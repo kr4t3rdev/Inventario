@@ -39,7 +39,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const COUNTS = [
@@ -60,7 +60,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    for (const count of COUNTS) vi.mocked(count as never).mockResolvedValue(0 as never);
+    for (const count of COUNTS) (count as unknown as { mockResolvedValue: (v: number) => void }).mockResolvedValue(0);
     vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'ven-1' } as never);
     vi.mocked(prisma.vendor.delete).mockResolvedValue({ vendorId: 'ven-1' } as never);
   });
@@ -73,6 +73,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
     const result = await deleteVendorAction('ven-1');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('PROVEEDOR_EN_USO');
     expect(result.error?.message).toContain('3');
     expect(result.error?.message).toContain('2');
@@ -84,7 +85,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
     await deleteVendorAction('ven-1');
 
     for (const count of COUNTS) {
-      const where = vi.mocked(count as never).mock.calls[0][0] as {
+      const where = (count as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][0] as {
         where: Record<string, unknown>;
       };
       expect(where.where.tenantId).toBe('tenant-test');
@@ -104,6 +105,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
     const result = await deleteVendorAction('ven-x');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('NOT_FOUND');
     expect(prisma.vendor.delete).not.toHaveBeenCalled();
   });

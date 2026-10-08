@@ -37,6 +37,8 @@ COPY --from=builder /app/.next /app/.next
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/pnpm-lock.yaml /app/pnpm-lock.yaml
+COPY --from=builder /app/prisma /app/prisma
+COPY --from=builder /app/scripts /app/scripts
 
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["sh", "-c", "/app/scripts/run-prisma-schema-sync.sh && pnpm start"]

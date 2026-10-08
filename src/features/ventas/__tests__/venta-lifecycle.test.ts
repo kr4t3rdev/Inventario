@@ -47,6 +47,7 @@ const { mockTx } = vi.hoisted(() => {
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn() },
 		cliente: { findFirst: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
+		asiento: { findMany: vi.fn().mockResolvedValue([]) },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
 	};
@@ -137,6 +138,7 @@ beforeEach(() => {
 	mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
 	mockTx.producto.findUnique.mockResolvedValue(ventaPedido.items[0].producto);
 	mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+	mockTx.asiento.findMany.mockResolvedValue([]);
 	mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cliente-1', limiteCredito: null });
 	mockTx.$queryRaw.mockResolvedValue([]);
 });
@@ -319,7 +321,7 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 	});
 
 	it('rechaza facturar una venta sin cliente', async () => {
-		mirarVenta({ ...ventaEntregada, clienteId: null });
+		mirarVenta({ ...ventaEntregada, clienteId: null } as never);
 		await expect(
 			svc.facturarVenta({
 				ventaId: 'venta-1',
@@ -418,10 +420,10 @@ describe('anularVentaPorEstado', () => {
 		const ventaFacturada = {
 			...ventaPedido,
 			estado: 'FACTURADA',
-			factura: { idFactura: 'fac-1', tenantId: 'tenant-1' },
+			factura: { idFactura: 'fac-1', tenantId: 'tenant-1' } as never,
 		};
 		mirarVenta(ventaFacturada);
-		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: 'cxc-1' }]);
+		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: 'cxc-1' }] as never);
 		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
 
 		expect(mockTx.factura.update).toHaveBeenCalledWith(

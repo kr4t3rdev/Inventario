@@ -24,11 +24,13 @@ const createSchema = z.object({
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
   tasaInteres: z.coerce.number().min(0).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().optional(),
   comprobanteAsset: cloudinaryAssetSchema.optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const updateSchema = z.object({
@@ -38,12 +40,14 @@ const updateSchema = z.object({
 }).strict()
 
 const pagoSchema = z.object({
+  id: z.string().min(1, 'La deuda es requerida'),
   monto: z.coerce.number().positive('El monto debe ser positivo'),
   cuentaId: z.string().min(1, 'La cuenta bancaria es requerida'),
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
   observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const DEUDA_INCLUDE = {
@@ -126,7 +130,6 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
   ) => {
     requireFeature(user, 'deudas-cash', 'registrar pagos de deudas cash');
     const {
-    // @ts-expect-error Zod infers the intersection without preserving the external id field in destructuring.
     id, ...body
     } = pagoSchema.parse(input)
     const resultado = await AccountingCashOperationsMutationService.registerCashDebtPayment({

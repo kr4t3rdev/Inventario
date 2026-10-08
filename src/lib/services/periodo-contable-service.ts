@@ -456,7 +456,9 @@ export class PeriodoContableService {
 		periodoId: string,
 		actor: string,
 		motivo: string,
+		client?: Prisma.TransactionClient,
 	) {
+		const db = client ?? prisma;
 		if (!motivo || motivo.trim().length === 0) {
 			throw new PeriodoError(
 				"El motivo de reapertura es obligatorio.",
@@ -464,7 +466,7 @@ export class PeriodoContableService {
 			);
 		}
 
-		const periodo = await prisma.periodoContable.findUnique({
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -486,7 +488,7 @@ export class PeriodoContableService {
 			);
 		}
 
-		const reabierto = await prisma.periodoContable.update({
+		const reabierto = await db.periodoContable.update({
 			where: { periodoId },
 			data: {
 				estado: EstadoPeriodo.REABIERTO,
@@ -503,7 +505,7 @@ export class PeriodoContableService {
 			evento: EventoAuditoria.REAPERTURA,
 			actor,
 			motivo,
-		});
+		}, client);
 
 		return reabierto;
 	}

@@ -16,8 +16,12 @@ export const createCompraProductoSchema = z.object({
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', 'ANTICIPO_PAGO']),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  cuentaId: z.string().min(1).optional(),
+  tipoPagoId: z.string().min(1).optional(),
   // Moneda del documento y de la CxP que genere (B-02.1). Histórico: CUP.
   moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']).default('CUP'),
+  tasaCambio: z.coerce.number().positive().optional(),
+  fechaTasa: z.string().optional(),
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),
@@ -32,6 +36,18 @@ export const createCompraProductoSchema = z.object({
     return data.estado === 'PENDIENTE';
   },
   { message: 'Estado no coincide con la forma de pago', path: ['estado'] }
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || !!data.cuentaId,
+  {
+    message: 'Seleccione una cuenta bancaria',
+    path: ['cuentaId'],
+  },
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || !!data.tipoPagoId,
+  {
+    message: 'Seleccione un tipo de pago',
+    path: ['tipoPagoId'],
+  },
 ).refine(
   (data) => (data.formaPago === 'ANTICIPO_PAGO' ? !!data.anticipoPagoId : true),
   { message: 'Debe indicar un anticipo', path: ['anticipoPagoId'] }
@@ -56,5 +72,5 @@ export const updateCompraProductoSchema = z.object({
   { message: 'Estado no coincide con la forma de pago', path: ['estado'] }
 );
 
-export type CreateCompraProductoInput = z.infer<typeof createCompraProductoSchema>;
+export type CreateCompraProductoInput = z.input<typeof createCompraProductoSchema>;
 export type UpdateCompraProductoInput = z.infer<typeof updateCompraProductoSchema>;

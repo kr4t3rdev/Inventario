@@ -67,10 +67,11 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 't1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockCuenta = {
+  tenantId: 'tenant-1',
   cuentaId: 'c1',
   nombreBanco: 'Banco Test',
   numeroCuenta: '123-456',
@@ -104,6 +105,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.cuentas).toHaveLength(1);
       expect(result.data!.cuentas[0].nombreBanco).toBe('Banco Test');
       expect(prisma.cuentaBancaria.findMany).toHaveBeenCalledWith(
@@ -117,6 +119,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.cuentas).toEqual([]);
     });
 
@@ -126,17 +129,19 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('AUTH_REQUIRED');
     });
   });
 
   describe('getCuentaBancariaByIdAction', () => {
     it('debe retornar una cuenta por ID', async () => {
-      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta as never);
 
       const result = await getCuentaBancariaByIdAction('c1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.cuentaId).toBe('c1');
     });
 
@@ -146,6 +151,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaBancariaByIdAction('inexistente');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('NOT_FOUND');
     });
   });
@@ -190,6 +196,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await createCuentaBancariaAction({ ...validInput, saldo: 1000 });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
@@ -198,6 +205,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await createCuentaBancariaAction({ ...validInput, saldo: -1 });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
@@ -213,6 +221,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('PERIODO_CERRADO');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
@@ -325,6 +334,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
     });
 
@@ -338,13 +348,14 @@ describe('Cuentas Bancarias Actions', () => {
       } as never);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('debe actualizar solo los campos enviados', async () => {
-      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta as never);
       txClient.cuentaBancaria.update.mockResolvedValue({
         ...mockCuenta,
         nombreBanco: 'Banco Actualizado',
@@ -370,7 +381,7 @@ describe('Cuentas Bancarias Actions', () => {
     });
 
     it('debe permitir toggle de isActive sin otros campos', async () => {
-      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta as never);
       txClient.cuentaBancaria.update.mockResolvedValue({
         ...mockCuenta,
         isActive: false,
@@ -397,6 +408,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -410,6 +422,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -423,6 +436,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -474,18 +488,20 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('NOT_FOUND');
     });
   });
 
   describe('deleteCuentaBancariaAction', () => {
     it('debe eliminar una cuenta existente', async () => {
-      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta as never);
       txClient.cuentaBancaria.delete.mockResolvedValue(mockCuenta);
 
       const result = await deleteCuentaBancariaAction('c1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.eliminado).toBe(true);
       expect(txClient.cuentaBancaria.delete).toHaveBeenCalledWith({
         where: { cuentaId: 'c1' },
@@ -503,14 +519,15 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await deleteCuentaBancariaAction('inexistente');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('NOT_FOUND');
     });
   });
 
   describe('getCuentaHistorialAction', () => {
     beforeEach(() => {
-      vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuenta);
-      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuenta as never);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta as never);
       vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([]);
       vi.mocked(prisma.reconciliacionServicio.findMany).mockResolvedValue([]);
       vi.mocked(prisma.reconciliacionGasto.findMany).mockResolvedValue([]);
@@ -524,6 +541,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.transacciones).toEqual([]);
       expect(result.data?.resumen.saldoActual).toBe(1000);
       expect(result.data?.resumen.totalMovimientos).toBe(0);
@@ -535,6 +553,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'inexistente' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('NOT_FOUND');
     });
 
@@ -558,6 +577,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.transacciones).toHaveLength(10);
       expect(result.data?.resumen.totalIngresos).toBe(1500);
       expect(result.data?.resumen.totalMovimientos).toBe(15);
@@ -577,6 +597,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.resumen.totalIngresos).toBe(500);
       expect(result.data?.resumen.totalEgresos).toBe(200);
       expect(result.data?.resumen.monedasNoConvertidas).toEqual(['USD']);
@@ -591,6 +612,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.resumen.totalIngresos).toBe(2450);
       expect(result.data?.resumen.monedasNoConvertidas).toEqual([]);
     });
@@ -610,6 +632,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.transacciones.every((t) => t.tipoMovimiento === 'venta')).toBe(true);
       expect(result.data?.resumen.totalMovimientos).toBe(2);
       expect(result.data?.resumen.totalIngresos).toBe(300);
@@ -658,6 +681,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data?.resumen.totalIngresos).toBe(500);
       expect(result.data?.resumen.totalEgresos).toBe(500);
       expect(result.data?.resumen.totalMovimientos).toBe(4);

@@ -34,6 +34,7 @@ describe('generateUploadSignature', () => {
 
   it('generates signature with valid params', () => {
     const result = generateUploadSignature({
+      provider: 'cloudinary',
       uploadKey: 'productos.photo',
       folder: 'tenant123/productos',
       resourceType: 'image',
@@ -60,6 +61,7 @@ describe('generateUploadSignature', () => {
 
     expect(() =>
       generateUploadSignature({
+        provider: 'cloudinary',
         uploadKey: 'productos.photo',
         folder: 'folder',
         resourceType: 'image',
@@ -73,6 +75,7 @@ describe('generateUploadSignature', () => {
   it('throws error when folder is empty', () => {
     expect(() =>
       generateUploadSignature({
+        provider: 'cloudinary',
         uploadKey: 'productos.photo',
         folder: '',
         resourceType: 'image',
@@ -86,6 +89,7 @@ describe('generateUploadSignature', () => {
   it('throws error when folder is whitespace', () => {
     expect(() =>
       generateUploadSignature({
+        provider: 'cloudinary',
         uploadKey: 'productos.photo',
         folder: '   ',
         resourceType: 'image',
@@ -98,6 +102,7 @@ describe('generateUploadSignature', () => {
 
   it('includes publicId when provided', () => {
     const result = generateUploadSignature({
+      provider: 'cloudinary',
       uploadKey: 'productos.photo',
       folder: 'folder',
       resourceType: 'image',
@@ -110,6 +115,7 @@ describe('generateUploadSignature', () => {
 
   it('uses image as default resourceType', () => {
     const result = generateUploadSignature({
+      provider: 'cloudinary',
       uploadKey: 'productos.photo',
       folder: 'folder',
       resourceType: 'image',

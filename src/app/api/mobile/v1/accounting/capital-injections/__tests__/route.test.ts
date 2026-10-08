@@ -163,6 +163,67 @@ describe('mobile accounting capital injections route', () => {
     });
   });
 
+  it('maps the idempotency key from the body and preserves body precedence over the header', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.createCapitalInjection).mockResolvedValue({
+      inyeccionCapitalId: 'ic-idempotent',
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/capital-injections', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'header-key',
+      },
+      body: JSON.stringify({
+        montoRecibido: 500,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'cb-1',
+        socio: 'Socio fundador',
+        idempotencyKey: 'body-key',
+      }),
+    });
+
+    await POST(request);
+
+    expect(AccountingOperationsMutationService.createCapitalInjection).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'body-key' }),
+      user: mockUser,
+    });
+  });
+
+  it('maps the idempotency key from the header when the body omits it', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.createCapitalInjection).mockResolvedValue({
+      inyeccionCapitalId: 'ic-header',
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/capital-injections', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'header-key',
+      },
+      body: JSON.stringify({
+        montoRecibido: 500,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'cb-1',
+        socio: 'Socio fundador',
+      }),
+    });
+
+    await POST(request);
+
+    expect(AccountingOperationsMutationService.createCapitalInjection).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'header-key' }),
+      user: mockUser,
+    });
+  });
+
   it('maps service validation failures to a client error', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
     vi.mocked(AccountingOperationsMutationService.createCapitalInjection).mockRejectedValueOnce(

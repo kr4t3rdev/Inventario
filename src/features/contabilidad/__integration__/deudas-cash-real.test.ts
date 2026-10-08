@@ -17,7 +17,7 @@ import { NextRequest } from 'next/server';
 vi.mock('@/lib/auth-middleware', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/auth-middleware')>();
   return { ...original, withAuthPost: (handler: (
-    request: NextRequest, context: unknown, user: { userId: string; tenantId: string },
+    request: NextRequest, context: unknown, user: { userId: string; tenantId: string; planFeatures?: Record<string, boolean>; permissions?: Set<string> },
   ) => Promise<Response>) => async (request: NextRequest, context: unknown) =>
     handler(request, context, {
       userId: 'actor-real', tenantId,
@@ -149,7 +149,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       'http://localhost/api/contabilidad/deudas-cash', {
         method: 'POST', body: JSON.stringify({ proveedorId: otherProveedorId,
           montoCapital: 1000, moneda: 'CUP', cuentaBancariaId: cuentaId }),
-      }));
+      }), {});
     expect(crearAjeno.status).toBe(404);
 
     const pagarAjeno = await POST_PAGAR(new NextRequest(
@@ -173,7 +173,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       'http://localhost/api/contabilidad/deudas-cash', {
         method: 'POST', body: JSON.stringify({ proveedorId, montoCapital: 3000,
           moneda: 'CUP', cuentaBancariaId: cuentaId }),
-      }));
+      }), {});
     expect(response.status).toBe(201);
     const { deuda } = await response.json();
     expect(deuda.proveedorId).toBe(proveedorId);
@@ -207,7 +207,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
         method: 'POST',
         body: JSON.stringify({ proveedorId, montoCapital: 125, moneda: 'CUP', cuentaBancariaId: cuentaId }),
       },
-    ));
+    ), {});
 
     expect(response.status).toBe(500);
     expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } })).saldo)
@@ -223,7 +223,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
         method: 'POST',
         body: JSON.stringify({ proveedorId, montoCapital: 90, moneda: 'CUP', cuentaBancariaId: cuentaId }),
       },
-    ));
+    ), {});
     expect(createResponse.status).toBe(201);
     const created = await createResponse.json();
     const before = await prisma.deudaCash.findFirstOrThrow({
@@ -238,10 +238,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
         body: JSON.stringify({ observaciones: 'Cambio que debe revertirse' }),
         headers: { 'content-type': 'application/json' },
       },
-    ), { params: Promise.resolve({ id: created.deuda.id }) }, {
-      userId: 'actor-real', tenantId, planFeatures: { 'deudas-cash': true },
-      permissions: new Set(['financiero.contabilidad.acceder']),
-    } as never);
+    ), { params: Promise.resolve({ id: created.deuda.id }) });
 
     expect(updateResponse.status).toBe(500);
     expect(await prisma.deudaCash.findFirstOrThrow({
@@ -258,7 +255,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       'http://localhost/api/contabilidad/deudas-cash', {
         method: 'POST', body: JSON.stringify({ proveedorId, montoCapital: 3000,
           moneda: 'USD', tasaCambio: 24, cuentaBancariaId: cuentaFxId }),
-      }));
+      }), {});
     expect(response.status).toBe(201);
     const { deuda } = await response.json();
 
@@ -586,7 +583,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       'http://localhost/api/contabilidad/deudas-cash', {
         method: 'POST', body: JSON.stringify({ proveedorId, montoCapital: 777,
           moneda: 'CUP', cuentaBancariaId: cuentaId }),
-      }));
+      }), {});
     expect(response.status).toBe(500);
 
     expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } }))

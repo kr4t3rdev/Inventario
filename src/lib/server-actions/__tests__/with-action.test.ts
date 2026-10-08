@@ -31,7 +31,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test-1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 /** Crea un ZodError con field errors específicos para testing */
@@ -145,6 +145,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error).toBeDefined();
       expect(result.error!.code).toBe('VALIDATION_ERROR');
       expect(result.error!.message).toBeDefined();
@@ -179,6 +180,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('P2002');
       expect(result.error!.message).toContain('Ya existe');
     });
@@ -193,6 +195,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('P2025');
       expect(result.error!.message).toContain('no fue encontrado');
     });
@@ -207,6 +210,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('P9999');
       expect(result.error!.message).toBeDefined();
     });
@@ -225,6 +229,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('PRICE_MISMATCH');
       expect(result.error!.message).toBe('El precio no coincide con el vigente');
     });
@@ -239,6 +244,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('P2002');
       expect(result.error!.message).toContain('Ya existe');
     });
@@ -254,13 +260,14 @@ describe('withAction()', () => {
       const wrapped = withAction(async () => {
         throw new Prisma.PrismaClientValidationError(
           'Invalid value for field "precio": expected number, got string',
-          '5.0.0'
+          { clientVersion: '5.0.0' }
         );
       });
 
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('PRISMA_VALIDATION_ERROR');
       expect(result.error!.message).toContain('validación');
     });
@@ -279,6 +286,7 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('INTERNAL_ERROR');
       expect(result.error!.message).toBeDefined();
     });
@@ -292,7 +300,11 @@ describe('withAction()', () => {
 
       const result = await wrapped(undefined);
 
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).not.toContain('SECRETO');
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).not.toContain('12345');
     });
   });

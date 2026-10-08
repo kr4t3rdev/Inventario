@@ -53,7 +53,7 @@ function CuotasEstimadasDeuda({ control }: { control: any }) {
 
   if (monto <= 0) return null
 
-  const totalConInteres = calcularTotalDeudaConInteres(monto, tasa)
+  const totalConInteres = calcularTotalDeudaConInteres(monto, tasa).toNumber()
   const interes = totalConInteres - monto
 
   let dias = 0
@@ -129,6 +129,7 @@ interface DeudaCashFormProps {
 export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBancarias = [], onSuccess }: DeudaCashFormProps) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
   const [comprobante, setComprobante] = useState<File | null>(null)
   const [comprobanteAsset, setComprobanteAsset] = useState<CloudinaryAssetUploadResult | null>(null)
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
@@ -172,11 +173,14 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
   const montoCapital = useWatch({ control: form.control, name: 'montoCapital' })
   const tasaInteres = useWatch({ control: form.control, name: 'tasaInteres' })
-  const saldoPendientePreview = calcularTotalDeudaConInteres(Number(montoCapital) || 0, Number(tasaInteres) || 0)
+  const saldoPendientePreview = calcularTotalDeudaConInteres(Number(montoCapital) || 0, Number(tasaInteres) || 0).toNumber()
   const canUploadReceipt = hasPlanFeature(user, 'upload-deudas-cash-receipt')
 
   const onSubmit = async (data: DeudaFormValues) => {
+    setIsLoading(true)
     try {
+      const idempotencyKey = pendingIdempotencyKey.current ?? crypto.randomUUID()
+      pendingIdempotencyKey.current = idempotencyKey
       let comprobanteUrl: string | undefined
       let uploadedAsset: CloudinaryAssetUploadResult | null = comprobanteAsset
 
@@ -202,6 +206,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         comprobanteUrl,
         comprobanteAsset: uploadedAsset,
         cuentaBancariaId: data.cuentaBancariaId,
+        idempotencyKey,
       })
 
       if (!result.success) {
@@ -211,6 +216,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
       toast.success("Deuda en efectivo registrada exitosamente.")
       form.reset()
+      pendingIdempotencyKey.current = null
       clearComprobante()
       onOpenChange(false)
       onSuccess?.()
@@ -222,6 +228,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
   const handleClose = () => {
     form.reset()
+    pendingIdempotencyKey.current = null
     clearComprobante()
     onOpenChange(false)
   }

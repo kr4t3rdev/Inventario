@@ -84,7 +84,7 @@ const tenantUser: AuthenticatedUser = {
   userId: 'user-1',
   name: 'Tenant User',
   email: 'tenant@test.com',
-  role: 'user',
+  role: 'regularUser',
   isActive: true,
   tenantId: 'tenant-self',
   tenantRole: 'manager',
@@ -139,6 +139,7 @@ describe('affiliate actions', () => {
     } as never);
     const selfReferral = await registerReferralFromCodeAction({ referralCode: 'REF-SELF' });
     expect(selfReferral.success).toBe(false);
+    if (selfReferral.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(selfReferral.error?.code).toBe('SELF_REFERRAL_NOT_ALLOWED');
   });
 

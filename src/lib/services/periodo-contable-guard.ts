@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { ActionError } from "@/lib/server-actions/types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "./periodo-contable-service";
+import { PeriodoAuditService } from './periodo-audit-service';
 import {
 	EstadoPeriodo,
 	getGuardConfig,
@@ -36,6 +37,14 @@ export interface VerificarEscrituraParams {
 	tipoOperacion: string;
 	actor: string;
 	metadata?: Record<string, unknown>;
+	/** Un rechazo formal exige evidencia fuera de la transacción del writer. */
+	auditoriaObligatoria?: boolean;
+}
+
+export interface ContextoAuditoriaAsiento {
+	actorId: string;
+	actorTipo: 'USUARIO' | 'SERVICIO';
+	origen: { tipo: string; id: string };
 }
 
 export interface VerificarEscrituraResult {
@@ -163,7 +172,7 @@ export interface PeriodoAuditServiceStub {
 		motivo?: string;
 		entidadAfectada?: string;
 		payload?: Record<string, unknown>;
-	}): Promise<void>;
+	}): Promise<unknown>;
 }
 
 // ── PeriodoGuard ──────────────────────────────────────────────────────────
@@ -193,7 +202,7 @@ export class PeriodoGuard {
 	async verificarEscritura(
 		params: VerificarEscrituraParams,
 	): Promise<VerificarEscrituraResult> {
-		const { fecha, tenantId, tipoOperacion, actor, metadata } = params;
+		const { fecha, tenantId, tipoOperacion, actor, metadata, auditoriaObligatoria } = params;
 
 		// Modo disabled: bypass completo
 		if (this.config.mode === "disabled" || !this.config.enabled) {
@@ -244,7 +253,7 @@ export class PeriodoGuard {
 				fecha: fecha.toISOString(),
 				tipoOperacion,
 				...metadata,
-			});
+			}, auditoriaObligatoria);
 
 			if (this.config.mode === "enforce") {
 				return { permitido: false, error, codigo: code, modo: "enforce" };
@@ -272,14 +281,22 @@ export class PeriodoGuard {
 		fecha: Date,
 		tenantId: string,
 		tipoOperacion?: string,
+		contexto?: ContextoAuditoriaAsiento,
 	): Promise<VerificarEscrituraResult> {
 		const config = getGuardConfigExtended();
-		const guard = new PeriodoGuard(config);
+		if (contexto && (!contexto.actorId || !tenantId || !contexto.origen.tipo ||
+			!contexto.origen.id)) {
+			throw new ActionError('Falta contexto para auditar el asiento', 'AUDITORIA_SIN_CONTEXTO');
+		}
+		// El servicio usa prisma raíz, nunca el TransactionClient que el writer revertirá.
+		const guard = new PeriodoGuard(config, contexto ? new PeriodoAuditService() : null);
 		return guard.verificarEscritura({
 			fecha,
 			tenantId,
 			tipoOperacion: tipoOperacion ?? "devengo",
-			actor: "system",
+			actor: contexto?.actorId ?? 'system',
+			metadata: contexto ? { actorTipo: contexto.actorTipo, origen: contexto.origen } : undefined,
+			auditoriaObligatoria: Boolean(contexto),
 		});
 	}
 
@@ -381,19 +398,27 @@ export class PeriodoGuard {
 		actor: string,
 		mensaje: string,
 		payload?: Record<string, unknown>,
+		obligatoria = false,
 	): Promise<void> {
-		if (!this.auditService) return;
+		if (!this.auditService) {
+			if (obligatoria) throw new ActionError('Auditoría no disponible', 'AUDITORIA_NO_DISPONIBLE');
+			return;
+		}
 
 		try {
 			await this.auditService.registrar({
-				periodoId: "N/A",
+				periodoId: typeof payload?.periodoId === 'string' ? payload.periodoId : 'N/A',
 				tenantId,
 				evento: "INTENTO_BYPASS",
 				actor,
 				motivo: mensaje,
 				payload,
 			});
-		} catch {
+		} catch (error) {
+			if (obligatoria) {
+				throw new ActionError('No se pudo persistir la auditoría del período',
+					'AUDITORIA_FALLIDA');
+			}
 			// Si falla la auditoría, al menos logeamos
 			console.error(
 				"[PeriodoGuard] Error registrando intento bypass:",

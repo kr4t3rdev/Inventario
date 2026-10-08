@@ -110,6 +110,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(workflowMock.applyPagoGastoWorkflow).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({
@@ -163,6 +164,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		const data = JSON.parse(JSON.stringify(result.data));
 		expect(data.cuentaPorPagar.estado).toBe("PARCIAL");
 		expect(data.cuentaPorPagar.saldoPendiente).toBe(50);
@@ -259,6 +261,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("MONTO_EXCEDE_SALDO");
 	});
 
@@ -281,6 +284,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("CUENTA_YA_PAGADA");
 	});
 

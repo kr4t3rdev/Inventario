@@ -12,6 +12,10 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+const reverseFormalEntries = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+vi.mock("@/features/contabilidad-formal/services/reversal-service", () => ({
+	reverseFormalEntries,
+}));
 
 const mockTx = {
 	compraDocumento: {
@@ -51,7 +55,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const compraBase = {
@@ -93,6 +97,11 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(true);
+		expect(reverseFormalEntries).toHaveBeenCalledWith(
+			mockTx,
+			{ tenantId: 'tenant-test', userId: 'user-1' },
+			[{ tipo: 'compra_documento', id: 'cd-1' }],
+		);
 		// Stock revertido con delta negativo sobre el mismo almacén de la compra.
 		expect(upsertStockUbicacion).toHaveBeenCalledWith(
 			mockTx,
@@ -144,6 +153,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		expect(mockTx.gastoCompra.update).not.toHaveBeenCalled();
@@ -158,6 +168,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 	});
@@ -177,6 +188,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("CXP_HAS_PAYMENTS");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		// El CAS dentro de la transacción se revierte con el rollback: nada persiste.
@@ -191,6 +203,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("HAS_IMPACT");
 	});
 
@@ -241,6 +254,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-x" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 

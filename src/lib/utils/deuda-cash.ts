@@ -1,43 +1,59 @@
+import { Prisma } from '@/generated/prisma';
+
+type DecimalInput = number | string | Prisma.Decimal;
+
+function toDecimalOrZero(value: DecimalInput | null | undefined): Prisma.Decimal {
+  try {
+    const d = new Prisma.Decimal(value as DecimalInput);
+    return d.isFinite() ? d : new Prisma.Decimal(0);
+  } catch {
+    return new Prisma.Decimal(0);
+  }
+}
+
 /**
  * @description Calcula el total de la deuda sumando interés al capital.
- * @param {number} montoCapital - Capital base.
- * @param {number | null | undefined} tasaInteres - Tasa porcentual.
- * @returns {number} Total adeudado con interés.
+ * @param {DecimalInput} montoCapital - Capital base.
+ * @param {DecimalInput | null | undefined} tasaInteres - Tasa porcentual.
+ * @returns {Prisma.Decimal} Total adeudado con interés (aritmética decimal exacta, 2 decimales).
  */
-export function calcularTotalDeudaConInteres(montoCapital: number, tasaInteres?: number | null): number {
-  const capital = Number(montoCapital) || 0
-  const tasa = Number(tasaInteres) || 0
+export function calcularTotalDeudaConInteres(montoCapital: DecimalInput, tasaInteres?: DecimalInput | null): Prisma.Decimal {
+  const capital = toDecimalOrZero(montoCapital)
+  const tasa = toDecimalOrZero(tasaInteres)
 
-  if (capital <= 0) return 0
+  if (capital.lte(0)) return new Prisma.Decimal(0)
 
-  return Number((capital * (1 + tasa / 100)).toFixed(2))
+  return capital
+    .mul(new Prisma.Decimal(1).add(tasa.div(100)))
+    .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
 }
 
 /**
  * @description Calcula el saldo pendiente de una deuda cash.
- * @param {number} montoDeuda - Total adeudado.
- * @param {number} montoPagado - Total ya pagado.
- * @returns {number} Saldo pendiente.
+ * @param {DecimalInput} montoDeuda - Total adeudado.
+ * @param {DecimalInput} montoPagado - Total ya pagado.
+ * @returns {Prisma.Decimal} Saldo pendiente (nunca negativo, 2 decimales).
  */
-export function calcularSaldoPendienteDeuda(montoDeuda: number, montoPagado: number): number {
-  const deuda = Number(montoDeuda) || 0
-  const pagado = Number(montoPagado) || 0
-  return Math.max(0, Number((deuda - pagado).toFixed(2)))
+export function calcularSaldoPendienteDeuda(montoDeuda: DecimalInput, montoPagado: DecimalInput): Prisma.Decimal {
+  const deuda = toDecimalOrZero(montoDeuda)
+  const pagado = toDecimalOrZero(montoPagado)
+  const saldo = deuda.sub(pagado).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+  return saldo.gt(0) ? saldo : new Prisma.Decimal(0)
 }
 
 /**
  * @description Normaliza el estado de una deuda cash con base en saldo y tolerancia de centavos.
  * @param {string} estadoActual - Estado persistido.
- * @param {{ montoDeuda: number; montoPagado: number; estado?: string }} cuentaPorPagar - Cuenta asociada.
+ * @param {{ montoDeuda: DecimalInput; montoPagado: DecimalInput; estado?: string }} cuentaPorPagar - Cuenta asociada.
  * @returns {string} Estado normalizado.
  */
 export function normalizarEstadoDeudaCash(
   estadoActual: string,
-  cuentaPorPagar: { montoDeuda: number; montoPagado: number; estado?: string }
+  cuentaPorPagar: { montoDeuda: DecimalInput; montoPagado: DecimalInput; estado?: string }
 ): string {
   const saldo = calcularSaldoPendienteDeuda(cuentaPorPagar.montoDeuda, cuentaPorPagar.montoPagado)
 
-  if (saldo <= 0.01) return 'PAGADO'
+  if (saldo.lte('0.01')) return 'PAGADO'
   if (estadoActual === 'CANCELADO') return 'CANCELADO'
   if (cuentaPorPagar.estado === 'PAGADA') return 'PAGADO'
   return estadoActual === 'PAGADO' ? 'PAGADO' : 'ACTIVO'

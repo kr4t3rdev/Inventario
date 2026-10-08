@@ -121,4 +121,67 @@ describe('mobile accounting bank adjustments route', () => {
       user: mockUser,
     });
   });
+
+  it('maps the idempotency key from the body and preserves body precedence over the header', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.createBankAdjustment).mockResolvedValue({
+      ajuste: { ajusteId: 'aj-idempotent' },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'header-key',
+      },
+      body: JSON.stringify({
+        cuentaId: 'cb-1',
+        tipo: 'egreso',
+        monto: 50,
+        moneda: 'CUP',
+        descripcion: 'Ajuste manual',
+        motivo: 'Diferencia de caja',
+        idempotencyKey: 'body-key',
+      }),
+    });
+
+    await POST(request);
+
+    expect(AccountingOperationsMutationService.createBankAdjustment).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'body-key' }),
+      user: mockUser,
+    });
+  });
+
+  it('maps the idempotency key from the header when the body omits it', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.createBankAdjustment).mockResolvedValue({
+      ajuste: { ajusteId: 'aj-header' },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'header-key',
+      },
+      body: JSON.stringify({
+        cuentaId: 'cb-1',
+        tipo: 'egreso',
+        monto: 50,
+        moneda: 'CUP',
+        descripcion: 'Ajuste manual',
+        motivo: 'Diferencia de caja',
+      }),
+    });
+
+    await POST(request);
+
+    expect(AccountingOperationsMutationService.createBankAdjustment).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'header-key' }),
+      user: mockUser,
+    });
+  });
 });

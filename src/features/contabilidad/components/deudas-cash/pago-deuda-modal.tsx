@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -56,6 +56,7 @@ export function PagoDeudaModal({
   onSuccess,
 }: PagoDeudaModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
 
   const saldoPendiente = useMemo(() => {
     if (!deuda?.cuentaPorPagar) return Number(deuda?.montoCapital ?? 0)
@@ -78,6 +79,7 @@ export function PagoDeudaModal({
 
   useEffect(() => {
     if (deuda && open) {
+      pendingIdempotencyKey.current = crypto.randomUUID()
       form.reset({
         monto: saldoPendiente,
         cuentaId: "",
@@ -106,6 +108,7 @@ export function PagoDeudaModal({
         moneda: values.moneda,
         tasaCambio: values.tasaCambio,
         observaciones: values.observaciones || undefined,
+        idempotencyKey: pendingIdempotencyKey.current ?? undefined,
       })
 
       if (!result.success) {
@@ -115,6 +118,7 @@ export function PagoDeudaModal({
 
       toast.success("Pago registrado correctamente")
       onSuccess?.()
+      pendingIdempotencyKey.current = null
       onOpenChange(false)
     } catch (error) {
       toast.error("No se pudo registrar el pago")
@@ -124,13 +128,16 @@ export function PagoDeudaModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen) pendingIdempotencyKey.current = null
+      onOpenChange(nextOpen)
+    }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Registrar Pago de Deuda</DialogTitle>
           <DialogDescription>
             {deuda
-              ? `Deuda #${deuda.idNumerico} • Proveedor: ${deuda.proveedor?.nombre ?? "—"} • Saldo: ${deuda.moneda} ${saldoPendiente.toFixed(2)}`
+              ? `Deuda #${deuda.idNumerico} • Proveedor: ${deuda.proveedor?.nombre ?? "—"} • Saldo: ${deuda.moneda} ${saldoPendiente.toFixed(4)}`
               : "Seleccione una deuda."}
           </DialogDescription>
         </DialogHeader>
@@ -144,10 +151,10 @@ export function PagoDeudaModal({
                 <FormItem>
                   <FormLabel>Monto a pagar</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" max={saldoPendiente} {...field} />
+                    <Input type="number" step="0.0001" min="0" max={saldoPendiente} {...field} />
                   </FormControl>
                   {montoIngresado > saldoPendiente && (
-                    <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(2)})</p>
+                    <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(4)})</p>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -215,7 +222,7 @@ export function PagoDeudaModal({
                   </FormControl>
                   {montoConvertido !== null && (
                     <p className="text-xs text-muted-foreground">
-                      Monto convertido: ${montoConvertido.toFixed(2)}
+                      Monto convertido: ${montoConvertido.toFixed(4)}
                     </p>
                   )}
                   <FormMessage />

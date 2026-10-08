@@ -15,8 +15,6 @@ import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticiposTable } from "@/features/contabilidad/components/anticipos/anticipos-table"
 import { AnticipoForm } from "@/features/contabilidad/components/anticipos/anticipo-form"
 import { AnticipoDetail } from "@/features/contabilidad/components/anticipos/anticipo-detail"
-import { AnticipoEjecutarDialog } from "@/features/contabilidad/components/anticipos/anticipo-ejecutar-dialog"
-import { AnticipoRevertirDialog } from "@/features/contabilidad/components/anticipos/anticipo-revertir-dialog"
 import { ReportesAnticipos } from "@/features/contabilidad/components/anticipos/reportes-anticipos"
 import { Anticipo } from "@/app/models/model"
 import { useAuth } from "@/contexts/auth-context"
@@ -41,8 +39,6 @@ function AnticiposContent() {
   // Estados para modals/dialogs
   const [openForm, setOpenForm] = useState(false)
   const [openDetail, setOpenDetail] = useState(false)
-  const [openEjecutar, setOpenEjecutar] = useState(false)
-  const [openRevertir, setOpenRevertir] = useState(false)
   const [anticipoSeleccionado, setAnticipoSeleccionado] = useState<Anticipo | null>(null)
   const [anticipoDetailId, setAnticipoDetailId] = useState<string | null>(null)
   const [tabActiva, setTabActiva] = useState("lista")
@@ -134,16 +130,6 @@ function AnticiposContent() {
     setOpenDetail(true)
   }
 
-  const handleEjecutar = (anticipo: Anticipo) => {
-    setAnticipoSeleccionado(anticipo)
-    setOpenEjecutar(true)
-  }
-
-  const handleRevertir = (anticipo: Anticipo) => {
-    setAnticipoSeleccionado(anticipo)
-    setOpenRevertir(true)
-  }
-
   const handleSuccess = () => {
     loadAnticipos()
   }
@@ -189,12 +175,14 @@ function AnticiposContent() {
 
         {/* Tab Lista */}
         <TabsContent value="lista">
+          <p className="mb-4 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+            Los anticipos se aplican al crear el documento correspondiente. Para revertir una
+            aplicación, utiliza el flujo de reversión del documento.
+          </p>
           <AnticiposTable
             anticipos={anticipos}
             isLoading={loadingAnticipos}
             onVerDetalle={handleVerDetalle}
-            onEjecutar={handleEjecutar}
-            onRevertir={handleRevertir}
           />
         </TabsContent>
 
@@ -249,19 +237,6 @@ function AnticiposContent() {
         isLoading={loadingDetail}
       />
 
-      <AnticipoEjecutarDialog
-        anticipo={anticipoSeleccionado}
-        open={openEjecutar}
-        onOpenChange={setOpenEjecutar}
-        onSuccess={handleSuccess}
-      />
-
-      <AnticipoRevertirDialog
-        anticipo={anticipoSeleccionado}
-        open={openRevertir}
-        onOpenChange={setOpenRevertir}
-        onSuccess={handleSuccess}
-      />
     </>
   )
 }

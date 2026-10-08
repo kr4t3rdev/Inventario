@@ -9,6 +9,19 @@
  */
 
 import { Prisma } from "@/generated/prisma";
+import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
+import { ActionError } from "@/lib/server-actions";
+
+export interface CostoFifoValorado {
+	montoFuncional: Prisma.Decimal;
+	monedaFuncional: string;
+	cantidadValorada: number;
+}
+
+export interface SeleccionCostoFifo {
+	ventaItemId: string;
+	cantidad: number;
+}
 
 // ─── Tipos ────────────────────────────────────────────────────
 
@@ -20,31 +33,189 @@ export interface AllocateFifoParams {
 }
 
 /**
- * @description Costo FIFO agregado de una venta: suma de (cantidad asignada ×
- * precio unitario del lote de compra) sobre todas las PurchaseAllocation de la
- * venta. Retorna 0 cuando la venta no tiene asignaciones (p. ej. servicios).
- * CTA-1: alimenta el evento COSTO_VENTA_DEVENGADO de la capa formal.
- * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
- * @param {string} tenantId - Tenant propietario.
- * @param {string} ventaId - Venta a costear.
- * @returns {Promise<number>} Costo FIFO total en moneda de la operación.
+ * @description Valora en la moneda funcional el costo FIFO a partir del snapshot
+ * monetario de cada documento de compra asignado a la venta. Las fuentes sin FX
+ * verificable no se convierten usando una tasa inferida.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional activo.
+ * @param {string} tenantId - Tenant propietario de la venta y compras.
+ * @param {string} ventaId - Venta que se costea.
+ * @param {SeleccionCostoFifo} [seleccion] - Porción FIFO concreta restaurada en una devolución.
+ * @returns {Promise<CostoFifoValorado | null>} Costo funcional, o null sin asignaciones.
  */
-export async function getCostoFifoVenta(
+export async function getCostoFifoVentaValorado(
 	tx: Prisma.TransactionClient,
 	tenantId: string,
 	ventaId: string,
-): Promise<number> {
+	seleccion?: SeleccionCostoFifo,
+): Promise<CostoFifoValorado | null> {
+	if (seleccion && (!Number.isSafeInteger(seleccion.cantidad) || seleccion.cantidad <= 0)) {
+		throw new ActionError('La cantidad del costo FIFO no es válida', 'FX_INSUFICIENTE');
+	}
 	const asignaciones = await tx.purchaseAllocation.findMany({
-		where: { tenantId, ventaItem: { ventaId } },
+		where: {
+			tenantId,
+			ventaItem: {
+				ventaId,
+				...(seleccion ? { id: seleccion.ventaItemId } : {}),
+			},
+		},
 		select: {
+			tenantId: true,
 			cantidad: true,
-			compraDocumentoItem: { select: { precioUnitario: true } },
+			compraDocumentoItem: {
+				select: {
+					createdAt: true,
+					precioUnitario: true,
+					compraDocumento: {
+						select: {
+							compraDocumentoId: true,
+							tenantId: true,
+							total: true,
+							moneda: true,
+							tasaCambio: true,
+							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
+						},
+					},
+				},
+			},
 		},
 	});
-	return asignaciones.reduce(
-		(total, a) => total + a.cantidad * Number(a.compraDocumentoItem.precioUnitario),
-		0,
-	);
+
+	if (asignaciones.length === 0) return null;
+
+	const cantidadesValoradas = new Map<string, number>();
+	if (seleccion) {
+		asignaciones.sort((a, b) =>
+			a.compraDocumentoItem.createdAt.getTime() - b.compraDocumentoItem.createdAt.getTime(),
+		);
+		let pendiente = seleccion.cantidad;
+		for (const [index, asignacion] of asignaciones.entries()) {
+			if (pendiente <= 0) break;
+			const cantidad = Math.min(pendiente, asignacion.cantidad);
+			cantidadesValoradas.set(String(index), cantidad);
+			pendiente -= cantidad;
+		}
+		if (cantidadesValoradas.size === 0) return null;
+	}
+
+	const policy = await tx.tenantAccountingPolicy.findUnique({
+		where: { tenantId },
+		select: { functionalCurrencyCode: true },
+	});
+	const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase();
+	if (!monedaFuncional) {
+		throw new ActionError(
+			'No hay moneda funcional para valorar el costo FIFO',
+			'FX_INSUFICIENTE',
+		);
+	}
+
+	let costoFuncional = new Prisma.Decimal(0);
+	let cantidadValorada = 0;
+	for (const [index, asignacion] of asignaciones.entries()) {
+		const cantidad = seleccion
+			? cantidadesValoradas.get(String(index)) ?? 0
+			: asignacion.cantidad;
+		if (cantidad <= 0) break;
+		const compra = asignacion.compraDocumentoItem.compraDocumento;
+		const monedaOriginal = compra.moneda.trim().toUpperCase();
+		if (
+			asignacion.tenantId !== tenantId ||
+			compra.tenantId !== tenantId ||
+			!Number.isSafeInteger(asignacion.cantidad) || asignacion.cantidad <= 0 ||
+			!Number.isSafeInteger(asignacion.compraDocumentoItem.precioUnitario) ||
+			asignacion.compraDocumentoItem.precioUnitario < 0 ||
+			(compra.functionalCurrency &&
+				compra.functionalCurrency.trim().toUpperCase() !== monedaFuncional)
+		) {
+			throw new ActionError(
+				'La asignación FIFO no pertenece a una fuente monetaria verificable',
+				'FX_INSUFICIENTE',
+			);
+		}
+
+		const costoOriginal = new Prisma.Decimal(
+			asignacion.compraDocumentoItem.precioUnitario,
+		).mul(cantidad);
+		cantidadValorada += cantidad;
+		if (monedaOriginal === monedaFuncional) {
+			costoFuncional = costoFuncional.add(costoOriginal);
+			continue;
+		}
+
+		if (
+			compra.tasaCambio == null || compra.montoConvertido == null ||
+			!compra.functionalCurrency ||
+			compra.functionalCurrency.trim().toUpperCase() !== monedaFuncional ||
+			!compra.rateEffectiveAt || !compra.fxEvidenceFingerprint ||
+			!compra.fxProvenanceSource || compra.fxEvidenceVersion !== 1 ||
+			compra.fxProvenanceKind !== 'MANUAL_GOVERNED'
+		) {
+			throw new ActionError(
+				'La compra de origen del costo FIFO no tiene evidencia FX completa',
+				'FX_INSUFICIENTE',
+			);
+		}
+
+		let evidencia: ReturnType<typeof buildAppliedFxEvidence>;
+		try {
+			evidencia = buildAppliedFxEvidence({
+				originalAmount: compra.total,
+				originalCurrency: monedaOriginal,
+				functionalCurrency: monedaFuncional,
+				exchangeRate: Number(compra.tasaCambio),
+				convertedAmount: Number(compra.montoConvertido),
+				rateEffectiveAt: compra.rateEffectiveAt,
+				source: compra.fxProvenanceSource,
+				fxCatalogRateId: compra.fxCatalogRateId,
+			});
+		} catch {
+			throw new ActionError(
+				'La evidencia FX de la compra de origen no es verificable',
+				'FX_INSUFICIENTE',
+			);
+		}
+		if (evidencia.fxEvidenceFingerprint !== compra.fxEvidenceFingerprint) {
+			throw new ActionError(
+				'La evidencia FX de la compra de origen fue alterada',
+				'FX_INSUFICIENTE',
+			);
+		}
+
+		const tasa = new Prisma.Decimal(compra.tasaCambio);
+		if (
+			!tasa.gt(0) ||
+			!new Prisma.Decimal(compra.montoConvertido).eq(
+				new Prisma.Decimal(compra.total).mul(tasa),
+			)
+		) {
+			throw new ActionError(
+				'La conversión persistida de la compra no coincide con su tasa',
+				'FX_INSUFICIENTE',
+			);
+		}
+		costoFuncional = costoFuncional.add(costoOriginal.mul(tasa));
+	}
+
+	if (
+		!costoFuncional.isFinite() ||
+		!costoFuncional.mul(10000).isInteger() ||
+		!costoFuncional.abs().lt('10000000000000000')
+	) {
+		throw new ActionError(
+			'El costo FIFO no es representable en la escala contable funcional',
+			'FX_INSUFICIENTE',
+		);
+	}
+
+	return { montoFuncional: costoFuncional, monedaFuncional, cantidadValorada };
 }
 
 // ─── FIFO: Asignación individual ───────────────────────────────

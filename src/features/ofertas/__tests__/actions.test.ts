@@ -21,7 +21,8 @@ const mockTx = {
   factura: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   cuentaPorCobrar: {
     findFirst: vi.fn().mockResolvedValue({ id: 'cxc-1', monedaOriginal: 'CUP',
-      tasaCambio: 1, montoDeuda: 500, montoDeudaFuncional: 500 }),
+      monedaFuncional: 'CUP', montoOriginal: 1000, tasaCambio: 1,
+      montoDeuda: 1000, montoDeudaFuncional: 1000 }),
     findMany: vi.fn().mockResolvedValue([]),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
   },
@@ -65,7 +66,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('Ofertas Server Actions', () => {
@@ -99,6 +100,7 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
       const result = await getOfertaByIdAction('of-noexiste');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -106,7 +108,7 @@ describe('Ofertas Server Actions', () => {
   describe('createOfertaAction', () => {
     it('crea oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' } as never);
       vi.mocked(prisma.producto.findFirst).mockResolvedValue({
         id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
       } as any);
@@ -136,7 +138,7 @@ describe('Ofertas Server Actions', () => {
   describe('updateOfertaAction', () => {
     it('actualiza estado exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' });
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as never);
       vi.mocked(prisma.oferta.update).mockResolvedValue({} as any);
 
       const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
@@ -148,7 +150,7 @@ describe('Ofertas Server Actions', () => {
     it('exige permiso de gestión de ofertas antes de consultar la oferta', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue({
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         permissions: new Set<string>(),
         planFeatures: { ofertas: true },
@@ -157,6 +159,7 @@ describe('Ofertas Server Actions', () => {
       const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('FORBIDDEN');
       expect(prisma.oferta.findFirst).not.toHaveBeenCalled();
     });
@@ -289,11 +292,12 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
         ofertaId: 'of-1', estado: 'FACTURADA', tenantId: 'tenant-test',
-      });
+      } as never);
 
       const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('ya fue facturada');
     });
 
@@ -305,7 +309,9 @@ describe('Ofertas Server Actions', () => {
         items: [],
         cliente: { clienteId: 'cli-1', nombre: 'Test' },
       } as any);
-      vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ ventaId: 'ven-1' } as any);
+      vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({
+        ventaId: 'ven-1', facturaId: 'fac-1', tipoVencimiento: 'fecha', reconciliacionId: null,
+      } as any);
       vi.mocked(applyAnticipoAllocations).mockResolvedValue([]);
       mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
       // Gate de cupo (remediación): el anticipo crea CxC por vencimiento; el
@@ -313,7 +319,8 @@ describe('Ofertas Server Actions', () => {
       mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cli-1', limiteCredito: null });
       mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
       mockTx.cuentaPorCobrar.findFirst.mockResolvedValue({
-        id: 'cxc-1', monedaOriginal: 'CUP', tasaCambio: 1, montoDeuda: 500, montoDeudaFuncional: 500,
+        id: 'cxc-1', monedaOriginal: 'CUP', monedaFuncional: 'CUP', montoOriginal: 1000,
+        tasaCambio: 1, montoDeuda: 1000, montoDeudaFuncional: 1000,
       });
 
       const result = await facturarOfertaAction({
@@ -333,13 +340,23 @@ describe('Ofertas Server Actions', () => {
           usuarioId: 'user-1',
         }),
       );
+      expect(applyFacturacionCobroWorkflow).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({ tipoVencimiento: 'fecha', montoTotal: 1000 }),
+      );
+      expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ montoPagado: 1000, estado: 'PAGADA' }),
+      }));
+      expect(mockTx.factura.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+        data: { estado: 'PAGADA' },
+      }));
     });
   });
 
   describe('deleteOfertaAction', () => {
     it('elimina oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' });
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as never);
       vi.mocked(prisma.oferta.delete).mockResolvedValue({} as any);
       const result = await deleteOfertaAction('of-1');
       expect(result.success).toBe(true);
@@ -351,6 +368,7 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getOfertasAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

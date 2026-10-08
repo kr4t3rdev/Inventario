@@ -19,8 +19,12 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
   },
 }));
+const reverseFormalEntries = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));
+vi.mock('@/features/contabilidad-formal/services/reversal-service', () => ({
+  reverseFormalEntries,
+}));
 
 import { deleteNominaHandler } from '@/features/empleados/api/nomina';
 
@@ -82,6 +86,11 @@ describe('deleteNominaHandler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(reverseFormalEntries).toHaveBeenCalledWith(
+      tx,
+      { tenantId: 'tenant-a', userId: 'user-1' },
+      [{ tipo: 'reconciliacion_gasto', id: 'rec-1' }],
+    );
     expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith({
       where: { cuentaId: 'account-1', tenantId: 'tenant-a' },
       data: { saldo: { increment: 125 } },

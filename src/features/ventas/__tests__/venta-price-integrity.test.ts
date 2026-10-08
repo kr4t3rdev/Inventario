@@ -60,7 +60,7 @@ const cajeroUser: AuthenticatedUser = {
 	userId: "user-cajero",
 	name: "Cajero",
 	email: "cajero@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "dependiente",
@@ -141,6 +141,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("PRICE_MISMATCH");
 		expect(result.error?.message).toContain("Producto");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
@@ -240,6 +241,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("PRICE_MISMATCH");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
@@ -254,6 +256,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("PRICE_MISMATCH");
 	});
 
@@ -268,6 +271,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
@@ -283,6 +287,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 
@@ -299,6 +304,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});

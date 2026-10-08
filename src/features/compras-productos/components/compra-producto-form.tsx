@@ -24,6 +24,8 @@ import { useProductos } from '@/features/productos/hooks/use-productos'
 import { createCompraProductoAction } from '@/features/compras-productos/actions'
 import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
+import { getTiposPagoAction } from '@/features/contabilidad/actions-tipos-pago'
+import { useCuentasBancarias } from '@/features/contabilidad/hooks/use-cuentas-bancarias'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
 const itemSchema = z.object({
@@ -39,7 +41,11 @@ const compraDocumentoSchema = z.object({
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  cuentaId: z.string().optional().default(''),
+  tipoPagoId: z.string().optional().default(''),
   moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']),
+  tasaCambio: z.coerce.number().positive().optional(),
+  fechaTasa: z.string().optional(),
   descripcionCompra: z.string().max(500).optional().default(''),
   fechaVencimiento: z.string().optional().default(''),
   anticipoPagoId: z.string().optional().default(''),
@@ -54,6 +60,18 @@ const compraDocumentoSchema = z.object({
   {
     message: 'El estado no coincide con la forma de pago',
     path: ['estado']
+  }
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || !!data.cuentaId,
+  {
+    message: 'Seleccione una cuenta bancaria',
+    path: ['cuentaId'],
+  }
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || !!data.tipoPagoId,
+  {
+    message: 'Seleccione un tipo de pago',
+    path: ['tipoPagoId'],
   }
 ).refine(
   (data) => {
@@ -90,6 +108,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       : `${Date.now()}-${Math.random()}`,
   )
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
+  const { cuentas, isLoading: isLoadingCuentas } = useCuentasBancarias()
+  const [tiposPago, setTiposPago] = useState<Array<{ tipoId: string; nombre: string }>>([])
 
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
   const { vendors, isLoading: isLoadingVendors } = useVendors()
@@ -103,9 +123,13 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       formaPago: 'PAGO_COMPLETO',
       estado: 'PAGADA',
       moneda: 'CUP',
+      tasaCambio: undefined,
+      fechaTasa: '',
       descripcionCompra: '',
       fechaVencimiento: '',
       anticipoPagoId: '',
+      cuentaId: '',
+      tipoPagoId: '',
       items: [{ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 }],
     }
   })
@@ -116,6 +140,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   })
 
   const formaPagoSeleccionada = form.watch('formaPago')
+  const monedaSeleccionada = form.watch('moneda')
   const proveedorSeleccionado = form.watch('proveedorId')
   const items = useWatch({ control: form.control, name: 'items' }) ?? []
 
@@ -162,6 +187,16 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     })
     return () => { cancelled = true }
   }, [anticiposFeatureEnabled, formaPagoSeleccionada, proveedorSeleccionado])
+
+  useEffect(() => {
+    let cancelled = false
+    getTiposPagoAction({ requiereCuenta: true }).then((result) => {
+      if (!cancelled && result.success) {
+        setTiposPago(result.data?.data ?? [])
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -522,6 +557,94 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                   )}
                 />
 
+                {monedaSeleccionada !== 'CUP' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name='tasaCambio'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tasa de cambio aplicada</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              min='0'
+                              step='0.0000000001'
+                              inputMode='decimal'
+                              aria-label='Tasa de cambio aplicada'
+                              value={field.value ?? ''}
+                              onChange={(event) => field.onChange(
+                                event.target.value === '' ? undefined : Number(event.target.value),
+                              )}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            La tasa se conserva como evidencia de la compra.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='fechaTasa'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha efectiva de la tasa</FormLabel>
+                          <FormControl>
+                            <Input type='datetime-local' aria-label='Fecha efectiva de la tasa' {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {monedaSeleccionada !== 'CUP' && formaPagoSeleccionada === 'PAGO_PARCIAL' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name='tasaCambio'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tasa de cambio aplicada</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              min='0'
+                              step='0.0000000001'
+                              inputMode='decimal'
+                              aria-label='Tasa de cambio aplicada'
+                              value={field.value ?? ''}
+                              onChange={(event) => field.onChange(
+                                event.target.value === '' ? undefined : Number(event.target.value),
+                              )}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Se guarda como evidencia de la compra; no se recalcula después.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='fechaTasa'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha efectiva de la tasa</FormLabel>
+                          <FormControl>
+                            <Input type='datetime-local' aria-label='Fecha efectiva de la tasa' {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
                 <FormField
                   control={form.control}
                   name='estado'
@@ -544,6 +667,60 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                   )}
                 />
               </div>
+
+              {formaPagoSeleccionada === 'PAGO_COMPLETO' && (
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <FormField
+                    control={form.control}
+                    name='cuentaId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cuenta bancaria de pago</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger aria-label='Cuenta bancaria de pago' disabled={isLoadingCuentas}>
+                              <SelectValue placeholder='Seleccione la cuenta bancaria' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {cuentas.filter((cuenta) => cuenta.isActive).map((cuenta) => (
+                              <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                                {`${cuenta.nombreBanco} · ${cuenta.numeroCuenta} (${cuenta.moneda})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='tipoPagoId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de pago</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger aria-label='Tipo de pago'>
+                              <SelectValue placeholder='Seleccione el tipo de pago' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {tiposPago.map((tipo) => (
+                              <SelectItem key={tipo.tipoId} value={tipo.tipoId}>
+                                {tipo.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               {anticiposFeatureEnabled && formaPagoSeleccionada === FORMA_PAGO_ANTICIPO_PAGO && (
                 <FormField

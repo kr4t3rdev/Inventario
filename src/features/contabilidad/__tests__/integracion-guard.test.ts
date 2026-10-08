@@ -157,7 +157,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { createVentaServicioAction } = await import(
 				"@/features/venta-servicios/actions"
@@ -169,6 +169,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			} as any);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			// Usa () => new Date() como extractor, depende de la fecha actual.
 			// Puede ser PERIODO_NO_EXISTE si no hay período para hoy, o PERIODO_CERRADO
 			// si el mock coincide. Ambos son válidos — el guard bloquea la operación.
@@ -182,7 +183,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { createVentaServicioAction } = await import(
 				"@/features/venta-servicios/actions"
@@ -206,7 +207,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { createCompraServicioAction } = await import(
 				"@/features/compras-servicios/actions"
@@ -219,6 +220,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			} as any);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
@@ -229,7 +231,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { executeAnticipoAction } = await import(
 				"@/features/contabilidad/actions-anticipos"
@@ -240,6 +242,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
@@ -250,7 +253,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { reverseAnticipoAction } = await import(
 				"@/features/contabilidad/actions-anticipos"
@@ -261,6 +264,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
@@ -271,7 +275,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { createCierreAction } = await import(
 				"@/features/contabilidad/actions-cierres"
@@ -284,6 +288,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
@@ -294,7 +299,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
-			vi.mocked(getCurrentUser).mockResolvedValue(baseUser);
+			vi.mocked(getCurrentUser).mockResolvedValue(baseUser as never);
 
 			const { createInyeccionCapitalAction } = await import(
 				"@/features/contabilidad/actions-capital"
@@ -308,6 +313,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("PERIODO_CERRADO");
 		});
 	});

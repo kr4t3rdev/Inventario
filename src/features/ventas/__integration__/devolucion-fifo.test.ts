@@ -317,7 +317,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
 
       expect(await prisma.$queryRawUnsafe<Array<{ last_value: bigint }>>(
         `SELECT last_value FROM "${sequenceName}"`,
-      )).toEqual([{ last_value: 2n }]);
+      )).toEqual([{ last_value: BigInt(2) }]);
       expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(1);
       expect(await prisma.devolucionVentaItem.count({ where: { devolucionId: result.devolucionId } })).toBe(1);
       expect(await prisma.stockMoveLine.count({ where: { origenId: result.devolucionId } })).toBe(1);
@@ -565,7 +565,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
         fxProvenanceKind: snapshot.evidence.fxProvenanceKind,
         fxProvenanceSource: snapshot.evidence.fxProvenanceSource,
         fxCatalogRateId: snapshot.evidence.fxCatalogRateId,
-        fxEvidenceJson: snapshot.evidence,
+        fxEvidenceJson: snapshot.evidence as never,
         fxEvidenceFingerprint: snapshot.evidence.fxEvidenceFingerprint,
         fxEvidenceVersion: snapshot.evidence.fxEvidenceVersion,
       },

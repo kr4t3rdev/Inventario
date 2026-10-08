@@ -31,7 +31,7 @@ const YEAR = 2026;
  * @param {unknown[]} inYearRows - Filas del período solicitado.
  * @returns {void} No devuelve valor; configura el mock recibido.
  */
-function scopeInYear(model: { findMany: (args?: unknown) => Promise<unknown[]> }, inYearRows: unknown[]): void {
+function scopeInYear(model: { findMany: ReturnType<typeof vi.fn> }, inYearRows: unknown[]): void {
   model.findMany.mockImplementation((args?: { where?: { fechaReconciliacion?: Record<string, unknown> } }) => {
     const range = args?.where?.fechaReconciliacion;
     if (range && !('gte' in range)) return Promise.resolve([]);

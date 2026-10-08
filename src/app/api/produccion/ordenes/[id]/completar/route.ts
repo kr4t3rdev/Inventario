@@ -6,6 +6,8 @@ import { convertToBase } from '@/lib/utils/unit-converter';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoProduccionSalida } from '@/features/contabilidad-formal/lib/event-builders';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 
 /**
  * @description Completa una orden de producción, incrementando el stock del producto terminado
@@ -18,7 +20,14 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
   try {
     const { id } = await params;
     const body = await request.json();
-    const userId = body.userId || user?.userId || 'system';
+    const userId = user.userId;
+    const tenantId = requireTenant(user);
+    requireFeature(user, 'produccion', 'completar órdenes de producción');
+    try {
+      requirePermission(user, 'produccion.recetas.gestionar', 'completar órdenes de producción');
+    } catch {
+      return NextResponse.json({ error: 'No tienes permisos para completar órdenes de producción.' }, { status: 403 });
+    }
 
     const ordenActualizada = await prisma.$transaction(async (tx) => {
       const orden = await tx.ordenProduccion.findUnique({
@@ -33,13 +42,15 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         },
       });
 
-      if (!orden) {
+      if (!orden || orden.tenantId !== tenantId) {
         return null;
       }
 
       if (String(orden.estado) !== PRODUCTION_STATES.EN_PROCESO) {
         throw new Error('La orden no está en proceso.');
       }
+
+      const accountingPolicy = await getRequiredTenantAccountingPolicy(tenantId, tx);
 
       if (!orden.Receta.Producto) {
         throw new Error('Producto final no configurado para esta receta.');
@@ -70,6 +81,33 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         if (producto) {
           costoMateriales += producto.precioCosto * cantidadUsada;
         }
+      }
+
+      if (costoMateriales > 0) {
+        if (typeof body.cuentaId !== 'string' || !body.cuentaId.trim()) {
+          throw new Error('CUENTA_PRODUCCION_INVALIDA');
+        }
+        const tipoPagoId = body.tipoPagoId ?? 'efectivo';
+        if (typeof tipoPagoId !== 'string' || !tipoPagoId.trim()) {
+          throw new Error('TIPO_PAGO_PRODUCCION_INVALIDO');
+        }
+        const [cuenta, tipoPago] = await Promise.all([
+          tx.cuentaBancaria.findFirst({
+            where: {
+              cuentaId: body.cuentaId,
+              tenantId,
+              isActive: true,
+              moneda: accountingPolicy.functionalCurrencyCode,
+            },
+            select: { cuentaId: true },
+          }),
+          tx.tipoPago.findFirst({
+            where: { tipoId: tipoPagoId, tenantId, isActive: true },
+            select: { tipoId: true },
+          }),
+        ]);
+        if (!cuenta) throw new Error('CUENTA_PRODUCCION_INVALIDA');
+        if (!tipoPago) throw new Error('TIPO_PAGO_PRODUCCION_INVALIDO');
       }
 
       // 1. Incrementar stock del producto final
@@ -138,6 +176,29 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         },
       });
 
+      // La reconciliación y el asiento deben confirmar o revertir junto con el stock.
+      if (costoMateriales > 0) {
+        const fecha = new Date();
+        const periodo = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+        await tx.reconciliacionGasto.create({
+          data: {
+            tenantId: orden.tenantId,
+            tipoGasto: 'produccion',
+            referenciaId: id,
+            cuentaId: body.cuentaId,
+            tipoPagoId: body.tipoPagoId ?? 'efectivo',
+            monto: costoMateriales,
+            moneda: accountingPolicy.functionalCurrencyCode,
+            montoConvertido: costoMateriales,
+            functionalCurrency: accountingPolicy.functionalCurrencyCode,
+            descripcion: `Costo de producción - Orden completa (Cantidad: ${orden.cantidad})`,
+            periodo,
+            reconciliadoPor: userId,
+            estado: 'PENDIENTE',
+          },
+        });
+      }
+
       // Capa de contabilidad formal (CTA-1): salida de producción al costo de insumos.
       if (costoMateriales > 0) {
         await postEvento(
@@ -146,6 +207,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           buildEventoProduccionSalida({
             ordenId: id,
             costo: costoMateriales,
+            monedaFuncional: accountingPolicy.functionalCurrencyCode,
+            fecha: new Date(),
             descripcion: `Salida de producción ${orden_updated.ordenProduccionId}`,
           }),
         );
@@ -158,33 +221,13 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
     }
 
-    // 4. Registrar en contabilidad (ReconciliacionGasto) fuera de la transacción
-    if (ordenActualizada.costoMateriales > 0 && body.cuentaId) {
-      try {
-        const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        await prisma.reconciliacionGasto.create({
-          data: {
-            tenantId: ordenActualizada.orden.tenantId,
-            tipoGasto: 'produccion',
-            referenciaId: id,
-            cuentaId: body.cuentaId,
-            tipoPagoId: body.tipoPagoId || 'efectivo',
-            monto: ordenActualizada.costoMateriales,
-            moneda: 'CUP',
-            descripcion: `Costo de producción - Orden completa (Cantidad: ${ordenActualizada.orden.cantidad})`,
-            periodo,
-            reconciliadoPor: userId,
-            estado: 'PENDIENTE',
-          },
-        });
-      } catch (error) {
-        console.error('Error al crear ReconciliacionGasto (no bloqueante):', error);
-      }
-    }
-
     return NextResponse.json(ordenActualizada.orden);
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message === 'CUENTA_PRODUCCION_INVALIDA' ||
+          error.message === 'TIPO_PAGO_PRODUCCION_INVALIDO') {
+        return NextResponse.json({ error: 'Cuenta o tipo de pago no válido para esta empresa.' }, { status: 400 });
+      }
       if (error.message === 'La orden no está en proceso.') {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }

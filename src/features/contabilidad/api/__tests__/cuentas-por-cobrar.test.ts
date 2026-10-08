@@ -32,6 +32,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.cuentaPorCobrar.findMany).not.toHaveBeenCalled()
   })
@@ -84,6 +85,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.cuentas).toHaveLength(1)
     expect(result.data?.cuentas[0].totalPagadoFactura).toBe(300)  // 2*100 + 100
     expect(result.data?.cuentas[0].saldoFactura).toBe(700)        // 1000 - 300
@@ -127,6 +129,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.cuentas).toHaveLength(1)
     expect(result.data?.cuentas[0].totalFactura).toBe(800)
     expect(result.data?.cuentas[0].totalPagadoFactura).toBe(200)

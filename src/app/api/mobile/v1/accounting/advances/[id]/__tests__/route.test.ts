@@ -17,7 +17,9 @@ import { GET, PUT, DELETE } from '../route';
 
 const user = {
   userId: 'u1', name: 'Test User', email: 'test@example.com', role: 'manager', isActive: true,
-  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { contabilidad: true },
+  tenantId: 'tenant-1', tenantRole: 'manager',
+  planFeatures: { contabilidad: true, anticipos: true },
+  permissions: new Set(['financiero.contabilidad.acceder']),
 };
 
 describe('mobile advance by id route', () => {
@@ -44,7 +46,7 @@ describe('mobile advance by id route', () => {
     expect(prisma.anticipo.findFirst).toHaveBeenCalled();
   });
 
-  it('updates anticipo', async () => {
+  it('rejects financial-field changes outside the document workflow', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
     vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ anticipoId: 'a1' } as never);
     vi.mocked(prisma.anticipo.update).mockResolvedValue({ anticipoId: 'a1' } as never);
@@ -55,18 +57,20 @@ describe('mobile advance by id route', () => {
       headers: { 'content-type': 'application/json' },
     }), { params: Promise.resolve({ id: 'a1' }) } as never);
 
-    expect(response.status).toBe(200);
-    expect(prisma.anticipo.update).toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe('DOCUMENT_WORKFLOW_REQUIRED');
+    expect(prisma.anticipo.update).not.toHaveBeenCalled();
   });
 
-  it('deletes anticipo', async () => {
+  it('rejects deletion of an anticipo with financial effects', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
     vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ anticipoId: 'a1' } as never);
     vi.mocked(prisma.anticipo.delete).mockResolvedValue({} as never);
 
     const response = await DELETE(new NextRequest('http://localhost/api/mobile/v1/accounting/advances/a1', { method: 'DELETE' }), { params: Promise.resolve({ id: 'a1' }) } as never);
 
-    expect(response.status).toBe(200);
-    expect(prisma.anticipo.delete).toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe('DOCUMENT_WORKFLOW_REQUIRED');
+    expect(prisma.anticipo.delete).not.toHaveBeenCalled();
   });
 });

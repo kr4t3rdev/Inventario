@@ -18,6 +18,7 @@ import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { FacturarVentaInput } from '@/features/ventas/schemas';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 
 /**
  * @description Acumulado de reconciliaciones para su reversión bancaria.
@@ -650,6 +651,22 @@ export const VentaLifecycleService = {
       }
 
       const reconciliaciones = currentVenta.reconciliaciones ?? [];
+      // Preserve every posted source entry before the legacy cancellation
+      // restores bank balances and removes the reconciliation/document graph.
+      const origenesAsiento = [
+        ...(currentVenta.factura?.idFactura
+          ? [{ tipo: 'factura', id: currentVenta.factura.idFactura }]
+          : []),
+        { tipo: 'venta_costo', id: currentVenta.ventaId },
+        ...reconciliaciones.map((reconciliacion) => ({
+          tipo: 'reconciliacion_venta',
+          id: reconciliacion.reconciliacionId,
+        })),
+      ];
+      await reverseFormalEntries(tx, {
+        tenantId,
+        userId: user.userId,
+      }, origenesAsiento);
       await reverseReconciliations(tx, reconciliaciones, tenantId);
 
       if (reconciliaciones.length > 0) {

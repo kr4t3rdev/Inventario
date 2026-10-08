@@ -51,6 +51,7 @@ describe('getKardexAction', () => {
     const response = await getKardexAction({ productoId: 'producto-1', page: 1, limit: 50 });
 
     expect(response.success).toBe(true);
+    if (!response.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(response.data?.saldoInicial).toBe(0);
     expect(response.data?.total).toBe(1);
     expect(response.data?.items).toEqual([
@@ -87,6 +88,7 @@ describe('getKardexAction', () => {
     const response = await getKardexAction({ productoId: 'producto-1' });
 
     expect(response.success).toBe(false);
+    if (response.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(response.error?.message).toBe('Error interno del servidor');
     expect(prisma.stockMoveLine.findMany).not.toHaveBeenCalled();
   });

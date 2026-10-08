@@ -183,6 +183,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('RECEPCION_EXCEDENTE');
   });
 
@@ -202,6 +203,7 @@ describe('Órdenes de compra y recepciones', () => {
       }),
     }));
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('ESTADO_INVALIDO');
   });
 
@@ -232,6 +234,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('NOT_FOUND');
     expect(prisma.reglaReabastecimiento.upsert).not.toHaveBeenCalled();
   });
@@ -248,6 +251,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('VALIDATION_ERROR');
   });
 
@@ -290,6 +294,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('RECEPCION_EXCEDENTE');
     expect(mockTx.recepcion.create).not.toHaveBeenCalled();
   });
@@ -373,7 +378,8 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.yaRegistrada).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+    expect(result.data?.data.yaRegistrada).toBe(true);
     expect(prisma.recepcion.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 'tenant-1', claveIdempotencia: 'misma-clave' },
@@ -424,6 +430,7 @@ describe('Órdenes de compra y recepciones', () => {
     const result = await sugerirReabastecimientoAction({});
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(result.data).toEqual(expect.arrayContaining([
       expect.objectContaining({ productoId: 'prod-1', cantidadSugerida: 22, tipo: 'FABRICAR' }),
       expect.objectContaining({ productoId: 'prod-2', cantidadSugerida: 13, tipo: 'COMPRAR' }),

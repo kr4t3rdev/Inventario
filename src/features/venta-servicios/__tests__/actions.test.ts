@@ -58,6 +58,9 @@ vi.mock("@/lib/prisma", () => ({
 		reconciliacionServicio: {
 			count: vi.fn(),
 		},
+		anticipoMovimiento: {
+			findMany: vi.fn(),
+		},
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -231,6 +234,118 @@ describe("VentaServicios Server Actions", () => {
 
 			expect(conflict.success).toBe(false);
 			if (!conflict.success) expect(conflict.error?.code).toBe('IDEMPOTENCY_CONFLICT');
+		});
+
+		it("reconstruye allocationsResult de anticipos en replay legacy con la misma clave", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValueOnce([] as any);
+			vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb(mockTx));
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			const persistedVenta = {
+				...mockVentaRow,
+				ventaServicioId: "vs-advance-replay",
+				clienteId: "cl-1",
+				condicionPago: "CREDITO",
+			};
+			mockTx.ventaServicios.create.mockResolvedValue(persistedVenta as any);
+			const expectedAllocations = [
+				{ anticipoId: "a1", movimientoId: "mov-1", montoAplicado: 100, saldoRestante: 900 },
+			];
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue(expectedAllocations);
+
+			const first = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				condicionPago: "CREDITO",
+				clienteId: "cl-1",
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+				idempotencyKey: "service-advance-key",
+			});
+			expect(first.success).toBe(true);
+			if (!first.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+			expect(first.data.allocationsResult).toEqual(expectedAllocations);
+			const storedKey = mockTx.ventaServicios.create.mock.calls.at(-1)?.[0].data.idempotencyKey;
+
+			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValueOnce([
+				{ ...persistedVenta, idempotencyKey: storedKey },
+			] as any);
+			vi.mocked(prisma.anticipoMovimiento.findMany).mockResolvedValueOnce([
+				{
+					anticipoId: "a1",
+					movimientoId: "mov-1",
+					monto: new Prisma.Decimal(100),
+					saldoDespues: new Prisma.Decimal(900),
+				},
+			] as any);
+
+			const replay = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				condicionPago: "CREDITO",
+				clienteId: "cl-1",
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+				idempotencyKey: "service-advance-key",
+			});
+
+			expect(replay.success).toBe(true);
+			if (!replay.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+			expect(replay.data).toMatchObject({ mode: "LEGACY", replayed: true });
+			expect(replay.data.allocationsResult).toEqual(expectedAllocations);
+			expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+			expect(prisma.anticipoMovimiento.findMany).toHaveBeenCalledWith(expect.objectContaining({
+				where: expect.objectContaining({
+					documentoDestinoId: "vs-advance-replay",
+					contexto: "FACTURA_DIRECTA",
+				}),
+			}));
+		});
+
+		it("reconstruye allocationsResult de anticipos en replay legacy por carrera P2002", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findMany)
+				.mockResolvedValueOnce([] as any)
+				.mockResolvedValueOnce([{
+					...mockVentaRow,
+					ventaServicioId: "vs-race-replay",
+					clienteId: "cl-1",
+					condicionPago: "CREDITO",
+					idempotencyKey: "service-race-key",
+				}] as any);
+			vi.mocked(prisma.$transaction).mockRejectedValueOnce({ code: "P2002" });
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			vi.mocked(prisma.anticipoMovimiento.findMany).mockResolvedValueOnce([
+				{
+					anticipoId: "a1",
+					movimientoId: "mov-race-1",
+					monto: new Prisma.Decimal(100),
+					saldoDespues: new Prisma.Decimal(900),
+				},
+			] as any);
+
+			const replay = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				condicionPago: "CREDITO",
+				clienteId: "cl-1",
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+				idempotencyKey: "service-race-key",
+			});
+
+			expect(replay.success).toBe(true);
+			if (!replay.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+			expect(replay.data).toMatchObject({ mode: "LEGACY", replayed: true });
+			expect(replay.data.allocationsResult).toEqual([
+				{
+					anticipoId: "a1",
+					movimientoId: "mov-race-1",
+					montoAplicado: 100,
+					saldoRestante: 900,
+				},
+			]);
 		});
 
 		it("deniega actor sin permiso de registrar ventas antes de abrir transacción", async () => {

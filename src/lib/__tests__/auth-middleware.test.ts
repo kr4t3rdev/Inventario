@@ -20,6 +20,9 @@ vi.mock('../prisma', () => ({
     tenantLicense: {
       findFirst: vi.fn(),
     },
+    tenantRole: {
+      findFirst: vi.fn(),
+    },
   },
 }))
 
@@ -491,6 +494,53 @@ describe('authenticateUser', () => {
         where: { tenantId_userId: { tenantId: 'tenant-1', userId: 'user-1' } },
       })
       expect(result.user.tenantId).toBe('tenant-1')
+    })
+
+    it('rechaza un tenant móvil ajeno antes de leer productos', async () => {
+      vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost/api/mobile/v1/products', {
+        headers: {
+          authorization: `Bearer ${mockToken}`,
+          'x-tenant-id': 'tenant-b',
+        },
+      })
+      const result = await authenticateUser(request)
+
+      expect(result).toHaveProperty('status', 403)
+      expect(prisma.tenantMembership.findUnique).toHaveBeenCalledWith({
+        where: { tenantId_userId: { tenantId: 'tenant-b', userId: 'user-1' } },
+      })
+      expect(prisma.tenantLicense.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('rechaza permiso móvil ausente con membresía activa verificada', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        role: 'employee',
+      } as never)
+      vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
+        ...mockMembership,
+        tenantRole: 'dependiente',
+        customRoleId: 'role-restricted',
+      } as never)
+      vi.mocked(prisma.tenantRole.findFirst).mockResolvedValue({
+        permissions: [],
+      } as never)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost/api/mobile/v1/products', {
+        headers: {
+          authorization: `Bearer ${mockToken}`,
+          'x-tenant-id': 'tenant-1',
+        },
+      })
+      const result = await authenticateUser(request)
+
+      expect(result).toHaveProperty('status', 403)
+      expect(prisma.tenantRole.findFirst).toHaveBeenCalledWith({
+        where: { roleId: 'role-restricted', tenantId: 'tenant-1', isActive: true },
+      })
     })
 
     it('does not attach tenant context when no membership exists', async () => {

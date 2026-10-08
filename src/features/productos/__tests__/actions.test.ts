@@ -7,7 +7,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 // Mockeamos dependencias ANTES de importar el módulo
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/generated/prisma", () => {
+vi.mock("@/generated/prisma", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@/generated/prisma")>();
 	class MockPrismaClientKnownRequestError extends Error {
 		code: string;
 		constructor(
@@ -37,6 +38,7 @@ return {
 						this.name = "PrismaClientValidationError";
 					}
 				},
+				Decimal: actual.Prisma.Decimal,
 			},
 		};
 	});
@@ -85,7 +87,7 @@ vi.mock("@/lib/prisma", () => {
 			},
 			$transaction: vi
 				.fn()
-				.mockImplementation(async (callback: (tx: typeof tx) => unknown) =>
+				.mockImplementation(async (callback: (tx: any) => unknown) =>
 					callback(tx),
 				),
 		},
@@ -105,6 +107,10 @@ vi.mock("@/lib/cost-history-utils", () => ({
 	CostChangeReason: {
 		RESTOCK: "RESTOCK",
 	},
+}));
+const postEventoMock = vi.hoisted(() => vi.fn());
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+	postEvento: postEventoMock,
 }));
 vi.mock("@/lib/restock-utils", () => {
 	const actual = vi.importActual("@/lib/restock-utils");
@@ -173,9 +179,37 @@ describe("Productos Server Actions", () => {
 	// ─── getProductosAction ───────────────────────
 
 	describe("getProductosAction", () => {
+		it('caracteriza firma sin filtros, precios Int/Date y tenant del actor', async () => {
+			const date = new Date('2025-01-01T00:00:00.000Z');
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findMany).mockResolvedValue([{
+				...mockProducto, precioCosto: 1250, createdAt: date,
+			}] as never);
+			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([] as never);
+			const result = await getProductosAction();
+			expect(JSON.parse(JSON.stringify(result))).toMatchObject({
+				success: true, data: [{ id: 'prod-1', stock: 0, stockTotal: 0,
+					precioCosto: 1250, createdAt: date.toISOString() }],
+			});
+			expect(prisma.producto.findMany).toHaveBeenCalledWith(expect.objectContaining({
+				where: { tenantId: 'tenant-test' }, orderBy: { createdAt: 'desc' },
+			}));
+		});
+
+		it('caracteriza tenant ausente y fallo de persistencia sin datos', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, tenantId: undefined });
+			const denied = await getProductosAction();
+			expect(denied).toMatchObject({ success: false, error: { code: 'INTERNAL_ERROR' } });
+			expect(prisma.producto.findMany).not.toHaveBeenCalled();
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findMany).mockRejectedValue(new Error('private database details'));
+			const failed = await getProductosAction();
+			expect(failed.success).toBe(false);
+			expect(JSON.stringify(failed)).not.toContain('private database details');
+		});
 		it("retorna lista de productos del tenant", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.producto.findMany).mockResolvedValue([mockProducto]);
+			vi.mocked(prisma.producto.findMany).mockResolvedValue([mockProducto] as never);
 			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
 				{ productoId: "prod-1", cantidad: 30 },
 				{ productoId: "prod-1", cantidad: 20 },
@@ -184,6 +218,7 @@ describe("Productos Server Actions", () => {
 			const result = await getProductosAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toHaveLength(1);
 			expect(result.data![0].nombre).toBe("Producto Test");
 			expect(prisma.producto.findMany).toHaveBeenCalledWith(
@@ -200,7 +235,8 @@ describe("Productos Server Actions", () => {
 
 			const result = await getProductosAction();
 
-			expect(result.success).toBe(true);
+      expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toEqual([]);
 		});
 	});
@@ -228,7 +264,7 @@ describe("Productos Server Actions", () => {
 
 		it("crea producto exitosamente con datos válidos", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto as never);
 
 			const result = await createProductoAction(validInput);
 
@@ -249,6 +285,7 @@ describe("Productos Server Actions", () => {
 			const result = await createProductoAction({ ...validInput, nombre: "" });
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBeDefined();
 		});
 
@@ -261,6 +298,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBeDefined();
 		});
 
@@ -274,6 +312,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("INVALID_PRICE_LIST");
 			expect(prisma.producto.create).not.toHaveBeenCalled();
 			expect(prisma.listaPrecio.count).toHaveBeenCalledWith({
@@ -283,7 +322,7 @@ describe("Productos Server Actions", () => {
 
 		it("no duplica el stock inicial entre almacén y punto de venta", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto as never);
 
 			const result = await createProductoAction({
 				...validInput,
@@ -320,11 +359,11 @@ describe("Productos Server Actions", () => {
 
 		it("actualiza producto exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto as never);
 			vi.mocked(prisma.producto.update).mockResolvedValue({
 				...mockProducto,
 				nombre: "Producto Actualizado",
-			});
+			} as never);
 
 			const result = await updateProductoAction(validUpdate);
 
@@ -339,6 +378,7 @@ describe("Productos Server Actions", () => {
 			const result = await updateProductoAction(validUpdate);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrado");
 		});
 
@@ -347,11 +387,12 @@ describe("Productos Server Actions", () => {
 			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
 				...mockProducto,
 				tenantId: "tenant-externo",
-			});
+			} as never);
 
 			const result = await updateProductoAction(validUpdate);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("NOT_FOUND");
 			expect(prisma.producto.update).not.toHaveBeenCalled();
 		});
@@ -362,8 +403,8 @@ describe("Productos Server Actions", () => {
 	describe("deleteProductoAction", () => {
 		it("elimina producto exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
-			vi.mocked(prisma.producto.delete).mockResolvedValue(mockProducto);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto as never);
+			vi.mocked(prisma.producto.delete).mockResolvedValue(mockProducto as never);
 
 			const result = await deleteProductoAction("prod-1");
 
@@ -380,6 +421,7 @@ describe("Productos Server Actions", () => {
 			const result = await deleteProductoAction("prod-noexiste");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrado");
 		});
 
@@ -388,11 +430,12 @@ describe("Productos Server Actions", () => {
 			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
 				...mockProducto,
 				tenantId: "tenant-externo",
-			});
+			} as never);
 
 			const result = await deleteProductoAction("prod-1");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("NOT_FOUND");
 			expect(prisma.producto.delete).not.toHaveBeenCalled();
 		});
@@ -407,6 +450,7 @@ describe("Productos Server Actions", () => {
 			const result = await getProductosAction();
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
@@ -507,6 +551,7 @@ describe("Productos Server Actions", () => {
 				findUnique: vi.fn(),
 				findFirst: vi.fn(),
 				update: vi.fn(),
+				updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 			},
 			reconciliacionGasto: {
 				create: vi.fn(),
@@ -517,13 +562,16 @@ describe("Productos Server Actions", () => {
 			stockUbicacion: {
 				upsert: vi.fn(),
 			},
+			tenantAccountingPolicy: {
+				findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+			},
 		};
 
 		beforeEach(() => {
 			vi.clearAllMocks();
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.findUnique).mockResolvedValue(
-				mockProductoCompleto,
+				mockProductoCompleto as never,
 			);
 			vi.mocked(executeProductInstanceCreationWorkflow).mockReturnValue(
 				mockWorkflowResult,
@@ -539,6 +587,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("VALIDATION_ERROR");
 		});
 
@@ -549,6 +598,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("VALIDATION_ERROR");
 		});
 
@@ -560,6 +610,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("VALIDATION_ERROR");
 		});
 
@@ -571,8 +622,23 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("NOT_FOUND");
 			expect(result.error!.message).toContain("no encontrado");
+		});
+
+		it("rechaza producto de otro tenant antes de mutar stock", async () => {
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
+				...mockProductoCompleto,
+				tenantId: 'tenant-other',
+			} as never);
+
+			const result = await restockProductoAction(validRestockInput);
+
+			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+			expect(result.error?.code).toBe('NOT_FOUND');
+			expect(prisma.$transaction).not.toHaveBeenCalled();
 		});
 
 		// ── 3.2: Restock simple (solo cantidad) ──
@@ -581,7 +647,7 @@ describe("Productos Server Actions", () => {
 			vi.mocked(prisma.producto.update).mockResolvedValue({
 				...mockProductoCompleto,
 				stock: 55,
-			});
+			} as never);
 			mockTx.producto.update.mockResolvedValue({
 				...mockProductoCompleto,
 				stock: 55,
@@ -595,11 +661,14 @@ describe("Productos Server Actions", () => {
 				tipoId: "tipo-1",
 				cuentaDefecto: "cuenta-1",
 			});
-			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
-				cuentaId: "cuenta-1",
-				isActive: true,
-			});
-			mockTx.reconciliacionGasto.create.mockResolvedValue({});
+      mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+        cuentaId: "cuenta-1",
+        isActive: true,
+        moneda: 'CUP',
+      });
+      mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+        reconciliacionId: 'rec-usd', ...data,
+      }));
 			mockTx.cuentaBancaria.update.mockResolvedValue({});
 
 			mockTransaction({
@@ -613,6 +682,7 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toBeDefined();
 			expect(result.data!.producto.stock).toBe(55);
 			expect(result.data!.gastoCompra.cantidad).toBe(5);
@@ -661,12 +731,15 @@ describe("Productos Server Actions", () => {
 				tipoId: "tipo-1",
 				cuentaDefecto: "cuenta-1",
 			});
-			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
 				cuentaId: "cuenta-1",
 				isActive: true,
+				moneda: 'CUP',
 			});
-			mockTx.reconciliacionGasto.create.mockResolvedValue({});
-			mockTx.cuentaBancaria.update.mockResolvedValue({});
+			mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+				reconciliacionId: 'rec-usd', ...data,
+			}));
+			mockTx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 });
 
 			mockTransaction({
 				producto: { ...mockProductoCompleto, stock: 60 },
@@ -691,7 +764,9 @@ describe("Productos Server Actions", () => {
 			expect(result.success).toBe(true);
 			// Verificar que se llamó a reconcile y update de cuenta
 			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalled();
-			expect(mockTx.cuentaBancaria.update).toHaveBeenCalled();
+			expect(mockTx.cuentaBancaria.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+				where: { cuentaId: 'cuenta-1', tenantId: 'tenant-test', isActive: true, saldo: { gte: 1000 } },
+			}));
 		});
 
 		// ── 3.4: Restock con PAGO_PARCIAL ──
@@ -769,12 +844,15 @@ describe("Productos Server Actions", () => {
 				tipoId: "tipo-1",
 				cuentaDefecto: "cuenta-1",
 			});
-			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
 				cuentaId: "cuenta-1",
 				isActive: true,
+				moneda: 'USD',
 			});
-			mockTx.reconciliacionGasto.create.mockResolvedValue({});
-			mockTx.cuentaBancaria.update.mockResolvedValue({});
+			mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+				reconciliacionId: 'rec-usd', ...data,
+			}));
+			mockTx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 });
 
 			mockTransaction({
 				producto: { ...mockProductoCompleto, stock: 55 },
@@ -795,26 +873,101 @@ describe("Productos Server Actions", () => {
 				formaPago: "PAGO_COMPLETO",
 				moneda: "USD",
 				tasaCambio: 24,
-				montoConvertido: 1200,
+					montoConvertido: 6000,
 				monedaOriginal: "USD",
 				montoOriginal: 250,
 			});
 
-			expect(result.success).toBe(true);
+			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+			expect(result.success, JSON.stringify(result.error)).toBe(true);
 			// Verificar que la reconciliación usa datos de moneda extranjera
-			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            moneda: "USD",
+            tasaCambio: 24,
+            montoConvertido: 6000,
+            fxEvidenceFingerprint: expect.any(String),
+          }),
+        }),
+      );
+      expect(postEventoMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-test-1' }),
+        expect.objectContaining({
+          tipo: 'COMPRA_CONTADO',
+          montoFuncional: 6000,
+          fxEvidenceFingerprint: expect.any(String),
+        }),
+      );
+      // El saldo se decrementa en la moneda propia de la cuenta (250 USD);
+      // la valoración funcional (6000 CUP) solo alimenta el asiento contable.
+      expect(mockTx.cuentaBancaria.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { cuentaId: 'cuenta-1', tenantId: 'tenant-test', isActive: true, saldo: { gte: 250 } },
+          data: { saldo: { decrement: 250 } },
+        }),
+      );
+		});
+
+		// ── 3.7: Saldo insuficiente → SALDO_INSUFICIENTE ──
+
+		it("PAGO_COMPLETO con saldo insuficiente: falla cerrado sin debitar", async () => {
+			mockTx.producto.update.mockResolvedValue({
+				...mockProductoCompleto,
+				stock: 60,
+			});
+			mockTx.gastoCompra.create.mockResolvedValue({
+				...mockGastoCompra,
+				gastoCompraId: "gasto-pago-1",
+			});
+			mockTx.compraProducto.create.mockResolvedValue({
+				compraProductoId: "compra-pago-1",
+			});
+			mockTx.tipoPago.findFirst.mockResolvedValue({
+				tipoId: "tipo-1",
+				cuentaDefecto: "cuenta-1",
+			});
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cuenta-1",
+				isActive: true,
+				moneda: 'CUP',
+			});
+			mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+				reconciliacionId: 'rec-1', ...data,
+			}));
+			// El guard atómico bloquea el débito (cuenta vigente pero sin saldo suficiente)
+			mockTx.cuentaBancaria.updateMany.mockResolvedValueOnce({ count: 0 });
+
+			mockTransaction({
+				producto: { ...mockProductoCompleto, stock: 60 },
+				gastoCompra: {
+					...mockGastoCompra,
+					gastoCompraId: "gasto-pago-1",
+				},
+				newProductInstance: null,
+				compraProducto: { compraProductoId: "compra-pago-1" },
+				workflowResult: mockWorkflowResult,
+			});
+
+			const result = await restockProductoAction({
+				productoId: "prod-1",
+				cantidad: 10,
+				precioCosto: 100,
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				cuentaId: "cuenta-1",
+			});
+
+			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+			expect(result.error!.code).toBe("SALDO_INSUFICIENTE");
+			// El débito incluyó la condición atómica de saldo suficiente (10 × 100 CUP)
+			expect(mockTx.cuentaBancaria.updateMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: expect.objectContaining({
-						moneda: "USD",
-						tasaCambio: 24,
-						montoConvertido: 1200,
-					}),
-				}),
-			);
-			// El saldo se decrementa con montoConvertido (1200 CUP)
-			expect(mockTx.cuentaBancaria.update).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: { saldo: { decrement: 1200 } },
+					where: expect.objectContaining({ saldo: { gte: 1000 } }),
+					data: { saldo: { decrement: 1000 } },
 				}),
 			);
 		});
@@ -876,7 +1029,7 @@ describe("Productos Server Actions", () => {
 			};
 
 			vi.mocked(executeProductInstanceCreationWorkflow).mockReturnValue(
-				newInstanceWorkflow,
+				newInstanceWorkflow as never,
 			);
 			mockTx.producto.create.mockResolvedValue(mockNewInstance);
 			mockTx.gastoCompra.create.mockResolvedValue({
@@ -900,6 +1053,13 @@ describe("Productos Server Actions", () => {
 			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
 				cuentaId: "cuenta-1",
 				isActive: true,
+			});
+			// La compra es en CUP: la cuenta del flujo PAGO_COMPLETO debe ser CUP
+			// (una cuenta en tercera moneda falla cerrado).
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cuenta-1",
+				isActive: true,
+				moneda: 'CUP',
 			});
 			mockTx.reconciliacionGasto.create.mockResolvedValue({});
 			mockTx.cuentaBancaria.update.mockResolvedValue({});
@@ -928,6 +1088,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			// El producto retornado debe ser la nueva instancia
 			expect(result.data!.producto.id).toBe("prod-new-1");
 			// Debe haber creado la nueva instancia
@@ -944,6 +1105,7 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
 	});

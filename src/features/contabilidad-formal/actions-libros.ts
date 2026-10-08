@@ -11,7 +11,7 @@ import { z } from 'zod';
 
 import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { obtenerLibroDiario } from '@/features/contabilidad-formal/services/libro-diario-service';
 import { obtenerLibroMayor } from '@/features/contabilidad-formal/services/libro-mayor-service';
@@ -96,6 +96,7 @@ export const getConciliacionCruzadaAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 		requireFeature(user, FEATURE, 'consultar la conciliación cruzada');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar la conciliación cruzada');
 		return obtenerConciliacionCruzada(tenantId, {});
 	},
 );

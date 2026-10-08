@@ -6,6 +6,10 @@ const requirePermissionMock = vi.hoisted(() => vi.fn());
 const txMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$executeRaw: vi.fn(),
+	auditLog: { create: vi.fn().mockResolvedValue({ auditId: 'audit-1' }) },
+	tenantAccountingPolicy: {
+		findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+	},
 	venta: { findUnique: vi.fn() },
 	cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn() },
 	cuentaBancaria: { update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn() },
@@ -47,7 +51,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 	requirePermission: requirePermissionMock,
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
-	AuditLogService: { log: vi.fn() },
+	AuditLogService: { log: vi.fn(), logStrict: vi.fn().mockResolvedValue({ auditId: 'audit-1' }) },
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
@@ -89,6 +93,10 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		prismaMock.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { monto: null } });
 		prismaMock.reconciliacionVenta.findMany.mockResolvedValue([]);
 		prismaMock.reconciliacionServicio.count.mockResolvedValue(0);
+		txMock.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+		txMock.cuentaBancaria.findFirst.mockResolvedValue({
+			cuentaId: 'bank-1', isActive: true, tipoCuenta: 'BANCO', moneda: 'CUP',
+		});
 		prismaMock.$transaction.mockImplementation(
 			async (callback: (tx: typeof txMock) => unknown) => callback(txMock),
 		);
@@ -159,7 +167,9 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 			montoPagado: 0,
 			estado: 'ANULADA',
 		});
-		txMock.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cuenta-1', isActive: true });
+		txMock.cuentaBancaria.findFirst.mockResolvedValue({
+			cuentaId: 'cuenta-1', isActive: true, moneda: 'CUP',
+		});
 		txMock.tipoPago.findFirst.mockResolvedValue({ tipoId: 'tipo-1', isActive: true });
 
 		const result = await reconciliarVentaAction({

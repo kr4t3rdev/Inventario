@@ -41,7 +41,7 @@ const adminUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-admin',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 describe('Admin license filters actions', () => {
@@ -89,6 +89,7 @@ describe('Admin license filters actions', () => {
     });
 
     expect(r.success).toBe(true);
+    if (!r.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(r.data).toEqual({
       total: 12,
       activas: 8,

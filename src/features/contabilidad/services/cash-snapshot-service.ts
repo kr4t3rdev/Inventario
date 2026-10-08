@@ -3,12 +3,12 @@
  *
  * @nota A10 (auditoría 2026-10-07): este servicio es correcto como mecanismo
  * aislado de copia (4/4 tests). Limitaciones conocidas:
- * - No está conectado a ningún flujo operativo (cierre, conciliación); no hay
- *   callers productivos fuera de tests.
+ * - Está conectado al cierre de período; no sustituye una conciliación
+ *   independiente ni reconstruye históricos.
  * - `fechaCorte` etiqueta el estado leído "ahora"; no hay reconstrucción histórica
  *   real por fecha pasada/futura.
- * - La captura no es un snapshot transaccional común de ambas fuentes; bajo
- *   concurrencia, `creados = después - antes` puede atribuir inserciones ajenas.
+ * - La captura no reconstruye la evolución histórica: solo congela el estado
+ *   funcional visible en la transacción de captura.
  * No declarar comparabilidad histórica global con este servicio aislado.
  */
 import { prisma } from '@/lib/prisma';
@@ -25,6 +25,12 @@ export interface CapturarCashSnapshotsInput {
   periodoId?: string;
   /** Motivo libre: CIERRE_DIARIO | AUDITORIA | RECONCILIACION ... */
   motivo?: string;
+  /**
+   * Cliente transaccional opcional. Cuando se proporciona, la captura se
+   * ejecuta dentro de la transacción del caller y no abre una transacción
+   * anidada (por ejemplo, durante el cierre de período).
+   */
+  client?: Prisma.TransactionClient;
 }
 
 export interface CapturarCashSnapshotsResult {
@@ -69,106 +75,116 @@ export const CashSnapshotService = {
     const fechaCorte = inicioDiaUTC(input.fechaCorte ?? new Date());
     const corteStr = yyyyMmDd(fechaCorte);
 
-    const [cxcs, cxps] = await Promise.all([
-      prisma.cuentaPorCobrar.findMany({
-        where: { tenantId, tipoCuenta: CASH_SNAPSHOT_TIPO_PRESTAMO },
-        select: {
-          id: true,
-          montoDeudaFuncional: true,
-          montoPagadoFuncional: true,
-          monedaFuncional: true,
-          tasaCambio: true,
-          rateEffectiveAt: true,
-          fxEvidenceFingerprint: true,
-          prestamoCash: { select: { id: true } },
-        },
-      }),
-      prisma.cuentaPorPagar.findMany({
-        where: { tenantId, tipoDeuda: CASH_SNAPSHOT_TIPO_DEUDA, deletedAt: null },
-        select: {
-          cuentaPorPagarId: true,
-          montoDeudaFuncional: true,
-          montoPagadoFuncional: true,
-          monedaFuncional: true,
-          tasaCambio: true,
-          rateEffectiveAt: true,
-          fxEvidenceFingerprint: true,
-          deudaCash: { select: { id: true } },
-        },
-      }),
-    ]);
+    const capturarEnCliente = async (tx: Prisma.TransactionClient) => {
+      // Read both sources and persist their rows on the same PostgreSQL
+      // snapshot. Serializable also prevents a concurrent source mutation
+      // from being silently presented as part of this capture.
+      const [cxcs, cxps] = await Promise.all([
+        tx.cuentaPorCobrar.findMany({
+          where: { tenantId, tipoCuenta: CASH_SNAPSHOT_TIPO_PRESTAMO },
+          select: {
+            id: true,
+            montoDeudaFuncional: true,
+            montoPagadoFuncional: true,
+            monedaFuncional: true,
+            tasaCambio: true,
+            rateEffectiveAt: true,
+            fxEvidenceFingerprint: true,
+            prestamoCash: { select: { id: true } },
+          },
+        }),
+        tx.cuentaPorPagar.findMany({
+          where: { tenantId, tipoDeuda: CASH_SNAPSHOT_TIPO_DEUDA, deletedAt: null },
+          select: {
+            cuentaPorPagarId: true,
+            montoDeudaFuncional: true,
+            montoPagadoFuncional: true,
+            monedaFuncional: true,
+            tasaCambio: true,
+            rateEffectiveAt: true,
+            fxEvidenceFingerprint: true,
+            deudaCash: { select: { id: true } },
+          },
+        }),
+      ]);
 
-    const filas: Prisma.CashSnapshotCreateManyInput[] = [];
-    let omitidos = 0;
+      const filas: Prisma.CashSnapshotCreateManyInput[] = [];
+      let omitidos = 0;
 
-    for (const cxc of cxcs) {
-      if (cxc.montoDeudaFuncional == null || cxc.monedaFuncional == null) {
-        omitidos += 1;
-        continue;
+      for (const cxc of cxcs) {
+        if (cxc.montoDeudaFuncional == null || cxc.monedaFuncional == null) {
+          omitidos += 1;
+          continue;
+        }
+        const deuda = new Prisma.Decimal(cxc.montoDeudaFuncional);
+        const pagado = new Prisma.Decimal(cxc.montoPagadoFuncional ?? 0);
+        const saldo = deuda.sub(pagado).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+        filas.push({
+          tenantId,
+          tipo: CASH_SNAPSHOT_TIPO_PRESTAMO,
+          origenId: cxc.prestamoCash?.id ?? cxc.id,
+          cuentaPorCobrarId: cxc.id,
+          monedaFuncional: cxc.monedaFuncional,
+          montoDeudaFuncional: deuda,
+          montoPagadoFuncional: pagado,
+          saldoFuncional: saldo,
+          tasaCambio: cxc.tasaCambio,
+          rateEffectiveAt: cxc.rateEffectiveAt,
+          fxEvidenceFingerprint: cxc.fxEvidenceFingerprint,
+          fechaCorte,
+          periodoId: periodoId ?? null,
+          motivo: motivo ?? null,
+          idempotencyKey: `${tenantId}:${CASH_SNAPSHOT_TIPO_PRESTAMO}:${cxc.id}:${corteStr}`,
+        });
       }
-      const deuda = new Prisma.Decimal(cxc.montoDeudaFuncional);
-      const pagado = new Prisma.Decimal(cxc.montoPagadoFuncional ?? 0);
-      const saldo = deuda.sub(pagado).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
-      filas.push({
-        tenantId,
-        tipo: CASH_SNAPSHOT_TIPO_PRESTAMO,
-        origenId: cxc.prestamoCash?.id ?? cxc.id,
-        cuentaPorCobrarId: cxc.id,
-        monedaFuncional: cxc.monedaFuncional,
-        montoDeudaFuncional: deuda,
-        montoPagadoFuncional: pagado,
-        saldoFuncional: saldo,
-        tasaCambio: cxc.tasaCambio,
-        rateEffectiveAt: cxc.rateEffectiveAt,
-        fxEvidenceFingerprint: cxc.fxEvidenceFingerprint,
-        fechaCorte,
-        periodoId: periodoId ?? null,
-        motivo: motivo ?? null,
-        idempotencyKey: `${tenantId}:${CASH_SNAPSHOT_TIPO_PRESTAMO}:${cxc.id}:${corteStr}`,
-      });
-    }
 
-    for (const cxp of cxps) {
-      if (cxp.montoDeudaFuncional == null || cxp.monedaFuncional == null) {
-        omitidos += 1;
-        continue;
+      for (const cxp of cxps) {
+        if (cxp.montoDeudaFuncional == null || cxp.monedaFuncional == null) {
+          omitidos += 1;
+          continue;
+        }
+        const deuda = new Prisma.Decimal(cxp.montoDeudaFuncional);
+        const pagado = new Prisma.Decimal(cxp.montoPagadoFuncional ?? 0);
+        const saldo = deuda.sub(pagado).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+        filas.push({
+          tenantId,
+          tipo: CASH_SNAPSHOT_TIPO_DEUDA,
+          origenId: cxp.deudaCash?.id ?? cxp.cuentaPorPagarId,
+          cuentaPorPagarId: cxp.cuentaPorPagarId,
+          monedaFuncional: cxp.monedaFuncional,
+          montoDeudaFuncional: deuda,
+          montoPagadoFuncional: pagado,
+          saldoFuncional: saldo,
+          tasaCambio: cxp.tasaCambio,
+          rateEffectiveAt: cxp.rateEffectiveAt,
+          fxEvidenceFingerprint: cxp.fxEvidenceFingerprint,
+          fechaCorte,
+          periodoId: periodoId ?? null,
+          motivo: motivo ?? null,
+          idempotencyKey: `${tenantId}:${CASH_SNAPSHOT_TIPO_DEUDA}:${cxp.cuentaPorPagarId}:${corteStr}`,
+        });
       }
-      const deuda = new Prisma.Decimal(cxp.montoDeudaFuncional);
-      const pagado = new Prisma.Decimal(cxp.montoPagadoFuncional ?? 0);
-      const saldo = deuda.sub(pagado).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
-      filas.push({
+
+      const { count: creados } = filas.length > 0
+        ? await tx.cashSnapshot.createMany({ data: filas, skipDuplicates: true })
+        : { count: 0 };
+
+      return {
         tenantId,
-        tipo: CASH_SNAPSHOT_TIPO_DEUDA,
-        origenId: cxp.deudaCash?.id ?? cxp.cuentaPorPagarId,
-        cuentaPorPagarId: cxp.cuentaPorPagarId,
-        monedaFuncional: cxp.monedaFuncional,
-        montoDeudaFuncional: deuda,
-        montoPagadoFuncional: pagado,
-        saldoFuncional: saldo,
-        tasaCambio: cxp.tasaCambio,
-        rateEffectiveAt: cxp.rateEffectiveAt,
-        fxEvidenceFingerprint: cxp.fxEvidenceFingerprint,
         fechaCorte,
-        periodoId: periodoId ?? null,
-        motivo: motivo ?? null,
-        idempotencyKey: `${tenantId}:${CASH_SNAPSHOT_TIPO_DEUDA}:${cxp.cuentaPorPagarId}:${corteStr}`,
-      });
-    }
-
-    const antes = await prisma.cashSnapshot.count({ where: { tenantId, fechaCorte } });
-    if (filas.length > 0) {
-      await prisma.cashSnapshot.createMany({ data: filas, skipDuplicates: true });
-    }
-    const despues = await prisma.cashSnapshot.count({ where: { tenantId, fechaCorte } });
-    const creados = despues - antes;
-
-    return {
-      tenantId,
-      fechaCorte,
-      creados,
-      existentes: filas.length - creados,
-      omitidos,
+        creados,
+        existentes: filas.length - creados,
+        omitidos,
+      };
     };
+
+    if (input.client) {
+      return capturarEnCliente(input.client);
+    }
+
+    return prisma.$transaction(capturarEnCliente, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
   },
 
   /** @description Lee los snapshots de un corte para auditoría/conciliación. */

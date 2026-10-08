@@ -39,6 +39,8 @@ describe('getBillingHealthAction', () => {
   it('rechaza roles no admin sin consultar facturas', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, role: 'regularUser' })
     const result = await getBillingHealthAction()
+    expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('FORBIDDEN')
     expect(prisma.factura.count).not.toHaveBeenCalled()
   })

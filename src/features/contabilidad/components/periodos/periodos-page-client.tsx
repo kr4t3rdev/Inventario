@@ -8,7 +8,7 @@
  */
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,73 @@ import type {
 	EstadoPeriodo,
 } from "@/lib/services/periodo-contable-types";
 
+interface ManualAperturaLineDraft {
+	role: string;
+	accountId: string;
+	label: string;
+	side: "DEBE" | "HABER";
+	amount: string;
+	reference: string;
+	note: string;
+}
+
+interface ManualAperturaDraftInput {
+	periodoId: string;
+	aperturaId: string;
+	fechaCorte: string | Date;
+	lines: ManualAperturaLineDraft[];
+}
+
+/**
+ * @description Converts explicit user declarations into manual CUP evidence; it never asserts source trust.
+ * @param {ManualAperturaDraftInput} input - Period, opening, and user-declared line data.
+ * @returns {Object} Action payload with manual evidence snapshots and no actor or tenant identity.
+ */
+export function buildManualAperturaDraftInput(input: ManualAperturaDraftInput) {
+	return {
+		periodoId: input.periodoId,
+		aperturaId: input.aperturaId,
+		fechaCorte: input.fechaCorte instanceof Date ? input.fechaCorte : new Date(input.fechaCorte),
+		lines: input.lines.map((line) => ({
+			fechaEfectiva: input.fechaCorte instanceof Date ? input.fechaCorte : new Date(input.fechaCorte),
+			lado: line.side,
+			rolCuenta: line.role,
+			cuentaId: line.accountId,
+			monedaNativa: "CUP" as const,
+			importeNativo: line.amount,
+			importeFuncional: line.amount,
+			fuenteTipo: "MANUAL" as const,
+			fuenteId: line.reference,
+			evidenciaVersion: 1,
+			fuenteSnapshot: {
+				declaredSource: "MANUAL_USER_DECLARATION",
+				accountLabel: line.label,
+				role: line.role,
+				side: line.side,
+				currency: "CUP",
+				amount: line.amount,
+				reference: line.reference,
+				note: line.note,
+			},
+		})),
+	};
+}
+
+/** @description Allows a first or rejected-correction draft, but never replaces an approved opening. */
+export function canCreateManualAperturaDraft(latestStatus?: string): boolean {
+	return latestStatus === undefined || latestStatus === "RECHAZADA";
+}
+
+/** @description Guards async context responses against a newer request or period selection. */
+export function isCurrentAperturaContext(
+	requestId: number,
+	latestRequestId: number,
+	requestedPeriodId: string,
+	selectedPeriodId: string | null,
+): boolean {
+	return requestId === latestRequestId && requestedPeriodId === selectedPeriodId;
+}
+
 const TIPO_LABELS: Record<string, string> = {
 	DIARIO: "Diario",
 	MENSUAL: "Mensual",
@@ -115,6 +182,14 @@ export function PeriodosPageClient({
 	const [pagination] = useState(initialPagination);
 	const [isLoading, setIsLoading] = useState(false);
 	const [timelineData, setTimelineData] = useState<Record<string, any[]>>({});
+	const [aperturaPeriodoId, setAperturaPeriodoId] = useState<string | null>(null);
+	const [aperturaContext, setAperturaContext] = useState<any>(null);
+	const [aperturaContextPeriodId, setAperturaContextPeriodId] = useState<string | null>(null);
+	const [aperturaRevisionDetail, setAperturaRevisionDetail] = useState<any>(null);
+	const [aperturaLines, setAperturaLines] = useState<ManualAperturaLineDraft[]>([]);
+	const [aperturaBusy, setAperturaBusy] = useState(false);
+	const aperturaRequestId = useRef(0);
+	const aperturaPeriodoIdRef = useRef<string | null>(null);
 
 	// View mode
 	const [viewMode, setViewMode] = useState<"list" | "dashboard">("list");
@@ -221,6 +296,112 @@ export function PeriodosPageClient({
 
 	const handleTimelineClick = (periodoId: string) => {
 		setTimelinePeriodoId(timelinePeriodoId === periodoId ? null : periodoId);
+	};
+
+	const loadAperturaContext = async (periodoId: string) => {
+		const requestId = ++aperturaRequestId.current;
+		aperturaPeriodoIdRef.current = periodoId;
+		setAperturaPeriodoId(periodoId);
+		setAperturaContext(null);
+		setAperturaContextPeriodId(null);
+		setAperturaRevisionDetail(null);
+		setAperturaLines([]);
+		try {
+			const { getAperturaRevisionContextAction, getAperturaRevisionAction } = await import(
+				"@/features/contabilidad/actions-apertura-revisada"
+			);
+			const result = await getAperturaRevisionContextAction(periodoId);
+			if (!isCurrentAperturaContext(requestId, aperturaRequestId.current, periodoId, aperturaPeriodoIdRef.current)) return;
+			if (!result.success || !result.data) {
+				toast.error("error" in result ? result.error?.message ?? "No se pudo cargar la apertura revisada" : "No se pudo cargar la apertura revisada");
+				return;
+			}
+			setAperturaContext(result.data);
+			setAperturaContextPeriodId(periodoId);
+			const latest = result.data.revisiones?.[0];
+			if (latest) {
+				const detail = await getAperturaRevisionAction(latest.revisionId);
+				if (!isCurrentAperturaContext(requestId, aperturaRequestId.current, periodoId, aperturaPeriodoIdRef.current)) return;
+				if (detail.success) setAperturaRevisionDetail(detail.data?.revision ?? null);
+			}
+		} catch (error) {
+			if (isCurrentAperturaContext(requestId, aperturaRequestId.current, periodoId, aperturaPeriodoIdRef.current)) {
+				toast.error(error instanceof Error ? error.message : "No se pudo cargar la apertura revisada");
+			}
+		}
+	};
+
+	const closeAperturaContext = () => {
+		aperturaRequestId.current += 1;
+		aperturaPeriodoIdRef.current = null;
+		setAperturaPeriodoId(null);
+		setAperturaContextPeriodId(null);
+		setAperturaContext(null);
+		setAperturaRevisionDetail(null);
+	};
+
+	const handleCreateAperturaDraft = async () => {
+		if (!aperturaPeriodoId || aperturaContextPeriodId !== aperturaPeriodoId ||
+			!aperturaContext?.apertura || aperturaLines.length === 0) return;
+		const hasInvalidLine = aperturaLines.some((line) =>
+			!line.reference.trim() || !line.note.trim() ||
+			!/^\d+(\.\d{1,4})?$/.test(line.amount) || Number(line.amount) <= 0 ||
+			!aperturaContext.roles.some((role: any) =>
+				role.role === line.role && role.accountId === line.accountId));
+		const hasDuplicateAccount = new Set(aperturaLines.map((line) => line.accountId)).size !== aperturaLines.length;
+		if (hasInvalidLine || hasDuplicateAccount) {
+			toast.error(hasDuplicateAccount
+				? "Cada cuenta debe aparecer una sola vez en la apertura."
+				: "Completa cada línea con una cuenta disponible, importe CUP positivo, referencia y nota.");
+			return;
+		}
+		setAperturaBusy(true);
+		try {
+			const { createAperturaRevisionDraftAction } = await import(
+				"@/features/contabilidad/actions-apertura-revisada"
+			);
+			const result = await createAperturaRevisionDraftAction(buildManualAperturaDraftInput({
+				periodoId: aperturaPeriodoId,
+				aperturaId: aperturaContext.apertura.aperturaId,
+				fechaCorte: new Date(aperturaContext.apertura.fechaCorte).toISOString(),
+				lines: aperturaLines,
+			}));
+			if (!result.success) {
+				toast.error("error" in result ? result.error?.message ?? "No se pudo guardar el borrador" : "No se pudo guardar el borrador");
+				return;
+			}
+			toast.success("Borrador manual guardado; la evidencia declarada requiere revisión");
+			if (aperturaPeriodoIdRef.current === aperturaPeriodoId) await loadAperturaContext(aperturaPeriodoId);
+			refreshPeriodos();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "No se pudo guardar el borrador");
+		} finally {
+			setAperturaBusy(false);
+		}
+	};
+
+	const handleAperturaRevisionAction = async (kind: "submit" | "approve") => {
+		if (!aperturaPeriodoId || aperturaContextPeriodId !== aperturaPeriodoId) return;
+		const revisionId = aperturaContext?.revisiones?.[0]?.revisionId;
+		if (!revisionId) return;
+		setAperturaBusy(true);
+		try {
+			const actions = await import("@/features/contabilidad/actions-apertura-revisada");
+			const result = kind === "submit"
+				? await actions.submitAperturaRevisionAction(revisionId)
+				: await actions.approveAperturaRevisionAction(revisionId);
+			if (!result.success) {
+				toast.error("error" in result ? result.error?.message ?? "No se pudo completar la revisión" : "No se pudo completar la revisión");
+				return;
+			}
+			toast.success(kind === "submit" ? "Revisión presentada" : "Apertura aprobada");
+			if (aperturaPeriodoIdRef.current === aperturaPeriodoId) await loadAperturaContext(aperturaPeriodoId);
+			refreshPeriodos();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "No se pudo completar la revisión");
+		} finally {
+			setAperturaBusy(false);
+		}
 	};
 
 	// Helper: qué acciones están disponibles según estado
@@ -508,20 +689,103 @@ export function PeriodosPageClient({
 																	{accion.label}
 																</Button>
 															))}
-															<Button
-																variant="ghost"
-																size="sm"
+																				<Button
+																				variant="ghost"
+																				size="sm"
 																onClick={() =>
 																	handleTimelineClick(periodo.periodoId)
 																}
 															>
 																{timelinePeriodoId === periodo.periodoId
 																	? "Ocultar"
-																	: "Timeline"}
-															</Button>
-														</div>
-													</TableCell>
-												</TableRow>
+																					: "Timeline"}
+																				</Button>
+																				<Button
+																					variant="outline"
+																					size="sm"
+																								onClick={() => aperturaPeriodoId === periodo.periodoId
+																								? closeAperturaContext()
+																						: loadAperturaContext(periodo.periodoId)}
+																				>
+																					Apertura revisada
+																				</Button>
+																			</div>
+																		</TableCell>
+																</TableRow>
+																{aperturaPeriodoId === periodo.periodoId && (
+																	<TableRow>
+																		<TableCell colSpan={7}>
+																			<div className="space-y-4 rounded-md bg-muted/30 p-4">
+																				<h3 className="font-semibold">Apertura manual en CUP</h3>
+																				<p className="text-sm text-muted-foreground">
+																					Los importes y referencias son declaraciones manuales; no acreditan por sí mismos una fuente confiable. La aprobación vuelve a validar permisos, cuentas y evidencia en el servidor.
+																				</p>
+																						{!aperturaContext || aperturaContextPeriodId !== aperturaPeriodoId ? (
+																					<p role="status">Cargando contexto de apertura…</p>
+																				) : !aperturaContext.apertura ? (
+																					<p role="status">Este período no tiene una apertura disponible para revisión.</p>
+																				) : (
+																					<>
+																						{aperturaContext.revisiones?.[0] && (
+																							<div className="rounded border p-3" aria-live="polite">
+																								<p className="font-medium">
+																									Revisión {aperturaContext.revisiones[0].version}: {aperturaContext.revisiones[0].estado}
+																								</p>
+																								{aperturaRevisionDetail?.lineas?.map((line: any) => (
+																									<div key={line.lineaId} className="mt-2 text-sm">
+																										{line.rolCuenta} · {line.cuentaId} · {line.lado} {line.importeNativo} CUP
+																										<span className="block text-muted-foreground">
+																											Referencia declarada: {line.fuenteId ?? "—"}; evidencia: {String(line.fuenteSnapshot?.note ?? "sin nota")}
+																										</span>
+																									</div>
+																									))}
+																							</div>
+																						)}
+																						{aperturaContext.revisiones?.[0]?.estado === "BORRADOR" && (
+																							<Button size="sm" disabled={aperturaBusy} onClick={() => handleAperturaRevisionAction("submit")}>
+																								Presentar revisión
+																							</Button>
+																						)}
+																						{aperturaContext.revisiones?.[0]?.estado === "PRESENTADA" && (
+																							<Button size="sm" disabled={aperturaBusy} onClick={() => handleAperturaRevisionAction("approve")}>
+																								Aprobar apertura
+																							</Button>
+																						)}
+																			{canCreateManualAperturaDraft(aperturaContext.revisiones?.[0]?.estado) && (
+																							<div className="space-y-3 border-t pt-3">
+																								<p className="text-sm font-medium">Nuevo borrador manual</p>
+																								{aperturaLines.map((line, index) => (
+																									<div key={index} className="grid gap-2 md:grid-cols-6">
+																										<select aria-label={`Cuenta de línea ${index + 1}`} className="rounded border bg-background p-2 md:col-span-2" value={`${line.role}|${line.accountId}`} onChange={(event) => {
+																											const option = aperturaContext.roles.find((role: any) => `${role.role}|${role.accountId}` === event.target.value);
+																											if (option) setAperturaLines((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, role: option.role, accountId: option.accountId, label: option.label } : item));
+																										}}>
+																											{aperturaContext.roles.map((role: any) => <option key={`${role.role}-${role.accountId}`} value={`${role.role}|${role.accountId}`}>{role.role}: {role.label}</option>)}
+																										</select>
+																										<select aria-label={`Lado de línea ${index + 1}`} className="rounded border bg-background p-2" value={line.side} onChange={(event) => setAperturaLines((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, side: event.target.value as "DEBE" | "HABER" } : item))}>
+																											<option value="DEBE">Debe</option><option value="HABER">Haber</option>
+																										</select>
+																										<input aria-label={`Importe CUP de línea ${index + 1}`} inputMode="decimal" required pattern="[0-9]+([.][0-9]{1,4})?" placeholder="Importe CUP" className="rounded border bg-background p-2" value={line.amount} onChange={(event) => setAperturaLines((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, amount: event.target.value } : item))} />
+																										<input aria-label={`Referencia manual de línea ${index + 1}`} required placeholder="Referencia" className="rounded border bg-background p-2" value={line.reference} onChange={(event) => setAperturaLines((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, reference: event.target.value } : item))} />
+																		<input aria-label={`Nota manual de línea ${index + 1}`} required placeholder="Nota de evidencia declarada" className="rounded border bg-background p-2" value={line.note} onChange={(event) => setAperturaLines((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, note: event.target.value } : item))} />
+																		<Button type="button" variant="ghost" size="sm" aria-label={`Eliminar línea ${index + 1}`} onClick={() => setAperturaLines((current) => current.filter((_, itemIndex) => itemIndex !== index))}>Eliminar</Button>
+																	</div>
+																							))}
+																							<div className="flex gap-2">
+																								<Button type="button" variant="outline" size="sm" disabled={!aperturaContext.roles?.length} onClick={() => {
+																									const role = aperturaContext.roles[0];
+																									setAperturaLines((current) => [...current, { role: role.role, accountId: role.accountId, label: role.label, side: "DEBE", amount: "", reference: "", note: "" }]);
+																								}}>Agregar línea</Button>
+																								<Button size="sm" disabled={aperturaBusy || !aperturaLines.length || !aperturaContext.apertura.fechaCorte} onClick={handleCreateAperturaDraft}>Guardar borrador</Button>
+																							</div>
+																				</div>
+																			)}
+																			</>
+																				)}
+																			</div>
+																		</TableCell>
+																	</TableRow>
+																)}
 												{timelinePeriodoId === periodo.periodoId && (
 													<TableRow key={`${periodo.periodoId}-timeline`}>
 														<TableCell colSpan={7} className="p-0">

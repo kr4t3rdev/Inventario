@@ -57,6 +57,10 @@ async function crearEscenario(opts: { limiteCredito: number; deuda: number; paga
   });
   tenantIds.push(tenant.tenantId);
   const tenantId = tenant.tenantId;
+  // Política contable requerida por el writer y el guard fail-closed del motor.
+  await prisma.tenantAccountingPolicy.create({
+    data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: 'integration-carrera' },
+  });
 
   const cliente = await prisma.cliente.create({
     data: { nombre: 'Cliente Carrera', tenantId, limiteCredito: opts.limiteCredito },
@@ -101,6 +105,7 @@ afterAll(async () => {
     await prisma.tipoPago.deleteMany({ where: { tenantId } });
     await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
     await prisma.cliente.deleteMany({ where: { tenantId } });
+    await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
     await prisma.tenant.delete({ where: { tenantId } }).catch(() => undefined);
   }
 });

@@ -3,7 +3,8 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
 export { GET } from '@/app/api/anticipos/[id]/route'
@@ -27,8 +28,16 @@ export const PUT = withAuthPost(async (
 ) => {
   try {
     const tenantId = requireTenant(user)
+    requireFeature(user, 'anticipos', 'actualizar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'actualizar anticipos')
     const { id } = await params
     const body = await request.json()
+    if (body?.estado !== undefined || body?.saldoDisponible !== undefined) {
+      return NextResponse.json({
+        error: 'El estado y saldo del anticipo solo cambian mediante un flujo documental.',
+        code: 'DOCUMENT_WORKFLOW_REQUIRED',
+      }, { status: 409 })
+    }
     const payload = UpdateAnticipoSchema.parse(body)
 
     // Validar período contable
@@ -46,8 +55,8 @@ export const PUT = withAuthPost(async (
       )
     }
 
-    const existing = await prisma.anticipo.findUnique({
-      where: { anticipoId: id },
+    const existing = await prisma.anticipo.findFirst({
+      where: { anticipoId: id, tenantId },
       select: { anticipoId: true },
     })
 
@@ -56,7 +65,7 @@ export const PUT = withAuthPost(async (
     }
 
     const anticipo = await prisma.anticipo.update({
-      where: { anticipoId: id },
+      where: { anticipoId: id, tenantId },
       data: {
         ...(payload.estado && { estado: payload.estado }),
         ...(payload.saldoDisponible !== undefined && { saldoDisponible: payload.saldoDisponible }),
@@ -74,13 +83,18 @@ export const PUT = withAuthPost(async (
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Payload inválido', issues: error.flatten() }, { status: 400 })
     }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
 
     return NextResponse.json({ error: 'Error al actualizar anticipo' }, { status: 500 })
   }
 })
 
 /**
- * @description Elimina un anticipo con validación de período contable.
+ * @description Impide eliminar anticipos por fuera del flujo documental.
  * @param {NextRequest} _request - Request HTTP.
  * @returns {Promise<NextResponse>} Mensaje de eliminación.
  */
@@ -90,37 +104,21 @@ export const DELETE = withAuthPost(async (
   user: AuthenticatedUser
 ) => {
   try {
-    const tenantId = requireTenant(user)
-    const { id } = await params
-
-    // Validar período contable
-    const validacionPeriodo = await validarEscrituraPeriodo({
-      fecha: new Date(),
-      tenantId,
-      tipoOperacion: 'anticipo',
-      actor: user.userId,
-    })
-    if (!validacionPeriodo.permitido) {
-      return NextResponse.json(
-        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
-        { status: 400 }
-      )
-    }
-
-    const existing = await prisma.anticipo.findUnique({
-      where: { anticipoId: id },
-      select: { anticipoId: true },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Anticipo no encontrado' }, { status: 404 })
-    }
-
-    await prisma.anticipo.delete({ where: { anticipoId: id } })
-
-    return NextResponse.json({ message: 'Anticipo eliminado' })
+    requireTenant(user)
+    requireFeature(user, 'anticipos', 'eliminar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'eliminar anticipos')
+    await params
+    return NextResponse.json({
+      error: 'Un anticipo con efectos financieros debe revertirse desde el documento relacionado.',
+      code: 'DOCUMENT_WORKFLOW_REQUIRED',
+    }, { status: 409 })
   } catch (error) {
     console.error('Error al eliminar anticipo:', error)
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
     return NextResponse.json({ error: 'Error al eliminar anticipo' }, { status: 500 })
   }
 })

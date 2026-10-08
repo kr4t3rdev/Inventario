@@ -1,15 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
+import * as matchers from 'vitest-axe/matchers';
+import 'vitest-axe/extend-expect';
 import { describe, expect, it } from 'vitest';
 
-expect.extend({ toHaveNoViolations: toHaveNoViolations as ExpectMatcherFn });
+expect.extend(matchers);
 
-type ExpectMatcherFn = (result: Awaited<ReturnType<typeof axe>>) => {
-  pass: boolean;
-  message: () => string;
-};
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toHaveNoViolations(): T;
+  }
+}
 
 import { PermissionMatrix } from '../components/permission-matrix';
 

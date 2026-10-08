@@ -3,7 +3,8 @@ import { z } from 'zod';
 
 import prisma from '@/lib/prisma';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { ActionError } from '@/lib/server-actions/types';
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write';
 import { createAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow';
 import { errorResponse, successResponse } from '@/lib/api-response';
@@ -17,8 +18,8 @@ const createSchema = z.object({
   clienteId: z.string().optional(),
   monto: z.coerce.number().positive(),
   moneda: z.string().min(1),
-  cuentaOrigenId: z.string().optional(),
-  tipoPagoOrigenId: z.string().optional(),
+  cuentaOrigenId: z.string().min(1),
+  tipoPagoOrigenId: z.string().min(1),
   referenciaExterna: z.string().optional(),
   vigenciaHasta: z.string().optional(),
 });
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
 
   try {
     const tenantId = requireTenant(authResult.user);
+    requireFeature(authResult.user, 'anticipos', 'registrar anticipos');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'registrar anticipos');
     const body = await request.json();
     const payload = createSchema.parse(body);
 
@@ -76,11 +79,15 @@ export async function POST(request: Request) {
       tenantId,
       vigenciaHasta: payload.vigenciaHasta || undefined,
       usuarioId: authResult.user.userId,
+      idempotencyKey: request.headers.get('Idempotency-Key') ?? undefined,
     }));
 
     return successResponse({ anticipo }, 201);
   } catch (error) {
     console.error('Error al crear anticipo mobile:', error);
+    if (error instanceof ActionError) {
+      return errorResponse(error.message, error.code === 'FORBIDDEN' ? 403 : 400, error.code);
+    }
 
     if (isAnticipoWorkflowError(error)) {
       return errorResponse(error.message, error.status, error.code);

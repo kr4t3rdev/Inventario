@@ -50,6 +50,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('AUTH_REQUIRED')
   })
 
@@ -69,6 +70,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
@@ -137,6 +139,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(prismaMock.cuentaPorCobrar.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'cxc-1', tenantId: 'tenant-1' },
@@ -171,6 +174,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: '', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
@@ -194,6 +198,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PARCIAL' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('VALIDATION_ERROR')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
@@ -218,6 +223,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('VALIDATION_ERROR')
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({

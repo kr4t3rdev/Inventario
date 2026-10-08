@@ -5,8 +5,8 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
+vi.mock('@/lib/prisma', () => {
+  const mockedPrisma = {
     $queryRaw: vi.fn(),
     $transaction: vi.fn(),
     venta: {
@@ -21,8 +21,9 @@ vi.mock('@/lib/prisma', () => ({
     tipoPago: {
       findFirst: vi.fn(),
     },
-  },
-}));
+  };
+  return { default: mockedPrisma, prisma: mockedPrisma };
+});
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
@@ -35,11 +36,18 @@ vi.mock('@/lib/services/tenant-scope', () => ({
     }
     return user.tenantId;
   }),
+  requireFeature: vi.fn(),
+  requirePermission: vi.fn(),
+}));
+
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+  postEvento: vi.fn(),
 }));
 
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: {
     log: vi.fn().mockResolvedValue(undefined),
+    logStrict: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -51,6 +59,7 @@ vi.mock('@/lib/services/validate-period-write', () => ({
 import prisma from '@/lib/prisma';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 import { GET, POST } from '../route';
 
@@ -179,6 +188,10 @@ describe('web accounting reconciliation sales route - POST', () => {
     } as never);
     const transactionClient = {
       $queryRaw: vi.fn().mockResolvedValue([]),
+      tenantAccountingPolicy: {
+        findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+      },
+      auditLog: { create: vi.fn().mockResolvedValue({ auditId: 'audit-1' }) },
       cuentaBancaria: {
         findFirst: vi.fn().mockResolvedValue({
           cuentaId: 'cuenta-own',
@@ -192,16 +205,12 @@ describe('web accounting reconciliation sales route - POST', () => {
       reconciliacionVenta: {
         findFirst: vi.fn().mockResolvedValue(null),
         findMany: vi.fn().mockResolvedValue([]),
-        create: vi.fn().mockResolvedValue({
+        create: vi.fn().mockImplementation(async ({ data }) => ({
+          ...data,
           reconciliacionId: 'reconciliacion-own',
-          ventaId: 'venta-own',
-          cuentaId: 'cuenta-own',
-          tipoPagoId: 'tipo-own',
-          monto: 100,
-          moneda: 'CUP',
-          montoConvertido: 100,
-        }),
+        })),
       },
+      cuentaPorCobrar: { findFirst: vi.fn().mockResolvedValue(null) },
     };
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
       callback(transactionClient as never),
@@ -220,6 +229,16 @@ describe('web accounting reconciliation sales route - POST', () => {
     );
 
     expect(response.status).not.toBe(500);
+    expect(postEvento).toHaveBeenCalledTimes(1);
+    expect(postEvento).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ tenantId: 'tenant-user', userId: 'qa-user' }),
+      expect.objectContaining({
+        tipo: 'VENTA_CONTADO',
+        montoFuncional: 100,
+        fxEvidenceFingerprint: expect.any(String),
+      }),
+    );
     expect(prisma.venta.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({

@@ -200,6 +200,7 @@ describe('updateTenantRoleAction (PG-04 RED)', () => {
     const result = await updateTenantRoleAction({ roleId: 'role-1', nombre: 'X' });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('INTERNAL_ERROR');
     expect(vi.mocked(prisma.$transaction)).toHaveBeenCalled();
   });

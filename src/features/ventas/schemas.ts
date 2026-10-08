@@ -123,7 +123,7 @@ export const facturarVentaSchema = z.object({
 
 // ─── Tipos inferidos ──────────────────────────────────────
 
-export type CreateVentaInput = z.infer<typeof createVentaSchema>;
+export type CreateVentaInput = z.input<typeof createVentaSchema>;
 export type VentaItemInput = z.infer<typeof ventaItemSchema>;
 export type AnularVentaInput = z.infer<typeof anularVentaSchema>;
 export type FacturarVentaInput = z.infer<typeof facturarVentaSchema>;

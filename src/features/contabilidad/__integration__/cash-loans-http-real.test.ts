@@ -263,7 +263,7 @@ describe('canal móvil cash-loans — sesión Bearer real y carrera', { timeout:
       ), { params: Promise.resolve({ id: raceLoanId }) }),
     ]);
     const respuestas = resultados
-      .filter((r): r is PromiseSettledResult<import('next/server').NextResponse> =>
+      .filter((r): r is PromiseFulfilledResult<import('next/server').NextResponse> =>
         r.status === 'fulfilled')
       .map((r) => r.value);
     expect(respuestas).toHaveLength(2);

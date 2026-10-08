@@ -15,6 +15,8 @@ function mapActionErrorStatus(code: string): number {
       return 403;
     case 'DISABLED':
       return 404;
+    case 'IDEMPOTENCY_CONFLICT':
+      return 409;
     default:
       return 400;
   }
@@ -47,7 +49,10 @@ export async function POST(
     }
 
     const result = await AccountingCashOperationsMutationService.registerCashDebtPayment({
-      input: { id, ...body },
+      input: (() => {
+        const idempotencyKey = body.idempotencyKey ?? request.headers.get('Idempotency-Key') ?? undefined;
+        return idempotencyKey ? { id, ...body, idempotencyKey } : { id, ...body };
+      })(),
       user: authResult.user,
     });
 

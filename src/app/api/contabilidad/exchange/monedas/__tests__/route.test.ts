@@ -30,7 +30,7 @@ describe('GET /api/contabilidad/exchange/monedas', () => {
 
     const { GET } = await import('../route')
     const request = new NextRequest('http://localhost/api/contabilidad/exchange/monedas')
-    const response = await GET(request)
+    const response = await GET(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(200)

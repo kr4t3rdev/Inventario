@@ -13,7 +13,7 @@ const usuarioSinFeature = {
 	isActive: true,
 	name: 'Manager',
 	email: 'm@example.com',
-	planFeatures: {},
+		planFeatures: { 'contabilidad-formal': false },
 };
 
 const usuarioConFeature = {
@@ -82,6 +82,7 @@ describe('inicializarPlanContableAction', () => {
 		const respuesta = await inicializarPlanContableAction(undefined);
 
 		expect(respuesta.success).toBe(true);
+		if (!respuesta.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		// Una transacción para las plantillas globales y otra para el plan del tenant.
 		expect(prismaMock.$transaction).toHaveBeenCalledTimes(2);
 		expect(seedPlanMock).toHaveBeenCalledWith(prismaMock, 'tenant-1');
@@ -110,6 +111,7 @@ describe('inicializarPlanContableAction', () => {
 		const respuesta = await inicializarPlanContableAction(undefined);
 
 		expect(respuesta.success).toBe(false);
+		if (respuesta.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(respuesta.error?.code).toBe('FEATURE_NOT_AVAILABLE');
 		expect(seedPlanMock).not.toHaveBeenCalled();
 	});
@@ -143,6 +145,7 @@ describe('obtenerEstadoPlanContableAction', () => {
 		const respuesta = await obtenerEstadoPlanContableAction(undefined);
 
 		expect(respuesta.success).toBe(true);
+		if (!respuesta.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(respuesta.data).toEqual({
 			inicializado: true,
 			cuentas: 33,
@@ -166,6 +169,7 @@ describe('obtenerEstadoPlanContableAction', () => {
 		const respuesta = await obtenerEstadoPlanContableAction(undefined);
 
 		expect(respuesta.success).toBe(true);
+		if (!respuesta.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(respuesta.data).toMatchObject({ inicializado: false, cuentas: 0 });
 	});
 });

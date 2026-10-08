@@ -66,14 +66,14 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockTenantUserWithoutCategorias: AuthenticatedUser = {
 	userId: "user-test-2",
 	name: "Tenant User",
 	email: "tenant@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "manager",
@@ -87,7 +87,7 @@ const mockTenantUserWithoutCategoriasEan13: AuthenticatedUser = {
 	userId: "user-test-3",
 	name: "Tenant User No EAN13",
 	email: "tenant-ean@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "manager",
@@ -99,6 +99,7 @@ const mockTenantUserWithoutCategoriasEan13: AuthenticatedUser = {
 
 const mockCategoriaRow = {
 	catId: "cat-1",
+	tenantId: "tenant-1",
 	nombre: "Electrónica",
 	descripcion: "Productos electrónicos",
 	parentId: null,
@@ -129,6 +130,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toHaveLength(1);
 			expect(result.data![0].nombre).toBe("Electrónica");
 			expect(prisma.categoria.findMany).toHaveBeenCalledWith(
@@ -145,6 +147,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toEqual([]);
 		});
 
@@ -154,6 +157,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
 		});
 	});
@@ -163,11 +167,12 @@ describe("Categorias Server Actions", () => {
 	describe("getCategoriaByIdAction", () => {
 		it("retorna categoría por ID", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow as never);
 
 			const result = await getCategoriaByIdAction("cat-1");
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data!.nombre).toBe("Electrónica");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -183,6 +188,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaByIdAction("cat-noexiste");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("NOT_FOUND");
 		});
 
@@ -193,6 +199,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaByIdAction("cat-otro-tenant");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("NOT_FOUND");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -214,6 +221,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaHierarchyAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toBeDefined();
 			expect(prisma.categoria.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -245,6 +253,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaHierarchyAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toHaveLength(1);
 			expect(result.data![0].productCount).toBe(3);
 			expect(result.data![0].subcategorias[0].productCount).toBe(2);
@@ -268,7 +277,7 @@ describe("Categorias Server Actions", () => {
 				success: true,
 				data: validInput as any,
 			});
-			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow as never);
 
 			const result = await createCategoriaAction(validInput);
 
@@ -289,6 +298,7 @@ describe("Categorias Server Actions", () => {
 			const result = await createCategoriaAction({ ...validInput, nombre: "" });
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBeDefined();
 		});
 
@@ -300,7 +310,7 @@ describe("Categorias Server Actions", () => {
 				success: true,
 				data: validInput as any,
 			});
-			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow as never);
 
 			const result = await createCategoriaAction(validInput);
 
@@ -327,7 +337,7 @@ describe("Categorias Server Actions", () => {
 
 		it("actualiza categoría exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow as never);
 			vi.mocked(CategoriaValidator.validateCategoryUpdate).mockResolvedValue({
 				success: true,
 				data: {
@@ -341,7 +351,7 @@ describe("Categorias Server Actions", () => {
 			vi.mocked(prisma.categoria.update).mockResolvedValue({
 				...mockCategoriaRow,
 				nombre: "Electrónica Actualizada",
-			});
+			} as never);
 
 			const result = await updateCategoriaAction(validUpdate);
 
@@ -356,6 +366,7 @@ describe("Categorias Server Actions", () => {
 			const result = await updateCategoriaAction(validUpdate);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrada");
 		});
 
@@ -369,6 +380,7 @@ describe("Categorias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrada");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -384,18 +396,17 @@ describe("Categorias Server Actions", () => {
 		it("elimina categoría sin dependencias", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.categoria.findFirst)
-				.mockResolvedValueOnce(mockCategoriaRow) // existencia
+				.mockResolvedValueOnce(mockCategoriaRow as never) // existencia
 				.mockResolvedValueOnce({
 					...mockCategoriaRow,
-					productosSubcategoria: [],
 				}); // productos subcat
 			vi.mocked(CategoriaDeletionValidator.validateDeletion).mockResolvedValue({
 				canDelete: true,
 				errors: [],
 				warnings: [],
-				affectedItems: {},
+				affectedItems: { productos: 0, subcategorias: 0, productosSubcategoria: 0 },
 			});
-			vi.mocked(prisma.categoria.delete).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.delete).mockResolvedValue(mockCategoriaRow as never);
 
 			const result = await deleteCategoriaAction("cat-1");
 
@@ -412,6 +423,7 @@ describe("Categorias Server Actions", () => {
 			const result = await deleteCategoriaAction("cat-noexiste");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrada");
 		});
 
@@ -422,6 +434,7 @@ describe("Categorias Server Actions", () => {
 			const result = await deleteCategoriaAction("cat-otro-tenant");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrada");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -446,7 +459,7 @@ describe("Categorias Server Actions", () => {
 					clasSpecificId: null,
 				} as any,
 			});
-			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow as never);
 
 			await createCategoriaAction({
 				nombre: "Test",
@@ -465,12 +478,12 @@ describe("Categorias Server Actions", () => {
 
 		it("updateCategoriaAction usa validator con tenantId", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow as never);
 			vi.mocked(CategoriaValidator.validateCategoryUpdate).mockResolvedValue({
 				success: true,
 				data: { nombre: "Actualizado" } as any,
 			});
-			vi.mocked(prisma.categoria.update).mockResolvedValue(mockCategoriaRow);
+			vi.mocked(prisma.categoria.update).mockResolvedValue(mockCategoriaRow as never);
 
 			await updateCategoriaAction({ catId: "cat-1" });
 
@@ -485,10 +498,9 @@ describe("Categorias Server Actions", () => {
 		it("deleteCategoriaAction usa validator con tenantId", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.categoria.findFirst)
-				.mockResolvedValueOnce(mockCategoriaRow)
+				.mockResolvedValueOnce(mockCategoriaRow as never)
 				.mockResolvedValueOnce({
 					...mockCategoriaRow,
-					productosSubcategoria: [],
 				});
 			vi.mocked(CategoriaDeletionValidator.validateDeletion).mockResolvedValue({
 				canDelete: true,
@@ -512,6 +524,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
 
@@ -527,6 +540,7 @@ describe("Categorias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
 	});

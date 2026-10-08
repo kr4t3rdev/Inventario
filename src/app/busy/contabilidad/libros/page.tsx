@@ -12,6 +12,6 @@ export const metadata: Metadata = {
  * @description Página de libros contables formales (capa contabilidad-formal).
  * @returns {JSX.Element} Vista de libros.
  */
-export default function LibrosContablesPage(): JSX.Element {
+export default function LibrosContablesPage(): React.JSX.Element {
 	return <LibrosPageClient />;
 }

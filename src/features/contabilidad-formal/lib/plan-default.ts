@@ -59,6 +59,7 @@ export type TipoEventoClave =
 	| 'COSTO_VENTA_DEVENGADO'
 	| 'DEVOLUCION_VENTA'
 	| 'VENTA_SERVICIO'
+	| 'VENTA_SERVICIO_CREDITO'
 	| 'COBRO_SERVICIO'
 	| 'COMPRA_CONTADO'
 	| 'COMPRA_CREDITO'
@@ -110,6 +111,7 @@ export const DIARIO_POR_EVENTO: Record<TipoEventoClave, DiarioDefault['tipo']> =
 	COSTO_VENTA_DEVENGADO: 'VENTAS',
 	DEVOLUCION_VENTA: 'VENTAS',
 	VENTA_SERVICIO: 'VENTAS',
+	VENTA_SERVICIO_CREDITO: 'VENTAS',
 	COBRO_SERVICIO: 'VENTAS',
 	ANTICIPO_CLIENTE_RECIBIDO: 'VENTAS',
 	ANTICIPO_CLIENTE_APLICADO: 'VENTAS',
@@ -423,6 +425,10 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 		{ lado: 'DEBE', rol: 'CAJA_PRINCIPAL', regla: 'TOTAL' },
 		{ lado: 'HABER', rol: 'VENTAS_SERVICIOS', regla: 'TOTAL' },
 	]),
+	...plantilla('VENTA_SERVICIO_CREDITO', [
+		{ lado: 'DEBE', rol: 'CXC_CLIENTES', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'VENTAS_SERVICIOS', regla: 'TOTAL' },
+	]),
 	...plantilla('COBRO_SERVICIO', [
 		{ lado: 'DEBE', rol: 'CAJA_PRINCIPAL', regla: 'TOTAL' },
 		{
@@ -548,15 +554,23 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 	]),
 	...plantilla('ANTICIPO_CLIENTE_APLICADO', [
 		{ lado: 'DEBE', rol: 'ANTICIPOS_CLIENTES', regla: 'TOTAL' },
-		{ lado: 'HABER', rol: 'CXC_CLIENTES', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'CXC_CLIENTES', regla: 'TOTAL', condicion: 'SIN_DIFERENCIA_FX' },
+		{ lado: 'HABER', rol: 'CXC_CLIENTES', regla: 'TOTAL_MENOS_DIFERENCIA', condicion: 'FX_POSITIVA' },
+		{ lado: 'HABER', rol: 'CXC_CLIENTES', regla: 'TOTAL_MAS_DIFERENCIA', condicion: 'FX_NEGATIVA' },
+		{ lado: 'HABER', rol: 'DIFERENCIA_CAMBIARIA_INGRESO', regla: 'DIFERENCIA_FX', condicion: 'FX_POSITIVA' },
+		{ lado: 'DEBE', rol: 'DIFERENCIA_CAMBIARIA_GASTO', regla: 'DIFERENCIA_FX', condicion: 'FX_NEGATIVA' },
 	]),
 	...plantilla('ANTICIPO_PROVEEDOR_ENTREGADO', [
 		{ lado: 'DEBE', rol: 'ANTICIPOS_PROVEEDORES', regla: 'TOTAL' },
 		{ lado: 'HABER', rol: 'CAJA_PRINCIPAL', regla: 'TOTAL' },
 	]),
 	...plantilla('ANTICIPO_PROVEEDOR_APLICADO', [
-		{ lado: 'DEBE', rol: 'CXP_PROVEEDORES', regla: 'TOTAL' },
+		{ lado: 'DEBE', rol: 'CXP_PROVEEDORES', regla: 'TOTAL', condicion: 'SIN_DIFERENCIA_FX' },
+		{ lado: 'DEBE', rol: 'CXP_PROVEEDORES', regla: 'TOTAL_MAS_DIFERENCIA', condicion: 'FX_POSITIVA' },
+		{ lado: 'DEBE', rol: 'CXP_PROVEEDORES', regla: 'TOTAL_MENOS_DIFERENCIA', condicion: 'FX_NEGATIVA' },
 		{ lado: 'HABER', rol: 'ANTICIPOS_PROVEEDORES', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'DIFERENCIA_CAMBIARIA_INGRESO', regla: 'DIFERENCIA_FX', condicion: 'FX_POSITIVA' },
+		{ lado: 'DEBE', rol: 'DIFERENCIA_CAMBIARIA_GASTO', regla: 'DIFERENCIA_FX', condicion: 'FX_NEGATIVA' },
 	]),
 	...plantilla('PRESTAMO_OTORGADO', [
 		{ lado: 'DEBE', rol: 'PRESTAMOS_OTORGADOS', regla: 'TOTAL' },

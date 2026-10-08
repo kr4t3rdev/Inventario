@@ -397,7 +397,7 @@ describe('tenant accounting policy service', () => {
       './tenant-accounting-policy-service'
     );
 
-    await expect(prismaMock.$transaction(async (tx) => {
+    await expect(prismaMock.$transaction(async (tx: any) => {
       await provisionTenantAccountingPolicyInTransaction(tx, {
         tenantId: 'tenant-a',
         functionalCurrencyCode: 'CUP',

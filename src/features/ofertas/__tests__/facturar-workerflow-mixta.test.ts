@@ -146,5 +146,38 @@ describe('facturarOfertaWorkflow – aislamiento de servicios', () => {
         data: expect.objectContaining({ moneda: 'USD' }),
       }),
     );
+    expect(applyFacturacionCobroWorkflow).toHaveBeenCalledWith(
+      mockTx,
+      expect.objectContaining({ monedaOriginal: 'USD' }),
+    );
+  });
+
+  it('propaga la combinación no homogénea de monedas para impedir una valoración inventada', async () => {
+    mockTx.servicios.findFirst.mockImplementation(({ where }) => Promise.resolve({
+      servicioId: where.servicioId,
+      moneda: where.servicioId === 'srv-usd' ? 'USD' : 'EUR',
+      nombre: where.servicioId,
+    }));
+
+    await facturarOfertaWorkflow(mockTx as any, {
+      tenantId: 'tenant-A',
+      ofertaId: 'of-multi-currency',
+      clienteId: 'cli-1',
+      puntoDeVentaId: 'pv-1',
+      items: [],
+      servicios: [
+        { servicioId: 'srv-usd', cantidad: 1, precioUnitario: 50, total: 50, moneda: 'CUP' },
+        { servicioId: 'srv-eur', cantidad: 1, precioUnitario: 100, total: 100, moneda: 'CUP' },
+      ],
+      subtotal: 150,
+      impuestos: 0,
+      total: 150,
+      usuarioId: 'user-1',
+    });
+
+    expect(applyFacturacionCobroWorkflow).toHaveBeenCalledWith(
+      mockTx,
+      expect.objectContaining({ monedaOriginal: 'EUR,USD' }),
+    );
   });
 });

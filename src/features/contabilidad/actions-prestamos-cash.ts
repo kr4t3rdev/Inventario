@@ -28,6 +28,7 @@ const createSchema = z.object({
   solicitarCreditoOverride: z.boolean().optional(),
   motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const updateSchema = z.object({
@@ -37,6 +38,7 @@ const updateSchema = z.object({
 }).strict()
 
 const pagoSchema = z.object({
+  id: z.string().min(1, 'El préstamo es requerido'),
   monto: z.coerce.number().positive('El monto debe ser positivo'),
   cuentaId: z.string().min(1, 'La cuenta bancaria es requerida'),
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
@@ -122,7 +124,6 @@ export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
   ) => {
     requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
     const {
-    // @ts-expect-error Zod infers the intersection without preserving the external id field in destructuring.
     id, ...body
     } = pagoSchema.parse(input)
     const resultado = await AccountingCashOperationsMutationService.registerCashLoanPayment({

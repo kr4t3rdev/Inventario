@@ -50,6 +50,9 @@ vi.mock('@/lib/services/audit-log-service', () => ({
     logStrict: vi.fn((_params: unknown, client: typeof mockTx) => client.auditLog.create({ data: _params })),
   },
 }));
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => ({
+  getRequiredTenantAccountingPolicy: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+}));
 vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({ postEvento: vi.fn() }));
 
 // Espías pass-through: conservan la lógica real y permiten verificar qué
@@ -94,6 +97,7 @@ describe('gate 1.3: autorización efectiva del POST HTTP de préstamos cash', ()
     vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cta-1',
       saldo: 10000,
+      moneda: 'CUP',
       isActive: true,
     } as never);
     vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue({
@@ -117,7 +121,34 @@ describe('gate 1.3: autorización efectiva del POST HTTP de préstamos cash', ()
     mockTx.prestamoCash.create.mockResolvedValue({ id: 'p-1' });
   });
 
+  it('rechaza 403 sin el permiso contable antes de abrir la transacción', async () => {
+    // beforeEach deja un usuario dependiente sin permisos: el gate debe negar
+    // antes de tocar la base de datos.
+    authHolder.user = {
+      userId: 'user-http-3', tenantId: 'tenant-http', role: 'user', tenantRole: 'dependiente',
+      planFeatures: { 'prestamos-cash': true }, permissions: new Set(),
+    };
+    const { POST } = await import('../route');
+    const request = new NextRequest('http://localhost/api/contabilidad/prestamos-cash', {
+      method: 'POST',
+      body: JSON.stringify(bodyDesembolso()),
+    });
+    const response = await POST(request, { params: Promise.resolve({}) });
+
+    expect(response.status).toBe(403);
+    expect(requirePermission).toHaveBeenCalledWith(
+      authHolder.user, 'financiero.contabilidad.acceder', expect.any(String),
+    );
+    expect(prisma.$transaction as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
+    expect(mockTx.prestamoCash.create).not.toHaveBeenCalled();
+  });
+
   it('requiere autorización explícita y permiso de override para exceder el cupo', async () => {
+    authHolder.user = {
+      userId: 'user-http-1', tenantId: 'tenant-http', role: 'user', tenantRole: 'manager',
+      planFeatures: { 'prestamos-cash': true },
+      permissions: new Set(['financiero.contabilidad.acceder']),
+    };
     const { POST } = await import('../route');
     const request = new NextRequest('http://localhost/api/contabilidad/prestamos-cash', {
       method: 'POST',
@@ -129,6 +160,9 @@ describe('gate 1.3: autorización efectiva del POST HTTP de préstamos cash', ()
     expect(response.status).toBe(403);
     expect(requireTenant).toHaveBeenCalled();
     expect(requireFeature).toHaveBeenCalledWith(expect.anything(), 'prestamos-cash', expect.any(String));
+    expect(requirePermission).toHaveBeenCalledWith(
+      expect.anything(), 'financiero.contabilidad.acceder', expect.any(String),
+    );
     expect(requirePermission).toHaveBeenCalledWith(
       expect.anything(), 'financiero.prestamos-cash.credito-override', expect.any(String),
     );
@@ -154,7 +188,9 @@ describe('gate 1.3: autorización efectiva del POST HTTP de préstamos cash', ()
     authHolder.user = {
       userId: 'user-http-1', tenantId: 'tenant-http', role: 'user', tenantRole: 'manager',
       planFeatures: { 'prestamos-cash': true },
-      permissions: new Set(['financiero.prestamos-cash.credito-override']),
+      permissions: new Set([
+        'financiero.contabilidad.acceder', 'financiero.prestamos-cash.credito-override',
+      ]),
     };
     const { POST } = await import('../route');
     const request = new NextRequest('http://localhost/api/contabilidad/prestamos-cash', {

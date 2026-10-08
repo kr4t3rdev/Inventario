@@ -152,4 +152,32 @@ describe('pago parcial préstamo cash — deduplicación idempotente', { timeout
     expect(thrown).toBeTruthy();
     expect(`${thrown?.code ?? ''} ${thrown?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
   });
+
+  it('dos requests simultáneos con la misma clave devuelven el mismo pago', async () => {
+    const loan = await AccountingCashOperationsMutationService.createCashLoan({
+      input: { clienteId, montoCapital: 500, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId },
+      user: user(),
+    });
+    const idempotencyKey = `idem-race-${crypto.randomUUID()}`;
+    const input = {
+      id: loan.id, monto: 75, cuentaId: cuentaPagoId, tipoPagoId, idempotencyKey,
+    };
+    const saldoAntes = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId: cuentaPagoId }, select: { saldo: true },
+    }))!.saldo);
+
+    const resultados = await Promise.all([
+      AccountingCashOperationsMutationService.registerCashLoanPayment({ input, user: user() }),
+      AccountingCashOperationsMutationService.registerCashLoanPayment({ input, user: user() }),
+    ]);
+
+    expect(resultados[0].reconciliacionId).toBe(resultados[1].reconciliacionId);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'PRESTAMO_CASH', prestamoCashId: loan.id, idempotencyKey },
+    })).toBe(1);
+    const saldoDespues = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId: cuentaPagoId }, select: { saldo: true },
+    }))!.saldo);
+    expect(saldoDespues).toBe(saldoAntes + 75);
+  });
 });

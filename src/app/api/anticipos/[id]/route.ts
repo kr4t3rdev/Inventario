@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { ActionError } from '@/lib/server-actions'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 
 const UpdateAnticipoSchema = z.object({
   estado: z.enum(['RESERVADO', 'EJECUTADO', 'ANULADO']).optional(),
@@ -143,14 +145,23 @@ export const GET = withAuthGet(async (_request: NextRequest, { params }: { param
  * @param {{ userId: string }} user - Usuario autenticado.
  * @returns {Promise<NextResponse>} Anticipo actualizado.
  */
-export const PUT = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, _user: { userId: string }) => {
+export const PUT = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user)
+    requireFeature(user, 'anticipos', 'actualizar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'actualizar anticipos')
     const { id } = await params
     const body = await request.json()
+    if (body?.estado !== undefined || body?.saldoDisponible !== undefined) {
+      return NextResponse.json({
+        error: 'El estado y saldo del anticipo solo cambian mediante un flujo documental.',
+        code: 'DOCUMENT_WORKFLOW_REQUIRED',
+      }, { status: 409 })
+    }
     const payload = UpdateAnticipoSchema.parse(body)
 
-    const existing = await prisma.anticipo.findUnique({
-      where: { anticipoId: id },
+    const existing = await prisma.anticipo.findFirst({
+      where: { anticipoId: id, tenantId },
       select: { anticipoId: true },
     })
 
@@ -159,7 +170,7 @@ export const PUT = withAuthPost(async (request: NextRequest, { params }: { param
     }
 
     const anticipo = await prisma.anticipo.update({
-      where: { anticipoId: id },
+      where: { anticipoId: id, tenantId },
       data: {
         ...(payload.estado && { estado: payload.estado }),
         ...(payload.saldoDisponible !== undefined && { saldoDisponible: payload.saldoDisponible }),
@@ -177,6 +188,11 @@ export const PUT = withAuthPost(async (request: NextRequest, { params }: { param
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Payload inválido', issues: error.flatten() }, { status: 400 })
     }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
 
     return NextResponse.json({ error: 'Error al actualizar anticipo' }, { status: 500 })
   }
@@ -189,19 +205,23 @@ export const PUT = withAuthPost(async (request: NextRequest, { params }: { param
  * @param {{ userId: string }} user - Usuario autenticado.
  * @returns {Promise<NextResponse>} Mensaje de eliminación.
  */
-export const DELETE = withAuthPost(async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }, _user: { userId: string }) => {
-  const { id } = await params
-
-  const existing = await prisma.anticipo.findUnique({
-    where: { anticipoId: id },
-    select: { anticipoId: true },
-  })
-
-  if (!existing) {
-    return NextResponse.json({ error: 'Anticipo no encontrado' }, { status: 404 })
+export const DELETE = withAuthPost(async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }, user: AuthenticatedUser) => {
+  try {
+    requireTenant(user)
+    requireFeature(user, 'anticipos', 'eliminar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'eliminar anticipos')
+    await params
+    return NextResponse.json({
+      error: 'Un anticipo con efectos financieros debe revertirse desde el documento relacionado.',
+      code: 'DOCUMENT_WORKFLOW_REQUIRED',
+    }, { status: 409 })
+  } catch (error) {
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
+    console.error('Error al eliminar anticipo:', error)
+    return NextResponse.json({ error: 'Error al eliminar anticipo' }, { status: 500 })
   }
-
-  await prisma.anticipo.delete({ where: { anticipoId: id } })
-
-  return NextResponse.json({ message: 'Anticipo eliminado' })
 })

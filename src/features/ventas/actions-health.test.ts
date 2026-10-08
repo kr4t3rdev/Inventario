@@ -43,6 +43,8 @@ describe('getSalesHealthAction', () => {
   it('rechaza roles no admin sin consultar ventas', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, role: 'regularUser' })
     const result = await getSalesHealthAction()
+    expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('FORBIDDEN')
     expect(prisma.venta.count).not.toHaveBeenCalled()
   })

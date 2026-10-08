@@ -208,6 +208,7 @@ describe('restockProductoAction — posting enforce y rollback real', { timeout:
 
 		const reintento = await restockProductoAction(input);
 		expect(reintento.success).toBe(false);
+		if (reintento.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(JSON.stringify(reintento.error)).toContain('RESTOCK_DUPLICADO');
 
 		// Sin duplicados: una sola compra registrada con esa factura.

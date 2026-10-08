@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -95,6 +95,7 @@ export function ReconciliacionServiciosForm({
 	const [monedas, setMonedas] = useState<any[]>([]);
 	const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const pendingIdempotency = useRef<{ fingerprint: string; key: string } | null>(null);
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [cuentas, setCuentas] = useState<any[]>([]);
@@ -278,7 +279,7 @@ export function ReconciliacionServiciosForm({
 
 		setIsSubmitting(true);
 		try {
-			const result = await reconciliarServicioAction({
+			const input = {
 				ventaServicioId: servicio.ventaServicioId!,
 				distribuciones: data.distribuciones.map((d) => ({
 					cuentaId: d.cuentaId,
@@ -287,11 +288,23 @@ export function ReconciliacionServiciosForm({
 					moneda: d.moneda,
 					observaciones: d.observaciones,
 				})),
+			};
+			const fingerprint = JSON.stringify(input);
+			if (pendingIdempotency.current?.fingerprint !== fingerprint) {
+				pendingIdempotency.current = {
+					fingerprint,
+					key: crypto.randomUUID(),
+				};
+			}
+			const result = await reconciliarServicioAction({
+				...input,
+				idempotencyKey: pendingIdempotency.current.key,
 			});
 
 			if (!result.success)
 				throw new Error(result.error?.message || "Error al reconciliar");
 
+			pendingIdempotency.current = null;
 			toast.success("Servicio reconciliado exitosamente");
 			onSuccess?.();
 			onClose();

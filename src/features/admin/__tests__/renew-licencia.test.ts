@@ -105,7 +105,7 @@ function buildTx(overrides: Record<string, unknown> = {}) {
     },
     auditLog: { create: vi.fn().mockResolvedValue({ id: 'audit-1' }) },
     ...overrides,
-  } as never;
+  };
 }
 
 describe('renewLicenciaAction', () => {
@@ -131,9 +131,10 @@ describe('renewLicenciaAction', () => {
     const tx = buildTx();
     vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(tx));
 
-    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
+    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic', registerPayment: false });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicense.update).toHaveBeenCalled();
     const updateArgs = tx.tenantLicense.update.mock.calls[0][0] as {
       where: { tenantLicenseId: string };
@@ -166,9 +167,10 @@ describe('renewLicenciaAction', () => {
     const tx = buildTx({ plan: { findUnique: vi.fn().mockResolvedValue(planPro) } });
     vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(tx));
 
-    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-pro' });
+    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-pro', registerPayment: false });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicense.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         planId: 'plan-pro',
@@ -192,7 +194,7 @@ describe('renewLicenciaAction', () => {
     const tx = buildTx({ tenantLicense: { findUnique: vi.fn().mockResolvedValue(expired), update: vi.fn().mockResolvedValue({ ...expired, activa: true, expiracion: new Date('2026-01-31T00:00:00.000Z') }) } });
     vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(tx));
 
-    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
+    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic', registerPayment: false });
 
     expect(result.success).toBe(true);
     expect(tx.tenantLicense.update).toHaveBeenCalledWith(expect.objectContaining({
@@ -208,9 +210,10 @@ describe('renewLicenciaAction', () => {
     const tx = buildTx({ tenantMembership: { findFirst: vi.fn().mockResolvedValue(null) } });
     vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(tx));
 
-    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
+    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic', registerPayment: false });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('TENANT_NOT_ACTIVE');
     expect(tx.tenantLicense.update).not.toHaveBeenCalled();
   });
@@ -228,6 +231,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicensePayment.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         paymentKind: 'renewal',
@@ -257,6 +261,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
     expect(confirmSalesAgentTenantPayment).toHaveBeenCalledWith(expect.objectContaining({
       tenantId: 'tenant-1',
@@ -281,6 +286,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('PAYMENT_AMOUNT_MISMATCH');
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
   });
@@ -303,6 +309,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
     expect(result.data?.duplicate).toBe(true);
     expect(result.data?.registeredPaymentId).toBe('pay-existing');
@@ -324,6 +331,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(tx.tenantLicensePayment.create).toHaveBeenCalled();
     expect(confirmSalesAgentTenantPayment).not.toHaveBeenCalled();
     expect(result.data?.commissionCredited).toBe(false);
@@ -332,9 +340,10 @@ describe('renewLicenciaAction', () => {
   it('rechaza con FORBIDDEN si el usuario no es admin', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, role: 'user' } as unknown as AuthenticatedUser);
 
-    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
+    const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic', registerPayment: false });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('FORBIDDEN');
   });
 });

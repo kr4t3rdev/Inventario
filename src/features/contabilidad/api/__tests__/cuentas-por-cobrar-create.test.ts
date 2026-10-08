@@ -53,6 +53,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.venta.findFirst).not.toHaveBeenCalled()
   })
@@ -78,6 +79,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
   })
@@ -112,6 +114,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('DUPLICATE')
     expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
   })
@@ -176,6 +179,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.id).toBe('cxc-new')
     expect(result.data?.montoDeuda).toBe(1000)
     expect(result.data?.estado).toBe('PENDIENTE')

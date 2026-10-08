@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { ActionError } from '@/lib/server-actions';
 import { reverseAnticipo } from '@/lib/services/anticipos-workflow';
 
@@ -105,6 +106,32 @@ export async function reverseExpenseEffects(
     }
   }
 
+  const movements = params.anticipoContext && tx.anticipoMovimiento?.findMany
+    ? await tx.anticipoMovimiento.findMany({
+      where: {
+        documentoDestinoId: params.referenciaId,
+        anticipo: { tenantId: params.tenantId },
+      },
+      select: { movimientoId: true, anticipoId: true, tipoMovimiento: true, monto: true },
+    })
+    : [];
+  const origins = [
+    ...(params.tipoGasto === 'servicio'
+      ? [{ tipo: 'compra_servicio', id: params.referenciaId }]
+      : []),
+    ...reconciliations.map((reconciliation) => ({
+      tipo: 'reconciliacion_gasto',
+      id: reconciliation.reconciliacionId,
+    })),
+    ...movements
+      .filter((movement) => movement.tipoMovimiento === 'EJECUCION')
+      .map((movement) => ({ tipo: 'anticipo_movimiento', id: movement.movimientoId })),
+  ];
+  await reverseFormalEntries(tx, {
+    tenantId: params.tenantId,
+    userId: params.usuarioId,
+  }, origins);
+
   const accountTotals = new Map<string, number>();
   for (const [cuentaId, accountRows] of accountReconciliations) {
     const cuenta = await tx.cuentaBancaria.findUnique({
@@ -184,11 +211,7 @@ export async function reverseExpenseEffects(
   }
 
   let anticipos = 0;
-  if (params.anticipoContext && tx.anticipoMovimiento?.findMany) {
-    const movements = await tx.anticipoMovimiento.findMany({
-      where: { documentoDestinoId: params.referenciaId },
-      select: { anticipoId: true, tipoMovimiento: true, monto: true },
-    });
+  if (movements.length > 0) {
     const netByAnticipo = new Map<string, number>();
     for (const movement of movements) {
       const current = netByAnticipo.get(movement.anticipoId) ?? 0;

@@ -150,6 +150,7 @@ export async function facturarOfertaWorkflow(
     select: { ventaId: true },
   });
 
+  const monedasServicios = new Set<string>();
   for (const item of params.servicios ?? []) {
     if (!item.servicioId) continue;
     const servicio = await tx.servicios.findFirst({
@@ -157,6 +158,7 @@ export async function facturarOfertaWorkflow(
       select: { servicioId: true, moneda: true, nombre: true },
     });
     if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
+    monedasServicios.add((servicio.moneda ?? item.moneda).trim().toUpperCase());
     await tx.ventaServicios.create({
       data: {
         tenantId: params.tenantId,
@@ -222,6 +224,13 @@ export async function facturarOfertaWorkflow(
 
   await allocateFifoForSale(tx, params.tenantId, venta.ventaId);
 
+  const monedasServiciosResueltas = [...monedasServicios].sort();
+  const monedaOriginal = monedasServiciosResueltas.length === 1
+    ? monedasServiciosResueltas[0]
+    : monedasServiciosResueltas.length > 1
+      ? monedasServiciosResueltas.join(',')
+      : undefined;
+
   const factura = await tx.factura.create({
     data: {
       tenantId: params.tenantId,
@@ -255,6 +264,7 @@ export async function facturarOfertaWorkflow(
     tipoVencimiento: params.tipoVencimiento,
     fechaVencimiento: params.fechaVencimiento,
     cuentaBancariaId: params.cuentaBancariaId,
+    ...(monedaOriginal ? { monedaOriginal } : {}),
   });
 
   return {

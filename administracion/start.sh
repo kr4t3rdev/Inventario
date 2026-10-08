@@ -57,7 +57,7 @@ done
 echo -e "${YELLOW}[5/5] Ejecutando Prisma migrations...${NC}"
 sleep 5
 docker-compose exec -T app pnpm prisma generate
-docker-compose exec -T app pnpm prisma db push
+docker-compose exec -T app sh -c "pnpm exec prisma migrate deploy && node scripts/ci/verify-accounting-sql-guards.mjs"
 
 echo -e "${GREEN}"
 echo "========================================="

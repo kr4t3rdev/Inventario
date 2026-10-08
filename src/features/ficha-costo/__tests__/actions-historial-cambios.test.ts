@@ -7,22 +7,31 @@ vi.mock('@/lib/prisma', () => ({
     productoCostHistory: { findMany: vi.fn(), count: vi.fn() },
   },
 }))
-vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
+vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireFeature: vi.fn(),
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'u1',
+  name: 'Test',
+  email: 'test@test.com',
+  role: 'regularUser',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+}
 
 describe('getHistorialCambiosPrecioAction', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+  })
 
   it('retorna historial paginado de cambios de precio', async () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([
@@ -34,19 +43,27 @@ describe('getHistorialCambiosPrecioAction', () => {
     ] as any)
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(15)
 
-    const data = await getHistorialCambiosPrecioAction({ page: 1, limit: 10 }, mockUser)
+    const data = await getHistorialCambiosPrecioAction({ page: 1, limit: 10 })
 
-    expect(data.items).toHaveLength(1)
-    expect(data.items[0].precioVenta).toEqual({ old: 100, new: 120 })
-    expect(data.pagination.total).toBe(15)
-    expect(data.pagination.totalPages).toBe(2)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.items).toHaveLength(1)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.items[0].precioVenta).toEqual({ old: 100, new: 120 })
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.pagination.total).toBe(15)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.pagination.totalPages).toBe(2)
   })
 
   it('filtra por productoId', async () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([])
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(0)
 
-    await getHistorialCambiosPrecioAction({ productoId: 'p1', page: 1, limit: 10 }, mockUser)
+    await getHistorialCambiosPrecioAction({ productoId: 'p1', page: 1, limit: 10 })
 
     expect(prisma.productoCostHistory.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -59,7 +76,7 @@ describe('getHistorialCambiosPrecioAction', () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([])
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(0)
 
-    await getHistorialCambiosPrecioAction({ page: 1, limit: 10 }, mockUser)
+    await getHistorialCambiosPrecioAction({ page: 1, limit: 10 })
 
     // Since ProductoCostHistory doesn't have tenantId, we can't filter it directly.
     // The test verifies the action runs without error (multi-tenant is handled

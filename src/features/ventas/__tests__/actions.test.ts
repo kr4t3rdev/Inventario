@@ -28,6 +28,7 @@ const { mockTx } = vi.hoisted(() => {
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
+		asiento: { findMany: vi.fn().mockResolvedValue([]) },
 		cuentaBancaria: { updateMany: vi.fn(), findFirst: vi.fn() },
 		auditLog: { create: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
@@ -88,7 +89,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockVenta = {
@@ -127,11 +128,12 @@ describe("Ventas Server Actions", () => {
 	describe("getVentasAction", () => {
 		it("retorna ventas del tenant", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.venta.findMany).mockResolvedValue([mockVenta]);
+			vi.mocked(prisma.venta.findMany).mockResolvedValue([mockVenta] as never);
 
 			const result = await getVentasAction();
 
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toHaveLength(1);
 			expect(prisma.venta.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -180,7 +182,7 @@ describe("Ventas Server Actions", () => {
 		mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 			tenantId: "tenant-test",
 		} as any);
-		prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+		vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 			id: "turno-1",
 		} as any);
 
@@ -223,6 +225,7 @@ describe("Ventas Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBeDefined();
 		});
 
@@ -245,7 +248,7 @@ describe("Ventas Server Actions", () => {
 		mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 			tenantId: "tenant-test",
 		} as any);
-		prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+		vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 			id: "turno-1",
 		} as any);
 
@@ -292,7 +295,7 @@ describe("Ventas Server Actions", () => {
 			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 				tenantId: "tenant-test",
 			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 				id: "turno-1",
 			} as any);
 
@@ -307,6 +310,7 @@ describe("Ventas Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("STOCK_INSUFICIENTE");
 			// El mensaje debe mencionar la cantidad disponible
 			expect(result.error!.message).toContain("5");
@@ -330,7 +334,7 @@ describe("Ventas Server Actions", () => {
 			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 				tenantId: "tenant-test",
 			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 				id: "turno-1",
 			} as any);
 
@@ -343,6 +347,7 @@ describe("Ventas Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("STOCK_INCONSISTENTE");
 		});
 
@@ -370,7 +375,7 @@ describe("Ventas Server Actions", () => {
 			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 				tenantId: "tenant-test",
 			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 				id: "turno-1",
 			} as any);
 
@@ -389,6 +394,7 @@ describe("Ventas Server Actions", () => {
 			// Current: 5 <= 10 (cantidad) → aprueba
 			// TODO: cambiar validación a cantidadDisponible en Fase 3
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("STOCK_INSUFICIENTE");
 			expect(result.error!.message).toContain("3");
 		});
@@ -415,7 +421,7 @@ describe("Ventas Server Actions", () => {
 			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 				tenantId: "tenant-test",
 			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			vi.mocked(prisma.turnoPuntoVenta.findFirst).mockResolvedValue({
 				id: "turno-1",
 			} as any);
 
@@ -509,7 +515,7 @@ describe("Ventas Server Actions", () => {
 
 		it("registra auditoría durable de la reversión dentro de la transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as never);
 			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
 
 			const result = await anularVentaAction({ ventaId: "venta-1", motivo: "Venta duplicada" });
@@ -583,9 +589,9 @@ describe("Ventas Server Actions", () => {
 
 		it("anula venta existente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as never);
 			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
-			vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta);
+			vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta as never);
 			mockTx.stockUbicacion.findUnique.mockResolvedValue({
 				cantidad: 10,
 				cantidadDisponible: 10,
@@ -625,9 +631,9 @@ describe("Ventas Server Actions", () => {
 
 	it("anula con costo histórico del kardex, no con el precio actual", async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-		vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as never);
 		mockTx.venta.findUnique.mockResolvedValue(mockVenta);
-		vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta);
+		vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta as never);
 		mockTx.stockUbicacion.findUnique.mockResolvedValue({
 			cantidad: 10,
 			cantidadDisponible: 10,
@@ -662,7 +668,7 @@ describe("Ventas Server Actions", () => {
 
 		it("revalida el turno dentro de la transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as never);
 			mockTx.venta.findUnique.mockResolvedValue({
 				...mockVenta,
 				turno: { estado: "CERRADO", arqueos: [] },
@@ -680,13 +686,14 @@ describe("Ventas Server Actions", () => {
 
 		it("no repite efectos si la reclamación transaccional detecta una anulación concurrente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as never);
 			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
 			mockTx.venta.updateMany.mockResolvedValueOnce({ count: 0 });
 
 			const result = await anularVentaAction({ ventaId: "venta-1" });
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("ya está anulada");
 			expect(mockTx.stockUbicacion.updateMany).not.toHaveBeenCalled();
 			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
@@ -700,6 +707,7 @@ describe("Ventas Server Actions", () => {
 			const result = await anularVentaAction({ ventaId: "no-existe" });
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrada");
 		});
 	});

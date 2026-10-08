@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence'
 
 import {
   applyAnticipoAllocations,
@@ -9,6 +10,16 @@ import {
 
 function createTxMock() {
   const tx: any = {
+    $queryRaw: vi.fn().mockResolvedValue([]),
+    auditLog: { create: vi.fn().mockResolvedValue({ auditId: 'audit-1' }) },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+    },
+    cuentaBancaria: {
+      findFirst: vi.fn().mockResolvedValue({ cuentaId: 'bank', moneda: 'CUP' }),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
+    tipoPago: { findFirst: vi.fn().mockResolvedValue({ tipoId: 'payment' }) },
     contrato: {
       findUnique: vi.fn()
     },
@@ -19,6 +30,7 @@ function createTxMock() {
       updateMany: vi.fn()
     },
     anticipoMovimiento: {
+      findFirst: vi.fn().mockResolvedValue(null),
       create: vi.fn()
     },
     $transaction: vi.fn()
@@ -41,7 +53,8 @@ describe('anticipos-workflow', () => {
         proveedorId: 'vendor-1',
         monto: 0,
         moneda: 'CUP',
-        usuarioId: 'user-1'
+        usuarioId: 'user-1',
+        tenantId: 'tenant-1',
       })
     ).rejects.toThrow('El monto del anticipo debe ser mayor que cero')
   })
@@ -68,7 +81,8 @@ describe('anticipos-workflow', () => {
         monto: 100,
         moneda: 'CUP',
         vigenciaHasta: invalidVigencia.toISOString(),
-        usuarioId: 'user-1'
+        usuarioId: 'user-1',
+        tenantId: 'tenant-1',
       })
     ).rejects.toThrow('La vigencia del anticipo no puede exceder la fecha fin del contrato')
   })
@@ -99,7 +113,9 @@ describe('anticipos-workflow', () => {
       monto: 100,
       moneda: 'CUP',
       vigenciaHasta: validVigencia.toISOString(),
-      usuarioId: 'user-1'
+      cuentaOrigenId: 'bank', tipoPagoOrigenId: 'payment',
+      usuarioId: 'user-1',
+      tenantId: 'tenant-1',
     })
 
     expect(result.anticipoId).toBe('ant-created')
@@ -107,120 +123,26 @@ describe('anticipos-workflow', () => {
     expect(tx.anticipoMovimiento.create).toHaveBeenCalled()
   })
 
-  it('ejecuta anticipo y retorna replay idempotente con la misma clave', async () => {
+  it('rechaza el writer de ejecución standalone sin tocar el anticipo', async () => {
     const tx = createTxMock()
     tx.anticipo.findUnique.mockResolvedValue({
-      anticipoId: 'ant-1',
-      estado: 'RESERVADO',
-      saldoDisponible: 100,
-      moneda: 'CUP',
-      vigenciaHasta: null
+      anticipoId: 'ant-manual', estado: 'RESERVADO', saldoDisponible: 100,
+      moneda: 'CUP', vigenciaHasta: null,
     })
     tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
-    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'mov-1' })
+    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'manual-movement' })
 
-    const first = await executeAnticipo(
-      tx,
-      {
-        anticipoId: 'ant-1',
-        contexto: 'FACTURA_DIRECTA',
-        documentoDestinoId: 'fact-1',
-        montoObjetivo: 100,
-        monedaObjetivo: 'CUP',
-        idempotencyKey: 'idem-ant-1',
-        usuarioId: 'user-1'
-      },
-      async () => ({ reconciliacionVentaId: 'rec-1' })
+    await expect(executeAnticipo(tx, {
+      anticipoId: 'ant-manual', contexto: 'FACTURA_DIRECTA',
+      documentoDestinoId: 'documento-manual-no-registrado', montoObjetivo: 100,
+      monedaObjetivo: 'CUP', idempotencyKey: 'manual-key', usuarioId: 'user-1',
+    })).rejects.toSatisfy((error) =>
+      isAnticipoWorkflowError(error) && error.code === 'DOCUMENT_WORKFLOW_REQUIRED',
     )
 
-    const second = await executeAnticipo(
-      tx,
-      {
-        anticipoId: 'ant-1',
-        contexto: 'FACTURA_DIRECTA',
-        documentoDestinoId: 'fact-1',
-        montoObjetivo: 100,
-        monedaObjetivo: 'CUP',
-        idempotencyKey: 'idem-ant-1',
-        usuarioId: 'user-1'
-      },
-      async () => ({ reconciliacionVentaId: 'rec-1' })
-    )
-
-    expect(first.idempotentReplay).toBe(false)
-    expect(second.idempotentReplay).toBe(true)
-    expect(second.movimientoId).toBe(first.movimientoId)
-  })
-
-  it('rechaza misma clave idempotente con payload distinto', async () => {
-    const tx = createTxMock()
-    tx.anticipo.findUnique.mockResolvedValue({
-      anticipoId: 'ant-2',
-      estado: 'RESERVADO',
-      saldoDisponible: 100,
-      moneda: 'CUP',
-      vigenciaHasta: null
-    })
-    tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
-    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'mov-2' })
-
-    await executeAnticipo(
-      tx,
-      {
-        anticipoId: 'ant-2',
-        contexto: 'FACTURA_DIRECTA',
-        documentoDestinoId: 'fact-2',
-        montoObjetivo: 100,
-        monedaObjetivo: 'CUP',
-        idempotencyKey: 'idem-ant-2',
-        usuarioId: 'user-1'
-      },
-      async () => ({ reconciliacionVentaId: 'rec-2' })
-    )
-
-    await expect(
-      executeAnticipo(
-        tx,
-        {
-          anticipoId: 'ant-2',
-          contexto: 'FACTURA_DIRECTA',
-          documentoDestinoId: 'fact-2-otro',
-          montoObjetivo: 100,
-          monedaObjetivo: 'CUP',
-          idempotencyKey: 'idem-ant-2',
-          usuarioId: 'user-1'
-        },
-        async () => ({ reconciliacionVentaId: 'rec-2' })
-      )
-    ).rejects.toSatisfy((error) => isAnticipoWorkflowError(error) && error.code === 'IDEMPOTENCIA_CONFLICTO')
-  })
-
-  it('detecta conflicto de concurrencia cuando updateMany no modifica filas', async () => {
-    const tx = createTxMock()
-    tx.anticipo.findUnique.mockResolvedValue({
-      anticipoId: 'ant-3',
-      estado: 'RESERVADO',
-      saldoDisponible: 200,
-      moneda: 'CUP',
-      vigenciaHasta: null
-    })
-    tx.anticipo.updateMany.mockResolvedValue({ count: 0 })
-
-    await expect(
-      executeAnticipo(
-        tx,
-        {
-          anticipoId: 'ant-3',
-          contexto: 'COMPRA_PRODUCTO',
-          documentoDestinoId: 'compra-1',
-          montoObjetivo: 200,
-          monedaObjetivo: 'CUP',
-          idempotencyKey: 'idem-ant-3',
-          usuarioId: 'user-1'
-        },
-        async () => ({ reconciliacionGastoId: 'rec-g-1' })
-      )
-    ).rejects.toSatisfy((error) => isAnticipoWorkflowError(error) && error.code === 'CONCURRENCIA')
+    expect(tx.anticipo.findUnique).not.toHaveBeenCalled()
+    expect(tx.anticipo.updateMany).not.toHaveBeenCalled()
+    expect(tx.anticipoMovimiento.create).not.toHaveBeenCalled()
   })
 
   it('aplica una asignación con tenant scope y decremento atómico', async () => {
@@ -232,6 +154,14 @@ describe('anticipos-workflow', () => {
         saldoDisponible: 100,
         moneda: 'CUP',
         vigenciaHasta: null,
+        montoOriginal: 100,
+        fxSnapshot: {
+          ...buildAppliedFxEvidenceExact({
+            originalAmount: '100', originalCurrency: 'CUP', functionalCurrency: 'CUP',
+            source: 'anticipo-recognition',
+          }).evidence,
+          exchangeRate: '1',
+        },
       })
       .mockResolvedValueOnce({ saldoDisponible: 60 })
     tx.anticipo.updateMany.mockResolvedValue({ count: 1 })

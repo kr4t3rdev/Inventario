@@ -3,7 +3,8 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
@@ -29,7 +30,7 @@ function prestamosCashEnabled(): boolean {
  * @param {NextRequest} request - Request
  * @returns {NextResponse} Préstamo encontrado o 404
  */
-export const GET = withAuthGet(async (request: NextRequest, context: unknown) => {
+export const GET = withAuthGet(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
@@ -37,9 +38,12 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
 
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
+    const tenantId = requireTenant(user)
+    requireFeature(user, 'prestamos-cash', 'consultar préstamos cash')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar préstamos cash')
 
     const prestamo = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, tenantId, deletedAt: null },
       include: {
         cliente: {
           select: {
@@ -73,6 +77,11 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
     return NextResponse.json({ prestamo: prestamoNormalizado })
   } catch (error) {
     console.error('Error obteniendo préstamo cash:', error)
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
     return NextResponse.json({ error: 'Error obteniendo préstamo cash' }, { status: 500 })
   }
 })
@@ -89,6 +98,8 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     }
 
     const tenantId = requireTenant(user)
+    requireFeature(user, 'prestamos-cash', 'actualizar préstamos cash')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'actualizar préstamos cash')
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
@@ -118,45 +129,44 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
 
     const data = updateSchema.parse(body)
 
-    const existing = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null }
-    })
+    const prestamo = await prisma.$transaction(async (tx) => {
+      const existing = await tx.prestamoCash.findFirst({ where: { id, tenantId, deletedAt: null } })
+      if (!existing) return null
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Préstamo no encontrado' }, { status: 404 })
-    }
-
-    const prestamo = await prisma.prestamoCash.update({
-      where: { id },
-      data: {
-        ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
-        ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
-        ...(data.observaciones !== undefined ? { observaciones: data.observaciones } : {})
-      },
-      include: {
-        cliente: {
-          select: {
-            clienteId: true,
-            nombre: true
-          }
-        },
-        cuentaPorCobrar: true
-      }
-    })
-
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'PRESTAMO_CASH',
-      entidadId: id,
-      usuarioId: user.userId,
-      detalles: {
-        cambios: {
-          ...(data.fechaVencimiento !== undefined ? { fechaVencimiento: { anterior: existing.fechaVencimiento, nuevo: prestamo.fechaVencimiento } } : {}),
-          ...(data.tasaInteres !== undefined ? { tasaInteres: { anterior: Number(existing.tasaInteres), nuevo: Number(prestamo.tasaInteres) } } : {}),
-          ...(data.observaciones !== undefined ? { observaciones: { anterior: existing.observaciones, nuevo: prestamo.observaciones } } : {})
+      const updated = await tx.prestamoCash.updateMany({
+        where: { id, tenantId, deletedAt: null },
+        data: {
+          ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
+          ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
+          ...(data.observaciones !== undefined ? { observaciones: data.observaciones } : {})
         }
-      }
+      })
+      if (updated.count !== 1) return null
+
+      const prestamoActualizado = await tx.prestamoCash.findFirst({
+        where: { id, tenantId, deletedAt: null },
+        include: {
+          cliente: { select: { clienteId: true, nombre: true } },
+          cuentaPorCobrar: true,
+        },
+      })
+      if (!prestamoActualizado) return null
+      await AuditLogService.logStrict({
+        accion: 'UPDATE',
+        entidad: 'PRESTAMO_CASH',
+        entidadId: id,
+        usuarioId: user.userId,
+        detalles: {
+          cambios: {
+            ...(data.fechaVencimiento !== undefined ? { fechaVencimiento: { anterior: existing.fechaVencimiento, nuevo: prestamoActualizado.fechaVencimiento } } : {}),
+            ...(data.tasaInteres !== undefined ? { tasaInteres: { anterior: Number(existing.tasaInteres), nuevo: Number(prestamoActualizado.tasaInteres) } } : {}),
+            ...(data.observaciones !== undefined ? { observaciones: { anterior: existing.observaciones, nuevo: prestamoActualizado.observaciones } } : {})
+          }
+        }
+      }, tx)
+      return prestamoActualizado
     })
+    if (!prestamo) return NextResponse.json({ error: 'Préstamo no encontrado' }, { status: 404 })
 
     return NextResponse.json({
       prestamo: {
@@ -175,6 +185,11 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+    }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     console.error('Error actualizando préstamo cash:', error)
     return NextResponse.json({ error: 'Error actualizando préstamo cash' }, { status: 500 })

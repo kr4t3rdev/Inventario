@@ -45,6 +45,9 @@ jobs:
       - name: CI safety contracts
         run: pnpm run test:ci:contracts
 
+      - name: Check domain imports (pending until PRE-GO/1)
+        run: pnpm run check:dominio-imports
+
       - name: Lint
         run: pnpm run lint
 

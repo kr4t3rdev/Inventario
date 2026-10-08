@@ -2,11 +2,16 @@
  * @description Tests unitarios para Server Actions de compras de servicios.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Prisma } from '@/generated/prisma';
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/anticipos-workflow", () => ({
 	applyAnticipoAllocations: vi.fn(),
+}));
+const postEventoMock = vi.hoisted(() => vi.fn());
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+	postEvento: postEventoMock,
 }));
 vi.mock("@/features/gastosDE/reversal", () => ({
 	reverseExpenseEffects: vi.fn(),
@@ -16,6 +21,11 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 
 const mockTx = {
+  cuentaPorPagar: {
+    create: vi.fn().mockResolvedValue({ cuentaPorPagarId: 'cxp-1' }),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+  },
+  vendor: { findFirst: vi.fn().mockResolvedValue({ nombre: 'Proveedor' }) },
 	compraServicio: {
 		create: vi.fn(),
 		findUnique: vi.fn(),
@@ -24,7 +34,7 @@ const mockTx = {
 	},
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
-	anticipo: { findUnique: vi.fn() },
+	anticipo: { findUnique: vi.fn(), findFirst: vi.fn() },
 	reconciliacionGasto: {
 		create: vi.fn().mockResolvedValue({ reconciliacionId: 'rec-mock' }),
 		findMany: vi.fn(),
@@ -104,6 +114,7 @@ const mockCompraRow = {
 describe("ComprasServicios Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'vendor-1' } as never);
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
 	});
 
@@ -115,6 +126,7 @@ describe("ComprasServicios Server Actions", () => {
 			]);
 			const result = await getComprasServiciosAction();
 			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(result.data).toHaveLength(1);
 		});
 	});
@@ -134,6 +146,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(null);
 			const result = await getCompraServicioByIdAction("cs-noexiste");
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("NOT_FOUND");
 		});
 	});
@@ -181,6 +194,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await createCompraServicioAction(validInput);
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("Servicio no encontrado");
 		});
 
@@ -194,6 +208,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("NOT_FOUND");
 		});
 
@@ -210,6 +225,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("Proveedor no encontrado");
 		});
 		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
@@ -218,6 +234,9 @@ describe("ComprasServicios Server Actions", () => {
 				mockServicio as any,
 			);
 			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
+			mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+				reconciliacionId: 'rec-expense-fx', ...data,
+			}));
 			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
 				{ anticipoId: "a1", montoAplicado: 100 },
 			] as any);
@@ -225,12 +244,15 @@ describe("ComprasServicios Server Actions", () => {
 			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
 				functionalCurrencyCode: "CUP",
 			} as any);
-			mockTx.anticipo.findUnique.mockResolvedValue({
-				tipo: "PAGO",
-				moneda: "USD",
+      mockTx.anticipo.findFirst.mockResolvedValue({
+        tipo: "PAGO",
+        moneda: "USD",
 				cuentaOrigenId: "cb-1",
-				tipoPagoOrigenId: "tp-1",
-			} as any);
+        tipoPagoOrigenId: "tp-1",
+      } as any);
+      mockTx.reconciliacionGasto.create.mockImplementationOnce(async ({ data }) => ({
+        reconciliacionId: 'rec-expense-fx', ...data,
+      }));
 			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
 			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
 				cuentaId: "cb-1",
@@ -243,18 +265,33 @@ describe("ComprasServicios Server Actions", () => {
 
 			const result = await createCompraServicioAction({
 				...validInput,
+				proveedorId: 'vendor-1',
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
 			expect(result.success).toBe(true);
-			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect(mockTx.reconciliacionGasto.create).not.toHaveBeenCalled();
+      expect(postEventoMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+        expect.objectContaining({
+          tipo: 'GASTO_CREDITO',
+          montoFuncional: new Prisma.Decimal(2000),
+          fxEvidenceFingerprint: expect.any(String),
+        }),
+      );
+			expect(postEventoMock).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ userId: 'user-1', tenantId: 'tenant-test' }),
 				expect.objectContaining({
-					data: expect.objectContaining({ moneda: "USD" }),
+					tipo: 'GASTO_CREDITO',
+					montoFuncional: new Prisma.Decimal(2000),
+					fxEvidenceFingerprint: expect.any(String),
 				}),
 			);
 		});
 
-		it("escribe transaccionMoneda de espejo para anticipo extranjero", async () => {
+		it("aplicar el anticipo no duplica transaccionMoneda ni el pago bancario", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(
 				mockServicio as any,
@@ -266,7 +303,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
 				{ anticipoId: "a1", montoAplicado: 100 },
 			] as any);
-			mockTx.anticipo.findUnique.mockResolvedValue({
+      mockTx.anticipo.findFirst.mockResolvedValue({
 				tipo: "PAGO",
 				moneda: "USD",
 				cuentaOrigenId: "cb-1",
@@ -284,22 +321,12 @@ describe("ComprasServicios Server Actions", () => {
 
 			const result = await createCompraServicioAction({
 				...validInput,
+				proveedorId: 'vendor-1',
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
 			expect(result.success).toBe(true);
-			expect(mockTx.transaccionMoneda.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({
-						tipoTransaccion: "servicio_egreso",
-						referenciaId: mockCompraRow.compraServicioId,
-						monedaId: "USD",
-						montoOriginal: 100,
-						tasaCambio: 24.5,
-						montoConvertido: 2450,
-					}),
-				}),
-			);
+			expect(mockTx.transaccionMoneda.create).not.toHaveBeenCalled();
 		});
 	});
 
@@ -350,6 +377,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.message).toContain("no encontrado");
 		});
 	});
@@ -394,6 +422,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await getComprasServiciosAction();
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("FEATURE_NOT_AVAILABLE");
 		});
 
@@ -414,6 +443,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("FORBIDDEN");
 		});
 
@@ -428,6 +458,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await deleteCompraServicioAction("cs-1");
 
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("FORBIDDEN");
 		});
 	});
@@ -437,6 +468,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(null);
 			const result = await getComprasServiciosAction();
 			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
 	});

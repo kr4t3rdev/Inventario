@@ -49,6 +49,7 @@ describe('actions de devoluciones (DNC-T4)', () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r = await getDevolucionContextoAction('v-1');
 		expect(r.success).toBe(false);
+		if (r.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(r.error?.code).toBe('AUTH_REQUIRED');
 	});
 
@@ -59,6 +60,7 @@ describe('actions de devoluciones (DNC-T4)', () => {
 		} as never);
 		const r = await getDevolucionContextoAction('v-1');
 		expect(r.success).toBe(false);
+		if (r.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 

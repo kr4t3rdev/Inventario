@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
@@ -20,6 +20,10 @@ import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoCompraCredito } from '@/features/contabilidad-formal/lib/event-builders';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
+import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
+import { resolveTenantInventoryCostValuation } from '@/lib/services/inventory-cost-valuation';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
 import type { CreateCompraProductoInput, UpdateCompraProductoInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -89,6 +93,8 @@ export const getCompraProductoByIdAction = withAction(async (id: string, user: A
 export const createCompraProductoAction = withAction(async (input: CreateCompraProductoInput, user: AuthenticatedUser) => {
   const parsed = createCompraProductoSchema.parse(input);
   const tenantId = requireTenant(user);
+  requireFeature(user, 'compras', 'registrar compras de productos');
+  requirePermission(user, 'compras.compras.gestionar', 'registrar compras de productos');
 
   if (parsed.claveIdempotencia) {
     const existente = await prisma.compraDocumento.findFirst({
@@ -123,9 +129,45 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   }
 
   const total = parsed.items.reduce((sum, item) => sum + item.precioCosto * item.cantidad, 0);
-
+  const fechaCompra = new Date();
+  const fechaTasa = parsed.fechaTasa ? new Date(parsed.fechaTasa) : null;
+  if (fechaTasa && Number.isNaN(fechaTasa.getTime())) {
+    throw new ActionError('La fecha efectiva de la tasa no es válida', 'VALIDATION_ERROR');
+  }
   try {
     const resultado = await prisma.$transaction(async (tx: any) => {
+      const accountingPolicy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const effectiveAt = parsed.moneda === 'CUP' ? fechaCompra : fechaTasa;
+      let valuation;
+      try {
+        valuation = await resolveTenantInventoryCostValuation(tx, {
+          amount: total,
+          sourceCurrency: parsed.moneda,
+          functionalCurrency: accountingPolicy.functionalCurrencyCode,
+          exchangeRateToCup: parsed.tasaCambio,
+          effectiveAt,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('COST_FX_RATE_MISSING')) {
+          throw new ActionError('Falta evidencia FX para valorar el inventario en moneda funcional', 'FX_INSUFICIENTE');
+        }
+        throw error;
+      }
+      const conversion = {
+        montoConvertido: valuation.amount.toNumber(),
+        tasaCambio: valuation.exchangeRate.toNumber(),
+        fxEvidence: {
+          functionalCurrency: valuation.evidence.functionalCurrency,
+          ...(valuation.evidence.rateEffectiveAt
+            ? { rateEffectiveAt: new Date(valuation.evidence.rateEffectiveAt) }
+            : {}),
+          fxProvenanceKind: valuation.evidence.fxProvenanceKind,
+          fxProvenanceSource: valuation.evidence.fxProvenanceSource,
+          fxCatalogRateId: valuation.evidence.fxCatalogRateId,
+          fxEvidenceFingerprint: valuation.evidence.fxEvidenceFingerprint,
+          fxEvidenceVersion: valuation.evidence.fxEvidenceVersion,
+        },
+      };
       let ordenVinculada: any = null;
       const preciosOc = new Map<string, number>();
 
@@ -201,7 +243,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       for (const [productoId, agregado] of agregados) {
         const producto = productos.get(productoId);
         const stockAntes = await getStockTotalProducto(tx, { productoId });
-        const precioFactura = agregado.costoTotal / agregado.cantidad;
+        const precioFactura = (agregado.costoTotal / agregado.cantidad) * conversion.tasaCambio;
         const nuevoPrecioCosto = ordenVinculada
           ? {
               precioCostoNuevo: stockAntes > 0
@@ -231,12 +273,15 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           facturaUrl: parsed.facturaUrl || '',
           formaPago: parsed.formaPago,
           moneda: parsed.moneda,
+          tasaCambio: conversion.tasaCambio,
+          montoConvertido: conversion.montoConvertido,
+          ...conversion.fxEvidence,
           estado: parsed.estado,
           total,
           descripcion: parsed.descripcionCompra || null,
           ordenCompraId: parsed.ordenCompraId,
           claveIdempotencia: parsed.claveIdempotencia || null,
-          fechaCompra: new Date(),
+          fechaCompra,
           tipoOperacion: 'REGULAR',
         },
       });
@@ -274,7 +319,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
               oldPrecioVenta: ajuste.producto.precioVenta,
               newPrecioVenta: ajuste.producto.precioVenta,
               reason: CostChangeReason.RESTOCK,
-              changedBy: user.userId || 'system',
+              changedBy: user.userId,
               notes: `Compra x${ajuste.cantidad} - Factura ${parsed.numeroFactura || 'N/A'}`,
             });
           } catch (error) {
@@ -311,7 +356,9 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
       }
 
-      if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
+      let cxpAnticipoId: string | undefined;
+      if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL' ||
+        parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
       const now = new Date();
       const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         const primeraLinea = parsed.items[0];
@@ -333,12 +380,33 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         },
       });
 
+      if (parsed.formaPago === 'PAGO_COMPLETO') {
+        await applyPagoGastoWorkflow(tx, {
+          tipoGasto: 'compra',
+          referenciaId: gastoCompra.gastoCompraId,
+          reconciliadoPor: user.userId,
+          descripcion: `Compra pagada ${parsed.numeroFactura || compra.compraDocumentoId}`,
+          monto: total,
+          moneda: parsed.moneda,
+          functionalCurrency: conversion.fxEvidence.functionalCurrency,
+          tenantId,
+          tasaCambio: conversion.tasaCambio,
+          tasaCambioCuenta: parsed.tasaCambio,
+          periodo,
+          estado: 'PAGADA',
+          gastoCompraId: gastoCompra.gastoCompraId,
+          cuentaId: parsed.cuentaId,
+          tipoPagoId: parsed.tipoPagoId,
+          fechaPago: fechaTasa ?? now,
+        });
+      }
+
       await tx.compraDocumento.update({
         where: { compraDocumentoId: compra.compraDocumentoId },
         data: { gastoCompraId: gastoCompra.gastoCompraId },
       });
 
-      if (parsed.formaPago === 'PAGO_PARCIAL') {
+      if (parsed.formaPago === 'PAGO_PARCIAL' || parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
         const cxp = await tx.cuentaPorPagar.create({
           data: {
             tenantId,
@@ -347,12 +415,27 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
             montoDeuda: total,
             saldoPendiente: total,
             moneda: parsed.moneda,
+            fxSnapshot: {
+              originalAmount: String(total), originalCurrency: parsed.moneda.trim().toUpperCase(),
+              functionalAmount: String(compra.montoConvertido ?? total),
+              functionalCurrency: compra.functionalCurrency ?? 'CUP',
+              exchangeRate: String(compra.tasaCambio ?? 1),
+              rateEffectiveAt: compra.rateEffectiveAt?.toISOString() ?? '',
+              fxProvenanceKind: compra.fxProvenanceKind ?? 'SAME_CURRENCY',
+              fxProvenanceSource: compra.fxProvenanceSource ?? 'compra-documento',
+              fxCatalogRateId: compra.fxCatalogRateId ?? null,
+              fxEvidenceFingerprint: compra.fxEvidenceFingerprint,
+              fxEvidenceVersion: compra.fxEvidenceVersion ?? 2,
+            },
             estado: 'PENDIENTE',
             tipo: 'compra',
             proveedorId: parsed.proveedorId,
             proveedorNombre: proveedor.nombre,
           },
         });
+        if (parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
+          cxpAnticipoId = cxp.cuentaPorPagarId;
+        }
 
         await tx.compraDocumento.update({
           where: { compraDocumentoId: compra.compraDocumentoId },
@@ -362,12 +445,17 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         // Capa de contabilidad formal (CTA-1): compra a crédito → inventario vs CxP.
         await postEvento(
           tx,
-          { tenantId, userId: user.userId || 'system' },
+          { tenantId, userId: user.userId },
           buildEventoCompraCredito({
             compraId: compra.compraDocumentoId,
             monto: total,
             moneda: parsed.moneda,
+            montoFuncional: Number(compra.montoConvertido),
+            tasaCambio: compra.tasaCambio == null ? null : Number(compra.tasaCambio),
+            fxEvidenceFingerprint: compra.fxEvidenceFingerprint ?? null,
+            monedaFuncionalCodigo: compra.functionalCurrency ?? 'CUP',
             descripcion: `Compra a crédito ${parsed.numeroFactura || compra.compraDocumentoId}`,
+            fecha: compra.fechaCompra,
             referencia: parsed.numeroFactura || undefined,
           }),
         );
@@ -382,6 +470,16 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           documentoDestinoId: compra.compraDocumentoId, contexto: 'COMPRA_PRODUCTO',
           idempotencyKey: parsed.idempotencyKey,
           usuarioId: user.userId, observaciones: `Pago de compra ${compra.compraDocumentoId}`,
+          proveedorId: parsed.proveedorId, monedaDocumento: parsed.moneda,
+          monedaFuncionalDocumento: compra.functionalCurrency ?? 'CUP',
+          montoFuncionalDocumento: compra.montoConvertido ?? total,
+        });
+        if (!cxpAnticipoId) {
+          throw new ActionError('La compra no conserva su obligación bruta', 'VALIDATION_ERROR');
+        }
+        await tx.cuentaPorPagar.updateMany({
+          where: { cuentaPorPagarId: cxpAnticipoId, tenantId },
+          data: { montoPagado: total, saldoPendiente: 0, estado: 'PAGADA' },
         });
       }
       }
@@ -424,8 +522,9 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
       if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
 
       if (data.formaPago !== existing.formaPago) {
-        await reconcileFormaPago(tx, existing, data.formaPago ?? '');
+        assertFormaPagoTransitionAllowed(existing, data.formaPago ?? '');
       }
+      assertCompraEstadoCompatible(data.formaPago ?? existing.formaPago, data.estado, existing.estado);
 
       return tx.compraDocumento.update({
         where: { compraDocumentoId },
@@ -442,6 +541,7 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
     where: { compraDocumentoId, tenantId },
   });
   if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
+  assertCompraEstadoCompatible(existing.formaPago, data.estado, existing.estado);
 
   const updated = await prisma.compraDocumento.update({
     where: { compraDocumentoId },
@@ -454,13 +554,15 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
 });
 
 /**
- * @description Reconcilia entidades contables al cambiar formaPago de una compra.
+ * @description Valida un cambio de forma de pago sin revertir efectos financieros.
+ * @param {Awaited<ReturnType<typeof prisma.compraDocumento.findFirst>> & { cuentaPorPagar: any }} compra - Compra existente.
+ * @param {string} nuevaFormaPago - Forma de pago solicitada.
+ * @returns {void} No retorna si el cambio no produce inconsistencias.
  */
-async function reconcileFormaPago(
-  tx: any,
+function assertFormaPagoTransitionAllowed(
   compra: Awaited<ReturnType<typeof prisma.compraDocumento.findFirst>> & { cuentaPorPagar: any },
   nuevaFormaPago: string,
-): Promise<void> {
+): void {
   const oldFormaPago = compra.formaPago;
 
   if (oldFormaPago === FORMA_PAGO_ANTICIPO_PAGO || nuevaFormaPago === FORMA_PAGO_ANTICIPO_PAGO) {
@@ -470,58 +572,46 @@ async function reconcileFormaPago(
     );
   }
 
-  if (oldFormaPago === 'PAGO_PARCIAL' && nuevaFormaPago === 'PAGO_COMPLETO') {
-    if (!compra.cuentaPorPagarId || !compra.cuentaPorPagar) {
-      throw new ActionError(
-        'La compra no tiene cuenta por pagar asociada pero la forma de pago es PAGO_PARCIAL. Inconsistencia de datos.',
-        'DATA_INCONSISTENCY',
-      );
-    }
-
-    const cxp = compra.cuentaPorPagar;
-    if (Number(cxp.saldoPendiente) < Number(cxp.montoDeuda)) {
-      throw new ActionError(
-        'No se puede cambiar la forma de pago porque la cuenta por pagar tiene pagos parciales aplicados. Revierta los pagos desde Contabilidad primero.',
-        'CXP_HAS_PAYMENTS',
-      );
-    }
-
-    await tx.cuentaPorPagar.delete({
-      where: { cuentaPorPagarId: compra.cuentaPorPagarId },
-    });
-
-    await tx.compraDocumento.update({
-      where: { compraDocumentoId: compra.compraDocumentoId },
-      data: { cuentaPorPagarId: null },
-    });
+  if (oldFormaPago === 'PAGO_PARCIAL' && nuevaFormaPago === 'PAGO_COMPLETO'
+    && compra.cuentaPorPagar
+    && Number(compra.cuentaPorPagar.saldoPendiente) < Number(compra.cuentaPorPagar.montoDeuda)) {
+    throw new ActionError(
+      'La cuenta por pagar ya tiene pagos parciales. Revierta los pagos desde Contabilidad primero.',
+      'CXP_HAS_PAYMENTS',
+    );
   }
 
-  if (oldFormaPago === 'PAGO_COMPLETO' && nuevaFormaPago === 'PAGO_PARCIAL') {
-    if (compra.cuentaPorPagarId) {
-      throw new ActionError(
-        'La compra ya tiene cuenta por pagar asociada pero la forma de pago es PAGO_COMPLETO. Inconsistencia de datos.',
-        'DATA_INCONSISTENCY',
-      );
-    }
+  if (oldFormaPago === 'PAGO_COMPLETO' || nuevaFormaPago === 'PAGO_COMPLETO') {
+    throw new ActionError(
+      'No se puede cambiar la forma de pago porque requiere registrar o revertir el movimiento bancario desde Contabilidad.',
+      'FORMA_PAGO_RECONCILIATION_NOT_IMPLEMENTED',
+    );
+  }
+}
 
-    const cxp = await tx.cuentaPorPagar.create({
-      data: {
-        tenantId: compra.tenantId,
-        numeroFactura: compra.numeroFactura || '',
-        gastoCompraId: compra.gastoCompraId || undefined,
-        montoDeuda: compra.total,
-        saldoPendiente: compra.total,
-        moneda: compra.moneda ?? 'CUP',
-        estado: 'PENDIENTE',
-        tipo: 'compra',
-        proveedorId: compra.proveedorId,
-      },
-    });
-
-    await tx.compraDocumento.update({
-      where: { compraDocumentoId: compra.compraDocumentoId },
-      data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
-    });
+/**
+ * @description Evita cambiar el estado pagado sin que coincida con la forma de pago.
+ * @param {string} formaPago - Forma de pago vigente o solicitada.
+ * @param {string | undefined} nuevoEstado - Estado solicitado.
+ * @param {string | undefined} estadoActual - Estado persistido.
+ * @returns {void} No retorna si el cambio es compatible.
+ */
+function assertCompraEstadoCompatible(
+  formaPago: string,
+  nuevoEstado: string | undefined,
+  estadoActual: string | undefined,
+): void {
+  if (!nuevoEstado || nuevoEstado === estadoActual) return;
+  const estadoEsperado = formaPago === 'PAGO_COMPLETO'
+    ? 'PAGADA'
+    : formaPago === 'PAGO_PARCIAL'
+      ? 'PENDIENTE'
+      : null;
+  if (estadoEsperado && nuevoEstado !== estadoEsperado) {
+    throw new ActionError(
+      'El estado de la compra no puede cambiarse sin registrar o revertir el pago correspondiente desde Contabilidad.',
+      'COMPRA_ESTADO_RECONCILIATION_NOT_IMPLEMENTED',
+    );
   }
 }
 
@@ -657,6 +747,10 @@ export const anularCompraProductoAction = withAction(async (input: { id: string;
     if (marcada.count !== 1) {
       throw new ActionError('La compra ya está anulada', 'VALIDATION_ERROR');
     }
+
+    await reverseFormalEntries(tx, { tenantId, userId: user.userId }, [
+      { tipo: 'compra_documento', id: compra.compraDocumentoId },
+    ]);
 
     if (compra.cuentaPorPagar) {
       const cxp = compra.cuentaPorPagar;

@@ -14,7 +14,6 @@ import {
 	isGastoWorkflowError,
 } from "@/lib/services/pago-gastos-workflow";
 import { exchangeRateProvider } from "./services/exchange-rate-provider";
-import { AuditLogService } from "@/lib/services/audit-log-service";
 import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import {
@@ -313,21 +312,6 @@ export const reconciliarVentaAction = withAction(
 				fxCatalogRateId,
 			});
 
-			AuditLogService.log({
-				accion: "CREATE",
-				entidad: "RECONCILIACION",
-				entidadId: result.reconciliacionId,
-				usuarioId: user.userId,
-				detalles: {
-					tipo: "VENTA",
-					ventaId: input.ventaId,
-					cuentaId: input.cuentaId,
-					tipoPagoId: input.tipoPagoId,
-					monto: input.monto,
-					moneda: input.moneda || "CUP",
-				},
-			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion venta:", err));
-
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 			revalidatePath("/busy/contabilidad");
@@ -453,154 +437,18 @@ export const reconciliarServicioAction = withAction(
 					monto: number;
 					moneda?: string;
 					tasaCambio?: number;
+					fechaTasa?: string;
 					observaciones?: string;
 				}>;
 				fechaReconciliacion?: string;
+				idempotencyKey?: string;
 			},
 			user: AuthenticatedUser,
 		) => {
 			requireFeature(user, 'servicios', 'reconciliar servicios');
-			const tenantId = requireTenant(user);
+			requireTenant(user);
 			requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar servicios');
-
-			if (!input.distribuciones?.length) {
-				throw new ActionError(
-					"Debe incluir al menos una distribución",
-					"INVALID_INPUT",
-				);
-			}
-
-			const result = await prisma.$transaction(async (tx) => {
-				await acquireAccountingTenantLock(tx, tenantId);
-				// Verificar el total del servicio
-				const servicio = await tx.ventaServicios.findFirst({
-					where: { ventaServicioId: input.ventaServicioId, tenantId },
-					select: { total: true, reconciliado: true },
-				});
-				if (!servicio) {
-					throw new ActionError("Servicio no encontrado", "NOT_FOUND");
-				}
-				if (servicio.reconciliado) {
-					throw new ActionError('Servicio ya reconciliado', 'ALREADY_RECONCILED');
-				}
-
-				const montoTotalDistribuido = input.distribuciones.reduce(
-					(sum, d) => sum + d.monto,
-					0,
-				);
-				const precioServicio = Number(servicio.total);
-
-				if (Math.abs(montoTotalDistribuido - precioServicio) > 0.01) {
-					throw new ActionError(
-						`El monto total distribuido (${montoTotalDistribuido.toFixed(2)}) debe ser igual al precio del servicio (${precioServicio.toFixed(2)})`,
-						"VALIDATION_ERROR",
-					);
-				}
-
-				// Crear todas las reconciliaciones e incrementar saldos en una sola transacción
-				for (const dist of input.distribuciones) {
-					const cuenta = await tx.cuentaBancaria.findFirst({
-						where: { cuentaId: dist.cuentaId, tenantId, isActive: true },
-					});
-					const tipoPago = await tx.tipoPago.findFirst({
-						where: { tipoId: dist.tipoPagoId, tenantId, isActive: true },
-					});
-					if (!cuenta || !tipoPago) {
-						throw new ActionError('Cuenta o tipo de pago no encontrado', 'NOT_FOUND');
-					}
-					// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
-					const saldoActualizado = await tx.cuentaBancaria.updateMany({
-						where: { cuentaId: dist.cuentaId, tenantId },
-						data: { saldo: { increment: dist.monto } },
-					});
-					if (saldoActualizado.count !== 1) {
-						throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
-					}
-
-					const fechaDistribucion = input.fechaReconciliacion
-						? new Date(input.fechaReconciliacion)
-						: new Date();
-					let distRateId: string | null = null;
-					if ((dist.moneda || 'CUP').trim().toUpperCase() !== 'CUP') {
-						try {
-							const rate = await exchangeRateProvider.getRateAsOf({
-								sourceCurrency: dist.moneda || 'CUP',
-								boundaryAt: fechaDistribucion,
-							});
-							distRateId = rate?.tasaId ?? null;
-						} catch {
-							distRateId = null;
-						}
-					}
-					const conversion = buildPersistedAccountingAmount(
-						dist.monto,
-						dist.moneda || 'CUP',
-						dist.tasaCambio,
-						fechaDistribucion,
-						distRateId,
-					);
-
-					const reconciliacion = await tx.reconciliacionServicio.create({
-						data: {
-							ventaServicioId: input.ventaServicioId,
-							cuentaId: dist.cuentaId,
-							tipoPagoId: dist.tipoPagoId,
-							monto: dist.monto,
-							moneda: dist.moneda || "CUP",
-							montoConvertido: conversion.montoConvertido,
-							tasaCambio: conversion.tasaCambio,
-							fechaReconciliacion: fechaDistribucion,
-							...(conversion.fxEvidence ?? {}),
-							observaciones: dist.observaciones,
-							tenantId,
-							reconciliadoPor: user.userId,
-						},
-					});
-					if (reconciliacion.moneda !== 'CUP' &&
-						(!reconciliacion.fxEvidenceFingerprint || !reconciliacion.tasaCambio ||
-							reconciliacion.montoConvertido == null)) {
-						throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
-					}
-					await postEvento(tx, { tenantId, userId: user.userId }, buildEventoServicio({
-						cobro: true,
-						reconciliacionId: reconciliacion.reconciliacionId,
-						fecha: reconciliacion.fechaReconciliacion,
-						tesoreria: {
-							monto: Number(reconciliacion.monto),
-							moneda: reconciliacion.moneda,
-							montoFuncional: Number(reconciliacion.montoConvertido),
-							tasaCambio: reconciliacion.tasaCambio
-								? Number(reconciliacion.tasaCambio) : null,
-							fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
-							tipoCuenta: cuenta.tipoCuenta,
-						},
-					}));
-				}
-
-				// Marcar el servicio como reconciliado
-				await tx.ventaServicios.updateMany({
-					where: { ventaServicioId: input.ventaServicioId, tenantId },
-					data: { reconciliado: true },
-				});
-
-				return {
-					reconciliado: true,
-					distribuciones: input.distribuciones.length,
-				};
-			});
-
-			AuditLogService.log({
-				accion: "CREATE",
-				entidad: "RECONCILIACION",
-				entidadId: `SERV-${input.ventaServicioId}`,
-				usuarioId: user.userId,
-				detalles: {
-					tipo: "SERVICIO",
-					ventaServicioId: input.ventaServicioId,
-					distribuciones: input.distribuciones,
-					moneda: "CUP",
-				},
-			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion servicio:", err));
+			const result = await AccountingReconciliationService.reconcileService({ input, user });
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad");
@@ -1079,28 +927,6 @@ export const reconciliarGastoAction = withAction(
 						distribucion,
 					});
 				});
-
-				const auditReferenciaId =
-					input.gastosDEId ||
-					input.pgId ||
-					input.gastoCompraId ||
-					input.compraServicioId ||
-					input.ventaServicioId;
-
-				AuditLogService.log({
-					accion: "CREATE",
-					entidad: "RECONCILIACION",
-					entidadId: (result as any)?.reconciliacionId || `GASTO-${auditReferenciaId}`,
-					usuarioId: user.userId,
-					detalles: {
-						tipo: tipoGasto,
-						referenciaId: auditReferenciaId,
-						cuentaId: input.cuentaId,
-						tipoPagoId: input.tipoPagoId,
-						monto: input.monto,
-						moneda: input.moneda || "CUP",
-					},
-				}).catch((err) => console.error("[AuditLog] Error logging reconciliacion gasto:", err));
 
 				revalidatePath("/busy/contabilidad/reconciliacion");
 				if (input.cuentaPorPagarId) {

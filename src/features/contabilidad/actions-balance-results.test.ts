@@ -28,7 +28,7 @@ const user = {
 describe('getBalanceResultsAction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getCurrentUser).mockResolvedValue(user);
+    vi.mocked(getCurrentUser).mockResolvedValue(user as never);
     serviceMock.getBalanceResultsReport.mockResolvedValue({
       balance: {},
       estadoResultados: {},
@@ -38,7 +38,7 @@ describe('getBalanceResultsAction', () => {
 
   it('requires the accounting feature and delegates the normalized input', async () => {
     const result = await getBalanceResultsAction({
-      year: '2026',
+      year: 2026,
       cutoffAt: '2026-08-21T15:30:00.000Z',
       moneda: 'cup',
     });
@@ -57,7 +57,7 @@ describe('getBalanceResultsAction', () => {
 
   it('returns a validation error for an invalid period or cutoff', async () => {
     const result = await getBalanceResultsAction({
-      year: 'not-a-year',
+      year: 'not-a-year' as unknown as number,
       cutoffAt: 'not-a-date',
     });
 
@@ -72,7 +72,7 @@ describe('getBalanceResultsAction', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...user,
       planFeatures: { contabilidad: false },
-    });
+    } as never);
 
     const result = await getBalanceResultsAction({});
 
@@ -84,7 +84,7 @@ describe('getBalanceResultsAction', () => {
   });
 
   it('returns a tenant error when no company is selected', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue({ ...user, tenantId: undefined });
+    vi.mocked(getCurrentUser).mockResolvedValue({ ...user, tenantId: undefined } as never);
 
     const result = await getBalanceResultsAction({});
 

@@ -111,7 +111,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       nombre: 'Receta Test',
       rendimiento: 2,
       precioCostoProductoFinal: 100,
-    }))
+    }) as never)
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 0,
@@ -131,7 +131,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     ])
 
     // Mock calculateCostoUnitarioReceta to return 75 ((100 + 50) / 2)
-    vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(75)
+    vi.mocked(calculateCostoUnitarioReceta as never).mockReturnValueOnce(75)
 
     const mockRecetaActualizada = {
       recetaId,
@@ -167,7 +167,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       ],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as never)
 
     const request = createIngredientesRequest(recetaId, [
       {
@@ -232,7 +232,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       nombre: 'Receta Compleja',
       rendimiento: 4,
       precioCostoProductoFinal: 200,
-    }))
+    }) as never)
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 0,
@@ -311,7 +311,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       ],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as never)
 
     const request = createIngredientesRequest(recetaId, [
       {
@@ -346,7 +346,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       nombre: 'Receta Vacía',
       rendimiento: 1,
       precioCostoProductoFinal: 100,
-    }))
+    }) as never)
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 2,
@@ -372,7 +372,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       RecetaIngrediente: [],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as never)
 
     const request = createIngredientesRequest(recetaId, [])
 
@@ -394,7 +394,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       nombre: 'Receta Normalizada',
       rendimiento: 1,
       precioCostoProductoFinal: 10,
-    }))
+    }) as never)
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({ count: 0 })
     vi.mocked(prisma.recetaIngrediente.createMany).mockResolvedValueOnce({ count: 1 })
@@ -454,7 +454,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.unitNormalizations).toEqual([
+    expect(data.unitNormalizations as never).toEqual([
       {
         productoId: 'prod-1',
         productoNombre: 'Harina',
@@ -485,7 +485,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       nombre: 'Receta Inválida',
       rendimiento: 1,
       precioCostoProductoFinal: 10,
-    }))
+    }) as never)
 
     vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
       {

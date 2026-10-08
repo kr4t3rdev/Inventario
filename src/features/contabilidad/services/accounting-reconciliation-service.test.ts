@@ -36,7 +36,7 @@ const user = {
   userId: 'actor-1', tenantId: 'tenant-1', role: 'regularUser', tenantRole: 'economico',
   permissions: new Set(['financiero.contabilidad.acceder']),
   planFeatures: { contabilidad: true, servicios: true },
-} as Parameters<
+} as unknown as Parameters<
   typeof AccountingReconciliationService.reconcileService
 >[0]['user'];
 

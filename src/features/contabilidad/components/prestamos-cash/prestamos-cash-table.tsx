@@ -409,7 +409,7 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
       cell: ({ row }) => {
         const cpc = row.original.cuentaPorCobrar
         const saldo = cpc
-          ? calcularSaldoPendientePrestamo(Number(cpc.montoDeuda), Number(cpc.montoPagado))
+          ? calcularSaldoPendientePrestamo(Number(cpc.montoDeuda), Number(cpc.montoPagado)).toNumber()
           : Number(row.original.montoCapital)
         return (
           <span className={cn("font-medium", saldo > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>

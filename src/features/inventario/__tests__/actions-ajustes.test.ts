@@ -111,6 +111,7 @@ describe('createAjusteAction', () => {
 	it('rechaza ajuste sin diferencia', async () => {
 		const result = await createAjusteAction({ ...baseInput, cantidadContada: 10 } as any);
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe('SIN_DIFERENCIA');
 	});
 
@@ -120,6 +121,7 @@ describe('createAjusteAction', () => {
 		const result = await createAjusteAction(baseInput as any);
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe('CONTEO_ACTIVO');
 	});
 
@@ -132,6 +134,7 @@ describe('createAjusteAction', () => {
 		const result = await createAjusteAction(baseInput as any);
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 });

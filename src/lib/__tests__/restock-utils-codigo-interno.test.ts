@@ -13,6 +13,7 @@ const baseProduct = {
   precioCosto: 100,
   precioVenta: 150,
   stock: 20,
+  stockMinimo: 5,
   fotos: [],
   categoriaId: 'cat-1',
   unidadId: 'unit-1',

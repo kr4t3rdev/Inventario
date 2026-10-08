@@ -140,6 +140,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "test@example.com", password: "wrong" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("INVALID_CREDENTIALS");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
@@ -151,6 +152,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "test@example.com", password: "password123" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("USER_INACTIVE");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
@@ -163,6 +165,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "locked@example.com", password: "password123" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("ACCOUNT_LOCKED");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
@@ -187,6 +190,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "no-es-un-email", password: "password123" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 

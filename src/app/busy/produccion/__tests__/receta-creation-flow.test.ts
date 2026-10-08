@@ -18,7 +18,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
       nombreReceta: '',
       rendimiento: 1,
       selectedProducto: '',
-      nuevoItems: [],
+      nuevoItems: [] as { productoId: string; cantidad: number; unidadSimbolo: string; desperdicio: number }[],
       busquedaProductos: '',
       dialogRecetaOpen: false,
     }
@@ -154,7 +154,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe prevenir agregar el mismo producto dos veces', async () => {
-    let nuevoItems = [
+    let nuevoItems: { productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }[] = [
       { productoId: 'p1', cantidad: 1, unidadSimbolo: null, desperdicio: 0 },
     ]
 

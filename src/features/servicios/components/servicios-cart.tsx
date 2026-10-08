@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -70,6 +70,9 @@ export default function ServiciosCart({
 	const [formaPago, setFormaPago] = useState<"PAGO_COMPLETO" | "PAGO_PARCIAL">(
 		"PAGO_COMPLETO",
 	);
+	// La clave vive durante todo el intento de venta. Si la red falla, el
+	// reintento conserva la misma clave y el servidor devuelve el replay.
+	const pendingVentaIdempotencyKey = useRef<string | null>(null);
 
 	// El carrito puede mezclar monedas: los totales se calculan agrupados por
 	// moneda y nunca se suman importes cruzados.
@@ -127,7 +130,10 @@ export default function ServiciosCart({
 		setIsProcessing(true);
 		try {
 			if (mode === "VENTA") {
+				const idempotencyKey = pendingVentaIdempotencyKey.current ?? crypto.randomUUID();
+				pendingVentaIdempotencyKey.current = idempotencyKey;
 				const result = await createVentaServicioAction({
+					idempotencyKey,
 					clienteId: selectedClienteId,
 					condicionPago: 'CONTADO',
 					observaciones: observaciones || undefined,
@@ -141,6 +147,7 @@ export default function ServiciosCart({
 				if (!result.success) {
 					throw new Error(result.error?.message ?? "Error desconocido");
 				}
+				pendingVentaIdempotencyKey.current = null;
 			} else {
 				// Compra: cada línea del carrito se vuelve un registro CompraServicio.
 				await Promise.all(

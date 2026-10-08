@@ -166,8 +166,9 @@ export interface Anticipo {
 	contratoId: string;
 	proveedorId?: string;
 	clienteId?: string;
-	cuentaOrigenId?: string;
-	tipoPagoOrigenId?: string;
+	cuentaOrigenId: string;
+	tipoPagoOrigenId: string;
+	idempotencyKey?: string;
 	referenciaExterna?: string;
 	vigenciaHasta?: string;
 	fechaReserva: string;
@@ -185,8 +186,8 @@ export interface CreateAnticipoRequest {
 	clienteId?: string;
 	monto: number;
 	moneda: string;
-	cuentaOrigenId?: string;
-	tipoPagoOrigenId?: string;
+	cuentaOrigenId: string;
+	tipoPagoOrigenId: string;
 	referenciaExterna?: string;
 	vigenciaHasta?: string;
 }

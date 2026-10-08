@@ -25,7 +25,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockProfileRow = {
@@ -47,11 +47,12 @@ describe('Profile Server Actions', () => {
   describe('getProfileAction', () => {
     it('retorna perfil del usuario autenticado', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockProfileRow);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockProfileRow as never);
 
       const result = await getProfileAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.name).toBe('Test User');
     });
 
@@ -62,6 +63,7 @@ describe('Profile Server Actions', () => {
       const result = await getProfileAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -69,11 +71,12 @@ describe('Profile Server Actions', () => {
   describe('updateProfileAction', () => {
     it('actualiza perfil exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.user.update).mockResolvedValue({ ...mockProfileRow, name: 'Nuevo Nombre' });
+      vi.mocked(prisma.user.update).mockResolvedValue({ ...mockProfileRow, name: 'Nuevo Nombre' } as never);
 
       const result = await updateProfileAction({ name: 'Nuevo Nombre' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.name).toBe('Nuevo Nombre');
     });
 
@@ -83,6 +86,7 @@ describe('Profile Server Actions', () => {
       const result = await updateProfileAction({ name: 'Test' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

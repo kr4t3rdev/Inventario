@@ -801,6 +801,31 @@ describe("assertWritable estático", () => {
 		vi.clearAllMocks();
 	});
 
+	it('audita una vez fuera del writer con actor real, período y causa; falla cerrado si no persiste', async () => {
+		mockPrisma.periodoContable.findFirst.mockResolvedValue({
+			periodoId: 'p-1', tenantId: TENANT, tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.CERRADO,
+			fechaInicio: new Date('2026-02-01'), fechaFin: new Date('2026-02-28'),
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		process.env.PERIODO_CONTABLE_MODE = 'enforce';
+		const fecha = new Date('2026-02-15');
+		const contexto = { actorId: ACTOR, actorTipo: 'USUARIO' as const,
+			origen: { tipo: 'venta', id: 'v-1' } };
+		const result = await PeriodoGuard.assertWritable(fecha, TENANT, 'asiento', contexto);
+		expect(result.permitido).toBe(false);
+		expect(mockPrisma.auditoriaPeriodo.create).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.auditoriaPeriodo.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+			periodoId: 'p-1', tenantId: TENANT, evento: 'INTENTO_BYPASS', actor: ACTOR,
+			motivo: expect.stringContaining('cerrado'),
+			payload: expect.objectContaining({ fecha: fecha.toISOString(), tipoOperacion: 'asiento',
+				actorTipo: 'USUARIO', origen: contexto.origen }),
+		}) });
+		mockPrisma.auditoriaPeriodo.create.mockRejectedValueOnce(new Error('DB unavailable'));
+		await expect(PeriodoGuard.assertWritable(fecha, TENANT, 'asiento', contexto))
+			.rejects.toMatchObject({ code: 'AUDITORIA_FALLIDA' });
+	});
+
 	it("bloquea período cerrado", async () => {
 		mockPrisma.periodoContable.findFirst.mockResolvedValue({
 			periodoId: "p-1",

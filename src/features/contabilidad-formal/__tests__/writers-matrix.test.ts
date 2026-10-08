@@ -29,14 +29,14 @@ function isProductiveSource(path: string): boolean {
 }
 
 function findPostingCallsites(): Map<string, number> {
-	return new Map(
+		return new Map<string, number>(
 		listTypeScriptFiles(SOURCE_ROOT)
 			.filter(isProductiveSource)
-			.map((path) => [
+			.map((path): [string, number] => [
 				relative(ROOT, path),
 				(readFileSync(path, 'utf8').match(/\bpostEvento\s*\(/g) ?? []).length,
 			])
-			.filter(([, count]) => count > 0),
+				.filter(([, count]) => typeof count === 'number' && count > 0),
 	);
 }
 

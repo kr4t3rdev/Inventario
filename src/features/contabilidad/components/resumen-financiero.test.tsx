@@ -138,7 +138,7 @@ describe('ResumenFinanciero — Rediseño Fase 4', () => {
     p.data.monedas = [{ codigo: 'USD', esPrincipal: false }];
     p.data.resumen = {
       estadisticas: { periodo: { fechaInicio: '2026-01-01', fechaFin: '2026-01-31' } },
-      resumenPorMoneda: [{ moneda: 'USD', totalIngresos: 100, totalEgresos: 20, saldoActual: 80 }],
+      resumenPorMoneda: [{ moneda: 'USD', totalIngresos: 100, totalEgresos: 20 }],
     };
     getResumenCompletoAction.mockResolvedValue(p);
     render(<ResumenFinanciero periodo="enero" page={1} limit={10} />);

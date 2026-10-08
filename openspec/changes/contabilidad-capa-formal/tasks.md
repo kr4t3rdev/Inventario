@@ -2115,9 +2115,10 @@ V8 focal indicó 100% statements/functions/lines y 89.62% branches en los dos m�
 advirtió versiones mezcladas Vitest 3.2.4/coverage-v8 3.2.7, por lo que no se considera una
 certificación del gate global de cobertura/CI ni se cambiaron dependencias para ocultar el aviso.
 
-Este cierre actualiza solamente R5.5. R5.4 conserva su estado documental pendiente, R4 y los
-restantes gates R1–R7/aceptación operativa continúan separados. Sin commit/push, migración en
-producción ni activación de shadow/enforce/replay.
+Este cierre actualiza solamente R5.5. R5.4 queda técnicamente cerrado según la evidencia de
+persistencia y runtime descrita arriba; R4 y los restantes gates R1–R7/aceptación operativa
+continúan separados. Sin commit/push, migración en producción ni activación de
+shadow/enforce/replay.
 
 **Nota terminal R1.2/R1.5 (2026-09-29):** prevalece la decisión de `DESCARTADO` indicada
 arriba para ambos criterios de cierre de esta change. Las referencias anteriores a
@@ -2542,34 +2543,63 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 - [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
   **Firma 06-10 REABIERTA por auditoría 07-10** (`auditoria-correcciones-2026-10-07.md`):
-  la firma prematura no se sostenía; hallazgos A1–A10 corregidos uno por uno:
-  - A1 (venta-servicios): contrato idempotente en ambas ramas, hash canónico, envelope
-    estable — commit `25173027`; 40/40 tests.
-  - A2 (payload capital/ajuste/cash): comparación completa (tasaInteres, fechaOperacion,
-    tasaCambio, observaciones) — commits `074ade90` + `f7f712bc`; 12/12 tests.
-  - A5 (precisión): rutas legacy cash sin redondeo a 2 decimales, acumulan
-    montoPagadoFuncional — commit `68745b50`; 29/29 tests.
-  - A3+A4 (carreras/canales): lookup bajo lock, UI envía clave, móvil mapea 409 —
-    verificado; 3/3 tests de carrera.
-  - A6 (devengo directo): test reparado (inyecta usuario) — commit `61da7979`; 2/2.
-  - A7+A8 (orphans/períodos): 9 mutadores marcados, períodos con logStrict —
-    commit `bf404dbe`; 1/1 test.
-  Pendiente: re-firma global solo tras typecheck:tests verde y limpieza de fixtures.
-  Matriz `matriz-accept-r0.5.md`: 31/31 callsites inventariados; las 8 dimensiones
-  se acreditan por evidencia específica, no por conteo.
-  **Excepción resuelta 06-10:** `venta-servicios` recibió `idempotencyKey` + `@@unique([tenantId,
+  la firma prematura no se sostenía. A1–A6 tienen correcciones con evidencia focal;
+  A7 queda alineado en el inventario actual; A8–A10 permanecen pendientes de evidencia
+  operativa/física:
+  - A1 (venta-servicios): corte actual **actions 40/40** y `typecheck` de aplicación
+    verde. Los commits `25173027` y `0f2d3278` se conservan como historial de la
+    corrección, no como sustituto de esta evidencia. **Corte posterior:** el replay
+    legacy con anticipos devuelve ahora el mismo `allocationsResult` en creación y
+    reintento normal/P2002; acciones focales **42/42**.
+  - A2 (payload capital/ajuste/cash): bloque actual A2/A3/A5 con **84/84 unitarios**
+    y **12 integraciones**; compara los campos funcionales documentados. Los commits
+    `074ade90` y `f7f712bc` quedan como historial, no como conteo vigente.
+  - A5 (precisión): incluida en el bloque actual A2/A3/A5 (**84/84 unitarios + 12
+    integraciones**). Además, los modales web de pago de préstamo y deuda conservan
+    la precisión de cuatro decimales (`step=0.0001`, presentación `toFixed(4)`) y
+    propagan una clave por intento lógico; prueba focal de UI **4/4**. El commit
+    `68745b50` se conserva únicamente como historial.
+  - A3+A4 (carreras/canales): A3 está incluida en el bloque actual A2/A3/A5
+    (**84/84 unitarios + 12 integraciones**); A4 tiene `cash-actions` integración
+    **4/4**, con altas, deuda y pagos parciales, y schemas con `idempotencyKey`.
+  - A6 (devengo directo): `service-devengo-directo-real.test.ts` **2/2** y
+    `service-credit-cxc-real.test.ts` **2/2**. El commit `61da7979` se conserva como
+    historial de la reparación del fixture.
+  - A7 (orphans): el código actual marca nominativamente los 9 mutadores legacy sin
+    callers (6 en `api/handlers.ts`, 3 en `api/exchange-handlers.ts`); la disposición
+    queda documentada abajo. Esto no certifica rollback ni aceptación global.
+  - A8 (períodos/rollback): `periodo-rollback-real.test.ts` **1/1** y
+    `cuentas-audit-rollback-real.test.ts` **1/1** en PostgreSQL desechable. La segunda
+    cubre rollback físico por fallo de `AuditLog` en CxP create, CxC create/update/anular;
+    A8 sigue pendiente para aceptación global porque no acredita por sí sola el
+    commit/entorno de períodos ni el baseline operativo.
+  - A10 (snapshots cash): `cash-snapshots-real.test.ts` **4/4** y cierre formal
+    focal **8/8** en PostgreSQL desechable; `CashSnapshotService` reutiliza el cliente
+    transaccional del cierre y revierte junto con el período. La captura queda
+    explícitamente limitada al estado observado al instante: no reconstruye históricos
+    por fecha de corte, por lo que A10 sigue pendiente para aceptación global.
+  La tanda formal de siete suites queda en **194/194** tras corregir los fixtures de
+  replay, permisos y evidencia FX. El filtro de errores de `typecheck:tests` sobre
+  `contabilidad/**`, `contabilidad-formal/**` y el test CxC de venta-servicios queda
+  en **0**, pero el comando global sigue en `exit 2` con 65 errores fuera de ese
+  alcance; por ello la re-firma global sigue pendiente junto con la limpieza de
+  fixtures ajenos.
+  Matriz `matriz-accept-r0.5.md`: 31/31 callsites inventariados; el inventario no equivale
+  a 31/31 PASS en las 8 dimensiones. La matriz está reabierta para aceptación global.
+  **Historial de excepción 06-10:** `venta-servicios` recibió `idempotencyKey` + `@@unique([tenantId,
   idempotencyKey])` + migración `20261006120000_venta_servicios_idempotency`; el action maneja
   reintento (check previo) y carrera concurrente (P2002 → devuelve ganadoras). Commit `95a7e837`.
-  Evidencia de cierre: `completar-concurrente.test.ts` (producción: 5 concurrentes, 1 gana);
-  matriz actualizada con tests de reintento para cash web, bank ops, compras-servicios, producción
-  y venta-servicios.
+  La evidencia registrada entonces fue `completar-concurrente.test.ts` (producción: 5
+  concurrentes, 1 gana) y la actualización de la matriz con tests de reintento para cash web,
+  bank ops, compras-servicios, producción y venta-servicios; no sustituye la re-firma actual.
   Para cada writer probar actor/permiso, aislamiento tenant, referencia/origen único,
   moneda/FX, transacción, idempotencia/retry, error de posting/auditoría y rollback SQL.
   Incluir web, Server Actions, móvil y workflows; los unit tests mock no cuentan como prueba
   física de rollback.
   **Fase B 05-10:** matriz sistemática en `matriz-accept-r0.5.md` (31 callsites ×
-  adaptadores vivos × 8 dimensiones). Los 31 vivos están en ✅ para actor/permiso, tenant,
-  origen, FX, tx y posting/auditoría; G4 cerrado con el retiro de `reconciliarVentaDirecta`
+  adaptadores vivos × 8 dimensiones). Sus checks son evidencia focal/histórica, no una
+  certificación global: la aceptación permanece reabierta hasta resolver A8–A10 y los
+  gaps explícitos de Fase C. G4 sí queda cerrado con el retiro de `reconciliarVentaDirecta`
   (sin caller). Gaps para Fase C:
   - [x] G1: rollback físico por fallo de AuditLog en `pago-gastos-workflow` (trigger SQL
     que falle el AuditLog dentro del tx; revierte saldo, obligación, reconciliación y asiento).
@@ -2611,6 +2641,9 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     **Cerrado 05-10:** 6 adaptadores con test de reintento propio (no duplican):
     web (`prestamos-cash-pagar-real`, `deudas-cash-real`), mobile Bearer (`cash-loans-http-real`,
     `cash-debts-http-real`), actions (`cash-actions-retry-real`).
+    **Corte 07-10:** se corrigió además la propagación de `idempotencyKey` en los formularios
+    web de capital/ajuste, las rutas mobile correspondientes y los cinco esquemas OpenAPI;
+    evidencia focal 27/27. Esto no convierte G5 en aceptación global de todos los writers.
 - [x] **R0.5-LEGACY — Resolver los cinco writers/exclusiones históricas y handlers huérfanos.**
   **Cerrado 05-10:** verificadas las cinco tombstones de matriz (filas 8, 13–16): cero callers
   productivos para los módulos legacy de reconciliación de servicios, préstamos cash y deudas
@@ -2637,9 +2670,13 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   3 promesas flotantes (sin `await`) de `actions-cierres.ts`. `ExchangeRateProvider.createRate`
   acepta `client?: Prisma.TransactionClient` para que `updateTasaCambioAction` audite en la
   misma transacción que crea la tasa (patrón ya usado por `getPrincipalCurrency`). Política de
-  las 12 llamadas best-effort restantes del repo, fuera de este criterio: 6 en
-  `api/handlers.ts` + 3 en `api/exchange-handlers.ts` → R6-ORPHANS (exports legacy sin
-  callers); 3 en `admin/actions.ts` → fuera del scope contable (anotado en R6-ORPHANS).
+  las 12 llamadas best-effort restantes del repo, fuera de este criterio: 9
+  mutadores legacy sin callers → R6-ORPHANS (6 en `api/handlers.ts`:
+  `createInyeccionCapital`, `pagarDeudaCapital`, `createCierre`, `updateCierre`,
+  `deleteCierre`, `createAjusteBancario`; 3 en `api/exchange-handlers.ts`:
+  `createMoneda`, `updateMoneda`, `createTasa`); 3 logs en `admin/actions.ts` → fuera
+  del scope contable (anotado en R6-ORPHANS). Las lecturas legacy no se cuentan como
+  mutadores huérfanos.
   **Prueba de fallo de audit:** `src/features/contabilidad/__integration__/audit-config-rollback-real.test.ts`
   (PostgreSQL aislado; trigger `BEFORE INSERT ON "AuditLog"` con `RAISE EXCEPTION ... ERRCODE 22012`)
   → 2/2. Con la auditoría operativa los 5 writers de la matriz persisten la mutación y su fila
@@ -2650,26 +2687,29 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   32/32, actions tipos-pago 22/22, API tipos-pago 12/12, exchange 4/4, integracion-guard
   9/9 (2 todo), writers-matrix 1/1. Verificación: `pnpm exec tsc --noEmit --incremental false`
   → 0 errores; eslint focal sobre los 8 archivos fuente → 0.
-- [x] **R6-ORPHANS — Documentar los 9 exports legacy sin callers** (7 en
-  `api/handlers.ts`: `getExchangeImpactAnalysis`, `getComprobanteTransferencia`,
-  `pagarDeudaCapital`, `getAnticiposDisponibles`, `getAnticiposPorProveedor`,
-  `getAnticiposPorCliente`, `getContabilidadLogs`; 2 en `api/exchange-handlers.ts`:
-  `createTasa`, `getTasasHistorial`). **Cerrado 06-10 (documentar, no retirar):**
-  cero callers en `src/`, cero referencias en rutas `src/app/`, cero tests; marcados con
-  `@deprecated R6-ORPHANS` en el código. Tres logs de `admin/actions.ts` fuera del scope
-  contable. Si se confirma que no se necesitan, retirar en un change posterior.
-- [x] **R6-ROLLBACK — Pruebas PostgreSQL de fallo del AuditLog con rollback.**
-  **Cerrado 06-10:** cobertura de rollback por fallo de `AuditLog` (trigger `BEFORE INSERT`):
+- [x] **R6-ORPHANS — Documentar los 9 mutadores legacy sin callers.** Se verifican seis
+  en `api/handlers.ts` (`createInyeccionCapital`, `pagarDeudaCapital`, `createCierre`,
+  `updateCierre`, `deleteCierre`, `createAjusteBancario`) y tres en
+  `api/exchange-handlers.ts` (`createMoneda`, `updateMoneda`, `createTasa`); todos están
+  marcados `@deprecated R6-ORPHANS` junto a su definición y una búsqueda fresca no
+  encuentra callers en `src/`. Las lecturas legacy (`get*`) no son mutadores y no deben
+  inflar el inventario. Tres logs de `admin/actions.ts` quedan fuera del scope contable.
+  Esto cierra la **disposición documental** del residuo, no la aceptación R0.5/R6.
+- [ ] **R6-ROLLBACK — Pruebas PostgreSQL de fallo del AuditLog con rollback.**
+  Hay cobertura focal (trigger `BEFORE INSERT`):
   gasto (`pago-gastos-workflow-real.test.ts`, G1), 5 writers de configuración
   (`audit-config-rollback-real.test.ts` 2/2, R6-LOGS), anticipos
   (`anticipos-devengo-bruto-real`, `anticipos-fx-real`), transferencias
   (`accounting-bank-transfers-real`), cash (`prestamos-cash-pagar-real`, `deudas-cash-real`),
   servicios (`reconciliar-servicio-real`), períodos (`periodo-rollback-real.test.ts` 1/1:
   `cerrarPeriodoAction` revierte si falla el `INSERT` en `AuditLog`), ventas web
-  (trigger SQL real). CxP y CxC-anulación usan los mismos patrones `logStrict(tx)`; su
-  cobertura específica queda como mejora futura, no bloqueante.
-- [x] **R6-BASELINE — Baseline y guards verificados; plan para entornos heredados.**
-  **Cerrado 06-10:** `verify-accounting-sql-guards.mjs` confirma
+  (trigger SQL real). CxP y CxC-anulación usan los mismos patrones `logStrict(tx)`; la
+  cobertura física específica queda acreditada por `cuentas-audit-rollback-real.test.ts`
+  (1/1, cuatro operaciones —CxP create y CxC create/update/anular— bajo trigger SQL). La prueba contra el commit/entorno de
+  períodos y la cobertura global por writer siguen pendientes.
+  Los tests unitarios no sustituyen esa evidencia.
+- [ ] **R6-BASELINE — Completar baseline y guards por entorno; el plan heredado existe.**
+  **Evidencia parcial 06-10:** `verify-accounting-sql-guards.mjs` confirma
   `[db-guards] Required accounting SQL guards are present` en la DB desechable; las
   migraciones `20261005160000_merma_idempotency_key` y `20261006000000_ajuste_idempotency_key`
   son la fuente de verdad para entornos frescos (`prisma migrate deploy`). **TCPBD:**
@@ -2680,6 +2720,7 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   El smoke local no acredita despliegues existentes; cada entorno heredado requiere su
   propia corrida de guards antes de activar enforce.
 
-**Estado global:** R6 cerrado 06-10 (R6-LOGS, R6-ORPHANS, R6-ROLLBACK, R6-BASELINE).
-R0.5 permanece `[ ]` por writers/adaptadores no cubiertos. No activar modo operativo ni
-actualizar el baseline heredado como parte del inventario.
+**Estado global:** R6 permanece **abierto**: R6-LOGS y la disposición documental de
+R6-ORPHANS están verificadas, pero R6-ROLLBACK y R6-BASELINE siguen pendientes. R0.5
+permanece `[ ]`; A8–A10 impiden declarar aceptación global o activar modo operativo.
+El smoke local no actualiza el baseline de ningún entorno heredado.

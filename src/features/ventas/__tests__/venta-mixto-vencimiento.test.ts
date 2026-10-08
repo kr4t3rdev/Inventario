@@ -4,7 +4,7 @@
  * cuenta sólo el remanente (deuda realmente pendiente) y una porción que cubre
  * el total no crea CxC.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
 vi.mock('@/features/inventario/movimientos', () => ({ registrarMovimiento: vi.fn() }));
@@ -75,6 +75,17 @@ const ventaMixtoVencimiento = {
 	tipoVencimiento: 'fecha' as const,
 	fechaVencimiento: '2026-10-10',
 };
+
+// Estas pruebas ejercitan la lógica del writer con prisma mockeado: el gate
+// de la capa formal (licencia/savepoint/outbox) exige PostgreSQL real, así que
+// el modo queda fijado a 'off' y la cobertura en shadow/enforce vive en las
+// suites __integration__ correspondientes.
+const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+vi.stubEnv('CONTABILIDAD_FORMAL_MODE', 'off');
+afterAll(() => {
+	if (originalMode === undefined) vi.unstubAllEnvs();
+	else vi.stubEnv('CONTABILIDAD_FORMAL_MODE', originalMode);
+});
 
 beforeEach(() => {
 	vi.clearAllMocks();

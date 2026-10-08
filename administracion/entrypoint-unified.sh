@@ -23,10 +23,8 @@ run_migrations() {
     echo "[2/4] Ejecutando migraciones de base de datos..."
     cd /app
     
-    until npx prisma db push --accept-data-loss 2>/dev/null; do
-        echo "   Reintentando migración..."
-        sleep 2
-    done
+    npx prisma migrate deploy
+    node /app/scripts/ci/verify-accounting-sql-guards.mjs
     echo "   ✓ Migraciones completadas"
 }
 

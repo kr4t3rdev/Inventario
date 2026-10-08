@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NextRequest } from 'next/server'
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+type RawHandler = (request: NextRequest, context: any, user: AuthenticatedUser) => Promise<Response>;
 
 const mockPrisma = {
   moneda: {
@@ -21,7 +23,7 @@ vi.mock('@/lib/prisma', () => ({
   default: mockPrisma,
 }))
 
-const { PUT } = await import('../route')
+const { PUT } = await import('../route') as unknown as { PUT: RawHandler }
 
 describe('PUT /api/reparaciones/catalogo/config', () => {
   beforeEach(() => {

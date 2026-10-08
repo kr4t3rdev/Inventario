@@ -6,10 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Prisma } from '@/generated/prisma';
-import {
-	applyFacturacionCobroWorkflow,
-	reconciliarVentaDirecta,
-} from '@/features/ventas/services/facturacion-workflow';
+import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 
 const postEventoMock = vi.hoisted(() => vi.fn());
 const conversionMock = vi.hoisted(() => vi.fn());
@@ -72,49 +69,6 @@ function crearTx(cuenta: { cuentaId: string; moneda: string; tipoCuenta?: string
 	afterEach(() => {
 		if (originalFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
 		else process.env.CONTABILIDAD_FORMAL_MODE = originalFormalMode;
-	});
-
-	it('reconciliarVentaDirecta emite VENTA_CONTADO con la valoración heredada', async () => {
-		const tx = crearTx({ cuentaId: 'cta-bank', moneda: 'USD', tipoCuenta: 'AHORROS' });
-
-		await reconciliarVentaDirecta(tx as never, {
-			ventaId: 'venta-1',
-			montoTotal: 25,
-			usuarioId: 'u1',
-			tenantId: 'tenant-1',
-			observaciones: 'Cobro mostrador',
-		});
-
-		expect(postEventoMock).toHaveBeenCalledTimes(1);
-		const [txArg, ctxArg, evento] = postEventoMock.mock.calls[0];
-		expect(txArg).toBe(tx);
-		expect(ctxArg).toEqual({ tenantId: 'tenant-1', userId: 'u1' });
-		expect(evento).toMatchObject({
-			tipo: 'VENTA_CONTADO',
-			moneda: 'USD',
-			montoFuncional: 1100,
-			tasaCambio: 44,
-			fxEvidenceFingerprint: 'fp-1',
-			medioCobro: 'BANCOS',
-			origen: { tipo: 'reconciliacion_venta', id: 'rec-1' },
-		});
-		expect(Number(evento.monto)).toBe(25);
-	});
-
-	it('cuenta en efectivo produce medioCobro CAJA', async () => {
-		const tx = crearTx({ cuentaId: 'cta-caja', moneda: 'CUP', tipoCuenta: 'EFECTIVO' });
-		conversionMock.mockReturnValue({ montoConvertido: 100, tasaCambio: 1, fxEvidence: { functionalCurrency: 'CUP' } });
-
-		await reconciliarVentaDirecta(tx as never, {
-			ventaId: 'venta-2',
-			montoTotal: 100,
-			usuarioId: 'u1',
-			tenantId: 'tenant-1',
-		});
-
-		const [, , evento] = postEventoMock.mock.calls[0];
-		expect(evento.medioCobro).toBe('CAJA');
-		expect(evento.montoFuncional).toBe(100);
 	});
 
 	it('factura contra_pago emite VENTA_CONTADO', async () => {

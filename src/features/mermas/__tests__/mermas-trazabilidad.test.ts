@@ -16,6 +16,13 @@ const { mockTx } = vi.hoisted(() => ({
     stockMoveLine: { upsert: vi.fn(), findMany: vi.fn().mockResolvedValue([]), count: vi.fn(), aggregate: vi.fn() },
     ajusteInventario: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     stockUbicacion: { findUnique: vi.fn().mockResolvedValue({ cantidad: 50 }) },
+    asiento: { findFirst: vi.fn().mockResolvedValue(null) },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn().mockResolvedValue({
+        tenantId: 'tenant-test', functionalCurrencyCode: 'CUP', createdAt: new Date(),
+        updatedAt: new Date(), updatedBy: 'user-1',
+      }),
+    },
   },
 }));
 
@@ -24,6 +31,8 @@ vi.mock('@/lib/prisma', () => ({
     merma: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
     producto: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
     stockUbicacion: { findUnique: vi.fn() },
+    asiento: { findFirst: vi.fn().mockResolvedValue(null) },
+    shadowPosteoOutbox: { findFirst: vi.fn().mockResolvedValue(null) },
     $transaction: vi.fn((args: any) => (typeof args === 'function' ? args(mockTx) : Promise.all(args))),
     $queryRaw: vi.fn(),
   },
@@ -36,7 +45,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('CU-07 trazabilidad y costo de mermas (RED)', () => {

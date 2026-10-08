@@ -9,6 +9,9 @@ vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => ({
+  getRequiredTenantAccountingPolicy: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+}));
 
 const { mockTx } = vi.hoisted(() => ({
 	mockTx: {
@@ -54,6 +57,8 @@ vi.mock('@/lib/prisma', () => ({
     stockUbicacion: {
       findUnique: vi.fn(),
     },
+    asiento: { findFirst: vi.fn().mockResolvedValue(null) },
+    shadowPosteoOutbox: { findFirst: vi.fn().mockResolvedValue(null) },
     $transaction: vi.fn((args: any) => typeof args === 'function' ? args(mockTx) : Promise.all(args)),
     $queryRaw: vi.fn(),
   },
@@ -75,7 +80,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 const mockMermaRow = {
@@ -99,7 +104,11 @@ const mockProducto = {
 };
 
 describe('Mermas Server Actions', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.asiento.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.shadowPosteoOutbox.findFirst).mockResolvedValue(null);
+  });
 
   describe('getMermasAction', () => {
     it('retorna lista del tenant', async () => {
@@ -107,6 +116,7 @@ describe('Mermas Server Actions', () => {
       vi.mocked(prisma.merma.findMany).mockResolvedValue([mockMermaRow]);
       const result = await getMermasAction();
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
     });
   });
@@ -114,16 +124,32 @@ describe('Mermas Server Actions', () => {
   describe('getMermaByIdAction', () => {
     it('retorna merma por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findFirst).mockResolvedValue(mockMermaRow);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue(mockMermaRow as never);
       const result = await getMermaByIdAction('mer-1');
       expect(result.success).toBe(true);
     });
   });
 
   describe('createMermaAction', () => {
+    it('rechaza un actor sin permiso antes de leer o modificar inventario', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...mockUser,
+        role: 'user',
+        tenantRole: 'dependiente',
+        planFeatures: { mermas: true },
+        permissions: new Set(),
+      } as never);
+
+      const result = await createMermaAction({ productoId: 'prod-1', cantidad: 5 });
+
+      expect(result.success).toBe(false);
+      expect(prisma.producto.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('crea merma y decrementa stock', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
+      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto as never);
       vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 50 } as any);
       mockTx.merma.create.mockResolvedValue(mockMermaRow);
       vi.mocked(notificarMerma).mockResolvedValue(undefined);
@@ -177,23 +203,25 @@ describe('Mermas Server Actions', () => {
       const result = await createMermaAction({ productoId: 'prod-noexiste', cantidad: 5 });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('Producto no encontrado');
     });
 
     it('rechaza si stock es insuficiente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.producto.findUnique).mockResolvedValue({ ...mockProducto, stock: 2 });
+      vi.mocked(prisma.producto.findUnique).mockResolvedValue({ ...mockProducto, stock: 2 } as never);
       vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 2 } as any);
 
       const result = await createMermaAction({ productoId: 'prod-1', cantidad: 5 });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('STOCK_INSUFICIENTE');
     });
 
     it('(RETIRE LEGACY) con almacén no escribe Producto.stock', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
+      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto as never);
       vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
         cantidadDisponible: 10,
       } as any);
@@ -224,10 +252,26 @@ describe('Mermas Server Actions', () => {
   });
 
   describe('updateMermaAction', () => {
+    it('rechaza editar una merma con asiento formal', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5,
+        tenantId: 'tenant-test', almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.asiento.findFirst).mockResolvedValue({ asientoId: 'entry-1' } as any);
+
+      const result = await updateMermaAction({ mermaId: 'mer-1', cantidad: 6 });
+
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+      expect(result.error?.code).toBe('MERMA_ACCOUNTING_IMMUTABLE');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('actualiza solo motivo', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, tenantId: 'tenant-test', almacenId: 'alm-1' });
-      vi.mocked(prisma.merma.update).mockResolvedValue(mockMermaRow);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, tenantId: 'tenant-test', almacenId: 'alm-1' } as never);
+      vi.mocked(prisma.merma.update).mockResolvedValue(mockMermaRow as never);
 
       const result = await updateMermaAction({ mermaId: 'mer-1', motivo: 'Nuevo motivo' });
 
@@ -342,14 +386,30 @@ describe('Mermas Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('STOCK_INSUFICIENTE');
     });
   });
 
   describe('deleteMermaAction', () => {
+    it('rechaza eliminar una merma con asiento formal', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.asiento.findFirst).mockResolvedValue({ asientoId: 'entry-1' } as any);
+
+      const result = await deleteMermaAction('mer-1');
+
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+      expect(result.error?.code).toBe('MERMA_ACCOUNTING_IMMUTABLE');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('elimina merma y restaura stock', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, almacenId: 'alm-1' });
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, almacenId: 'alm-1' } as never);
       mockTx.merma.delete.mockResolvedValue(mockMermaRow);
 
       const result = await deleteMermaAction('mer-1');
@@ -398,6 +458,7 @@ describe('Mermas Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getMermasAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

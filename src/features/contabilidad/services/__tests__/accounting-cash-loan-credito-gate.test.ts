@@ -15,6 +15,9 @@ const mock = vi.hoisted(() => ({
   lock: vi.fn(),
   tx: {
     $queryRaw: vi.fn().mockResolvedValue([]),
+    tenantAccountingPolicy: {
+      findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+    },
     cuentaBancaria: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     cuentaPorCobrar: {
       create: vi.fn(),
@@ -157,16 +160,12 @@ describe('gate 4.2.c: createCashLoan bajo cupo común', () => {
     expect(requirePermission).toHaveBeenCalledWith(
       expect.anything(), 'financiero.prestamos-cash.credito-override', expect.any(String),
     );
-    expect(mock.tx.cuentaPorCobrar.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          tipoCuenta: 'PRESTAMO_CASH',
-          montoDeuda: 500,
-          monedaOriginal: 'CUP',
-          montoOriginal: 500,
-        }),
-      }),
-    );
+    expect(mock.tx.cuentaPorCobrar.create).toHaveBeenCalledOnce();
+    const cxcData = mock.tx.cuentaPorCobrar.create.mock.calls[0]?.[0].data;
+    expect(cxcData.tipoCuenta).toBe('PRESTAMO_CASH');
+    expect(cxcData.montoDeuda.toString()).toBe('500');
+    expect(cxcData.monedaOriginal).toBe('CUP');
+    expect(cxcData.montoOriginal.toString()).toBe('500');
     expect(AuditLogService.logStrict).toHaveBeenCalledWith(expect.objectContaining({
       detalles: expect.objectContaining({
         tipo: 'CREDITO_OVERRIDE',
@@ -188,7 +187,12 @@ describe('gate 4.2.c: createCashLoan bajo cupo común', () => {
     });
 
     expect(result).toMatchObject({ id: 'loan-new' });
-    expect(AuditLogService.logStrict).not.toHaveBeenCalled();
+    expect(AuditLogService.logStrict).toHaveBeenCalledWith(expect.objectContaining({
+      entidad: 'PRESTAMO_CASH', entidadId: 'loan-new',
+    }), mock.tx);
+    expect(AuditLogService.logStrict).not.toHaveBeenCalledWith(expect.objectContaining({
+      detalles: expect.objectContaining({ tipo: 'CREDITO_OVERRIDE' }),
+    }), mock.tx);
   });
 
   it('cliente ajeno dentro de la transacción → NOT_FOUND antes de escribir', async () => {

@@ -35,7 +35,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockClienteRow = {
@@ -59,6 +59,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findMany).mockResolvedValue([mockClienteRow]);
       const result = await getClientesAction();
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
     });
 
@@ -67,6 +68,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findMany).mockResolvedValue([]);
       const result = await getClientesAction();
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual([]);
     });
   });
@@ -74,9 +76,10 @@ describe('Clientes Server Actions', () => {
   describe('getClienteByIdAction', () => {
     it('retorna cliente por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow as never);
       const result = await getClienteByIdAction('cli-1');
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.nombre).toBe('Cliente Test');
     });
 
@@ -85,6 +88,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await getClienteByIdAction('cli-noexiste');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -92,7 +96,7 @@ describe('Clientes Server Actions', () => {
   describe('createClienteAction', () => {
     it('crea cliente exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.create).mockResolvedValue(mockClienteRow);
+      vi.mocked(prisma.cliente.create).mockResolvedValue(mockClienteRow as never);
       const result = await createClienteAction({ nombre: 'Cliente Test', direccion: 'Calle 123', telefono: '555-1234' });
       expect(result.success).toBe(true);
     });
@@ -101,6 +105,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       const result = await createClienteAction({ nombre: '' });
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('VALIDATION_ERROR');
     });
   });
@@ -108,8 +113,8 @@ describe('Clientes Server Actions', () => {
   describe('updateClienteAction', () => {
     it('actualiza cliente exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow);
-      vi.mocked(prisma.cliente.update).mockResolvedValue(mockClienteRow);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow as never);
+      vi.mocked(prisma.cliente.update).mockResolvedValue(mockClienteRow as never);
       const result = await updateClienteAction({ clienteId: 'cli-1', nombre: 'Actualizado' });
       expect(result.success).toBe(true);
     });
@@ -119,6 +124,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await updateClienteAction({ clienteId: 'cli-noexiste', nombre: 'Test' });
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -126,8 +132,8 @@ describe('Clientes Server Actions', () => {
   describe('deleteClienteAction', () => {
     it('elimina cliente exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow);
-      vi.mocked(prisma.cliente.delete).mockResolvedValue(mockClienteRow);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow as never);
+      vi.mocked(prisma.cliente.delete).mockResolvedValue(mockClienteRow as never);
       const result = await deleteClienteAction('cli-1');
       expect(result.success).toBe(true);
     });
@@ -137,6 +143,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await deleteClienteAction('cli-noexiste');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -146,6 +153,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getClientesAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });
@@ -154,13 +162,14 @@ describe('Clientes Server Actions', () => {
     it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye clientes', async () => {
       const restrictedUser: AuthenticatedUser = {
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         planFeatures: { clientes: false },
       };
       vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
       const result = await getClientesAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
     });
   });

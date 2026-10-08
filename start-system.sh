@@ -69,7 +69,7 @@ docker run -d --name inventario-app \
     -e HOSTNAME="0.0.0.0" \
     --entrypoint "/bin/sh" \
     tcp-app:latest \
-    -c "cd /app/.next/standalone && mkdir -p .next && cp -r /app/.next/static .next/ && cp -r /app/public . && node server.js"
+    -c "cd /app/.next/standalone && mkdir -p .next && cp -r /app/.next/static .next/ && cp -r /app/public . && npx prisma migrate deploy && node /app/scripts/ci/verify-accounting-sql-guards.mjs && node server.js"
 
 sleep 5
 echo "   ✓ Aplicación iniciada"
@@ -77,7 +77,7 @@ echo "   ✓ Aplicación iniciada"
 # 6. Ejecutar migraciones
 echo ""
 echo "[6/7] Ejecutando migraciones de base de datos..."
-docker exec inventario-app sh -c "cd /app/.next/standalone && npx prisma db push --accept-data-loss --skip-generate" 2>/dev/null || echo "   ⚠ Migración ya ejecutada"
+docker exec inventario-app sh -c "cd /app/.next/standalone && npx prisma migrate deploy && node /app/scripts/ci/verify-accounting-sql-guards.mjs"
 echo "   ✓ Migraciones completadas"
 
 # 7. Iniciar Nginx

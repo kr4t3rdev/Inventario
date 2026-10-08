@@ -12,10 +12,11 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
+import { decimalFuncional } from '@/features/contabilidad-formal/services/decimal-contable';
 import {
 	insertarAsientoConNumeracion,
 	type LineaAsientoResuelta,
-	type PostingTx,
 } from '@/features/contabilidad-formal/services/posting-engine';
 
 /** Tipos de cuenta que constituyen el resultado (ingreso, costo y gasto). */
@@ -24,42 +25,13 @@ const TIPOS_RESULTADO = ['INGRESO', 'COSTO', 'GASTO'] as const;
 /** Roles que gobiernan los asientos de cierre/apertura. */
 const ROL_RESULTADO_PERIODO = 'RESULTADO_PERIODO';
 const ROL_RESULTADOS_ACUMULADOS = 'RESULTADOS_ACUMULADOS';
+const ROLES_APERTURA = [
+	'CAJA_PRINCIPAL', 'BANCOS', 'CXC_CLIENTES', 'CXP_PROVEEDORES', 'INVENTARIOS',
+	'CAPITAL_SOCIAL', ROL_RESULTADO_PERIODO, ROL_RESULTADOS_ACUMULADOS,
+] as const;
 
-/** Extensión de tx con las lecturas que los servicios CTA-3 necesitan. */
-export interface CierreTx extends PostingTx {
-	cuentaRolTenant: {
-		findMany(args: { where: { tenantId: string }; include?: unknown }): Promise<
-			Array<{ rol: string; cuenta: { cuentaContableId: string } }>
-		>;
-	};
-	cuentaContable: {
-		findMany(args: {
-			where: { cuentaContableId: { in: string[] } };
-			select?: unknown;
-		}): Promise<Array<{ cuentaContableId: string; tipo: string; nombre: string; codigo: string }>>;
-	};
-	asientoLinea: {
-		groupBy(args: {
-			by: ['cuentaId'];
-			where: Record<string, unknown>;
-			_sum: { debe: true; haber: true };
-		}): Promise<Array<{ cuentaId: string; _sum: { debe: unknown; haber: unknown } }>>;
-		findFirst(args: {
-			where: { asientoId: string; cuentaId: string };
-		}): Promise<{ debe: unknown; haber: unknown } | null>;
-	};
-	aperturaPeriodo: {
-		findUnique(args: { where: { periodoId: string }; select?: unknown }): Promise<{
-			saldoCajaInicial: unknown;
-			saldoBancoInicial: unknown;
-			saldoCuentasCobrarInicial: unknown;
-			saldoCuentasPagarInicial: unknown;
-			saldoInventarioInicial: unknown;
-			saldoCapitalInicial: unknown;
-			saldoResultadoAcumInicial: unknown;
-		} | null>;
-	};
-}
+/** Cliente Prisma transaccional compartido con el motor. */
+export type CierreTx = Prisma.TransactionClient;
 
 /** Parámetros de generación del asiento de cierre. */
 export interface ParamsCierreFormal {
@@ -88,6 +60,21 @@ function modoForzado(): boolean {
 	return process.env.CONTABILIDAD_FORMAL_MODE === 'enforce';
 }
 
+/**
+ * @description Compara períodos por día civil UTC, sin depender de si el fin
+ * fue persistido a medianoche o al último instante del día.
+ */
+export function isImmediatelyPrecedingPeriod(priorEnd: Date, currentStart: Date): boolean {
+	if (!Number.isFinite(priorEnd.getTime()) || !Number.isFinite(currentStart.getTime())) return false;
+	const priorCivilDay = Date.UTC(
+		priorEnd.getUTCFullYear(), priorEnd.getUTCMonth(), priorEnd.getUTCDate(),
+	);
+	const currentCivilDay = Date.UTC(
+		currentStart.getUTCFullYear(), currentStart.getUTCMonth(), currentStart.getUTCDate(),
+	);
+	return currentCivilDay - priorCivilDay === 24 * 60 * 60 * 1000;
+}
+
 async function diarioAperturaCierre(tx: CierreTx, tenantId: string): Promise<string | null> {
 	const diario = await tx.diario.findFirst({
 		where: { tenantId, tipo: 'APERTURA_CIERRE' },
@@ -99,18 +86,19 @@ async function diarioAperturaCierre(tx: CierreTx, tenantId: string): Promise<str
 /** Construye la línea de asiento del lado indicado con numeración creciente. */
 function lineaDeLado(
 	cuentaId: string,
-	monto: number,
+	monto: Prisma.Decimal | number,
 	lado: 'DEBE' | 'HABER',
 	orden: number,
 	referencia: string,
 ): LineaAsientoResuelta {
+	const valor = decimalFuncional(String(monto));
 	return {
 		orden,
 		cuentaId,
-		debe: lado === 'DEBE' ? monto : 0,
-		haber: lado === 'HABER' ? monto : 0,
+		debe: lado === 'DEBE' ? valor : new Prisma.Decimal(0),
+		haber: lado === 'HABER' ? valor : new Prisma.Decimal(0),
 		monedaOriginal: 'CUP',
-		montoOriginal: monto,
+		montoOriginal: valor,
 		tasaCambio: null,
 		fxEvidenceFingerprint: null,
 		referencia,
@@ -121,8 +109,43 @@ function lineaDeLado(
  * @description Saldo neto de una cuenta de resultado dentro del período.
  * INGRESO → haber − debe; COSTO/GASTO → debe − haber.
  */
-function saldoNeto(tipo: string, suma: { debe: number; haber: number }): number {
-	return tipo === 'INGRESO' ? suma.haber - suma.debe : suma.debe - suma.haber;
+function saldoNeto(tipo: string, suma: { debe: Prisma.Decimal; haber: Prisma.Decimal }): Prisma.Decimal {
+	return tipo === 'INGRESO' ? suma.haber.minus(suma.debe) : suma.debe.minus(suma.haber);
+}
+
+/** Obtiene el resultado de actividad del período, excluyendo asientos de cierre. */
+async function resultadoOperativoPeriodo(
+	tx: CierreTx,
+	tenantId: string,
+	periodoId: string,
+): Promise<Prisma.Decimal> {
+	const saldos = await tx.asientoLinea.groupBy({
+		by: ['cuentaId'],
+		where: {
+			asiento: { tenantId, periodoId, estado: 'CONTABILIZADO', origenTipo: { not: 'cierre_periodo' } },
+			cuenta: { tipo: { in: [...TIPOS_RESULTADO] } },
+		},
+		_sum: { debe: true, haber: true },
+	});
+	if (saldos.length === 0) return new Prisma.Decimal(0);
+	const cuentas = await tx.cuentaContable.findMany({
+		where: { cuentaContableId: { in: saldos.map((saldo) => saldo.cuentaId) } },
+		select: { cuentaContableId: true, tipo: true },
+	});
+	const tipoPorCuenta = new Map(cuentas.map((cuenta) => [cuenta.cuentaContableId, cuenta.tipo]));
+	return saldos.reduce((neto, suma) => {
+		const tipo = tipoPorCuenta.get(suma.cuentaId);
+		if (!tipo) throw new Error(`Falta el tipo contable de ${suma.cuentaId}`);
+		return tipo === 'INGRESO'
+			? neto.plus(saldoNeto(tipo, {
+				debe: decimalFuncional(String(suma._sum.debe ?? 0)),
+				haber: decimalFuncional(String(suma._sum.haber ?? 0)),
+			}))
+			: neto.minus(saldoNeto(tipo, {
+				debe: decimalFuncional(String(suma._sum.debe ?? 0)),
+				haber: decimalFuncional(String(suma._sum.haber ?? 0)),
+			}));
+	}, new Prisma.Decimal(0));
 }
 
 /**
@@ -142,15 +165,19 @@ export async function generarAsientoCierre(
 		where: { tenantId: params.tenantId, origenTipo: 'cierre_periodo', origenId: params.periodoId },
 	});
 	if (existente) return { estado: 'YA_EXISTENTE', asientoId: existente.asientoId };
+	const periodo = await tx.periodoContable.findUnique({ where: { periodoId: params.periodoId } });
+	if (!periodo || periodo.tenantId !== params.tenantId) throw new Error('Período de cierre no encontrado');
+	const fecha = params.fecha ?? new Date();
+	const fechaContable = fecha < periodo.fechaInicio || fecha > periodo.fechaFin ? periodo.fechaFin : fecha;
 
 	const roles = await tx.cuentaRolTenant.findMany({
 		where: { tenantId: params.tenantId },
 		include: { cuenta: true },
 	});
-	if (roles.length === 0) return { estado: 'OMITIDO', motivo: 'PLAN_NO_INICIALIZADO' };
+	if (roles.length === 0) throw new Error('Faltan roles contables requeridos para el cierre');
 	const rolMapa = new Map(roles.map((r) => [r.rol, r.cuenta.cuentaContableId]));
 	const resultadoId = rolMapa.get(ROL_RESULTADO_PERIODO);
-	if (!resultadoId) return { estado: 'OMITIDO', motivo: 'ROL_RESULTADO_SIN_MAPEAR' };
+	if (!resultadoId) throw new Error('Falta el rol contable RESULTADO_PERIODO');
 
 	const saldos = await tx.asientoLinea.groupBy({
 		by: ['cuentaId'],
@@ -170,27 +197,34 @@ export async function generarAsientoCierre(
 		: [];
 	const tipoPorCuenta = new Map(cuentasInfo.map((c) => [c.cuentaContableId, c.tipo]));
 
-	let neto = 0;
+	let neto = new Prisma.Decimal(0);
 	const lineas: LineaAsientoResuelta[] = [];
 	let orden = 0;
 	for (const suma of saldos) {
 		const tipo = tipoPorCuenta.get(suma.cuentaId);
 		if (!tipo) continue;
 		const saldo = saldoNeto(tipo, {
-			debe: Number(suma._sum.debe ?? 0),
-			haber: Number(suma._sum.haber ?? 0),
+			debe: decimalFuncional(String(suma._sum.debe ?? 0)),
+			haber: decimalFuncional(String(suma._sum.haber ?? 0)),
 		});
-		if (Math.abs(saldo) <= 0.005) continue;
+		if (saldo.isZero()) continue;
 		orden += 1;
-		lineas.push(lineaDeLado(suma.cuentaId, saldo, tipo === 'INGRESO' ? 'DEBE' : 'HABER', orden, 'Cierre'));
-		neto += tipo === 'INGRESO' ? saldo : -saldo;
+		const ladoSaldo = tipo === 'INGRESO' ? 'HABER' : 'DEBE';
+		lineas.push(lineaDeLado(suma.cuentaId, saldo.abs(),
+			saldo.gt(0) ? (ladoSaldo === 'HABER' ? 'DEBE' : 'HABER') : ladoSaldo,
+			orden, 'Cierre'));
+		neto = tipo === 'INGRESO' ? neto.plus(saldo) : neto.minus(saldo);
 	}
 
-	if (lineas.length === 0) return { estado: 'OMITIDO', motivo: 'SIN_MOVIMIENTOS_RESULTADO' };
+	if (lineas.length === 0) return { estado: 'OMITIDO', motivo: 'RESULTADO_CERO_SIN_MOVIMIENTOS' };
 
 	// Contrapartida: utilidad al haber del resultado; pérdida al debe.
 	orden += 1;
-	lineas.push(lineaDeLado(resultadoId, Math.abs(neto), neto >= 0 ? 'HABER' : 'DEBE', orden, 'Resultado del período'));
+	if (!neto.isZero()) lineas.push(lineaDeLado(resultadoId, neto.abs(),
+		neto.gt(0) ? 'HABER' : 'DEBE', orden, 'Resultado del período'));
+	const debe = lineas.reduce((total, linea) => total.plus(linea.debe), new Prisma.Decimal(0));
+	const haber = lineas.reduce((total, linea) => total.plus(linea.haber), new Prisma.Decimal(0));
+	if (!debe.eq(haber)) throw new Error('El asiento de cierre no cuadra');
 
 	const diarioId = await diarioAperturaCierre(tx, params.tenantId);
 	if (!diarioId) return { estado: 'OMITIDO', motivo: 'DIARIO_NO_ENCONTRADO' };
@@ -201,7 +235,7 @@ export async function generarAsientoCierre(
 		{
 			diarioId,
 			periodoId: params.periodoId,
-			fecha: params.fecha ?? new Date(),
+			fecha: fechaContable,
 			descripcion: 'Cierre del período',
 			origenTipo: 'cierre_periodo',
 			origenId: params.periodoId,
@@ -233,53 +267,125 @@ export async function generarAsientoApertura(
 	});
 	if (existente) return { estado: 'YA_EXISTENTE', asientoId: existente.asientoId };
 
-	const apertura = await tx.aperturaPeriodo.findUnique({ where: { periodoId: params.periodoId } });
+	const apertura = await tx.aperturaPeriodo.findFirst({ where: { periodoId: params.periodoId, tenantId: params.tenantId } });
 	if (!apertura) return { estado: 'OMITIDO', motivo: 'SIN_APERTURA' };
+	if (apertura.tenantId !== params.tenantId) throw new Error('La apertura pertenece a otro tenant');
+	const periodo = await tx.periodoContable.findUnique({ where: { periodoId: params.periodoId } });
+	if (!periodo || periodo.tenantId !== params.tenantId) throw new Error('Período de apertura no encontrado');
+	if (params.fecha < periodo.fechaInicio || params.fecha > periodo.fechaFin) {
+		throw new Error('La fecha de apertura está fuera del período');
+	}
+	const periodosSolapados = await tx.periodoContable.findMany({
+		where: {
+			tenantId: params.tenantId,
+			tipo: periodo.tipo,
+			periodoId: { not: periodo.periodoId },
+			fechaInicio: { lte: periodo.fechaFin },
+			fechaFin: { gte: periodo.fechaInicio },
+		},
+		select: { periodoId: true },
+		take: 1,
+	});
+	if (periodosSolapados.length > 0) throw new Error('Existe un período contable solapado');
+	const periodoAnterior = await tx.periodoContable.findFirst({
+		where: { tenantId: params.tenantId, fechaFin: { lt: periodo.fechaInicio }, tipo: periodo.tipo },
+		orderBy: { fechaFin: 'desc' },
+	});
+	if (!periodoAnterior || !isImmediatelyPrecedingPeriod(periodoAnterior.fechaFin, periodo.fechaInicio) || periodoAnterior.estado !== 'APROBADO') {
+		throw new Error('No existe un período anterior contiguo aprobado');
+	}
+	// Although the schema allows null for initial openings, this formal rollover
+	// path only accepts an opening explicitly derived from its immediate predecessor.
+	if (apertura.origenPeriodoId !== periodoAnterior.periodoId) {
+		throw new Error('La apertura no corresponde al período inmediatamente anterior');
+	}
 
 	const roles = await tx.cuentaRolTenant.findMany({
 		where: { tenantId: params.tenantId },
 		include: { cuenta: true },
 	});
-	if (roles.length === 0) return { estado: 'OMITIDO', motivo: 'PLAN_NO_INICIALIZADO' };
+	if (roles.length === 0) throw new Error('Faltan roles contables requeridos para la apertura');
 	const rolMapa = new Map(roles.map((r) => [r.rol, r.cuenta.cuentaContableId]));
+	const rolesConfigurados = new Set(roles.map((r) => String(r.rol)));
+	const faltante = ROLES_APERTURA.find((rol) => !rolesConfigurados.has(rol));
+	if (faltante) throw new Error(`Falta el rol contable ${faltante}`);
 
 	const lineas: LineaAsientoResuelta[] = [];
-	const push = (rol: string, monto: number, lado: 'DEBE' | 'HABER', referencia: string): void => {
-		if (!Number.isFinite(monto) || monto <= 0) return;
+	const push = (rol: keyof typeof import('@/generated/prisma').RolCuenta, monto: Prisma.Decimal, lado: 'DEBE' | 'HABER', referencia: string): void => {
+		if (monto.isZero()) return;
 		const cuentaId = rolMapa.get(rol);
-		if (!cuentaId) return;
-		lineas.push(lineaDeLado(cuentaId, monto, lado, lineas.length + 1, referencia));
+		if (!cuentaId) throw new Error(`Falta el rol contable ${rol}`);
+		lineas.push(lineaDeLado(cuentaId, monto.abs(), monto.gt(0) ? lado : lado === 'DEBE' ? 'HABER' : 'DEBE', lineas.length + 1, referencia));
 	};
 
-	push('CAJA_PRINCIPAL', Number(apertura.saldoCajaInicial), 'DEBE', 'Saldo inicial caja');
-	push('BANCOS', Number(apertura.saldoBancoInicial), 'DEBE', 'Saldo inicial bancos');
-	push('CXC_CLIENTES', Number(apertura.saldoCuentasCobrarInicial), 'DEBE', 'Saldo inicial CxC');
-	push('CXP_PROVEEDORES', Number(apertura.saldoCuentasPagarInicial), 'HABER', 'Saldo inicial CxP');
-	push('INVENTARIOS', Number(apertura.saldoInventarioInicial), 'DEBE', 'Saldo inicial inventario');
-	push('CAPITAL_SOCIAL', Number(apertura.saldoCapitalInicial), 'HABER', 'Saldo inicial capital');
-	push(ROL_RESULTADOS_ACUMULADOS, Number(apertura.saldoResultadoAcumInicial), 'HABER', 'Resultados acumulados');
+	push('CAJA_PRINCIPAL', decimalFuncional(String(apertura.saldoCajaInicial)), 'DEBE', 'Saldo inicial caja');
+	push('BANCOS', decimalFuncional(String(apertura.saldoBancoInicial)), 'DEBE', 'Saldo inicial bancos');
+	push('CXC_CLIENTES', decimalFuncional(String(apertura.saldoCuentasCobrarInicial)), 'DEBE', 'Saldo inicial CxC');
+	push('CXP_PROVEEDORES', decimalFuncional(String(apertura.saldoCuentasPagarInicial)), 'HABER', 'Saldo inicial CxP');
+	push('INVENTARIOS', decimalFuncional(String(apertura.saldoInventarioInicial)), 'DEBE', 'Saldo inicial inventario');
+	push('CAPITAL_SOCIAL', decimalFuncional(String(apertura.saldoCapitalInicial)), 'HABER', 'Saldo inicial capital');
+	// The stored accumulated balance is prior retained earnings; this period's
+	// result is transferred separately below, exactly once via the opening source.
+	push(ROL_RESULTADOS_ACUMULADOS, decimalFuncional(String(apertura.saldoResultadoAcumInicial)), 'HABER', 'Resultados acumulados');
 
 	// Traspaso del resultado del período cerrado (si existe) al acumulado.
 	const ultimoCierre = await tx.asiento.findFirst({
-		where: { tenantId: params.tenantId, origenTipo: 'cierre_periodo', estado: 'CONTABILIZADO' },
-		orderBy: { fecha: 'desc' },
+		where: { tenantId: params.tenantId, periodoId: periodoAnterior.periodoId,
+			origenTipo: 'cierre_periodo', estado: 'CONTABILIZADO' },
 	});
+	const resultadoOperativo = await resultadoOperativoPeriodo(tx, params.tenantId, periodoAnterior.periodoId);
+	if (!ultimoCierre && !resultadoOperativo.isZero()) {
+		throw new Error('Falta el cierre del período inmediatamente anterior');
+	}
+	const resultadoId = rolMapa.get(ROL_RESULTADO_PERIODO);
+	const acumuladoId = rolMapa.get(ROL_RESULTADOS_ACUMULADOS);
+	if (!resultadoId || !acumuladoId) throw new Error('Faltan roles para transferir el resultado cerrado');
+	const lineasCierre = ultimoCierre
+		? await tx.asientoLinea.findMany({ where: { asientoId: ultimoCierre.asientoId } })
+		: [];
 	if (ultimoCierre) {
-		const resultadoId = rolMapa.get(ROL_RESULTADO_PERIODO);
-		const acumuladoId = rolMapa.get(ROL_RESULTADOS_ACUMULADOS);
-		if (resultadoId && acumuladoId) {
-			const lineaResultado = await tx.asientoLinea.findFirst({
-				where: { asientoId: ultimoCierre.asientoId, cuentaId: resultadoId },
-			});
-			const monto = lineaResultado
-				? Math.max(Number(lineaResultado.debe ?? 0), Number(lineaResultado.haber ?? 0))
-				: 0;
-			if (monto > 0) {
-				push(ROL_RESULTADO_PERIODO, monto, 'DEBE', 'Traspaso del resultado cerrado');
-				push(ROL_RESULTADOS_ACUMULADOS, monto, 'HABER', 'Traspaso del resultado cerrado');
-			}
+		if (lineasCierre.length < 2) throw new Error('El asiento de cierre está incompleto');
+		const debeCierre = lineasCierre.reduce(
+			(total, linea) => total.plus(decimalFuncional(String(linea.debe ?? 0))), new Prisma.Decimal(0),
+		);
+		const haberCierre = lineasCierre.reduce(
+			(total, linea) => total.plus(decimalFuncional(String(linea.haber ?? 0))), new Prisma.Decimal(0),
+		);
+		if (!debeCierre.eq(haberCierre)) throw new Error('El asiento de cierre anterior no cuadra');
+	}
+	const lineasResultado = lineasCierre.filter((linea) => linea.cuentaId === resultadoId);
+	if (resultadoOperativo.isZero()) {
+		if (lineasResultado.some((linea) =>
+			!decimalFuncional(String(linea.debe ?? 0)).isZero() ||
+			!decimalFuncional(String(linea.haber ?? 0)).isZero())) {
+			throw new Error('El cierre registra resultado no cero cuando el resultado operativo es cero');
+		}
+		if (lineasResultado.length > 1) throw new Error('El cierre duplica la línea de resultado');
+	} else if (lineasResultado.length !== 1) {
+		throw new Error('El cierre debe contener exactamente una línea de resultado');
+	}
+	if (lineasResultado.length === 1) {
+		const lineaResultado = lineasResultado[0];
+		const debeResultado = decimalFuncional(String(lineaResultado.debe ?? 0));
+		const haberResultado = decimalFuncional(String(lineaResultado.haber ?? 0));
+		if (!debeResultado.isZero() && !haberResultado.isZero()) throw new Error('Línea de resultado de cierre inválida');
+		const magnitudEsperada = resultadoOperativo.abs();
+		const ladoEsperadoValido = resultadoOperativo.gt(0)
+			? debeResultado.isZero() && haberResultado.eq(magnitudEsperada)
+			: resultadoOperativo.lt(0)
+				? haberResultado.isZero() && debeResultado.eq(magnitudEsperada)
+				: debeResultado.isZero() && haberResultado.isZero();
+		if (!ladoEsperadoValido) throw new Error('El cierre no coincide con el resultado operativo verificado');
+		if (magnitudEsperada.gt(0)) {
+			const ladoResultado: 'DEBE' | 'HABER' = resultadoOperativo.gt(0) ? 'DEBE' : 'HABER';
+			push(ROL_RESULTADO_PERIODO, magnitudEsperada, ladoResultado, 'Traspaso del resultado cerrado');
+			push(ROL_RESULTADOS_ACUMULADOS, magnitudEsperada,
+				ladoResultado === 'DEBE' ? 'HABER' : 'DEBE', 'Traspaso del resultado cerrado');
 		}
 	}
+	const debeTotal = lineas.reduce((total, linea) => total.plus(linea.debe), new Prisma.Decimal(0));
+	const haberTotal = lineas.reduce((total, linea) => total.plus(linea.haber), new Prisma.Decimal(0));
+	if (!debeTotal.eq(haberTotal)) throw new Error('El asiento de apertura no cuadra');
 
 	if (lineas.length < 2) return { estado: 'OMITIDO', motivo: 'SIN_SALDOS_DE_APERTURA' };
 

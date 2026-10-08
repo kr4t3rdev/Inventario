@@ -113,10 +113,9 @@ describe('gate 4.4.b: edición manual de CxC bajo cupo común', () => {
     // Discriminador determinista: la lectura posterior al commit incluye relaciones
     // (`include`); las lecturas previas/vigente devuelven la cuenta base. Así el mock
     // no depende del número de consultas que haga el gate antes de rechazar.
-    vi.mocked(prisma.cuentaPorCobrar.findFirst).mockImplementation(
-      async (args?: { include?: unknown }) =>
-        (args?.include ? cuentaActualizada() : existente()) as never,
-    );
+	vi.mocked(prisma.cuentaPorCobrar.findFirst).mockImplementation((async (args?: { include?: unknown }) =>
+        (args?.include ? cuentaActualizada() : existente()) as never
+    ) as any);
     // Relectura dentro de la transacción (delta neto) y saldo del cliente.
     mockTx.cuentaPorCobrar.findFirst.mockResolvedValue(existente() as never);
     mockTx.cuentaPorCobrar.findMany.mockResolvedValue([
@@ -190,7 +189,12 @@ describe('gate 4.4.b: edición manual de CxC bajo cupo común', () => {
     expect(mockTx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
       mockTx.cuentaPorCobrar.findFirst.mock.invocationCallOrder[0] ?? Infinity,
     );
-    expect(AuditLogService.logStrict).not.toHaveBeenCalled();
+    expect(AuditLogService.logStrict).toHaveBeenCalledWith(expect.objectContaining({
+      accion: 'UPDATE',
+      entidad: 'CUENTA_POR_COBRAR',
+      entidadId: 'cxc-1',
+      usuarioId: manager.userId,
+    }), mockTx);
   });
 
   it('fail-closed: aumento sobre cuenta sin moneda verificable → FX_INSUFICIENTE', async () => {
@@ -220,6 +224,11 @@ describe('gate 4.4.b: edición manual de CxC bajo cupo común', () => {
 
     expect(result, JSON.stringify(result)).toMatchObject({ success: true });
     expect(requirePermission).not.toHaveBeenCalled();
-    expect(AuditLogService.logStrict).not.toHaveBeenCalled();
+    expect(AuditLogService.logStrict).toHaveBeenCalledWith(expect.objectContaining({
+      accion: 'UPDATE',
+      entidad: 'CUENTA_POR_COBRAR',
+      entidadId: 'cxc-1',
+      usuarioId: manager.userId,
+    }), mockTx);
   });
 });

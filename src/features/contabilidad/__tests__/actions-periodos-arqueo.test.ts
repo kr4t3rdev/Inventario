@@ -23,9 +23,10 @@ const mockPrisma = vi.hoisted(() => ({
 const mockUser = vi.hoisted((): AuthenticatedUser => ({
   userId: 'user-1',
   tenantId: 'tenant-mock-1',
-  role: 'ADMIN',
+  role: 'admin',
   email: 'test@test.com',
   name: 'Test User',
+  isActive: true,
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -77,7 +78,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
       { metodoPago: 'TARJETA', total: 50000 },
     ]);
 
-    const result = await integrarArqueosEnPeriodoAction('periodo-1', mockUser);
+    const result = await integrarArqueosEnPeriodoAction('periodo-1');
 
     expect(result.success).toBe(true);
     if (result.success && result.data) {
@@ -120,7 +121,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
 
     mockPrisma.arqueoCaja.findMany.mockResolvedValue([]);
 
-    const result = await integrarArqueosEnPeriodoAction('periodo-1', mockUser);
+    const result = await integrarArqueosEnPeriodoAction('periodo-1');
 
     expect(result.success).toBe(true);
     if (result.success && result.data) {
@@ -147,10 +148,10 @@ describe('integrarArqueosEnPeriodoAction', () => {
       .mockResolvedValueOnce([]); // Segunda llamada: 0 arqueos no contabilizados
     mockPrisma.venta.findMany.mockResolvedValue([]);
 
-    const firstResult = await integrarArqueosEnPeriodoAction('periodo-1', mockUser);
+    const firstResult = await integrarArqueosEnPeriodoAction('periodo-1');
     expect(firstResult.success).toBe(true);
 
-    const secondResult = await integrarArqueosEnPeriodoAction('periodo-1', mockUser);
+    const secondResult = await integrarArqueosEnPeriodoAction('periodo-1');
     expect(secondResult.success).toBe(true);
     if (secondResult.success && secondResult.data) {
       expect(secondResult.data.arqueosIntegrados).toBe(0);
@@ -160,7 +161,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
   it('should fail when periodo does not exist', async () => {
     mockPrisma.periodoContable.findFirst.mockResolvedValue(null);
 
-    const result = await integrarArqueosEnPeriodoAction('periodo-invalid', mockUser);
+    const result = await integrarArqueosEnPeriodoAction('periodo-invalid');
 
     expect(result.success).toBe(false);
     if (!result.success && result.error) {

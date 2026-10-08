@@ -274,7 +274,7 @@ describe('canal móvil cash-debts — sesión Bearer real y numeración', { time
       )),
     ]);
     const respuestas = resultados
-      .filter((r): r is PromiseSettledResult<import('next/server').NextResponse> =>
+      .filter((r): r is PromiseFulfilledResult<import('next/server').NextResponse> =>
         r.status === 'fulfilled')
       .map((r) => r.value);
     const cuerpos = await Promise.all(respuestas.map(async (r) => ({

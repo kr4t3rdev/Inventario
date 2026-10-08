@@ -61,5 +61,8 @@ jobs:
       - name: Apply migrations
         run: pnpm exec prisma migrate deploy
 
+      - name: Verify accounting SQL guards
+        run: node scripts/ci/verify-accounting-sql-guards.mjs
+
       - name: Integration tests
         run: pnpm run test:integration

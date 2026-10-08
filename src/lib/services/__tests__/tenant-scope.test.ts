@@ -68,23 +68,23 @@ describe('assertTenantAccess', () => {
 
 describe('requireTenant', () => {
   it('devuelve tenantId cuando el usuario tiene tenant', () => {
-    const user = { userId: 'u-1', tenantId: 'tenant-1' } as AuthenticatedUser
+    const user = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-1', tenantId: 'tenant-1' } as AuthenticatedUser
     expect(requireTenant(user)).toBe('tenant-1')
   })
 
   it('lanza error cuando el usuario no tiene tenantId', () => {
-    const user = { userId: 'u-1' } as AuthenticatedUser
+    const user = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-1' } as AuthenticatedUser
     expect(() => requireTenant(user))
       .toThrow('Se requiere una membresía de empresa activa para acceder a este recurso')
   })
 })
 
 describe('requireFeature', () => {
-  const userWithFeature = { userId: 'u-1', tenantId: 't-1', role: 'user', planFeatures: { clientes: true } } as AuthenticatedUser;
-  const userWithoutFeature = { userId: 'u-2', tenantId: 't-1', role: 'user', planFeatures: { clientes: false } } as AuthenticatedUser;
-  const userNoPlanFeatures = { userId: 'u-3', tenantId: 't-1', role: 'user' } as AuthenticatedUser;
-  const adminUser = { userId: 'u-4', role: 'admin' } as AuthenticatedUser;
-  const userNoTenant = { userId: 'u-5', role: 'user', planFeatures: { clientes: true } } as AuthenticatedUser;
+  const userWithFeature = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-1', tenantId: 't-1', role: 'regularUser', planFeatures: { clientes: true } } as AuthenticatedUser;
+  const userWithoutFeature = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-2', tenantId: 't-1', role: 'regularUser', planFeatures: { clientes: false } } as AuthenticatedUser;
+  const userNoPlanFeatures = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-3', tenantId: 't-1', role: 'regularUser' } as AuthenticatedUser;
+  const adminUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-4', role: 'admin' } as AuthenticatedUser;
+  const userNoTenant = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-5', role: 'regularUser', planFeatures: { clientes: true } } as AuthenticatedUser;
 
   it('permite acceso cuando planFeatures[key] es true', () => {
     expect(() => requireFeature(userWithFeature, 'clientes')).not.toThrow();
@@ -110,8 +110,8 @@ describe('requireFeature', () => {
   });
 
   describe('features del plan Profesional', () => {
-    const basicoUser = { userId: 'u-basico', tenantId: 't-1', role: 'user', planFeatures: {} } as AuthenticatedUser;
-    const profesionalUser = { userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
+    const basicoUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-basico', tenantId: 't-1', role: 'regularUser', planFeatures: {} } as AuthenticatedUser;
+    const profesionalUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-pro', tenantId: 't-1', role: 'regularUser', planFeatures: {
       'transferencias-bancarias': true,
       'ajustes-bancarios': true,
       'ventas-factura': true,
@@ -140,16 +140,16 @@ describe('requireFeature', () => {
   });
 
   describe('features de inventario por plan (paridad Odoo)', () => {
-    const basicoUser = { userId: 'u-bas', tenantId: 't-1', role: 'user', planFeatures: {
+    const basicoUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-bas', tenantId: 't-1', role: 'regularUser', planFeatures: {
       kardex: true, 'ajustes-inventario': true, 'conteo-fisico': true,
     } } as AuthenticatedUser;
-    const profesionalUser = { userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
+    const profesionalUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-pro', tenantId: 't-1', role: 'regularUser', planFeatures: {
       kardex: true, 'ajustes-inventario': true, 'conteo-fisico': true,
       'ordenes-compra': true, recepciones: true, reabastecimiento: true,
       'unidades-conversion': true, 'lotes-series': true, variantes: true,
       'ubicaciones-avanzadas': true,
     } } as AuthenticatedUser;
-    const empresarialUser = { userId: 'u-emp', tenantId: 't-1', role: 'user', planFeatures: {
+    const empresarialUser = { name: 'Test User', email: 'test@example.com', isActive: true, userId: 'u-emp', tenantId: 't-1', role: 'regularUser', planFeatures: {
       'mrp-avanzado': true,
     } } as AuthenticatedUser;
 
@@ -177,16 +177,28 @@ describe('requireFeature', () => {
 
 describe('role gates', () => {
   const dependienteUser = {
+    name: 'Test User',
+    email: 'test@example.com',
+    role: 'regularUser',
+    isActive: true,
     userId: 'u-dep',
     tenantId: 't-1',
     tenantRole: 'dependiente',
   } as AuthenticatedUser;
   const economicoUser = {
+    name: 'Test User',
+    email: 'test@example.com',
+    role: 'regularUser',
+    isActive: true,
     userId: 'u-eco',
     tenantId: 't-1',
     tenantRole: 'economico',
   } as AuthenticatedUser;
   const managerUser = {
+    name: 'Test User',
+    email: 'test@example.com',
+    role: 'regularUser',
+    isActive: true,
     userId: 'u-man',
     tenantId: 't-1',
     tenantRole: 'manager',
@@ -195,7 +207,7 @@ describe('role gates', () => {
     userId: 'u-invalid',
     tenantId: 't-1',
     tenantRole: 'cajero',
-  } as AuthenticatedUser;
+  } as unknown as AuthenticatedUser;
 
   it('requireManagerRole permite manager y rechaza economico', () => {
     expect(() => requireManagerRole(managerUser, 'administrar productos')).not.toThrow();

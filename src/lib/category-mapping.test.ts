@@ -45,7 +45,7 @@ describe('Category Mapping', () => {
 
   describe('mapCategoryToSection()', () => {
     it('should return the section code for a valid category', () => {
-      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0]
+      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0] as keyof typeof CATEGORY_TO_SECTION
       const expected = CATEGORY_TO_SECTION[categoryName]
       const result = mapCategoryToSection(categoryName)
       expect(result).toBe(expected)
@@ -58,14 +58,14 @@ describe('Category Mapping', () => {
     })
 
     it('should be case-insensitive', () => {
-      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0]
+      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0] as keyof typeof CATEGORY_TO_SECTION
       const lowercase = mapCategoryToSection(categoryName.toLowerCase())
       const uppercase = mapCategoryToSection(categoryName.toUpperCase())
       expect(lowercase).toBe(uppercase)
     })
 
     it('should trim whitespace', () => {
-      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0]
+      const categoryName = Object.keys(CATEGORY_TO_SECTION)[0] as keyof typeof CATEGORY_TO_SECTION
       const result = mapCategoryToSection(`  ${categoryName}  `)
       expect(result).toBe(CATEGORY_TO_SECTION[categoryName])
     })
@@ -73,7 +73,7 @@ describe('Category Mapping', () => {
 
   describe('mapSubcategoryToSpecific()', () => {
     it('should return the specific code for a valid subcategory', () => {
-      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0]
+      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0] as keyof typeof SUBCATEGORY_TO_SPECIFIC
       const expected = SUBCATEGORY_TO_SPECIFIC[subcategoryName]
       const result = mapSubcategoryToSpecific(subcategoryName)
       expect(result).toBe(expected)
@@ -86,14 +86,14 @@ describe('Category Mapping', () => {
     })
 
     it('should be case-insensitive', () => {
-      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0]
+      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0] as keyof typeof SUBCATEGORY_TO_SPECIFIC
       const lowercase = mapSubcategoryToSpecific(subcategoryName.toLowerCase())
       const uppercase = mapSubcategoryToSpecific(subcategoryName.toUpperCase())
       expect(lowercase).toBe(uppercase)
     })
 
     it('should trim whitespace', () => {
-      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0]
+      const subcategoryName = Object.keys(SUBCATEGORY_TO_SPECIFIC)[0] as keyof typeof SUBCATEGORY_TO_SPECIFIC
       const result = mapSubcategoryToSpecific(`  ${subcategoryName}  `)
       expect(result).toBe(SUBCATEGORY_TO_SPECIFIC[subcategoryName])
     })

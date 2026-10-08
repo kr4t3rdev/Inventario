@@ -10,7 +10,7 @@ const mockUseIsMounted = vi.fn();
 const mockUseSidebar = vi.fn();
 
 vi.mock('framer-motion', () => {
-  const React = require('react');
+  const React = require('react') as typeof import('react');
 
   const stripMotionProps = <T extends Record<string, unknown>>(props: T) => {
     const { animate, exit, initial, transition, variants, whileHover, ...domProps } = props;

@@ -46,7 +46,7 @@ describe('FxEvidenceService', () => {
     db.fxEvidence.findUnique.mockResolvedValue(null);
     db.fxEvidence.create.mockImplementation(async ({ data }: { data: unknown }) => ({
       fxEvidenceId: 'evidence-1',
-      ...data,
+      ...(data as Record<string, unknown>),
     }));
   });
 

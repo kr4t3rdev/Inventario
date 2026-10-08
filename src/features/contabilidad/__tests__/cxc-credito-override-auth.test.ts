@@ -134,7 +134,7 @@ describe('gate 1.3: autorización efectiva del cargo manual de CxC', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...dependienteConFeature,
       planFeatures: {},
-    } as AuthenticatedUser);
+	} as unknown as AuthenticatedUser);
 
     const result = await createCuentaPorCobrarAction({
       ventaId: 'sale-1', clienteId: 'client-1', monto: 125, moneda: 'USD',
@@ -151,7 +151,7 @@ describe('gate 1.3: autorización efectiva del cargo manual de CxC', () => {
       tenantRole: 'manager',
       planFeatures: { 'cuentas-cobrar': true },
       permissions: new Set(['financiero.cuentas-cobrar.credito-override']),
-    } as AuthenticatedUser);
+	} as unknown as AuthenticatedUser);
 
     const result = await createCuentaPorCobrarAction({
       ventaId: 'sale-1', clienteId: 'client-1', monto: 500, moneda: 'CUP',

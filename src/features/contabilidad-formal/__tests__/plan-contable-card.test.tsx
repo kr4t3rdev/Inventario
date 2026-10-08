@@ -5,12 +5,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
-import { beforeEach, describe, expect, it, vi, type ExpectMatcherFn } from 'vitest';
+import 'vitest-axe/extend-expect';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanContableCard } from '@/features/contabilidad-formal/components/plan-contable-card';
 
-expect.extend({ toHaveNoViolations: toHaveNoViolations as ExpectMatcherFn });
 
 const estadoMock = vi.hoisted(() => vi.fn());
 const inicializarMock = vi.hoisted(() => vi.fn());

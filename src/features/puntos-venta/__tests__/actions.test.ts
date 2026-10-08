@@ -46,7 +46,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-pv',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const featureBlockedUser: AuthenticatedUser = {
@@ -103,6 +103,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
       expect(result.data![0].nombre).toBe('Tienda Principal');
       expect(prisma.puntoDeVenta.findMany).toHaveBeenCalledWith(
@@ -118,6 +119,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual([]);
     });
 
@@ -127,6 +129,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
       expect(prisma.puntoDeVenta.findMany).not.toHaveBeenCalled();
     });
@@ -136,11 +139,12 @@ describe('Puntos de Venta Server Actions', () => {
 
   describe('getPuntoDeVentaByIdAction', () => {
     it('retorna punto de venta por ID', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRowFull);
+      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRowFull as never);
 
       const result = await getPuntoDeVentaByIdAction('pv-1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.nombre).toBe('Tienda Principal');
     });
 
@@ -150,6 +154,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -159,6 +164,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-otro-tenant');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -167,7 +173,7 @@ describe('Puntos de Venta Server Actions', () => {
 
   describe('createPuntoDeVentaAction', () => {
     it('crea punto de venta exitosamente sin lista de precios', async () => {
-      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow as never);
 
       const result = await createPuntoDeVentaAction({ nombre: 'Tienda Principal', ubicacion: 'Calle 123' });
 
@@ -184,7 +190,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('crea punto de venta con listaPrecioId conectando la relación', async () => {
-      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow as never);
 
       const result = await createPuntoDeVentaAction({
         nombre: 'Tienda Principal',
@@ -200,7 +206,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('crea punto de venta sin listaPrecioId (sin relación)', async () => {
-      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue(mockPvRow as never);
 
       const result = await createPuntoDeVentaAction({
         nombre: 'Sucursal',
@@ -214,7 +220,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('crea punto de venta con ubicación opcional null', async () => {
-      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue({ ...mockPvRow, ubicacion: null });
+      vi.mocked(prisma.puntoDeVenta.create).mockResolvedValue({ ...mockPvRow, ubicacion: null } as never);
 
       const result = await createPuntoDeVentaAction({ nombre: 'Sucursal' });
 
@@ -226,6 +232,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await createPuntoDeVentaAction({ nombre: '' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('VALIDATION_ERROR');
     });
   });
@@ -234,14 +241,14 @@ describe('Puntos de Venta Server Actions', () => {
 
   describe('updatePuntoDeVentaAction', () => {
     beforeEach(() => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow as never);
     });
 
     it('actualiza punto de venta exitosamente', async () => {
       vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue({
         ...mockPvRow,
         nombre: 'Actualizado',
-      });
+      } as never);
 
       const result = await updatePuntoDeVentaAction({
         pvId: 'pv-1',
@@ -254,7 +261,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('conecta nueva lista de precios en update', async () => {
-      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvWithList);
+      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvWithList as never);
 
       const result = await updatePuntoDeVentaAction({
         pvId: 'pv-1',
@@ -268,7 +275,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('desconecta lista de precios cuando listaPrecioId es null', async () => {
-      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvRow as never);
 
       const result = await updatePuntoDeVentaAction({
         pvId: 'pv-1',
@@ -282,7 +289,7 @@ describe('Puntos de Venta Server Actions', () => {
     });
 
     it('no modifica listaPrecio si no se envía', async () => {
-      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.update).mockResolvedValue(mockPvRow as never);
 
       const result = await updatePuntoDeVentaAction({
         pvId: 'pv-1',
@@ -303,6 +310,7 @@ describe('Puntos de Venta Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -315,6 +323,7 @@ describe('Puntos de Venta Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -323,8 +332,8 @@ describe('Puntos de Venta Server Actions', () => {
 
   describe('deletePuntoDeVentaAction', () => {
     it('elimina punto de venta exitosamente', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
-      vi.mocked(prisma.puntoDeVenta.delete).mockResolvedValue(mockPvRow);
+      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow as never);
+      vi.mocked(prisma.puntoDeVenta.delete).mockResolvedValue(mockPvRow as never);
 
       const result = await deletePuntoDeVentaAction('pv-1');
 
@@ -340,6 +349,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -349,6 +359,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-otro-tenant');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -362,6 +373,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -371,6 +383,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await createPuntoDeVentaAction({ nombre: 'Test' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -380,6 +393,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await updatePuntoDeVentaAction({ pvId: 'pv-1', nombre: 'Test' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -389,6 +403,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -398,6 +413,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

@@ -83,7 +83,7 @@ describe('procesarFacturaPendiente (5.3): dirigido y con attemptId', () => {
 		const claimArgs = mockPrisma.fiscalDocument.updateMany.mock.calls[0][0];
 		expect(claimArgs.where).toMatchObject({ facturaId: 'fac-B', tenantId: 'tenant-1', estado: 'PENDIENTE' });
 		// La finalización TIMBRADA es CAS por attemptId.
-		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)![0];
 		expect(finalArgs.where).toMatchObject({ facturaId: 'fac-B', estado: 'PROCESANDO' });
 		expect(finalArgs.where).toHaveProperty('attemptId');
 		expect(finalArgs.data).toMatchObject({ estado: 'TIMBRADA' });
@@ -138,7 +138,7 @@ describe('clasificación de fallos (5.4): INCIERTA por defecto post-envío', () 
 		});
 
 		expect(r?.estado).toBe('INCIERTA');
-		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)![0];
 		expect(finalArgs.data).toMatchObject({ estado: 'INCIERTA' });
 		expect(finalArgs.data).toHaveProperty('intentos');
 		expect(mockPrisma.fiscalEmisionEvent.create).toHaveBeenCalledWith(
@@ -167,7 +167,7 @@ describe('clasificación de fallos (5.4): INCIERTA por defecto post-envío', () 
 		});
 
 		expect(r?.estado).toBe('RECHAZADA');
-		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)![0];
 		expect(finalArgs.data).toMatchObject({ estado: 'RECHAZADA' });
 		expect(mockPrisma.fiscalEmisionEvent.create).toHaveBeenCalledWith(
 			expect.objectContaining({

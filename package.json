@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
+    "typecheck:tests": "NODE_OPTIONS='--max-old-space-size=6144' tsc -p tsconfig.test.json --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
@@ -22,6 +22,7 @@
     "seed:plans": "tsx prisma/seed/plans-seed.ts",
     "seed:upload-backfill": "tsx prisma/seed/backfill-upload-features.ts",
     "ops:baseline-prisma-production": "tsx scripts/ops/baseline-prisma-production.ts --dry-run",
+    "ops:verify-accounting-sql-guards": "node scripts/ci/verify-accounting-sql-guards.mjs",
     "ops:sync-plan-features-production": "tsx scripts/ops/sync-plan-features-production.ts",
     "seed:licenses": "tsx prisma/seed/tenant-licenses-seed.ts",
     "report:qa": "tsx prisma/seed/qa-report.ts",
@@ -58,10 +59,11 @@
     "openapi:generate:check": "node scripts/openapi/check-generated.mjs",
     "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check",
     "ops:monitor:accounting-reports": "tsx scripts/ops/accounting-reports-monitor.ts",
-    "test:integration": "vitest run --config vitest.integration.config.mjs",
+    "test:integration": "node scripts/ci/prepare-disposable-integration-database.mjs && node scripts/ci/verify-accounting-sql-guards.mjs && vitest run --config vitest.integration.config.mjs",
     "e2e:prep": "playwright test --config playwright.cart.config.ts e2e/prep-auth.spec.ts",
     "test:smoke:prod": "playwright test --config playwright.smoke.config.ts",
-    "test:ci:contracts": "vitest run --config vitest.ci-contract.config.mjs"
+    "test:ci:contracts": "vitest run --config vitest.ci-contract.config.mjs",
+    "check:dominio-imports": "node scripts/check-dominio-imports.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",

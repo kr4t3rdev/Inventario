@@ -13,9 +13,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-}))
+vi.mock('@/lib/server-actions/get-current-user')
 
 const { mockRequireFeature } = vi.hoisted(() => ({ mockRequireFeature: vi.fn() }))
 
@@ -24,7 +22,9 @@ vi.mock('@/lib/services/tenant-scope', () => ({
   requireFeature: mockRequireFeature,
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
 const makeProducto = (overrides: any = {}) => ({
   id: overrides.id ?? 'prod-1',
@@ -35,29 +35,34 @@ const makeProducto = (overrides: any = {}) => ({
   tenantId: overrides.tenantId ?? 'tenant-1',
 })
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Test',
+  email: 'test@test.com',
+  role: 'regularUser',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+}
 
 describe('getProductosMargenBajoAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
 
   it.each([
-    ['productos con margen bajo', () => getProductosMargenBajoAction({}, mockUser)],
-    ['verificación de margen', () => verificarMargenBajoAction({}, mockUser)],
-    ['dashboard de rentabilidad', () => getDashboardRentabilidadAction({}, mockUser)],
+    ['productos con margen bajo', () => getProductosMargenBajoAction({})],
+    ['verificación de margen', () => verificarMargenBajoAction({})],
+    ['dashboard de rentabilidad', () => getDashboardRentabilidadAction({})],
   ])('deniega %s antes de consultar Prisma', async (_name, invoke) => {
-    mockUser.planFeatures['ficha-costo'] = false
+    mockUser.planFeatures!['ficha-costo'] = false
 
     await expect(invoke()).rejects.toThrow('plan actual no incluye')
 
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
-    mockUser.planFeatures['ficha-costo'] = true
+    mockUser.planFeatures!['ficha-costo'] = true
   })
 
   it('retorna productos con margen < 10% ordenados ascendentemente', async () => {
@@ -67,13 +72,15 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'C', precioVenta: 100, precioCosto: 110 }), // margen=-10%
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = await getProductosMargenBajoAction({})
 
-    expect(data).toHaveLength(2) // solo B y C
-    expect(data[0].id).toBe('C') // margen=-10% primero
-    expect(data[0].margenPorcentaje).toBeCloseTo(-10, 0)
-    expect(data[1].id).toBe('B') // margen=5% segundo
-    expect(data[1].margenPorcentaje).toBeCloseTo(5, 0)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data).toHaveLength(2) // solo B y C
+    expect(data.data[0].id).toBe('C') // margen=-10% primero
+    expect(data.data[0].margenPorcentaje).toBeCloseTo(-10, 0)
+    expect(data.data[1].id).toBe('B') // margen=5% segundo
+    expect(data.data[1].margenPorcentaje).toBeCloseTo(5, 0)
   })
 
   it('retorna array vacío si todos tienen margen ≥ 10%', async () => {
@@ -81,9 +88,11 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'A', precioVenta: 100, precioCosto: 50 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = await getProductosMargenBajoAction({})
 
-    expect(data).toHaveLength(0)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data).toHaveLength(0)
   })
 
   it('excluye productos con precioVenta = 0', async () => {
@@ -92,16 +101,18 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'B', precioVenta: 100, precioCosto: 95 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = await getProductosMargenBajoAction({})
 
-    expect(data).toHaveLength(1)
-    expect(data[0].id).toBe('B')
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data).toHaveLength(1)
+    expect(data.data[0].id).toBe('B')
   })
 
   it('filtra por tenantId', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    await getProductosMargenBajoAction({}, mockUser)
+    await getProductosMargenBajoAction({})
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
       where: {
@@ -126,7 +137,7 @@ describe('getProductosMargenBajoAction', () => {
     )
     vi.mocked(prisma.producto.findMany).mockResolvedValue(productos as any)
 
-    const data = await getProductosMargenBajoAction({ limit: 5 }, mockUser)
+    const data = await getProductosMargenBajoAction({ limit: 5 })
 
     expect(data).toHaveLength(5)
   })
@@ -137,7 +148,7 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'B', precioVenta: 100, precioCosto: 95 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = await getProductosMargenBajoAction({})
 
     expect(data).toHaveLength(1)
   })

@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, deleteGastosDEBulkAction, updateGastosDEAction, aprobarGastoDEAction, rechazarGastoDEAction, getGastoConceptosAction, createGastoConceptoAction, getGastoElementosAction, createGastoElementoAction } from '@/features/gastosDE/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
+const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'manager' };
 const featureBlockedUser: AuthenticatedUser = {
   userId: 'u2',
   name: 'Feature Blocked',
@@ -31,7 +31,7 @@ describe('GastosDE Actions', () => {
   });
 
   it('crea', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.gastosDE.create).mockResolvedValue({gastosDEId:'g1'}as any); const r=await createGastosDEAction({proveedor:'P1',monto:5000,descripcion:'Test'}); expect(r.success).toBe(true); });
-  it('elimina', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({gastosDEId:'g1'}); vi.mocked(prisma.gastosDE.delete).mockResolvedValue({}as any); const r=await deleteGastosDEAction('g1'); expect(r.success).toBe(true); });
+  it('elimina', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({gastosDEId:'g1'} as never); vi.mocked(prisma.gastosDE.delete).mockResolvedValue({}as any); const r=await deleteGastosDEAction('g1'); expect(r.success).toBe(true); });
 
   describe('updateGastosDEAction', () => {
     const existing = { gastosDEId: 'g1', tenantId: 't1', tipo: null, conceptoId: null, elementoId: null, periodo: '2026-01', proveedor: 'P', monto: 100, descripcion: 'D' };
@@ -85,6 +85,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
       const r = await updateGastosDEAction({ gastosDEId: 'g1', conceptoId: 'c-1', elementoId: 'e-from-c2' });
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('VALIDATION_ERROR');
       expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
     });
@@ -95,6 +96,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
       const r = await updateGastosDEAction({ gastosDEId: 'g1', conceptoId: 'c-de-otro-tenant' });
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('VALIDATION_ERROR');
       expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
     });
@@ -105,6 +107,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
       const r = await updateGastosDEAction({ gastosDEId: 'g1', elementoId: 'e-de-otro-tenant' });
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('VALIDATION_ERROR');
       expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
     });
@@ -114,6 +117,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(null);
       const r = await updateGastosDEAction({ gastosDEId: 'g-otro-tenant', monto: 100 });
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('NOT_FOUND');
       expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
     });
@@ -135,6 +139,7 @@ describe('GastosDE Actions', () => {
     vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(null);
     const r = await deleteGastosDEAction('g-otro-tenant');
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
   });
@@ -144,6 +149,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       const r = await deleteGastosDEBulkAction([]);
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('VALIDATION_ERROR');
       expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
     });
@@ -157,6 +163,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(prisma.gastosDE.delete).mockResolvedValue({} as any);
       const r = await deleteGastosDEBulkAction(['g1', 'g2', 'g-otro-tenant']);
       expect(r.success).toBe(true);
+      if (!r.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(vi.mocked(prisma.gastosDE.delete)).toHaveBeenCalledTimes(2);
       expect(r.data?.eliminados).toBe(2);
     });
@@ -165,6 +172,7 @@ describe('GastosDE Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       const r = await deleteGastosDEBulkAction(['', 123 as unknown as string]);
       expect(r.success).toBe(false);
+      if (r.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(r.error?.code).toBe('VALIDATION_ERROR');
     });
   });
@@ -175,6 +183,7 @@ describe('GastosDE Actions', () => {
     const r = await getGastosDEAction();
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
     expect(vi.mocked(prisma.gastosDE.findMany)).not.toHaveBeenCalled();
   });
@@ -197,6 +206,7 @@ describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
     vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue({ conceptoId: 'c-1', tenantId: 't1', nombre: 'Arrendamiento' } as any);
     const r = await createGastoConceptoAction({ nombre: 'Arrendamiento' });
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('DUPLICATE');
     expect(prisma.gastoConcepto.create).not.toHaveBeenCalled();
   });
@@ -226,6 +236,7 @@ describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
     vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
     const r = await createGastoElementoAction({ conceptoId: 'c-de-otro-tenant', nombre: 'Extra' });
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(prisma.gastoElemento.create).not.toHaveBeenCalled();
   });
@@ -246,6 +257,7 @@ describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
     vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
     const r = await createGastosDEAction({ proveedor: 'P', monto: 100, descripcion: 'D', conceptoId: 'c-de-otro-tenant' });
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('VALIDATION_ERROR');
     expect(prisma.gastosDE.create).not.toHaveBeenCalled();
   });
@@ -255,6 +267,7 @@ describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
     vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
     const r = await createGastosDEAction({ proveedor: 'P', monto: 100, descripcion: 'D', elementoId: 'e-de-otro-tenant' });
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('VALIDATION_ERROR');
     expect(prisma.gastosDE.create).not.toHaveBeenCalled();
   });
@@ -262,11 +275,11 @@ describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
 
 describe('B-04: proveedor con FK y aprobación', () => {
   const dependiente: AuthenticatedUser = {
-    userId: 'd1', name: 'Dep', email: 'd@t.com', role: 'user', isActive: true, tenantId: 't1', tenantRole: 'dependiente',
+    userId: 'd1', name: 'Dep', email: 'd@t.com', role: 'regularUser', isActive: true, tenantId: 't1', tenantRole: 'dependiente',
     planFeatures: { gastos: true },
   };
   const economico: AuthenticatedUser = {
-    userId: 'e1', name: 'Eco', email: 'e@t.com', role: 'user', isActive: true, tenantId: 't1', tenantRole: 'economico',
+    userId: 'e1', name: 'Eco', email: 'e@t.com', role: 'regularUser', isActive: true, tenantId: 't1', tenantRole: 'economico',
     planFeatures: { gastos: true },
   };
 
@@ -299,6 +312,7 @@ describe('B-04: proveedor con FK y aprobación', () => {
     const r = await createGastosDEAction({ proveedor: '', proveedorId: 'ven-x', monto: 500, descripcion: 'Compra' } as never);
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(prisma.gastosDE.create).not.toHaveBeenCalled();
   });
@@ -323,6 +337,7 @@ describe('B-04: proveedor con FK y aprobación', () => {
     const r = await aprobarGastoDEAction({ id: 'g1' });
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('FORBIDDEN');
     expect(prisma.gastosDE.update).not.toHaveBeenCalled();
   });
@@ -350,6 +365,7 @@ describe('B-04: proveedor con FK y aprobación', () => {
     const r = await aprobarGastoDEAction({ id: 'g1' });
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('VALIDATION_ERROR');
   });
 
@@ -376,6 +392,7 @@ describe('B-04: proveedor con FK y aprobación', () => {
     const r = await updateGastosDEAction({ gastosDEId: 'g1', monto: 200 });
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('FORBIDDEN');
   });
 
@@ -386,6 +403,7 @@ describe('B-04: proveedor con FK y aprobación', () => {
     const r = await deleteGastosDEAction('g1');
 
     expect(r.success).toBe(false);
+    if (r.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(r.error?.code).toBe('VALIDATION_ERROR');
     expect(prisma.gastosDE.delete).not.toHaveBeenCalled();
   });

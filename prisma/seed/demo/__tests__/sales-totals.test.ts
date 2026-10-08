@@ -47,7 +47,7 @@ describe('demo sales totals seed', () => {
     vi.clearAllMocks();
   });
 
-  it('professional seed actualiza total y subtotal de ventas demo', async () => {
+  it('professional seed actualiza total y cantidad de ventas demo', async () => {
     const client = createSeedClient();
 
     await seedProfessionalExtras({ tenantId: 'tenant-pro' }, client as never);
@@ -55,13 +55,13 @@ describe('demo sales totals seed', () => {
     expect(client.venta.update).toHaveBeenCalledWith({
       where: { ventaId: 'venta-pro-1' },
       data: {
-        subtotal: 740,
         total: 740,
+        cantidad: 7,
       },
     });
   });
 
-  it('enterprise seed actualiza total y subtotal de ventas demo', async () => {
+  it('enterprise seed actualiza el total de la venta demo', async () => {
     const client = createSeedClient();
     client.venta.create = vi
       .fn()
@@ -73,7 +73,6 @@ describe('demo sales totals seed', () => {
     expect(client.venta.update).toHaveBeenCalledWith({
       where: { ventaId: 'venta-emp-1' },
       data: {
-        subtotal: 1200,
         total: 1200,
       },
     });

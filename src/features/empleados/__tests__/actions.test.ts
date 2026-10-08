@@ -84,7 +84,7 @@ describe('Empleados Server Actions', () => {
 
   it('updateEmpleadoAction actualiza empleado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' });
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as never);
     vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
     const result = await updateEmpleadoAction({ empleadoId: 'emp-1', nombre: 'Juan Carlos' });
     expect(result.success).toBe(true);
@@ -92,7 +92,7 @@ describe('Empleados Server Actions', () => {
 
   it('deleteEmpleadoAction elimina empleado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' });
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as never);
     vi.mocked(prisma.empleado.delete).mockResolvedValue({} as any);
     const result = await deleteEmpleadoAction('emp-1');
     expect(result.success).toBe(true);
@@ -147,19 +147,21 @@ describe('Empleados Server Actions', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null);
     const result = await getEmpleadosAction();
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error!.code).toBe('AUTH_REQUIRED');
   });
 
   it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye empleados', async () => {
     const restrictedUser: AuthenticatedUser = {
       ...mockUser,
-      role: 'user',
+      role: 'regularUser',
       tenantRole: 'manager',
       planFeatures: { empleados: false },
     };
     vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
     const result = await getEmpleadosAction();
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
   });
 
@@ -291,6 +293,7 @@ describe('Empleados Server Actions', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('NOT_FOUND');
 	expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
 	expect(tx.reconciliacionGasto.deleteMany).not.toHaveBeenCalled();

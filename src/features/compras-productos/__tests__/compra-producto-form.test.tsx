@@ -25,6 +25,21 @@ vi.mock('@/features/compras-productos/actions-oc', () => ({
 vi.mock('@/features/contabilidad/actions-anticipos', () => ({
   getAnticiposAction: vi.fn().mockResolvedValue({ success: false }),
 }));
+vi.mock('@/features/contabilidad/actions-tipos-pago', () => ({
+  getTiposPagoAction: vi.fn().mockResolvedValue({
+    success: true,
+    data: { data: [{ tipoId: 'tipo-1', nombre: 'Transferencia' }] },
+  }),
+}));
+vi.mock('@/features/contabilidad/hooks/use-cuentas-bancarias', () => ({
+  useCuentasBancarias: () => ({
+    cuentas: [{
+      cuentaId: 'cuenta-1', nombreBanco: 'Banco', numeroCuenta: '1234',
+      moneda: 'CUP', isActive: true,
+    }],
+    isLoading: false,
+  }),
+}));
 vi.mock('@/features/productos/components/product-photo-upload', () => ({
   ProductPhotoUpload: () => null,
 }));
@@ -54,6 +69,8 @@ describe('CompraProductoForm', () => {
     expect(screen.getByLabelText('Proveedor')).toBeInTheDocument();
     expect(screen.getByLabelText('Orden de compra (opcional)')).toBeInTheDocument();
     expect(screen.getByLabelText('Estado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cuenta bancaria de pago')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tipo de pago')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /registrar compra/i })).toBeInTheDocument();
   });
 

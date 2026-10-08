@@ -156,6 +156,7 @@ describe('sales-agent actions', () => {
     const result = await getSalesAgentDashboardAction({});
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(prisma.salesAgentReferral.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { salesAgentUserId: 'agent-1' } }),
     );
@@ -218,6 +219,8 @@ describe('sales-agent actions', () => {
         }],
       },
     });
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.referrals[0].tenant).toEqual(expect.not.objectContaining({
       direccion: expect.anything(),
       telefono: expect.anything(),

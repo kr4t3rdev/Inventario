@@ -20,7 +20,7 @@ vi.mock('@/lib/prisma', () => ({
     $transaction: vi.fn(),
   },
 }))
-vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
+vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requirePermission: mockRequirePermission,
@@ -32,19 +32,26 @@ vi.mock('@/lib/cost-history-utils', () => ({
 }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 import { recordCostChange } from '@/lib/cost-history-utils'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Test',
+  email: 'test@test.com',
+  role: 'regularUser',
+  isActive: true,
   tenantId: 'tenant-1',
-  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
   tenantRole: 'manager',
-} as any
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
+}
 
 describe('getSugerenciasPrecioAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.productoCostSheetTemplate.findMany).mockResolvedValue([])
   })
 
@@ -55,12 +62,14 @@ describe('getSugerenciasPrecioAction', () => {
     ] as any)
     vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue(null)
 
-    const data = await getSugerenciasPrecioAction({}, mockUser)
+    const data = await getSugerenciasPrecioAction({})
 
-    expect(data).toHaveLength(2)
-    expect(data[0].precioSugerido).toBe(130) // 100 * 1.30
-    expect(data[1].precioSugerido).toBe(260) // 200 * 1.30
-    expect(data[0].diffPorcentaje).toBeCloseTo(8.33, 1) // (130-120)/120 * 100
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data).toHaveLength(2)
+    expect(data.data[0].precioSugerido).toBe(130) // 100 * 1.30
+    expect(data.data[1].precioSugerido).toBe(260) // 200 * 1.30
+    expect(data.data[0].diffPorcentaje).toBeCloseTo(8.33, 1) // (130-120)/120 * 100
   })
 
   it('usa margenObjetivo de plantilla activa si existe', async () => {
@@ -71,9 +80,11 @@ describe('getSugerenciasPrecioAction', () => {
       { productoId: 'p1', margenObjetivo: 0.40 },
     ] as any)
 
-    const data = await getSugerenciasPrecioAction({}, mockUser)
+    const data = await getSugerenciasPrecioAction({})
 
-    expect(data[0].precioSugerido).toBe(140) // 100 * 1.40
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data[0].precioSugerido).toBe(140) // 100 * 1.40
   })
 
   it('excluye productos sin precioCosto', async () => {
@@ -83,16 +94,18 @@ describe('getSugerenciasPrecioAction', () => {
     ] as any)
     vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue(null)
 
-    const data = await getSugerenciasPrecioAction({}, mockUser)
+    const data = await getSugerenciasPrecioAction({})
 
-    expect(data).toHaveLength(1)
-    expect(data[0].productoId).toBe('p2')
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data).toHaveLength(1)
+    expect(data.data[0].productoId).toBe('p2')
   })
 
   it('filtra por tenantId', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    await getSugerenciasPrecioAction({}, mockUser)
+    await getSugerenciasPrecioAction({})
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', precioCosto: { gt: 0 } },
@@ -104,14 +117,16 @@ describe('getSugerenciasPrecioAction', () => {
 describe('aplicarSugerenciaPrecioAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.productoCostSheetTemplate.findMany).mockResolvedValue([])
   })
 
   it('rechaza usuarios no-manager antes de modificar precios o registrar auditoría', async () => {
     const nonManagerUser = { ...mockUser, tenantRole: 'economico' }
+    vi.mocked(getCurrentUser).mockResolvedValue(nonManagerUser as never)
 
     await expect(
-      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, nonManagerUser),
+      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }),
     ).rejects.toThrow('No tienes permisos')
 
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
@@ -131,9 +146,10 @@ describe('aplicarSugerenciaPrecioAction', () => {
       tenantRole: 'economico',
       planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
     }
+    vi.mocked(getCurrentUser).mockResolvedValue(nonManagerBasicUser as never)
 
     await expect(
-      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, nonManagerBasicUser),
+      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }),
     ).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
     expect(mockRequirePermission).not.toHaveBeenCalled()
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
@@ -149,9 +165,11 @@ describe('aplicarSugerenciaPrecioAction', () => {
     })
     vi.mocked(prisma.producto.update).mockResolvedValue({ id: 'p1', precioVenta: 130 } as any)
 
-    const data = await aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, mockUser)
+    const data = await aplicarSugerenciaPrecioAction({ productoIds: ['p1'] })
 
-    expect(data.updated).toBe(1)
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.updated).toBe(1)
     expect(recordCostChange).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ reason: 'MANUAL_EDIT' }),
@@ -171,9 +189,11 @@ describe('aplicarSugerenciaPrecioAction', () => {
     ] as any)
     vi.mocked(prisma.$transaction).mockRejectedValue(dbError)
 
-    const data = await aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, mockUser)
+    const data = await aplicarSugerenciaPrecioAction({ productoIds: ['p1'] })
 
-    expect(data.errors).toEqual([
+    expect(data.success).toBe(true)
+    if (!data.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(data.data.errors).toEqual([
       { productoId: 'p1', message: 'No se pudo aplicar el precio sugerido' },
     ])
     expect(consoleError).toHaveBeenCalledWith(

@@ -52,6 +52,8 @@ describe('acciones fiscales (FE-T3)', () => {
 	it('emitirFiscalAction exige feature + tenant activo', async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r0 = await emitirFiscalAction('fac-1');
+		expect(r0.success).toBe(false);
+		if (r0.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(r0.error?.code).toBe('AUTH_REQUIRED');
 
 		vi.mocked(getCurrentUser).mockResolvedValue({
@@ -59,6 +61,8 @@ describe('acciones fiscales (FE-T3)', () => {
 			planFeatures: {},
 		} as never);
 		const r1 = await emitirFiscalAction('fac-1');
+		expect(r1.success).toBe(false);
+		if (r1.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(r1.error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 
@@ -92,6 +96,8 @@ describe('acciones fiscales (FE-T3)', () => {
 			facturaId: 'fac-1',
 			pruebaNoEmision: 'Ack-PAC-2026-000123: no existe el comprobante',
 		});
+		expect(r.success).toBe(false);
+		if (r.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(r.error?.code).toBe('ESTADO_INVALIDO');
 	});
 });

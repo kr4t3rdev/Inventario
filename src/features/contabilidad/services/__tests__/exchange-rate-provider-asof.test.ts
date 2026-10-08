@@ -6,7 +6,7 @@ const prismaMock = vi.hoisted(() => ({
 
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));
 
-import { exchangeRateProvider } from '../exchange-rate-provider';
+import { exchangeRateProvider, PrismaExchangeRateProvider } from '../exchange-rate-provider';
 
 describe('exchangeRateProvider.getRateAsOf', () => {
   beforeEach(() => {
@@ -61,5 +61,45 @@ describe('exchangeRateProvider.getRateAsOf', () => {
         boundaryAt: new Date('2026-03-15T12:00:00.000Z'),
       }),
     ).toBeNull();
+  });
+
+  it('conserva la tasa Decimal original para valoraciones formales exactas', async () => {
+    prismaMock.tasaCambio.findFirst.mockResolvedValue({
+      tasaId: 'tasa-exacta',
+      tasa: '24.123456789123456',
+      fechaVigencia: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    const result = await exchangeRateProvider.getRateAsOfExact({
+      sourceCurrency: 'USD',
+      targetCurrency: 'MLC',
+      boundaryAt: new Date('2026-03-15T12:00:00.000Z'),
+    });
+
+    expect(result?.tasa.toFixed()).toBe('24.123456789123456');
+    expect(result?.tasaId).toBe('tasa-exacta');
+  });
+
+  it('usa el cliente Prisma inyectado cuando no se pasa un cliente transaccional', async () => {
+    const injectedDb = {
+      tasaCambio: {
+        findFirst: vi.fn().mockResolvedValue({
+          tasaId: 'injected-rate',
+          tasa: '7.125',
+          fechaVigencia: new Date('2026-01-01T00:00:00.000Z'),
+        }),
+      },
+    };
+    const provider = new PrismaExchangeRateProvider(injectedDb as never);
+
+    const result = await provider.getRateAsOfExact({
+      sourceCurrency: 'USD',
+      targetCurrency: 'MLC',
+      boundaryAt: new Date('2026-03-15T12:00:00.000Z'),
+    });
+
+    expect(result?.tasa.toFixed()).toBe('7.125');
+    expect(injectedDb.tasaCambio.findFirst).toHaveBeenCalledTimes(1);
+    expect(prismaMock.tasaCambio.findFirst).not.toHaveBeenCalled();
   });
 });

@@ -18,7 +18,7 @@ describe('regla pura de comisiones (CMV-T2)', () => {
 		const r = calcularComisionReport({
 			ventas: ventasBase,
 			devoluciones: [
-				{ ventaId: 'v-1', ventaTotal: 5000, cantidad: 2, precioUnitario: 2500, total: 5000 },
+				{ total: 5000 },
 			],
 			empleadoId: 'e-1',
 			comisionPct: 10,
@@ -67,7 +67,7 @@ describe('borde de la regla', () => {
 	it('devolución mayor que la venta no baja la comisión por debajo de 0', () => {
 		const r = calcularComisionReport({
 			ventas: ventasBase.slice(0, 1), // solo FACTURADA 5000
-			devoluciones: [{ ventaId: 'v-1', total: 8000, cantidad: 1, precioUnitario: 8000, ventaTotal: 5000 }],
+			devoluciones: [{ total: 8000 }],
 			empleadoId: 'e-1',
 			comisionPct: 10,
 		});

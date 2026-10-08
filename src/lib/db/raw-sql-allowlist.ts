@@ -66,9 +66,39 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'src/features/contabilidad/actions-reconciliacion.ts',
-    occurrences: 9,
+    occurrences: 4,
     reason: 'Agregados de saldos y locks FOR UPDATE transaccionales.',
     tenantGuarantee: 'CTE/whereParts y locks incluyen tenantId de requireTenant.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/apertura-revision-service.ts',
+    occurrences: 1,
+    reason: 'Advisory lock serializa revisiones de apertura por tenant y período.',
+    tenantGuarantee: 'La llave se compone de tenantId y periodoId validados en el servicio.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/replay-backfill-service.ts',
+    occurrences: 4,
+    reason: 'Advisory lock tenant/período y savepoint constante para replay atómico.',
+    tenantGuarantee: 'El tenantId proviene del preflight aprobado; el savepoint no consulta datos.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/reversal-service.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE del asiento original antes de crear su reverso.',
+    tenantGuarantee: 'La consulta incluye asientoId y tenantId autenticado.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/shadow-outbox.ts',
+    occurrences: 3,
+    reason: 'Métricas y consumo transaccional del outbox shadow.',
+    tenantGuarantee: 'Métricas requieren tenantId; consumo sin filtro solo corresponde al worker interno de entrega, sin caller HTTP.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/shadow-savepoint.ts',
+    occurrences: 3,
+    reason: 'SAVEPOINT/ROLLBACK/RELEASE con identificador SQL constante.',
+    tenantGuarantee: 'Controla solo el savepoint de la transacción entregada; no lee filas ni concatena entrada.',
   },
   {
     file: 'src/features/contabilidad/api/exchange-handlers.ts',
@@ -155,6 +185,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'La venta se resuelve con tenantId autenticado antes de ejecutar el lock parametrizado.',
   },
   {
+    file: 'src/features/ventas/services/credito-override.ts',
+    occurrences: 2,
+    reason: 'Verificación de capacidad SQL y lock FOR UPDATE del cliente para serializar el cupo.',
+    tenantGuarantee: 'La fila Cliente se filtra por clienteId y tenantId autenticado.',
+  },
+  {
     file: 'scripts/seed-e2e-user.ts',
     occurrences: 1,
     reason: 'Reinicia el esquema de una base de datos descartable para fixtures E2E.',
@@ -171,5 +207,11 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     occurrences: 3,
     reason: 'Locks FOR UPDATE sobre fuentes, CxP y cuentas bancarias.',
     tenantGuarantee: 'SQL parametrizado incluye tenantId en cada tabla tenant-scoped.',
+  },
+  {
+    file: 'src/lib/services/anticipos-workflow.ts',
+    occurrences: 2,
+    reason: 'Advisory lock idempotente de creación y lock FOR UPDATE al aplicar anticipos.',
+    tenantGuarantee: 'Claves de lock incluyen tenantId; lecturas de Anticipo filtran tenantId antes de mutar.',
   },
 ] as const;

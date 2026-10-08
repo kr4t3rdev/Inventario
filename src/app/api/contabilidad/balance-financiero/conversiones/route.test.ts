@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NextRequest } from 'next/server';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+type RawHandler = (request: NextRequest, context: any, user: AuthenticatedUser) => Promise<Response>;
 
 const captureMock = vi.hoisted(() => vi.fn());
 const authMock = vi.hoisted(() => ({
@@ -24,7 +26,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
       skippedCount: 0,
       skipped: [],
     });
-    const { POST } = await import('./route');
+    const { POST } = await import('./route') as unknown as { POST: RawHandler };
     const response = await POST(
       new NextRequest('http://localhost/api/contabilidad/balance-financiero/conversiones', {
         method: 'POST',
@@ -36,7 +38,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
         userId: 'manager-1',
         name: 'Manager',
         email: 'manager@example.com',
-        role: 'user',
+        role: 'regularUser',
         isActive: true,
         tenantId: 'tenant-1',
         tenantRole: 'manager',
@@ -62,7 +64,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
   });
 
   it('rechaza un usuario sin tenant o sin capacidad contable', async () => {
-    const { POST } = await import('./route');
+    const { POST } = await import('./route') as unknown as { POST: RawHandler };
     const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero/conversiones', {
       method: 'POST',
       body: JSON.stringify({}),
@@ -73,7 +75,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
       userId: 'user-1',
       name: 'User',
       email: 'user@example.com',
-      role: 'user',
+      role: 'regularUser',
       isActive: true,
       tenantRole: 'dependiente',
       planFeatures: { contabilidad: false },
@@ -84,7 +86,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
   });
 
   it('rechaza un cuerpo JSON inválido antes de mutar evidencia', async () => {
-    const { POST } = await import('./route');
+    const { POST } = await import('./route') as unknown as { POST: RawHandler };
     const response = await POST(
       new NextRequest('http://localhost/api/contabilidad/balance-financiero/conversiones', {
         method: 'POST',
@@ -96,7 +98,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
         userId: 'manager-1',
         name: 'Manager',
         email: 'manager@example.com',
-        role: 'user',
+        role: 'regularUser',
         isActive: true,
         tenantId: 'tenant-1',
         tenantRole: 'manager',

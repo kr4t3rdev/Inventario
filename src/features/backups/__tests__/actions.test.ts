@@ -97,6 +97,7 @@ describe('Backups Server Actions', () => {
     const result = await createBackupAction({ type: 'tenant', tenantId: 'tenant-x' });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('NOT_FOUND');
     expect(backupEngineCtor).not.toHaveBeenCalled();
   });

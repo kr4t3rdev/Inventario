@@ -58,7 +58,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockVendorRow = {
@@ -88,6 +88,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorsAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
       expect(result.data![0].nombre).toBe('Proveedor Test');
       expect(result.data![0].ean13Code).toBe('0100000000011');
@@ -100,6 +101,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorsAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual([]);
     });
   });
@@ -107,12 +109,13 @@ describe('Vendors Server Actions', () => {
   describe('getVendorByIdAction', () => {
     it('retorna proveedor por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow);
+      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow as never);
       vi.mocked(generateVendorEan13).mockReturnValue('0100000000011');
 
       const result = await getVendorByIdAction('ven-1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.nombre).toBe('Proveedor Test');
     });
 
@@ -123,6 +126,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorByIdAction('ven-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -132,12 +136,13 @@ describe('Vendors Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(initializeVendorCodeSequence).mockResolvedValue(undefined);
       vi.mocked(getNextVendorCode).mockResolvedValue('05');
-      vi.mocked(prisma.vendor.create).mockResolvedValue({ ...mockVendorRow, vendorCode: '05' });
+      vi.mocked(prisma.vendor.create).mockResolvedValue({ ...mockVendorRow, vendorCode: '05' } as never);
       vi.mocked(generateVendorEan13).mockReturnValue('0500000000011');
 
       const result = await createVendorAction({ nombre: 'Nuevo Proveedor' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(getNextVendorCode).toHaveBeenCalled();
       expect(result.data!.vendorCode).toBe('05');
     });
@@ -148,6 +153,7 @@ describe('Vendors Server Actions', () => {
       const result = await createVendorAction({ nombre: '' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('VALIDATION_ERROR');
     });
   });
@@ -155,8 +161,8 @@ describe('Vendors Server Actions', () => {
   describe('updateVendorAction', () => {
     it('actualiza proveedor exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow);
-      vi.mocked(prisma.vendor.update).mockResolvedValue({ ...mockVendorRow, nombre: 'Actualizado' });
+      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow as never);
+      vi.mocked(prisma.vendor.update).mockResolvedValue({ ...mockVendorRow, nombre: 'Actualizado' } as never);
       vi.mocked(generateVendorEan13).mockReturnValue('0100000000011');
 
       const result = await updateVendorAction({ vendorId: 'ven-1', nombre: 'Actualizado' });
@@ -171,6 +177,7 @@ describe('Vendors Server Actions', () => {
       const result = await updateVendorAction({ vendorId: 'ven-noexiste', nombre: 'Test' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -178,8 +185,8 @@ describe('Vendors Server Actions', () => {
   describe('deleteVendorAction', () => {
     it('elimina proveedor exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow);
-      vi.mocked(prisma.vendor.delete).mockResolvedValue(mockVendorRow);
+      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(mockVendorRow as never);
+      vi.mocked(prisma.vendor.delete).mockResolvedValue(mockVendorRow as never);
 
       const result = await deleteVendorAction('ven-1');
 
@@ -193,6 +200,7 @@ describe('Vendors Server Actions', () => {
       const result = await deleteVendorAction('ven-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -202,6 +210,7 @@ describe('Vendors Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getVendorsAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

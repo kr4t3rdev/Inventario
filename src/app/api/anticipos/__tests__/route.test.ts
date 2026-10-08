@@ -14,9 +14,18 @@ const prismaMock = vi.hoisted(() => ({
 
 const createAnticipoMock = vi.hoisted(() => vi.fn())
 
+const authUser = vi.hoisted(() => ({
+  current: {
+    userId: 'user-1', tenantId: 'tenant-1', role: 'user',
+    tenantRole: 'manager',
+    planFeatures: { anticipos: true },
+    permissions: new Set(['financiero.contabilidad.acceder']),
+  } as Record<string, unknown>,
+}))
+
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: any) => handler,
-  withAuthPost: (handler: any) => handler,
+  withAuthGet: (handler: any) => (request: any) => handler(request, authUser.current),
+  withAuthPost: (handler: any) => (request: any, context?: any) => handler(request, context, authUser.current),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -65,10 +74,12 @@ describe('API /anticipos', () => {
         proveedorId: 'prov-1',
         monto: 100,
         moneda: 'CUP',
+        cuentaOrigenId: 'cta-1',
+        tipoPagoOrigenId: 'tp-1',
       }),
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(201)
@@ -94,7 +105,7 @@ describe('API /anticipos', () => {
       }),
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(201)

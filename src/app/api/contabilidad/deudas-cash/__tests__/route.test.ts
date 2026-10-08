@@ -172,7 +172,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
@@ -189,7 +189,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash?proveedorId=v-1",
 		);
-		await GET(request);
+		await GET(request, {});
 
 		expect(prisma.deudaCash.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -205,7 +205,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 
 		expect(response.status).toBe(404);
 	});

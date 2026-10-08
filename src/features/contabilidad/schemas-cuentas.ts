@@ -19,9 +19,16 @@ export const createCuentaPorCobrarSchema = z.object({
 	ventaId: z.string().min(1, "El ID de venta es requerido"),
 	clienteId: z.string().min(1, "El ID de cliente es requerido"),
 	monto: z.number().positive("El monto debe ser mayor que 0"),
-	moneda: z.enum(["CUP", "USD"]).default("CUP"),
+	moneda: z
+		.string()
+		.trim()
+		.length(3, "La moneda debe tener un código de tres letras")
+		.regex(/^[A-Za-z]{3}$/, "La moneda debe tener un código de tres letras")
+		.transform((currency) => currency.toUpperCase()),
 	numeroFactura: z.string().optional(),
-	fechaVencimiento: z.string().datetime().optional().nullable(),
+ fechaVencimiento: z.string().datetime().optional().nullable(),
+ solicitarCreditoOverride: z.boolean().optional(),
+ motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
 });
 
 export const updateCuentaPorCobrarSchema = z.object({
@@ -30,7 +37,9 @@ export const updateCuentaPorCobrarSchema = z.object({
 	montoDeuda: z.number().positive().optional(),
 	montoPagado: z.number().min(0).optional(),
 	idTransferencia: z.string().optional(),
-	fechaVencimiento: z.string().datetime().optional().nullable(),
+ fechaVencimiento: z.string().datetime().optional().nullable(),
+ solicitarCreditoOverride: z.boolean().optional(),
+ motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
 });
 
 export const annulCuentaPorCobrarSchema = z.object({
@@ -65,7 +74,7 @@ export const createCuentaPorPagarSchema = z.object({
 
 // ═══ Types inferidos ═══
 
-export type GetCuentasPorCobrarInput = z.infer<
+export type GetCuentasPorCobrarInput = z.input<
 	typeof getCuentasPorCobrarSchema
 >;
 export type CreateCuentaPorCobrarInput = z.infer<
@@ -79,6 +88,6 @@ export type AnnulCuentaPorCobrarInput = z.infer<
 >;
 
 export type GetCuentasPorPagarInput = z.infer<typeof getCuentasPorPagarSchema>;
-export type CreateCuentaPorPagarInput = z.infer<
+export type CreateCuentaPorPagarInput = z.input<
 	typeof createCuentaPorPagarSchema
 >;

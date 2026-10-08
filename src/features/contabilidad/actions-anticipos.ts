@@ -10,10 +10,10 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
-import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { createAnticipo } from '@/lib/services/anticipos-workflow';
 
 // ─── Schemas ───────────────────────────────────────────────
 
@@ -23,11 +23,14 @@ const createSchema = z.object({
   moneda: z.string().optional().default('CUP'),
   proveedorId: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
-  contratoId: z.string().optional().nullable(),
+  contratoId: z.string().min(1),
   concepto: z.string().optional(),
   observaciones: z.string().optional(),
   fechaAnticipo: z.string().optional(),
-  cuentaOrigenId: z.string().optional().nullable(),
+  vigenciaHasta: z.string().optional(),
+  cuentaOrigenId: z.string().min(1),
+  tipoPagoOrigenId: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(128).optional(),
 });
 
 const executeSchema = z.object({
@@ -90,32 +93,25 @@ export const createAnticipoAction = withAction(withPeriodValidation(
   (input) => input.fechaAnticipo ? new Date(input.fechaAnticipo) : new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'anticipos', 'crear anticipos');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear anticipos');
     const parsed = createSchema.parse(input);
     const tenantId = requireTenant(user);
 
-    const anticipo = await prisma.anticipo.create({
-      data: {
-        tipo: parsed.tipo,
-        montoOriginal: parsed.monto,
-        saldoDisponible: parsed.monto,
-        moneda: parsed.moneda,
-        proveedor: parsed.proveedorId ? { connect: { vendorId: parsed.proveedorId } } : undefined,
-        cliente: parsed.clienteId ? { connect: { clienteId: parsed.clienteId } } : undefined,
-        contrato: { connect: { contratoId: parsed.contratoId! } },
-        cuentaOrigenId: parsed.cuentaOrigenId,
-        tenant: { connect: { tenantId } },
-        creador: { connect: { userId: user.userId } },
-        estado: 'RESERVADO',
-      },
-    });
-
-    AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'ANTICIPO',
-      entidadId: anticipo.anticipoId,
+    const anticipo = await prisma.$transaction((tx) => createAnticipo(tx, {
+      tipo: parsed.tipo,
+      monto: parsed.monto,
+      moneda: parsed.moneda,
+      contratoId: parsed.contratoId,
+      proveedorId: parsed.proveedorId ?? undefined,
+      clienteId: parsed.clienteId ?? undefined,
+      cuentaOrigenId: parsed.cuentaOrigenId,
+      tipoPagoOrigenId: parsed.tipoPagoOrigenId,
+      idempotencyKey: parsed.idempotencyKey,
+      referenciaExterna: parsed.concepto ?? parsed.observaciones,
+      vigenciaHasta: parsed.vigenciaHasta,
+      tenantId,
       usuarioId: user.userId,
-      detalles: { tipo: parsed.tipo, monto: parsed.monto, moneda: parsed.moneda, proveedorId: parsed.proveedorId, clienteId: parsed.clienteId },
-    }).catch((err) => console.error('[AuditLog] Error logging anticipo:', err));
+    }));
 
     revalidatePath('/busy/contabilidad/anticipos');
     return { anticipo };
@@ -126,58 +122,26 @@ export const executeAnticipoAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof executeSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'anticipos', 'ejecutar anticipos');
-    const parsed = executeSchema.parse(input);
-  const tenantId = requireTenant(user);
-
-  const anticipo = await prisma.anticipo.findFirst({
-    where: { anticipoId: parsed.anticipoId, tenantId },
-  });
-  if (!anticipo) throw new ActionError('Anticipo no encontrado', 'NOT_FOUND');
-
-  const updated = await prisma.anticipo.update({
-    where: { anticipoId: parsed.anticipoId },
-    data: { estado: 'EJECUTADO' },
-  });
-
-  AuditLogService.log({
-    accion: 'EXECUTE',
-    entidad: 'ANTICIPO',
-    entidadId: parsed.anticipoId,
-    usuarioId: user.userId,
-    detalles: { montoEjecutar: parsed.montoEjecutar, documentoDestinoId: parsed.documentoDestinoId, observaciones: parsed.observaciones },
-  }).catch((err) => console.error('[AuditLog] Error logging execute anticipo:', err));
-
-  revalidatePath('/busy/contabilidad/anticipos');
-  return { anticipo: updated };
+    requirePermission(user, 'financiero.contabilidad.acceder', 'ejecutar anticipos');
+    executeSchema.parse(input);
+    requireTenant(user);
+    throw new ActionError(
+      'El anticipo se aplica automáticamente al crear el documento que lo consume. No se permite ejecución manual.',
+      'DOCUMENT_WORKFLOW_REQUIRED',
+    );
 }));
 
 export const reverseAnticipoAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof reverseSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'anticipos', 'anular anticipos');
-    const parsed = reverseSchema.parse(input);
-  const tenantId = requireTenant(user);
-
-  const anticipo = await prisma.anticipo.findFirst({
-    where: { anticipoId: parsed.anticipoId, tenantId },
-  });
-  if (!anticipo) throw new ActionError('Anticipo no encontrado', 'NOT_FOUND');
-
-  const updated = await prisma.anticipo.update({
-    where: { anticipoId: parsed.anticipoId },
-    data: { estado: 'ANULADO' },
-  });
-
-  AuditLogService.log({
-    accion: 'DELETE',
-    entidad: 'ANTICIPO',
-    entidadId: parsed.anticipoId,
-    usuarioId: user.userId,
-    detalles: { montoReverso: parsed.montoReverso, observaciones: parsed.observaciones },
-  }).catch((err) => console.error('[AuditLog] Error logging reverse anticipo:', err));
-
-  revalidatePath('/busy/contabilidad/anticipos');
-  return { anticipo: updated };
+    requirePermission(user, 'financiero.contabilidad.acceder', 'anular anticipos');
+    reverseSchema.parse(input);
+    requireTenant(user);
+    throw new ActionError(
+      'La reversión de un anticipo debe realizarse al revertir el documento que lo consumió.',
+      'DOCUMENT_WORKFLOW_REQUIRED',
+    );
 }));
 
 export const getResumenAnticiposAction = withAction(async (params: { fechaInicio?: string; fechaFin?: string; tipo?: string } = {}, user: AuthenticatedUser) => {

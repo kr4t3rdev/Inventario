@@ -72,7 +72,7 @@ describe('completarOrdenProduccionAction — claim concurrente', () => {
 
 		const resultados = await Promise.all(
 			Array.from({ length: 5 }, () =>
-				completarOrdenProduccionAction('orden-1', currentUser.value as never)
+				completarOrdenProduccionAction('orden-1')
 			),
 		);
 

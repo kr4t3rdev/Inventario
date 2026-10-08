@@ -31,6 +31,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { getCurrentBalance } from "@/features/contabilidad/services/current-balance-service";
 import { getReconciledResultForYear } from "@/features/contabilidad/services/reconciled-result-service";
+import { CashSnapshotService } from "@/features/contabilidad/services/cash-snapshot-service";
 import {
 	captureFinancialAuxiliaryCheckpoint,
 	collectFinancialAuxiliaryEvidence,
@@ -481,6 +482,7 @@ export const cerrarPeriodoAction = withAction(
 			);
 		}
 		let snapshotsCount = 0;
+		let cashSnapshotsCount = 0;
 		// Cerrar período y persistir su evidencia en una sola transacción.
 		// Managers y admins del tenant auto-aprueban al cerrar.
 			const { cerrado } = await prisma.$transaction(async (tx) => {
@@ -653,6 +655,19 @@ export const cerrarPeriodoAction = withAction(
 					snapshotsCount = 1;
 				}
 
+				// El snapshot cash captura el estado funcional visible al momento real
+				// del cierre. No reconstruye saldos históricos para la fecha fin del
+				// período; se ejecuta con el mismo cliente transaccional para que una
+				// captura incompleta o fallida aborte atómicamente el cierre.
+				const cashSnapshot = await CashSnapshotService.capturar({
+					tenantId,
+					periodoId: parsed.periodoId,
+					fechaCorte: new Date(),
+					motivo: 'CIERRE_PERIODO',
+					client: tx as Prisma.TransactionClient,
+				});
+				cashSnapshotsCount = cashSnapshot.creados;
+
 				resultadoCierre = await PeriodoContableService.cerrarPeriodo(
 					parsed.periodoId,
 					user.userId,
@@ -681,7 +696,7 @@ export const cerrarPeriodoAction = withAction(
 					entidad: 'CIERRE_CONTABLE',
 					entidadId: parsed.periodoId,
 					usuarioId: user.userId,
-					detalles: { accion: 'CERRAR', snapshotsCount },
+					detalles: { accion: 'CERRAR', snapshotsCount, cashSnapshotsCount },
 				}, tx);
 
 				return { cerrado: resultadoCierre };
@@ -695,6 +710,7 @@ export const cerrarPeriodoAction = withAction(
 		return {
 			periodo: cerrado,
 			snapshots: snapshotsCount,
+			cashSnapshots: cashSnapshotsCount,
 		};
 	},
 );

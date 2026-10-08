@@ -7,15 +7,36 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+	isImmediatelyPrecedingPeriod,
 	generarAsientoApertura,
 	generarAsientoCierre,
 } from '@/features/contabilidad-formal/services/cierre-formal-service';
 
 const TENANT = 'tenant-cierre';
 
+describe('isImmediatelyPrecedingPeriod', () => {
+	it.each([
+		['period ending at UTC midnight', '2025-12-31T00:00:00.000Z', true],
+		['period ending at UTC end-of-day', '2025-12-31T23:59:59.999Z', true],
+		['period with a civil-day gap', '2025-12-30T23:59:59.999Z', false],
+		['period overlapping current start', '2026-01-01T00:00:00.000Z', false],
+	])('%s', (_label, priorEnd, expected) => {
+		expect(isImmediatelyPrecedingPeriod(
+			new Date(priorEnd),
+			new Date('2026-01-01T00:00:00.000Z'),
+		)).toBe(expected);
+	});
+
+	it('rejects invalid dates', () => {
+		expect(isImmediatelyPrecedingPeriod(new Date(Number.NaN), new Date())).toBe(false);
+	});
+});
+
 const prismaMock = vi.hoisted(() => ({
 	asiento: {
 		findFirst: vi.fn(),
+		findUnique: vi.fn(),
+		findMany: vi.fn(),
 		aggregate: vi.fn(),
 		create: vi.fn(),
 		count: vi.fn(),
@@ -24,8 +45,8 @@ const prismaMock = vi.hoisted(() => ({
 	cuentaRolTenant: { findMany: vi.fn() },
 	cuentaContable: { findMany: vi.fn() },
 	diario: { findFirst: vi.fn() },
-	aperturaPeriodo: { findUnique: vi.fn() },
-	periodoContable: { findFirst: vi.fn(), update: vi.fn() },
+	aperturaPeriodo: { findFirst: vi.fn() },
+	periodoContable: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
 	$executeRaw: vi.fn(),
 }));
 
@@ -73,6 +94,13 @@ beforeEach(() => {
 	prismaMock.diario.findFirst.mockResolvedValue({ diarioId: 'dia-ape' });
 	prismaMock.asiento.aggregate.mockResolvedValue({ _max: { numero: null } });
 	prismaMock.asiento.findFirst.mockResolvedValue(null);
+	prismaMock.asiento.findUnique.mockResolvedValue(null);
+	prismaMock.asiento.findMany.mockResolvedValue([]);
+	prismaMock.asientoLinea.groupBy.mockResolvedValue([]);
+	prismaMock.aperturaPeriodo.findFirst.mockResolvedValue(null);
+	prismaMock.periodoContable.findUnique.mockResolvedValue(null);
+	prismaMock.periodoContable.findFirst.mockResolvedValue(null);
+	prismaMock.periodoContable.findMany.mockResolvedValue([]);
 		prismaMock.asiento.create.mockResolvedValue({ asientoId: 'ast-cierre' });
 	prismaMock.cuentaContable.findMany.mockResolvedValue([
 		{ cuentaContableId: 'cta-ventas', tipo: 'INGRESO' },
@@ -93,8 +121,16 @@ describe('generarAsientoCierre', () => {
 				cuenta: { cuentaContableId: cuentaId, aceptaMovimiento: true, activa: true },
 			})),
 		);
+		prismaMock.periodoContable.findUnique.mockResolvedValue({
+			periodoId: 'per-1',
+			tenantId: TENANT,
+			tipo: 'MENSUAL',
+			estado: 'APROBADO',
+			fechaInicio: new Date('2026-09-01T00:00:00.000Z'),
+			fechaFin: new Date('2026-09-30T23:59:59.999Z'),
+		});
 
-		const resultado = await generarAsientoCierre(prismaMock, {
+		const resultado = await generarAsientoCierre(prismaMock as never, {
 			periodoId: 'per-1',
 			tenantId: TENANT,
 			actorId: 'u1',
@@ -106,16 +142,18 @@ describe('generarAsientoCierre', () => {
 		const gastos = lineas.find((l: { cuentaId: string }) => l.cuentaId === 'cta-gastos');
 		const resultado_ = lineas.find((l: { cuentaId: string }) => l.cuentaId === 'cta-resperiodo');
 		// Utilidad 700: carga ingresos, abona gastos y resultado del período
-		expect(ventas.debe).toBe(1000);
-		expect(gastos.haber).toBe(300);
-		expect(resultado_.haber).toBe(700);
+		expect(ventas.debe.toString()).toBe('1000');
+		expect(gastos.haber.toString()).toBe('300');
+		expect(resultado_.haber.toString()).toBe('700');
 	});
 });
 
 describe('generarAsientoApertura', () => {
 	it('construye líneas desde los saldos de AperturaPeriodo (solo ≠ 0)', async () => {
-		prismaMock.aperturaPeriodo.findUnique.mockResolvedValue({
+		prismaMock.aperturaPeriodo.findFirst.mockResolvedValue({
 			periodoId: 'per-2',
+			tenantId: TENANT,
+			origenPeriodoId: 'per-1',
 			saldoCajaInicial: 500,
 			saldoBancoInicial: 200,
 			saldoCuentasCobrarInicial: 150,
@@ -124,36 +162,56 @@ describe('generarAsientoApertura', () => {
 			saldoCapitalInicial: 400,
 			saldoResultadoAcumInicial: 100,
 		});
+		prismaMock.periodoContable.findUnique.mockResolvedValue({
+			periodoId: 'per-2',
+			tenantId: TENANT,
+			tipo: 'MENSUAL',
+			estado: 'ABIERTO',
+			fechaInicio: new Date('2026-10-01T00:00:00.000Z'),
+			fechaFin: new Date('2026-10-31T23:59:59.999Z'),
+		});
+		prismaMock.periodoContable.findMany.mockResolvedValue([]);
+		prismaMock.periodoContable.findFirst.mockResolvedValue({
+			periodoId: 'per-1',
+			tenantId: TENANT,
+			tipo: 'MENSUAL',
+			estado: 'APROBADO',
+			fechaInicio: new Date('2026-09-01T00:00:00.000Z'),
+			fechaFin: new Date('2026-09-30T23:59:59.999Z'),
+		});
 
-		const resultado = await generarAsientoApertura(prismaMock, {
+		const resultado = await generarAsientoApertura(prismaMock as never, {
 			periodoId: 'per-2',
 			tenantId: TENANT,
 			actorId: 'u1',
-			fecha: new Date('2026-10-01'),
+			fecha: new Date('2026-10-01T00:00:00.000Z'),
 		} as never);
 
 		expect(resultado.estado).toBe('CONTABILIZADO');
+		expect(prismaMock.aperturaPeriodo.findFirst).toHaveBeenCalledWith({
+			where: { periodoId: 'per-2', tenantId: TENANT },
+		});
 		const lineas = prismaMock.asiento.create.mock.calls[0][0].data.lineas.create;
 		const porCuenta = Object.fromEntries(
 			lineas.map((l: { cuentaId: string; debe: number; haber: number }) => [l.cuentaId, l]),
 		);
-		expect(porCuenta['cta-caja'].debe).toBe(500);
-		expect(porCuenta['cta-bancos'].debe).toBe(200);
-		expect(porCuenta['cta-cxc'].debe).toBe(150);
-		expect(porCuenta['cta-cxp'].haber).toBe(350);
-		expect(porCuenta['cta-cap'].haber).toBe(400);
-		expect(porCuenta['cta-resacum'].haber).toBe(100);
+		expect(porCuenta['cta-caja'].debe.toString()).toBe('500');
+		expect(porCuenta['cta-bancos'].debe.toString()).toBe('200');
+		expect(porCuenta['cta-cxc'].debe.toString()).toBe('150');
+		expect(porCuenta['cta-cxp'].haber.toString()).toBe('350');
+		expect(porCuenta['cta-cap'].haber.toString()).toBe('400');
+		expect(porCuenta['cta-resacum'].haber.toString()).toBe('100');
 		expect(porCuenta['cta-inv']).toBeUndefined();
 	});
 
 	it('sin apertura previa no genera asiento (OMITIDO)', async () => {
-		prismaMock.aperturaPeriodo.findUnique.mockResolvedValue(null);
-		const resultado = await generarAsientoApertura(prismaMock, {
+		prismaMock.aperturaPeriodo.findFirst.mockResolvedValue(null);
+		const resultado = await generarAsientoApertura(prismaMock as never, {
 			periodoId: 'per-3',
 			tenantId: TENANT,
 			actorId: 'u1',
 			fecha: new Date(),
 		} as never);
-		expect(resultado.estado).toBe('OMITIDO');
+		expect(resultado).toEqual({ estado: 'OMITIDO', motivo: 'SIN_APERTURA' });
 	});
 });

@@ -12,6 +12,12 @@ solo canal) · ❌ GAP (sin evidencia) · ➖ N/A por diseño.
 web = ruta Next.js propia · mobile = `/api/mobile/v1/**` · action = Server Action ·
 workflow/service = caller intermedio (el adaptador real está un salto más arriba).
 
+> **Corte de auditoría 2026-10-07 — ACEPTACIÓN REABIERTA:** las marcas por celda son
+> evidencia focal registrada durante la Fase B; no constituyen un `31/31` PASS ni
+> certifican todas las combinaciones writer × adaptador. R6-ROLLBACK/R6-BASELINE y la
+> ventana operativa R7.3/R7.4 continúan pendientes; ver A8–A10 en
+> `auditoria-correcciones-2026-10-07.md`.
+
 ## 1. Ventas y facturación
 
 | Writer (callsite → evento) | Adaptadores vivos | actor/permiso | tenant | origen único | moneda/FX | tx | idem/retry | posting/auditoría | rollback SQL |
@@ -148,8 +154,10 @@ Los 6 adaptadores verifican idempotencia en reintento sin duplicar registros.
 
 ## Notas
 
-- Las dimensiones actor/permiso, tenant, origen, FX, tx y posting/auditoría están en
-  ✅ para los 31 callsites vivos con la evidencia citada (unit + integración existente).
+- Las celdas ✅ son afirmaciones de evidencia focal por fila, no aceptación global de los
+  31 callsites. La auditoría 07-10 reabrió el gate hasta completar A8–A10 y verificar
+  cada adaptador en el entorno/corte correspondiente.
 - `venta-mutation-service.ts:498` (shadow sin valoración) no postea por diseño; su
   aceptación es la del outbox durable, ya cubierta en `formal-shadow-cash-sale.test.ts`.
-- Este documento no cierra R0.5-ACCEPT; es la entrada de la Fase C.
+- Este documento no cierra R0.5-ACCEPT; es la entrada de la Fase C y conserva los gaps
+  abiertos sin convertir el conteo de inventario en certificación.

@@ -1,9 +1,7 @@
 #!/bin/sh
 # Script de inicio del contenedor.
-# Sincroniza el schema de Prisma con la DB antes de levantar el servidor.
-# Por compatibilidad, el modo por defecto sigue siendo `db-push`.
-# Una vez baselineada la DB de producción, configurar:
-#   PRISMA_MIGRATION_MODE=migrate-deploy
+# Aplica migraciones versionadas antes de levantar el servidor en producción.
+# En desarrollo, el modo db-push es el valor por defecto.
 
 set -e
 

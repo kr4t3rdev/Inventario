@@ -88,6 +88,7 @@ describe('getMastersHealthAction', () => {
     const result = await getMastersHealthAction()
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('INTERNAL_ERROR')
     expect(prisma.producto.count).not.toHaveBeenCalled()
   })

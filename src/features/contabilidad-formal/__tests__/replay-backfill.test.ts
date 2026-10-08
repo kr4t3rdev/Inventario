@@ -15,7 +15,8 @@ const FECHA_SET = new Date('2026-09-15T12:00:00Z');
 
 const replayMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+vi.mock('@/features/contabilidad-formal/services/posting-engine', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/features/contabilidad-formal/services/posting-engine')>()),
 	replayEvento: replayMock,
 }));
 
@@ -26,6 +27,12 @@ const prismaMock = vi.hoisted(() => ({
 	ajusteBancario: { findMany: vi.fn() },
 	transferenciaBancaria: { findMany: vi.fn() },
 	inyeccionCapital: { findMany: vi.fn() },
+	prestamoCash: { findMany: vi.fn() },
+	deudaCash: { findMany: vi.fn() },
+	pagosalario: { findMany: vi.fn() },
+	gastosDE: { findMany: vi.fn() },
+	gastoCompra: { findMany: vi.fn() },
+	cuentaPorPagar: { findMany: vi.fn() },
 	pagoDeuda: { findMany: vi.fn() },
 	merma: { findMany: vi.fn() },
 	compraDocumento: { findMany: vi.fn() },
@@ -36,7 +43,10 @@ const prismaMock = vi.hoisted(() => ({
 		findMany: vi.fn(),
 		findFirst: vi.fn(),
 	},
+	tenantAccountingPolicy: { findUnique: vi.fn() },
+	tenantLicense: { findFirst: vi.fn() },
 	asiento: { findMany: vi.fn() },
+	replayPreflight: { findFirst: vi.fn() },
 	cuentaBancaria: { findUnique: vi.fn() },
 	$transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb({})),
 }));
@@ -74,6 +84,10 @@ beforeEach(() => {
 	replayMock.mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'ast-new' });
 	prismaMock.periodoContable.findMany.mockResolvedValue([PERIODO_SEP]);
 	prismaMock.periodoContable.findFirst.mockResolvedValue(PERIODO_SEP);
+	prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+	prismaMock.tenantLicense.findFirst.mockResolvedValue({
+		plan: { features: { 'contabilidad-formal': true } }, featureOverrides: null, features: null,
+	});
 	prismaMock.asiento.findMany.mockResolvedValue([]);
 	prismaMock.reconciliacionVenta.findMany.mockResolvedValue([]);
 	prismaMock.reconciliacionGasto.findMany.mockResolvedValue([]);
@@ -81,6 +95,12 @@ beforeEach(() => {
 	prismaMock.ajusteBancario.findMany.mockResolvedValue([]);
 	prismaMock.transferenciaBancaria.findMany.mockResolvedValue([]);
 	prismaMock.inyeccionCapital.findMany.mockResolvedValue([]);
+	prismaMock.prestamoCash.findMany.mockResolvedValue([]);
+	prismaMock.deudaCash.findMany.mockResolvedValue([]);
+	prismaMock.pagosalario.findMany.mockResolvedValue([]);
+	prismaMock.gastosDE.findMany.mockResolvedValue([]);
+	prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+	prismaMock.cuentaPorPagar.findMany.mockResolvedValue([]);
 	prismaMock.pagoDeuda.findMany.mockResolvedValue([]);
 	prismaMock.merma.findMany.mockResolvedValue([]);
 	prismaMock.compraDocumento.findMany.mockResolvedValue([]);
@@ -122,7 +142,7 @@ describe('planBackfillContable (dry-run)', () => {
 });
 
 describe('ejecutarBackfillPeriodo', () => {
-	it('replay de eventos en orden cronológico con período explícito', async () => {
+	it('rechaza el acceso directo sin preflight y aprobación persistidos', async () => {
 		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([
 			{
 				reconciliacionId: 'rg-2',
@@ -158,24 +178,18 @@ describe('ejecutarBackfillPeriodo', () => {
 			},
 		]);
 
-		const resultado = await ejecutarBackfillPeriodo(TENANT, 'p-sep', 'actor-1');
+		prismaMock.replayPreflight.findFirst.mockResolvedValue(null);
 
-		expect(resultado.contabilizados).toBe(2);
-		expect(replayMock).toHaveBeenCalledTimes(2);
-		const ordenOrigenes = replayMock.mock.calls.map(
-			(call) => call[2].origen.id,
-		);
-		expect(ordenOrigenes).toEqual(['rg-1', 'rg-2']); // cronológico
-		expect(replayMock.mock.calls[0][3]).toBe('p-sep'); // período forzado
+		await expect(ejecutarBackfillPeriodo(TENANT, 'p-sep', 'actor-1')).rejects.toThrow(/preflight vigente/);
+		expect(replayMock).not.toHaveBeenCalled();
 	});
 
-	it('no reposta lo ya posteado (idempotencia por segunda corrida)', async () => {
+	it('no reposta nada por acceso directo aunque la fuente ya esté posteada', async () => {
 		prismaMock.reconciliacionVenta.findMany.mockResolvedValue([reconVenta({ reconciliacionId: 'rv-1' })]);
 		prismaMock.asiento.findMany.mockResolvedValue([{ origenTipo: 'reconciliacion_venta', origenId: 'rv-1' }]);
+		prismaMock.replayPreflight.findFirst.mockResolvedValue(null);
 
-		const resultado = await ejecutarBackfillPeriodo(TENANT, 'p-sep', 'actor-1');
-		expect(resultado.contabilizados).toBe(0);
-		expect(resultado.yaPosteados).toBe(1);
+		await expect(ejecutarBackfillPeriodo(TENANT, 'p-sep', 'actor-1')).rejects.toThrow(/preflight vigente/);
 		expect(replayMock).not.toHaveBeenCalled();
 	});
 });

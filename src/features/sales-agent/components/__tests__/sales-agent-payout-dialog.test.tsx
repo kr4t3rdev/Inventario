@@ -58,14 +58,14 @@ describe('SalesAgentPayoutDialog', () => {
 
     expect(confirmSalesAgentPayoutAction).toHaveBeenCalledTimes(1);
     expect(submit).toBeDisabled();
-    const firstKey = vi.mocked(confirmSalesAgentPayoutAction).mock.calls[0][0].idempotencyKey;
+    const firstKey = vi.mocked(confirmSalesAgentPayoutAction).mock.calls[0]![0]!.idempotencyKey;
 
     rejectFirstRequest?.(new Error('response lost'));
     await waitFor(() => expect(submit).toBeEnabled());
     fireEvent.click(submit);
 
     await waitFor(() => expect(confirmSalesAgentPayoutAction).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(confirmSalesAgentPayoutAction).mock.calls[1][0].idempotencyKey)
+    expect(vi.mocked(confirmSalesAgentPayoutAction).mock.calls[1]![0]!.idempotencyKey)
       .toBe(firstKey);
   });
 });

@@ -56,7 +56,7 @@ docker run -d --name inventario-app \
     -e HOSTNAME="0.0.0.0" \
     --entrypoint "/bin/sh" \
     tcp-app:latest \
-    -c "cd /app/.next/standalone && mkdir -p .next && cp -r /app/.next/static .next/ && cp -r /app/public . && npx prisma db push --accept-data-loss --skip-generate 2>/dev/null; node server.js"
+    -c "cd /app/.next/standalone && mkdir -p .next && cp -r /app/.next/static .next/ && cp -r /app/public . && npx prisma migrate deploy && node /app/scripts/ci/verify-accounting-sql-guards.mjs && node server.js"
 
 echo "   ✓ Contenedor iniciado"
 

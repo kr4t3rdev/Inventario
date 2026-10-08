@@ -95,11 +95,14 @@ export interface ExchangeRateProvider {
   getRateHistory(
     filters?: ExchangeRateHistoryFilters,
   ): Promise<ExchangeRateHistoryResult>;
-  createRate(input: {
-    monedaOrigenId: string;
-    monedaDestino: string;
-    tasa: number;
-  }): Promise<ExchangeRateRecord>;
+  createRate(
+    input: {
+      monedaOrigenId: string;
+      monedaDestino: string;
+      tasa: number;
+    },
+    client?: Prisma.TransactionClient,
+  ): Promise<ExchangeRateRecord>;
 }
 
 export class ExchangeServiceError extends Error {

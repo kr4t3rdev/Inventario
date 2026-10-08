@@ -61,6 +61,7 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('DUPLICATE')
     expect(result.error?.message).toBe('Ya existe una cuenta por pagar con ese número de factura')
   })
@@ -185,6 +186,7 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('AUTH_REQUIRED')
   })
 

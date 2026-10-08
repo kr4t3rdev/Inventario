@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Eye, PlayCircle, Undo2, MoreHorizontal } from "lucide-react"
+import { Eye, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,8 +36,6 @@ interface AnticiposTableProps {
   isLoading: boolean
   error?: any
   onVerDetalle?: (anticipo: Anticipo) => void
-  onEjecutar?: (anticipo: Anticipo) => void
-  onRevertir?: (anticipo: Anticipo) => void
 }
 
 const surfaceCardClass = cn(
@@ -55,8 +53,6 @@ export function AnticiposTable({
   isLoading,
   error,
   onVerDetalle,
-  onEjecutar,
-  onRevertir,
 }: AnticiposTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -84,18 +80,6 @@ export function AnticiposTable({
                 <Eye className="mr-2 h-4 w-4" />
                 Ver Detalle
               </DropdownMenuItem>
-              {anticipo.estado === "RESERVADO" && anticipo.saldoDisponible && Number(anticipo.saldoDisponible) > 0 && (
-                <DropdownMenuItem onClick={() => onEjecutar?.(anticipo)}>
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  Ejecutar
-                </DropdownMenuItem>
-              )}
-              {anticipo.estado === "EJECUTADO" && (
-                <DropdownMenuItem onClick={() => onRevertir?.(anticipo)}>
-                  <Undo2 className="mr-2 h-4 w-4" />
-                  Revertir
-                </DropdownMenuItem>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import prisma from '@/lib/prisma'
-import { withAuthPost } from '@/lib/auth-middleware'
-import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
-import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
+
+import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { ActionError } from '@/lib/server-actions'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 
 const ExecuteAnticipoSchema = z.object({
   contexto: z.enum(['COMPRA_PRODUCTO', 'COMPRA_SERVICIO', 'FACTURA_OFERTA', 'FACTURA_DIRECTA']),
@@ -15,103 +15,33 @@ const ExecuteAnticipoSchema = z.object({
   observaciones: z.string().optional(),
 })
 
-/**
- * @description Ejecuta un anticipo total (sin parcial).
- * La reconciliación NO se hace aquí — vive en el flujo que consume el anticipo
- * (ej: compra-productos, venta-servicios, etc.).
- * @param {NextRequest} request - Request HTTP
- * @param {{ params: Promise<{ id: string }> }} context - Parámetros de ruta
- * @param {{ userId: string }} user - Usuario autenticado
- * @returns {Promise<NextResponse>} Resultado de la ejecución
- */
-export const POST = withAuthPost(
-  async (
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> },
-    user: { userId: string }
-  ) => {
-    try {
-      const { id: anticipoId } = await params
-      const body = await request.json()
-      const payload = ExecuteAnticipoSchema.parse(body)
+/** @description Impide la ejecución manual fuera del writer del documento destino. */
+export const POST = withAuthPost(async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
+) => {
+  try {
+    requireTenant(user)
+    requireFeature(user, 'anticipos', 'ejecutar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'ejecutar anticipos')
+    await params
+    ExecuteAnticipoSchema.parse(await request.json())
 
-      // Validar que el monto objetivo sea exactamente el saldo disponible
-      const anticipo = await prisma.anticipo.findUnique({
-        where: { anticipoId },
-        select: { saldoDisponible: true, tenantId: true },
-      })
-
-      if (!anticipo) {
-        return NextResponse.json(
-          { error: 'Anticipo no encontrado', code: 'ANTICIPO_NO_ENCONTRADO' },
-          { status: 404 }
-        )
-      }
-
-      // Validar período contable antes de ejecutar
-      const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
-      const validacionPeriodo = await validarEscrituraPeriodo({
-        fecha: fechaOperacion,
-        tenantId: anticipo.tenantId,
-        tipoOperacion: 'ejecutar_anticipo',
-        actor: user.userId,
-      })
-      if (!validacionPeriodo.permitido) {
-        return NextResponse.json(
-          { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
-          { status: 400 }
-        )
-      }
-
-      const saldoDisponible = Number(anticipo.saldoDisponible)
-      if (Math.abs(saldoDisponible - payload.montoObjetivo) > 0.000001) {
-        return NextResponse.json(
-          {
-            error: 'La ejecución parcial del anticipo no está permitida. Debe ejecutar el saldo completo.',
-            code: 'EJECUCION_PARCIAL_NO_PERMITIDA',
-            saldoDisponible,
-            montoObjetivo: payload.montoObjetivo,
-          },
-          { status: 409 }
-        )
-      }
-
-      const resultado = await prisma.$transaction(async (tx) => {
-        return executeAnticipo(tx, {
-          anticipoId,
-          contexto: payload.contexto,
-          documentoDestinoId: payload.documentoDestinoId,
-          montoObjetivo: payload.montoObjetivo,
-          monedaObjetivo: payload.monedaObjetivo,
-          tasaAplicada: payload.tasaAplicada,
-          idempotencyKey: payload.idempotencyKey,
-          observaciones: payload.observaciones,
-          usuarioId: user.userId,
-        })
-      })
-
-      return NextResponse.json({ result: resultado }, { status: 200 })
-    } catch (error) {
-      console.error('Error al ejecutar anticipo:', error)
-
-      if (isAnticipoWorkflowError(error)) {
-        return NextResponse.json(
-          { error: error.message, code: error.code },
-          { status: error.status }
-        )
-      }
-
-      if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: 'Payload inválido', issues: error.flatten() },
-          { status: 400 }
-        )
-      }
-
-      return NextResponse.json(
-        { error: 'Error al ejecutar anticipo' },
-        { status: 500 }
-      )
+    return NextResponse.json({
+      error: 'El anticipo se aplica automáticamente al crear el documento que lo consume.',
+      code: 'DOCUMENT_WORKFLOW_REQUIRED',
+    }, { status: 409 })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Payload inválido', issues: error.flatten() }, { status: 400 })
     }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
+    console.error('Error al validar ejecución de anticipo:', error)
+    return NextResponse.json({ error: 'No se pudo validar la ejecución del anticipo' }, { status: 500 })
   }
-)
+})

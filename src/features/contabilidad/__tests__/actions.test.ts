@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
 import { getMovimientosReportAction } from '@/features/contabilidad/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
+const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'manager' };
 describe('Contabilidad Actions', () => {
   beforeEach(() => vi.clearAllMocks());
   it('movimientos report', async () => {
@@ -22,6 +22,7 @@ describe('Contabilidad Actions', () => {
     } as never);
     const r = await getMovimientosReportAction({});
     expect(r.success).toBe(true);
+    if (!r.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(r.data!.data).toEqual([]);
     expect(AccountingReportsService.getMovementsReport).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: 't1' }),

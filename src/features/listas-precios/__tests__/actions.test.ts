@@ -52,18 +52,20 @@ describe('ListasPrecios Server Actions', () => {
   describe('getListasPreciosAction', () => {
     it('retorna listas del tenant', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findMany).mockResolvedValue([{ ...mockListaRow, _count: { puntosDeVenta: 0, precios: 0 } }]);
+      vi.mocked(prisma.listaPrecio.findMany).mockResolvedValue([{ ...mockListaRow, _count: { puntosDeVenta: 0, precios: 0 } }] as never);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
     });
 
     it('rechaza usuarios que no sean manager del tenant', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'user', tenantRole: 'economico' });
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'regularUser', tenantRole: 'economico' });
 
       const result = await getListasPreciosAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error?.code).toBe('FORBIDDEN');
       expect(prisma.listaPrecio.findMany).not.toHaveBeenCalled();
     });
@@ -72,7 +74,7 @@ describe('ListasPrecios Server Actions', () => {
   describe('getListaPrecioByIdAction', () => {
     it('retorna lista por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ ...mockListaRow, puntosDeVenta: [] });
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ ...mockListaRow, puntosDeVenta: [] } as never);
       const result = await getListaPrecioByIdAction('lp-1');
       expect(result.success).toBe(true);
     });
@@ -82,6 +84,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null);
       const result = await getListaPrecioByIdAction('lp-noexiste');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -89,7 +92,7 @@ describe('ListasPrecios Server Actions', () => {
   describe('createListaPrecioAction', () => {
     it('crea lista exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.create).mockResolvedValue(mockListaRow);
+      vi.mocked(prisma.listaPrecio.create).mockResolvedValue(mockListaRow as never);
       const result = await createListaPrecioAction({ nombre: 'Nueva Lista', esDefault: true });
       expect(result.success).toBe(true);
       expect(prisma.listaPrecio.updateMany).toHaveBeenCalled(); // desactiva otras default
@@ -99,8 +102,8 @@ describe('ListasPrecios Server Actions', () => {
   describe('updateListaPrecioAction', () => {
     it('actualiza lista exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow);
-      vi.mocked(prisma.listaPrecio.update).mockResolvedValue(mockListaRow);
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow as never);
+      vi.mocked(prisma.listaPrecio.update).mockResolvedValue(mockListaRow as never);
       const result = await updateListaPrecioAction({ id: 'lp-1', nombre: 'Actualizado' });
       expect(result.success).toBe(true);
     });
@@ -110,6 +113,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null);
       const result = await updateListaPrecioAction({ id: 'lp-noexiste', nombre: 'Test' });
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrada');
     });
   });
@@ -117,19 +121,20 @@ describe('ListasPrecios Server Actions', () => {
   describe('deleteListaPrecioAction', () => {
     it('elimina lista sin puntos de venta', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow);
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow as never);
       vi.mocked(prisma.puntoDeVenta.count).mockResolvedValue(0);
-      vi.mocked(prisma.listaPrecio.delete).mockResolvedValue(mockListaRow);
+      vi.mocked(prisma.listaPrecio.delete).mockResolvedValue(mockListaRow as never);
       const result = await deleteListaPrecioAction('lp-1');
       expect(result.success).toBe(true);
     });
 
     it('rechaza eliminar si está en uso', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow);
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(mockListaRow as never);
       vi.mocked(prisma.puntoDeVenta.count).mockResolvedValue(1);
       const result = await deleteListaPrecioAction('lp-1');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('LISTA_PRECIO_IN_USE');
     });
   });
@@ -139,6 +144,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });
@@ -147,13 +153,14 @@ describe('ListasPrecios Server Actions', () => {
     it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye listas-precios', async () => {
       const restrictedUser: AuthenticatedUser = {
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         planFeatures: { 'listas-precios': false },
       };
       vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
     });
   });

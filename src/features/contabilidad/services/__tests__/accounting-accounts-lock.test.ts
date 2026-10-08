@@ -7,11 +7,15 @@ const mockTx = vi.hoisted(() => ({
     updateMany: vi.fn(),
   },
 }));
+const auditStrictMock = vi.hoisted(() => vi.fn().mockResolvedValue({ auditId: 'audit-1' }));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: vi.fn((callback: (tx: typeof mockTx) => unknown) => callback(mockTx)),
   },
+}));
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { logStrict: auditStrictMock },
 }));
 
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
@@ -28,6 +32,7 @@ describe('AccountingAccountsService.annulReceivable credit lock', () => {
     const result = await AccountingAccountsService.annulReceivable({
       id: 'cxc-1',
       tenantId: 'tenant-1',
+      usuarioId: 'user-1',
     });
 
     expect(result).toMatchObject({ changed: true, previousState: 'PARCIAL' });
@@ -35,5 +40,10 @@ describe('AccountingAccountsService.annulReceivable credit lock', () => {
     expect(mockTx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
       mockTx.cuentaPorCobrar.updateMany.mock.invocationCallOrder[0] ?? Infinity,
     );
+    expect(auditStrictMock).toHaveBeenCalledWith(expect.objectContaining({
+      entidad: 'CUENTA_POR_COBRAR',
+      entidadId: 'cxc-1',
+      usuarioId: 'user-1',
+    }), mockTx);
   });
 });

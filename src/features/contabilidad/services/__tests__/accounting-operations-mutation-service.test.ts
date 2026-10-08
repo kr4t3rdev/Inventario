@@ -124,7 +124,7 @@ describe('AccountingOperationsMutationService', () => {
         moneda: 'CUP',
         descripcion: 'Corrección bancaria',
         motivo: 'Diferencia conciliada',
-        fechaOperacion,
+        fechaOperacion: new Date(fechaOperacion),
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -133,7 +133,7 @@ describe('AccountingOperationsMutationService', () => {
       data: expect.objectContaining({
         montoConvertido: new Prisma.Decimal(100),
         tasaCambio: new Prisma.Decimal(1),
-        fechaOperacion,
+        fechaOperacion: new Date(fechaOperacion),
       }),
     });
   });
@@ -547,7 +547,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
-        fechaOperacion,
+        fechaOperacion: new Date(fechaOperacion),
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });

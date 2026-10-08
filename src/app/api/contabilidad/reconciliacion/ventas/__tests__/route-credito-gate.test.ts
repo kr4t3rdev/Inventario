@@ -14,6 +14,9 @@ vi.mock('next/cache', () => ({
 
 const mockTx = vi.hoisted(() => ({
   $queryRaw: vi.fn().mockResolvedValue([]),
+  tenantAccountingPolicy: {
+    findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+  },
   cuentaBancaria: {
     findFirst: vi.fn(),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -241,7 +244,12 @@ describe('gate 4.2.c/4.4.b: reconciliación de ventas que aumenta exposición Cx
         data: expect.objectContaining({ montoPagado: new Prisma.Decimal('500'), estado: 'PARCIAL' }),
       }),
     );
-    expect(AuditLogService.logStrict).not.toHaveBeenCalled();
+    expect(AuditLogService.logStrict).toHaveBeenCalledWith(expect.objectContaining({
+      entidad: 'RECONCILIACION',
+      entidadId: 'rec-1',
+      usuarioId: 'user-rec-1',
+      detalles: expect.objectContaining({ tipo: 'VENTA', ventaId: 'venta-1' }),
+    }), mockTx);
   });
 
   it('reactivar una CxC ANULADA se rechaza antes del gate: 400 CXC_ANULADA', async () => {

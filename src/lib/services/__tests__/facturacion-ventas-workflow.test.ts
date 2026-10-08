@@ -4,7 +4,6 @@ import {
   applyFacturacionCobroWorkflow,
   normalizeTipoVencimiento,
   resolveFechaVencimiento,
-  reconciliarVentaDirecta
 } from '@/features/ventas/services/facturacion-workflow'
 
 /**
@@ -75,6 +74,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-1',
       tipoVencimiento: 'fecha',
       fechaVencimiento: '2026-03-01T00:00:00.000Z'
     })
@@ -108,6 +108,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-1',
       tipoVencimiento: 'plazo'
     })
 
@@ -136,6 +137,7 @@ describe('facturacion-ventas-workflow', () => {
         clienteId: 'cliente-1',
         montoTotal: 1000,
         usuarioId: 'user-1',
+        tenantId: 'tenant-1',
         tipoVencimiento: 'fecha'
       })
     ).rejects.toThrow('La fecha de vencimiento es obligatoria para tipo fecha')
@@ -167,6 +169,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-1',
       tipoVencimiento: 'contra_pago'
     })
 
@@ -190,58 +193,6 @@ describe('facturacion-ventas-workflow', () => {
         })
       })
     )
-  })
-
-  it('reconciliarVentaDirecta crea reconciliacion y actualiza saldo', async () => {
-    const tx = createTxMock()
-    
-    // Mock para resolveCuentaYTipoPago
-    const mockTipoPago = { tipoId: 'efectivo', nombre: 'Efectivo', cuentaDefecto: 'caja-principal' }
-    const mockCuenta = { cuentaId: 'caja-principal', moneda: 'CUP' }
-    
-    // Setup mocks
-    tx.tipoPago.findMany.mockResolvedValue([mockTipoPago])
-    tx.cuentaBancaria.findFirst.mockResolvedValue(mockCuenta)
-    
-    tx.reconciliacionVenta.create.mockResolvedValue({
-      reconciliacionId: 'rec-directa-1'
-    })
-    tx.cuentaBancaria.update.mockResolvedValue({})
-
-    const resultId = await reconciliarVentaDirecta(tx as any, {
-      ventaId: 'venta-directa-1',
-      montoTotal: 500,
-      usuarioId: 'cajero-1',
-      observaciones: 'Venta rápida'
-    })
-
-    expect(resultId).toBe('rec-directa-1')
-    
-    // Verifica que se buscó cuenta/tipoPago
-    expect(tx.tipoPago.findMany).toHaveBeenCalled()
-    expect(tx.cuentaBancaria.findFirst).toHaveBeenCalled()
-
-    // Verifica creación de reconciliación
-    expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        ventaId: 'venta-directa-1',
-        cuentaId: 'caja-principal',
-        tipoPagoId: 'efectivo',
-        moneda: 'CUP',
-        reconciliadoPor: 'cajero-1',
-        observaciones: 'Venta rápida'
-      })
-    })
-    // FX-2: el monto se persiste como Decimal exacto.
-    expect(tx.reconciliacionVenta.create.mock.calls[0][0].data.monto.toString()).toBe('500')
-
-    // Verifica actualización de saldo
-    expect(tx.cuentaBancaria.update).toHaveBeenCalledWith({
-      where: { cuentaId: 'caja-principal' },
-      data: {
-        saldo: { increment: 500 }
-      }
-    })
   })
 
   it('contra pago permite cuenta bancaria explícita y mantiene flujo de reconciliación', async () => {
@@ -269,6 +220,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-2',
       montoTotal: 500,
       usuarioId: 'user-2',
+      tenantId: 'tenant-1',
       tipoVencimiento: 'contra_pago',
       cuentaBancariaId: 'cuenta-explicita'
     })

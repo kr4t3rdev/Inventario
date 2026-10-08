@@ -22,16 +22,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-  ActionError: class ActionError extends Error {
-    code: string
-    constructor(message: string, code: string) {
-      super(message)
-      this.code = code
-    }
-  },
-}))
+vi.mock('@/lib/server-actions/get-current-user')
 
 const mockRequireFeature = vi.fn()
 
@@ -50,27 +41,32 @@ vi.mock('@/lib/cost-history-utils', () => ({
   },
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 import { recordCostChange } from '@/lib/cost-history-utils'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Test',
+  email: 'test@test.com',
+  role: 'regularUser',
+  isActive: true,
   tenantId: 'tenant-1',
-  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
   tenantRole: 'manager',
-  role: 'user',
-} as any
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
+}
 
 describe('bulkApplyPercentageAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('debe validar que porcentaje sea mayor a -100', async () => {
     await expect(
       bulkApplyPercentageAction(
         { porcentaje: -101, productoIds: ['prod-1'] },
-        mockUser,
       ),
     ).rejects.toThrow('porcentaje')
   })
@@ -79,7 +75,6 @@ describe('bulkApplyPercentageAction', () => {
     await expect(
       bulkApplyPercentageAction(
         { porcentaje: 1001, productoIds: ['prod-1'] },
-        mockUser,
       ),
     ).rejects.toThrow('porcentaje')
   })
@@ -87,7 +82,6 @@ describe('bulkApplyPercentageAction', () => {
   it('debe retornar early si no hay productoIds', async () => {
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: [] },
-      mockUser,
     )
 
     expect(result).toEqual({
@@ -114,12 +108,17 @@ describe('bulkApplyPercentageAction', () => {
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
-    expect(result.updated).toBe(2)
-    expect(result.results).toHaveLength(2)
-    expect(result.results[0].newPrecio).toBe(1100)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(2)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.results).toHaveLength(2)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.results[0].newPrecio).toBe(1100)
     expect(recordCostChange).toHaveBeenCalledTimes(2)
   })
 
@@ -137,7 +136,6 @@ describe('bulkApplyPercentageAction', () => {
 
     await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
@@ -163,16 +161,23 @@ describe('bulkApplyPercentageAction', () => {
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
-    expect(result.updated).toBe(1)
-    expect(result.skipped).toHaveLength(1)
-    expect(result.skipped[0]).toEqual({
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.skipped).toHaveLength(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.skipped[0]).toEqual({
       productoId: 'prod-2',
       message: 'Producto no encontrado o sin permisos',
     })
-    expect(result.errors).toHaveLength(0)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors).toHaveLength(0)
   })
 
   it('debe usar Math.round para precios enteros', async () => {
@@ -189,7 +194,6 @@ describe('bulkApplyPercentageAction', () => {
 
     await bulkApplyPercentageAction(
       { porcentaje: 3.33, productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(prisma.producto.updateMany).toHaveBeenCalledWith({
@@ -225,10 +229,11 @@ describe('bulkApplyPercentageAction', () => {
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds },
-      mockUser,
     )
 
-    expect(result.updated).toBe(120)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(120)
     expect(prisma.$transaction).toHaveBeenCalledTimes(120)
     expect(maxActiveTransactions).toBe(5)
   })
@@ -250,12 +255,17 @@ describe('bulkApplyPercentageAction', () => {
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
-    expect(result.updated).toBe(1)
-    expect(result.errors).toHaveLength(1)
-    expect(result.errors[0].productoId).toBe('prod-2')
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors).toHaveLength(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors[0].productoId).toBe('prod-2')
   })
 
   it('debe revertir el precio si falla la auditoría y permitir un reintento limpio', async () => {
@@ -288,7 +298,6 @@ describe('bulkApplyPercentageAction', () => {
 
     const failedAttempt = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(failedAttempt).toEqual(expect.objectContaining({
@@ -302,10 +311,11 @@ describe('bulkApplyPercentageAction', () => {
 
     const retry = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
     )
 
-    expect(retry.updated).toBe(1)
+    expect(retry.success).toBe(true)
+    if (!retry.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(retry.data.updated).toBe(1)
     expect(persistedPrice).toBe(1100)
   })
 
@@ -323,7 +333,6 @@ describe('bulkApplyPercentageAction', () => {
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(txClient.producto.updateMany).toHaveBeenCalledWith({
@@ -331,8 +340,12 @@ describe('bulkApplyPercentageAction', () => {
       data: { precioVenta: 1100 },
     })
     expect(recordCostChange).not.toHaveBeenCalled()
-    expect(result.updated).toBe(0)
-    expect(result.errors[0]).toEqual({
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(0)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors[0]).toEqual({
       productoId: 'prod-1',
       message: 'El precio cambió durante el ajuste; vuelve a intentarlo',
     })
@@ -342,12 +355,12 @@ describe('bulkApplyPercentageAction', () => {
 describe('bulkApplyTemplateAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('debe retornar early si no hay productoIds', async () => {
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: [] },
-      mockUser,
     )
 
     expect(result).toEqual({
@@ -379,7 +392,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
     expect(prisma.productoCostSheetTemplate.findFirst).toHaveBeenCalledTimes(1)
@@ -396,7 +408,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(prisma.productoCostSheetTemplate.findFirst).toHaveBeenCalledWith({
@@ -414,7 +425,6 @@ describe('bulkApplyTemplateAction', () => {
     await expect(
       bulkApplyTemplateAction(
         { plantillaId: 'template-1', productoIds: ['prod-1'] },
-        mockUser,
       ),
     ).rejects.toThrow('Plantilla no encontrada')
   })
@@ -440,10 +450,11 @@ describe('bulkApplyTemplateAction', () => {
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
-    expect(result.updated).toBe(2)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(2)
     expect(prisma.producto.updateMany).toHaveBeenCalledWith({
       where: { id: 'prod-1', tenantId: 'tenant-1', precioVenta: 1000 },
       data: { precioVenta: 1500 },
@@ -470,7 +481,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(recordCostChange).toHaveBeenCalledWith(
@@ -502,13 +512,20 @@ describe('bulkApplyTemplateAction', () => {
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
-    expect(result.updated).toBe(1)
-    expect(result.skipped).toHaveLength(1)
-    expect(result.skipped[0].productoId).toBe('prod-2')
-    expect(result.errors).toHaveLength(0)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.skipped).toHaveLength(1)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.skipped[0].productoId).toBe('prod-2')
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors).toHaveLength(0)
   })
 
   it('debe revertir el precio de plantilla si falla la auditoría', async () => {
@@ -543,7 +560,6 @@ describe('bulkApplyTemplateAction', () => {
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(result).toEqual(expect.objectContaining({
@@ -575,18 +591,22 @@ describe('bulkApplyTemplateAction', () => {
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(recordCostChange).not.toHaveBeenCalled()
-    expect(result.updated).toBe(0)
-    expect(result.errors[0].message).toContain('precio cambió')
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.updated).toBe(0)
+    expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    expect(result.data.errors[0].message).toContain('precio cambió')
   })
 })
 
 describe('Feature gate estricto: ficha-costo-bulk', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('deniega bulk si falta la subfeature antes de consultar Prisma', async () => {
@@ -594,11 +614,11 @@ describe('Feature gate estricto: ficha-costo-bulk', () => {
       ...mockUser,
       planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
     }
+    vi.mocked(getCurrentUser).mockResolvedValue(basicUser)
 
     await expect(
       bulkApplyPercentageAction(
         { porcentaje: 10, productoIds: ['prod-1'] },
-        basicUser,
       ),
     ).rejects.toThrow('plan actual no incluye')
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
@@ -610,11 +630,11 @@ describe('Feature gate estricto: ficha-costo-bulk', () => {
       tenantRole: 'economico',
       planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
     }
+    vi.mocked(getCurrentUser).mockResolvedValue(nonManagerBasicUser as never)
 
     await expect(
       bulkApplyPercentageAction(
         { porcentaje: 10, productoIds: ['prod-1'] },
-        nonManagerBasicUser,
       ),
     ).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
     expect(prisma.producto.findMany).not.toHaveBeenCalled()

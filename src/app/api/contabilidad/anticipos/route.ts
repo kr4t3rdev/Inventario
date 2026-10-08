@@ -3,7 +3,8 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions/types'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { createAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 
@@ -16,8 +17,8 @@ const CreateAnticipoSchema = z.object({
   clienteId: z.string().optional(),
   monto: z.coerce.number().positive(),
   moneda: z.string().min(1),
-  cuentaOrigenId: z.string().optional(),
-  tipoPagoOrigenId: z.string().optional(),
+  cuentaOrigenId: z.string().min(1),
+  tipoPagoOrigenId: z.string().min(1),
   referenciaExterna: z.string().optional(),
   vigenciaHasta: z.string().optional(),
 })
@@ -29,6 +30,8 @@ const CreateAnticipoSchema = z.object({
  */
 export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    requireFeature(user, 'anticipos', 'registrar anticipos')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar anticipos')
     const tenantId = requireTenant(user)
     const body = await request.json()
     const payload = CreateAnticipoSchema.parse(body)
@@ -54,11 +57,18 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         tenantId,
         vigenciaHasta: payload.vigenciaHasta || undefined,
         usuarioId: user.userId,
+        idempotencyKey: request.headers.get('Idempotency-Key') ?? undefined,
       })
     })
 
     return NextResponse.json({ anticipo }, { status: 201 })
   } catch (error) {
+    if (error instanceof ActionError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.code === 'FORBIDDEN' ? 403 : 400 },
+      )
+    }
     console.error('Error al crear anticipo:', error)
 
     if (isAnticipoWorkflowError(error)) {

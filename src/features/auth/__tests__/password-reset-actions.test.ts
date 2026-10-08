@@ -127,6 +127,7 @@ describe("requestPasswordResetAction", () => {
 		const result = await requestPasswordResetAction({ email: "no-es-un-email" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 
@@ -138,6 +139,7 @@ describe("requestPasswordResetAction", () => {
 		const result = await requestPasswordResetAction({ email: "test@example.com" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("SERVICE_UNAVAILABLE");
 		expect(sendPasswordResetEmail).not.toHaveBeenCalled();
 	});
@@ -186,6 +188,7 @@ describe("resetPasswordAction", () => {
 		const result = await resetPasswordAction({ token: validToken, password: "nueva123" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("INVALID_TOKEN");
 		expect(prisma.user.update).not.toHaveBeenCalled();
 	});
@@ -194,6 +197,7 @@ describe("resetPasswordAction", () => {
 		const result = await resetPasswordAction({ token: validToken, password: "123" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 });

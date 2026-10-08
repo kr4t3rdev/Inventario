@@ -14,15 +14,34 @@ import { ActionError } from "@/lib/server-actions";
 import { hasPermission } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
+import { normalizeUserRole } from "@/lib/auth/roles";
+import { signOnboardingToken } from "@/lib/auth/onboarding";
+import { getConfiguredPublicAppUrl } from "@/features/sales-agent/public-url";
+import {
+  sendEmailVerificationLink,
+  sendPasswordResetEmail,
+} from "@/lib/email";
+import {
+  generateSalesAgentReferralCode,
+  isUniqueConstraintCollision,
+} from "@/features/sales-agent/referral-code";
 import {
 	lockUnlockSchema,
 	getLicenciasQuerySchema,
 	licenciasStatsQuerySchema,
+	adminUserIdSchema,
+	adminUpdateUserSchema,
+	adminAssignTenantSchema,
+	adminChangeTenantRoleSchema,
 } from "../schemas";
 import type {
 	GetLicenciasQueryInput,
 	LicenciasStatsQueryInput,
 	LockUnlockInput,
+	AdminUserIdInput,
+	AdminUpdateUserInput,
+	AdminAssignTenantInput,
+	AdminChangeTenantRoleInput,
 } from "../schemas";
 
 /**
@@ -772,4 +791,700 @@ export async function rejectAdminMembership(
   });
   revalidatePath("/busy/configuracion/usuarios");
   return { success: true };
+}
+
+// ─── Gestión individual de usuarios ──────────────────────────────────
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * @description Verifica que el usuario autenticado sea administrador de plataforma.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ */
+function assertPlatformAdmin(user: AuthenticatedUser): void {
+  if (user.role !== "admin")
+    throw new ActionError("Acceso restringido", "FORBIDDEN");
+}
+
+/**
+ * @description Registra una acción administrativa en el log de actividad.
+ * @param {{ userId: string; action: string; performedBy: string; details?: Record<string, unknown> }} params - Datos del registro.
+ * @returns {Promise<void>}
+ */
+async function logAdminUserAction(params: {
+  userId: string;
+  action: string;
+  performedBy: string;
+  details?: Record<string, unknown>;
+}): Promise<void> {
+  await prisma.userActivityLog.create({
+    data: {
+      userId: params.userId,
+      action: params.action,
+      details: params.details ? JSON.stringify(params.details) : undefined,
+      performedBy: params.performedBy,
+    },
+  });
+}
+
+/**
+ * @description Evita dejar la plataforma sin administradores activos.
+ * @param {string} userId - Usuario que perdería el rol/estado de admin.
+ * @returns {Promise<void>}
+ */
+async function assertNotLastPlatformAdmin(userId: string): Promise<void> {
+  const remaining = await prisma.user.count({
+    where: { role: "admin", isActive: true, userId: { not: userId } },
+  });
+  if (remaining === 0) {
+    throw new ActionError(
+      "No se puede completar la acción: debe existir al menos un administrador activo en la plataforma",
+      "CONFLICT",
+    );
+  }
+}
+
+const adminUserDetailSelect = {
+  userId: true,
+  name: true,
+  email: true,
+  role: true,
+  isActive: true,
+  onboardingType: true,
+  onboardingStatus: true,
+  emailVerifiedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  activatedAt: true,
+  expiresAt: true,
+  avatar: true,
+  lockedUntil: true,
+  loginAttempts: true,
+  lastFailedLogin: true,
+} satisfies Record<string, boolean>;
+
+/**
+ * @description Obtiene la ficha individual de un usuario sin descargar la lista completa.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Detalle del usuario con membresías y sesiones activas.
+ */
+export async function getAdminUserDetail(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const detail = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: {
+      ...adminUserDetailSelect,
+      tenantMemberships: {
+        select: {
+          membershipId: true,
+          tenantId: true,
+          tenantRole: true,
+          isActive: true,
+          createdAt: true,
+          tenant: {
+            select: { tenantId: true, nombre: true, slug: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!detail) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  const activeSessions = await prisma.userSession.count({
+    where: { userId: parsed.userId, isActive: true },
+  });
+
+  return { user: { ...detail, activeSessions } };
+}
+
+/**
+ * @description Edita el nombre, email o rol de plataforma de un usuario.
+ * @param {AdminUpdateUserInput} input - Campos a actualizar.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Usuario actualizado y mensaje.
+ */
+export async function updateAdminUser(
+  input: AdminUpdateUserInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUpdateUserSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, role: true, email: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: Record<string, any> = {};
+  if (parsed.name !== undefined) data.name = parsed.name.trim();
+  if (parsed.email !== undefined) {
+    const email = parsed.email.trim().toLowerCase();
+    const conflict = await prisma.user.findUnique({
+      where: { email },
+      select: { userId: true },
+    });
+    if (conflict && conflict.userId !== parsed.userId) {
+      throw new ActionError(
+        "El email ya está en uso por otro usuario",
+        "CONFLICT",
+      );
+    }
+    data.email = email;
+    // El nuevo correo aún no está verificado.
+    if (email !== target.email) data.emailVerifiedAt = null;
+  }
+  if (parsed.role !== undefined) {
+    const normalized = normalizeUserRole(parsed.role);
+    if (!normalized)
+      throw new ActionError(`Rol inválido: ${parsed.role}`, "VALIDATION");
+    if (parsed.userId === user.userId) {
+      throw new ActionError("No puedes cambiar tu propio rol", "FORBIDDEN");
+    }
+    if (target.role === "admin" && normalized !== "admin") {
+      await assertNotLastPlatformAdmin(parsed.userId);
+    }
+    data.role = normalized;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ActionError("Sin cambios para aplicar", "VALIDATION");
+  }
+
+  await prisma.user.update({ where: { userId: parsed.userId }, data });
+
+  // El gestor de ventas es tenantless: se limpian membresías y se asegura su perfil.
+  if (parsed.role === "salesAgent" && target.role !== "salesAgent") {
+    await prisma.tenantMembership.deleteMany({
+      where: { userId: parsed.userId },
+    });
+    const existingProfile = await prisma.salesAgentProfile.findUnique({
+      where: { userId: parsed.userId },
+      select: { salesAgentProfileId: true },
+    });
+    if (!existingProfile) {
+      try {
+        await prisma.salesAgentProfile.create({
+          data: {
+            userId: parsed.userId,
+            status: "active",
+            referralCode: generateSalesAgentReferralCode(),
+            approvedAt: new Date(),
+            approvedByAdminId: user.userId,
+          },
+        });
+        await prisma.salesAgentBalance.upsert({
+          where: { userId: parsed.userId },
+          create: { userId: parsed.userId },
+          update: {},
+        });
+      } catch (error) {
+        if (isUniqueConstraintCollision(error)) {
+          throw new ActionError(
+            "El código de referido generado colisionó. Intentá guardar nuevamente",
+            "REFERRAL_CODE_COLLISION",
+          );
+        }
+        throw error;
+      }
+    }
+  }
+
+  const updated = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: adminUserDetailSelect,
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.update",
+    performedBy: user.userId,
+    details: { changes: Object.keys(data) },
+  });
+  revalidatePath("/admin");
+  return { user: updated, message: "Usuario actualizado correctamente" };
+}
+
+/**
+ * @description Activa un usuario desactivado.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Estado actualizado y mensaje.
+ */
+export async function activateAdminUser(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, isActive: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+  if (target.isActive) {
+    throw new ActionError("El usuario ya está activo", "CONFLICT");
+  }
+
+  await prisma.user.update({
+    where: { userId: parsed.userId },
+    data: { isActive: true, lockedUntil: null, loginAttempts: 0 },
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.activate",
+    performedBy: user.userId,
+  });
+  revalidatePath("/admin");
+  return {
+    user: { userId: parsed.userId, isActive: true, lockedUntil: null },
+    message: "Usuario activado correctamente",
+  };
+}
+
+/**
+ * @description Desactiva un usuario y revoca sus sesiones activas.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Estado actualizado y mensaje.
+ */
+export async function deactivateAdminUser(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  if (parsed.userId === user.userId) {
+    throw new ActionError("No puedes desactivar tu propio usuario", "FORBIDDEN");
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, isActive: true, role: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+  if (!target.isActive) {
+    throw new ActionError("El usuario ya está desactivado", "CONFLICT");
+  }
+  if (target.role === "admin") {
+    await assertNotLastPlatformAdmin(parsed.userId);
+  }
+
+  const [revoked, deactivated] = await prisma.$transaction([
+    prisma.userSession.updateMany({
+      where: { userId: parsed.userId, isActive: true },
+      data: { isActive: false },
+    }),
+    prisma.user.update({
+      where: { userId: parsed.userId },
+      data: { isActive: false },
+      select: { userId: true, isActive: true, lockedUntil: true },
+    }),
+  ]);
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.deactivate",
+    performedBy: user.userId,
+    details: { revokedSessions: revoked.count },
+  });
+  revalidatePath("/admin");
+  return {
+    user: deactivated,
+    message: "Usuario desactivado y sesiones revocadas",
+  };
+}
+
+/**
+ * @description Elimina permanentemente un usuario de la plataforma.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación de eliminación.
+ */
+export async function deleteAdminUser(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  if (parsed.userId === user.userId) {
+    throw new ActionError("No puedes eliminar tu propio usuario", "FORBIDDEN");
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: {
+      userId: true,
+      name: true,
+      email: true,
+      role: true,
+      salesAgentBalance: { select: { salesAgentBalanceId: true } },
+      _count: {
+        select: {
+          salesAgentReferrals: true,
+          salesAgentCommissions: true,
+          salesAgentPayouts: true,
+        },
+      },
+    },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  if (target.role === "admin") {
+    await assertNotLastPlatformAdmin(parsed.userId);
+  }
+
+  const hasSalesAgentRecords =
+    target.salesAgentBalance !== null ||
+    target._count.salesAgentReferrals > 0 ||
+    target._count.salesAgentCommissions > 0 ||
+    target._count.salesAgentPayouts > 0;
+
+  if (hasSalesAgentRecords) {
+    throw new ActionError(
+      "No se puede eliminar un Gestor de Ventas con registros asociados (balance, referidos, comisiones o pagos). Desactiva el usuario en su lugar",
+      "SALES_AGENT_WITH_RECORDS",
+    );
+  }
+
+  // El log se asocia al admin ejecutor: el borrado en cascada eliminaría
+  // un registro asociado al usuario objetivo.
+  await logAdminUserAction({
+    userId: user.userId,
+    action: "admin.user.delete",
+    performedBy: user.userId,
+    details: {
+      deletedUserId: target.userId,
+      deletedEmail: target.email,
+      deletedName: target.name,
+    },
+  });
+
+  await prisma.user.deleteMany({ where: { userId: parsed.userId } });
+  revalidatePath("/admin");
+  return { success: true, userId: parsed.userId };
+}
+
+/**
+ * @description Envía al usuario un enlace temporal para restablecer su contraseña.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación del envío.
+ */
+export async function resetAdminUserPassword(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, name: true, email: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  const token = signOnboardingToken(
+    { userId: target.userId, email: target.email, purpose: "password-reset" },
+    "1h",
+  );
+
+  await prisma.user.update({
+    where: { userId: target.userId },
+    data: {
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
+
+  const origin = getConfiguredPublicAppUrl();
+  if (!origin) {
+    throw new Error("El servicio de recuperación no está disponible");
+  }
+  const resetUrl = `${origin}/reset-password?token=${encodeURIComponent(token)}`;
+  await sendPasswordResetEmail(target.email, resetUrl, target.name);
+
+  await logAdminUserAction({
+    userId: target.userId,
+    action: "admin.user.reset-password",
+    performedBy: user.userId,
+  });
+  revalidatePath("/admin");
+  return {
+    success: true,
+    message: `Enlace de restablecimiento enviado a ${target.email}`,
+  };
+}
+
+/**
+ * @description Marca manualmente el email de un usuario como verificado.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Estado de verificación y mensaje.
+ */
+export async function verifyAdminUserEmail(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, email: true, emailVerifiedAt: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  if (target.emailVerifiedAt) {
+    return {
+      user: {
+        userId: target.userId,
+        email: target.email,
+        emailVerifiedAt: target.emailVerifiedAt,
+      },
+      alreadyVerified: true,
+      message: "El email ya estaba verificado",
+    };
+  }
+
+  const updated = await prisma.user.update({
+    where: { userId: parsed.userId },
+    data: { emailVerifiedAt: new Date() },
+    select: { userId: true, email: true, emailVerifiedAt: true },
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.verify-email",
+    performedBy: user.userId,
+  });
+  revalidatePath("/admin");
+  return {
+    user: updated,
+    alreadyVerified: false,
+    message: "Email marcado como verificado",
+  };
+}
+
+/**
+ * @description Reenvía el email de verificación al correo del usuario.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación del envío.
+ */
+export async function resendAdminUserVerification(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true, name: true, email: true, emailVerifiedAt: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+  if (target.emailVerifiedAt) {
+    throw new ActionError(
+      "El email de este usuario ya está verificado",
+      "CONFLICT",
+    );
+  }
+
+  const verificationToken = signOnboardingToken({
+    userId: target.userId,
+    email: target.email,
+    purpose: "email-verification",
+  });
+
+  const origin = getConfiguredPublicAppUrl();
+  if (!origin) {
+    throw new Error("El servicio de verificación no está disponible");
+  }
+  const verificationUrl = `${origin}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+  await sendEmailVerificationLink(target.email, verificationUrl, target.name);
+
+  await logAdminUserAction({
+    userId: target.userId,
+    action: "admin.user.resend-verification",
+    performedBy: user.userId,
+  });
+  revalidatePath("/admin");
+  return {
+    success: true,
+    message: `Email de verificación reenviado a ${target.email}`,
+  };
+}
+
+/**
+ * @description Asigna un usuario a una empresa o lo cambia de empresa.
+ * @param {AdminAssignTenantInput} input - Usuario, empresa, rol y cambio de empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Membresía resultante y mensaje.
+ */
+export async function assignAdminUserTenant(
+  input: AdminAssignTenantInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminAssignTenantSchema.parse(input ?? {});
+
+  const [target, tenant] = await Promise.all([
+    prisma.user.findUnique({
+      where: { userId: parsed.userId },
+      select: { userId: true },
+    }),
+    prisma.tenant.findUnique({
+      where: { tenantId: parsed.tenantId },
+      select: { tenantId: true, nombre: true },
+    }),
+  ]);
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  if (parsed.deactivateOthers) {
+    await prisma.tenantMembership.updateMany({
+      where: {
+        userId: parsed.userId,
+        tenantId: { not: parsed.tenantId },
+        isActive: true,
+      },
+      data: { isActive: false },
+    });
+  }
+
+  const membership = await prisma.tenantMembership.upsert({
+    where: {
+      tenantId_userId: { tenantId: parsed.tenantId, userId: parsed.userId },
+    },
+    create: {
+      tenantId: parsed.tenantId,
+      userId: parsed.userId,
+      tenantRole: parsed.tenantRole,
+      isActive: true,
+    },
+    update: { tenantRole: parsed.tenantRole, isActive: true },
+    include: {
+      tenant: { select: { tenantId: true, nombre: true } },
+    },
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.assign-tenant",
+    performedBy: user.userId,
+    details: {
+      tenantId: parsed.tenantId,
+      tenantRole: parsed.tenantRole,
+      deactivateOthers: parsed.deactivateOthers,
+    },
+  });
+  revalidatePath("/admin");
+  return {
+    membership,
+    message: `Usuario asignado a ${tenant.nombre} como ${parsed.tenantRole}`,
+  };
+}
+
+/**
+ * @description Cambia el rol de un usuario dentro de una empresa.
+ * @param {AdminChangeTenantRoleInput} input - Usuario, empresa y nuevo rol.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Membresía actualizada y mensaje.
+ */
+export async function changeAdminUserTenantRole(
+  input: AdminChangeTenantRoleInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminChangeTenantRoleSchema.parse(input ?? {});
+
+  const membership = await prisma.tenantMembership.findUnique({
+    where: {
+      tenantId_userId: { tenantId: parsed.tenantId, userId: parsed.userId },
+    },
+    select: { membershipId: true, tenantRole: true },
+  });
+  if (!membership) {
+    throw new ActionError(
+      "El usuario no tiene membresía en esta empresa. Usa asignar empresa primero",
+      "NOT_FOUND",
+    );
+  }
+
+  const updated = await prisma.tenantMembership.update({
+    where: { membershipId: membership.membershipId },
+    data: { tenantRole: parsed.tenantRole },
+    include: {
+      tenant: { select: { tenantId: true, nombre: true } },
+    },
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.change-tenant-role",
+    performedBy: user.userId,
+    details: {
+      tenantId: parsed.tenantId,
+      previousRole: membership.tenantRole,
+      newRole: parsed.tenantRole,
+    },
+  });
+  revalidatePath("/admin");
+  return {
+    membership: updated,
+    message: `Rol actualizado a ${parsed.tenantRole} en ${updated.tenant.nombre}`,
+  };
+}
+
+/**
+ * @description Revoca todas las sesiones activas de un usuario.
+ * @param {AdminUserIdInput} input - Identificador del usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Cantidad revocada y mensaje.
+ */
+export async function revokeAdminUserSessions(
+  input: AdminUserIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUserIdSchema.parse(input ?? {});
+
+  const target = await prisma.user.findUnique({
+    where: { userId: parsed.userId },
+    select: { userId: true },
+  });
+  if (!target) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+  const result = await prisma.userSession.updateMany({
+    where: { userId: parsed.userId, isActive: true },
+    data: { isActive: false },
+  });
+
+  await logAdminUserAction({
+    userId: parsed.userId,
+    action: "admin.user.revoke-sessions",
+    performedBy: user.userId,
+    details: { revoked: result.count },
+  });
+  revalidatePath("/admin");
+  return {
+    revoked: result.count,
+    message:
+      result.count === 0
+        ? "El usuario no tenía sesiones activas"
+        : `Se revocaron ${result.count} sesiones activas`,
+  };
 }

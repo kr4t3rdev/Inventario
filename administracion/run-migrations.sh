@@ -23,9 +23,9 @@ else
 fi
 
 echo ""
-echo "Ejecutando prisma db push..."
+echo "Ejecutando prisma migrate deploy..."
 
-docker exec $CONTAINER_NAME sh -c "cd /app && npx prisma db push --accept-data-loss --skip-generate"
+docker exec "$CONTAINER_NAME" sh -c "cd /app && npx prisma migrate deploy && node scripts/ci/verify-accounting-sql-guards.mjs"
 
 if [ $? -eq 0 ]; then
     echo ""

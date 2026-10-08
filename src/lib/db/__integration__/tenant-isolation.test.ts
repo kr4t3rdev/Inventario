@@ -98,7 +98,7 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
 
   it('create sin tenantId lo inyecta desde el contexto', async () => {
     const created = await withTestTenant(tenantA, async () => {
-      return await prisma.categoria.create({ data: { nombre: `Inyectada ${suffix}` } });
+      return await prisma.categoria.create({ data: { nombre: `Inyectada ${suffix}` } as never });
     });
     expect(created.tenantId).toBe(tenantA);
   });
@@ -127,7 +127,7 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
           alertas: {
             create: [{ tipo: 'vencimiento', fechaAlerta: new Date(), mensaje: 'hola' }],
           },
-        },
+        } as never,
         include: { alertas: true },
       });
     });
@@ -144,7 +144,7 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
     const seen = await withTestTenant(tenantA, () =>
       prisma.$transaction(async (tx) => {
         const rows = await tx.categoria.findMany({});
-        const created = await tx.categoria.create({ data: { nombre: `Tx ${suffix}` } });
+        const created = await tx.categoria.create({ data: { nombre: `Tx ${suffix}` } as never });
         return { tenants: new Set(rows.map((r) => r.tenantId)), createdTenant: created.tenantId };
       }),
     );

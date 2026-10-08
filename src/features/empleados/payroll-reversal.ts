@@ -1,4 +1,5 @@
 import { Prisma, EstadoCuentaPorPagar } from '@/generated/prisma';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { ActionError } from '@/lib/server-actions';
 
 export class PayrollDeletionError extends ActionError {
@@ -67,7 +68,13 @@ export async function reversePayrollReconciliations(
   tx: Prisma.TransactionClient,
   reconciliaciones: readonly PayrollReconciliation[],
   tenantId: string,
+  usuarioId: string,
 ): Promise<void> {
+  if (reconciliaciones.length > 0) {
+    await reverseFormalEntries(tx, { tenantId, userId: usuarioId }, reconciliaciones.map(
+      ({ reconciliacionId }) => ({ tipo: 'reconciliacion_gasto', id: reconciliacionId }),
+    ));
+  }
   const accountTotals = new Map<string, number>();
   const payableTotals = new Map<string, number>();
 

@@ -7,8 +7,8 @@
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma'
-import { AuditLogService } from '@/lib/services/audit-log-service'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import {
   applyPagoGastoWorkflow,
@@ -125,6 +125,8 @@ export async function reconciliarGastoAdapter(
   user: AuthenticatedUser,
 ): Promise<ReconciliacionGastoResult> {
   const validatedData = reconciliacionGastoSchema.parse(body)
+  requireFeature(user, 'contabilidad', 'reconciliar gastos')
+  requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar gastos')
   const tenantId = requireTenant(user)
 
   const fechaPago = validatedData.fechaReconciliacion ??
@@ -266,30 +268,6 @@ export async function reconciliarGastoAdapter(
       distribucion: validatedData.distribucion,
     })
   })
-
-  // ── Audit log ──
-  for (const rec of result.reconciliaciones) {
-    try {
-      await AuditLogService.log({
-        accion: 'CREATE',
-        entidad: 'RECONCILIACION',
-        entidadId: rec.reconciliacionId,
-        usuarioId: user.userId,
-        detalles: {
-          tipo: 'GASTO',
-          tipoGasto: validatedData.tipoGasto,
-          referenciaId,
-          cuentaId: rec.cuentaId,
-          monto: rec.monto,
-          moneda: rec.moneda,
-          montoConvertido: rec.montoConvertido,
-          descripcion: rec.descripcion,
-        },
-      })
-    } catch (auditError) {
-      console.error('Error registrando auditoría de reconciliación de gasto:', auditError)
-    }
-  }
 
   return {
     reconciliaciones: result.reconciliaciones,

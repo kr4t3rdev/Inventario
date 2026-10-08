@@ -97,31 +97,16 @@ run_migrations() {
     echo "[3/5] Ejecutando migraciones..."
     cd /app
     sleep 3
-    
-    # Intentar con npx primero
-    if command -v npx &> /dev/null 2>&1; then
-        echo "   Usando npx..."
-        npx prisma db push --accept-data-loss --skip-generate 2>&1 || true
-    # Si no, intentar con node directamente
-    elif [ -f "/app/node_modules/.bin/prisma" ]; then
-        echo "   Usando prisma local..."
-        /app/node_modules/.bin/prisma db push --accept-data-loss --skip-generate 2>&1 || true
-    # Instalar prisma si es necesario
-    else
-        echo "   Instalando Prisma..."
-        npm install prisma --save-dev 2>/dev/null || true
-        npx prisma db push --accept-data-loss --skip-generate 2>&1 || true
-    fi
-    
-    # Verificar resultado
-    local table_count=$(su - postgres -c "psql -d inventario_db -t -c \"SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';\"" 2>/dev/null | tr -d ' ')
-    
+    npx prisma migrate deploy
+    node /app/scripts/ci/verify-accounting-sql-guards.mjs
+
+    local table_count
+    table_count=$(su - postgres -c "psql -d inventario_db -t -c \"SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';\"" 2>/dev/null | tr -d ' ')
     if [ -z "$table_count" ] || [ "$table_count" -eq 0 ]; then
-        echo "   ⚠ No se pudieron crear las tablas, intentando nuevamente..."
-        sleep 5
-        npx prisma db push --accept-data-loss --skip-generate 2>&1 || true
+        echo "   ERROR: no se detectaron tablas después de aplicar migraciones."
+        return 1
     fi
-    
+
     echo "   ✓ Migraciones completadas"
 }
 

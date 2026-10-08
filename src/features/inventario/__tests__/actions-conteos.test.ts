@@ -157,6 +157,7 @@ describe('registrarConteoAction (doble captura ciega)', () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe('MISMO_CONTADOR');
 	});
 });
@@ -243,6 +244,7 @@ describe('conciliarConteoAction', () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe('VARIANZA_SIN_RESOLVER');
 	});
 });

@@ -42,6 +42,7 @@ describe('getOrCreateTurnoActivo – aislamiento tenant', () => {
     const result = await getOrCreateTurnoActivo({ puntoDeVentaId: 'pv-B' });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error!.code).toBe('NOT_FOUND');
   });
 

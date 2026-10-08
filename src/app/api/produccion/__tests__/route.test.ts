@@ -50,6 +50,9 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
   }
 
   const transactionClientMock = {
+    tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ tenantId: 'tenant-1', functionalCurrencyCode: 'CUP' }) },
+    cuentaBancaria: { findFirst: vi.fn().mockResolvedValue({ cuentaId: 'cuenta-1', tenantId: 'tenant-1', isActive: true, moneda: 'CUP', saldo: 1000, update: vi.fn(), updateMany: vi.fn() }) },
+    tipoPago: { findFirst: vi.fn().mockResolvedValue({ tipoId: 'efectivo', tenantId: 'tenant-1', isActive: true, requiereCuenta: true }) },
     receta,
     ordenProduccion,
     valeSalida,
@@ -61,6 +64,9 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
   }
 
   const prismaMock = {
+    tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ tenantId: 'tenant-1', functionalCurrencyCode: 'CUP' }) },
+    cuentaBancaria: { findFirst: vi.fn().mockResolvedValue({ cuentaId: 'cuenta-1', tenantId: 'tenant-1', isActive: true, moneda: 'CUP', saldo: 1000, update: vi.fn(), updateMany: vi.fn() }) },
+    tipoPago: { findFirst: vi.fn().mockResolvedValue({ tipoId: 'efectivo', tenantId: 'tenant-1', isActive: true, requiereCuenta: true }) },
     receta,
     ordenProduccion,
     valeSalida,
@@ -85,12 +91,17 @@ vi.mock('@/lib/prisma', async () => {
   }
 })
 
-// Mock auth middleware
 vi.mock('@/lib/auth-middleware', () => ({
   withAuthGet: (fn: Function) => async (request: NextRequest, context?: unknown) =>
     fn(request, context, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
   withAuthPost: (fn: Function) => async (request: NextRequest, context?: unknown) =>
     fn(request, context, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
+}))
+
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: () => 'tenant-1',
+  requireFeature: vi.fn(),
+  requirePermission: vi.fn(),
 }))
 
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({
@@ -123,7 +134,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.count as Mock).mockResolvedValue(2)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -140,7 +151,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.count as Mock).mockResolvedValue(1)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas?search=Pan')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -160,7 +171,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.findMany as Mock).mockRejectedValue(new Error('DB Error'))
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -183,7 +194,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({ nombre: 'Nueva Receta', rendimiento: 10, productoId: 'prod-1' }),
       })
-      const response = await createReceta(request)
+      const response = await createReceta(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(201)
@@ -195,7 +206,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({}), // Invalid: missing required fields
       })
-      const response = await createReceta(request)
+      const response = await createReceta(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -207,6 +218,7 @@ describe('Production Module API Routes', () => {
     it('debe retornar una orden específica', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         cantidad: 10,
       }
@@ -240,6 +252,7 @@ describe('Production Module API Routes', () => {
     it('debe aprobar una orden y reservar materiales', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         cantidad: 10,
         Receta: {
@@ -307,6 +320,7 @@ describe('Production Module API Routes', () => {
     it('debe rechazar si la orden no está pendiente', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'COMPLETADA',
         cantidad: 10,
         receta: { ingredientes: [] },
@@ -328,6 +342,7 @@ describe('Production Module API Routes', () => {
     it('debe rechazar si no hay materiales suficientes', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         cantidad: 10,
         Receta: {
@@ -368,6 +383,7 @@ describe('Production Module API Routes', () => {
     it('debe completar una orden y crear registro contable', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'EN_PROCESO',
         cantidad: 10,
         costoMateriales: 0,
@@ -422,6 +438,7 @@ describe('Production Module API Routes', () => {
     it('debe rechazar si la orden no está en proceso', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         cantidad: 10,
         receta: { ingredientes: [], productoId: null },
@@ -445,6 +462,7 @@ describe('Production Module API Routes', () => {
     it('debe cancelar orden desde PENDIENTE sin liberar stock', async () => {
       const mockOrden = {
         ordenProduccionId: 'orden-1',
+        tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         cantidad: 10,
         Receta: {
@@ -560,7 +578,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales')
-      const response = await getVales(request)
+      const response = await getVales(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -574,7 +592,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales?concepto=Materia')
-      const response = await getVales(request)
+      const response = await getVales(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -622,7 +640,7 @@ describe('Production Module API Routes', () => {
           items: [{ productoId: 'prod-1', cantidad: 10 }],
         }),
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(201)
@@ -657,7 +675,7 @@ describe('Production Module API Routes', () => {
           items: [{ productoId: 'prod-1', cantidad: 10 }],
         }),
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -670,7 +688,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({}), // Invalid: missing required fields
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)

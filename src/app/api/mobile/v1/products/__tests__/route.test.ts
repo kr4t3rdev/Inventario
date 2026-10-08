@@ -78,4 +78,31 @@ describe('mobile products route', () => {
     expect(data.items).toHaveLength(1);
     expect(ProductoService.list).toHaveBeenCalledWith('tenant-1');
   });
+
+  it('caracteriza vacío, tenant ausente, error interno y JSON de fechas/precios', async () => {
+    const date = new Date('2025-01-01T00:00:00.000Z');
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(ProductoService.list).mockResolvedValueOnce([] as never).mockResolvedValueOnce([
+      { id: 'a', stock: 0, stockTotal: 0, precioCosto: 1250, createdAt: date },
+    ] as never).mockRejectedValueOnce(new Error('private database details'));
+    const request = new NextRequest('http://localhost/api/mobile/v1/products', {
+      headers: { 'x-tenant-id': 'B' },
+    });
+    const empty = await GET(request);
+    expect(empty.status).toBe(200);
+    expect(await empty.json()).toEqual({ items: [] });
+    const filled = await GET(request);
+    expect(await filled.json()).toEqual({ items: [{
+       id: 'a', stock: 0, stockTotal: 0, precioCosto: 1250, createdAt: date.toISOString(),
+    }] });
+    expect(ProductoService.list).toHaveBeenCalledWith('tenant-1');
+    const error = await GET(request);
+    expect(error.status).toBe(500);
+    expect(await error.json()).toEqual({ error: 'Error interno del servidor', code: 'INTERNAL_ERROR' });
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { ...mockUser, tenantId: null } } as never);
+    const noTenant = await GET(request);
+    expect(noTenant.status).toBe(403);
+    expect(await noTenant.json()).toEqual({ error: 'Tenant no identificado', code: 'TENANT_REQUIRED' });
+    expect(ProductoService.list).toHaveBeenCalledTimes(3);
+  });
 });

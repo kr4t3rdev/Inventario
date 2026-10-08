@@ -12,7 +12,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/audit-log-service", () => ({
-	AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
+	AuditLogService: {
+		log: vi.fn().mockResolvedValue(undefined),
+		logStrict: vi.fn().mockResolvedValue({ auditId: "audit-1" }),
+	},
 }));
 
 	const { mockPrisma } = vi.hoisted(() => ({
@@ -26,6 +29,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 		periodoContable: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),
+			findUniqueOrThrow: vi.fn(),
 			findMany: vi.fn(),
 			count: vi.fn(),
 			create: vi.fn(),
@@ -82,6 +86,10 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 			aggregate: vi.fn(),
 			findMany: vi.fn(),
 		},
+		cashSnapshot: {
+			createMany: vi.fn(),
+			findMany: vi.fn(),
+		},
 		periodoCache: {
 			findUnique: vi.fn(),
 			upsert: vi.fn().mockResolvedValue({}),
@@ -102,8 +110,17 @@ const checkpointMocks = vi.hoisted(() => ({
 }));
 
 const financialSnapshotV3Mocks = vi.hoisted(() => ({
-	captureFinancialSnapshotV3: vi.fn(),
-	approveFinancialSnapshotV3: vi.fn(),
+  captureFinancialSnapshotV3: vi.fn(),
+  approveFinancialSnapshotV3: vi.fn(),
+}));
+
+const cashSnapshotMocks = vi.hoisted(() => ({
+	capturar: vi.fn(),
+}));
+
+const formalCloseMocks = vi.hoisted(() => ({
+	generarAsientoCierre: vi.fn(),
+	generarAsientoApertura: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -122,6 +139,10 @@ vi.mock(
 	"@/features/contabilidad/services/financial-snapshot-v3-service",
 	() => financialSnapshotV3Mocks,
 );
+vi.mock("@/features/contabilidad/services/cash-snapshot-service", () => ({
+	CashSnapshotService: cashSnapshotMocks,
+}));
+vi.mock("@/features/contabilidad-formal/services/cierre-formal-service", () => formalCloseMocks);
 
 // ── Imports bajo test ─────────────────────────────────────────────────────
 
@@ -158,7 +179,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: TENANT,
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 function makePeriodo(overrides: Record<string, unknown> = {}) {
@@ -219,11 +240,14 @@ function resetMocks() {
 
 beforeEach(() => {
 	resetMocks();
+	formalCloseMocks.generarAsientoCierre.mockResolvedValue({ estado: "OMITIDO", motivo: "RESULTADO_CERO_SIN_MOVIMIENTOS" });
+	formalCloseMocks.generarAsientoApertura.mockResolvedValue({ estado: "OMITIDO", motivo: "MODO_NO_ENFORCE" });
 	process.env.FINANCIAL_V3_CAPTURE = "true";
 	mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
 	mockPrisma.compraDocumentoItem.findMany.mockResolvedValue([]);
 	mockPrisma.cuentaPorCobrar.findMany.mockResolvedValue([]);
 	mockPrisma.cuentaPorPagar.findMany.mockResolvedValue([]);
+	cashSnapshotMocks.capturar.mockResolvedValue({ creados: 0, existentes: 0, omitidos: 0 });
 	mockPrisma.inyeccionCapital.findMany.mockResolvedValue([]);
 	checkpointMocks.collectFinancialAuxiliaryEvidence.mockResolvedValue({
 		bankAccounts: [],
@@ -303,6 +327,16 @@ beforeEach(() => {
 
 // ── Tests: listarPeriodosAction ───────────────────────────────────────────
 
+// Estas pruebas ejercitan la lógica de transición con prisma mockeado; el gate
+// formal enforce (asiento obligatorio) lo cubren las suites __integration__ de
+// cierre/apertura sobre PostgreSQL real. El modo queda fijado a 'off' aquí.
+const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+vi.stubEnv('CONTABILIDAD_FORMAL_MODE', 'off');
+afterAll(() => {
+	if (originalMode === undefined) vi.unstubAllEnvs();
+	else vi.stubEnv('CONTABILIDAD_FORMAL_MODE', originalMode);
+});
+
 describe("listarPeriodosAction", () => {
 	it("retorna lista vacía cuando no hay períodos", async () => {
 		mockPrisma.periodoContable.findMany.mockResolvedValue([]);
@@ -311,6 +345,7 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction();
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodos).toEqual([]);
 		expect(result.data?.pagination.total).toBe(0);
 	});
@@ -336,6 +371,7 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction({ page: 1, limit: 10 });
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodos).toHaveLength(2);
 		expect(result.data?.periodos[0]).toHaveProperty("tieneHash");
 		expect(result.data?.periodos[0]).toHaveProperty("ultimaAuditoria");
@@ -386,6 +422,7 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction();
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("AUTH_REQUIRED");
 	});
 });
@@ -401,6 +438,7 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-1");
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.periodoId).toBe("p-1");
 		expect(result.data?.timeline).toBeDefined();
 	});
@@ -411,8 +449,10 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-no-existe");
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
+
 
 	it("falla si el período no pertenece al tenant", async () => {
 		// findFirst con where { periodoId, tenantId } no encuentra períodos de otro tenant
@@ -421,6 +461,7 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-1");
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 });
@@ -460,6 +501,7 @@ describe("obtenerTimelineAction", () => {
 		const result = await obtenerTimelineAction("p-1");
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.timeline).toHaveLength(2);
 		expect(result.data?.timeline[0].evento).toBe(EventoAuditoria.APERTURA);
 		expect(result.data?.timeline[1].evento).toBe(EventoAuditoria.CIERRE);
@@ -471,6 +513,7 @@ describe("obtenerTimelineAction", () => {
 		const result = await obtenerTimelineAction("p-no-existe");
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 });
@@ -498,6 +541,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.ABIERTO);
 		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.MENSUAL);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
@@ -523,6 +567,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.DIARIO);
 	});
 
@@ -546,6 +591,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.ANUAL);
 	});
 
@@ -557,6 +603,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("FECHAS_INVALIDAS");
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 	});
@@ -569,6 +616,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 
@@ -580,6 +628,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 
@@ -593,6 +642,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("PERIODO_SOLAPADO");
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 	});
@@ -635,6 +685,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.TRIMESTRAL);
 	});
 
@@ -658,13 +709,63 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.SEMESTRAL);
 	});
 });
 
 // ── Tests: cerrarPeriodoAction ────────────────────────────────────────────
 
-	describe("cerrarPeriodoAction", () => {
+describe("cerrarPeriodoAction", () => {
+	it("no permite que un cierre no-manager cambie el estado si enforce omite el asiento formal", async () => {
+		const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = "enforce";
+		try {
+			const periodo = makePeriodo({ estado: EstadoPeriodo.ABIERTO });
+			mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+			mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+			mockPrisma.periodoContable.update.mockResolvedValue({ ...periodo, estado: EstadoPeriodo.CERRADO });
+			mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+			vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, tenantRole: "economico" });
+
+			const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+			expect(result.error?.code).toBe("FORMAL_ACCOUNTING_REQUIRED");
+			expect(formalCloseMocks.generarAsientoCierre).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ periodoId: "p-1", tenantId: TENANT }),
+			);
+		} finally {
+			if (originalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = originalMode;
+		}
+	});
+
+	it("cierra un período no-manager en enforce si se formaliza el asiento", async () => {
+		const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = "enforce";
+		formalCloseMocks.generarAsientoCierre.mockResolvedValueOnce({ estado: "CONTABILIZADO", asientoId: "asiento-1" });
+		try {
+			const periodo = makePeriodo({ estado: EstadoPeriodo.ABIERTO });
+			mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+			mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+			mockPrisma.periodoContable.update.mockResolvedValue({ ...periodo, estado: EstadoPeriodo.CERRADO });
+			mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+			vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, tenantRole: "economico" });
+
+			const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+			expect(result.success).toBe(true);
+			if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+			expect(result.data?.periodo.estado).toBe(EstadoPeriodo.CERRADO);
+		} finally {
+			if (originalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = originalMode;
+		}
+	});
+
 	it("no invoca fórmulas legacy de agregación al cerrar un período anual", async () => {
 		const periodo = makePeriodo({
 			tipo: TipoPeriodo.ANUAL,
@@ -1003,6 +1104,7 @@ describe("abrirPeriodoAction", () => {
 		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(response.success).toBe(false);
+		if (response.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
 		expect(response.error?.code).not.toBe("INTERNAL_ERROR");
 	});
@@ -1104,6 +1206,7 @@ describe("abrirPeriodoAction", () => {
 		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(response.success).toBe(false);
+		if (response.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(response.error?.code).toBe("CUTOFF_EVIDENCE_UNAVAILABLE");
 		expect(checkpointMocks.captureFinancialAuxiliaryCheckpoint).toHaveBeenCalledTimes(1);
 	});
@@ -1152,9 +1255,27 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.CERRADO);
 		expect(result.data?.snapshots).toBe(0);
+		expect(cashSnapshotMocks.capturar).toHaveBeenCalledWith(expect.objectContaining({
+		 tenantId: TENANT,
+		 periodoId: "p-1",
+		 motivo: "CIERRE_PERIODO",
+		 client: mockPrisma,
+	}));
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
+	});
+
+	it("aborta el cierre cuando la captura cash falla", async () => {
+		const periodo = makePeriodo({ estado: EstadoPeriodo.ABIERTO });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		cashSnapshotMocks.capturar.mockRejectedValue(new Error("cash snapshot unavailable"));
+
+		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(result.success).toBe(false);
+		expect(revalidatePath).not.toHaveBeenCalled();
 	});
 
 	it("falla si el período no existe", async () => {
@@ -1163,6 +1284,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-no-existe" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 
@@ -1172,6 +1294,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 
@@ -1196,6 +1319,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
 	});
 
@@ -1222,6 +1346,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("HIJOS_ABIERTOS");
 		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
 	});
@@ -1237,6 +1362,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 
@@ -1247,6 +1373,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 	});
 
@@ -1267,6 +1394,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.REABIERTO);
 		expect(result.data?.periodo.motivoReapertura).toBe(
 			"Error en conciliación de saldos del mes de marzo",
@@ -1283,6 +1411,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 
@@ -1297,6 +1426,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
 	});
 });
@@ -1319,6 +1449,7 @@ describe("aprobarPeriodoAction", () => {
 		const result = await aprobarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.APROBADO);
 		expect(result.data?.periodo.aprobadoPor).toBe(ACTOR);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
@@ -1330,20 +1461,42 @@ describe("aprobarPeriodoAction", () => {
 		const result = await aprobarPeriodoAction({ periodoId: "p-no-existe" });
 
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
 
-	it("falla si la transición no es válida (período APROBADO no se puede aprobar de nuevo)", async () => {
-		// APROBADO solo permite transición a REABIERTO
-		// ABIERTO sí permitía ABIERTO→APROBADO, por eso usamos APROBADO
-		const periodo = makePeriodo({ estado: EstadoPeriodo.APROBADO });
-		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
-		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+	it("devuelve el período aprobado existente al repetir la aprobación sin duplicar el cierre", async () => {
+		const cerrado = makePeriodo({ estado: EstadoPeriodo.CERRADO });
+		const aprobado = makePeriodo({ estado: EstadoPeriodo.APROBADO });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(cerrado);
+		mockPrisma.periodoContable.findUnique
+			.mockResolvedValueOnce(cerrado)
+			.mockResolvedValueOnce(cerrado)
+			.mockResolvedValueOnce(aprobado);
+		mockPrisma.periodoContable.findUniqueOrThrow.mockResolvedValue(aprobado);
+		mockPrisma.periodoContable.update.mockResolvedValue(aprobado);
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		formalCloseMocks.generarAsientoCierre
+			.mockResolvedValueOnce({ estado: "CONTABILIZADO", asientoId: "close-p-1" })
+			.mockResolvedValueOnce({ estado: "YA_EXISTENTE", asientoId: "close-p-1" });
 
-		const result = await aprobarPeriodoAction({ periodoId: "p-1" });
+		const first = await aprobarPeriodoAction({ periodoId: "p-1" });
+		const repeated = await aprobarPeriodoAction({ periodoId: "p-1" });
 
-		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
+		expect(first.success).toBe(true);
+		expect(repeated.success).toBe(true);
+		if (!repeated.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+		expect(repeated.data?.periodo).toEqual(expect.objectContaining({
+			periodoId: "p-1",
+			estado: EstadoPeriodo.APROBADO,
+			fechaInicio: aprobado.fechaInicio.toISOString(),
+		}));
+		expect(mockPrisma.periodoContable.findUniqueOrThrow).toHaveBeenCalledTimes(1);
+		expect(formalCloseMocks.generarAsientoCierre).toHaveBeenCalledTimes(2);
+		expect(formalCloseMocks.generarAsientoCierre).toHaveBeenLastCalledWith(
+			expect.anything(),
+			expect.objectContaining({ periodoId: "p-1", tenantId: TENANT }),
+		);
 	});
 });
 

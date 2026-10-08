@@ -11,9 +11,10 @@ until nc -z db 5432; do
 done
 echo "✅ Base de datos conectada"
 
-# Hacer push de Prisma para crear las tablas
-echo "🔄 Aplicando migraciones de Prisma..."
-npx prisma db push --accept-data-loss
+# Aplicar migraciones versionadas. Si falla, el contenedor no inicia.
+echo "🔄 Aplicando migraciones versionadas de Prisma..."
+npx prisma migrate deploy
+node /app/scripts/ci/verify-accounting-sql-guards.mjs
 
 # Generar cliente Prisma (por si acaso)
 echo "🔄 Generando cliente Prisma..."

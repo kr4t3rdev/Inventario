@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -57,13 +57,14 @@ export function PagoPrestamoModal({
   onSuccess,
 }: PagoPrestamoModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
 
   const saldoPendiente = useMemo(() => {
     if (!prestamo?.cuentaPorCobrar) return Number(prestamo?.montoCapital ?? 0)
     return calcularSaldoPendientePrestamo(
       Number(prestamo.cuentaPorCobrar.montoDeuda),
       Number(prestamo.cuentaPorCobrar.montoPagado)
-    )
+    ).toNumber()
   }, [prestamo])
 
   const form = useForm<PagoFormValues>({
@@ -90,6 +91,7 @@ export function PagoPrestamoModal({
 
   useEffect(() => {
     if (prestamo && open) {
+      pendingIdempotencyKey.current = crypto.randomUUID()
       form.reset({
         monto: saldoPendiente,
         cuentaId: "",
@@ -118,6 +120,7 @@ export function PagoPrestamoModal({
         moneda: values.moneda,
         tasaCambio: values.tasaCambio,
         observaciones: values.observaciones || undefined,
+        idempotencyKey: pendingIdempotencyKey.current ?? undefined,
       })
 
       if (!result.success) {
@@ -127,6 +130,7 @@ export function PagoPrestamoModal({
 
       toast.success("Pago registrado correctamente")
       onSuccess?.()
+      pendingIdempotencyKey.current = null
       onOpenChange(false)
     } catch (error) {
       toast.error("No se pudo registrar el pago")
@@ -136,13 +140,16 @@ export function PagoPrestamoModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen) pendingIdempotencyKey.current = null
+      onOpenChange(nextOpen)
+    }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Registrar Pago de Préstamo</DialogTitle>
           <DialogDescription>
             {prestamo
-              ? `Préstamo #${prestamo.idNumerico} • Cliente: ${prestamo.cliente?.nombre ?? "—"} • Saldo: ${prestamo.moneda} ${saldoPendiente.toFixed(2)}`
+              ? `Préstamo #${prestamo.idNumerico} • Cliente: ${prestamo.cliente?.nombre ?? "—"} • Saldo: ${prestamo.moneda} ${saldoPendiente.toFixed(4)}`
               : "Seleccione un préstamo."}
           </DialogDescription>
         </DialogHeader>
@@ -156,16 +163,16 @@ export function PagoPrestamoModal({
                 <FormItem>
                   <FormLabel>Monto a pagar</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" max={saldoPendiente} {...field} />
+                    <Input type="number" step="0.0001" min="0" max={saldoPendiente} {...field} />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    Saldo pendiente actual: {saldoPendiente.toFixed(2)} {prestamo?.moneda}
+                    Saldo pendiente actual: {saldoPendiente.toFixed(4)} {prestamo?.moneda}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Saldo restante tras este pago: {saldoRestanteLuegoDePago.toFixed(2)} {prestamo?.moneda}
+                    Saldo restante tras este pago: {saldoRestanteLuegoDePago.toFixed(4)} {prestamo?.moneda}
                   </p>
                   {montoIngresado > saldoPendiente && (
-                    <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(2)})</p>
+                    <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(4)})</p>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -236,7 +243,7 @@ export function PagoPrestamoModal({
                     </FormControl>
                     {montoConvertido !== null && (
                       <p className="text-xs text-muted-foreground">
-                        Monto convertido: {montoConvertido.toFixed(2)} {prestamo?.moneda}
+                        Monto convertido: {montoConvertido.toFixed(4)} {prestamo?.moneda}
                       </p>
                     )}
                     <FormMessage />

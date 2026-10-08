@@ -280,7 +280,7 @@ describe('operaciones contables — canales HTTP reales (filas 17–20)', { time
 		})).saldo.toString()).toBe((Number(saldoAntes) - 350).toString());
 		expect(await prisma.pagoDeuda.count({ where: { inyeccionId: deudaId } })).toBe(1);
 		expect((await prisma.inyeccionCapital.findUniqueOrThrow({ where: { id: deudaId } }))
-			.saldoPendiente.toString()).toBe('150');
+			.saldoPendiente!.toString()).toBe('150');
 
 		const asientosPago = await prisma.asiento.findMany({
 			where: { tenantId, origenTipo: 'pago_deuda_capital' },

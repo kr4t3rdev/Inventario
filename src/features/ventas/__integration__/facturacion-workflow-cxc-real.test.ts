@@ -126,7 +126,7 @@ async function crearEscenario(opts?: {
               montoOriginal: opts.cxcPagada.montoDeuda,
             }
           : {}),
-      },
+      } as never,
     });
   }
 
@@ -164,7 +164,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
     });
 
     // Estado previo real: pagado 400 → saldo vivo 1600.
-    const pre = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+    const pre = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(Number(pre.montoPagado)).toBe(400);
     expect(pre.estado).toBe('PARCIAL');
     expect(saldoVivoCliente([pre])).toBe(1600);
@@ -183,7 +183,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
       });
     });
 
-    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(Number(post.montoPagado)).toBe(400);
     expect(post.estado).toBe('PARCIAL');
     expect(saldoVivoCliente([post])).toBe(1600);
@@ -214,8 +214,8 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
     });
 
     expect(precommit).not.toBeNull();
-    expect(Number(precommit.montoDeuda)).toBe(100); // total completo, no 60
-    expect(Number(precommit.montoPagado)).toBe(0); // sin aplicación del efectivo 40
+    expect(Number(precommit!.montoDeuda)).toBe(100); // total completo, no 60
+    expect(Number(precommit!.montoPagado)).toBe(0); // sin aplicación del efectivo 40
 
     // Post-commit: idéntico al pre-commit.
     const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({
@@ -231,7 +231,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
       cxcPagada: { montoDeuda: 2000.01, montoPagado: 400.25 },
     });
 
-    const pre = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+    const pre = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(pre.montoDeuda.toFixed(2)).toBe('2000.01');
     expect(pre.montoPagado.toFixed(2)).toBe('400.25');
 
@@ -248,7 +248,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
       });
     });
 
-    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(post.montoDeuda.toFixed(2)).toBe('2000.01');
     expect(post.montoPagado.toFixed(2)).toBe('400.25');
     expect(post.estado).toBe('PARCIAL');
@@ -262,7 +262,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
         cxcPagada: { montoDeuda: 2000, montoPagado: 0 },
         monedaOriginal: 'USD',
       });
-      expect(cxc.monedaOriginal).toBe('USD');
+      expect(cxc!.monedaOriginal).toBe('USD');
 
       // Esta fila histórica es deliberadamente incompleta: no pasar valoración
       // aquí conserva el contrato fail-closed y evita fabricar una conversión.
@@ -281,7 +281,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
         }),
       ).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
 
-      const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+      const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
       expect(post.monedaOriginal).toBe('USD');
       expect(post.monedaFuncional).toBeNull();
       expect(post.montoDeudaFuncional).toBeNull();
@@ -314,7 +314,7 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
       }),
     ).rejects.toThrow('rollback-fuerza');
 
-    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } });
+    const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(Number(post.montoDeuda)).toBe(2000);
     expect(Number(post.montoPagado)).toBe(400);
     expect(post.estado).toBe('PARCIAL');
@@ -388,9 +388,9 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
     const cxc = await prisma.cuentaPorCobrar.findFirstOrThrow({
       where: { tenantId, facturaId: factura.idFactura },
     });
-    expect(Number(cxc.montoDeuda)).toBe(60);
-    expect(Number(cxc.montoPagado)).toBe(0);
-    expect(cxc.estado).toBe('PENDIENTE');
+    expect(Number(cxc!.montoDeuda)).toBe(60);
+    expect(Number(cxc!.montoPagado)).toBe(0);
+    expect(cxc!.estado).toBe('PENDIENTE');
 
     const facturaPost = await prisma.factura.findUniqueOrThrow({
       where: { idFactura: factura.idFactura },

@@ -71,6 +71,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.cuentaPorCobrar.findFirst).not.toHaveBeenCalled()
   })
@@ -81,6 +82,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'cxc-1', tenantId: 'tenant-1' } }),
@@ -98,6 +100,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1', motivo: 'Venta anulada' })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.estado).toBe('ANULADA')
     expect(result.data?.montoDeuda).toBe(1000)
     expect(result.data?.montoPagado).toBe(250)
@@ -122,6 +125,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.estado).toBe('ANULADA')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
     expect(auditLogMock.logStrict).not.toHaveBeenCalled()
@@ -137,6 +141,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.estado).toBe('ANULADA')
     expect(auditLogMock.logStrict).not.toHaveBeenCalled()
   })

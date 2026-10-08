@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -62,7 +62,18 @@ const capitalSchema = z.object({
   path: ["entidadPrestamista"],
 });
 
-type CapitalFormData = z.infer<typeof capitalSchema>
+export type CapitalFormData = z.infer<typeof capitalSchema>
+
+/** @description Builds a capital-injection payload with a stable retry key. */
+export function buildCapitalInjectionPayload(data: CapitalFormData, idempotencyKey: string) {
+  return {
+    ...data,
+    fechaInicioPago: data.fechaInicioPago
+      ? new Date(`${data.fechaInicioPago}T00:00:00`)
+      : undefined,
+    idempotencyKey,
+  }
+}
 
 interface CapitalFormProps {
   onSuccess?: () => void
@@ -71,6 +82,7 @@ interface CapitalFormProps {
 
 export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
   const [isCreating, setIsCreating] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
   const [cuentas, setCuentas] = useState<any[]>([])
   const [monedas] = useState<any[]>([{ codigo: 'CUP', nombre: 'Peso Cubano' }, { codigo: 'USD', nombre: 'Dólar' }, { codigo: 'MLC', nombre: 'MLC' }])
 
@@ -97,20 +109,25 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
 
   const onSubmit = async (data: CapitalFormData) => {
     try {
-      const result = await createInyeccionCapitalAction({
-        ...data,
-        fechaInicioPago: data.fechaInicioPago
-          ? new Date(`${data.fechaInicioPago}T00:00:00`)
-          : undefined,
-      })
+      const idempotencyKey = pendingIdempotencyKey.current ?? crypto.randomUUID()
+      pendingIdempotencyKey.current = idempotencyKey
+      const result = await createInyeccionCapitalAction(
+        buildCapitalInjectionPayload(data, idempotencyKey),
+      )
       if (!result.success) throw new Error(result.error?.message || 'Error al crear')
       toast.success('Inyección de capital registrada exitosamente')
       form.reset()
+      pendingIdempotencyKey.current = null
       onSuccess?.()
     } catch (error: any) {
       console.error('Error al registrar inyección:', error)
       showErrorToast.generic(error.data?.error || "Error al registrar la inyección")
     }
+  }
+
+  const handleCancel = () => {
+    pendingIdempotencyKey.current = null
+    onCancel?.()
   }
 
   return (
@@ -376,7 +393,7 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
 
               <div className="flex justify-end gap-4 pt-4">
                 {onCancel && (
-                  <Button type="button" variant="outline" onClick={onCancel} disabled={isCreating}>
+                  <Button type="button" variant="outline" onClick={handleCancel} disabled={isCreating}>
                     Cancelar
                   </Button>
                 )}

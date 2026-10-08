@@ -125,7 +125,12 @@ afterAll(async () => {
     await prisma.factura.deleteMany({ where: { tenantId } });
     await prisma.venta.deleteMany({ where: { tenantId } });
     await prisma.turnoPuntoVenta.deleteMany({ where: { tenantId } });
-    await prisma.stockMoveLine.deleteMany({ where: { tenantId } });
+    // StockMoveLine es append-only: purgarla requiere omitir el trigger; la DB de
+    // pruebas es desechable y esta limpieza no relaja las garantías de producción.
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe("SET LOCAL session_replication_role = 'replica'");
+      await tx.stockMoveLine.deleteMany({ where: { tenantId } });
+    });
     await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
     await prisma.producto.deleteMany({ where: { tenantId } });
     await prisma.categoria.deleteMany({ where: { tenantId } });

@@ -22,8 +22,8 @@ const anticipoSchema = z.object({
   clienteId: z.string().optional(),
   monto: z.coerce.number().positive("El monto debe ser mayor que cero"),
   moneda: z.string().min(1, "Seleccione la moneda"),
-  cuentaOrigenId: z.string().optional(),
-  tipoPagoOrigenId: z.string().optional(),
+  cuentaOrigenId: z.string().min(1, 'Seleccione la cuenta donde se movió el dinero'),
+  tipoPagoOrigenId: z.string().min(1, 'Seleccione el tipo de pago'),
   referenciaExterna: z.string().optional(),
   vigenciaHasta: z.string().optional(),
 })
@@ -41,6 +41,7 @@ export function buildCreateAnticipoPayload(
   data: AnticipoFormValues,
   proveedorId?: string,
   clienteId?: string,
+  idempotencyKey?: string,
 ): import('@/app/models/model').CreateAnticipoRequest {
   return {
     tipo: data.tipo,
@@ -51,6 +52,7 @@ export function buildCreateAnticipoPayload(
     moneda: data.moneda,
     cuentaOrigenId: data.cuentaOrigenId,
     tipoPagoOrigenId: data.tipoPagoOrigenId,
+    ...(idempotencyKey ? { idempotencyKey } : {}),
     referenciaExterna: data.referenciaExterna,
     vigenciaHasta: data.vigenciaHasta || undefined,
   }
@@ -85,6 +87,7 @@ export function AnticipoForm({
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null)
 
   const form = useForm<AnticipoFormValues>({
     resolver: zodResolver(anticipoSchema),
@@ -125,11 +128,14 @@ export function AnticipoForm({
   const onSubmit = async (data: AnticipoFormValues) => {
     setIsLoading(true)
     try {
+      const retryKey = idempotencyKey ?? crypto.randomUUID()
+      if (!idempotencyKey) setIdempotencyKey(retryKey)
       const result = await createAnticipoAction(
         buildCreateAnticipoPayload(
           data,
           proveedorDelContrato?.vendorId,
           clienteDelContrato?.clienteId,
+          retryKey,
         )
       )
 
@@ -140,6 +146,7 @@ export function AnticipoForm({
       toast.success(`El anticipo de ${data.tipo === "PAGO" ? "pago" : "cobro"} ha sido creado exitosamente.`)
 
       form.reset()
+      setIdempotencyKey(null)
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
@@ -281,7 +288,7 @@ export function AnticipoForm({
                 name="cuentaOrigenId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cuenta de Origen (Opcional)</FormLabel>
+                    <FormLabel>Cuenta de Origen</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
@@ -309,7 +316,7 @@ export function AnticipoForm({
                 name="tipoPagoOrigenId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Pago (Opcional)</FormLabel>
+                    <FormLabel>Tipo de Pago</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>

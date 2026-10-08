@@ -52,7 +52,7 @@ describe('/api/mi-empresa', () => {
       cuentaBancariaId: 'cuenta-1',
     } as never);
 
-    const response = await GET(new NextRequest('http://localhost/api/mi-empresa'));
+    const response = await GET(new NextRequest('http://localhost/api/mi-empresa'), {});
     const data = await response.json();
 
     expect(response.status).toBe(200);

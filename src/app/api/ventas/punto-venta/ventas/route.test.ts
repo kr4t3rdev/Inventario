@@ -48,7 +48,7 @@ describe('/api/ventas/punto-venta/ventas', () => {
       }),
     });
 
-    const response = await POST(request);
+    const response = await POST(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -77,7 +77,7 @@ describe('/api/ventas/punto-venta/ventas', () => {
       }),
     });
 
-    const response = await POST(request);
+    const response = await POST(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(400);

@@ -32,7 +32,8 @@ vi.mock('@/lib/auth-middleware', () => ({
 
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: {
-    log: vi.fn().mockResolvedValue(undefined)
+    log: vi.fn().mockResolvedValue(undefined),
+    logStrict: vi.fn().mockResolvedValue(undefined),
   }
 }))
 
@@ -50,6 +51,9 @@ function createTxMock(overrides: Record<string, unknown> = {}) {
   const baseTx = {
     $queryRaw: vi.fn().mockResolvedValue([]),
     $queryRawUnsafe: vi.fn().mockResolvedValue([]),
+    tenantAccountingPolicy: {
+      findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
+    },
     tipoPago: {
       findUnique: vi.fn(),
       findFirst: vi.fn()
@@ -110,6 +114,35 @@ describe('Reconciliacion gastos API - POST', () => {
     vi.clearAllMocks()
   })
 
+  it('deniega el writer cuando el plan no tiene feature contabilidad', async () => {
+    const { POST } = await import('../route')
+    const prisma = (await import('@/lib/prisma')).default as any
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
+
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
+    vi.mocked(authenticateUser).mockResolvedValue({ user: {
+      userId: 'user-1', tenantId: 't1', tenantRole: 'manager',
+      permissions: new Set(['financiero.contabilidad.acceder']), planFeatures: {},
+    } } as any)
+    const response = await POST(new NextRequest(
+      'http://localhost/api/contabilidad/reconciliacion/gastos', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          tipoGasto: 'gastoDE', gastosDEId: 'gde-1', cuentaId: 'cb-1',
+          tipoPagoId: 'tp-1', monto: 120, moneda: 'CUP',
+          descripcion: 'Pago de prueba', estado: 'PAGADA',
+        }),
+      },
+    ))
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).code).toBe('FEATURE_NOT_AVAILABLE')
+    expect(prisma.gastosDE.findFirst).not.toHaveBeenCalled()
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
+
   it('registra reconciliacion PAGADA para gasto DE sin CxP', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
@@ -117,7 +150,7 @@ describe('Reconciliacion gastos API - POST', () => {
     const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1', tenantId: 't1' } } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1', tenantId: 't1', tenantRole: 'manager', planFeatures: { contabilidad: true } } } as any)
     vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-1'
     })
@@ -202,7 +235,7 @@ describe('Reconciliacion gastos API - POST', () => {
     const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2', tenantId: 't1' } } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2', tenantId: 't1', tenantRole: 'manager', planFeatures: { contabilidad: true } } } as any)
     vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-2'
     })
@@ -309,7 +342,7 @@ describe('Reconciliacion gastos API - POST', () => {
     const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3', tenantId: 't1' } } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3', tenantId: 't1', tenantRole: 'manager', planFeatures: { contabilidad: true } } } as any)
     vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-3'
     })
@@ -388,7 +421,7 @@ describe('Reconciliacion gastos API - POST', () => {
       modo: 'enforce',
       error: { message: 'Período contable cerrado', code: 'PERIODO_CERRADO' },
     })
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-4', tenantId: 't1' } } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-4', tenantId: 't1', tenantRole: 'manager', planFeatures: { contabilidad: true } } } as any)
 
     const request = new NextRequest('http://localhost/api/contabilidad/reconciliacion/gastos', {
       method: 'POST',

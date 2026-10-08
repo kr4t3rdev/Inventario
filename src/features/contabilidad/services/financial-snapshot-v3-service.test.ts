@@ -69,7 +69,7 @@ describe('financial snapshot v3 service', () => {
     const { captureFinancialSnapshotV3 } = await import('./financial-snapshot-v3-service');
     const incomplete = { ...completeInput(), coverage: undefined };
 
-    await expect(captureFinancialSnapshotV3(incomplete)).rejects.toMatchObject({
+    await expect(captureFinancialSnapshotV3(incomplete as never)).rejects.toMatchObject({
       code: 'INVALID_SNAPSHOT_PAYLOAD',
     });
     expect(prismaMock.snapshotPeriodo.create).not.toHaveBeenCalled();

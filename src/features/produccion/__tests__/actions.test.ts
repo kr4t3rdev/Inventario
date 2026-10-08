@@ -67,7 +67,7 @@ const mockUser: AuthenticatedUser = {
 	role: 'admin',
 	isActive: true,
 	tenantId: 'tenant-test',
-	tenantRole: 'admin',
+	tenantRole: 'manager',
 };
 
 describe('Producción Server Actions', () => {
@@ -164,13 +164,14 @@ describe('Producción Server Actions', () => {
 	it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye produccion', async () => {
 		const restrictedUser: AuthenticatedUser = {
 			...mockUser,
-			role: 'user',
+			role: 'regularUser',
 			tenantRole: 'manager',
 			planFeatures: { produccion: false },
 		};
 		vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
 		const result = await aprobarOrdenProduccionAction('op-1');
 		expect(result.success).toBe(false);
+		if (result.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 });

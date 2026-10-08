@@ -93,11 +93,11 @@ describe('accounting policy metrics', () => {
   });
 
   it('no define etiquetas de tenant, actor ni moneda en ninguna métrica nueva', () => {
-    expect(accountingPolicyPreflightCounter.labelNames.sort()).toEqual(['classification']);
-    expect(accountingPolicyProvisioningCounter.labelNames.sort()).toEqual(['origin', 'result']);
-    expect(accountingPolicyRolloutEntriesCounter.labelNames).toEqual(['result']);
+    expect((accountingPolicyPreflightCounter as unknown as { data: { labelNames: string[] } }).data.labelNames.sort()).toEqual(['classification']);
+    expect((accountingPolicyProvisioningCounter as unknown as { data: { labelNames: string[] } }).data.labelNames.sort()).toEqual(['origin', 'result']);
+    expect((accountingPolicyRolloutEntriesCounter as unknown as { data: { labelNames: string[] } }).data.labelNames).toEqual(['result']);
     expect(
-      operationalTenantsWithoutAccountingPolicyGauge.labelNames,
+      (operationalTenantsWithoutAccountingPolicyGauge as unknown as { data: { labelNames: string[] } }).data.labelNames,
     ).toEqual([]);
   });
 

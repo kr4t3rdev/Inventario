@@ -28,9 +28,10 @@ const mockUser = vi.hoisted(
 	(): AuthenticatedUser => ({
 		userId: "user-1",
 		tenantId: "tenant-mock-1",
-		role: "ADMIN",
+		role: "admin",
 		email: "test@test.com",
 		name: "Test User",
+		isActive: true,
 	}),
 );
 
@@ -97,10 +98,10 @@ describe("abrirTurnoAction", () => {
 
 		const result = await abrirTurnoAction(
 			{ puntoDeVentaId: "pv-1", fondoInicialCup: 50000, fondoInicialUsd: 0 },
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
+		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data).toBeDefined();
 		expect(mockPrisma.turnoPuntoVenta.create).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -121,7 +122,6 @@ describe("abrirTurnoAction", () => {
 
 		const result = await abrirTurnoAction(
 			{ puntoDeVentaId: "pv-1", fondoInicialCup: 50000, fondoInicialUsd: 0 },
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
@@ -135,7 +135,6 @@ describe("abrirTurnoAction", () => {
 
 		const result = await abrirTurnoAction(
 			{ puntoDeVentaId: "pv-1", fondoInicialCup: 50000, fondoInicialUsd: 0 },
-			mockUser,
 		);
 
 		expect(result.success).toBe(false);
@@ -147,7 +146,6 @@ describe("abrirTurnoAction", () => {
 	it("should fail validation with negative fondo", async () => {
 		const result = await abrirTurnoAction(
 			{ puntoDeVentaId: "pv-1", fondoInicialCup: -100, fondoInicialUsd: 0 },
-			mockUser,
 		);
 
 		expect(result.success).toBe(false);
@@ -229,7 +227,7 @@ describe("getCuadresCerradosAction", () => {
 			},
 		]);
 
-		const result = await getCuadresCerradosAction({ limit: 20 }, mockUser);
+		const result = await getCuadresCerradosAction({ limit: 20 });
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -271,7 +269,7 @@ describe("getCuadresCerradosAction", () => {
 			},
 		]);
 
-		const result = await getCuadresCerradosAction({}, mockUser);
+		const result = await getCuadresCerradosAction({});
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -340,7 +338,6 @@ describe("cerrarTurnoAction", () => {
 
 		const result = await cerrarTurnoAction(
 			{ turnoId: "nonexistent" },
-			mockUser,
 		);
 
 		expect(result.success).toBe(false);

@@ -9,6 +9,7 @@ const tx = vi.hoisted(() => ({
   transaccionMoneda: { deleteMany: vi.fn() },
   anticipoMovimiento: { findMany: vi.fn() },
   anticipo: { findUnique: vi.fn(), update: vi.fn() },
+  asiento: { findMany: vi.fn() },
   anticipoMovimientoCreate: vi.fn(),
   $queryRaw: vi.fn(),
 }));
@@ -40,6 +41,7 @@ beforeEach(() => {
   tx.reconciliacionGasto.deleteMany.mockResolvedValue({ count: 0 });
   tx.transaccionMoneda.deleteMany.mockResolvedValue({ count: 0 });
   tx.anticipoMovimiento.findMany.mockResolvedValue([]);
+  tx.asiento.findMany.mockResolvedValue([]);
   tx.cuentaBancaria.findUnique.mockResolvedValue({ cuentaId: 'bank-1', tenantId: 'tenant-1', moneda: 'CUP' });
 });
 
@@ -70,6 +72,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     tx.compraServicio.updateMany.mockResolvedValueOnce({ count: 0 });
     const result = await deleteCompraServicioAction('cs-1');
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('ALREADY_DELETED');
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
   });
@@ -80,6 +83,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     const result = await deleteCompraServicioAction('cs-1');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('CONCURRENT_RECONCILIATION');
     expect(tx.compraServicio.deleteMany).not.toHaveBeenCalled();
   });
@@ -94,6 +98,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     const result = await deleteCompraServicioAction('cs-1');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('HAS_IMPACT');
     expect(tx.cuentaPorPagar.delete).not.toHaveBeenCalled();
     expect(tx.compraServicio.deleteMany).not.toHaveBeenCalled();

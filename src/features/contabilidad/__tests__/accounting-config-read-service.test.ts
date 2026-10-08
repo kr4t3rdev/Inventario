@@ -22,6 +22,7 @@ import { AccountingConfigReadService } from '@/features/contabilidad/services/ac
 
 const mockTipoPagoA = {
   tipoId: 'tp-a',
+  tenantId: 'tenant-a',
   nombre: 'Efectivo',
   descripcion: null,
   requiereCuenta: false,
@@ -41,6 +42,7 @@ const mockCuentaA = {
   moneda: 'CUP',
   isActive: true,
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 };
 
 const mockCuentaB = {
@@ -97,11 +99,11 @@ describe('AccountingConfigReadService.getAvailableAccounts — tenant isolation'
 
   it('RED: debe filtrar cuentas bancarias por tenantId', async () => {
     vi.mocked(prisma.cuentaBancaria.findMany).mockResolvedValue([mockCuentaA]);
-    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA);
+    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA as never);
     vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([]);
     vi.mocked(prisma.cuentaBancaria.groupBy).mockResolvedValue([
       { moneda: 'CUP', _count: { cuentaId: 1 } },
-    ]);
+    ] as never);
 
     const result = await AccountingConfigReadService.getAvailableAccounts('tenant-a');
 
@@ -135,11 +137,11 @@ describe('AccountingConfigReadService.getAvailableAccounts — tenant isolation'
 
   it('RED: las estadísticas deben reflejar solo el tenant consultado', async () => {
     vi.mocked(prisma.cuentaBancaria.findMany).mockResolvedValue([mockCuentaA]);
-    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA);
+    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA as never);
     vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([]);
     vi.mocked(prisma.cuentaBancaria.groupBy).mockResolvedValue([
       { moneda: 'CUP', _count: { cuentaId: 1 } },
-    ]);
+    ] as never);
 
     await AccountingConfigReadService.getAvailableAccounts('tenant-a');
 

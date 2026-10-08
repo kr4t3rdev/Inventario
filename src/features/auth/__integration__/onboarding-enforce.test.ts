@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'pe04-integration-jwt-secret';
 process.env.REFRESH_JWT_SECRET =
@@ -294,14 +295,14 @@ describe('PE-04 onboarding and multi-tenant integration gate', { timeout: 120_00
     });
     expect(loginA.user.tenantId).toBe(tenantA.tenant.tenantId);
 
-    const switchedB = await AuthService.switchTenant({ tenantId: tenantB.tenant.tenantId, user: loginA.user });
+    const switchedB = await AuthService.switchTenant({ tenantId: tenantB.tenant.tenantId, user: loginA.user as unknown as AuthenticatedUser });
     expect(switchedB.tenantId).toBe(tenantB.tenant.tenantId);
     expect((jwt.verify(switchedB.tokens.accessToken, process.env.JWT_SECRET!) as { tenantId: string }).tenantId)
       .toBe(tenantB.tenant.tenantId);
 
     const switchedA = await AuthService.switchTenant({
       tenantId: tenantA.tenant.tenantId,
-      user: { ...loginA.user, tenantId: tenantB.tenant.tenantId, tenantRole: 'manager' },
+      user: { ...loginA.user as unknown as AuthenticatedUser, tenantId: tenantB.tenant.tenantId, tenantRole: 'manager' },
     });
     expect(switchedA.tenantId).toBe(tenantA.tenant.tenantId);
   });
@@ -403,10 +404,10 @@ describe('PE-04 onboarding and multi-tenant integration gate', { timeout: 120_00
       input: { email, password },
       client: { tenantId: tenantA.tenant.tenantId },
     });
-    await AuthService.switchTenant({ tenantId: tenantB.tenant.tenantId, user: loginA.user });
+    await AuthService.switchTenant({ tenantId: tenantB.tenant.tenantId, user: loginA.user as unknown as AuthenticatedUser });
     await AuthService.switchTenant({
       tenantId: tenantA.tenant.tenantId,
-      user: { ...loginA.user, tenantId: tenantB.tenant.tenantId, tenantRole: 'manager' },
+      user: { ...loginA.user as unknown as AuthenticatedUser, tenantId: tenantB.tenant.tenantId, tenantRole: 'manager' },
     });
     expect(collector.flush()).toEqual([]);
   });

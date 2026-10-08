@@ -26,31 +26,7 @@ export interface CreateAnticipoParams {
   referenciaExterna?: string
   vigenciaHasta?: Date | string
   usuarioId: string
-}
-
-export interface ExecuteAnticipoParams {
-  anticipoId: string
-  contexto: AnticipoContexto
-  documentoDestinoId: string
-  montoObjetivo: number
-  monedaObjetivo: string
-  tasaAplicada?: number
-  idempotencyKey: string
-  observaciones?: string
-  usuarioId: string
-}
-
-export interface ExecuteAnticipoResult {
-  anticipoId: string
-  estado: AnticipoEstado
-  saldoDisponible: number
-  movimientoId: string
-  idempotentReplay: boolean
-}
-
-export interface ExecuteAnticipoPersistedResult {
-  requestFingerprint: string
-  response: Omit<ExecuteAnticipoResult, 'idempotentReplay'>
+  idempotencyKey?: string
 }
 
 export interface ReverseAnticipoParams {
@@ -78,26 +54,3 @@ export interface AnticipoAllocationResult {
   montoAplicado: number
   saldoRestante: number
 }
-
-/**
- * Handler para ejecutar reconciliación de negocio después de consumir anticipo.
- * Recibe el contexto completo para tomar decisiones de qué tipo de reconciliación crear.
- */
-export type ExecuteReconciliacionHandler = (
-  tx: Prisma.TransactionClient,
-  context: {
-    anticipoId: string
-    tipoAnticipo: AnticipoTipo
-    documentoDestinoId: string
-    contexto: AnticipoContexto
-    montoObjetivo: number
-    monedaObjetivo: string
-    cuentaBancariaId: string
-    tipoPagoId: string
-    usuarioId: string
-  }
-) => Promise<{
-  reconciliacionVentaId?: string
-  reconciliacionGastoId?: string
-  reconciliacionServicioId?: string
-}>

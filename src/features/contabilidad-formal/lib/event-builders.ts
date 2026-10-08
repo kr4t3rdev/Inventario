@@ -7,21 +7,36 @@
  * @module src/features/contabilidad-formal/lib/event-builders
  */
 
-import type { EventoContableInput } from '@/features/contabilidad-formal/services/posting-engine';
+import { Prisma } from '@/generated/prisma';
+import type {
+	DecimalInput,
+	EventoContableInput,
+} from '@/features/contabilidad-formal/services/posting-engine';
 
 const MONEDA_FUNCIONAL_DEFECTO = 'CUP';
+
+function esPositivo(valor: DecimalInput | null | undefined): valor is DecimalInput {
+	if (valor == null) return false;
+	try {
+		return new Prisma.Decimal(valor).gt(0);
+	} catch {
+		return false;
+	}
+}
 
 /** Parámetros de tesorería compartidos por cobros y ventas al contado. */
 export interface ParamsTesoreria {
 	/** Monto en moneda original del cobro. */
-	monto: number;
+	monto: DecimalInput;
 	moneda: string;
 	/** Monto en moneda funcional (montoConvertido del registro de caja). */
-	montoFuncional: number;
+	montoFuncional: DecimalInput;
 	/** Moneda funcional del tenant; por defecto CUP (de la evidencia FX si aplica). */
 	monedaFuncionalCodigo?: string | null;
-	tasaCambio?: number | null;
+	tasaCambio?: DecimalInput | null;
 	fxEvidenceFingerprint?: string | null;
+	/** Diferencia entre efectivo funcional recibido y valor funcional del saldo liquidado. */
+	diferenciaFx?: DecimalInput;
 	/** Tipo de cuenta destino: EFECTIVO → CAJA; resto → BANCOS. */
 	tipoCuenta?: string | null;
 	referencia?: string;
@@ -74,6 +89,7 @@ export function buildEventoCobroCxc(params: {
 		...buildEventoVentaContado(params),
 		tipo: 'COBRO_CXC',
 		descripcion: params.descripcion ?? 'Cobro de cuenta por cobrar',
+		auxiliares: { diferenciaFx: params.tesoreria.diferenciaFx ?? 0 },
 	};
 }
 
@@ -82,22 +98,30 @@ export function buildEventoCobroCxc(params: {
  */
 export function buildEventoVentaCredito(params: {
 	facturaId: string;
-	monto: number;
+	monto: DecimalInput;
+	valoracion?: {
+		moneda: string;
+		montoFuncional: DecimalInput;
+		monedaFuncional: string;
+		tasaCambio?: DecimalInput | null;
+		fxEvidenceFingerprint?: string | null;
+	};
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
+	origenTipo?: string;
 }): EventoContableInput {
 	return {
 		tipo: 'VENTA_CREDITO',
 		fecha: params.fecha ?? new Date(),
 		descripcion: params.descripcion ?? 'Venta a crédito',
-		origen: { tipo: 'factura', id: params.facturaId },
+		origen: { tipo: params.origenTipo ?? 'factura', id: params.facturaId },
 		monto: params.monto,
-		moneda: MONEDA_FUNCIONAL_DEFECTO,
-		montoFuncional: params.monto,
-		monedaFuncional: MONEDA_FUNCIONAL_DEFECTO,
-		tasaCambio: null,
-		fxEvidenceFingerprint: null,
+		moneda: params.valoracion?.moneda ?? null,
+		montoFuncional: params.valoracion?.montoFuncional ?? null,
+		monedaFuncional: params.valoracion?.monedaFuncional ?? null,
+		tasaCambio: params.valoracion?.tasaCambio ?? null,
+		fxEvidenceFingerprint: params.valoracion?.fxEvidenceFingerprint ?? null,
 		referencia: params.referencia,
 	};
 }
@@ -108,24 +132,31 @@ export function buildEventoVentaCredito(params: {
  */
 export function buildEventoCostoVenta(params: {
 	ventaId: string;
-	costoFifo: number;
+	costoFifo: DecimalInput | null;
+	monedaFuncional?: string | null;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
 }): EventoContableInput {
+	const monedaFuncional = params.monedaFuncional === undefined
+		? MONEDA_FUNCIONAL_DEFECTO
+		: params.monedaFuncional?.trim().toUpperCase() || null;
+	const costoFifo = params.costoFifo != null && monedaFuncional != null
+		? params.costoFifo
+		: null;
 	return {
 		tipo: 'COSTO_VENTA_DEVENGADO',
 		fecha: params.fecha ?? new Date(),
 		descripcion: params.descripcion ?? 'Costo de venta devengado',
 		origen: { tipo: 'venta_costo', id: params.ventaId },
-		monto: params.costoFifo,
-		moneda: MONEDA_FUNCIONAL_DEFECTO,
-		montoFuncional: params.costoFifo,
-		monedaFuncional: MONEDA_FUNCIONAL_DEFECTO,
+		monto: costoFifo ?? 0,
+		moneda: costoFifo == null ? null : monedaFuncional,
+		montoFuncional: costoFifo,
+		monedaFuncional: costoFifo == null ? null : monedaFuncional,
 		tasaCambio: null,
 		fxEvidenceFingerprint: null,
 		referencia: params.referencia,
-		auxiliares: { costoFifo: params.costoFifo },
+		...(costoFifo == null ? {} : { auxiliares: { costoFifo } }),
 	};
 }
 
@@ -173,9 +204,12 @@ export function buildEventoEgreso(params: {
  */
 export function buildEventoCompraCredito(params: {
 	compraId: string;
-	monto: number;
+	monto: DecimalInput;
 	moneda?: string;
-	montoFuncional?: number;
+	montoFuncional?: DecimalInput;
+	tasaCambio?: DecimalInput | null;
+	fxEvidenceFingerprint?: string | null;
+	monedaFuncionalCodigo?: string | null;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
@@ -188,9 +222,9 @@ export function buildEventoCompraCredito(params: {
 		monto: params.monto,
 		moneda: params.moneda ?? MONEDA_FUNCIONAL_DEFECTO,
 		montoFuncional: params.montoFuncional ?? params.monto,
-		monedaFuncional: MONEDA_FUNCIONAL_DEFECTO,
-		tasaCambio: null,
-		fxEvidenceFingerprint: null,
+		monedaFuncional: params.monedaFuncionalCodigo ?? MONEDA_FUNCIONAL_DEFECTO,
+		tasaCambio: params.tasaCambio ?? null,
+		fxEvidenceFingerprint: params.fxEvidenceFingerprint ?? null,
 		referencia: params.referencia,
 	};
 }
@@ -223,6 +257,58 @@ export function buildEventoGastoConAnticipoProveedor(params: {
 export { MONEDA_FUNCIONAL_DEFECTO };
 
 /**
+ * @description Devenga una venta de servicios contra CxC sin movimiento bancario.
+ * @param {object} params - Documento y valoración exacta persistida.
+ * @returns {EventoContableInput} Evento de ingreso de servicios, no de productos.
+ */
+export function buildEventoVentaServicioCredito(params: {
+	ventaServicioId: string;
+	valoracion: ValoracionBase;
+	fecha: Date;
+}): EventoContableInput {
+	return baseEvento('VENTA_SERVICIO_CREDITO',
+		{ tipo: 'venta_servicio', id: params.ventaServicioId }, params.valoracion,
+		{ fecha: params.fecha, descripcion: `Devengo de servicio ${params.ventaServicioId}` });
+}
+
+/**
+ * @description Evento GASTO_CREDITO: devengo bruto del gasto contra la obligación CxP.
+ */
+export function buildEventoGastoCredito(params: {
+	compraId: string;
+	origenTipo?: string;
+	valoracion: {
+		monto: DecimalInput;
+		moneda: string;
+		montoFuncional: DecimalInput;
+		monedaFuncionalCodigo: string;
+		tasaCambio?: DecimalInput | null;
+		fxEvidenceFingerprint?: string | null;
+	};
+	descripcion?: string;
+	fecha?: Date;
+	referencia?: string;
+}): EventoContableInput {
+	return baseEvento(
+		'GASTO_CREDITO',
+		{ tipo: params.origenTipo ?? 'compra_servicio', id: params.compraId },
+		{
+			monto: params.valoracion.monto,
+			moneda: params.valoracion.moneda,
+			montoFuncional: params.valoracion.montoFuncional,
+			monedaFuncionalCodigo: params.valoracion.monedaFuncionalCodigo,
+			tasaCambio: params.valoracion.tasaCambio ?? null,
+			fxEvidenceFingerprint: params.valoracion.fxEvidenceFingerprint ?? null,
+		},
+		{
+			descripcion: params.descripcion ?? 'Gasto a crédito contra CxP',
+			referencia: params.referencia,
+			fecha: params.fecha,
+		},
+	);
+}
+
+/**
  * @description Discrimina el evento de egreso según el destino del pago en el
  * workflow de gastos. Prioridad: CxP → nómina → compra → gasto genérico.
  * @param {object} params - Referencias del workflow de pago de gastos.
@@ -241,11 +327,11 @@ export function resolverTipoEventoEgreso(params: {
 
 /** Parámetros de valoración para eventos no ligados a la cuenta destino. */
 interface ValoracionBase {
-	monto: number;
+	monto: DecimalInput;
 	moneda: string;
-	montoFuncional?: number;
+	montoFuncional?: DecimalInput;
 	monedaFuncionalCodigo?: string | null;
-	tasaCambio?: number | null;
+	tasaCambio?: DecimalInput | null;
 	fxEvidenceFingerprint?: string | null;
 }
 
@@ -258,9 +344,10 @@ function baseEvento(
 	valoracion: ValoracionBase,
 	extra?: Partial<EventoContableInput>,
 ): EventoContableInput {
+	const { fecha, ...extraSinFecha } = extra ?? {};
 	return {
 		tipo,
-		fecha: extra?.fecha ?? new Date(),
+		fecha: fecha ?? new Date(),
 		descripcion: extra?.descripcion ?? tipo,
 		origen,
 		monto: valoracion.monto,
@@ -269,18 +356,21 @@ function baseEvento(
 		monedaFuncional: valoracion.monedaFuncionalCodigo ?? MONEDA_FUNCIONAL_DEFECTO,
 		tasaCambio: valoracion.tasaCambio ?? null,
 		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint ?? null,
-		...extra,
+		...extraSinFecha,
 	} as EventoContableInput;
 }
 
 /** Evento TRANSFERENCIA_BANCARIA entre cuentas del tenant. */
 export function buildEventoTransferenciaBancaria(params: {
 	transferenciaId: string;
-	montoOrigen: number;
+	montoOrigen: DecimalInput;
 	monedaOrigen: string;
-	montoDestino: number;
+	montoDestino: DecimalInput;
 	monedaDestino: string;
-	tasaCambio?: number | null;
+	montoFuncional?: DecimalInput;
+	monedaFuncionalCodigo?: string;
+	tasaCambio?: DecimalInput | null;
+	fxEvidenceFingerprint?: string | null;
 	referencia?: string;
 	descripcion?: string;
 	fecha?: Date;
@@ -291,8 +381,11 @@ export function buildEventoTransferenciaBancaria(params: {
 		{
 			monto: params.montoOrigen,
 			moneda: params.monedaOrigen,
-			montoFuncional: params.monedaDestino === MONEDA_FUNCIONAL_DEFECTO ? params.montoDestino : params.montoOrigen,
+			montoFuncional: params.montoFuncional ??
+				(params.monedaDestino === MONEDA_FUNCIONAL_DEFECTO ? params.montoDestino : params.montoOrigen),
+			monedaFuncionalCodigo: params.monedaFuncionalCodigo ?? MONEDA_FUNCIONAL_DEFECTO,
 			tasaCambio: params.tasaCambio ?? null,
+			fxEvidenceFingerprint: params.fxEvidenceFingerprint ?? null,
 		},
 		{
 			descripcion: params.descripcion ?? 'Transferencia entre cuentas',
@@ -396,7 +489,7 @@ export function buildEventoPrestamoOtorgado(params: {
 export function buildEventoCobroPrestamo(params: {
 	reconciliacionId: string;
 	valoracion: ValoracionBase;
-	intereses?: number | null;
+	intereses?: DecimalInput | null;
 	tipoCuenta?: string | null;
 	descripcion?: string;
 	fecha?: Date;
@@ -412,7 +505,7 @@ export function buildEventoCobroPrestamo(params: {
 			fecha: params.fecha,
 			medioCobro: medioPorTipoCuenta(params.tipoCuenta),
 			auxiliares:
-				params.intereses && params.intereses > 0
+				esPositivo(params.intereses)
 					? { intereses: params.intereses }
 					: undefined,
 		},
@@ -445,7 +538,7 @@ export function buildEventoDeudaRecibida(params: {
 export function buildEventoPagoDeuda(params: {
 	reconciliacionId: string;
 	valoracion: ValoracionBase;
-	intereses?: number | null;
+	intereses?: DecimalInput | null;
 	tipoCuenta?: string | null;
 	descripcion?: string;
 	fecha?: Date;
@@ -461,7 +554,7 @@ export function buildEventoPagoDeuda(params: {
 			fecha: params.fecha,
 			medioCobro: medioPorTipoCuenta(params.tipoCuenta),
 			auxiliares:
-				params.intereses && params.intereses > 0
+				esPositivo(params.intereses)
 					? { intereses: params.intereses }
 					: undefined,
 		},
@@ -500,6 +593,7 @@ export function buildEventoAnticipoAplicado(params: {
 	movimientoId: string;
 	tipo: 'CLIENTE' | 'PROVEEDOR';
 	valoracion: ValoracionBase;
+	diferenciaFx?: DecimalInput | null;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
@@ -518,6 +612,9 @@ export function buildEventoAnticipoAplicado(params: {
 					: 'Anticipo de proveedor aplicado a compra'),
 			referencia: params.referencia,
 			fecha: params.fecha,
+			auxiliares: params.diferenciaFx == null
+				? undefined
+				: { diferenciaFx: params.diferenciaFx },
 		},
 	);
 }
@@ -546,7 +643,8 @@ export function buildEventoServicio(params: {
 /** Evento MERMA_INVENTARIO por el costo de la mercadería dada de baja. */
 export function buildEventoMerma(params: {
 	mermaId: string;
-	costo: number;
+	costo: DecimalInput;
+	monedaFuncional?: string;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
@@ -554,7 +652,12 @@ export function buildEventoMerma(params: {
 	return baseEvento(
 		'MERMA_INVENTARIO',
 		{ tipo: 'merma', id: params.mermaId },
-		{ monto: params.costo, moneda: MONEDA_FUNCIONAL_DEFECTO, montoFuncional: params.costo },
+		{
+			monto: params.costo,
+			moneda: params.monedaFuncional ?? MONEDA_FUNCIONAL_DEFECTO,
+			montoFuncional: params.costo,
+			monedaFuncionalCodigo: params.monedaFuncional ?? MONEDA_FUNCIONAL_DEFECTO,
+		},
 		{
 			descripcion: params.descripcion ?? 'Merma de inventario',
 			referencia: params.referencia,
@@ -566,7 +669,8 @@ export function buildEventoMerma(params: {
 /** Evento PRODUCCION_SALIDA por el costo de ingredientes consumidos. */
 export function buildEventoProduccionSalida(params: {
 	ordenId: string;
-	costo: number;
+	costo: DecimalInput;
+	monedaFuncional?: string;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
@@ -574,7 +678,12 @@ export function buildEventoProduccionSalida(params: {
 	return baseEvento(
 		'PRODUCCION_SALIDA',
 		{ tipo: 'orden_produccion', id: params.ordenId },
-		{ monto: params.costo, moneda: MONEDA_FUNCIONAL_DEFECTO, montoFuncional: params.costo },
+		{
+			monto: params.costo,
+			moneda: params.monedaFuncional ?? MONEDA_FUNCIONAL_DEFECTO,
+			montoFuncional: params.costo,
+			monedaFuncionalCodigo: params.monedaFuncional ?? MONEDA_FUNCIONAL_DEFECTO,
+		},
 		{
 			descripcion: params.descripcion ?? 'Salida de producción',
 			referencia: params.referencia,
@@ -589,9 +698,15 @@ export function buildEventoProduccionSalida(params: {
  */
 export function buildEventoDevolucionVenta(params: {
 	devolucionId: string;
-	total: number;
-	tasaCambio?: number | null;
-	costoFifoRestaurado?: number;
+	total: DecimalInput;
+	valoracion?: {
+		moneda: string;
+		montoFuncional: DecimalInput;
+		monedaFuncional: string;
+		tasaCambio?: DecimalInput | null;
+		fxEvidenceFingerprint?: string | null;
+	} | null;
+	costoFifoRestaurado?: DecimalInput;
 	descripcion?: string;
 	fecha?: Date;
 	referencia?: string;
@@ -602,11 +717,11 @@ export function buildEventoDevolucionVenta(params: {
 		descripcion: params.descripcion ?? 'Devolución de venta',
 		origen: { tipo: 'devolucion_venta', id: params.devolucionId },
 		monto: params.total,
-		moneda: MONEDA_FUNCIONAL_DEFECTO,
-		montoFuncional: params.total,
-		monedaFuncional: MONEDA_FUNCIONAL_DEFECTO,
-		tasaCambio: params.tasaCambio ?? null,
-		fxEvidenceFingerprint: null,
+		moneda: params.valoracion?.moneda ?? null,
+		montoFuncional: params.valoracion?.montoFuncional ?? null,
+		monedaFuncional: params.valoracion?.monedaFuncional ?? null,
+		tasaCambio: params.valoracion?.tasaCambio ?? null,
+		fxEvidenceFingerprint: params.valoracion?.fxEvidenceFingerprint ?? null,
 		referencia: params.referencia,
 		auxiliares:
 			params.costoFifoRestaurado != null

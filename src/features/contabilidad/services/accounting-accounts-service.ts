@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import {
   getCuentasPorCobrarSchema,
   getCuentasPorPagarSchema,
@@ -321,7 +322,12 @@ export const AccountingAccountsService = {
    * @param {{ id: string; tenantId: string }} input - Identificador y tenant de la cuenta.
    * @returns {Promise<{ cuenta: Record<string, unknown>; changed: boolean } | null>} Cuenta y si hubo transición.
    */
-  async annulReceivable(input: { id: string; tenantId: string }) {
+  async annulReceivable(input: {
+    id: string;
+    tenantId: string;
+    usuarioId: string;
+    motivo?: string | null;
+  }) {
     const where = { id: input.id, tenantId: input.tenantId };
     return prisma.$transaction(async (tx) => {
       const snapshot = await tx.cuentaPorCobrar.findFirst({
@@ -359,6 +365,19 @@ export const AccountingAccountsService = {
       }
 
       const updated = await tx.cuentaPorCobrar.findFirst({ where, include: CXC_INCLUDE });
+      if (updated) {
+        await AuditLogService.logStrict({
+          accion: 'UPDATE',
+          entidad: 'CUENTA_POR_COBRAR',
+          entidadId: input.id,
+          usuarioId: input.usuarioId,
+          detalles: {
+            estadoAnterior: existing.estado,
+            estadoNuevo: 'ANULADA',
+            motivo: input.motivo ?? null,
+          },
+        }, tx);
+      }
       return updated
         ? {
             cuenta: updated as unknown as Record<string, unknown>,

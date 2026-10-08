@@ -14,29 +14,29 @@ vi.mock('@/lib/prisma', () => ({
 }));
 vi.mock('@/lib/services/validate-period-write', () => ({ validarEscrituraPeriodo: vi.fn(), extraerFechaDeBody: vi.fn() }));
 vi.mock('@/lib/services/anticipos-workflow', () => ({ executeAnticipo: vi.fn(), isAnticipoWorkflowError: vi.fn() }));
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: vi.fn(() => 'tenant-1'),
+  requireFeature: vi.fn(),
+  requirePermission: vi.fn(),
+}));
 
 import { authenticateUser } from '@/lib/auth-middleware';
 import prisma from '@/lib/prisma';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write';
 import { executeAnticipo } from '@/lib/services/anticipos-workflow';
 import { POST } from '../route';
 
 const user = {
   userId: 'u1', name: 'Test User', email: 'test@example.com', role: 'manager', isActive: true,
-  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { contabilidad: true },
+  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { anticipos: true },
 };
 
 describe('mobile advance execute route', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('executes anticipo', async () => {
+  it('rejects manual execution and directs callers to the document workflow', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
-    vi.mocked(prisma.anticipo.findUnique).mockResolvedValue({ saldoDisponible: 100, tenantId: 'tenant-1' } as never);
-    vi.mocked(extraerFechaDeBody).mockReturnValue(null as never);
-    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never);
-    vi.mocked(executeAnticipo).mockResolvedValue({ anticipoId: 'a1' } as never);
-    vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(prisma));
-
     const response = await POST(new NextRequest('http://localhost/api/mobile/v1/accounting/advances/a1/ejecutar', {
       method: 'POST',
       body: JSON.stringify({
@@ -49,7 +49,14 @@ describe('mobile advance execute route', () => {
       headers: { 'content-type': 'application/json' },
     }), { params: Promise.resolve({ id: 'a1' }) } as never);
 
-    expect(response.status).toBe(200);
-    expect(executeAnticipo).toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe('DOCUMENT_WORKFLOW_REQUIRED');
+    expect(requireFeature).toHaveBeenCalledWith(user, 'anticipos', expect.any(String));
+    expect(requirePermission).toHaveBeenCalledWith(
+      user, 'financiero.contabilidad.acceder', expect.any(String),
+    );
+    expect(prisma.anticipo.findUnique).not.toHaveBeenCalled();
+    expect(executeAnticipo).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

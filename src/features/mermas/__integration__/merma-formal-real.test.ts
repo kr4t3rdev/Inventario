@@ -171,8 +171,10 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 		const eliminar = await deleteMermaAction(merma.mermaId);
 
 		expect(editar.success).toBe(false);
+		if (editar.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(editar.error?.code).toBe('MERMA_ACCOUNTING_IMMUTABLE');
 		expect(eliminar.success).toBe(false);
+		if (eliminar.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(eliminar.error?.code).toBe('MERMA_ACCOUNTING_IMMUTABLE');
 		expect(await prisma.merma.count({ where: { tenantId, mermaId: merma.mermaId } })).toBe(1);
 		expect(await prisma.asiento.count({

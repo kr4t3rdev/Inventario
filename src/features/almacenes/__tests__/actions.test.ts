@@ -53,7 +53,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockAlmacenRow = {
@@ -80,6 +80,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
       expect(result.data![0].nombre).toBe('Almacén Principal');
       expect(prisma.almacen.findMany).toHaveBeenCalledWith(
@@ -96,6 +97,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual([]);
     });
   });
@@ -105,11 +107,12 @@ describe('Almacenes Server Actions', () => {
   describe('getAlmacenByIdAction', () => {
     it('retorna almacén por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow as never);
 
       const result = await getAlmacenByIdAction('alm-1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.nombre).toBe('Almacén Principal');
       expect(prisma.almacen.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -125,6 +128,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenByIdAction('alm-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -136,7 +140,7 @@ describe('Almacenes Server Actions', () => {
 
     it('crea almacén exitosamente con datos válidos', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.almacen.create).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.almacen.create).mockResolvedValue(mockAlmacenRow as never);
 
       const result = await createAlmacenAction(validInput);
 
@@ -157,6 +161,7 @@ describe('Almacenes Server Actions', () => {
       const result = await createAlmacenAction({ nombre: '' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('VALIDATION_ERROR');
     });
   });
@@ -166,11 +171,11 @@ describe('Almacenes Server Actions', () => {
   describe('updateAlmacenAction', () => {
     it('actualiza almacén exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow as never);
       vi.mocked(prisma.almacen.update).mockResolvedValue({
         ...mockAlmacenRow,
         nombre: 'Almacén Actualizado',
-      });
+      } as never);
 
       const result = await updateAlmacenAction({
         almacenId: 'alm-1',
@@ -191,6 +196,7 @@ describe('Almacenes Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -200,13 +206,13 @@ describe('Almacenes Server Actions', () => {
   describe('deleteAlmacenAction', () => {
     it('elimina almacén exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow as never);
       vi.mocked(prisma.producto.count).mockResolvedValue(0);
       vi.mocked(prisma.stockUbicacion.count).mockResolvedValue(0);
       vi.mocked(prisma.transferencia.count).mockResolvedValue(0);
       vi.mocked(prisma.merma.count).mockResolvedValue(0);
       vi.mocked(prisma.puntoDeVenta.count).mockResolvedValue(0);
-      vi.mocked(prisma.almacen.delete).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.almacen.delete).mockResolvedValue(mockAlmacenRow as never);
 
       const result = await deleteAlmacenAction('alm-1');
 
@@ -223,6 +229,7 @@ describe('Almacenes Server Actions', () => {
       const result = await deleteAlmacenAction('alm-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.message).toContain('no encontrado');
     });
   });
@@ -236,6 +243,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -245,6 +253,7 @@ describe('Almacenes Server Actions', () => {
       const result = await createAlmacenAction({ nombre: 'Test' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -254,6 +263,7 @@ describe('Almacenes Server Actions', () => {
       const result = await deleteAlmacenAction('alm-1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

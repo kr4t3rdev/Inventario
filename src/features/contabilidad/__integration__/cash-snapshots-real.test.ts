@@ -53,6 +53,11 @@ describe('snapshots funcionales cash — PostgreSQL aislado', { timeout: 90_000 
     await prisma.tenantLicense.create({ data: {
       tenantId, planId: plan.planId, expiracion: new Date('2099-01-01'),
     } });
+    await prisma.moneda.upsert({
+      where: { codigo: 'CUP' },
+      create: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP', esPrincipal: true },
+      update: {},
+    });
     await prisma.tenantAccountingPolicy.create({
       data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: 'actor-real' },
     });

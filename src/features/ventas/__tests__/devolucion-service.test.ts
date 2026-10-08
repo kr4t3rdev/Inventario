@@ -168,7 +168,7 @@ function cxcUsdValuada() {
 describe('DevolucionVentaService.registrar (DNC-T3)', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(postEvento).mockResolvedValue(undefined);
+		vi.mocked(postEvento).mockResolvedValue(undefined as never);
 		vi.mocked(getCostoFifoVentaValorado).mockResolvedValue(null);
 		vi.mocked(prisma.$transaction).mockImplementation(
 			(async (callback: (tx: unknown) => unknown) => callback(mockTx)) as never,
@@ -509,11 +509,11 @@ describe('DevolucionVentaService.registrar (DNC-T3)', () => {
 		let transactionCalls = 0;
 		const committedPostings: unknown[] = [];
 		const transactionClients: Array<{ pendingPostings: unknown[] }> = [];
-		vi.mocked(postEvento).mockImplementation(async (tx) => {
+		vi.mocked(postEvento).mockImplementation((async (tx) => {
 			const transactionalState = tx as typeof transactionClients[number];
 			transactionalState.pendingPostings.push({ entry: transactionClients.length });
 			if (transactionClients.length === 1) throw { code: 'P2034' };
-		});
+		}) as never);
 		vi.mocked(prisma.$transaction).mockImplementation((async (
 			callback: (tx: unknown) => unknown,
 		) => {

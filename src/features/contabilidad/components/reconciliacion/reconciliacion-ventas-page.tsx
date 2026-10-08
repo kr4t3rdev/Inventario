@@ -28,7 +28,11 @@ import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
-import { buildCreateCuentaPorCobrarInputFromVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
+import {
+  buildCreateCuentaPorCobrarInputFromVenta,
+  getCuentaPorCobrarCurrency,
+  groupAmountsByCurrency,
+} from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
 import {
   PageTransition,
   StaggerContainer,
@@ -128,6 +132,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
           ventaId: cuenta.factura?.ventaId || cuenta.facturaId || cuenta.id,
           ordenId: cuenta.numeroFactura || cuenta.facturaId,
           cliente: cuenta.cliente,
+          moneda: getCuentaPorCobrarCurrency(cuenta.moneda),
           createdAt: cuenta.createdAt,
           total: totalCuenta,
           montoTotal: totalCuenta,
@@ -150,9 +155,11 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     return acc
   }, {})
  
-  const formatCurrency = (amount: number | string, currency: string = "CUP") => {
+  const formatCurrency = (amount: number | string, currency?: string | null) => {
+    if (!currency || !/^[A-Za-z]{3}$/.test(currency.trim())) return "Moneda no informada"
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
-    const symbol = MONEDA_SIMBOLOS[currency] || currency
+    const normalizedCurrency = currency.trim().toUpperCase()
+    const symbol = MONEDA_SIMBOLOS[normalizedCurrency] || normalizedCurrency
     return `${symbol} ${numAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
  
@@ -174,8 +181,8 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
 
       toast.success('Cuenta por cobrar creada')
       refetch()
-    } catch (_error) {
-      toast.error('No se pudo crear la cuenta por cobrar')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo crear la cuenta por cobrar')
     }
   }
  
@@ -200,31 +207,14 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
  
   const ventasPendientes = allVentasArray.filter((v: VentaPendiente) => (v.saldoPendiente || 0) > 0.01)
 
-  const totalPendiente = ventasPendientes.reduce((sum: number, venta: VentaPendiente) => {
-    if (venta.saldoPendiente !== undefined) {
-      return sum + venta.saldoPendiente
-    }
+  const pendientesPorMoneda = groupAmountsByCurrency(ventasPendientes.map((venta: VentaPendiente) => {
     const key = venta.ordenId || venta.ventaId
     const saldo = saldosPorFactura[key]
     const monto = typeof saldo === "number"
       ? saldo
       : Number(venta?.total ?? (venta?.cantidad ? venta.cantidad * (venta?.producto?.precioVenta ?? 0) : 0))
-    return sum + (isNaN(monto) ? 0 : monto)
-  }, 0)
-
-  const totalReconciliado = ventasReconciliadas.reduce((sum: number, venta: ReconciliacionVenta) => {
-    const monto = Number(venta?.monto ?? 0)
-    if (!Number.isFinite(monto)) {
-      return sum
-    }
-
-    if (venta?.moneda === "CUP") {
-      return sum + monto
-    }
-
-    const tasa = Number(venta?.tasaCambio ?? 0)
-    return sum + (Number.isFinite(tasa) && tasa > 0 ? monto * tasa : monto)
-  }, 0)
+    return { amount: venta.saldoPendiente ?? monto, currency: venta.moneda }
+  }))
 
   const montoRecon = (ventasReconciliadas.filter((s: ReconciliacionVenta) => s?.cuentaBancaria?.moneda === 'USD') ?? 0).
   reduce((sum: number, venta: ReconciliacionVenta) => (sum + Number(venta.montoConvertido ?? 0)),  0)
@@ -234,30 +224,10 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const montoReconCUP = (ventasReconciliadas.filter((s: ReconciliacionVenta) => s?.cuentaBancaria?.moneda === 'CUP') ?? 0).
   reduce((sum: number, venta: ReconciliacionVenta) => (sum + Number(venta.montoConvertido ?? 0)), 0)
 
-  const pendientesPorMoneda = ventasPendientes.reduce((acc: Record<string, number>, venta: VentaPendiente) => {
-    const moneda = "CUP"
-    if (!acc[moneda]) acc[moneda] = 0
-    if (venta.saldoPendiente !== undefined) {
-      acc[moneda] += venta.saldoPendiente
-    } else {
-      const key = venta.ordenId || venta.ventaId
-      const saldo = saldosPorFactura[key]
-      const monto = typeof saldo === "number"
-        ? saldo
-        : Number(venta?.total ?? (venta?.cantidad ? venta.cantidad * (venta?.producto?.precioVenta ?? 0) : 0))
-      acc[moneda] += isNaN(monto) ? 0 : monto
-    }
-    return acc
-  }, {} as Record<string, number>)
-
-
-  const reconciliadasPorMoneda = ventasReconciliadas.reduce((acc: Record<string, number>, venta: ReconciliacionVenta) => {
-    const moneda = venta.moneda || "CUP"
-    if (!acc[moneda]) acc[moneda] = 0
-    const monto = Number(venta?.monto ?? 0)
-    acc[moneda] += isNaN(monto) ? 0 : monto
-    return acc
-  }, {} as Record<string, number>)
+  const reconciliadasPorMoneda = groupAmountsByCurrency(ventasReconciliadas.map((venta: ReconciliacionVenta) => ({
+    amount: Number(venta?.monto ?? Number.NaN),
+    currency: venta.moneda,
+  })))
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -371,9 +341,18 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-lg font-semibold">Quedan {ventasPendientes.length} ventas</div>
-                <Badge variant="outline" className="mt-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
-                  {formatCurrency(totalPendiente)}
-                </Badge>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(pendientesPorMoneda.totalsByCurrency).map(([currency, amount]) => (
+                    <Badge key={currency} variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                      {formatCurrency(amount, currency)}
+                    </Badge>
+                  ))}
+                  {pendientesPorMoneda.unknownCurrencyCount > 0 && (
+                    <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                      {pendientesPorMoneda.unknownCurrencyCount} sin moneda verificable
+                    </Badge>
+                  )}
+                </div>
               </CardContent>
             </Card>
             <Card className={cn(surfaceCardClass)}>
@@ -385,9 +364,18 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-lg font-semibold">Se han reconciliado {ventasReconciliadas.length} ventas</div>
-                <Badge variant="outline" className="mt-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
-                  {formatCurrency(totalReconciliado)}
-                </Badge>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(reconciliadasPorMoneda.totalsByCurrency).map(([currency, amount]) => (
+                    <Badge key={currency} variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
+                      {formatCurrency(amount, currency)}
+                    </Badge>
+                  ))}
+                  {reconciliadasPorMoneda.unknownCurrencyCount > 0 && (
+                    <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
+                      {reconciliadasPorMoneda.unknownCurrencyCount} sin moneda verificable
+                    </Badge>
+                  )}
+                </div>
               </CardContent>
             </Card>
             <Card className={cn(surfaceCardClass)}>

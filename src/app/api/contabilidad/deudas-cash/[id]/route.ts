@@ -3,7 +3,8 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 
@@ -28,7 +29,7 @@ function deudasCashEnabled(): boolean {
  * @param {NextRequest} request - Request
  * @returns {NextResponse} Deuda encontrada o 404
  */
-export const GET = withAuthGet(async (request: NextRequest, context: unknown) => {
+export const GET = withAuthGet(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
@@ -36,9 +37,12 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
 
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
+    const tenantId = requireTenant(user)
+    requireFeature(user, 'deudas-cash', 'consultar deudas cash')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar deudas cash')
 
     const deuda = await prisma.deudaCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, tenantId, deletedAt: null },
       include: {
         proveedor: {
           select: {
@@ -57,6 +61,11 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
     return NextResponse.json({ deuda })
   } catch (error) {
     console.error('Error obteniendo deuda cash:', error)
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
     return NextResponse.json({ error: 'Error obteniendo deuda cash' }, { status: 500 })
   }
 })
@@ -73,6 +82,8 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     }
 
     const tenantId = requireTenant(user)
+    requireFeature(user, 'deudas-cash', 'actualizar deudas cash')
+    requirePermission(user, 'financiero.contabilidad.acceder', 'actualizar deudas cash')
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
@@ -102,50 +113,54 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
 
     const data = updateSchema.parse(body)
 
-    const existing = await prisma.deudaCash.findFirst({
-      where: { id, deletedAt: null }
-    })
+    const deuda = await prisma.$transaction(async (tx) => {
+      const existing = await tx.deudaCash.findFirst({ where: { id, tenantId, deletedAt: null } })
+      if (!existing) return null
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Deuda no encontrada' }, { status: 404 })
-    }
-
-    const deuda = await prisma.deudaCash.update({
-      where: { id },
-      data: {
-        ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
-        ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
-        ...(data.observaciones !== undefined ? { observaciones: data.observaciones } : {})
-      },
-      include: {
-        proveedor: {
-          select: {
-            vendorId: true,
-            nombre: true
-          }
-        },
-        cuentaPorPagar: true
-      }
-    })
-
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'DEUDA_CASH',
-      entidadId: id,
-      usuarioId: user.userId,
-      detalles: {
-        cambios: {
-          ...(data.fechaVencimiento !== undefined ? { fechaVencimiento: { anterior: existing.fechaVencimiento, nuevo: deuda.fechaVencimiento } } : {}),
-          ...(data.tasaInteres !== undefined ? { tasaInteres: { anterior: Number(existing.tasaInteres), nuevo: Number(deuda.tasaInteres) } } : {}),
-          ...(data.observaciones !== undefined ? { observaciones: { anterior: existing.observaciones, nuevo: deuda.observaciones } } : {})
+      const updated = await tx.deudaCash.updateMany({
+        where: { id, tenantId, deletedAt: null },
+        data: {
+          ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
+          ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
+          ...(data.observaciones !== undefined ? { observaciones: data.observaciones } : {})
         }
-      }
+      })
+      if (updated.count !== 1) return null
+
+      const deudaActualizada = await tx.deudaCash.findFirst({
+        where: { id, tenantId, deletedAt: null },
+        include: {
+          proveedor: { select: { vendorId: true, nombre: true } },
+          cuentaPorPagar: true,
+        },
+      })
+      if (!deudaActualizada) return null
+      await AuditLogService.logStrict({
+        accion: 'UPDATE',
+        entidad: 'DEUDA_CASH',
+        entidadId: id,
+        usuarioId: user.userId,
+        detalles: {
+          cambios: {
+            ...(data.fechaVencimiento !== undefined ? { fechaVencimiento: { anterior: existing.fechaVencimiento, nuevo: deudaActualizada.fechaVencimiento } } : {}),
+            ...(data.tasaInteres !== undefined ? { tasaInteres: { anterior: Number(existing.tasaInteres), nuevo: Number(deudaActualizada.tasaInteres) } } : {}),
+            ...(data.observaciones !== undefined ? { observaciones: { anterior: existing.observaciones, nuevo: deudaActualizada.observaciones } } : {})
+          }
+        }
+      }, tx)
+      return deudaActualizada
     })
+    if (!deuda) return NextResponse.json({ error: 'Deuda no encontrada' }, { status: 404 })
 
     return NextResponse.json({ deuda })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+    }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     console.error('Error actualizando deuda cash:', error)
     return NextResponse.json({ error: 'Error actualizando deuda cash' }, { status: 500 })

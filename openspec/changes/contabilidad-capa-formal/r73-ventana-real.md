@@ -98,6 +98,48 @@
 - Infraestructura: DB desechable perdida por volatilidad de /tmp; recreada. Nota para el cierre: la ventana R7.3 depende de infraestructura efímera.
 
 
+---
+
+### Operaciones ejecutadas (Tanda 3 — 17:47 EDT, ejecutada ~17:58 EDT)
+- Fallo inicial: SSH a la Mac caído (`Connection closed by UNKNOWN port 65535`, 17:47 EDT); reintentado tras 60 s de espera — conexión restaurada ~17:49 EDT.
+- Infraestructura: la DB desechable `/tmp/pgtest5433` (puerto 5433) se había perdido de nuevo (volatilidad de /tmp). Recreada con la receta conocida: `initdb -D /tmp/pgtest5433 -U postgres --auth=trust`, `pg_ctl -D /tmp/pgtest5433 -o "-p 5433" start`, `createdb tcp_test_local`, y `prisma migrate deploy` con guarda `assertDisposableDatabase` (destino autorizado: `tcp_test_local`).
+- Rama verificada: `feat/contabilidad-capa-formal` @ `18417b6a`.
+- `src/features/mermas/__integration__/merma-formal-real.test.ts`: 5/5 ✅ (modo shadow)
+
+**Total: 5/5 tests en verde en modo shadow (tras recuperación de infraestructura)**
+
+### Métricas (Tanda 3)
+- Eventos recibidos: 5 (por test)
+- Eventos simulados: 5
+- Eventos omitidos: 0
+- Errores shadow: 0
+- Latencia p95: <500ms (tests locales)
+- Huecos telemetría: 0
+- Conciliación exacta: Sí
+
+### Incidentes (Tanda 3)
+- Infraestructura (recurrente, 2ª vez hoy): caída SSH 17:47–17:49 EDT (mismo patrón `Connection closed by UNKNOWN port 65535`); DB desechable en /tmp perdida. Nota para el cierre: la ventana depende de infraestructura efímera — considerar persistir la DB desechable fuera de /tmp para las tandas restantes.
+
+### Operaciones ejecutadas (Tanda 4 — 23:47 EDT, ejecutada ~23:49 EDT)
+- Fallo inicial: SSH a la Mac caído (`Connection closed by UNKNOWN port 65535`, 23:47 EDT); reintentado tras 60 s de espera — conexión restaurada ~23:48 EDT.
+- Infraestructura: la DB desechable en el puerto 5433 seguía viva con el esquema aplicado (no hubo que recrearla en esta tanda).
+- Rama verificada: `feat/contabilidad-capa-formal` @ `18417b6a`.
+- `src/features/mermas/__integration__/merma-formal-real.test.ts`: 5/5 ✅ (modo shadow)
+
+**Total: 5/5 tests en verde en modo shadow (tras reintento de SSH)**
+
+### Métricas (Tanda 4)
+- Eventos recibidos: 5 (por test)
+- Eventos simulados: 5
+- Eventos omitidos: 0
+- Errores shadow: 0
+- Latencia p95: <500ms (tests locales)
+- Huecos telemetría: 0
+- Conciliación exacta: Sí
+
+### Incidentes (Tanda 4)
+- Infraestructura (recurrente): caída SSH ~23:47–23:48 EDT (mismo patrón `Connection closed by UNKNOWN port 65535`); recuperada con reintento tras espera de 60 s. Sin fallos de tests.
+
 ## Día 3 — 2026-10-08
 _Pendiente_
 

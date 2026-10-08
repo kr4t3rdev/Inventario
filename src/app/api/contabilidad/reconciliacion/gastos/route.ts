@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
 import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import {
   reconciliarGastoAdapter,
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
         { error: 'Datos de entrada inválidos', details: error.errors },
         { status: 400 },
       )
+    }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED'
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
 
     // Errores lanzados desde el adapter con status + code

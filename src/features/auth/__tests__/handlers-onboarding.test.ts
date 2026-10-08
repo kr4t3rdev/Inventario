@@ -140,7 +140,7 @@ describe('register — copy neutro (PE-01)', () => {
 		vi.mocked(checkRateLimit).mockReturnValueOnce({
 			allowed: false,
 			remaining: 0,
-		});
+		} as never);
 
 		const res = await register(
 			buildRequest('/api/auth/register', {

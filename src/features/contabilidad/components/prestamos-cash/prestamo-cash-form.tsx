@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
@@ -52,7 +52,7 @@ function CuotasEstimadas({ control }: { control: any }) {
 
   if (monto <= 0) return null
 
-  const totalConInteres = calcularMontoTotalACobrar(monto, tasa)
+  const totalConInteres = calcularMontoTotalACobrar(monto, tasa).toNumber()
   const interes = totalConInteres - monto
 
   let dias = 0
@@ -135,6 +135,7 @@ export function PrestamoCashForm({
   onSuccess,
 }: PrestamoCashFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
 
   const monedaPrincipal = tasasData?.monedaPrincipal?.codigo ?? "CUP"
   const tasas = tasasData?.tasas ?? []
@@ -172,6 +173,8 @@ export function PrestamoCashForm({
   const onSubmit = async (data: PrestamoFormValues) => {
     setIsLoading(true)
     try {
+      const idempotencyKey = pendingIdempotencyKey.current ?? crypto.randomUUID()
+      pendingIdempotencyKey.current = idempotencyKey
       const result = await createPrestamoCashAction({
         clienteId: data.clienteId,
         montoCapital: data.montoCapital,
@@ -181,6 +184,7 @@ export function PrestamoCashForm({
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         cuentaBancariaId: data.cuentaBancariaId,
+        idempotencyKey,
       })
 
       if (!result.success) {
@@ -190,6 +194,7 @@ export function PrestamoCashForm({
 
       toast.success("Préstamo en efectivo creado exitosamente.")
       form.reset()
+      pendingIdempotencyKey.current = null
       onOpenChange(false)
       onSuccess?.()
     } catch (error) {
@@ -201,6 +206,7 @@ export function PrestamoCashForm({
 
   const handleClose = () => {
     form.reset()
+    pendingIdempotencyKey.current = null
     onOpenChange(false)
   }
 

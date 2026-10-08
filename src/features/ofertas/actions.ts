@@ -263,8 +263,10 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
         contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,
         idempotencyKey: parsed.idempotencyKey,
-        clienteId: oferta.clienteId, monedaDocumento: cxc.monedaOriginal,
-        tasaDocumento: cxc.tasaCambio.toString(),
+        clienteId: oferta.clienteId,
+        monedaDocumento: cxc.monedaOriginal,
+        monedaFuncionalDocumento: cxc.monedaFuncional ?? 'CUP',
+        montoFuncionalDocumento: cxc.montoDeudaFuncional,
         observaciones: `Anticipo aplicado a facturación de oferta ${oferta.id}`,
       });
       await tx.cuentaPorCobrar.updateMany({ where: { id: cxc.id, tenantId }, data: {

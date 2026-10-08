@@ -91,7 +91,7 @@ describe('FiscalEmisionService (FE-T2)', () => {
 		const r = await FiscalEmisionService.procesarSiguientePendiente('tenant-1', LocalAdapter);
 		expect(r?.estado).toBe('TIMBRADA');
 		// La finalización es CAS por attemptId (no update a ciegas).
-		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)![0];
 		expect(finalArgs.data).toMatchObject({ estado: 'TIMBRADA' });
 		expect(finalArgs.where).toHaveProperty('attemptId');
 		expect(mockPrisma.fiscalEmisionEvent.create).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe('FiscalEmisionService (FE-T2)', () => {
 		};
 		const r = await FiscalEmisionService.procesarSiguientePendiente('tenant-1', adapterRoto as never);
 		expect(r?.estado).toBe('INCIERTA');
-		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)![0];
 		expect(finalArgs.data).toMatchObject({
 			estado: 'INCIERTA',
 			intentos: { increment: 1 },

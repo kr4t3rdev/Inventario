@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
+import type { AnticipoAllocationResult } from '@/lib/services/anticipos-workflow.types';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -47,7 +48,7 @@ type VentaServicioRow = {
 type VentaServicioResult = {
   mode: 'LEGACY';
   ventaServicio: unknown;
-  allocationsResult: unknown[];
+  allocationsResult: AnticipoAllocationResult[];
   replayed?: boolean;
 };
 
@@ -282,6 +283,42 @@ async function valueServiceReceivable(params: {
       'FX_INSUFICIENTE',
     );
   }
+}
+
+/**
+ * @description Reconstruye el resultado visible de aplicación de anticipos desde
+ * los movimientos persistidos para que el replay idempotente devuelva el mismo
+ * contrato sin volver a ejecutar efectos.
+ * @param {string} tenantId - Tenant propietario de la venta y los anticipos.
+ * @param {string} ventaServicioId - Documento destino registrado en AnticipoMovimiento.
+ * @returns {Promise<AnticipoAllocationResult[]>} Resultado estable para el replay.
+ */
+async function reconstructAnticipoAllocationsResult(
+  tenantId: string,
+  ventaServicioId: string,
+): Promise<AnticipoAllocationResult[]> {
+  const movimientos = await prisma.anticipoMovimiento.findMany({
+    where: {
+      documentoDestinoId: ventaServicioId,
+      contexto: 'FACTURA_DIRECTA',
+      tipoMovimiento: 'EJECUCION',
+      anticipo: { tenantId },
+    },
+    orderBy: [{ createdAt: 'asc' }, { movimientoId: 'asc' }],
+    select: {
+      anticipoId: true,
+      movimientoId: true,
+      monto: true,
+      saldoDespues: true,
+    },
+  });
+
+  return movimientos.map((movimiento) => ({
+    anticipoId: movimiento.anticipoId,
+    movimientoId: movimiento.movimientoId,
+    montoAplicado: new Prisma.Decimal(movimiento.monto).toNumber(),
+    saldoRestante: new Prisma.Decimal(movimiento.saldoDespues).toNumber(),
+  }));
 }
 
 export const getVentaServiciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
@@ -550,7 +587,10 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       return {
         mode: 'LEGACY' as const,
         ventaServicio: existentes[0],
-        allocationsResult: [],
+        allocationsResult: await reconstructAnticipoAllocationsResult(
+          tenantId,
+          existentes[0].ventaServicioId,
+        ),
         replayed: true,
       } satisfies VentaServicioResult;
     }
@@ -591,7 +631,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       },
     });
 
-    let allocationsResult: any[] = [];
+    let allocationsResult: AnticipoAllocationResult[] = [];
     // B-06: venta a crédito → devengo bruto (ingreso + CxC por el TOTAL) y el
     // anticipo aplicado reduce la CxC (tratamiento confirmado filas 25/26).
     if (data.condicionPago === 'CREDITO' || data.anticipos?.length) {
@@ -724,7 +764,10 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         return {
           mode: 'LEGACY' as const,
           ventaServicio: ganadoras[0],
-          allocationsResult: [],
+          allocationsResult: await reconstructAnticipoAllocationsResult(
+            tenantId,
+            ganadoras[0].ventaServicioId,
+          ),
           replayed: true,
         } satisfies VentaServicioResult;
       }

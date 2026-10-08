@@ -39,6 +39,7 @@ describe('mi-empresa actions', () => {
     const result = await getMiEmpresaAction();
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
     expect(vi.mocked(getMiEmpresaByTenant)).not.toHaveBeenCalled();
   });
@@ -49,6 +50,7 @@ describe('mi-empresa actions', () => {
     const result = await updateMiEmpresaAction({ nombre: 'Mi Empresa' });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
     expect(vi.mocked(upsertMiEmpresa)).not.toHaveBeenCalled();
   });

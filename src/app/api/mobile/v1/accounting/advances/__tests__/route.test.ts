@@ -35,7 +35,7 @@ import { GET, POST } from '../route';
 
 const user = {
   userId: 'u1', name: 'Test User', email: 'test@example.com', role: 'manager', isActive: true,
-  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { contabilidad: true },
+  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { anticipos: true, contabilidad: true },
 };
 
 describe('mobile advances route', () => {
@@ -88,6 +88,8 @@ describe('mobile advances route', () => {
         clienteId: 'cli-1',
         monto: 100,
         moneda: 'CUP',
+        cuentaOrigenId: 'bank-1',
+        tipoPagoOrigenId: 'payment-1',
       }),
       headers: { 'content-type': 'application/json' },
     }));

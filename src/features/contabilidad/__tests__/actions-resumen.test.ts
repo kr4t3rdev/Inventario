@@ -66,6 +66,7 @@ describe('getResumenCompletoAction', () => {
     const result = await getResumenCompletoAction({ fechaInicio: '2026-08-01', fechaFin: '2026-08-31' });
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(result.data).toMatchObject({
       resumen: resumenOk,
       monedas: [{ codigo: 'CUP', esPrincipal: true }],
@@ -82,6 +83,7 @@ describe('getResumenCompletoAction', () => {
     const result = await getResumenCompletoAction({});
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(result.data?.monedas).toEqual([]);
     expect(result.data?.resumen).toEqual(resumenOk);
   });
@@ -95,6 +97,7 @@ describe('getResumenCompletoAction', () => {
     const result = await getResumenCompletoAction({});
 
     expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     expect(mocks.getPrestamosCashStatsAction).not.toHaveBeenCalled();
     expect(result.data?.prestamosStats).toBeNull();
   });

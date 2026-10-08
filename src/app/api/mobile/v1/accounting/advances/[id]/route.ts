@@ -3,8 +3,9 @@ import { z } from 'zod';
 
 import prisma from '@/lib/prisma';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
+import { ActionError } from '@/lib/server-actions';
 
 const updateSchema = z.object({
   estado: z.enum(['RESERVADO', 'EJECUTADO', 'ANULADO']).optional(),
@@ -55,18 +56,25 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   try {
     const tenantId = requireTenant(authResult.user);
+    requireFeature(authResult.user, 'anticipos', 'actualizar anticipos');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'actualizar anticipos');
     const { id } = await params;
     const body = await request.json();
+    if (body?.estado !== undefined || body?.saldoDisponible !== undefined) {
+      return errorResponse(
+        'El estado y saldo del anticipo solo cambian mediante un flujo documental.',
+        409,
+        'DOCUMENT_WORKFLOW_REQUIRED',
+      );
+    }
     const payload = updateSchema.parse(body);
 
     const existing = await prisma.anticipo.findFirst({ where: { anticipoId: id, tenantId }, select: { anticipoId: true } });
     if (!existing) return errorResponse('Anticipo no encontrado', 404, 'NOT_FOUND');
 
     const anticipo = await prisma.anticipo.update({
-      where: { anticipoId: id },
+      where: { anticipoId: id, tenantId },
       data: {
-        ...(payload.estado && { estado: payload.estado }),
-        ...(payload.saldoDisponible !== undefined && { saldoDisponible: payload.saldoDisponible }),
         ...(payload.referenciaExterna !== undefined && { referenciaExterna: payload.referenciaExterna }),
         ...(payload.vigenciaHasta !== undefined && { vigenciaHasta: payload.vigenciaHasta ? new Date(payload.vigenciaHasta) : null }),
       },
@@ -76,6 +84,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   } catch (error) {
     console.error('Error al actualizar anticipo mobile:', error);
     if (error instanceof z.ZodError) return errorResponse('Payload inválido', 400, 'VALIDATION_ERROR', error.flatten());
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400;
+      return errorResponse(error.message, status, error.code);
+    }
     return errorResponse('Error al actualizar anticipo', 500, 'INTERNAL_ERROR');
   }
 }
@@ -85,15 +98,22 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if ('status' in authResult) return authResult as Response;
 
   try {
-    const tenantId = requireTenant(authResult.user);
-    const { id } = await params;
-    const existing = await prisma.anticipo.findFirst({ where: { anticipoId: id, tenantId }, select: { anticipoId: true } });
-    if (!existing) return errorResponse('Anticipo no encontrado', 404, 'NOT_FOUND');
-
-    await prisma.anticipo.delete({ where: { anticipoId: id } });
-    return successResponse({ message: 'Anticipo eliminado' });
+    requireTenant(authResult.user);
+    requireFeature(authResult.user, 'anticipos', 'eliminar anticipos');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'eliminar anticipos');
+    await params;
+    return errorResponse(
+      'Un anticipo con efectos financieros debe revertirse desde el documento relacionado.',
+      409,
+      'DOCUMENT_WORKFLOW_REQUIRED',
+    );
   } catch (error) {
     console.error('Error al eliminar anticipo mobile:', error);
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400;
+      return errorResponse(error.message, status, error.code);
+    }
     return errorResponse('Error al eliminar anticipo', 500, 'INTERNAL_ERROR');
   }
 }

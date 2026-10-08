@@ -113,6 +113,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
       expect(result.data![0].nombre).toBe('Kilogramo');
       // Verifica que filtró por tenantId
@@ -129,6 +130,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual([]);
     });
 
@@ -137,7 +139,11 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       vi.mocked(prisma.unidad.findMany).mockResolvedValue([mockUnidadRow]);
 
       const result = await getUnidadesAction();
+      expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toHaveLength(1);
+      expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data![0].tenantId).toBe(TENANT_A);
     });
 
@@ -147,6 +153,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(typeof result.data![0].createdAt).toBe('string');
       expect(result.data![0].createdAt).toBe(mockUnidadRow.createdAt.toISOString());
     });
@@ -163,6 +170,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.nombre).toBe('Kilogramo');
     });
 
@@ -172,6 +180,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -181,6 +190,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-b1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -221,6 +231,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: '', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('VALIDATION_ERROR');
     });
 
@@ -230,6 +241,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Kilogramo', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('Kilogramo');
     });
@@ -242,6 +254,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'NuevaUnidad', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('kg');
     });
@@ -270,6 +283,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Kilogramo', simbolo: 'k' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('Kilogramo');
     });
@@ -281,6 +295,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Nuevo', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('kg');
     });
@@ -307,6 +322,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(prisma.unidad.update).toHaveBeenCalled();
       expect(typeof result.data!.createdAt).toBe('string');
     });
@@ -320,6 +336,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -332,6 +349,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -344,6 +362,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('Libra');
     });
@@ -378,6 +397,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
       expect(result.error!.message).toContain('lb');
     });
@@ -392,6 +412,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('CONFLICT');
     });
   });
@@ -409,6 +430,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data).toEqual({ id: 'uni-1', eliminado: true });
       expect(prisma.producto.count).toHaveBeenCalledWith({
         where: { unidadId: 'uni-1' },
@@ -424,6 +446,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-noexiste');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -433,6 +456,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-b1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -443,6 +467,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('IN_USE');
       expect(result.error!.message).toBe(
         'No se puede eliminar: está en uso por 5 producto(s)'
@@ -456,6 +481,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('IN_USE');
       expect(result.error!.message).toContain('1 producto');
     });
@@ -472,6 +498,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -481,6 +508,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'X', simbolo: 'x' });
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
 
@@ -490,6 +518,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('any-id');
 
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

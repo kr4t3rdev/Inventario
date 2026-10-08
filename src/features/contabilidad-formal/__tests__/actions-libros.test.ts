@@ -37,6 +37,7 @@ const usuarioBase = {
 	name: 'Gestor',
 	email: 'g@example.com',
 	planFeatures: { 'contabilidad-formal': true },
+	permissions: new Set<string>(['financiero.contabilidad.acceder']),
 };
 
 let usuarioActual: typeof usuarioBase = usuarioBase;
@@ -64,7 +65,7 @@ vi.mock('@/lib/server-actions', () => ({
 describe('actions de libros (CTA-2)', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		usuarioActual = usuarioBase;
+		usuarioActual = { ...usuarioBase, permissions: new Set<string>() };
 		diarioMock.mockResolvedValue({ asientos: [], total: 0 });
 		comprobacionMock.mockResolvedValue({ filas: [], totales: {} });
 		conciliacionMock.mockResolvedValue({ rubros: [] });
@@ -109,14 +110,30 @@ describe('actions de libros (CTA-2)', () => {
 		const { getBalanceComprobacionAction, getConciliacionCruzadaAction } = await import(
 			'@/features/contabilidad-formal/actions-libros'
 		);
-		usuarioActual = { ...usuarioBase, planFeatures: {} };
+		usuarioActual = { ...usuarioBase, planFeatures: { 'contabilidad-formal': false } };
 		const sinFeature = await getBalanceComprobacionAction({});
 		expect(sinFeature.success).toBe(false);
+		if (sinFeature.success) expect.unreachable('Se esperaba que la accion fallara');
 		expect(sinFeature.error?.code).toBe('FEATURE_NOT_AVAILABLE');
 		usuarioActual = usuarioBase;
 		const sinInput = await getConciliacionCruzadaAction();
 		expect(sinInput.success).toBe(true);
 		expect(conciliacionMock).toHaveBeenCalledWith('tenant-1', {});
+	});
+
+	it('conciliación requiere permiso contable antes de leer', async () => {
+		usuarioActual = { ...usuarioBase, permissions: new Set<string>() };
+		const { getConciliacionCruzadaAction } = await import(
+			'@/features/contabilidad-formal/actions-libros'
+		);
+
+		const respuesta = await getConciliacionCruzadaAction();
+
+		expect(respuesta.success).toBe(false);
+		if (respuesta.success) expect.unreachable('Se esperaba que la accion fallara');
+		expect(respuesta).toMatchObject({ error: { message: expect.any(String) } });
+		expect(respuesta.error?.message).toMatch(/permisos/i);
+		expect(conciliacionMock).not.toHaveBeenCalled();
 	});
 
 	it('getCuentasMayorablesAction devuelve solo hojas activas del tenant', async () => {
@@ -128,6 +145,7 @@ describe('actions de libros (CTA-2)', () => {
 		);
 		const respuesta = await getCuentasMayorablesAction();
 		expect(respuesta.success).toBe(true);
+		if (!respuesta.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(prismaMock.cuentaContable.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({

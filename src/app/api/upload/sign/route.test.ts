@@ -5,7 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { NextRequest } from 'next/server'
 import { POST } from './route'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
 // Mockeamos los módulos de server-actions (getCurrentUser) y cloudinary
 vi.mock('@/lib/server-actions', () => ({
@@ -19,18 +21,18 @@ vi.mock('@/lib/cloudinary', () => ({
 import { getCurrentUser } from '@/lib/server-actions'
 import { generateUploadSignature } from '@/lib/cloudinary'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-test-1',
   name: 'Test User',
   email: 'test@example.com',
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test-1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 }
 
-function createRequest(body: unknown): Request {
-  return new Request('http://localhost/api/upload/sign', {
+function createRequest(body: unknown): NextRequest {
+  return new NextRequest('http://localhost/api/upload/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -43,7 +45,7 @@ describe('POST /api/upload/sign', () => {
   })
 
   it('retorna 200 con firma prefijada con tenantId para folder relativo', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser as never)
 
     const request = createRequest({
       uploadKey: 'productos.photo',
@@ -81,7 +83,7 @@ describe('POST /api/upload/sign', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       tenantId: undefined,
-    })
+    } as never)
 
     const request = createRequest({
       uploadKey: 'productos.photo',
@@ -95,7 +97,7 @@ describe('POST /api/upload/sign', () => {
   })
 
   it('retorna 400 cuando falta el uploadKey', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser as never)
 
     const request = createRequest({
       filename: 'photo.jpg',
@@ -108,7 +110,7 @@ describe('POST /api/upload/sign', () => {
   })
 
   it('retorna 400 cuando el mimeType no es válido para la policy', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser as never)
 
     const request = createRequest({
       uploadKey: 'productos.photo',
@@ -122,7 +124,7 @@ describe('POST /api/upload/sign', () => {
   })
 
   it('retorna 400 cuando bytes exceden el máximo permitido', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser as never)
 
     const request = createRequest({
       uploadKey: 'productos.photo',
@@ -143,7 +145,7 @@ describe('POST /api/upload/sign', () => {
         contratos: false,
         'upload-contratos-attachment': false,
       },
-    })
+    } as never)
 
     const request = createRequest({
       uploadKey: 'contratos.attachment',
@@ -201,7 +203,7 @@ describe('POST /api/upload/sign', () => {
   })
 
   it('retorna intent de uploadthing para contratos.attachment', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser as never)
 
     const request = createRequest({
       uploadKey: 'contratos.attachment',

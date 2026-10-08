@@ -7,16 +7,17 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
+import * as matchers from 'vitest-axe/matchers';
+import 'vitest-axe/extend-expect';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-expect.extend({ toHaveNoViolations });
+expect.extend(matchers);
 
-type ExpectMatcherFn = (result: Awaited<ReturnType<typeof axe>>) => {
-  pass: boolean;
-  message: () => string;
-};
-expect.extend({ toHaveNoViolations: toHaveNoViolations as ExpectMatcherFn });
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toHaveNoViolations(): T;
+  }
+}
 
 const actionMock = vi.hoisted(() => vi.fn());
 

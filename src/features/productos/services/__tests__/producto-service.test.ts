@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 import { ActionError } from '@/lib/server-actions';
-import { ProductoService } from '../producto-service';
+import { PRODUCTO_SELECT, ProductoService } from '../producto-service';
 
 describe('ProductoService', () => {
   beforeEach(() => {
@@ -44,6 +44,40 @@ describe('ProductoService', () => {
       where: { productoId: { in: ['prod-1'] } },
       select: { productoId: true, cantidad: true },
     });
+  });
+
+  it('caracteriza filtros internos, selección, stock cero, vacío y fallo', async () => {
+    const date = new Date('2025-01-01T00:00:00.000Z');
+    mockPrisma.producto.findMany.mockResolvedValueOnce([
+      { id: 'a', tenantId: 'A', stock: 99, precioCosto: 12.5, createdAt: date },
+      { id: 'b', tenantId: 'A', stock: 9, precioCosto: 2, createdAt: date },
+    ]).mockResolvedValueOnce([]).mockRejectedValueOnce(new Error('db offline'));
+    mockPrisma.stockUbicacion.findMany.mockResolvedValueOnce([
+      { productoId: 'a', cantidad: 3 }, { productoId: 'a', cantidad: 4 },
+    ]);
+
+    const items = await ProductoService.list('A', {
+      categoryId: 'cat', subcategoryId: 'sub', search: '  harina  ',
+    });
+    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'A', categoriaId: 'cat', subcategoriaId: 'sub',
+        OR: expect.arrayContaining([
+          { nombre: { contains: 'harina', mode: 'insensitive' } },
+          { vendor: { nombre: { contains: 'harina', mode: 'insensitive' } } },
+        ]),
+      }, select: PRODUCTO_SELECT, orderBy: { createdAt: 'desc' },
+    });
+    expect(mockPrisma.stockUbicacion.findMany).toHaveBeenCalledWith({
+      where: { productoId: { in: ['a', 'b'] } },
+      select: { productoId: true, cantidad: true },
+    });
+    expect(items.map(({ stock, stockTotal }) => [stock, stockTotal])).toEqual([[7, 7], [0, 0]]);
+    expect(JSON.parse(JSON.stringify(items))[0]).toMatchObject({
+      precioCosto: 12.5, createdAt: date.toISOString(),
+    });
+    expect(await ProductoService.list('A')).toEqual([]);
+    await expect(ProductoService.list('A')).rejects.toThrow('db offline');
   });
 
   it('returns a tenant-scoped product by id', async () => {

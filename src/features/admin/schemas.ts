@@ -183,7 +183,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LockUnlockInput = z.infer<typeof lockUnlockSchema>;
 export type CloudinaryAssetsQueryInput = z.infer<typeof cloudinaryAssetsQuerySchema>;
-export type CloudinaryCleanupInput = z.infer<typeof cloudinaryCleanupSchema>;
+export type CloudinaryCleanupInput = z.input<typeof cloudinaryCleanupSchema>;
 export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
 export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;
@@ -200,7 +200,7 @@ export type RenewLicenciaInput = z.infer<typeof renewLicenciaSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;
-export type CreatePlanInput = z.infer<typeof createPlanSchema>;
+export type CreatePlanInput = z.input<typeof createPlanSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
 
 // ─── Licencias Query ────────────────────────────────────
@@ -226,3 +226,34 @@ export const licenciasStatsQuerySchema = z.object({
 });
 
 export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
+
+export const adminUserIdSchema = z.object({
+  userId: z.string().min(1),
+});
+
+export const adminUpdateUserSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().min(1).max(120).optional(),
+  email: z.string().email("Ingresa un email válido").optional(),
+  role: z.enum(["admin", "regularUser", "salesAgent"]).optional(),
+});
+
+export const adminAssignTenantSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+  deactivateOthers: z.boolean().optional().default(false),
+});
+
+export const adminChangeTenantRoleSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+});
+
+export type AdminUserIdInput = z.infer<typeof adminUserIdSchema>;
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+export type AdminAssignTenantInput = z.infer<typeof adminAssignTenantSchema>;
+export type AdminChangeTenantRoleInput = z.infer<
+  typeof adminChangeTenantRoleSchema
+>;

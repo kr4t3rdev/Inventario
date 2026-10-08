@@ -18,7 +18,7 @@ const u: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 't1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 describe('getRentabilidadCompraAction — ingresos proporcionales a la asignación FIFO', () => {
@@ -44,7 +44,7 @@ describe('getRentabilidadCompraAction — ingresos proporcionales a la asignaci�
           producto: { id: 'p1', nombre: 'Arroz' },
         },
       ],
-    });
+    } as never);
 
     // Una línea de venta de 10 uds a $100 (total $1000) fue satisfecha en
     // parte (3 uds) por esta compra. El ingreso correcto es 3 × $100 = $300,
@@ -58,11 +58,12 @@ describe('getRentabilidadCompraAction — ingresos proporcionales a la asignaci�
           createdAt: new Date('2026-08-10T00:00:00.000Z'),
         },
       },
-    ]);
+    ] as never);
 
     const r = await getRentabilidadCompraAction('c1');
 
     expect(r.success).toBe(true);
+    if (!r.success) expect.unreachable('Se esperaba que la accion tuviera exito');
     const producto = r.data!.productos[0];
     expect(producto.unidadesVendidas).toBe(3);
     expect(producto.ingresos).toBe(300);

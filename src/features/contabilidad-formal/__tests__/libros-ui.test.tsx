@@ -4,12 +4,11 @@
  */
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
-import { beforeEach, describe, expect, it, vi, type ExpectMatcherFn } from 'vitest';
+import 'vitest-axe/extend-expect';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LibrosPageClient } from '@/features/contabilidad-formal/components/libros-page-client';
 
-expect.extend({ toHaveNoViolations: toHaveNoViolations as ExpectMatcherFn });
 
 const authState = vi.hoisted(() => ({
 	user: {

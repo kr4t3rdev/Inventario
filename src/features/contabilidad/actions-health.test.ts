@@ -14,8 +14,8 @@ describe('getAccountingHealthAction', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(admin)
     vi.mocked(prisma.periodoContable.count).mockResolvedValue(3)
     vi.mocked(prisma.periodoContable.findFirst)
-      .mockResolvedValueOnce({ codigo: '2026-01', estado: 'ABIERTO' })
-      .mockResolvedValueOnce({ codigo: '2025-12' })
+      .mockResolvedValueOnce({ codigo: '2026-01', estado: 'ABIERTO' } as never)
+      .mockResolvedValueOnce({ codigo: '2025-12' } as never)
     await expect(getAccountingHealthAction()).resolves.toEqual({
       success: true,
       data: { metrics: { hasActivePeriod: true, currentPeriodStatus: 'ABIERTO', lastClosedPeriod: '2025-12', totalPeriods: 3 } },

@@ -25,8 +25,8 @@ describe('getUserMetrics', () => {
             regularUser: 11,
           },
         ])
-        .mockResolvedValueOnce([{ totalUsers: 12n }])
-        .mockResolvedValueOnce([{ action: 'login', count: 13n }]),
+        .mockResolvedValueOnce([{ totalUsers: BigInt(12) }])
+        .mockResolvedValueOnce([{ action: 'login', count: BigInt(13) }]),
       user: {
         count: vi.fn().mockResolvedValue(10),
       },

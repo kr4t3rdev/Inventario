@@ -9,6 +9,7 @@ const tx = vi.hoisted(() => ({
   transaccionMoneda: { deleteMany: vi.fn() },
   anticipoMovimiento: { findMany: vi.fn() },
   anticipo: { update: vi.fn(), findUnique: vi.fn() },
+  asiento: { findMany: vi.fn() },
   $queryRaw: vi.fn(),
 }));
 
@@ -40,6 +41,7 @@ beforeEach(() => {
   tx.cuentaBancaria.findUnique.mockResolvedValue({ cuentaId: 'cash-1', tenantId: 'tenant-1', moneda: 'CUP' });
   tx.gastosDE.deleteMany.mockResolvedValue({ count: 1 });
   tx.reconciliacionGasto.findMany.mockResolvedValue([]);
+  tx.asiento.findMany.mockResolvedValue([]);
   tx.reconciliacionGasto.deleteMany.mockResolvedValue({ count: 0 });
   tx.transaccionMoneda.deleteMany.mockResolvedValue({ count: 0 });
 });
@@ -90,6 +92,7 @@ describe('deleteGastosDEAction financial reversal', () => {
     const result = await deleteGastosDEAction('g-1');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('ALREADY_DELETED');
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
     expect(tx.reconciliacionGasto.deleteMany).not.toHaveBeenCalled();
@@ -132,6 +135,7 @@ describe('deleteGastosDEAction financial reversal', () => {
     const result = await deleteGastosDEAction('g-1');
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('NOT_FOUND');
     expect(tx.cuentaPorPagar.delete).not.toHaveBeenCalled();
   });

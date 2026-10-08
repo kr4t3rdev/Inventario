@@ -43,7 +43,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 const mockContrato = {
@@ -68,6 +68,7 @@ describe('Contratos Server Actions', () => {
       const result = await getContratosAction({ page: 1, limit: 10 });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.meta.total).toBe(1);
       expect(result.data!.data).toHaveLength(1);
     });
@@ -76,7 +77,7 @@ describe('Contratos Server Actions', () => {
   describe('getContratoByIdAction', () => {
     it('retorna contrato por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato as never);
       const result = await getContratoByIdAction('ct-1');
       expect(result.success).toBe(true);
     });
@@ -86,6 +87,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(prisma.contrato.findFirst).mockResolvedValue(null);
       const result = await getContratoByIdAction('ct-noexiste');
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
@@ -102,7 +104,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
       vi.mocked(crearContratoConConsecutivo).mockImplementation(async ({ create }: any) =>
         create({ numeroConsecutivo: 1, numeroContrato: 'CV-0001' }));
-      vi.mocked(prisma.contrato.create).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.contrato.create).mockResolvedValue(mockContrato as never);
       vi.mocked(prisma.contratoVersion.create).mockResolvedValue({} as any);
       vi.mocked(prisma.cliente.update).mockResolvedValue({} as any);
 
@@ -126,8 +128,8 @@ describe('Contratos Server Actions', () => {
   describe('updateContratoAction', () => {
     it('actualiza contrato exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
-      vi.mocked(prisma.contrato.update).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato as never);
+      vi.mocked(prisma.contrato.update).mockResolvedValue(mockContrato as never);
 
       const result = await updateContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
 
@@ -147,9 +149,9 @@ describe('Contratos Server Actions', () => {
   describe('deleteContratoAction', () => {
     it('elimina contrato exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, clienteId: 'cli-1', numeroContrato: 'CT-001' });
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, clienteId: 'cli-1', numeroContrato: 'CT-001' } as never);
       vi.mocked(prisma.cliente.update).mockResolvedValue({} as any);
-      vi.mocked(prisma.contrato.delete).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.contrato.delete).mockResolvedValue(mockContrato as never);
 
       const result = await deleteContratoAction('ct-1');
       expect(result.success).toBe(true);
@@ -164,6 +166,7 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2', 'ct-3'], estado: 'ACTIVO' });
 
       expect(result.success).toBe(true);
+      if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(result.data!.count).toBe(3);
     });
   });
@@ -173,6 +176,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getContratosAction();
       expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });

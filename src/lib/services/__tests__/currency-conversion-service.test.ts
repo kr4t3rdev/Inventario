@@ -7,6 +7,11 @@ const provider = vi.hoisted(() => ({
   getCurrency: vi.fn(),
   getPrincipalCurrency: vi.fn(),
   getLatestRate: vi.fn(),
+  getRateAsOf: vi.fn(),
+  listCurrencies: vi.fn(),
+  getCurrentRates: vi.fn(),
+  getRateHistory: vi.fn(),
+  createRate: vi.fn(),
 }))
 
 describe('CurrencyConversionService', () => {

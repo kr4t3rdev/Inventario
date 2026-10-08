@@ -22,6 +22,8 @@ function mapActionErrorStatus(code: string): number {
     case 'VALIDATION_ERROR':
     case 'INVALID_INPUT':
       return 400;
+    case 'IDEMPOTENCY_CONFLICT':
+      return 409;
     default:
       return 400;
   }
@@ -80,7 +82,10 @@ export async function POST(request: Request) {
     }
 
     const result = await AccountingReconciliationService.reconcileService({
-      input: body,
+      input: {
+        ...body,
+        idempotencyKey: request.headers.get('Idempotency-Key') ?? body.idempotencyKey,
+      },
       user: authResult.user,
     });
     return successResponse(result);

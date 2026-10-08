@@ -30,7 +30,7 @@ vi.mock('@/lib/prisma', () => {
 
 vi.mock('@/lib/db/platform-prisma', async () => {
   const mocked = await import('@/lib/prisma');
-  return { prismaPlatform: mocked.prisma, default: mocked.prisma, __tx: mocked.__tx };
+  return { prismaPlatform: mocked.prisma, default: mocked.prisma, __tx: (mocked as unknown as { __tx: unknown }).__tx };
 });
 
 vi.mock('bcryptjs', () => ({
@@ -52,7 +52,9 @@ vi.mock('../demo-seed', () => ({ seedDemoTenantData: seedMock }));
 vi.mock('@/lib/metrics', () => metricsMock);
 
 import bcrypt from 'bcryptjs';
-import { prisma, __tx } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+// @ts-expect-error: __tx lo provee el vi.mock de arriba, no el modulo real
+import { __tx } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { createDemoTenantForPlan } from '../demo-tenant-factory';
 

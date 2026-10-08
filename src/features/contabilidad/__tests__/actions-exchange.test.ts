@@ -87,6 +87,7 @@ describe('actions-exchange', () => {
     const result = await getTasasActualesAction()
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data?.tasas).toHaveLength(1)
   })
 
@@ -111,6 +112,7 @@ describe('actions-exchange', () => {
     const result = await convertMoneyAction({ monto: 100, monedaOrigen: 'USD', monedaDestino: 'CUP', referenciaId: 'ref-1' })
 
     expect(result.success).toBe(true)
+    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     expect(result.data).toMatchObject({
       montoOriginal: 100,
       montoConvertido: 2450,
@@ -146,6 +148,7 @@ describe('actions-exchange', () => {
     const result = await convertMoneyAction({ monto: 100, monedaOrigen: 'USD', monedaDestino: 'EUR' })
 
     expect(result.success).toBe(false)
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara')
     expect(result.error?.code).toBe('NO_MAIN_CURRENCY')
     expect(prismaMock.transaccionMoneda.create).not.toHaveBeenCalled()
   })

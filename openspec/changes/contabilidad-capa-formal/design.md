@@ -335,3 +335,125 @@ Replay cronológico por tenant/período: lee las fuentes (ventas, reconciliacion
 - Integración real en `src/features/contabilidad-formal/__integration__/` con `DATABASE_URL_TEST`: cuadre imposible de violar, idempotencia de reintento, aislamiento entre tenants, cierre→apertura, conciliación cruzada contra balance calculado con fixtures.
 - Componentes: Testing Library + `vitest-axe` en formularios de configuración y vistas de libros.
 - Evidencia RED documentada por fase en `tasks.md` antes de cada GREEN; commits por fase con stage selectivo (worktree compartido).
+
+## §9 Remediación de aceptación — diseño vigente (Explore #3899, Propose #3902, Spec #3904)
+
+**Estado:** CTA-0–CTA-4 ya tienen implementación parcial. Este apartado prevalece donde §§1–8 describen una intención que contradice el código o la spec modificada. No se habilita `enforce` ni se interpreta una tarea marcada como hecha como evidencia de aceptación. En particular quedan reemplazados: omisión de tenants sin plan (§2), captura de errores después de escribir en `shadow` (§2), tolerancia monetaria (§3), bypass irrestricto del guard en replay (§5), rollback destructivo (§6) y la suposición de que existen `asiento-service.ts`/`actions-health.ts`: no existen hoy.
+
+### Arquitectura técnica y fronteras
+
+```
+writer (API legacy / action, tenant + actor autenticados)
+  └─ tx Prisma existente ── postEvento(tx, ctx, evento)
+       ├─ gate servidor: licencia/flag por tenant + modo efectivo (off/shadow/enforce)
+       ├─ validación de evento, moneda, plan, roles, plantilla y período
+       ├─ cálculo puro Decimal → líneas normalizadas → cuadre exacto
+       ├─ shadow: simular sin escrituras formales; observar resultado tras commit
+       └─ enforce: lock tenant → número/hash → insert cabecera+líneas en tx
+  └─ commit/rollback operación y asiento conjuntamente
+
+aprobación período → tx: cierre firmado + total libro en resumen/hash → transición
+apertura período → tx: período inmediato + saldos firmados + traspaso → apertura
+preflight persistido → autorización servidor → replay bajo lock → conciliación → run auditado
+```
+
+El motor no puede decidir el modo únicamente por `CONTABILIDAD_FORMAL_MODE`: el **doble gate** requiere flag/licencia del tenant verificada en servidor y modo efectivo explícito; sin licencia, `off`; con licencia pero plan incompleto, `enforce` rechaza (nunca interpreta falta de roles como flag apagado). Para habilitar `enforce`, además se exige aprobación por tenant del gate de §9.6. Si la política vigente de flags no admite habilitación individual de modo, agregar control persistido por tenant antes de cualquier activación, sin derivarlo de la UI. Los writers existentes conservan su API y transacción; inventariar la matriz real de evento→writer→origen→valoración, incluyendo rutas legacy y cierres, antes de afirmar cobertura. Una operación que requiere varios asientos usa orígenes deterministas distintos sin violar la unicidad por origen.
+
+**Typecheck:** reemplazar los contratos estructurales incompatibles `PostingTx`/`CierreTx` y los casts `tx as never` por `Prisma.TransactionClient` (import desde `@/generated/prisma`) o por puertos derivados de operaciones Prisma reales, con tipos `Prisma.*GetPayload`/selects exactos; helpers de lock, inserción, cierre y replay comparten el mismo cliente transaccional. No tipar delegates como funciones manuales de retorno `Promise` cuando Prisma devuelve `PrismaPromise`; resolver causas de los ~34 diagnósticos reportados, no silenciarlos con casts ni `skipLibCheck`. Capturar baseline completo en RED y verificar `pnpm run typecheck` limpio en GREEN; si hay errores ajenos, identificarlos y bloquear el gate hasta eliminarlos, sin atribuir su autoría.
+
+**Dinero e integridad:** `EventoContableInput`, auxiliares, líneas, grupos, saldos y diferencias viajan como `Prisma.Decimal` o strings decimales validados; nunca `Number(...)`, `Math.round`, `Math.abs` ni epsilon en cálculo contable. Centralizar parseo finito, normalización monetaria y serialización canónica decimal en helper compartido; comprobar Σdebe.eq(Σhaber), positivos exclusivos y moneda funcional consistente **antes** de persistir. El hash debe serializar importes normalizados como strings estables e incluir identidad de origen/fecha/orden; migrar o versionar la verificación para no invalidar silenciosamente hashes publicados. La escala de almacenamiento `Decimal(20,4)` no determina automáticamente la escala funcional ni su regla de redondeo. Hasta su aprobación, **bloquear enforce y replay que publiquen nuevos importes**; opción conservadora a evaluar: normalizar cada línea una sola vez a la escala funcional acordada, rechazar diferencia residual y registrar cualquier ajuste mediante línea explícita, jamás tolerancia escondida. Conciliación usa igual política sin declarar `OK` por diferencia real; presentación puede redondear solo al renderizar y debe distinguir «sin cobertura» de «conforme».
+
+**Snapshot FX de writers fuera de reconciliaciones:** `AjusteBancario`, `TransferenciaBancaria`, `InyeccionCapital`, `PagoDeuda` y `CompraDocumento` no poseían evidencia completa en la fuente; R0.5 añade campos nullable (`montoConvertido`, `functionalCurrency`, `rateEffectiveAt`, `fxProvenanceKind/Source`, `fxCatalogRateId`, `fxEvidenceJson`, `fxEvidenceFingerprint`, `fxEvidenceVersion`, con `tasaCambio` donde faltaba) por migraciones aditivas 20260926000000–003. Ajuste, capital y compra extranjera exigen tasa/fecha efectiva y el asiento hereda evidencia. Transferencias USD→CUP están probadas; dos divisas no funcionales distintas se bloquean si no hay cotización cruzada. No hay backfill inferido para filas históricas. `PAGO_COMPLETO` de compras requiere definir el writer de tesorería; no se declara cubierto por el hook de COMPRA_CREDITO.
+
+**Shadow atómico — decisión técnica condicionada:** preferir simular lectura/resolución/cálculo/hash provisional **sin escribir Asiento/AsientoLinea**, y emitir evidencia durable de evento, resultado, causa y latencia fuera de la operación, ligada al commit (outbox o mecanismo equivalente; nunca anunciar asiento persistido). Esto conserva operación ante fallo del motor y evita el estado PostgreSQL abortado después de un error SQL capturado dentro de `prisma.$transaction`. Si se necesita probar persistencia en shadow, diseñar savepoint SQL con conexión/tx comprobablemente compartidos y rollback de intento; no abrir otra transacción Prisma anidada ni hacer `catch` de `P2002` seguido de consultas en la misma transacción abortada. Si falla telemetría, contabilizar un hueco de cobertura y bloquear promoción. Probar inyección de error tras el punto de construcción/insert y ausencia de cabecera/líneas parciales. `off` mantiene no-op.
+
+**Auditoría del guard:** `PeriodoGuard.assertWritable` actualmente fija `actor: 'system'` y crea `PeriodoGuard` sin audit service, por lo que no persiste el bypass en esa ruta. Pasar contexto explícito `{tenantId, actorId, actorTipo, tipoOperacion, origen, fecha}` desde el writer, conectar `AuditoriaPeriodo` real y dejar `INTENTO_BYPASS` durable **fuera del tx que se revierte**, con período real y causa (no `N/A` si existe). El fallo al auditar un rechazo no se interpreta como auditoría exitosa: fallar cerrado o entregar evidencia durable comprobable. Actor de servicio solo para jobs identificados; permisos y pertenencia de tenant se verifican en actions y en servicios invocables directamente.
+
+
+### R3 — Apertura formal con evidencia revisada (contrato aprobado)
+
+La apertura formal deja de tratar los agregados legacy de `AperturaPeriodo` como fuente publicable. El servicio actual suma `resumenJson.saldosPorMoneda` como si fuera una sola moneda y asigna cero a rubros sin resolver; el camino de datos vivos suma bancos/CxC/CxP en `number`, también sin moneda funcional ni evidencia reproducible. Por tanto esos datos no se migran ni se aprueban implícitamente.
+
+**Modelo aditivo mínimo, pendiente de implementar:** `AperturaPeriodo` permanece como cabecera/compatibilidad operativa, sin autoridad de lifecycle ni campos nuevos de aprobación. Crear `AperturaRevision` append-only como única fuente de estado, presentador/revisor, permisos, versión y digest; todas las líneas y referencias de evidencia MUST pertenecer mediante FK a una revisión exacta. La revisión contiene identidad tenant/período, estado (`BORRADOR`, `PRESENTADA`, `APROBADA`/`RECHAZADA`), `presentadaPor/At`, `revisadaPor/At`, versión/digest canónico y versión/hash inmutable de evidencia. La revisión nueva para corregir/sustituir una anterior apunta a la revisión reemplazada; nunca se muta evidencia ya presentada/aprobada. Añadir líneas de apertura por revisión: fecha efectiva de origen, rol/cuenta destino, moneda nativa ISO, importe Decimal, tipo/identificador de fuente y fingerprint/hash de evidencia. SQL triggers deben impedir UPDATE/DELETE de evidencia/líneas de revisiones `PRESENTADA`/`APROBADA`; transición de estado solo por operación autorizada y auditada. Aplicar desde la entrada la decisión R0.1: **máximo cuatro decimales exactos, sin cuantización/redondeo**, rechazo de precisión superior y del rango que exceda `Decimal(20,4)` (hasta 16 dígitos enteros); ceros finales se eliminan al canonicalizar. Líneas contables del diario solo admiten CUP funcional por ahora; no inferir soporte multi-funcional solo porque `functionalCurrency` sea string. Reabrir esa limitación únicamente cuando un contrato/writer contable verificado soporte explícitamente otra moneda funcional.
+
+Cada línea MUST pertenecer a una revisión exacta, tenant, período y cuenta; la fecha efectiva debe quedar sustentada por la evidencia y ser aplicable a la fecha de apertura; rol/cuenta, código ISO de moneda y monto son obligatorios. Para moneda nativa CUP, el importe funcional es el mismo y la tasa puede ser `1` o `null`; toda moneda extranjera exige importe original y funcional, moneda funcional CUP, tasa positiva, fecha efectiva, fuente/provenance y fingerprint cuya relación se recompute desde evidencia inmutable, no desde campos editables. Una declaración manual de saldo no constituye prueba FX: capturas extranjeras sin evidencia verificable quedan no valoradas y no se postean. La tasa conserva la escala/procedencia que admite el contrato existente (`Decimal(20,10)`), pero el importe contable original/funcional no excede cuatro decimales ni `Decimal(20,4)`. El digest MUST tener dominio y versión de contrato explícitos y cubrir serialización canónica con fechas UTC ISO, códigos de moneda uppercase, montos Decimal en texto plano sin exponentes/ceros finales, tenant, período, revisión, fecha efectiva, rol/cuenta, fuente, versión+hash de evidencia inmutable y todos los campos FX. Si el origen no es confiable o no permite resolver importe/moneda, exigir captura manual declarada y evidencia adjunta, sin importar/sumar el agregado mixto.
+
+La presentación congela revisión, líneas y evidencia (correcciones mediante una nueva revisión append-only que identifica la anterior, nunca edición silenciosa). Presentar requiere permiso activo tenant-scoped `contabilidad.apertura.presentar`; aprobar requiere permiso activo tenant-scoped `contabilidad.apertura.aprobar` (no basta acceso de lectura/gestión genérica). La aprobación requiere actor autenticado autorizado distinto de quien presentó y revalida en esa transacción tenant/período/fechas, permisos activos, revisión/version/digest, hash de evidencia, cuenta/rol, moneda, FX, límites Decimal y cuadre; la evidencia FX se vuelve a resolver y fingerprint se recomputa desde snapshot inmutable. No se permite asiento de ajuste/plug para forzar balance. La aprobación de una revisión y su asiento de apertura se confirman en la misma transacción con idempotencia por revisión, de modo que cualquier rechazo/rollback no deja estado aprobado ni asiento parcial. Un `AperturaPeriodo` legacy sin `AperturaRevision` permanece no aprobado y nunca se usa para generar un asiento.
+
+**Dos orígenes distintos:** una primera apertura sin período anterior es un alta de saldos iniciales respaldada por evidencia/manual, revisada independientemente; no se fabrica desde el snapshot operativo actual. Un rollover solo puede derivarse del cierre formal aprobado y completo del período inmediatamente anterior, mismo tenant y continuidad de fechas/tipo; se conserva cada saldo por cuenta y moneda y se traspasa resultado una sola vez. Período anterior ausente/no conforme impide rollover (no se busca un cierre viejo ni se cae a datos vivos).
+
+**Decisión R3.10 (usuario, 2026-09-30):** cerrar un período sin actividad es opcional; en `enforce`, una transición a `CERRADO` o `APROBADO` requiere asiento formal de cierre dentro de la misma transacción. Si no se puede producir ese asiento, se rechaza y se revierte la transición; el período queda abierto/en su estado previo. No se crea un asiento cero. La ausencia de actividad se identifica por ausencia de líneas de resultado contabilizadas/candidatas a cierre, no por resultado neto igual a cero: líneas compensatorias entre cuentas todavía requieren asiento formal. El contrato de apertura inicial sigue siendo independiente de esta decisión.
+
+**Replay:** `recolectarCandidatos` convierte nulos a cero, asigna `CUP` por defecto y consulta `m.costoTotal`; el plan actual solo contabiliza replayables/ya posteados/sin período. Introducir preflight persistido por tenant+período con snapshot/fingerprint de candidatos, categorías exhaustivas (reproducible, ya posteado/omitido, ambiguo, sin FX, sin costo, fuera de período), causas y expiración de 24 horas desde la generación del preflight. Merma: derivar costo desde valoración fuente histórica demostrable (movimientos/costo FIFO/evidencia de operación) en Decimal; si no es unívoco, omitir esa fuente con causa, jamás inferir cero. La omisión de fuentes ambiguas, sin FX indispensable, sin costo verificable o fuera del período no bloquea por sí sola el replay de las demás fuentes; se registran identidad y causa por fuente y la cobertura permanece incompleta. FX: exigir fingerprint/evidencia cuando la fuente lo requiere; jamás inventar tasa o moneda. Acción `withAction` valida Zod, `requireTenant`, `requireFeature`, permiso servidor, aprobación verificable y vínculo `(preflightId, digest, tenantId, periodoId, actor)`; escribir `replayRunId`, estado, conteos y diferencias. Dentro de lock tenant, revalidar fingerprint, fechas, vigencia, condiciones bloqueantes y orígenes; bypass del guard solo mediante capacidad privada de replay para ese alcance, auditada, nunca `omitirGuard: true` accesible por caller ordinario. Reintentos retornan `YA_EXISTENTE` sin duplicar; discrepancia post-run => estado `NO_CONFORME`, no éxito. Persistir resultado/diagnóstico incluso si falla el trabajo, sin publicar un run falso como conforme. El replay de cada período se confirma en una única transacción bajo lock; un fallo revierte todos sus asientos y avances, sin lotes parcialmente confirmados. La vigencia predeterminada del preflight es de 24 horas. Digest aprobado: SHA-256 versionado (v1) de una serialización canónica y estable que incluya tenant, período, identidad ordenada de cada fuente, clasificación/causa de omisión, valoración decimal normalizada, moneda y evidencia FX. Persistir versión y digest con el preflight y su aprobación; recomputar bajo lock antes del replay. Cualquier cambio invalida la aprobación y exige generar y aprobar otro preflight. La implementación necesita prueba concurrente y plan de recuperación.
+
+### Archivos previstos (solo diseño; ningún código modificado en esta fase)
+
+| Archivo | Cambio futuro propuesto |
+|---|---|
+| `src/features/contabilidad-formal/services/posting-engine.ts` | Tipos de tx reales, gate, Decimal, simulación shadow, guard con actor, idempotencia/hash. |
+| `src/features/contabilidad-formal/services/cierre-formal-service.ts` | Signos, fecha, período inmediato, cuadre, mismo tx y moneda funcional. |
+| `src/features/contabilidad/actions-periodos.ts` | Coordinar aprobación/apertura con asiento obligatorio en enforce; eliminar casts falsos. |
+| `src/lib/services/periodo-contable-guard.ts` | Actor y auditoría durable en rechazos. |
+| `src/features/contabilidad-formal/services/replay-backfill-service.ts` y `actions-backfill.ts` | Preflight y run persistidos, clasificación total, lock, autorización, costo merma y conciliación. |
+| `src/features/contabilidad-formal/services/conciliacion-cruzada-service.ts` | Decimal, cobertura y períodos/moneda comparables; no tolerancia que oculte diferencias. |
+| `src/features/contabilidad-formal/actions-libros.ts`, `components/conciliacion-panel.tsx`, `components/libros-page-client.tsx` | Solo estados de salud/conciliación y replay si se aprueba el gate; no nuevas pantallas por defecto. |
+| `prisma/schema.prisma` y migración aditiva revisada | Persistencia de preflight/run, `replayRunId`/evidencia y aprobación tenant si los modelos actuales no la cubren; no borrar datos publicados. |
+| `src/features/contabilidad-formal/__tests__/`, `__integration__/`, `content/docs/modules/contabilidad/`, `docs/GLOSSARY.md` | Matriz, RED→GREEN, runbook de activación/incidente y semántica monetaria aprobada. |
+
+Los nombres de nuevas tablas/archivos de salud quedan por concretar después de revisar el esquema y la autorización; **no** presuponer `actions-health.ts` existente. La tabla de archivos expresa impacto previsto, no cambios ejecutados.
+
+### Dirección visual (limitada a superficies operativas existentes)
+
+No hay rediseño de producto en el alcance de remediación. Para estados nuevos del panel de conciliación y eventual preflight, dirección **libro de control editorial**: usar layout y tokens existentes del módulo contabilidad, fondo papel neutro `#F7F5F0`, tinta `#252B2A`, verde petróleo `#185B52` solo para conformidad verificada y ámbar `#98641F`/rojo profundo `#A33D35` para cobertura incompleta/bloqueo; tokens CSS locales compatibles con light/dark y contraste WCAG, no imponerlos globalmente. Encabezado compacto de período + moneda + estado, tabla densa con importes tabulares alineados a la derecha, columna fija «Diferencia», y banda visible de «Sin cobertura» distinta de cero; desgloses accesibles por teclado antes que tarjetas KPI decorativas. Conservar tipografía instalada para cuerpo y usar números tabulares (`font-variant-numeric: tabular-nums`); no añadir fuentes remotas ni animación ornamental. Solo transición de estado/foco de 120–160 ms, deshabilitada con `prefers-reduced-motion`. Errores del servidor via toast en español neutro y detalle persistente en panel; no presentar éxito si falla conciliación o hay ambiguos. Validación cliente (Zod/formulario: período, confirmación y vigencia visible) es ayuda; el servidor decide tenant, roles, digest, permisos y capacidad de replay. Ningún color sustituye texto/icono/ARIA para comunicar estado. Esta propuesta visual es **condicional** a cambios de UI realmente necesarios y no autoriza nuevas vistas.
+
+### §9.6 TDD y gate operacional
+
+Orden estricto por fallo: escribir test RED reproducible → corrección mínima GREEN → regresión. Unitarios de Decimal, hash, gate de modos, plan/plantilla faltantes, utilidad/pérdida y clasificación replay con Prisma mockeado (`DATABASE_URL` MM-B inaccesible); integración exclusivamente `src/**/__integration__/` con `DATABASE_URL_TEST`, fixtures por tenant, inyección de error SQL en shadow, rollback completo enforce, audit durable pese al rollback, colisión de origen/concurrencia, cierre/apertura real y replay con lock. Testing Library + `vitest-axe` para estados de panel/toasts cuando cambie UI. Validar suite focalizada y writers de ventas/compras/contabilidad en off, shadow y enforce, lint de archivos tocados y `pnpm run typecheck` completo; no marcar gate verde sin ejecución/evidencia.
+
+Matriz de cobertura por writer/evento/origen + métricas shadow durables por tenant, tipo, causa y latencia p95 + conciliación exacta comprobable durante **al menos siete días** + responsable y criterio de reversión registrados. La promoción a enforce se bloquea si falta cualquier evidencia, si hay divergencia o si la política monetaria/preflight permanece sin resolver. Ante incidente: apagar nuevos posteos y replay del tenant, congelar evidencia, investigar y reabrir gate shadow; `off` no borra asientos ni elimina tablas. Correcciones de asientos publicados mediante contrapartidas auditadas, nunca borrado destructivo en producción.
+
+### §9.7 Decisiones abiertas (sin atribuirlas al usuario)
+
+**Decisión explícita del usuario (2026-09-23):** escala funcional global EXACTA de cuatro
+decimales. Frontera: antes de construir/persistir líneas funcionales y antes del cuadre;
+rechazar todo valor con dígitos significativos más allá de cuatro posiciones decimales.
+No hay regla de empate ni redondeo porque no se cuantiza; los ceros finales no cuentan como
+precisión adicional. Tampoco se crea ajuste automático. Los importes originales y las tasas
+FX conservan su evidencia/escala propia; cualquier resultado funcional no representable
+se rechaza sin truncar. El helper `decimal-contable.ts` valida esta frontera; su existencia
+aislada NO implica que todos los writers ya la apliquen ni habilita enforce/replay.
+
+**Shadow:** usuario elige savepoint comprobado. Queda condicionado a demostrar mediante
+integración PostgreSQL que SAVEPOINT/ROLLBACK TO SAVEPOINT se ejecutan en la misma conexión
+del `Prisma.TransactionClient` del writer, incluso ante error SQL; recuperación y telemetría
+ligada al commit requieren pruebas separadas. No implementar un shadow de escrituras ni
+promoverlo mientras no exista esa demostración. R0.3 y R0.4 siguen abiertos: «sí» a replay
+y conciliación no establece vigencia, autorizaciones, bloqueos ni cobertura parcial.
+
+**Decisión R2 (2026-09-24):** la simulación de inserción se revierte siempre en el
+savepoint del writer; una fila `ShadowPosteoOutbox` se inserta *después* de liberarlo,
+en la transacción exterior. Un rollback exterior revierte la evidencia. `SIMULADO`
+solo describe la prueba, nunca un asiento confirmado. Clave de deduplicación:
+`(tenantId, tipoEvento, origenTipo, origenId)`. El consumidor lee exclusivamente
+filas confirmadas, bloquea por `FOR UPDATE SKIP LOCKED` y requiere un sink idempotente
+por id; no es seguro incrementar un contador externo no idempotente antes del ACK.
+La migración aditiva crea la tabla; el despliegue requiere aplicarla antes de
+habilitar shadow. Un fallo al escribir evidencia bloquea el writer (hueco no oculto).
+Todavía no existe un sink/reportador de métricas ni prueba integral del motor contra
+PostgreSQL con fixture de tenant; NO habilitar shadow operativamente ni enforce.
+
+- [x] **Escala funcional:** cuatro decimales exactos globales, rechazo sin cuantización ni empate; integración de la frontera en todos los posteos aún pendiente.
+- [x] **Aislamiento shadow elegido:** savepoint real; validación técnica, aislamiento y telemetría ligados al commit aún pendientes. **Bloquea promoción shadow→enforce.**
+- [ ] **Preflight replay:** vigencia predeterminada aprobada: 24 horas desde la generación; el manager aprobador debe ser una persona distinta de la solicitante y tener permiso vigente para el tenant. Las fuentes ambiguas, sin FX, sin costo o fuera de período se omiten con causa sin detener las demás; digest SHA-256 versionado del snapshot canónico (tenant, período, fuentes, valoración, omisiones) aprobado; cualquier cambio exige nuevo preflight y aprobación; cada período usa una sola transacción (sin lotes confirmados parcialmente); fallos de autorización, vigencia o integridad del preflight sí impiden el run y se revalida todo bajo lock. **Bloquea replay histórico.**
+- [ ] **Cobertura formal versus caja:** decidir criterio de períodos parciales y rubros sin fuente funcional suficiente (p. ej. inventario/capital) antes de declarar conciliación conforme; mostrar `SIN_COBERTURA` mientras tanto. **Bloquea certificación de gate.**
+
+**Decisiones confirmadas después:** el autorizador de replay es manager; un período parcial o
+un rubro sin fuente comparable se califica `NO_EVALUABLE` y bloquea `enforce` (no equivale
+a conciliación conforme). El usuario confirmó **24 horas** de vigencia predeterminada
+desde la generación del preflight el 2026-09-26; aún no está implementada. El usuario
+aprobó SHA-256 versionado del snapshot canónico de tenant, período, fuentes,
+valoración y causas de omisión; un cambio exige nuevo preflight y aprobación. El
+replay de cada período debe ser atómico en una sola transacción: un fallo revierte
+todo el período. El manager aprobador debe ser otra persona con permiso vigente
+para el tenant; el servidor rechaza la autoaprobación. No ejecutar replay hasta
+implementar y verificar estos controles.

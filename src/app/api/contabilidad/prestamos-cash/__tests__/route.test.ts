@@ -72,7 +72,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		expect(response.status).toBe(200);
 	});
 
@@ -98,7 +98,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
@@ -117,7 +117,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash?estado=ACTIVO",
 		);
-		await GET(request);
+		await GET(request, {});
 
 		expect(prisma.prestamoCash.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -135,7 +135,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);

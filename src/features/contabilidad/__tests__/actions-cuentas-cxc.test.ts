@@ -7,7 +7,10 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 	requireTenant: (user: { tenantId: string }) => user.tenantId,
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
-	AuditLogService: { log: vi.fn().mockResolvedValue(null) },
+	AuditLogService: {
+		log: vi.fn().mockResolvedValue(null),
+		logStrict: vi.fn().mockResolvedValue({ auditId: 'audit-1' }),
+	},
 }));
 const mockTx = vi.hoisted(() => ({
 	$queryRaw: vi.fn().mockResolvedValue([]),
@@ -38,7 +41,7 @@ const user: AuthenticatedUser = {
 	role: 'admin',
 	isActive: true,
 	tenantId: 'tenant-1',
-	tenantRole: 'admin',
+	tenantRole: 'manager',
 };
 
 const account = {

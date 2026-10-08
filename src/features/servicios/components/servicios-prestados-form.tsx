@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import { LazyMotion, m as motion } from 'framer-motion'
@@ -56,6 +56,7 @@ interface ServiciosPrestadosFormProps {
 export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosFormProps): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const pendingIdempotencyKey = useRef<string | null>(null)
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const servicios = initialServicios ?? []
   const { clientes, isLoading: isLoadingClientes } = useClientes()
@@ -88,7 +89,10 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   async function onSubmit(values: FormValues): Promise<void> {
     setIsLoading(true)
     try {
+      const idempotencyKey = pendingIdempotencyKey.current ?? crypto.randomUUID()
+      pendingIdempotencyKey.current = idempotencyKey
       const result = await createVentaServicioAction({
+        idempotencyKey,
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
@@ -103,6 +107,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
       }
 
       sileo.success({ title: 'Servicio prestado registrado correctamente.' })
+      pendingIdempotencyKey.current = null
       form.reset()
     } catch (error) {
       console.error('Error al registrar servicio prestado:', error)

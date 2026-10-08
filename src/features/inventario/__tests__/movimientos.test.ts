@@ -61,7 +61,7 @@ describe('registrarMovimiento', () => {
       }),
       update: {},
     });
-    expect(store.stockMoveLine.create).toBeUndefined();
+    expect((store.stockMoveLine as any).create).toBeUndefined();
   });
 
   it('rechaza un movimiento con cantidad cero', async () => {
@@ -105,7 +105,7 @@ describe('getKardex', () => {
   it('requiere productoId para calcular saldos correctos', async () => {
     const store = createStore();
 
-    await expect(getKardex(store, { tenantId: 'tenant-1' })).rejects.toThrow(
+    await expect(getKardex(store, { tenantId: 'tenant-1' } as never)).rejects.toThrow(
       'El kardex requiere un producto específico',
     );
   });

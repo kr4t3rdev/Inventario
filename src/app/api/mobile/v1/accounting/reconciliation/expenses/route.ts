@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
+import { ActionError } from '@/lib/server-actions';
 import { AccountingReconciliationService } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { reconciliarGastoAdapter } from '@/features/contabilidad/api/reconciliacion-gastos-adapter';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
@@ -71,6 +72,15 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return errorResponse('Datos de entrada inválidos', 400, 'VALIDATION_ERROR');
+    }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' ||
+        error.code === 'TENANT_REQUIRED'
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : 400;
+      return errorResponse(error.message, status, error.code);
     }
 
     const err = error as { status?: number; code?: string; message?: string };
