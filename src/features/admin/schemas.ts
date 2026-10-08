@@ -226,3 +226,48 @@ export const licenciasStatsQuerySchema = z.object({
 });
 
 export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
+export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
+
+export const adminUserIdSchema = z.object({
+  userId: z.string().min(1),
+});
+
+export const adminUpdateUserSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().min(1).max(120).optional(),
+  email: z.string().email("Ingresa un email válido").optional(),
+  role: z.enum(["admin", "regularUser", "salesAgent"]).optional(),
+});
+
+export const adminAssignTenantSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+  deactivateOthers: z.boolean().optional().default(false),
+});
+
+export const adminChangeTenantRoleSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+});
+
+export type AdminUserIdInput = z.infer<typeof adminUserIdSchema>;
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+export type AdminAssignTenantInput = z.infer<typeof adminAssignTenantSchema>;
+export type AdminChangeTenantRoleInput = z.infer<
+  typeof adminChangeTenantRoleSchema
+>;
+
+export const adminLicenciaIdSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+});
+
+export const adminRenewLicenciaSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1).optional(),
+  durationDays: z.number().int().min(1).max(3650).optional(),
+});
+
+export type AdminLicenciaIdInput = z.infer<typeof adminLicenciaIdSchema>;
+export type AdminRenewLicenciaInput = z.infer<typeof adminRenewLicenciaSchema>;
