@@ -451,7 +451,7 @@ export async function getAdminTenants(
         select: { memberships: true, productos: true, almacenes: true },
       },
       licencias: {
-        where: { activa: true, isDemo: false },
+        where: { activa: true, isDemo: false, expiracion: { gt: new Date() } },
         orderBy: { createdAt: "desc" },
         take: 1,
         include: { plan: true },
