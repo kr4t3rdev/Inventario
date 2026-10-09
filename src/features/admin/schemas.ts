@@ -270,3 +270,79 @@ export const adminRenewLicenciaSchema = z.object({
 
 export type AdminLicenciaIdInput = z.infer<typeof adminLicenciaIdSchema>;
 export type AdminRenewLicenciaInput = z.infer<typeof adminRenewLicenciaSchema>;
+
+export const adminActivityLogsQuerySchema = z.object({
+  userId: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
+export const adminLoginHistoryQuerySchema = z.object({
+  userId: z.string().min(1),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
+export const adminRevokeSessionSchema = z.object({
+  sessionId: z.string().min(1),
+});
+
+export type AdminActivityLogsQueryInput = z.infer<
+  typeof adminActivityLogsQuerySchema
+>;
+export type AdminLoginHistoryQueryInput = z.infer<
+  typeof adminLoginHistoryQuerySchema
+>;
+export type AdminRevokeSessionInput = z.infer<typeof adminRevokeSessionSchema>;
+
+export const adminTenantIdSchema = z.object({
+  tenantId: z.string().min(1),
+});
+
+export const adminUpdateTenantSchema = z.object({
+  tenantId: z.string().min(1),
+  nombre: z.string().min(1).max(120).optional(),
+  slug: z.string().min(1).max(120).optional(),
+  regimenFiscal: z.string().max(120).nullable().optional(),
+  taxId: z.string().max(60).nullable().optional(),
+  razonSocial: z.string().max(160).nullable().optional(),
+  codigoPostalFiscal: z.string().max(20).nullable().optional(),
+  fiscalActivado: z.boolean().optional(),
+  contabilidadTimezone: z.string().max(80).optional(),
+});
+
+export const adminRemoveTenantUserSchema = z.object({
+  tenantId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export const adminAssignTenantLicenseSchema = z.object({
+  tenantId: z.string().min(1),
+  planId: z.string().min(1),
+  durationDays: z.number().int().min(1).max(3650).optional(),
+  inicio: z.string().datetime().optional(),
+  expiracion: z.string().datetime().optional(),
+  activa: z.boolean().optional().default(true),
+});
+
+export const adminUpdateTenantLicenseSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1).optional(),
+  expiracion: z.string().datetime().optional(),
+  activa: z.boolean().optional(),
+  isAdminTest: z.boolean().optional(),
+  maxUsuarios: z.number().int().min(1).optional(),
+  maxAlmacenes: z.number().int().min(1).optional(),
+  maxProductos: z.number().int().min(1).optional(),
+  maxClientes: z.number().int().min(1).optional(),
+});
+
+export type AdminTenantIdInput = z.infer<typeof adminTenantIdSchema>;
+export type AdminUpdateTenantInput = z.infer<typeof adminUpdateTenantSchema>;
+export type AdminRemoveTenantUserInput = z.infer<
+  typeof adminRemoveTenantUserSchema
+>;
+export type AdminAssignTenantLicenseInput = z.infer<
+  typeof adminAssignTenantLicenseSchema
+>;
+export type AdminUpdateTenantLicenseInput = z.infer<
+  typeof adminUpdateTenantLicenseSchema
+>;

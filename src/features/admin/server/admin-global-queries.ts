@@ -42,6 +42,14 @@ import {
 	adminChangeTenantRoleSchema,
 	adminLicenciaIdSchema,
 	adminRenewLicenciaSchema,
+	adminTenantIdSchema,
+	adminUpdateTenantSchema,
+	adminRemoveTenantUserSchema,
+	adminAssignTenantLicenseSchema,
+	adminUpdateTenantLicenseSchema,
+	adminActivityLogsQuerySchema,
+	adminLoginHistoryQuerySchema,
+	adminRevokeSessionSchema,
 } from "../schemas";
 import type {
 	GetLicenciasQueryInput,
@@ -53,6 +61,14 @@ import type {
 	AdminChangeTenantRoleInput,
 	AdminLicenciaIdInput,
 	AdminRenewLicenciaInput,
+	AdminTenantIdInput,
+	AdminUpdateTenantInput,
+	AdminRemoveTenantUserInput,
+	AdminAssignTenantLicenseInput,
+	AdminUpdateTenantLicenseInput,
+	AdminActivityLogsQueryInput,
+	AdminLoginHistoryQueryInput,
+	AdminRevokeSessionInput,
 } from "../schemas";
 
 /**
@@ -957,7 +973,7 @@ export async function updateAdminUser(
     if (!normalized)
       throw new ActionError(`Rol inválido: ${parsed.role}`, "VALIDATION");
     if (parsed.userId === user.userId) {
-      throw new ActionError("No puedes cambiar tu propio rol", "FORBIDDEN");
+      throw new ActionError("No puedes modificar tu propio rol", "FORBIDDEN");
     }
     if (target.role === "admin" && normalized !== "admin") {
       await assertNotLastPlatformAdmin(parsed.userId);
@@ -1339,7 +1355,7 @@ export async function resendAdminUserVerification(
 }
 
 /**
- * @description Asigna un usuario a una empresa o lo cambia de empresa.
+ * @description Asigna un usuario a una empresa o lo mueve de empresa.
  * @param {AdminAssignTenantInput} input - Usuario, empresa, rol y cambio de empresa.
  * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
  * @returns {Promise<object>} Membresía resultante y mensaje.
@@ -1409,7 +1425,7 @@ export async function assignAdminUserTenant(
 }
 
 /**
- * @description Cambia el rol de un usuario dentro de una empresa.
+ * @description Modifica el rol de un usuario dentro de una empresa.
  * @param {AdminChangeTenantRoleInput} input - Usuario, empresa y nuevo rol.
  * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
  * @returns {Promise<object>} Membresía actualizada y mensaje.
@@ -1739,4 +1755,650 @@ export async function deleteAdminLicense(
 
   revalidatePath("/admin");
   return { success: true, tenantLicenseId: parsed.tenantLicenseId };
+}
+
+// ─── Gestión de empresas ─────────────────────────────────────────────
+
+const adminTenantDetailSelect = {
+  tenantId: true,
+  nombre: true,
+  slug: true,
+  createdAt: true,
+  updatedAt: true,
+  contabilidadTimezone: true,
+  regimenFiscal: true,
+  taxId: true,
+  razonSocial: true,
+  codigoPostalFiscal: true,
+  fiscalActivado: true,
+} satisfies Record<string, boolean>;
+
+/**
+ * @description Obtiene el detalle completo de una empresa.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Empresa con licencia vigente, miembros y conteos.
+ */
+export async function getAdminTenantDetail(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: {
+      ...adminTenantDetailSelect,
+      licencias: {
+        orderBy: { createdAt: "desc" },
+        include: { plan: true },
+      },
+      memberships: {
+        where: { isActive: true },
+        select: {
+          membershipId: true,
+          tenantRole: true,
+          isActive: true,
+          createdAt: true,
+          user: {
+            select: {
+              userId: true,
+              name: true,
+              email: true,
+              role: true,
+              isActive: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: {
+        select: {
+          memberships: true,
+          productos: true,
+          almacenes: true,
+          clientes: true,
+        },
+      },
+    },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  // Igual que getAdminTenants (fix 3feec6b6): la vigencia exige expiracion futura.
+  const now = new Date();
+  const currentLicense =
+    tenant.licencias.find((l) => l.activa && !l.isDemo && l.expiracion > now) ??
+    tenant.licencias.find((l) => l.activa && l.expiracion > now) ??
+    null;
+
+  return {
+    tenant: {
+      ...tenant,
+      totalUsers: tenant._count.memberships,
+      totalProducts: tenant._count.productos,
+      totalWarehouses: tenant._count.almacenes,
+      totalClients: tenant._count.clientes,
+    },
+    currentLicense,
+  };
+}
+
+/**
+ * @description Edita el nombre, los datos fiscales y la configuración de una empresa.
+ * @param {AdminUpdateTenantInput} input - Campos a actualizar.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Empresa actualizada y mensaje.
+ */
+export async function updateAdminTenant(
+  input: AdminUpdateTenantInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUpdateTenantSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: { tenantId: true, slug: true },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: Record<string, any> = {};
+  if (parsed.nombre !== undefined) data.nombre = parsed.nombre.trim();
+  if (parsed.slug !== undefined) {
+    const slug = parsed.slug.trim();
+    if (slug !== tenant.slug) {
+      const conflict = await prisma.tenant.findUnique({
+        where: { slug },
+        select: { tenantId: true },
+      });
+      if (conflict && conflict.tenantId !== parsed.tenantId) {
+        throw new ActionError(
+          "El identificador ya está en uso por otra empresa",
+          "CONFLICT",
+        );
+      }
+    }
+    data.slug = slug;
+  }
+  if (parsed.regimenFiscal !== undefined)
+    data.regimenFiscal = parsed.regimenFiscal;
+  if (parsed.taxId !== undefined) data.taxId = parsed.taxId;
+  if (parsed.razonSocial !== undefined) data.razonSocial = parsed.razonSocial;
+  if (parsed.codigoPostalFiscal !== undefined)
+    data.codigoPostalFiscal = parsed.codigoPostalFiscal;
+  if (parsed.fiscalActivado !== undefined)
+    data.fiscalActivado = parsed.fiscalActivado;
+  if (parsed.contabilidadTimezone !== undefined)
+    data.contabilidadTimezone = parsed.contabilidadTimezone;
+
+  if (Object.keys(data).length === 0) {
+    throw new ActionError("Sin cambios para aplicar", "VALIDATION");
+  }
+
+  const updated = await prisma.tenant.update({
+    where: { tenantId: parsed.tenantId },
+    data,
+    select: adminTenantDetailSelect,
+  });
+
+  revalidatePath("/admin");
+  return { tenant: updated, message: "Empresa actualizada correctamente" };
+}
+
+/**
+ * @description Activa una empresa reactivando todas sus membresías.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Cantidad reactivada y mensaje.
+ */
+export async function activateAdminTenant(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: { tenantId: true, nombre: true },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  const result = await prisma.tenantMembership.updateMany({
+    where: { tenantId: parsed.tenantId, isActive: false },
+    data: { isActive: true },
+  });
+
+  revalidatePath("/admin");
+  return {
+    tenantId: parsed.tenantId,
+    membershipsActivated: result.count,
+    message:
+      result.count === 0
+        ? `${tenant.nombre} ya tenía todas sus membresías activas`
+        : `${tenant.nombre} activada: ${result.count} membresías reactivadas`,
+  };
+}
+
+/**
+ * @description Desactiva una empresa bloqueando el acceso de todos sus miembros.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Cantidad desactivada y mensaje.
+ */
+export async function deactivateAdminTenant(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: { tenantId: true, nombre: true },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  const result = await prisma.tenantMembership.updateMany({
+    where: { tenantId: parsed.tenantId, isActive: true },
+    data: { isActive: false },
+  });
+
+  revalidatePath("/admin");
+  return {
+    tenantId: parsed.tenantId,
+    membershipsDeactivated: result.count,
+    message: `${tenant.nombre} desactivada: ${result.count} membresías bloqueadas`,
+  };
+}
+
+/**
+ * @description Elimina permanentemente una empresa y todos sus datos.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación de eliminación.
+ */
+export async function deleteAdminTenant(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: { tenantId: true, nombre: true },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  await prisma.tenant.delete({ where: { tenantId: parsed.tenantId } });
+
+  revalidatePath("/admin");
+  return {
+    success: true,
+    tenantId: parsed.tenantId,
+    message: `Empresa ${tenant.nombre} eliminada permanentemente`,
+  };
+}
+
+/**
+ * @description Lista los usuarios pertenecientes a una empresa.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Miembros con sus datos y total.
+ */
+export async function getAdminTenantUsers(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: { tenantId: true },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  const memberships = await prisma.tenantMembership.findMany({
+    where: { tenantId: parsed.tenantId },
+    select: {
+      membershipId: true,
+      tenantRole: true,
+      isActive: true,
+      createdAt: true,
+      user: {
+        select: {
+          userId: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          avatar: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const users = memberships.map((m) => ({
+    ...m.user,
+    tenantRole: m.tenantRole,
+    membershipId: m.membershipId,
+    membershipActive: m.isActive,
+    memberSince: m.createdAt,
+  }));
+
+  return { users, total: users.length, tenantId: parsed.tenantId };
+}
+
+/**
+ * @description Quita un usuario de una empresa desactivando su membresía.
+ * @param {AdminRemoveTenantUserInput} input - Empresa y usuario.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Resultado y mensaje.
+ */
+export async function removeAdminTenantUser(
+  input: AdminRemoveTenantUserInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminRemoveTenantUserSchema.parse(input ?? {});
+
+  const membership = await prisma.tenantMembership.findUnique({
+    where: {
+      tenantId_userId: { tenantId: parsed.tenantId, userId: parsed.userId },
+    },
+    select: {
+      membershipId: true,
+      isActive: true,
+      user: { select: { name: true } },
+      tenant: { select: { nombre: true } },
+    },
+  });
+  if (!membership) {
+    throw new ActionError(
+      "El usuario no pertenece a esta empresa",
+      "NOT_FOUND",
+    );
+  }
+  if (!membership.isActive) {
+    throw new ActionError(
+      "El usuario ya no es miembro activo de esta empresa",
+      "CONFLICT",
+    );
+  }
+
+  await prisma.tenantMembership.update({
+    where: { membershipId: membership.membershipId },
+    data: { isActive: false },
+  });
+
+  revalidatePath("/admin");
+  return {
+    success: true,
+    membershipId: membership.membershipId,
+    message: `${membership.user.name} fue quitado de ${membership.tenant.nombre}`,
+  };
+}
+
+/**
+ * @description Obtiene las licencias de una empresa y la vigente.
+ * @param {AdminTenantIdInput} input - Identificador de la empresa.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Licencias ordenadas y la vigente.
+ */
+export async function getAdminTenantLicense(
+  input: AdminTenantIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminTenantIdSchema.parse(input ?? {});
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: parsed.tenantId },
+    select: {
+      tenantId: true,
+      licencias: {
+        orderBy: { createdAt: "desc" },
+        include: { plan: true },
+      },
+    },
+  });
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+  const now = new Date();
+  const current =
+    tenant.licencias.find((l) => l.activa && !l.isDemo && l.expiracion > now) ??
+    tenant.licencias.find((l) => l.activa && l.expiracion > now) ??
+    null;
+
+  return {
+    licenses: tenant.licencias,
+    current,
+    tenantId: parsed.tenantId,
+  };
+}
+
+/**
+ * @description Asigna una licencia nueva a una empresa desactivando las vigentes.
+ * @param {AdminAssignTenantLicenseInput} input - Empresa, plan y vigencia.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Licencia creada y mensaje.
+ */
+export async function assignAdminTenantLicense(
+  input: AdminAssignTenantLicenseInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminAssignTenantLicenseSchema.parse(input ?? {});
+
+  const [tenant, plan] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { tenantId: parsed.tenantId },
+      select: { tenantId: true, nombre: true },
+    }),
+    prisma.plan.findUnique({ where: { planId: parsed.planId } }),
+  ]);
+  if (!tenant) throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+  if (!plan) throw new ActionError("Plan no encontrado", "NOT_FOUND");
+
+  const durationDays = resolveLicenseDurationDays(
+    plan.duracionDias,
+    parsed.durationDays,
+  );
+  if (!durationDays) {
+    throw new ActionError(
+      "No se pudo resolver la duración de la licencia",
+      "VALIDATION",
+    );
+  }
+
+  const inicio = parsed.inicio ? new Date(parsed.inicio) : new Date();
+  const expiracion = parsed.expiracion
+    ? new Date(parsed.expiracion)
+    : addDays(inicio, durationDays);
+
+  const license = await prisma.$transaction(async (tx) => {
+    await tx.tenantLicense.updateMany({
+      where: { tenantId: parsed.tenantId, activa: true },
+      data: { activa: false },
+    });
+
+    const created = await tx.tenantLicense.create({
+      data: {
+        tenantId: parsed.tenantId,
+        planId: plan.planId,
+        inicio,
+        expiracion,
+        activa: parsed.activa,
+        maxUsuarios: plan.maxUsuarios,
+        maxAlmacenes: plan.maxAlmacenes,
+        maxProductos: plan.maxProductos,
+        maxClientes: plan.maxClientes,
+        ...resolveLicensePricing(Number(plan.precio), false),
+      },
+      include: { plan: true },
+    });
+
+    await AuditLogService.logStrict(
+      {
+        accion: "CREATE",
+        entidad: "TENANT_LICENSE",
+        entidadId: created.tenantLicenseId,
+        usuarioId: user.userId,
+        detalles: {
+          tenantId: parsed.tenantId,
+          planId: plan.planId,
+          expiracion: expiracion.toISOString(),
+          via: "mobile-admin",
+        },
+      },
+      tx,
+    );
+
+    return created;
+  });
+
+  revalidatePath("/admin");
+  return {
+    license,
+    message: `Licencia ${plan.nombre} asignada a ${tenant.nombre}`,
+  };
+}
+
+/**
+ * @description Modifica el plan, los límites o el vencimiento de una licencia.
+ * @param {AdminUpdateTenantLicenseInput} input - Cambios a aplicar.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Licencia actualizada y mensaje.
+ */
+export async function updateAdminTenantLicense(
+  input: AdminUpdateTenantLicenseInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminUpdateTenantLicenseSchema.parse(input ?? {});
+
+  const license = await prisma.tenantLicense.findUnique({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    select: { tenantLicenseId: true, planId: true },
+  });
+  if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: Record<string, any> = {};
+  if (parsed.expiracion !== undefined)
+    data.expiracion = new Date(parsed.expiracion);
+  if (parsed.activa !== undefined) data.activa = parsed.activa;
+  if (parsed.isAdminTest !== undefined) data.isAdminTest = parsed.isAdminTest;
+  if (parsed.maxUsuarios !== undefined) data.maxUsuarios = parsed.maxUsuarios;
+  if (parsed.maxAlmacenes !== undefined) data.maxAlmacenes = parsed.maxAlmacenes;
+  if (parsed.maxProductos !== undefined)
+    data.maxProductos = parsed.maxProductos;
+  if (parsed.maxClientes !== undefined) data.maxClientes = parsed.maxClientes;
+
+  let planChanged = false;
+  if (parsed.planId !== undefined && parsed.planId !== license.planId) {
+    const plan = await prisma.plan.findUnique({
+      where: { planId: parsed.planId },
+    });
+    if (!plan) throw new ActionError("Plan no encontrado", "NOT_FOUND");
+    data.planId = plan.planId;
+    // Al modificar el plan se sincronizan límites y precios del plan,
+    // salvo que se hayan indicado límites explícitos.
+    if (parsed.maxUsuarios === undefined) data.maxUsuarios = plan.maxUsuarios;
+    if (parsed.maxAlmacenes === undefined)
+      data.maxAlmacenes = plan.maxAlmacenes;
+    if (parsed.maxProductos === undefined)
+      data.maxProductos = plan.maxProductos;
+    if (parsed.maxClientes === undefined) data.maxClientes = plan.maxClientes;
+    Object.assign(data, resolveLicensePricing(Number(plan.precio), false));
+    planChanged = true;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ActionError("Sin cambios para aplicar", "VALIDATION");
+  }
+
+  const updated = await prisma.tenantLicense.update({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    data,
+    include: { plan: true },
+  });
+
+  await AuditLogService.logStrict({
+    accion: "UPDATE",
+    entidad: "TENANT_LICENSE",
+    entidadId: updated.tenantLicenseId,
+    usuarioId: user.userId,
+    detalles: {
+      changes: Object.keys(data),
+      planChanged,
+      via: "mobile-admin",
+    },
+  });
+
+  revalidatePath("/admin");
+  return { license: updated, message: "Licencia actualizada correctamente" };
+}
+
+// ─── Logs de acceso y sesiones ─────────────────────────────────────
+
+/**
+ * @description Obtiene el registro de actividad de los usuarios.
+ * @param {AdminActivityLogsQueryInput} input - Filtros opcionales (usuario, límite).
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Entradas del log ordenadas por fecha descendente.
+ */
+export async function getAdminActivityLogs(
+  input: AdminActivityLogsQueryInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminActivityLogsQuerySchema.parse(input ?? {});
+
+  const logs = await prisma.userActivityLog.findMany({
+    where: parsed.userId ? { userId: parsed.userId } : undefined,
+    orderBy: { createdAt: "desc" },
+    take: parsed.limit ?? 100,
+  });
+
+  return { logs, total: logs.length };
+}
+
+/**
+ * @description Obtiene el historial de sesiones (inicios de sesión) de un usuario.
+ * @param {AdminLoginHistoryQueryInput} input - Usuario y límite opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Sesiones del usuario ordenadas por fecha descendente.
+ */
+export async function getAdminUserLoginHistory(
+  input: AdminLoginHistoryQueryInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminLoginHistoryQuerySchema.parse(input ?? {});
+
+  const sessions = await prisma.userSession.findMany({
+    where: { userId: parsed.userId },
+    orderBy: { createdAt: "desc" },
+    take: parsed.limit ?? 50,
+    include: { user: { select: { name: true, email: true } } },
+  });
+
+  return { sessions, total: sessions.length, userId: parsed.userId };
+}
+
+/**
+ * @description Lista las sesiones registradas en la plataforma.
+ * @param {Record<string, unknown>} _input - Sin parámetros (reservado).
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Sesiones ordenadas por fecha descendente.
+ */
+export async function getAdminSessions(
+  _input: Record<string, unknown>,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+
+  const sessions = await prisma.userSession.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: { user: { select: { name: true, email: true, role: true } } },
+  });
+
+  return { sessions, total: sessions.length };
+}
+
+/**
+ * @description Revoca una sesión específica de un usuario.
+ * @param {AdminRevokeSessionInput} input - Identificador de la sesión.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación de revocación.
+ */
+export async function revokeAdminSession(
+  input: AdminRevokeSessionInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminRevokeSessionSchema.parse(input ?? {});
+
+  const session = await prisma.userSession.findUnique({
+    where: { id: parsed.sessionId },
+    select: { id: true, user: { select: { name: true } } },
+  });
+  if (!session) throw new ActionError("Sesión no encontrada", "NOT_FOUND");
+
+  await prisma.userSession.delete({ where: { id: parsed.sessionId } });
+
+  revalidatePath("/admin");
+  return {
+    success: true,
+    sessionId: parsed.sessionId,
+    message: `Sesión de ${session.user.name} revocada correctamente`,
+  };
 }

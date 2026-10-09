@@ -6329,6 +6329,374 @@
         }
       }
     },
+    "/admin/licenses/renew": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Renovar una licencia",
+        "description": "Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.",
+        "operationId": "mobileRenewAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewAdminLicenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesRenewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/activate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Activar una licencia",
+        "description": "Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.",
+        "operationId": "mobileActivateAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Desactivar una licencia",
+        "description": "Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.",
+        "operationId": "mobileDeactivateAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesDeactivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/delete": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Eliminar una licencia",
+        "description": "Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.",
+        "operationId": "mobileDeleteAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/memberships/approve": {
       "post": {
         "tags": [
@@ -6623,6 +6991,999 @@
         }
       }
     },
+    "/admin/tenants/detail": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Obtener el detalle de una empresa",
+        "description": "Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.",
+        "operationId": "mobileGetAdminTenantDetail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "description": "Identificador de la empresa.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminTenantDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/update": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Editar los datos de una empresa",
+        "description": "Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.",
+        "operationId": "mobileUpdateAdminTenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatchAdminTenantsUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/activate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Activar una empresa",
+        "description": "Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.",
+        "operationId": "mobileActivateAdminTenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTenantIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Desactivar una empresa",
+        "description": "Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.",
+        "operationId": "mobileDeactivateAdminTenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTenantIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsDeactivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/delete": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Eliminar una empresa",
+        "description": "Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.",
+        "operationId": "mobileDeleteAdminTenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTenantIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar los usuarios de una empresa",
+        "description": "Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.",
+        "operationId": "mobileGetAdminTenantUsers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "description": "Identificador de la empresa.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminTenantUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/remove-user": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Quitar un usuario de una empresa",
+        "description": "Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.",
+        "operationId": "mobileRemoveAdminTenantUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRemoveTenantUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsRemoveUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/license": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Ver las licencias de una empresa",
+        "description": "Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.",
+        "operationId": "mobileGetAdminTenantLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "description": "Identificador de la empresa.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminTenantLicenseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/license/assign": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Asignar una licencia a una empresa",
+        "description": "Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.",
+        "operationId": "mobileAssignAdminTenantLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignAdminTenantLicenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsLicenseAssignResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/license/update": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Actualizar la licencia de una empresa",
+        "description": "Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.",
+        "operationId": "mobileUpdateAdminTenantLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminTenantLicenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatchAdminTenantsLicenseUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants/license/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Desactivar la licencia de una empresa",
+        "description": "Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.",
+        "operationId": "mobileDeactivateAdminTenantLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminTenantsLicenseDeactivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/users": {
       "get": {
         "tags": [
@@ -6681,6 +8042,340 @@
           },
           "403": {
             "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/activity-logs": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Obtener el registro de actividad de los usuarios",
+        "description": "Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.",
+        "operationId": "mobileGetAdminActivityLogs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "description": "Identificador del usuario a filtrar.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Cantidad máxima de entradas a devolver.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminActivityLogsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/login-history": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Obtener el historial de sesiones de un usuario",
+        "description": "Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.",
+        "operationId": "mobileGetAdminUserLoginHistory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "description": "Identificador del usuario.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Cantidad máxima de entradas a devolver.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminUserLoginHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sessions": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar las sesiones registradas",
+        "description": "Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.",
+        "operationId": "mobileGetAdminSessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminSessionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sessions/revoke": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Revocar una sesión específica",
+        "description": "Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.",
+        "operationId": "mobileRevokeAdminSession",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRevokeSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminSessionsRevokeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
             "content": {
               "application/json": {
                 "schema": {
@@ -6819,6 +8514,1015 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PostAdminUsersLockResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/detail": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Obtener el detalle de un usuario",
+        "description": "Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.",
+        "operationId": "mobileGetAdminUserDetail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "description": "Identificador del usuario a consultar.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminUserDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/update": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Editar nombre, email o rol de un usuario",
+        "description": "Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.",
+        "operationId": "mobileUpdateAdminUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatchAdminUsersUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/activate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Activar un usuario",
+        "description": "Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.",
+        "operationId": "mobileActivateAdminUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Desactivar un usuario",
+        "description": "Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.",
+        "operationId": "mobileDeactivateAdminUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersDeactivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/delete": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Eliminar un usuario",
+        "description": "Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.",
+        "operationId": "mobileDeleteAdminUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/reset-password": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Enviar enlace de restablecimiento de contraseña",
+        "description": "Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.",
+        "operationId": "mobileResetAdminUserPassword",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/verify-email": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Marcar el email como verificado",
+        "description": "Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.",
+        "operationId": "mobileVerifyAdminUserEmail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersVerifyEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/resend-verification": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Reenviar el email de verificación",
+        "description": "Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.",
+        "operationId": "mobileResendAdminUserVerification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersResendVerificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/assign-tenant": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Asignar o cambiar la empresa de un usuario",
+        "description": "Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.",
+        "operationId": "mobileAssignAdminUserTenant",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignAdminUserTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersAssignTenantResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/change-tenant-role": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cambiar el rol de un usuario dentro de una empresa",
+        "description": "Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.",
+        "operationId": "mobileChangeAdminUserTenantRole",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAdminUserTenantRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatchAdminUsersChangeTenantRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/revoke-sessions": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Revocar las sesiones activas de un usuario",
+        "description": "Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.",
+        "operationId": "mobileRevokeAdminUserSessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminUsersRevokeSessionsResponse"
                 }
               }
             }
@@ -11106,28 +13810,72 @@
       "BankAccountTransaction": {
         "type": "object",
         "properties": {
-          "transaccionId": { "type": "string" },
-          "fecha": { "type": "string", "format": "date-time" },
-          "tipoMovimiento": { "type": "string" },
-          "descripcion": { "type": "string" },
-          "montoOriginal": { "type": "number" },
-          "monedaOriginal": { "type": "string" },
-          "tasaCambio": { "type": ["number", "null"] },
-          "montoConvertido": { "type": "number" },
-          "observaciones": { "type": "string" }
+          "transaccionId": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tipoMovimiento": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "montoOriginal": {
+            "type": "number"
+          },
+          "monedaOriginal": {
+            "type": "string"
+          },
+          "tasaCambio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "montoConvertido": {
+            "type": "number"
+          },
+          "observaciones": {
+            "type": "string"
+          }
         },
-        "required": ["transaccionId", "fecha", "tipoMovimiento", "descripcion", "montoOriginal", "monedaOriginal", "tasaCambio", "montoConvertido"],
+        "required": [
+          "transaccionId",
+          "fecha",
+          "tipoMovimiento",
+          "descripcion",
+          "montoOriginal",
+          "monedaOriginal",
+          "tasaCambio",
+          "montoConvertido"
+        ],
         "additionalProperties": false
       },
       "BankAccountHistorySummary": {
         "type": "object",
         "properties": {
-          "saldoActual": { "type": "number" },
-          "totalIngresos": { "type": "number" },
-          "totalEgresos": { "type": "number" },
-          "totalMovimientos": { "type": "integer" }
+          "saldoActual": {
+            "type": "number"
+          },
+          "totalIngresos": {
+            "type": "number"
+          },
+          "totalEgresos": {
+            "type": "number"
+          },
+          "totalMovimientos": {
+            "type": "integer"
+          }
         },
-        "required": ["saldoActual", "totalIngresos", "totalEgresos", "totalMovimientos"],
+        "required": [
+          "saldoActual",
+          "totalIngresos",
+          "totalEgresos",
+          "totalMovimientos"
+        ],
         "additionalProperties": false
       },
       "BankAdjustment": {
@@ -11599,6 +14347,12 @@
           "motivo": {
             "type": "string",
             "minLength": 1
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -11698,6 +14452,12 @@
           },
           "cuentaBancariaId": {
             "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -11759,6 +14519,12 @@
           "cuentaBancariaId": {
             "type": "string",
             "minLength": 1
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -11798,6 +14564,12 @@
           "cuentaBancariaId": {
             "type": "string",
             "minLength": 1
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -11845,6 +14617,12 @@
           },
           "observaciones": {
             "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -12088,6 +14866,12 @@
           "fechaReconciliacion": {
             "type": "string",
             "format": "date-time"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Clave estable para reintentar una conciliación sin duplicar el pago."
           }
         },
         "required": [
@@ -12497,7 +15281,9 @@
         "properties": {
           "transacciones": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/BankAccountTransaction" }
+            "items": {
+              "$ref": "#/components/schemas/BankAccountTransaction"
+            }
           },
           "resumen": {
             "$ref": "#/components/schemas/BankAccountHistorySummary"
@@ -12506,7 +15292,11 @@
             "$ref": "#/components/schemas/Pagination"
           }
         },
-        "required": ["transacciones", "resumen", "pagination"],
+        "required": [
+          "transacciones",
+          "resumen",
+          "pagination"
+        ],
         "additionalProperties": false
       },
       "GetAccountingBankAdjustmentsResponse": {
@@ -13476,6 +16266,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "replayed": {
+            "type": "boolean",
+            "description": "Indica si se devolvió una conciliación existente para la misma clave idempotente."
+          },
           "observaciones": {
             "type": [
               "string",
@@ -14296,6 +17090,1385 @@
           }
         },
         "additionalProperties": false
+      },
+      "AdminUserIdRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "UpdateAdminUserRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "regularUser",
+              "salesAgent"
+            ]
+          }
+        }
+      },
+      "AssignAdminUserTenantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "tenantId",
+          "tenantRole"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantRole": {
+            "type": "string",
+            "enum": [
+              "manager",
+              "economico",
+              "dependiente"
+            ]
+          },
+          "deactivateOthers": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ChangeAdminUserTenantRoleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "tenantId",
+          "tenantRole"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantRole": {
+            "type": "string",
+            "enum": [
+              "manager",
+              "economico",
+              "dependiente"
+            ]
+          }
+        }
+      },
+      "AdminUserMembership": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "membershipId",
+          "tenantId",
+          "tenantRole",
+          "isActive"
+        ],
+        "properties": {
+          "membershipId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "tenantRole": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "tenant": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tenantId",
+              "nombre"
+            ],
+            "properties": {
+              "tenantId": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "AdminUserDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "role",
+          "isActive",
+          "loginAttempts",
+          "activeSessions"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "onboardingType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onboardingStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "emailVerifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "avatar": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lockedUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "loginAttempts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastFailedLogin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserMembership"
+            }
+          },
+          "activeSessions": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "GetAdminUserDetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AdminUserDetail"
+          }
+        }
+      },
+      "AdminUserSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "role",
+          "isActive"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lockedUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "loginAttempts": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      },
+      "PatchAdminUsersUpdateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user",
+          "message"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AdminUserSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminUserStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "isActive"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lockedUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "PostAdminUsersActivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user",
+          "message"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AdminUserStatus"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersDeactivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user",
+          "message"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AdminUserStatus"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "userId"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersResetPasswordResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersVerifyEmailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user",
+          "alreadyVerified",
+          "message"
+        ],
+        "properties": {
+          "user": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "userId",
+              "email"
+            ],
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "emailVerifiedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            }
+          },
+          "alreadyVerified": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersResendVerificationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersAssignTenantResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "membership",
+          "message"
+        ],
+        "properties": {
+          "membership": {
+            "$ref": "#/components/schemas/AdminUserMembership"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PatchAdminUsersChangeTenantRoleResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "membership",
+          "message"
+        ],
+        "properties": {
+          "membership": {
+            "$ref": "#/components/schemas/AdminUserMembership"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminUsersRevokeSessionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "revoked",
+          "message"
+        ],
+        "properties": {
+          "revoked": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminLicenciaIdRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "RenewAdminLicenseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "planId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "durationDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650
+          }
+        }
+      },
+      "AdminLicenseSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId",
+          "tenantId",
+          "activa"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "isAdminTest": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostAdminLicensesRenewResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId",
+          "newExpiracion",
+          "newPlanId",
+          "message"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string"
+          },
+          "newExpiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newPlanId": {
+            "type": "string"
+          },
+          "previousExpiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previousPlanId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesActivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminLicenseSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesDeactivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminLicenseSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "tenantLicenseId": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminTenantIdRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "UpdateAdminTenantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "regimenFiscal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "taxId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 60
+          },
+          "razonSocial": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 160
+          },
+          "codigoPostalFiscal": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "fiscalActivado": {
+            "type": "boolean"
+          },
+          "contabilidadTimezone": {
+            "type": "string",
+            "maxLength": 80
+          }
+        }
+      },
+      "AdminRemoveTenantUserRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "userId"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "AssignAdminTenantLicenseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "planId"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "planId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "durationDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateAdminTenantLicenseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "planId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "isAdminTest": {
+            "type": "boolean"
+          },
+          "maxUsuarios": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxAlmacenes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxProductos": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxClientes": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "AdminTenantDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "nombre"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contabilidadTimezone": {
+            "type": "string"
+          },
+          "regimenFiscal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "razonSocial": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "codigoPostalFiscal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fiscalActivado": {
+            "type": "boolean"
+          },
+          "totalUsers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalProducts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalWarehouses": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalClients": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "GetAdminTenantDetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenant",
+          "currentLicense"
+        ],
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/AdminTenantDetail"
+          },
+          "currentLicense": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminLicenseSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PatchAdminTenantsUpdateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenant",
+          "message"
+        ],
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/AdminTenantDetail"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsActivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "membershipsActivated",
+          "message"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string"
+          },
+          "membershipsActivated": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsDeactivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "membershipsDeactivated",
+          "message"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string"
+          },
+          "membershipsDeactivated": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "tenantId",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminTenantUserItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "avatar": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenantRole": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string"
+          },
+          "membershipActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetAdminTenantUsersResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "users",
+          "total",
+          "tenantId"
+        ],
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTenantUserItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsRemoveUserResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "membershipId",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "membershipId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GetAdminTenantLicenseResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "licenses",
+          "current",
+          "tenantId"
+        ],
+        "properties": {
+          "licenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTenantLicenseItem"
+            }
+          },
+          "current": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AdminTenantLicenseItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsLicenseAssignResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminTenantLicenseItem"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PatchAdminTenantsLicenseUpdateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminTenantLicenseItem"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminTenantsLicenseDeactivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminLicenseSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminRevokeSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sessionId"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "AdminActivityLogItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "action"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "performedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAdminActivityLogsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "logs",
+          "total"
+        ],
+        "properties": {
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminActivityLogItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminSessionItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAdminUserLoginHistoryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sessions",
+          "total",
+          "userId"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSessionItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "GetAdminSessionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sessions",
+          "total"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSessionItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "PostAdminSessionsRevokeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "sessionId",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       }
     }
   }
