@@ -400,7 +400,7 @@ Registra un ingreso o egreso manual y actualiza el saldo de la cuenta bancaria s
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let bankAdjustmentRequest = BankAdjustmentRequest(cuentaId: "cuentaId_example", tipo: "tipo_example", monto: 123, moneda: "moneda_example", descripcion: "descripcion_example", motivo: "motivo_example") // BankAdjustmentRequest | 
+let bankAdjustmentRequest = BankAdjustmentRequest(cuentaId: "cuentaId_example", tipo: "tipo_example", monto: 123, moneda: "moneda_example", descripcion: "descripcion_example", motivo: "motivo_example", idempotencyKey: "idempotencyKey_example") // BankAdjustmentRequest | 
 let cuentaId = "cuentaId_example" // String | Identificador de la cuenta bancaria. (optional)
 let tipo = "tipo_example" // String | Tipo de registro solicitado. (optional)
 let fechaInicio = Date() // Date | Inicio inclusivo del período consultado. (optional)

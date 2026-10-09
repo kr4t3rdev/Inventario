@@ -10,6 +10,7 @@
 | **moneda** | **kotlin.String** |  |  [optional] |
 | **tasaCambio** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
 | **observaciones** | **kotlin.String** |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional para repetir la misma operación sin duplicarla. |  [optional] |
 
 
 

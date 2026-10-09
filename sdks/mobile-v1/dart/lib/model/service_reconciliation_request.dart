@@ -16,6 +16,7 @@ class ServiceReconciliationRequest {
     required this.ventaServicioId,
     this.distribuciones = const [],
     this.fechaReconciliacion,
+    this.idempotencyKey,
   });
 
   String ventaServicioId;
@@ -30,21 +31,32 @@ class ServiceReconciliationRequest {
   ///
   DateTime? fechaReconciliacion;
 
+  /// Clave estable para reintentar una conciliación sin duplicar el pago.
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  String? idempotencyKey;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is ServiceReconciliationRequest &&
     other.ventaServicioId == ventaServicioId &&
     _deepEquality.equals(other.distribuciones, distribuciones) &&
-    other.fechaReconciliacion == fechaReconciliacion;
+    other.fechaReconciliacion == fechaReconciliacion &&
+    other.idempotencyKey == idempotencyKey;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
     (ventaServicioId.hashCode) +
     (distribuciones.hashCode) +
-    (fechaReconciliacion == null ? 0 : fechaReconciliacion!.hashCode);
+    (fechaReconciliacion == null ? 0 : fechaReconciliacion!.hashCode) +
+    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
 
   @override
-  String toString() => 'ServiceReconciliationRequest[ventaServicioId=$ventaServicioId, distribuciones=$distribuciones, fechaReconciliacion=$fechaReconciliacion]';
+  String toString() => 'ServiceReconciliationRequest[ventaServicioId=$ventaServicioId, distribuciones=$distribuciones, fechaReconciliacion=$fechaReconciliacion, idempotencyKey=$idempotencyKey]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -54,6 +66,11 @@ class ServiceReconciliationRequest {
       json[r'fechaReconciliacion'] = this.fechaReconciliacion!.toUtc().toIso8601String();
     } else {
       json[r'fechaReconciliacion'] = null;
+    }
+    if (this.idempotencyKey != null) {
+      json[r'idempotencyKey'] = this.idempotencyKey;
+    } else {
+      json[r'idempotencyKey'] = null;
     }
     return json;
   }
@@ -80,6 +97,7 @@ class ServiceReconciliationRequest {
         ventaServicioId: mapValueOfType<String>(json, r'ventaServicioId')!,
         distribuciones: ServiceDistributionRequest.listFromJson(json[r'distribuciones']),
         fechaReconciliacion: mapDateTime(json, r'fechaReconciliacion', r''),
+        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;

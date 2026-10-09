@@ -15,6 +15,7 @@ Name | Type
 `tasaCambio` | number
 `montoConvertido` | number
 `fechaReconciliacion` | Date
+`replayed` | boolean
 `observaciones` | string
 
 ## Example
@@ -32,6 +33,7 @@ const example = {
   "tasaCambio": null,
   "montoConvertido": null,
   "fechaReconciliacion": null,
+  "replayed": null,
   "observaciones": null,
 } satisfies PostAccountingReconciliationServicesResponse
 

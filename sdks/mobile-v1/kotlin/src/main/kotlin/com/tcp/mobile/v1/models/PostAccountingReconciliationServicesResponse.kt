@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param tasaCambio 
  * @param montoConvertido 
  * @param fechaReconciliacion 
+ * @param replayed Indica si se devolvió una conciliación existente para la misma clave idempotente.
  * @param observaciones 
  */
 
@@ -58,6 +59,10 @@ data class PostAccountingReconciliationServicesResponse (
 
     @get:JsonProperty("fechaReconciliacion")
     val fechaReconciliacion: java.time.OffsetDateTime? = null,
+
+    /* Indica si se devolvió una conciliación existente para la misma clave idempotente. */
+    @get:JsonProperty("replayed")
+    val replayed: kotlin.Boolean? = null,
 
     @get:JsonProperty("observaciones")
     val observaciones: kotlin.String? = null

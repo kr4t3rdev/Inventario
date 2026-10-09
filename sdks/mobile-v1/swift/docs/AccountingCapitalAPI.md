@@ -73,7 +73,7 @@ Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuand
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let capitalInjectionCreateRequest = CapitalInjectionCreateRequest(monto: 123, moneda: "moneda_example", tipo: "tipo_example", descripcion: "descripcion_example", cuentaBancariaId: "cuentaBancariaId_example") // CapitalInjectionCreateRequest | 
+let capitalInjectionCreateRequest = CapitalInjectionCreateRequest(monto: 123, moneda: "moneda_example", tipo: "tipo_example", descripcion: "descripcion_example", cuentaBancariaId: "cuentaBancariaId_example", idempotencyKey: "idempotencyKey_example") // CapitalInjectionCreateRequest | 
 let tipo = "tipo_example" // String | Tipo de registro solicitado. (optional)
 
 // Registrar inyecciones de capital

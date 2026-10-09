@@ -49,6 +49,12 @@ export interface CapitalInjectionCreateRequest {
      * @memberof CapitalInjectionCreateRequest
      */
     cuentaBancariaId?: string;
+    /**
+     * Clave opcional para repetir la misma operación sin duplicarla.
+     * @type {string}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    idempotencyKey?: string;
 }
 
 /**
@@ -74,6 +80,7 @@ export function CapitalInjectionCreateRequestFromJSONTyped(json: any, ignoreDisc
         'tipo': json['tipo'] == null ? undefined : json['tipo'],
         'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
         'cuentaBancariaId': json['cuentaBancariaId'] == null ? undefined : json['cuentaBancariaId'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -93,6 +100,7 @@ export function CapitalInjectionCreateRequestToJSONTyped(value?: CapitalInjectio
         'tipo': value['tipo'],
         'descripcion': value['descripcion'],
         'cuentaBancariaId': value['cuentaBancariaId'],
+        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

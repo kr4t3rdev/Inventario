@@ -18,6 +18,7 @@ class CapitalInjectionCreateRequest {
     this.tipo = 'APORTE',
     this.descripcion,
     this.cuentaBancariaId,
+    this.idempotencyKey,
   });
 
   num monto;
@@ -42,13 +43,23 @@ class CapitalInjectionCreateRequest {
   ///
   String? cuentaBancariaId;
 
+  /// Clave opcional para repetir la misma operación sin duplicarla.
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  String? idempotencyKey;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is CapitalInjectionCreateRequest &&
     other.monto == monto &&
     other.moneda == moneda &&
     other.tipo == tipo &&
     other.descripcion == descripcion &&
-    other.cuentaBancariaId == cuentaBancariaId;
+    other.cuentaBancariaId == cuentaBancariaId &&
+    other.idempotencyKey == idempotencyKey;
 
   @override
   int get hashCode =>
@@ -57,10 +68,11 @@ class CapitalInjectionCreateRequest {
     (moneda.hashCode) +
     (tipo.hashCode) +
     (descripcion == null ? 0 : descripcion!.hashCode) +
-    (cuentaBancariaId == null ? 0 : cuentaBancariaId!.hashCode);
+    (cuentaBancariaId == null ? 0 : cuentaBancariaId!.hashCode) +
+    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
 
   @override
-  String toString() => 'CapitalInjectionCreateRequest[monto=$monto, moneda=$moneda, tipo=$tipo, descripcion=$descripcion, cuentaBancariaId=$cuentaBancariaId]';
+  String toString() => 'CapitalInjectionCreateRequest[monto=$monto, moneda=$moneda, tipo=$tipo, descripcion=$descripcion, cuentaBancariaId=$cuentaBancariaId, idempotencyKey=$idempotencyKey]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -76,6 +88,11 @@ class CapitalInjectionCreateRequest {
       json[r'cuentaBancariaId'] = this.cuentaBancariaId;
     } else {
       json[r'cuentaBancariaId'] = null;
+    }
+    if (this.idempotencyKey != null) {
+      json[r'idempotencyKey'] = this.idempotencyKey;
+    } else {
+      json[r'idempotencyKey'] = null;
     }
     return json;
   }
@@ -104,6 +121,7 @@ class CapitalInjectionCreateRequest {
         tipo: mapValueOfType<String>(json, r'tipo') ?? 'APORTE',
         descripcion: mapValueOfType<String>(json, r'descripcion'),
         cuentaBancariaId: mapValueOfType<String>(json, r'cuentaBancariaId'),
+        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;

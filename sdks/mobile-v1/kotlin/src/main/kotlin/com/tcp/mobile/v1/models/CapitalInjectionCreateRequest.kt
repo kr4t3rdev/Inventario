@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param tipo 
  * @param descripcion 
  * @param cuentaBancariaId 
+ * @param idempotencyKey Clave opcional para repetir la misma operación sin duplicarla.
  */
 
 
@@ -44,7 +45,11 @@ data class CapitalInjectionCreateRequest (
     val descripcion: kotlin.String? = null,
 
     @get:JsonProperty("cuentaBancariaId")
-    val cuentaBancariaId: kotlin.String? = null
+    val cuentaBancariaId: kotlin.String? = null,
+
+    /* Clave opcional para repetir la misma operación sin duplicarla. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 

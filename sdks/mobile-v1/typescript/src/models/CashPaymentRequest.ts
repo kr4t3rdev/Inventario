@@ -55,6 +55,12 @@ export interface CashPaymentRequest {
      * @memberof CashPaymentRequest
      */
     observaciones?: string;
+    /**
+     * Clave opcional para repetir la misma operación sin duplicarla.
+     * @type {string}
+     * @memberof CashPaymentRequest
+     */
+    idempotencyKey?: string;
 }
 
 /**
@@ -83,6 +89,7 @@ export function CashPaymentRequestFromJSONTyped(json: any, ignoreDiscriminator: 
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -103,6 +110,7 @@ export function CashPaymentRequestToJSONTyped(value?: CashPaymentRequest | null,
         'moneda': value['moneda'],
         'tasaCambio': value['tasaCambio'],
         'observaciones': value['observaciones'],
+        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

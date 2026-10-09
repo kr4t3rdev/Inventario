@@ -20,30 +20,185 @@ import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.apis.AdminApi
 import com.tcp.mobile.v1.models.AdminHealthResponse
+import com.tcp.mobile.v1.models.AdminLicenciaIdRequest
+import com.tcp.mobile.v1.models.AdminRemoveTenantUserRequest
+import com.tcp.mobile.v1.models.AdminRevokeSessionRequest
+import com.tcp.mobile.v1.models.AdminTenantIdRequest
 import com.tcp.mobile.v1.models.AdminTenantItem
+import com.tcp.mobile.v1.models.AdminUserIdRequest
 import com.tcp.mobile.v1.models.ApiError
 import com.tcp.mobile.v1.models.ApproveAdminMembershipRequest
+import com.tcp.mobile.v1.models.AssignAdminTenantLicenseRequest
+import com.tcp.mobile.v1.models.AssignAdminUserTenantRequest
+import com.tcp.mobile.v1.models.ChangeAdminUserTenantRoleRequest
+import com.tcp.mobile.v1.models.GetAdminActivityLogsResponse
 import com.tcp.mobile.v1.models.GetAdminLicenseStatsResponse
 import com.tcp.mobile.v1.models.GetAdminLicensesResponse
+import com.tcp.mobile.v1.models.GetAdminSessionsResponse
+import com.tcp.mobile.v1.models.GetAdminTenantDetailResponse
+import com.tcp.mobile.v1.models.GetAdminTenantLicenseResponse
+import com.tcp.mobile.v1.models.GetAdminTenantUsersResponse
+import com.tcp.mobile.v1.models.GetAdminUserDetailResponse
+import com.tcp.mobile.v1.models.GetAdminUserLoginHistoryResponse
 import com.tcp.mobile.v1.models.GetAdminUsersResponse
 import com.tcp.mobile.v1.models.LockAdminUserRequest
+import com.tcp.mobile.v1.models.PatchAdminTenantsLicenseUpdateResponse
+import com.tcp.mobile.v1.models.PatchAdminTenantsUpdateResponse
+import com.tcp.mobile.v1.models.PatchAdminUsersChangeTenantRoleResponse
+import com.tcp.mobile.v1.models.PatchAdminUsersUpdateResponse
 import com.tcp.mobile.v1.models.PendingMembershipItem
+import com.tcp.mobile.v1.models.PostAdminLicensesActivateResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesDeleteResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesRenewResponse
 import com.tcp.mobile.v1.models.PostAdminMembershipsApproveResponse
 import com.tcp.mobile.v1.models.PostAdminMembershipsRejectResponse
+import com.tcp.mobile.v1.models.PostAdminSessionsRevokeResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsActivateResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsDeleteResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsLicenseAssignResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsLicenseDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminTenantsRemoveUserResponse
+import com.tcp.mobile.v1.models.PostAdminUsersActivateResponse
+import com.tcp.mobile.v1.models.PostAdminUsersAssignTenantResponse
+import com.tcp.mobile.v1.models.PostAdminUsersDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminUsersDeleteResponse
 import com.tcp.mobile.v1.models.PostAdminUsersLockResponse
+import com.tcp.mobile.v1.models.PostAdminUsersResendVerificationResponse
+import com.tcp.mobile.v1.models.PostAdminUsersResetPasswordResponse
+import com.tcp.mobile.v1.models.PostAdminUsersRevokeSessionsResponse
+import com.tcp.mobile.v1.models.PostAdminUsersVerifyEmailResponse
 import com.tcp.mobile.v1.models.RejectAdminMembershipRequest
+import com.tcp.mobile.v1.models.RenewAdminLicenseRequest
 import com.tcp.mobile.v1.models.UnlockAdminUserRequest
+import com.tcp.mobile.v1.models.UpdateAdminTenantLicenseRequest
+import com.tcp.mobile.v1.models.UpdateAdminTenantRequest
+import com.tcp.mobile.v1.models.UpdateAdminUserRequest
 
 class AdminApiTest : ShouldSpec() {
     init {
         // uncomment below to create an instance of AdminApi
         //val apiInstance = AdminApi()
 
+        // to test mobileActivateAdminLicense
+        should("test mobileActivateAdminLicense") {
+            // uncomment below to test mobileActivateAdminLicense
+            //val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest | 
+            //val result : PostAdminLicensesActivateResponse = apiInstance.mobileActivateAdminLicense(adminLicenciaIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileActivateAdminTenant
+        should("test mobileActivateAdminTenant") {
+            // uncomment below to test mobileActivateAdminTenant
+            //val adminTenantIdRequest : AdminTenantIdRequest =  // AdminTenantIdRequest | 
+            //val result : PostAdminTenantsActivateResponse = apiInstance.mobileActivateAdminTenant(adminTenantIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileActivateAdminUser
+        should("test mobileActivateAdminUser") {
+            // uncomment below to test mobileActivateAdminUser
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersActivateResponse = apiInstance.mobileActivateAdminUser(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
         // to test mobileApproveAdminMembership
         should("test mobileApproveAdminMembership") {
             // uncomment below to test mobileApproveAdminMembership
             //val approveAdminMembershipRequest : ApproveAdminMembershipRequest =  // ApproveAdminMembershipRequest | 
             //val result : PostAdminMembershipsApproveResponse = apiInstance.mobileApproveAdminMembership(approveAdminMembershipRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileAssignAdminTenantLicense
+        should("test mobileAssignAdminTenantLicense") {
+            // uncomment below to test mobileAssignAdminTenantLicense
+            //val assignAdminTenantLicenseRequest : AssignAdminTenantLicenseRequest =  // AssignAdminTenantLicenseRequest | 
+            //val result : PostAdminTenantsLicenseAssignResponse = apiInstance.mobileAssignAdminTenantLicense(assignAdminTenantLicenseRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileAssignAdminUserTenant
+        should("test mobileAssignAdminUserTenant") {
+            // uncomment below to test mobileAssignAdminUserTenant
+            //val assignAdminUserTenantRequest : AssignAdminUserTenantRequest =  // AssignAdminUserTenantRequest | 
+            //val result : PostAdminUsersAssignTenantResponse = apiInstance.mobileAssignAdminUserTenant(assignAdminUserTenantRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileChangeAdminUserTenantRole
+        should("test mobileChangeAdminUserTenantRole") {
+            // uncomment below to test mobileChangeAdminUserTenantRole
+            //val changeAdminUserTenantRoleRequest : ChangeAdminUserTenantRoleRequest =  // ChangeAdminUserTenantRoleRequest | 
+            //val result : PatchAdminUsersChangeTenantRoleResponse = apiInstance.mobileChangeAdminUserTenantRole(changeAdminUserTenantRoleRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeactivateAdminLicense
+        should("test mobileDeactivateAdminLicense") {
+            // uncomment below to test mobileDeactivateAdminLicense
+            //val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest | 
+            //val result : PostAdminLicensesDeactivateResponse = apiInstance.mobileDeactivateAdminLicense(adminLicenciaIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeactivateAdminTenant
+        should("test mobileDeactivateAdminTenant") {
+            // uncomment below to test mobileDeactivateAdminTenant
+            //val adminTenantIdRequest : AdminTenantIdRequest =  // AdminTenantIdRequest | 
+            //val result : PostAdminTenantsDeactivateResponse = apiInstance.mobileDeactivateAdminTenant(adminTenantIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeactivateAdminTenantLicense
+        should("test mobileDeactivateAdminTenantLicense") {
+            // uncomment below to test mobileDeactivateAdminTenantLicense
+            //val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest | 
+            //val result : PostAdminTenantsLicenseDeactivateResponse = apiInstance.mobileDeactivateAdminTenantLicense(adminLicenciaIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeactivateAdminUser
+        should("test mobileDeactivateAdminUser") {
+            // uncomment below to test mobileDeactivateAdminUser
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersDeactivateResponse = apiInstance.mobileDeactivateAdminUser(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeleteAdminLicense
+        should("test mobileDeleteAdminLicense") {
+            // uncomment below to test mobileDeleteAdminLicense
+            //val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest | 
+            //val result : PostAdminLicensesDeleteResponse = apiInstance.mobileDeleteAdminLicense(adminLicenciaIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeleteAdminTenant
+        should("test mobileDeleteAdminTenant") {
+            // uncomment below to test mobileDeleteAdminTenant
+            //val adminTenantIdRequest : AdminTenantIdRequest =  // AdminTenantIdRequest | 
+            //val result : PostAdminTenantsDeleteResponse = apiInstance.mobileDeleteAdminTenant(adminTenantIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileDeleteAdminUser
+        should("test mobileDeleteAdminUser") {
+            // uncomment below to test mobileDeleteAdminUser
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersDeleteResponse = apiInstance.mobileDeleteAdminUser(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminActivityLogs
+        should("test mobileGetAdminActivityLogs") {
+            // uncomment below to test mobileGetAdminActivityLogs
+            //val userId : kotlin.String = userId_example // kotlin.String | Identificador del usuario a filtrar.
+            //val limit : kotlin.Int = 56 // kotlin.Int | Cantidad máxima de entradas a devolver.
+            //val result : GetAdminActivityLogsResponse = apiInstance.mobileGetAdminActivityLogs(userId, limit)
             //result shouldBe ("TODO")
         }
 
@@ -87,10 +242,58 @@ class AdminApiTest : ShouldSpec() {
             //result shouldBe ("TODO")
         }
 
+        // to test mobileGetAdminSessions
+        should("test mobileGetAdminSessions") {
+            // uncomment below to test mobileGetAdminSessions
+            //val result : GetAdminSessionsResponse = apiInstance.mobileGetAdminSessions()
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminTenantDetail
+        should("test mobileGetAdminTenantDetail") {
+            // uncomment below to test mobileGetAdminTenantDetail
+            //val tenantId : kotlin.String = tenantId_example // kotlin.String | Identificador de la empresa.
+            //val result : GetAdminTenantDetailResponse = apiInstance.mobileGetAdminTenantDetail(tenantId)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminTenantLicense
+        should("test mobileGetAdminTenantLicense") {
+            // uncomment below to test mobileGetAdminTenantLicense
+            //val tenantId : kotlin.String = tenantId_example // kotlin.String | Identificador de la empresa.
+            //val result : GetAdminTenantLicenseResponse = apiInstance.mobileGetAdminTenantLicense(tenantId)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminTenantUsers
+        should("test mobileGetAdminTenantUsers") {
+            // uncomment below to test mobileGetAdminTenantUsers
+            //val tenantId : kotlin.String = tenantId_example // kotlin.String | Identificador de la empresa.
+            //val result : GetAdminTenantUsersResponse = apiInstance.mobileGetAdminTenantUsers(tenantId)
+            //result shouldBe ("TODO")
+        }
+
         // to test mobileGetAdminTenants
         should("test mobileGetAdminTenants") {
             // uncomment below to test mobileGetAdminTenants
             //val result : kotlin.collections.List<AdminTenantItem> = apiInstance.mobileGetAdminTenants()
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminUserDetail
+        should("test mobileGetAdminUserDetail") {
+            // uncomment below to test mobileGetAdminUserDetail
+            //val userId : kotlin.String = userId_example // kotlin.String | Identificador del usuario a consultar.
+            //val result : GetAdminUserDetailResponse = apiInstance.mobileGetAdminUserDetail(userId)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetAdminUserLoginHistory
+        should("test mobileGetAdminUserLoginHistory") {
+            // uncomment below to test mobileGetAdminUserLoginHistory
+            //val userId : kotlin.String = userId_example // kotlin.String | Identificador del usuario.
+            //val limit : kotlin.Int = 56 // kotlin.Int | Cantidad máxima de entradas a devolver.
+            //val result : GetAdminUserLoginHistoryResponse = apiInstance.mobileGetAdminUserLoginHistory(userId, limit)
             //result shouldBe ("TODO")
         }
 
@@ -119,11 +322,91 @@ class AdminApiTest : ShouldSpec() {
             //result shouldBe ("TODO")
         }
 
+        // to test mobileRemoveAdminTenantUser
+        should("test mobileRemoveAdminTenantUser") {
+            // uncomment below to test mobileRemoveAdminTenantUser
+            //val adminRemoveTenantUserRequest : AdminRemoveTenantUserRequest =  // AdminRemoveTenantUserRequest | 
+            //val result : PostAdminTenantsRemoveUserResponse = apiInstance.mobileRemoveAdminTenantUser(adminRemoveTenantUserRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileRenewAdminLicense
+        should("test mobileRenewAdminLicense") {
+            // uncomment below to test mobileRenewAdminLicense
+            //val renewAdminLicenseRequest : RenewAdminLicenseRequest =  // RenewAdminLicenseRequest | 
+            //val result : PostAdminLicensesRenewResponse = apiInstance.mobileRenewAdminLicense(renewAdminLicenseRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileResendAdminUserVerification
+        should("test mobileResendAdminUserVerification") {
+            // uncomment below to test mobileResendAdminUserVerification
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersResendVerificationResponse = apiInstance.mobileResendAdminUserVerification(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileResetAdminUserPassword
+        should("test mobileResetAdminUserPassword") {
+            // uncomment below to test mobileResetAdminUserPassword
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersResetPasswordResponse = apiInstance.mobileResetAdminUserPassword(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileRevokeAdminSession
+        should("test mobileRevokeAdminSession") {
+            // uncomment below to test mobileRevokeAdminSession
+            //val adminRevokeSessionRequest : AdminRevokeSessionRequest =  // AdminRevokeSessionRequest | 
+            //val result : PostAdminSessionsRevokeResponse = apiInstance.mobileRevokeAdminSession(adminRevokeSessionRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileRevokeAdminUserSessions
+        should("test mobileRevokeAdminUserSessions") {
+            // uncomment below to test mobileRevokeAdminUserSessions
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersRevokeSessionsResponse = apiInstance.mobileRevokeAdminUserSessions(adminUserIdRequest)
+            //result shouldBe ("TODO")
+        }
+
         // to test mobileUnlockAdminUser
         should("test mobileUnlockAdminUser") {
             // uncomment below to test mobileUnlockAdminUser
             //val unlockAdminUserRequest : UnlockAdminUserRequest =  // UnlockAdminUserRequest | 
             //val result : PostAdminUsersLockResponse = apiInstance.mobileUnlockAdminUser(unlockAdminUserRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileUpdateAdminTenant
+        should("test mobileUpdateAdminTenant") {
+            // uncomment below to test mobileUpdateAdminTenant
+            //val updateAdminTenantRequest : UpdateAdminTenantRequest =  // UpdateAdminTenantRequest | 
+            //val result : PatchAdminTenantsUpdateResponse = apiInstance.mobileUpdateAdminTenant(updateAdminTenantRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileUpdateAdminTenantLicense
+        should("test mobileUpdateAdminTenantLicense") {
+            // uncomment below to test mobileUpdateAdminTenantLicense
+            //val updateAdminTenantLicenseRequest : UpdateAdminTenantLicenseRequest =  // UpdateAdminTenantLicenseRequest | 
+            //val result : PatchAdminTenantsLicenseUpdateResponse = apiInstance.mobileUpdateAdminTenantLicense(updateAdminTenantLicenseRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileUpdateAdminUser
+        should("test mobileUpdateAdminUser") {
+            // uncomment below to test mobileUpdateAdminUser
+            //val updateAdminUserRequest : UpdateAdminUserRequest =  // UpdateAdminUserRequest | 
+            //val result : PatchAdminUsersUpdateResponse = apiInstance.mobileUpdateAdminUser(updateAdminUserRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileVerifyAdminUserEmail
+        should("test mobileVerifyAdminUserEmail") {
+            // uncomment below to test mobileVerifyAdminUserEmail
+            //val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest | 
+            //val result : PostAdminUsersVerifyEmailResponse = apiInstance.mobileVerifyAdminUserEmail(adminUserIdRequest)
             //result shouldBe ("TODO")
         }
 

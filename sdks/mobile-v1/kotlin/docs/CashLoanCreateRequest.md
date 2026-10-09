@@ -12,6 +12,7 @@
 | **tasaCambioAlCrear** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
 | **fechaVencimiento** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  [optional] |
 | **observaciones** | **kotlin.String** |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional para repetir la misma operación sin duplicarla. |  [optional] |
 
 
 

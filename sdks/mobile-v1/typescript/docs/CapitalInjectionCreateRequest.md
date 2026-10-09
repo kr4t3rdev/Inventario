@@ -11,6 +11,7 @@ Name | Type
 `tipo` | string
 `descripcion` | string
 `cuentaBancariaId` | string
+`idempotencyKey` | string
 
 ## Example
 
@@ -24,6 +25,7 @@ const example = {
   "tipo": null,
   "descripcion": null,
   "cuentaBancariaId": null,
+  "idempotencyKey": null,
 } satisfies CapitalInjectionCreateRequest
 
 console.log(example)

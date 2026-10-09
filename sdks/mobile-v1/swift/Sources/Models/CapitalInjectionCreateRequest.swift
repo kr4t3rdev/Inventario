@@ -12,18 +12,22 @@ import AnyCodable
 
 public struct CapitalInjectionCreateRequest: Codable, JSONEncodable, Hashable {
 
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var monto: Double
     public var moneda: String? = "CUP"
     public var tipo: String? = "APORTE"
     public var descripcion: String?
     public var cuentaBancariaId: String?
+    /** Clave opcional para repetir la misma operación sin duplicarla. */
+    public var idempotencyKey: String?
 
-    public init(monto: Double, moneda: String? = "CUP", tipo: String? = "APORTE", descripcion: String? = nil, cuentaBancariaId: String? = nil) {
+    public init(monto: Double, moneda: String? = "CUP", tipo: String? = "APORTE", descripcion: String? = nil, cuentaBancariaId: String? = nil, idempotencyKey: String? = nil) {
         self.monto = monto
         self.moneda = moneda
         self.tipo = tipo
         self.descripcion = descripcion
         self.cuentaBancariaId = cuentaBancariaId
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -32,6 +36,7 @@ public struct CapitalInjectionCreateRequest: Codable, JSONEncodable, Hashable {
         case tipo
         case descripcion
         case cuentaBancariaId
+        case idempotencyKey
     }
 
     // Encodable protocol methods
@@ -43,6 +48,7 @@ public struct CapitalInjectionCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tipo, forKey: .tipo)
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
         try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
 

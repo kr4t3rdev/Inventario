@@ -12,6 +12,7 @@ Name | Type
 `moneda` | string
 `descripcion` | string
 `motivo` | string
+`idempotencyKey` | string
 
 ## Example
 
@@ -26,6 +27,7 @@ const example = {
   "moneda": null,
   "descripcion": null,
   "motivo": null,
+  "idempotencyKey": null,
 } satisfies BankAdjustmentRequest
 
 console.log(example)

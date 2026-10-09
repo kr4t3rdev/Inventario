@@ -10,6 +10,7 @@
 | **descripcion** | **kotlin.String** |  |  |
 | **motivo** | **kotlin.String** |  |  |
 | **moneda** | **kotlin.String** |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional para repetir la misma operación sin duplicarla. |  [optional] |
 
 
 <a id="Tipo"></a>

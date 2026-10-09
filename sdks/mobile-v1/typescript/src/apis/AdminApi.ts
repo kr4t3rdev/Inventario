@@ -16,53 +16,236 @@
 import * as runtime from '../runtime';
 import type {
   AdminHealthResponse,
+  AdminLicenciaIdRequest,
+  AdminRemoveTenantUserRequest,
+  AdminRevokeSessionRequest,
+  AdminTenantIdRequest,
   AdminTenantItem,
+  AdminUserIdRequest,
   ApiError,
   ApproveAdminMembershipRequest,
+  AssignAdminTenantLicenseRequest,
+  AssignAdminUserTenantRequest,
+  ChangeAdminUserTenantRoleRequest,
+  GetAdminActivityLogsResponse,
   GetAdminLicenseStatsResponse,
   GetAdminLicensesResponse,
+  GetAdminSessionsResponse,
+  GetAdminTenantDetailResponse,
+  GetAdminTenantLicenseResponse,
+  GetAdminTenantUsersResponse,
+  GetAdminUserDetailResponse,
+  GetAdminUserLoginHistoryResponse,
   GetAdminUsersResponse,
   LockAdminUserRequest,
+  PatchAdminTenantsLicenseUpdateResponse,
+  PatchAdminTenantsUpdateResponse,
+  PatchAdminUsersChangeTenantRoleResponse,
+  PatchAdminUsersUpdateResponse,
   PendingMembershipItem,
+  PostAdminLicensesActivateResponse,
+  PostAdminLicensesDeactivateResponse,
+  PostAdminLicensesDeleteResponse,
+  PostAdminLicensesRenewResponse,
   PostAdminMembershipsApproveResponse,
   PostAdminMembershipsRejectResponse,
+  PostAdminSessionsRevokeResponse,
+  PostAdminTenantsActivateResponse,
+  PostAdminTenantsDeactivateResponse,
+  PostAdminTenantsDeleteResponse,
+  PostAdminTenantsLicenseAssignResponse,
+  PostAdminTenantsLicenseDeactivateResponse,
+  PostAdminTenantsRemoveUserResponse,
+  PostAdminUsersActivateResponse,
+  PostAdminUsersAssignTenantResponse,
+  PostAdminUsersDeactivateResponse,
+  PostAdminUsersDeleteResponse,
   PostAdminUsersLockResponse,
+  PostAdminUsersResendVerificationResponse,
+  PostAdminUsersResetPasswordResponse,
+  PostAdminUsersRevokeSessionsResponse,
+  PostAdminUsersVerifyEmailResponse,
   RejectAdminMembershipRequest,
+  RenewAdminLicenseRequest,
   UnlockAdminUserRequest,
+  UpdateAdminTenantLicenseRequest,
+  UpdateAdminTenantRequest,
+  UpdateAdminUserRequest,
 } from '../models/index';
 import {
     AdminHealthResponseFromJSON,
     AdminHealthResponseToJSON,
+    AdminLicenciaIdRequestFromJSON,
+    AdminLicenciaIdRequestToJSON,
+    AdminRemoveTenantUserRequestFromJSON,
+    AdminRemoveTenantUserRequestToJSON,
+    AdminRevokeSessionRequestFromJSON,
+    AdminRevokeSessionRequestToJSON,
+    AdminTenantIdRequestFromJSON,
+    AdminTenantIdRequestToJSON,
     AdminTenantItemFromJSON,
     AdminTenantItemToJSON,
+    AdminUserIdRequestFromJSON,
+    AdminUserIdRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     ApproveAdminMembershipRequestFromJSON,
     ApproveAdminMembershipRequestToJSON,
+    AssignAdminTenantLicenseRequestFromJSON,
+    AssignAdminTenantLicenseRequestToJSON,
+    AssignAdminUserTenantRequestFromJSON,
+    AssignAdminUserTenantRequestToJSON,
+    ChangeAdminUserTenantRoleRequestFromJSON,
+    ChangeAdminUserTenantRoleRequestToJSON,
+    GetAdminActivityLogsResponseFromJSON,
+    GetAdminActivityLogsResponseToJSON,
     GetAdminLicenseStatsResponseFromJSON,
     GetAdminLicenseStatsResponseToJSON,
     GetAdminLicensesResponseFromJSON,
     GetAdminLicensesResponseToJSON,
+    GetAdminSessionsResponseFromJSON,
+    GetAdminSessionsResponseToJSON,
+    GetAdminTenantDetailResponseFromJSON,
+    GetAdminTenantDetailResponseToJSON,
+    GetAdminTenantLicenseResponseFromJSON,
+    GetAdminTenantLicenseResponseToJSON,
+    GetAdminTenantUsersResponseFromJSON,
+    GetAdminTenantUsersResponseToJSON,
+    GetAdminUserDetailResponseFromJSON,
+    GetAdminUserDetailResponseToJSON,
+    GetAdminUserLoginHistoryResponseFromJSON,
+    GetAdminUserLoginHistoryResponseToJSON,
     GetAdminUsersResponseFromJSON,
     GetAdminUsersResponseToJSON,
     LockAdminUserRequestFromJSON,
     LockAdminUserRequestToJSON,
+    PatchAdminTenantsLicenseUpdateResponseFromJSON,
+    PatchAdminTenantsLicenseUpdateResponseToJSON,
+    PatchAdminTenantsUpdateResponseFromJSON,
+    PatchAdminTenantsUpdateResponseToJSON,
+    PatchAdminUsersChangeTenantRoleResponseFromJSON,
+    PatchAdminUsersChangeTenantRoleResponseToJSON,
+    PatchAdminUsersUpdateResponseFromJSON,
+    PatchAdminUsersUpdateResponseToJSON,
     PendingMembershipItemFromJSON,
     PendingMembershipItemToJSON,
+    PostAdminLicensesActivateResponseFromJSON,
+    PostAdminLicensesActivateResponseToJSON,
+    PostAdminLicensesDeactivateResponseFromJSON,
+    PostAdminLicensesDeactivateResponseToJSON,
+    PostAdminLicensesDeleteResponseFromJSON,
+    PostAdminLicensesDeleteResponseToJSON,
+    PostAdminLicensesRenewResponseFromJSON,
+    PostAdminLicensesRenewResponseToJSON,
     PostAdminMembershipsApproveResponseFromJSON,
     PostAdminMembershipsApproveResponseToJSON,
     PostAdminMembershipsRejectResponseFromJSON,
     PostAdminMembershipsRejectResponseToJSON,
+    PostAdminSessionsRevokeResponseFromJSON,
+    PostAdminSessionsRevokeResponseToJSON,
+    PostAdminTenantsActivateResponseFromJSON,
+    PostAdminTenantsActivateResponseToJSON,
+    PostAdminTenantsDeactivateResponseFromJSON,
+    PostAdminTenantsDeactivateResponseToJSON,
+    PostAdminTenantsDeleteResponseFromJSON,
+    PostAdminTenantsDeleteResponseToJSON,
+    PostAdminTenantsLicenseAssignResponseFromJSON,
+    PostAdminTenantsLicenseAssignResponseToJSON,
+    PostAdminTenantsLicenseDeactivateResponseFromJSON,
+    PostAdminTenantsLicenseDeactivateResponseToJSON,
+    PostAdminTenantsRemoveUserResponseFromJSON,
+    PostAdminTenantsRemoveUserResponseToJSON,
+    PostAdminUsersActivateResponseFromJSON,
+    PostAdminUsersActivateResponseToJSON,
+    PostAdminUsersAssignTenantResponseFromJSON,
+    PostAdminUsersAssignTenantResponseToJSON,
+    PostAdminUsersDeactivateResponseFromJSON,
+    PostAdminUsersDeactivateResponseToJSON,
+    PostAdminUsersDeleteResponseFromJSON,
+    PostAdminUsersDeleteResponseToJSON,
     PostAdminUsersLockResponseFromJSON,
     PostAdminUsersLockResponseToJSON,
+    PostAdminUsersResendVerificationResponseFromJSON,
+    PostAdminUsersResendVerificationResponseToJSON,
+    PostAdminUsersResetPasswordResponseFromJSON,
+    PostAdminUsersResetPasswordResponseToJSON,
+    PostAdminUsersRevokeSessionsResponseFromJSON,
+    PostAdminUsersRevokeSessionsResponseToJSON,
+    PostAdminUsersVerifyEmailResponseFromJSON,
+    PostAdminUsersVerifyEmailResponseToJSON,
     RejectAdminMembershipRequestFromJSON,
     RejectAdminMembershipRequestToJSON,
+    RenewAdminLicenseRequestFromJSON,
+    RenewAdminLicenseRequestToJSON,
     UnlockAdminUserRequestFromJSON,
     UnlockAdminUserRequestToJSON,
+    UpdateAdminTenantLicenseRequestFromJSON,
+    UpdateAdminTenantLicenseRequestToJSON,
+    UpdateAdminTenantRequestFromJSON,
+    UpdateAdminTenantRequestToJSON,
+    UpdateAdminUserRequestFromJSON,
+    UpdateAdminUserRequestToJSON,
 } from '../models/index';
+
+export interface MobileActivateAdminLicenseRequest {
+    adminLicenciaIdRequest: AdminLicenciaIdRequest;
+}
+
+export interface MobileActivateAdminTenantRequest {
+    adminTenantIdRequest: AdminTenantIdRequest;
+}
+
+export interface MobileActivateAdminUserRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
 
 export interface MobileApproveAdminMembershipRequest {
     approveAdminMembershipRequest: ApproveAdminMembershipRequest;
+}
+
+export interface MobileAssignAdminTenantLicenseRequest {
+    assignAdminTenantLicenseRequest: AssignAdminTenantLicenseRequest;
+}
+
+export interface MobileAssignAdminUserTenantRequest {
+    assignAdminUserTenantRequest: AssignAdminUserTenantRequest;
+}
+
+export interface MobileChangeAdminUserTenantRoleRequest {
+    changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest;
+}
+
+export interface MobileDeactivateAdminLicenseRequest {
+    adminLicenciaIdRequest: AdminLicenciaIdRequest;
+}
+
+export interface MobileDeactivateAdminTenantRequest {
+    adminTenantIdRequest: AdminTenantIdRequest;
+}
+
+export interface MobileDeactivateAdminTenantLicenseRequest {
+    adminLicenciaIdRequest: AdminLicenciaIdRequest;
+}
+
+export interface MobileDeactivateAdminUserRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
+
+export interface MobileDeleteAdminLicenseRequest {
+    adminLicenciaIdRequest: AdminLicenciaIdRequest;
+}
+
+export interface MobileDeleteAdminTenantRequest {
+    adminTenantIdRequest: AdminTenantIdRequest;
+}
+
+export interface MobileDeleteAdminUserRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
+
+export interface MobileGetAdminActivityLogsRequest {
+    userId?: string;
+    limit?: number;
 }
 
 export interface MobileGetAdminLicenseStatsRequest {
@@ -83,6 +266,27 @@ export interface MobileGetAdminLicensesRequest {
     typeFilter?: string;
 }
 
+export interface MobileGetAdminTenantDetailRequest {
+    tenantId: string;
+}
+
+export interface MobileGetAdminTenantLicenseRequest {
+    tenantId: string;
+}
+
+export interface MobileGetAdminTenantUsersRequest {
+    tenantId: string;
+}
+
+export interface MobileGetAdminUserDetailRequest {
+    userId: string;
+}
+
+export interface MobileGetAdminUserLoginHistoryRequest {
+    userId: string;
+    limit?: number;
+}
+
 export interface MobileGetAdminUsersRequest {
     tenantId?: string;
     limit?: number;
@@ -96,8 +300,48 @@ export interface MobileRejectAdminMembershipRequest {
     rejectAdminMembershipRequest: RejectAdminMembershipRequest;
 }
 
+export interface MobileRemoveAdminTenantUserRequest {
+    adminRemoveTenantUserRequest: AdminRemoveTenantUserRequest;
+}
+
+export interface MobileRenewAdminLicenseRequest {
+    renewAdminLicenseRequest: RenewAdminLicenseRequest;
+}
+
+export interface MobileResendAdminUserVerificationRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
+
+export interface MobileResetAdminUserPasswordRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
+
+export interface MobileRevokeAdminSessionRequest {
+    adminRevokeSessionRequest: AdminRevokeSessionRequest;
+}
+
+export interface MobileRevokeAdminUserSessionsRequest {
+    adminUserIdRequest: AdminUserIdRequest;
+}
+
 export interface MobileUnlockAdminUserRequest {
     unlockAdminUserRequest: UnlockAdminUserRequest;
+}
+
+export interface MobileUpdateAdminTenantRequest {
+    updateAdminTenantRequest: UpdateAdminTenantRequest;
+}
+
+export interface MobileUpdateAdminTenantLicenseRequest {
+    updateAdminTenantLicenseRequest: UpdateAdminTenantLicenseRequest;
+}
+
+export interface MobileUpdateAdminUserRequest {
+    updateAdminUserRequest: UpdateAdminUserRequest;
+}
+
+export interface MobileVerifyAdminUserEmailRequest {
+    adminUserIdRequest: AdminUserIdRequest;
 }
 
 /**
@@ -107,6 +351,54 @@ export interface MobileUnlockAdminUserRequest {
  * @interface AdminApiInterface
  */
 export interface AdminApiInterface {
+    /**
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * @summary Activar una licencia
+     * @param {AdminLicenciaIdRequest} adminLicenciaIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileActivateAdminLicenseRaw(requestParameters: MobileActivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesActivateResponse>>;
+
+    /**
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * Activar una licencia
+     */
+    mobileActivateAdminLicense(requestParameters: MobileActivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesActivateResponse>;
+
+    /**
+     * Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.
+     * @summary Activar una empresa
+     * @param {AdminTenantIdRequest} adminTenantIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileActivateAdminTenantRaw(requestParameters: MobileActivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsActivateResponse>>;
+
+    /**
+     * Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.
+     * Activar una empresa
+     */
+    mobileActivateAdminTenant(requestParameters: MobileActivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsActivateResponse>;
+
+    /**
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * @summary Activar un usuario
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileActivateAdminUserRaw(requestParameters: MobileActivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersActivateResponse>>;
+
+    /**
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * Activar un usuario
+     */
+    mobileActivateAdminUser(requestParameters: MobileActivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersActivateResponse>;
+
     /**
      * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
      * @summary Aprobar solicitud de membresía
@@ -122,6 +414,183 @@ export interface AdminApiInterface {
      * Aprobar solicitud de membresía
      */
     mobileApproveAdminMembership(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsApproveResponse>;
+
+    /**
+     * Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.
+     * @summary Asignar una licencia a una empresa
+     * @param {AssignAdminTenantLicenseRequest} assignAdminTenantLicenseRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileAssignAdminTenantLicenseRaw(requestParameters: MobileAssignAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsLicenseAssignResponse>>;
+
+    /**
+     * Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.
+     * Asignar una licencia a una empresa
+     */
+    mobileAssignAdminTenantLicense(requestParameters: MobileAssignAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsLicenseAssignResponse>;
+
+    /**
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * @summary Asignar o cambiar la empresa de un usuario
+     * @param {AssignAdminUserTenantRequest} assignAdminUserTenantRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileAssignAdminUserTenantRaw(requestParameters: MobileAssignAdminUserTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersAssignTenantResponse>>;
+
+    /**
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * Asignar o cambiar la empresa de un usuario
+     */
+    mobileAssignAdminUserTenant(requestParameters: MobileAssignAdminUserTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersAssignTenantResponse>;
+
+    /**
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * @summary Cambiar el rol de un usuario dentro de una empresa
+     * @param {ChangeAdminUserTenantRoleRequest} changeAdminUserTenantRoleRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileChangeAdminUserTenantRoleRaw(requestParameters: MobileChangeAdminUserTenantRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminUsersChangeTenantRoleResponse>>;
+
+    /**
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * Cambiar el rol de un usuario dentro de una empresa
+     */
+    mobileChangeAdminUserTenantRole(requestParameters: MobileChangeAdminUserTenantRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminUsersChangeTenantRoleResponse>;
+
+    /**
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * @summary Desactivar una licencia
+     * @param {AdminLicenciaIdRequest} adminLicenciaIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeactivateAdminLicenseRaw(requestParameters: MobileDeactivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesDeactivateResponse>>;
+
+    /**
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * Desactivar una licencia
+     */
+    mobileDeactivateAdminLicense(requestParameters: MobileDeactivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesDeactivateResponse>;
+
+    /**
+     * Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.
+     * @summary Desactivar una empresa
+     * @param {AdminTenantIdRequest} adminTenantIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeactivateAdminTenantRaw(requestParameters: MobileDeactivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsDeactivateResponse>>;
+
+    /**
+     * Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.
+     * Desactivar una empresa
+     */
+    mobileDeactivateAdminTenant(requestParameters: MobileDeactivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsDeactivateResponse>;
+
+    /**
+     * Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.
+     * @summary Desactivar la licencia de una empresa
+     * @param {AdminLicenciaIdRequest} adminLicenciaIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeactivateAdminTenantLicenseRaw(requestParameters: MobileDeactivateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsLicenseDeactivateResponse>>;
+
+    /**
+     * Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.
+     * Desactivar la licencia de una empresa
+     */
+    mobileDeactivateAdminTenantLicense(requestParameters: MobileDeactivateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsLicenseDeactivateResponse>;
+
+    /**
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * @summary Desactivar un usuario
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeactivateAdminUserRaw(requestParameters: MobileDeactivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersDeactivateResponse>>;
+
+    /**
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * Desactivar un usuario
+     */
+    mobileDeactivateAdminUser(requestParameters: MobileDeactivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersDeactivateResponse>;
+
+    /**
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * @summary Eliminar una licencia
+     * @param {AdminLicenciaIdRequest} adminLicenciaIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeleteAdminLicenseRaw(requestParameters: MobileDeleteAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesDeleteResponse>>;
+
+    /**
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * Eliminar una licencia
+     */
+    mobileDeleteAdminLicense(requestParameters: MobileDeleteAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesDeleteResponse>;
+
+    /**
+     * Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.
+     * @summary Eliminar una empresa
+     * @param {AdminTenantIdRequest} adminTenantIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeleteAdminTenantRaw(requestParameters: MobileDeleteAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsDeleteResponse>>;
+
+    /**
+     * Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.
+     * Eliminar una empresa
+     */
+    mobileDeleteAdminTenant(requestParameters: MobileDeleteAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsDeleteResponse>;
+
+    /**
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * @summary Eliminar un usuario
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileDeleteAdminUserRaw(requestParameters: MobileDeleteAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersDeleteResponse>>;
+
+    /**
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * Eliminar un usuario
+     */
+    mobileDeleteAdminUser(requestParameters: MobileDeleteAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersDeleteResponse>;
+
+    /**
+     * Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.
+     * @summary Obtener el registro de actividad de los usuarios
+     * @param {string} [userId] Identificador del usuario a filtrar.
+     * @param {number} [limit] Cantidad máxima de entradas a devolver.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminActivityLogsRaw(requestParameters: MobileGetAdminActivityLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminActivityLogsResponse>>;
+
+    /**
+     * Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.
+     * Obtener el registro de actividad de los usuarios
+     */
+    mobileGetAdminActivityLogs(requestParameters: MobileGetAdminActivityLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminActivityLogsResponse>;
 
     /**
      * Devuelve métricas globales de la plataforma: total de usuarios reales por rol, empresas activas, sesiones vigentes y licencias con su estado de expiración. Incluye la tendencia de nuevos usuarios de los últimos 14 días con comparación entre semanas.
@@ -196,6 +665,69 @@ export interface AdminApiInterface {
     mobileGetAdminPendingMemberships(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PendingMembershipItem>>;
 
     /**
+     * Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.
+     * @summary Listar las sesiones registradas
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminSessionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminSessionsResponse>>;
+
+    /**
+     * Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.
+     * Listar las sesiones registradas
+     */
+    mobileGetAdminSessions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminSessionsResponse>;
+
+    /**
+     * Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.
+     * @summary Obtener el detalle de una empresa
+     * @param {string} tenantId Identificador de la empresa.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminTenantDetailRaw(requestParameters: MobileGetAdminTenantDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantDetailResponse>>;
+
+    /**
+     * Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.
+     * Obtener el detalle de una empresa
+     */
+    mobileGetAdminTenantDetail(requestParameters: MobileGetAdminTenantDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantDetailResponse>;
+
+    /**
+     * Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.
+     * @summary Ver las licencias de una empresa
+     * @param {string} tenantId Identificador de la empresa.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminTenantLicenseRaw(requestParameters: MobileGetAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantLicenseResponse>>;
+
+    /**
+     * Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.
+     * Ver las licencias de una empresa
+     */
+    mobileGetAdminTenantLicense(requestParameters: MobileGetAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantLicenseResponse>;
+
+    /**
+     * Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.
+     * @summary Listar los usuarios de una empresa
+     * @param {string} tenantId Identificador de la empresa.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminTenantUsersRaw(requestParameters: MobileGetAdminTenantUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantUsersResponse>>;
+
+    /**
+     * Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.
+     * Listar los usuarios de una empresa
+     */
+    mobileGetAdminTenantUsers(requestParameters: MobileGetAdminTenantUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantUsersResponse>;
+
+    /**
      * Enumera las empresas reales de la plataforma, excluyendo las cuentas de demostración, con su plan vigente, estado de licencia y conteo de usuarios, productos y almacenes.
      * @summary Listar empresas de la plataforma
      * @param {*} [options] Override http request option.
@@ -209,6 +741,39 @@ export interface AdminApiInterface {
      * Listar empresas de la plataforma
      */
     mobileGetAdminTenants(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdminTenantItem>>;
+
+    /**
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * @summary Obtener el detalle de un usuario
+     * @param {string} userId Identificador del usuario a consultar.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminUserDetailRaw(requestParameters: MobileGetAdminUserDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminUserDetailResponse>>;
+
+    /**
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * Obtener el detalle de un usuario
+     */
+    mobileGetAdminUserDetail(requestParameters: MobileGetAdminUserDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUserDetailResponse>;
+
+    /**
+     * Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.
+     * @summary Obtener el historial de sesiones de un usuario
+     * @param {string} userId Identificador del usuario.
+     * @param {number} [limit] Cantidad máxima de entradas a devolver.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileGetAdminUserLoginHistoryRaw(requestParameters: MobileGetAdminUserLoginHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminUserLoginHistoryResponse>>;
+
+    /**
+     * Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.
+     * Obtener el historial de sesiones de un usuario
+     */
+    mobileGetAdminUserLoginHistory(requestParameters: MobileGetAdminUserLoginHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUserLoginHistoryResponse>;
 
     /**
      * Lista los usuarios globales para el administrador de la plataforma o los integrantes de una empresa para un gestor. Permite acotar la consulta a una empresa mediante el identificador opcional.
@@ -260,6 +825,102 @@ export interface AdminApiInterface {
     mobileRejectAdminMembership(requestParameters: MobileRejectAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsRejectResponse>;
 
     /**
+     * Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.
+     * @summary Quitar un usuario de una empresa
+     * @param {AdminRemoveTenantUserRequest} adminRemoveTenantUserRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileRemoveAdminTenantUserRaw(requestParameters: MobileRemoveAdminTenantUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsRemoveUserResponse>>;
+
+    /**
+     * Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.
+     * Quitar un usuario de una empresa
+     */
+    mobileRemoveAdminTenantUser(requestParameters: MobileRemoveAdminTenantUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsRemoveUserResponse>;
+
+    /**
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * @summary Renovar una licencia
+     * @param {RenewAdminLicenseRequest} renewAdminLicenseRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileRenewAdminLicenseRaw(requestParameters: MobileRenewAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesRenewResponse>>;
+
+    /**
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * Renovar una licencia
+     */
+    mobileRenewAdminLicense(requestParameters: MobileRenewAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesRenewResponse>;
+
+    /**
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * @summary Reenviar el email de verificación
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileResendAdminUserVerificationRaw(requestParameters: MobileResendAdminUserVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersResendVerificationResponse>>;
+
+    /**
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * Reenviar el email de verificación
+     */
+    mobileResendAdminUserVerification(requestParameters: MobileResendAdminUserVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersResendVerificationResponse>;
+
+    /**
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * @summary Enviar enlace de restablecimiento de contraseña
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileResetAdminUserPasswordRaw(requestParameters: MobileResetAdminUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersResetPasswordResponse>>;
+
+    /**
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * Enviar enlace de restablecimiento de contraseña
+     */
+    mobileResetAdminUserPassword(requestParameters: MobileResetAdminUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersResetPasswordResponse>;
+
+    /**
+     * Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.
+     * @summary Revocar una sesión específica
+     * @param {AdminRevokeSessionRequest} adminRevokeSessionRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileRevokeAdminSessionRaw(requestParameters: MobileRevokeAdminSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminSessionsRevokeResponse>>;
+
+    /**
+     * Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.
+     * Revocar una sesión específica
+     */
+    mobileRevokeAdminSession(requestParameters: MobileRevokeAdminSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminSessionsRevokeResponse>;
+
+    /**
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * @summary Revocar las sesiones activas de un usuario
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileRevokeAdminUserSessionsRaw(requestParameters: MobileRevokeAdminUserSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersRevokeSessionsResponse>>;
+
+    /**
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * Revocar las sesiones activas de un usuario
+     */
+    mobileRevokeAdminUserSessions(requestParameters: MobileRevokeAdminUserSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersRevokeSessionsResponse>;
+
+    /**
      * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
      * @summary Desbloquear usuario
      * @param {UnlockAdminUserRequest} unlockAdminUserRequest 
@@ -275,12 +936,223 @@ export interface AdminApiInterface {
      */
     mobileUnlockAdminUser(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse>;
 
+    /**
+     * Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.
+     * @summary Editar los datos de una empresa
+     * @param {UpdateAdminTenantRequest} updateAdminTenantRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileUpdateAdminTenantRaw(requestParameters: MobileUpdateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminTenantsUpdateResponse>>;
+
+    /**
+     * Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.
+     * Editar los datos de una empresa
+     */
+    mobileUpdateAdminTenant(requestParameters: MobileUpdateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminTenantsUpdateResponse>;
+
+    /**
+     * Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.
+     * @summary Actualizar la licencia de una empresa
+     * @param {UpdateAdminTenantLicenseRequest} updateAdminTenantLicenseRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileUpdateAdminTenantLicenseRaw(requestParameters: MobileUpdateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminTenantsLicenseUpdateResponse>>;
+
+    /**
+     * Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.
+     * Actualizar la licencia de una empresa
+     */
+    mobileUpdateAdminTenantLicense(requestParameters: MobileUpdateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminTenantsLicenseUpdateResponse>;
+
+    /**
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * @summary Editar nombre, email o rol de un usuario
+     * @param {UpdateAdminUserRequest} updateAdminUserRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileUpdateAdminUserRaw(requestParameters: MobileUpdateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminUsersUpdateResponse>>;
+
+    /**
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * Editar nombre, email o rol de un usuario
+     */
+    mobileUpdateAdminUser(requestParameters: MobileUpdateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminUsersUpdateResponse>;
+
+    /**
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * @summary Marcar el email como verificado
+     * @param {AdminUserIdRequest} adminUserIdRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileVerifyAdminUserEmailRaw(requestParameters: MobileVerifyAdminUserEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersVerifyEmailResponse>>;
+
+    /**
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * Marcar el email como verificado
+     */
+    mobileVerifyAdminUserEmail(requestParameters: MobileVerifyAdminUserEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersVerifyEmailResponse>;
+
 }
 
 /**
  * 
  */
 export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
+
+    /**
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * Activar una licencia
+     */
+    async mobileActivateAdminLicenseRaw(requestParameters: MobileActivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesActivateResponse>> {
+        if (requestParameters['adminLicenciaIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminLicenciaIdRequest',
+                'Required parameter "adminLicenciaIdRequest" was null or undefined when calling mobileActivateAdminLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/licenses/activate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminLicenciaIdRequestToJSON(requestParameters['adminLicenciaIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminLicensesActivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * Activar una licencia
+     */
+    async mobileActivateAdminLicense(requestParameters: MobileActivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesActivateResponse> {
+        const response = await this.mobileActivateAdminLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.
+     * Activar una empresa
+     */
+    async mobileActivateAdminTenantRaw(requestParameters: MobileActivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsActivateResponse>> {
+        if (requestParameters['adminTenantIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminTenantIdRequest',
+                'Required parameter "adminTenantIdRequest" was null or undefined when calling mobileActivateAdminTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/activate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminTenantIdRequestToJSON(requestParameters['adminTenantIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsActivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.
+     * Activar una empresa
+     */
+    async mobileActivateAdminTenant(requestParameters: MobileActivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsActivateResponse> {
+        const response = await this.mobileActivateAdminTenantRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * Activar un usuario
+     */
+    async mobileActivateAdminUserRaw(requestParameters: MobileActivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersActivateResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileActivateAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/activate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersActivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * Activar un usuario
+     */
+    async mobileActivateAdminUser(requestParameters: MobileActivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersActivateResponse> {
+        const response = await this.mobileActivateAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
@@ -328,6 +1200,543 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
      */
     async mobileApproveAdminMembership(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsApproveResponse> {
         const response = await this.mobileApproveAdminMembershipRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.
+     * Asignar una licencia a una empresa
+     */
+    async mobileAssignAdminTenantLicenseRaw(requestParameters: MobileAssignAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsLicenseAssignResponse>> {
+        if (requestParameters['assignAdminTenantLicenseRequest'] == null) {
+            throw new runtime.RequiredError(
+                'assignAdminTenantLicenseRequest',
+                'Required parameter "assignAdminTenantLicenseRequest" was null or undefined when calling mobileAssignAdminTenantLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/license/assign`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AssignAdminTenantLicenseRequestToJSON(requestParameters['assignAdminTenantLicenseRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsLicenseAssignResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.
+     * Asignar una licencia a una empresa
+     */
+    async mobileAssignAdminTenantLicense(requestParameters: MobileAssignAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsLicenseAssignResponse> {
+        const response = await this.mobileAssignAdminTenantLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * Asignar o cambiar la empresa de un usuario
+     */
+    async mobileAssignAdminUserTenantRaw(requestParameters: MobileAssignAdminUserTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersAssignTenantResponse>> {
+        if (requestParameters['assignAdminUserTenantRequest'] == null) {
+            throw new runtime.RequiredError(
+                'assignAdminUserTenantRequest',
+                'Required parameter "assignAdminUserTenantRequest" was null or undefined when calling mobileAssignAdminUserTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/assign-tenant`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AssignAdminUserTenantRequestToJSON(requestParameters['assignAdminUserTenantRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersAssignTenantResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * Asignar o cambiar la empresa de un usuario
+     */
+    async mobileAssignAdminUserTenant(requestParameters: MobileAssignAdminUserTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersAssignTenantResponse> {
+        const response = await this.mobileAssignAdminUserTenantRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * Cambiar el rol de un usuario dentro de una empresa
+     */
+    async mobileChangeAdminUserTenantRoleRaw(requestParameters: MobileChangeAdminUserTenantRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminUsersChangeTenantRoleResponse>> {
+        if (requestParameters['changeAdminUserTenantRoleRequest'] == null) {
+            throw new runtime.RequiredError(
+                'changeAdminUserTenantRoleRequest',
+                'Required parameter "changeAdminUserTenantRoleRequest" was null or undefined when calling mobileChangeAdminUserTenantRole().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/change-tenant-role`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ChangeAdminUserTenantRoleRequestToJSON(requestParameters['changeAdminUserTenantRoleRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PatchAdminUsersChangeTenantRoleResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * Cambiar el rol de un usuario dentro de una empresa
+     */
+    async mobileChangeAdminUserTenantRole(requestParameters: MobileChangeAdminUserTenantRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminUsersChangeTenantRoleResponse> {
+        const response = await this.mobileChangeAdminUserTenantRoleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * Desactivar una licencia
+     */
+    async mobileDeactivateAdminLicenseRaw(requestParameters: MobileDeactivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesDeactivateResponse>> {
+        if (requestParameters['adminLicenciaIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminLicenciaIdRequest',
+                'Required parameter "adminLicenciaIdRequest" was null or undefined when calling mobileDeactivateAdminLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/licenses/deactivate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminLicenciaIdRequestToJSON(requestParameters['adminLicenciaIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminLicensesDeactivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * Desactivar una licencia
+     */
+    async mobileDeactivateAdminLicense(requestParameters: MobileDeactivateAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesDeactivateResponse> {
+        const response = await this.mobileDeactivateAdminLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.
+     * Desactivar una empresa
+     */
+    async mobileDeactivateAdminTenantRaw(requestParameters: MobileDeactivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsDeactivateResponse>> {
+        if (requestParameters['adminTenantIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminTenantIdRequest',
+                'Required parameter "adminTenantIdRequest" was null or undefined when calling mobileDeactivateAdminTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/deactivate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminTenantIdRequestToJSON(requestParameters['adminTenantIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsDeactivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.
+     * Desactivar una empresa
+     */
+    async mobileDeactivateAdminTenant(requestParameters: MobileDeactivateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsDeactivateResponse> {
+        const response = await this.mobileDeactivateAdminTenantRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.
+     * Desactivar la licencia de una empresa
+     */
+    async mobileDeactivateAdminTenantLicenseRaw(requestParameters: MobileDeactivateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsLicenseDeactivateResponse>> {
+        if (requestParameters['adminLicenciaIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminLicenciaIdRequest',
+                'Required parameter "adminLicenciaIdRequest" was null or undefined when calling mobileDeactivateAdminTenantLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/license/deactivate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminLicenciaIdRequestToJSON(requestParameters['adminLicenciaIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsLicenseDeactivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.
+     * Desactivar la licencia de una empresa
+     */
+    async mobileDeactivateAdminTenantLicense(requestParameters: MobileDeactivateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsLicenseDeactivateResponse> {
+        const response = await this.mobileDeactivateAdminTenantLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * Desactivar un usuario
+     */
+    async mobileDeactivateAdminUserRaw(requestParameters: MobileDeactivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersDeactivateResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileDeactivateAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/deactivate`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersDeactivateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * Desactivar un usuario
+     */
+    async mobileDeactivateAdminUser(requestParameters: MobileDeactivateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersDeactivateResponse> {
+        const response = await this.mobileDeactivateAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * Eliminar una licencia
+     */
+    async mobileDeleteAdminLicenseRaw(requestParameters: MobileDeleteAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesDeleteResponse>> {
+        if (requestParameters['adminLicenciaIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminLicenciaIdRequest',
+                'Required parameter "adminLicenciaIdRequest" was null or undefined when calling mobileDeleteAdminLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/licenses/delete`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminLicenciaIdRequestToJSON(requestParameters['adminLicenciaIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminLicensesDeleteResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * Eliminar una licencia
+     */
+    async mobileDeleteAdminLicense(requestParameters: MobileDeleteAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesDeleteResponse> {
+        const response = await this.mobileDeleteAdminLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.
+     * Eliminar una empresa
+     */
+    async mobileDeleteAdminTenantRaw(requestParameters: MobileDeleteAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsDeleteResponse>> {
+        if (requestParameters['adminTenantIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminTenantIdRequest',
+                'Required parameter "adminTenantIdRequest" was null or undefined when calling mobileDeleteAdminTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/delete`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminTenantIdRequestToJSON(requestParameters['adminTenantIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsDeleteResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.
+     * Eliminar una empresa
+     */
+    async mobileDeleteAdminTenant(requestParameters: MobileDeleteAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsDeleteResponse> {
+        const response = await this.mobileDeleteAdminTenantRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * Eliminar un usuario
+     */
+    async mobileDeleteAdminUserRaw(requestParameters: MobileDeleteAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersDeleteResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileDeleteAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/delete`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersDeleteResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * Eliminar un usuario
+     */
+    async mobileDeleteAdminUser(requestParameters: MobileDeleteAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersDeleteResponse> {
+        const response = await this.mobileDeleteAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.
+     * Obtener el registro de actividad de los usuarios
+     */
+    async mobileGetAdminActivityLogsRaw(requestParameters: MobileGetAdminActivityLogsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminActivityLogsResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['userId'] != null) {
+            queryParameters['userId'] = requestParameters['userId'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/activity-logs`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminActivityLogsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.
+     * Obtener el registro de actividad de los usuarios
+     */
+    async mobileGetAdminActivityLogs(requestParameters: MobileGetAdminActivityLogsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminActivityLogsResponse> {
+        const response = await this.mobileGetAdminActivityLogsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -536,6 +1945,195 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
     }
 
     /**
+     * Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.
+     * Listar las sesiones registradas
+     */
+    async mobileGetAdminSessionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminSessionsResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/sessions`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminSessionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.
+     * Listar las sesiones registradas
+     */
+    async mobileGetAdminSessions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminSessionsResponse> {
+        const response = await this.mobileGetAdminSessionsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.
+     * Obtener el detalle de una empresa
+     */
+    async mobileGetAdminTenantDetailRaw(requestParameters: MobileGetAdminTenantDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantDetailResponse>> {
+        if (requestParameters['tenantId'] == null) {
+            throw new runtime.RequiredError(
+                'tenantId',
+                'Required parameter "tenantId" was null or undefined when calling mobileGetAdminTenantDetail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/detail`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminTenantDetailResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.
+     * Obtener el detalle de una empresa
+     */
+    async mobileGetAdminTenantDetail(requestParameters: MobileGetAdminTenantDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantDetailResponse> {
+        const response = await this.mobileGetAdminTenantDetailRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.
+     * Ver las licencias de una empresa
+     */
+    async mobileGetAdminTenantLicenseRaw(requestParameters: MobileGetAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantLicenseResponse>> {
+        if (requestParameters['tenantId'] == null) {
+            throw new runtime.RequiredError(
+                'tenantId',
+                'Required parameter "tenantId" was null or undefined when calling mobileGetAdminTenantLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/license`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminTenantLicenseResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.
+     * Ver las licencias de una empresa
+     */
+    async mobileGetAdminTenantLicense(requestParameters: MobileGetAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantLicenseResponse> {
+        const response = await this.mobileGetAdminTenantLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.
+     * Listar los usuarios de una empresa
+     */
+    async mobileGetAdminTenantUsersRaw(requestParameters: MobileGetAdminTenantUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminTenantUsersResponse>> {
+        if (requestParameters['tenantId'] == null) {
+            throw new runtime.RequiredError(
+                'tenantId',
+                'Required parameter "tenantId" was null or undefined when calling mobileGetAdminTenantUsers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/users`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminTenantUsersResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.
+     * Listar los usuarios de una empresa
+     */
+    async mobileGetAdminTenantUsers(requestParameters: MobileGetAdminTenantUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminTenantUsersResponse> {
+        const response = await this.mobileGetAdminTenantUsersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Enumera las empresas reales de la plataforma, excluyendo las cuentas de demostración, con su plan vigente, estado de licencia y conteo de usuarios, productos y almacenes.
      * Listar empresas de la plataforma
      */
@@ -571,6 +2169,110 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
      */
     async mobileGetAdminTenants(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdminTenantItem>> {
         const response = await this.mobileGetAdminTenantsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * Obtener el detalle de un usuario
+     */
+    async mobileGetAdminUserDetailRaw(requestParameters: MobileGetAdminUserDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminUserDetailResponse>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling mobileGetAdminUserDetail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['userId'] != null) {
+            queryParameters['userId'] = requestParameters['userId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/detail`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminUserDetailResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * Obtener el detalle de un usuario
+     */
+    async mobileGetAdminUserDetail(requestParameters: MobileGetAdminUserDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUserDetailResponse> {
+        const response = await this.mobileGetAdminUserDetailRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.
+     * Obtener el historial de sesiones de un usuario
+     */
+    async mobileGetAdminUserLoginHistoryRaw(requestParameters: MobileGetAdminUserLoginHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAdminUserLoginHistoryResponse>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling mobileGetAdminUserLoginHistory().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['userId'] != null) {
+            queryParameters['userId'] = requestParameters['userId'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/login-history`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetAdminUserLoginHistoryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.
+     * Obtener el historial de sesiones de un usuario
+     */
+    async mobileGetAdminUserLoginHistory(requestParameters: MobileGetAdminUserLoginHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUserLoginHistoryResponse> {
+        const response = await this.mobileGetAdminUserLoginHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -720,6 +2422,300 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
     }
 
     /**
+     * Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.
+     * Quitar un usuario de una empresa
+     */
+    async mobileRemoveAdminTenantUserRaw(requestParameters: MobileRemoveAdminTenantUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminTenantsRemoveUserResponse>> {
+        if (requestParameters['adminRemoveTenantUserRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminRemoveTenantUserRequest',
+                'Required parameter "adminRemoveTenantUserRequest" was null or undefined when calling mobileRemoveAdminTenantUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/remove-user`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminRemoveTenantUserRequestToJSON(requestParameters['adminRemoveTenantUserRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminTenantsRemoveUserResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.
+     * Quitar un usuario de una empresa
+     */
+    async mobileRemoveAdminTenantUser(requestParameters: MobileRemoveAdminTenantUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminTenantsRemoveUserResponse> {
+        const response = await this.mobileRemoveAdminTenantUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * Renovar una licencia
+     */
+    async mobileRenewAdminLicenseRaw(requestParameters: MobileRenewAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminLicensesRenewResponse>> {
+        if (requestParameters['renewAdminLicenseRequest'] == null) {
+            throw new runtime.RequiredError(
+                'renewAdminLicenseRequest',
+                'Required parameter "renewAdminLicenseRequest" was null or undefined when calling mobileRenewAdminLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/licenses/renew`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RenewAdminLicenseRequestToJSON(requestParameters['renewAdminLicenseRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminLicensesRenewResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * Renovar una licencia
+     */
+    async mobileRenewAdminLicense(requestParameters: MobileRenewAdminLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminLicensesRenewResponse> {
+        const response = await this.mobileRenewAdminLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * Reenviar el email de verificación
+     */
+    async mobileResendAdminUserVerificationRaw(requestParameters: MobileResendAdminUserVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersResendVerificationResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileResendAdminUserVerification().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/resend-verification`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersResendVerificationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * Reenviar el email de verificación
+     */
+    async mobileResendAdminUserVerification(requestParameters: MobileResendAdminUserVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersResendVerificationResponse> {
+        const response = await this.mobileResendAdminUserVerificationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * Enviar enlace de restablecimiento de contraseña
+     */
+    async mobileResetAdminUserPasswordRaw(requestParameters: MobileResetAdminUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersResetPasswordResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileResetAdminUserPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/reset-password`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersResetPasswordResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * Enviar enlace de restablecimiento de contraseña
+     */
+    async mobileResetAdminUserPassword(requestParameters: MobileResetAdminUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersResetPasswordResponse> {
+        const response = await this.mobileResetAdminUserPasswordRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.
+     * Revocar una sesión específica
+     */
+    async mobileRevokeAdminSessionRaw(requestParameters: MobileRevokeAdminSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminSessionsRevokeResponse>> {
+        if (requestParameters['adminRevokeSessionRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminRevokeSessionRequest',
+                'Required parameter "adminRevokeSessionRequest" was null or undefined when calling mobileRevokeAdminSession().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/sessions/revoke`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminRevokeSessionRequestToJSON(requestParameters['adminRevokeSessionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminSessionsRevokeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.
+     * Revocar una sesión específica
+     */
+    async mobileRevokeAdminSession(requestParameters: MobileRevokeAdminSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminSessionsRevokeResponse> {
+        const response = await this.mobileRevokeAdminSessionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * Revocar las sesiones activas de un usuario
+     */
+    async mobileRevokeAdminUserSessionsRaw(requestParameters: MobileRevokeAdminUserSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersRevokeSessionsResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileRevokeAdminUserSessions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/revoke-sessions`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersRevokeSessionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * Revocar las sesiones activas de un usuario
+     */
+    async mobileRevokeAdminUserSessions(requestParameters: MobileRevokeAdminUserSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersRevokeSessionsResponse> {
+        const response = await this.mobileRevokeAdminUserSessionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
      * Desbloquear usuario
      */
@@ -765,6 +2761,202 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
      */
     async mobileUnlockAdminUser(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse> {
         const response = await this.mobileUnlockAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.
+     * Editar los datos de una empresa
+     */
+    async mobileUpdateAdminTenantRaw(requestParameters: MobileUpdateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminTenantsUpdateResponse>> {
+        if (requestParameters['updateAdminTenantRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateAdminTenantRequest',
+                'Required parameter "updateAdminTenantRequest" was null or undefined when calling mobileUpdateAdminTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/update`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateAdminTenantRequestToJSON(requestParameters['updateAdminTenantRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PatchAdminTenantsUpdateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.
+     * Editar los datos de una empresa
+     */
+    async mobileUpdateAdminTenant(requestParameters: MobileUpdateAdminTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminTenantsUpdateResponse> {
+        const response = await this.mobileUpdateAdminTenantRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.
+     * Actualizar la licencia de una empresa
+     */
+    async mobileUpdateAdminTenantLicenseRaw(requestParameters: MobileUpdateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminTenantsLicenseUpdateResponse>> {
+        if (requestParameters['updateAdminTenantLicenseRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateAdminTenantLicenseRequest',
+                'Required parameter "updateAdminTenantLicenseRequest" was null or undefined when calling mobileUpdateAdminTenantLicense().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/tenants/license/update`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateAdminTenantLicenseRequestToJSON(requestParameters['updateAdminTenantLicenseRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PatchAdminTenantsLicenseUpdateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.
+     * Actualizar la licencia de una empresa
+     */
+    async mobileUpdateAdminTenantLicense(requestParameters: MobileUpdateAdminTenantLicenseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminTenantsLicenseUpdateResponse> {
+        const response = await this.mobileUpdateAdminTenantLicenseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * Editar nombre, email o rol de un usuario
+     */
+    async mobileUpdateAdminUserRaw(requestParameters: MobileUpdateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PatchAdminUsersUpdateResponse>> {
+        if (requestParameters['updateAdminUserRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateAdminUserRequest',
+                'Required parameter "updateAdminUserRequest" was null or undefined when calling mobileUpdateAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/update`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateAdminUserRequestToJSON(requestParameters['updateAdminUserRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PatchAdminUsersUpdateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * Editar nombre, email o rol de un usuario
+     */
+    async mobileUpdateAdminUser(requestParameters: MobileUpdateAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PatchAdminUsersUpdateResponse> {
+        const response = await this.mobileUpdateAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * Marcar el email como verificado
+     */
+    async mobileVerifyAdminUserEmailRaw(requestParameters: MobileVerifyAdminUserEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersVerifyEmailResponse>> {
+        if (requestParameters['adminUserIdRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adminUserIdRequest',
+                'Required parameter "adminUserIdRequest" was null or undefined when calling mobileVerifyAdminUserEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/verify-email`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminUserIdRequestToJSON(requestParameters['adminUserIdRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersVerifyEmailResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * Marcar el email como verificado
+     */
+    async mobileVerifyAdminUserEmail(requestParameters: MobileVerifyAdminUserEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersVerifyEmailResponse> {
+        const response = await this.mobileVerifyAdminUserEmailRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

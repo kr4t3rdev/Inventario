@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param moneda 
  * @param tasaCambio 
  * @param observaciones 
+ * @param idempotencyKey Clave opcional para repetir la misma operación sin duplicarla.
  */
 
 
@@ -48,7 +49,11 @@ data class CashPaymentRequest (
     val tasaCambio: java.math.BigDecimal? = null,
 
     @get:JsonProperty("observaciones")
-    val observaciones: kotlin.String? = null
+    val observaciones: kotlin.String? = null,
+
+    /* Clave opcional para repetir la misma operación sin duplicarla. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 

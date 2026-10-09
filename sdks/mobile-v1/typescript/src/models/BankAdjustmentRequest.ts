@@ -55,6 +55,12 @@ export interface BankAdjustmentRequest {
      * @memberof BankAdjustmentRequest
      */
     motivo: string;
+    /**
+     * Clave opcional para repetir la misma operación sin duplicarla.
+     * @type {string}
+     * @memberof BankAdjustmentRequest
+     */
+    idempotencyKey?: string;
 }
 
 
@@ -96,6 +102,7 @@ export function BankAdjustmentRequestFromJSONTyped(json: any, ignoreDiscriminato
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'descripcion': json['descripcion'],
         'motivo': json['motivo'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -116,6 +123,7 @@ export function BankAdjustmentRequestToJSONTyped(value?: BankAdjustmentRequest |
         'moneda': value['moneda'],
         'descripcion': value['descripcion'],
         'motivo': value['motivo'],
+        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

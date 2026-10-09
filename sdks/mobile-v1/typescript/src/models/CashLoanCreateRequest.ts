@@ -67,6 +67,12 @@ export interface CashLoanCreateRequest {
      * @memberof CashLoanCreateRequest
      */
     cuentaBancariaId: string;
+    /**
+     * Clave opcional para repetir la misma operación sin duplicarla.
+     * @type {string}
+     * @memberof CashLoanCreateRequest
+     */
+    idempotencyKey?: string;
 }
 
 /**
@@ -97,6 +103,7 @@ export function CashLoanCreateRequestFromJSONTyped(json: any, ignoreDiscriminato
         'fechaVencimiento': json['fechaVencimiento'] == null ? undefined : (new Date(json['fechaVencimiento'])),
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
         'cuentaBancariaId': json['cuentaBancariaId'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -119,6 +126,7 @@ export function CashLoanCreateRequestToJSONTyped(value?: CashLoanCreateRequest |
         'fechaVencimiento': value['fechaVencimiento'] == null ? value['fechaVencimiento'] : value['fechaVencimiento'].toISOString(),
         'observaciones': value['observaciones'],
         'cuentaBancariaId': value['cuentaBancariaId'],
+        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

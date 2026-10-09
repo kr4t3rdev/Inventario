@@ -14,20 +14,25 @@ public struct ServiceReconciliationRequest: Codable, JSONEncodable, Hashable {
 
     public static let ventaServicioIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let distribucionesRule = ArrayRule(minItems: 1, maxItems: nil, uniqueItems: false)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 128, pattern: nil)
     public var ventaServicioId: String
     public var distribuciones: [ServiceDistributionRequest]
     public var fechaReconciliacion: Date?
+    /** Clave estable para reintentar una conciliación sin duplicar el pago. */
+    public var idempotencyKey: String?
 
-    public init(ventaServicioId: String, distribuciones: [ServiceDistributionRequest], fechaReconciliacion: Date? = nil) {
+    public init(ventaServicioId: String, distribuciones: [ServiceDistributionRequest], fechaReconciliacion: Date? = nil, idempotencyKey: String? = nil) {
         self.ventaServicioId = ventaServicioId
         self.distribuciones = distribuciones
         self.fechaReconciliacion = fechaReconciliacion
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
         case ventaServicioId
         case distribuciones
         case fechaReconciliacion
+        case idempotencyKey
     }
 
     // Encodable protocol methods
@@ -37,6 +42,7 @@ public struct ServiceReconciliationRequest: Codable, JSONEncodable, Hashable {
         try container.encode(ventaServicioId, forKey: .ventaServicioId)
         try container.encode(distribuciones, forKey: .distribuciones)
         try container.encodeIfPresent(fechaReconciliacion, forKey: .fechaReconciliacion)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
 

@@ -12,6 +12,7 @@
 | **tasaCambio** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
 | **montoConvertido** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
 | **fechaReconciliacion** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  [optional] |
+| **replayed** | **kotlin.Boolean** | Indica si se devolvió una conciliación existente para la misma clave idempotente. |  [optional] |
 | **observaciones** | **kotlin.String** |  |  [optional] |
 
 

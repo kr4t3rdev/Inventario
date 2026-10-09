@@ -45,6 +45,12 @@ export interface ServiceReconciliationRequest {
      * @memberof ServiceReconciliationRequest
      */
     fechaReconciliacion?: Date;
+    /**
+     * Clave estable para reintentar una conciliación sin duplicar el pago.
+     * @type {string}
+     * @memberof ServiceReconciliationRequest
+     */
+    idempotencyKey?: string;
 }
 
 /**
@@ -69,6 +75,7 @@ export function ServiceReconciliationRequestFromJSONTyped(json: any, ignoreDiscr
         'ventaServicioId': json['ventaServicioId'],
         'distribuciones': ((json['distribuciones'] as Array<any>).map(ServiceDistributionRequestFromJSON)),
         'fechaReconciliacion': json['fechaReconciliacion'] == null ? undefined : (new Date(json['fechaReconciliacion'])),
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -86,6 +93,7 @@ export function ServiceReconciliationRequestToJSONTyped(value?: ServiceReconcili
         'ventaServicioId': value['ventaServicioId'],
         'distribuciones': ((value['distribuciones'] as Array<any>).map(ServiceDistributionRequestToJSON)),
         'fechaReconciliacion': value['fechaReconciliacion'] == null ? value['fechaReconciliacion'] : value['fechaReconciliacion'].toISOString(),
+        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

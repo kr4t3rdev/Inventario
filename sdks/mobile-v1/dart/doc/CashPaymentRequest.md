@@ -14,6 +14,7 @@ Name | Type | Description | Notes
 **moneda** | **String** |  | [optional] 
 **tasaCambio** | **num** |  | [optional] 
 **observaciones** | **String** |  | [optional] 
+**idempotencyKey** | **String** | Clave opcional para repetir la misma operación sin duplicarla. | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

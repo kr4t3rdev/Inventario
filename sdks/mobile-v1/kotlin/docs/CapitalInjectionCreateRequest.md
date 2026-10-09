@@ -9,6 +9,7 @@
 | **tipo** | **kotlin.String** |  |  [optional] |
 | **descripcion** | **kotlin.String** |  |  [optional] |
 | **cuentaBancariaId** | **kotlin.String** |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional para repetir la misma operación sin duplicarla. |  [optional] |
 
 
 

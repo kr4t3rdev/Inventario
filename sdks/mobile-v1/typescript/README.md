@@ -123,16 +123,46 @@ All URIs are relative to */api/mobile/v1*
 *AccountingReportsApi* | [**mobileGetAccountingReportsOverdueInvoices**](docs/AccountingReportsApi.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas
 *AccountingReportsApi* | [**mobileGetAccountingReportsSummary**](docs/AccountingReportsApi.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero
 *AccountingReportsApi* | [**mobileGetAccountingReportsTransfers**](docs/AccountingReportsApi.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias
+*AdminApi* | [**mobileActivateAdminLicense**](docs/AdminApi.md#mobileactivateadminlicense) | **POST** /admin/licenses/activate | Activar una licencia
+*AdminApi* | [**mobileActivateAdminTenant**](docs/AdminApi.md#mobileactivateadmintenant) | **POST** /admin/tenants/activate | Activar una empresa
+*AdminApi* | [**mobileActivateAdminUser**](docs/AdminApi.md#mobileactivateadminuser) | **POST** /admin/users/activate | Activar un usuario
 *AdminApi* | [**mobileApproveAdminMembership**](docs/AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía
+*AdminApi* | [**mobileAssignAdminTenantLicense**](docs/AdminApi.md#mobileassignadmintenantlicense) | **POST** /admin/tenants/license/assign | Asignar una licencia a una empresa
+*AdminApi* | [**mobileAssignAdminUserTenant**](docs/AdminApi.md#mobileassignadminusertenant) | **POST** /admin/users/assign-tenant | Asignar o cambiar la empresa de un usuario
+*AdminApi* | [**mobileChangeAdminUserTenantRole**](docs/AdminApi.md#mobilechangeadminusertenantrole) | **PATCH** /admin/users/change-tenant-role | Cambiar el rol de un usuario dentro de una empresa
+*AdminApi* | [**mobileDeactivateAdminLicense**](docs/AdminApi.md#mobiledeactivateadminlicense) | **POST** /admin/licenses/deactivate | Desactivar una licencia
+*AdminApi* | [**mobileDeactivateAdminTenant**](docs/AdminApi.md#mobiledeactivateadmintenant) | **POST** /admin/tenants/deactivate | Desactivar una empresa
+*AdminApi* | [**mobileDeactivateAdminTenantLicense**](docs/AdminApi.md#mobiledeactivateadmintenantlicense) | **POST** /admin/tenants/license/deactivate | Desactivar la licencia de una empresa
+*AdminApi* | [**mobileDeactivateAdminUser**](docs/AdminApi.md#mobiledeactivateadminuser) | **POST** /admin/users/deactivate | Desactivar un usuario
+*AdminApi* | [**mobileDeleteAdminLicense**](docs/AdminApi.md#mobiledeleteadminlicense) | **POST** /admin/licenses/delete | Eliminar una licencia
+*AdminApi* | [**mobileDeleteAdminTenant**](docs/AdminApi.md#mobiledeleteadmintenant) | **POST** /admin/tenants/delete | Eliminar una empresa
+*AdminApi* | [**mobileDeleteAdminUser**](docs/AdminApi.md#mobiledeleteadminuser) | **POST** /admin/users/delete | Eliminar un usuario
+*AdminApi* | [**mobileGetAdminActivityLogs**](docs/AdminApi.md#mobilegetadminactivitylogs) | **GET** /admin/activity-logs | Obtener el registro de actividad de los usuarios
 *AdminApi* | [**mobileGetAdminHealth**](docs/AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
 *AdminApi* | [**mobileGetAdminLicenseStats**](docs/AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
 *AdminApi* | [**mobileGetAdminLicenses**](docs/AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
 *AdminApi* | [**mobileGetAdminPendingMemberships**](docs/AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
+*AdminApi* | [**mobileGetAdminSessions**](docs/AdminApi.md#mobilegetadminsessions) | **GET** /admin/sessions | Listar las sesiones registradas
+*AdminApi* | [**mobileGetAdminTenantDetail**](docs/AdminApi.md#mobilegetadmintenantdetail) | **GET** /admin/tenants/detail | Obtener el detalle de una empresa
+*AdminApi* | [**mobileGetAdminTenantLicense**](docs/AdminApi.md#mobilegetadmintenantlicense) | **GET** /admin/tenants/license | Ver las licencias de una empresa
+*AdminApi* | [**mobileGetAdminTenantUsers**](docs/AdminApi.md#mobilegetadmintenantusers) | **GET** /admin/tenants/users | Listar los usuarios de una empresa
 *AdminApi* | [**mobileGetAdminTenants**](docs/AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
+*AdminApi* | [**mobileGetAdminUserDetail**](docs/AdminApi.md#mobilegetadminuserdetail) | **GET** /admin/users/detail | Obtener el detalle de un usuario
+*AdminApi* | [**mobileGetAdminUserLoginHistory**](docs/AdminApi.md#mobilegetadminuserloginhistory) | **GET** /admin/users/login-history | Obtener el historial de sesiones de un usuario
 *AdminApi* | [**mobileGetAdminUsers**](docs/AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
 *AdminApi* | [**mobileLockAdminUser**](docs/AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas
 *AdminApi* | [**mobileRejectAdminMembership**](docs/AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía
+*AdminApi* | [**mobileRemoveAdminTenantUser**](docs/AdminApi.md#mobileremoveadmintenantuser) | **POST** /admin/tenants/remove-user | Quitar un usuario de una empresa
+*AdminApi* | [**mobileRenewAdminLicense**](docs/AdminApi.md#mobilerenewadminlicense) | **POST** /admin/licenses/renew | Renovar una licencia
+*AdminApi* | [**mobileResendAdminUserVerification**](docs/AdminApi.md#mobileresendadminuserverification) | **POST** /admin/users/resend-verification | Reenviar el email de verificación
+*AdminApi* | [**mobileResetAdminUserPassword**](docs/AdminApi.md#mobileresetadminuserpassword) | **POST** /admin/users/reset-password | Enviar enlace de restablecimiento de contraseña
+*AdminApi* | [**mobileRevokeAdminSession**](docs/AdminApi.md#mobilerevokeadminsession) | **POST** /admin/sessions/revoke | Revocar una sesión específica
+*AdminApi* | [**mobileRevokeAdminUserSessions**](docs/AdminApi.md#mobilerevokeadminusersessions) | **POST** /admin/users/revoke-sessions | Revocar las sesiones activas de un usuario
 *AdminApi* | [**mobileUnlockAdminUser**](docs/AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario
+*AdminApi* | [**mobileUpdateAdminTenant**](docs/AdminApi.md#mobileupdateadmintenant) | **PATCH** /admin/tenants/update | Editar los datos de una empresa
+*AdminApi* | [**mobileUpdateAdminTenantLicense**](docs/AdminApi.md#mobileupdateadmintenantlicense) | **PATCH** /admin/tenants/license/update | Actualizar la licencia de una empresa
+*AdminApi* | [**mobileUpdateAdminUser**](docs/AdminApi.md#mobileupdateadminuser) | **PATCH** /admin/users/update | Editar nombre, email o rol de un usuario
+*AdminApi* | [**mobileVerifyAdminUserEmail**](docs/AdminApi.md#mobileverifyadminuseremail) | **POST** /admin/users/verify-email | Marcar el email como verificado
 *AuthApi* | [**mobileGetAuthMe**](docs/AuthApi.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado
 *AuthApi* | [**mobileGetAuthTenants**](docs/AuthApi.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles
 *AuthApi* | [**mobilePostAuthLogin**](docs/AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
@@ -174,6 +204,7 @@ All URIs are relative to */api/mobile/v1*
 - [AccountingAdvancesIdPutRequest](docs/AccountingAdvancesIdPutRequest.md)
 - [AccountingAdvancesIdRevertirPostRequest](docs/AccountingAdvancesIdRevertirPostRequest.md)
 - [AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
+- [AdminActivityLogItem](docs/AdminActivityLogItem.md)
 - [AdminHealthResponse](docs/AdminHealthResponse.md)
 - [AdminHealthResponseLicenses](docs/AdminHealthResponseLicenses.md)
 - [AdminHealthResponseSessions](docs/AdminHealthResponseSessions.md)
@@ -182,20 +213,35 @@ All URIs are relative to */api/mobile/v1*
 - [AdminHealthResponseUsersByRoleInner](docs/AdminHealthResponseUsersByRoleInner.md)
 - [AdminHealthResponseUsersComparison](docs/AdminHealthResponseUsersComparison.md)
 - [AdminHealthResponseUsersTrendInner](docs/AdminHealthResponseUsersTrendInner.md)
+- [AdminLicenciaIdRequest](docs/AdminLicenciaIdRequest.md)
 - [AdminLicenseItem](docs/AdminLicenseItem.md)
 - [AdminLicenseItemCreatedByUser](docs/AdminLicenseItemCreatedByUser.md)
 - [AdminLicenseItemTenant](docs/AdminLicenseItemTenant.md)
 - [AdminLicenseManagerItem](docs/AdminLicenseManagerItem.md)
+- [AdminLicenseSummary](docs/AdminLicenseSummary.md)
 - [AdminPendingUserItem](docs/AdminPendingUserItem.md)
+- [AdminRemoveTenantUserRequest](docs/AdminRemoveTenantUserRequest.md)
+- [AdminRevokeSessionRequest](docs/AdminRevokeSessionRequest.md)
+- [AdminSessionItem](docs/AdminSessionItem.md)
+- [AdminSessionItemUser](docs/AdminSessionItemUser.md)
+- [AdminTenantDetail](docs/AdminTenantDetail.md)
+- [AdminTenantIdRequest](docs/AdminTenantIdRequest.md)
 - [AdminTenantItem](docs/AdminTenantItem.md)
 - [AdminTenantItemCount](docs/AdminTenantItemCount.md)
 - [AdminTenantLicenseItem](docs/AdminTenantLicenseItem.md)
 - [AdminTenantLicenseItemPlan](docs/AdminTenantLicenseItemPlan.md)
 - [AdminTenantLite](docs/AdminTenantLite.md)
+- [AdminTenantUserItem](docs/AdminTenantUserItem.md)
+- [AdminUserDetail](docs/AdminUserDetail.md)
+- [AdminUserIdRequest](docs/AdminUserIdRequest.md)
 - [AdminUserItem](docs/AdminUserItem.md)
 - [AdminUserItemSalesAgentBalance](docs/AdminUserItemSalesAgentBalance.md)
 - [AdminUserItemSalesAgentProfile](docs/AdminUserItemSalesAgentProfile.md)
 - [AdminUserLite](docs/AdminUserLite.md)
+- [AdminUserMembership](docs/AdminUserMembership.md)
+- [AdminUserMembershipTenant](docs/AdminUserMembershipTenant.md)
+- [AdminUserStatus](docs/AdminUserStatus.md)
+- [AdminUserSummary](docs/AdminUserSummary.md)
 - [Advance](docs/Advance.md)
 - [AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
 - [Almacen](docs/Almacen.md)
@@ -205,6 +251,8 @@ All URIs are relative to */api/mobile/v1*
 - [AlmacenUpdateRequest](docs/AlmacenUpdateRequest.md)
 - [ApiError](docs/ApiError.md)
 - [ApproveAdminMembershipRequest](docs/ApproveAdminMembershipRequest.md)
+- [AssignAdminTenantLicenseRequest](docs/AssignAdminTenantLicenseRequest.md)
+- [AssignAdminUserTenantRequest](docs/AssignAdminUserTenantRequest.md)
 - [AuditLog](docs/AuditLog.md)
 - [AuthSession](docs/AuthSession.md)
 - [AuthenticatedUser](docs/AuthenticatedUser.md)
@@ -225,6 +273,7 @@ All URIs are relative to */api/mobile/v1*
 - [CashLoanCreateRequest](docs/CashLoanCreateRequest.md)
 - [CashOperationUpdateRequest](docs/CashOperationUpdateRequest.md)
 - [CashPaymentRequest](docs/CashPaymentRequest.md)
+- [ChangeAdminUserTenantRoleRequest](docs/ChangeAdminUserTenantRoleRequest.md)
 - [Cliente](docs/Cliente.md)
 - [ClienteCreateRequest](docs/ClienteCreateRequest.md)
 - [ClienteDeleteResponse](docs/ClienteDeleteResponse.md)
@@ -279,8 +328,15 @@ All URIs are relative to */api/mobile/v1*
 - [GetAccountingReportsOverdueInvoicesResponse](docs/GetAccountingReportsOverdueInvoicesResponse.md)
 - [GetAccountingReportsSummaryResponse](docs/GetAccountingReportsSummaryResponse.md)
 - [GetAccountingReportsTransfersResponse](docs/GetAccountingReportsTransfersResponse.md)
+- [GetAdminActivityLogsResponse](docs/GetAdminActivityLogsResponse.md)
 - [GetAdminLicenseStatsResponse](docs/GetAdminLicenseStatsResponse.md)
 - [GetAdminLicensesResponse](docs/GetAdminLicensesResponse.md)
+- [GetAdminSessionsResponse](docs/GetAdminSessionsResponse.md)
+- [GetAdminTenantDetailResponse](docs/GetAdminTenantDetailResponse.md)
+- [GetAdminTenantLicenseResponse](docs/GetAdminTenantLicenseResponse.md)
+- [GetAdminTenantUsersResponse](docs/GetAdminTenantUsersResponse.md)
+- [GetAdminUserDetailResponse](docs/GetAdminUserDetailResponse.md)
+- [GetAdminUserLoginHistoryResponse](docs/GetAdminUserLoginHistoryResponse.md)
 - [GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
 - [GetDashboardStatsResponse](docs/GetDashboardStatsResponse.md)
 - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
@@ -292,6 +348,10 @@ All URIs are relative to */api/mobile/v1*
 - [LockAdminUserRequest](docs/LockAdminUserRequest.md)
 - [LoginRequest](docs/LoginRequest.md)
 - [Pagination](docs/Pagination.md)
+- [PatchAdminTenantsLicenseUpdateResponse](docs/PatchAdminTenantsLicenseUpdateResponse.md)
+- [PatchAdminTenantsUpdateResponse](docs/PatchAdminTenantsUpdateResponse.md)
+- [PatchAdminUsersChangeTenantRoleResponse](docs/PatchAdminUsersChangeTenantRoleResponse.md)
+- [PatchAdminUsersUpdateResponse](docs/PatchAdminUsersUpdateResponse.md)
 - [PatchSalesIdUpdateResponse](docs/PatchSalesIdUpdateResponse.md)
 - [PayableAccountSummary](docs/PayableAccountSummary.md)
 - [PayablePaymentSummary](docs/PayablePaymentSummary.md)
@@ -313,10 +373,30 @@ All URIs are relative to */api/mobile/v1*
 - [PostAccountingReconciliationExpensesResponse](docs/PostAccountingReconciliationExpensesResponse.md)
 - [PostAccountingReconciliationSalesResponse](docs/PostAccountingReconciliationSalesResponse.md)
 - [PostAccountingReconciliationServicesResponse](docs/PostAccountingReconciliationServicesResponse.md)
+- [PostAdminLicensesActivateResponse](docs/PostAdminLicensesActivateResponse.md)
+- [PostAdminLicensesDeactivateResponse](docs/PostAdminLicensesDeactivateResponse.md)
+- [PostAdminLicensesDeleteResponse](docs/PostAdminLicensesDeleteResponse.md)
+- [PostAdminLicensesRenewResponse](docs/PostAdminLicensesRenewResponse.md)
 - [PostAdminMembershipsApproveResponse](docs/PostAdminMembershipsApproveResponse.md)
 - [PostAdminMembershipsRejectResponse](docs/PostAdminMembershipsRejectResponse.md)
+- [PostAdminSessionsRevokeResponse](docs/PostAdminSessionsRevokeResponse.md)
+- [PostAdminTenantsActivateResponse](docs/PostAdminTenantsActivateResponse.md)
+- [PostAdminTenantsDeactivateResponse](docs/PostAdminTenantsDeactivateResponse.md)
+- [PostAdminTenantsDeleteResponse](docs/PostAdminTenantsDeleteResponse.md)
+- [PostAdminTenantsLicenseAssignResponse](docs/PostAdminTenantsLicenseAssignResponse.md)
+- [PostAdminTenantsLicenseDeactivateResponse](docs/PostAdminTenantsLicenseDeactivateResponse.md)
+- [PostAdminTenantsRemoveUserResponse](docs/PostAdminTenantsRemoveUserResponse.md)
+- [PostAdminUsersActivateResponse](docs/PostAdminUsersActivateResponse.md)
+- [PostAdminUsersAssignTenantResponse](docs/PostAdminUsersAssignTenantResponse.md)
+- [PostAdminUsersDeactivateResponse](docs/PostAdminUsersDeactivateResponse.md)
+- [PostAdminUsersDeleteResponse](docs/PostAdminUsersDeleteResponse.md)
 - [PostAdminUsersLockResponse](docs/PostAdminUsersLockResponse.md)
 - [PostAdminUsersLockResponseUser](docs/PostAdminUsersLockResponseUser.md)
+- [PostAdminUsersResendVerificationResponse](docs/PostAdminUsersResendVerificationResponse.md)
+- [PostAdminUsersResetPasswordResponse](docs/PostAdminUsersResetPasswordResponse.md)
+- [PostAdminUsersRevokeSessionsResponse](docs/PostAdminUsersRevokeSessionsResponse.md)
+- [PostAdminUsersVerifyEmailResponse](docs/PostAdminUsersVerifyEmailResponse.md)
+- [PostAdminUsersVerifyEmailResponseUser](docs/PostAdminUsersVerifyEmailResponseUser.md)
 - [PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
 - [PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
 - [Product](docs/Product.md)
@@ -338,6 +418,7 @@ All URIs are relative to */api/mobile/v1*
 - [RegisterRequest](docs/RegisterRequest.md)
 - [RegisterResponse](docs/RegisterResponse.md)
 - [RejectAdminMembershipRequest](docs/RejectAdminMembershipRequest.md)
+- [RenewAdminLicenseRequest](docs/RenewAdminLicenseRequest.md)
 - [ReportFilters](docs/ReportFilters.md)
 - [ReportResult](docs/ReportResult.md)
 - [ReportStatistics](docs/ReportStatistics.md)
@@ -359,6 +440,9 @@ All URIs are relative to */api/mobile/v1*
 - [Token](docs/Token.md)
 - [TokenPair](docs/TokenPair.md)
 - [UnlockAdminUserRequest](docs/UnlockAdminUserRequest.md)
+- [UpdateAdminTenantLicenseRequest](docs/UpdateAdminTenantLicenseRequest.md)
+- [UpdateAdminTenantRequest](docs/UpdateAdminTenantRequest.md)
+- [UpdateAdminUserRequest](docs/UpdateAdminUserRequest.md)
 
 ### Authorization
 

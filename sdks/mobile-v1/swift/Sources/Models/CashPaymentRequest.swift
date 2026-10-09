@@ -14,20 +14,24 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
 
     public static let cuentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let tipoPagoIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var monto: Double
     public var cuentaId: String
     public var tipoPagoId: String
     public var moneda: String?
     public var tasaCambio: Double?
     public var observaciones: String?
+    /** Clave opcional para repetir la misma operación sin duplicarla. */
+    public var idempotencyKey: String?
 
-    public init(monto: Double, cuentaId: String, tipoPagoId: String, moneda: String? = nil, tasaCambio: Double? = nil, observaciones: String? = nil) {
+    public init(monto: Double, cuentaId: String, tipoPagoId: String, moneda: String? = nil, tasaCambio: Double? = nil, observaciones: String? = nil, idempotencyKey: String? = nil) {
         self.monto = monto
         self.cuentaId = cuentaId
         self.tipoPagoId = tipoPagoId
         self.moneda = moneda
         self.tasaCambio = tasaCambio
         self.observaciones = observaciones
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -37,6 +41,7 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
         case moneda
         case tasaCambio
         case observaciones
+        case idempotencyKey
     }
 
     // Encodable protocol methods
@@ -49,6 +54,7 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(moneda, forKey: .moneda)
         try container.encodeIfPresent(tasaCambio, forKey: .tasaCambio)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
 

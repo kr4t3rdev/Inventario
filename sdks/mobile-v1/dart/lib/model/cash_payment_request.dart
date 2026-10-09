@@ -19,6 +19,7 @@ class CashPaymentRequest {
     this.moneda,
     this.tasaCambio,
     this.observaciones,
+    this.idempotencyKey,
   });
 
   num monto;
@@ -51,6 +52,15 @@ class CashPaymentRequest {
   ///
   String? observaciones;
 
+  /// Clave opcional para repetir la misma operación sin duplicarla.
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  String? idempotencyKey;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is CashPaymentRequest &&
     other.monto == monto &&
@@ -58,7 +68,8 @@ class CashPaymentRequest {
     other.tipoPagoId == tipoPagoId &&
     other.moneda == moneda &&
     other.tasaCambio == tasaCambio &&
-    other.observaciones == observaciones;
+    other.observaciones == observaciones &&
+    other.idempotencyKey == idempotencyKey;
 
   @override
   int get hashCode =>
@@ -68,10 +79,11 @@ class CashPaymentRequest {
     (tipoPagoId.hashCode) +
     (moneda == null ? 0 : moneda!.hashCode) +
     (tasaCambio == null ? 0 : tasaCambio!.hashCode) +
-    (observaciones == null ? 0 : observaciones!.hashCode);
+    (observaciones == null ? 0 : observaciones!.hashCode) +
+    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
 
   @override
-  String toString() => 'CashPaymentRequest[monto=$monto, cuentaId=$cuentaId, tipoPagoId=$tipoPagoId, moneda=$moneda, tasaCambio=$tasaCambio, observaciones=$observaciones]';
+  String toString() => 'CashPaymentRequest[monto=$monto, cuentaId=$cuentaId, tipoPagoId=$tipoPagoId, moneda=$moneda, tasaCambio=$tasaCambio, observaciones=$observaciones, idempotencyKey=$idempotencyKey]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -92,6 +104,11 @@ class CashPaymentRequest {
       json[r'observaciones'] = this.observaciones;
     } else {
       json[r'observaciones'] = null;
+    }
+    if (this.idempotencyKey != null) {
+      json[r'idempotencyKey'] = this.idempotencyKey;
+    } else {
+      json[r'idempotencyKey'] = null;
     }
     return json;
   }
@@ -121,6 +138,7 @@ class CashPaymentRequest {
         moneda: mapValueOfType<String>(json, r'moneda'),
         tasaCambio: num.parse('${json[r'tasaCambio']}'),
         observaciones: mapValueOfType<String>(json, r'observaciones'),
+        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;

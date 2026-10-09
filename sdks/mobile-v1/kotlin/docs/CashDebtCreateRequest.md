@@ -12,6 +12,7 @@
 | **fechaVencimiento** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  [optional] |
 | **observaciones** | **kotlin.String** |  |  [optional] |
 | **comprobanteUrl** | [**java.net.URI**](java.net.URI.md) |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional para repetir la misma operación sin duplicarla. |  [optional] |
 
 
 

@@ -14,6 +14,7 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
 
     public static let clienteIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let cuentaBancariaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var clienteId: String
     public var montoCapital: Double
     public var moneda: String?
@@ -22,8 +23,10 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
     public var fechaVencimiento: Date?
     public var observaciones: String?
     public var cuentaBancariaId: String
+    /** Clave opcional para repetir la misma operación sin duplicarla. */
+    public var idempotencyKey: String?
 
-    public init(clienteId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double? = nil, tasaCambioAlCrear: Double? = nil, fechaVencimiento: Date? = nil, observaciones: String? = nil, cuentaBancariaId: String) {
+    public init(clienteId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double? = nil, tasaCambioAlCrear: Double? = nil, fechaVencimiento: Date? = nil, observaciones: String? = nil, cuentaBancariaId: String, idempotencyKey: String? = nil) {
         self.clienteId = clienteId
         self.montoCapital = montoCapital
         self.moneda = moneda
@@ -32,6 +35,7 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
         self.fechaVencimiento = fechaVencimiento
         self.observaciones = observaciones
         self.cuentaBancariaId = cuentaBancariaId
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -43,6 +47,7 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
         case fechaVencimiento
         case observaciones
         case cuentaBancariaId
+        case idempotencyKey
     }
 
     // Encodable protocol methods
@@ -57,6 +62,7 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(fechaVencimiento, forKey: .fechaVencimiento)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
         try container.encode(cuentaBancariaId, forKey: .cuentaBancariaId)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
 
