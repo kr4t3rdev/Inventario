@@ -15,15 +15,15 @@ import { hasPermission } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 import { addDays } from "@/lib/date-utils";
-function resolveLicenseDurationDays(planDurationDays, overrideDays) {
+function resolveLicenseDurationDays(planDurationDays: number | null | undefined, overrideDays: number | null | undefined) {
   const resolved = overrideDays ?? planDurationDays;
-  if (resolved === undefined) return undefined;
+  if (resolved == null) return undefined;
   if (!Number.isInteger(resolved) || resolved <= 0) {
     throw new ActionError("La duracion de la licencia debe ser mayor que cero", "VALIDATION_ERROR");
   }
   return resolved;
 }
-function resolveLicensePricing(price, _isDemo) {
+function resolveLicensePricing(price: number, _isDemo: boolean) {
   return { precio: price };
 }
 import { AuditLogService } from "@/lib/services/audit-log-service";
@@ -36,11 +36,23 @@ import {
 	lockUnlockSchema,
 	getLicenciasQuerySchema,
 	licenciasStatsQuerySchema,
+	adminUserIdSchema,
+	adminUpdateUserSchema,
+	adminAssignTenantSchema,
+	adminChangeTenantRoleSchema,
+	adminLicenciaIdSchema,
+	adminRenewLicenciaSchema,
 } from "../schemas";
 import type {
 	GetLicenciasQueryInput,
 	LicenciasStatsQueryInput,
 	LockUnlockInput,
+	AdminUserIdInput,
+	AdminUpdateUserInput,
+	AdminAssignTenantInput,
+	AdminChangeTenantRoleInput,
+	AdminLicenciaIdInput,
+	AdminRenewLicenciaInput,
 } from "../schemas";
 
 /**

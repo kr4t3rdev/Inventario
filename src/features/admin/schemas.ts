@@ -226,7 +226,6 @@ export const licenciasStatsQuerySchema = z.object({
 });
 
 export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
-export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
 
 export const adminUserIdSchema = z.object({
   userId: z.string().min(1),
