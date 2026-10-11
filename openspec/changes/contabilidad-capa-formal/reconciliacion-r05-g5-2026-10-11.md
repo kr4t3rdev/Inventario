@@ -180,7 +180,11 @@ Rectificaciones y límites concretos:
 - **#15 capital/deuda externa:** ahora ambas ramas de alta tienen prueba explícita
   de AuditLog después del asiento; el pago posterior conserva evidencia distinta.
 - **#31 pago-gastos:** evidencia física histórica del workflow; no extender a nómina,
-  compras y todos sus callers sin identificar los casos que prueban cada variante.
+  compras y callers automáticamente. La continuación `r6-egresos-2026-10-11.md`
+  aporta ahora 24 casos nominativos (bundle 27/27 con histórico): actions y handlers
+  web/móvil, CxP parcial/total y caller de alta de compra; distingue fallos AuditLog
+  posteriores al asiento de fallos CxP posteriores a ambos débitos. Conservar los
+  límites de moneda/estado/variante indicados en esa acta.
 - **#28 shadow sin valoración:** conservar negocio y causa durable es el resultado
   diseñado, no rollback total ni posteo enforce.
 

@@ -2585,6 +2585,14 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   Estos checks certifican casos nominativos; R6 global, #31 por variante/caller y los
   gates de baseline/operación siguen pendientes. Ver matriz writers y acta 11-10.
 
+- [x] **R6-EGRESOS-VARIANTES (#31, alcance nominativo 11-10):** nueva suite de 24 casos
+  invoca action de reconciliación, POST web/móvil y caller de alta compra PAGO_COMPLETO.
+  Nómina/gastoDE/compra directa, gastoDE/compra CxP parcial/total y servicios CxP total
+  por action. Failpoints de segunda auditoría y de pago CxP tras ambos débitos/deuda,
+  SQLSTATE 22012, snapshots completos y retry positivo. Bundle con histórico 27/27.
+  Ver `r6-egresos-2026-10-11.md`; variantes/FX/estados no nominados y R6 global siguen
+  pendientes. No atribuir al failpoint de auditoría las mutaciones posteriores del banco.
+
 - [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
   **Firma 06-10 REABIERTA por auditoría 07-10** (`auditoria-correcciones-2026-10-07.md`):
   la firma prematura no se sostenía. A1–A6 tienen correcciones con evidencia focal;
