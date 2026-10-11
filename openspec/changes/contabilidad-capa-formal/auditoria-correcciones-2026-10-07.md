@@ -6,6 +6,10 @@
 > PostgreSQL y suite final ampliada 12/12; unit helper 9/9, typechecks/lint limpios.
 > Se reprodujo/corrigió `PERIODO_CERRADO` en replay válido de las cuatro actions.
 > El mapa R6 de 31 callsites ya existe. R0.5 sigue sin firma por A9/baseline/R6-R7.
+> Continuación tras commit G5 `dd0d30c4`: evidencia física nueva R6 #4 (también #2),
+> #5 y #15: POST cash/reconciliación con sesión real y auditoría SQL tardía; alta de
+> deuda externa diferenciada de capital. Suites cash/capital 29/29 y reconciliación
+> 4/4 en corridas separadas. R6 global conserva sus límites por variante y adapter.
 
 > **ESTADO ACTUAL — 2026-10-11:** el dictamen vigente es la sección «Estado A9 actualizado —
 > 2026-10-11» al final. Correcciones locales no son `31/31 PASS`;

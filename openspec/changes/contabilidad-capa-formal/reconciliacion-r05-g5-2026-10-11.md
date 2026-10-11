@@ -12,6 +12,9 @@ certifica el alcance detallado abajo; no es un acta `31 × 8 PASS`.
   `54d0c801a0d34a32d31a37b6cd043eb39dbe4a86`, con cambios locales compartidos.
 - La evidencia certifica los archivos presentes durante las corridas, no exclusivamente
   HEAD ni un artefacto desplegado. No hay atestación de un commit limpio.
+- G5 materializado en commit `dd0d30c4` durante la continuación solicitada por el usuario.
+  Los resultados pertenecen al checkout compartido; el commit no convierte el entorno
+  en limpio ni valida cambios ajenos que siguen pendientes.
 - Criterios: sección R0.5 de `tasks.md`, `matriz-accept-r0.5.md` y requisitos modificados
   del spec de generación de asientos, idempotencia, valoración y gobernanza de períodos.
 - A9/R7, baseline por entorno y R6 global conservan sus gates vigentes.
@@ -154,17 +157,28 @@ o tombstones de la matriz larga.
 | Idem/retry | El claim cash global se sustituye por las 18 combinaciones y condiciones anteriores. POS/backend/web/nativo conservan sus evidencias fechadas, sin extender a callers no comprobados. |
 | Posting/auditoría, rollback | #8 compra-servicios inicial, #21 servicio mixto y #24/#25/#26 facturación tienen evidencia física nueva verificada. R6 global permanece parcial por rama/adapter. |
 
+### Continuación R6 tras el commit G5
+
+| Corrida PostgreSQL | Resultado | Evidencia nueva |
+|---|---|---|
+| `cash-g5-acceptance-real.test.ts` + `accounting-bank-transfers-real.test.ts` | 29/29 PASS (16 + 13) | Altas legacy préstamo/deuda con y sin clave, JWT/sesión reales y AuditLog SQL después del asiento; alta DEUDA_EXTERNA diferenciada de capital con rollback tardío. |
+| `http-real-idempotencia.test.ts` | 4/4 PASS | Reconciliación legacy de venta con CxC, JWT/sesión reales, fallo AuditLog 22012 después de observar su asiento y snapshot completo sin cambios. |
+
+Los failpoints exigen que el asiento ya sea visible dentro de la transacción; si el orden
+cambiara, lanzarían `22023` y la prueba fallaría. Auth real significa invocación de handlers,
+no transporte de red. G5 tenía 12 casos en la firma; la suite ampliada añade cuatro casos
+R6 y ahora tiene 16. Esta continuación no constituye aceptación global de R6.
+
 Rectificaciones y límites concretos:
 
-- **#5 reconciliación legacy de ventas:** `reconciliar-servicio-real.test.ts` sí invoca
-  `POST_LEGACY_VENTA` y fuerza `22012` en el UPDATE de CxC. Prueba rollback de esa ruta
-  en ese failpoint; no el failpoint exacto de posteo/auditoría con sesión HTTP real.
-  Las suites de core y sesión se mantienen separadas. La evidencia es histórica en
-  esta pasada: ese archivo no se reejecutó aquí.
-- **#4 alta legacy de préstamo:** rollback del core y auth de la ruta existen; no
-  combinarlos como si un mismo test forzara fallo tardío en el POST exacto.
-- **#15 capital/deuda externa:** el test AuditLog de alta usa `CAPITAL_SOCIAL`, no
-  la rama de alta `DEUDA_EXTERNA`. El pago posterior de deuda es otra operación.
+- **#5 reconciliación legacy de ventas:** la evidencia CxC del core/ruta sigue separada;
+  la continuación aporta ahora el failpoint de auditoría tardía en el POST exacto con
+  sesión real. Variante focal con CxC USD→CUP; no aceptación de todos los canales.
+- **#4 alta legacy de préstamo:** ahora el POST exacto con sesión real y ambas ramas
+  keyed/no-key tiene rollback de auditoría después de posteo. La misma prueba cubre
+  alta de deuda (#2). No sustituye cada failpoint posible del adapter.
+- **#15 capital/deuda externa:** ahora ambas ramas de alta tienen prueba explícita
+  de AuditLog después del asiento; el pago posterior conserva evidencia distinta.
 - **#31 pago-gastos:** evidencia física histórica del workflow; no extender a nómina,
   compras y todos sus callers sin identificar los casos que prueban cada variante.
 - **#28 shadow sin valoración:** conservar negocio y causa durable es el resultado

@@ -8,7 +8,14 @@ import { AccountingOperationsMutationService } from '@/features/contabilidad/ser
 
 assertDisposableDatabase(process.env);
 
+const initialFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 const prefix = `cta-transfer-${crypto.randomUUID()}`;
+const actors = {
+	transfer: `actor-${prefix}-transfer`,
+	adjustment: `actor-${prefix}-adjustment-audit-rollback`,
+	injection: `actor-${prefix}-injection-audit-rollback`,
+	capitalPayment: `actor-${prefix}-capital-payment-audit-rollback`,
+};
 let tenantId = '';
 let otherTenantId = '';
 let sourceId = '';
@@ -18,12 +25,70 @@ let otherAccountId = '';
 let trigger = '';
 let auditTrigger = '';
 
-const manager = () => ({
-	userId: 'actor-transfer', tenantId, tenantRole: 'manager',
+const manager = (userId = actors.transfer) => ({
+	userId, tenantId, tenantRole: 'manager',
 	planFeatures: {
 		'transferencias-bancarias': true, contabilidad: true, 'inyeccion-capital': true,
 	},
 }) as never;
+
+/** @description Captura los efectos persistidos relevantes de los writers contables. */
+async function snapshotWriterState(actorId: string) {
+	const [accounts, adjustments, injections, payments, reconciliations, entries, auditLogs, periodCache] =
+		await Promise.all([
+			prisma.cuentaBancaria.findMany({ where: { tenantId }, orderBy: { cuentaId: 'asc' } }),
+			prisma.ajusteBancario.findMany({ where: { tenantId }, orderBy: { ajusteId: 'asc' } }),
+			prisma.inyeccionCapital.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.pagoDeuda.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.reconciliacionVenta.findMany({
+				where: { tenantId }, orderBy: { reconciliacionId: 'asc' },
+			}),
+			prisma.asiento.findMany({
+				where: { tenantId }, orderBy: { asientoId: 'asc' },
+				include: { lineas: { orderBy: { orden: 'asc' } } },
+			}),
+			prisma.auditLog.findMany({
+				where: {
+					usuarioId: actorId,
+					entidad: { in: ['AJUSTE_BANCARIO', 'INYECCION_CAPITAL', 'PAGO_DEUDA'] },
+				},
+				orderBy: { id: 'asc' },
+			}),
+			prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+		]);
+
+	return JSON.parse(JSON.stringify({
+		accounts, adjustments, injections, payments, reconciliations, entries, auditLogs, periodCache,
+	}, (_key, value) => typeof value === 'bigint' ? value.toString() : value));
+}
+
+/** @description Instala un rechazo real de PostgreSQL para una entidad/actor de auditoría. */
+async function rejectAuditFor(actorId: string, entity: string, postedOrigin?: string) {
+	auditTrigger = `cta_writer_audit_${crypto.randomUUID().replaceAll('-', '')}`;
+	await prisma.$executeRawUnsafe(`CREATE FUNCTION "${auditTrigger}"() RETURNS trigger
+		LANGUAGE plpgsql AS $$ BEGIN
+			IF NEW."usuarioId" = '${actorId}' AND NEW."entidad" = '${entity}' THEN
+				${postedOrigin ? `IF NOT EXISTS (
+          SELECT 1 FROM "asientos" a WHERE a."tenantId" = '${tenantId}'
+            AND a."origenTipo" = '${postedOrigin}' AND a."origenId" = NEW."entidadId"
+        ) THEN
+          RAISE EXCEPTION 'audit before posting' USING ERRCODE = '22023';
+        END IF;` : ''}
+				RAISE EXCEPTION 'audit rejected: ${entity}' USING ERRCODE = '22012';
+			END IF;
+			RETURN NEW;
+		END $$`);
+	await prisma.$executeRawUnsafe(`CREATE TRIGGER "${auditTrigger}" BEFORE INSERT ON "AuditLog"
+		FOR EACH ROW EXECUTE FUNCTION "${auditTrigger}"()`);
+}
+
+/** @description Retira el trigger PostgreSQL temporal sin afectar otros casos. */
+async function removeAuditRejection() {
+	if (!auditTrigger) return;
+	await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${auditTrigger}" ON "AuditLog"`);
+	await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${auditTrigger}"()`);
+	auditTrigger = '';
+}
 
 /** @description Prueba el writer compartido de transferencias en PostgreSQL aislado. */
 describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 90_000 }, () => {
@@ -57,7 +122,7 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 		} });
 		// Política contable requerida por los writers y el guard fail-closed del motor.
 		await prisma.tenantAccountingPolicy.create({
-			data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: 'actor-transfer' },
+			data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: actors.transfer },
 		});
 		sourceId = (await prisma.cuentaBancaria.create({ data: {
 			tenantId, nombreBanco: `${prefix}-src`, numeroCuenta: `${prefix}-src`,
@@ -83,13 +148,14 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 			fechaFin: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59)),
 		} });
 		await PeriodoGuard.assertWritable(now, tenantId, 'asiento', {
-			actorId: 'actor-transfer', actorTipo: 'USUARIO',
+			actorId: actors.transfer, actorTipo: 'USUARIO',
 			origen: { tipo: 'transferencia_bancaria', id: prefix },
 		});
 	});
 
 	afterAll(async () => {
-		delete process.env.CONTABILIDAD_FORMAL_MODE;
+		if (initialFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+		else process.env.CONTABILIDAD_FORMAL_MODE = initialFormalMode;
 		if (trigger) {
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
@@ -97,6 +163,13 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 		if (auditTrigger) {
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${auditTrigger}" ON "AuditLog"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${auditTrigger}"()`);
+		}
+		const auditRows = await prisma.auditLog.findMany({
+			where: { usuarioId: { in: Object.values(actors) } },
+			select: { id: true },
+		});
+		if (auditRows.length > 0) {
+			await prisma.auditLog.deleteMany({ where: { id: { in: auditRows.map(({ id }) => id) } } });
 		}
 		if (!tenantId) return;
 		await prisma.asientoLinea.deleteMany({ where: { asiento: { tenantId } } });
@@ -142,7 +215,7 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 		auditTrigger = `cta_transfer_audit_${crypto.randomUUID().replaceAll('-', '')}`;
 		await prisma.$executeRawUnsafe(`CREATE FUNCTION "${auditTrigger}"() RETURNS trigger
 			LANGUAGE plpgsql AS $$ BEGIN
-				IF NEW."usuarioId" = 'actor-transfer' AND NEW."entidad" = 'TRANSFERENCIA' THEN
+				IF NEW."usuarioId" = '${actors.transfer}' AND NEW."entidad" = 'TRANSFERENCIA' THEN
 					RAISE EXCEPTION 'transfer audit rejected' USING ERRCODE = '22012';
 				END IF;
 				RETURN NEW;
@@ -273,6 +346,7 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 			input: {
 				montoRecibido: 50, moneda: 'USD', tasaCambio: 24,
 				tipo: 'CAPITAL_SOCIAL', cuentaId: fxAccountId, socio: 'Socio USD',
+				idempotencyKey: 'accounting-bank-transfer-capital-usd',
 			},
 			user: manager(),
 		});
@@ -294,6 +368,7 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 				montoRecibido: 100, moneda: 'USD', tasaCambio: 24,
 				tipo: 'DEUDA_EXTERNA', cuentaId: fxAccountId,
 				entidadPrestamista: 'Prestamista USD',
+				idempotencyKey: 'accounting-bank-transfer-debt-usd',
 			},
 			user: manager(),
 		});
@@ -314,6 +389,172 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 		expect(asientos[0].lineas.some((line) =>
 			line.fxEvidenceFingerprint === payment.fxEvidenceFingerprint
 			&& line.tasaCambio?.toString() === '25')).toBe(true);
+	});
+
+	it('revierte ajuste, saldo y asiento si AuditLog rechaza AJUSTE_BANCARIO', async () => {
+		const actorId = actors.adjustment;
+		const balanceBefore = (await prisma.cuentaBancaria.findUniqueOrThrow({
+			where: { cuentaId: sourceId },
+		})).saldo.toString();
+		const result = await AccountingOperationsMutationService.createBankAdjustment({
+			input: {
+				cuentaId: sourceId, tipo: 'ingreso', monto: 7, moneda: 'CUP',
+				descripcion: 'Auditoría persistida de ajuste', motivo: 'Caso feliz rollback',
+			},
+			user: manager(actorId),
+		});
+		const persisted = await prisma.ajusteBancario.findUniqueOrThrow({
+			where: { ajusteId: result.ajuste.ajusteId },
+		});
+		expect(persisted.monto.toString()).toBe('7');
+		expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: sourceId } }))
+			.saldo.toString()).toBe(String(Number(balanceBefore) + 7));
+		expect(await prisma.auditLog.count({
+			where: { usuarioId: actorId, entidad: 'AJUSTE_BANCARIO', entidadId: persisted.ajusteId },
+		})).toBe(1);
+		const happyEntries = await prisma.asiento.findMany({
+			where: { tenantId, origenTipo: 'ajuste_bancario', origenId: persisted.ajusteId },
+			include: { lineas: true },
+		});
+		expect(happyEntries).toHaveLength(1);
+		expect(happyEntries[0].lineas.length).toBeGreaterThan(0);
+
+		await rejectAuditFor(actorId, 'AJUSTE_BANCARIO');
+		try {
+			const beforeFailure = await snapshotWriterState(actorId);
+			await expect(AccountingOperationsMutationService.createBankAdjustment({
+				input: {
+					cuentaId: sourceId, tipo: 'ingreso', monto: 11, moneda: 'CUP',
+					descripcion: 'Debe revertirse', motivo: 'Falla real de auditoría',
+				},
+				user: manager(actorId),
+			})).rejects.toMatchObject({
+				message: expect.stringMatching(/22012[\s\S]*audit rejected: AJUSTE_BANCARIO/),
+			});
+			expect(await snapshotWriterState(actorId)).toEqual(beforeFailure);
+		} finally {
+			await removeAuditRejection();
+		}
+	});
+
+	it.each(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA'] as const)(
+    'revierte alta %s, saldo y asiento si AuditLog rechaza INYECCION_CAPITAL', async (tipo) => {
+		const actorId = actors.injection;
+		const balanceBefore = (await prisma.cuentaBancaria.findUniqueOrThrow({
+			where: { cuentaId: fxAccountId },
+		})).saldo.toString();
+		const result = await AccountingOperationsMutationService.createCapitalInjection({
+			input: {
+				montoRecibido: 5, moneda: 'USD', tasaCambio: 24,
+				tipo, cuentaId: fxAccountId, socio: 'Socio auditoría',
+        entidadPrestamista: tipo === 'DEUDA_EXTERNA' ? 'Prestamista auditoría' : undefined,
+        tasaInteres: tipo === 'DEUDA_EXTERNA' ? 10 : undefined,
+				idempotencyKey: `audit-rollback-injection-happy-${tipo}`,
+			},
+			user: manager(actorId),
+		});
+		const persisted = await prisma.inyeccionCapital.findUniqueOrThrow({ where: { id: result.id } });
+		expect(persisted.montoRecibido.toString()).toBe('5');
+		expect(persisted.tipo).toBe(tipo);
+    if (tipo === 'DEUDA_EXTERNA') {
+      expect(persisted.montoInteres?.toString()).toBe('0.5');
+      expect(persisted.montoTotalDeuda?.toString()).toBe('5.5');
+      expect(persisted.saldoPendiente?.toString()).toBe('5.5');
+      expect(persisted.estado).toBe('ACTIVA');
+    }
+		expect(persisted.montoConvertido?.toString()).toBe('120');
+		expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: fxAccountId } }))
+			.saldo.toString()).toBe(String(Number(balanceBefore) + 5));
+		expect(await prisma.auditLog.count({
+			where: { usuarioId: actorId, entidad: 'INYECCION_CAPITAL', entidadId: persisted.id },
+		})).toBe(1);
+		const happyEntries = await prisma.asiento.findMany({
+			where: { tenantId,
+        origenTipo: tipo === 'DEUDA_EXTERNA' ? 'deuda_cash' : 'inyeccion_capital',
+        origenId: persisted.id },
+			include: { lineas: true },
+		});
+		expect(happyEntries).toHaveLength(1);
+		expect(happyEntries[0].lineas.length).toBeGreaterThan(0);
+
+		await rejectAuditFor(actorId, 'INYECCION_CAPITAL',
+      tipo === 'DEUDA_EXTERNA' ? 'deuda_cash' : 'inyeccion_capital');
+		try {
+			const beforeFailure = await snapshotWriterState(actorId);
+			await expect(AccountingOperationsMutationService.createCapitalInjection({
+				input: {
+					montoRecibido: 9, moneda: 'USD', tasaCambio: 24,
+					tipo, cuentaId: fxAccountId, socio: 'Debe revertirse',
+          entidadPrestamista: tipo === 'DEUDA_EXTERNA' ? 'Deuda que debe revertirse' : undefined,
+          tasaInteres: tipo === 'DEUDA_EXTERNA' ? 10 : undefined,
+					idempotencyKey: `audit-rollback-injection-failure-${tipo}`,
+				},
+				user: manager(actorId),
+			})).rejects.toMatchObject({
+				message: expect.stringMatching(/22012[\s\S]*audit rejected: INYECCION_CAPITAL/),
+			});
+			expect(await snapshotWriterState(actorId)).toEqual(beforeFailure);
+		} finally {
+			await removeAuditRejection();
+		}
+	});
+
+	it('revierte pago, saldo pendiente, banco y asiento si AuditLog rechaza PAGO_DEUDA', async () => {
+		const actorId = actors.capitalPayment;
+		const debt = await AccountingOperationsMutationService.createCapitalInjection({
+			input: {
+				montoRecibido: 100, moneda: 'USD', tasaCambio: 24,
+				tipo: 'DEUDA_EXTERNA', cuentaId: fxAccountId,
+				entidadPrestamista: 'Prestamista válido',
+				idempotencyKey: 'audit-rollback-payment-debt',
+			},
+			user: manager(actorId),
+		});
+		const debtBefore = await prisma.inyeccionCapital.findUniqueOrThrow({ where: { id: debt.id } });
+		const balanceBefore = (await prisma.cuentaBancaria.findUniqueOrThrow({
+			where: { cuentaId: fxAccountId },
+		})).saldo.toString();
+		const paymentResult = await AccountingOperationsMutationService.registerCapitalPayment({
+			input: {
+				inyeccionId: debt.id, monto: 10, cuentaBancariaId: fxAccountId,
+				tipoPagoId: 'compat-tipo-no-persistido', moneda: 'USD', tasaCambio: 25,
+			},
+			user: manager(actorId),
+		});
+		const payment = await prisma.pagoDeuda.findUniqueOrThrow({ where: { id: paymentResult.id } });
+		const debtAfterHappy = await prisma.inyeccionCapital.findUniqueOrThrow({ where: { id: debt.id } });
+		expect(payment.montoPagado.toString()).toBe('10');
+		expect(payment.montoConvertido?.toString()).toBe('250');
+		expect(debtAfterHappy.saldoPendiente?.toString()).toBe('90');
+		expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: fxAccountId } }))
+			.saldo.toString()).toBe(String(Number(balanceBefore) - 10));
+		expect(await prisma.auditLog.count({
+			where: { usuarioId: actorId, entidad: 'PAGO_DEUDA', entidadId: payment.id },
+		})).toBe(1);
+		const happyEntries = await prisma.asiento.findMany({
+			where: { tenantId, origenTipo: 'pago_deuda_capital', origenId: payment.id },
+			include: { lineas: true },
+		});
+		expect(happyEntries).toHaveLength(1);
+		expect(happyEntries[0].lineas.length).toBeGreaterThan(0);
+
+		await rejectAuditFor(actorId, 'PAGO_DEUDA');
+		try {
+			const beforeFailure = await snapshotWriterState(actorId);
+			await expect(AccountingOperationsMutationService.registerCapitalPayment({
+				input: {
+					inyeccionId: debt.id, monto: 7, cuentaBancariaId: fxAccountId,
+					tipoPagoId: 'compat-tipo-no-persistido', moneda: 'USD', tasaCambio: 25,
+				},
+				user: manager(actorId),
+			})).rejects.toMatchObject({
+				message: expect.stringMatching(/22012[\s\S]*audit rejected: PAGO_DEUDA/),
+			});
+			expect(await snapshotWriterState(actorId)).toEqual(beforeFailure);
+		} finally {
+			await removeAuditRejection();
+		}
+		expect(debtBefore.tipo).toBe('DEUDA_EXTERNA');
 	});
 
 	it('revierte ambas cuentas y la transferencia ante error SQL en postEvento', async () => {

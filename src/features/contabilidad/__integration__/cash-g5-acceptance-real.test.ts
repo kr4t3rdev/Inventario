@@ -1,5 +1,5 @@
 /**
- * @description Evidencia física de los gaps G5 de actions, finales móviles y carreras legacy.
+ * @description Evidencia física de G5 y rollback R6 de altas legacy con sesión real.
  * Auth de actions controlada; wrappers, schemas, guard, Prisma, posting y AuditLog reales.
  * Los handlers HTTP usan JWT, sesión, membresía y licencia persistidos.
  */
@@ -48,6 +48,56 @@ let proveedorId = '';
 let bankId = '';
 let tipoPagoId = '';
 let token = '';
+let auditTrigger = '';
+let auditFunction = '';
+
+/**
+ * @description Retira el failpoint SQL incluso si falla una aserción o la instalación parcial.
+ * @returns {Promise<void>} Trigger y función eliminados del fixture.
+ */
+async function removeAuditFailpoint(): Promise<void> {
+  if (auditTrigger) {
+    await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${auditTrigger}" ON "AuditLog"`);
+    auditTrigger = '';
+  }
+  if (auditFunction) {
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${auditFunction}"()`);
+    auditFunction = '';
+  }
+}
+
+/**
+ * @description Rechaza auditoría solamente después de observar el asiento en la misma tx.
+ * @param {Kind} kind - Entidad cuya alta se prueba.
+ * @returns {Promise<void>} Failpoint físico instalado para el actor del fixture.
+ */
+async function installAuditFailpoint(kind: Kind): Promise<void> {
+  const entity = kind === 'loan' ? 'PRESTAMO_CASH' : 'DEUDA_CASH';
+  const origin = kind === 'loan' ? 'prestamo_cash' : 'deuda_cash';
+  const suffix = crypto.randomUUID().replaceAll('-', '');
+  auditTrigger = `g5_r6_audit_${suffix}`;
+  auditFunction = `${auditTrigger}_fn`;
+  // Los identificadores interpolados son UUID internos, no datos de requests.
+  await prisma.$executeRawUnsafe(`
+    CREATE FUNCTION "${auditFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW."usuarioId" = '${userId}' AND NEW."entidad" = '${entity}'
+         AND NEW."accion" = 'CREATE' THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM "asientos" a
+          WHERE a."tenantId" = '${tenantId}' AND a."origenTipo" = '${origin}'
+            AND a."origenId" = NEW."entidadId"
+        ) THEN
+          RAISE EXCEPTION 'R6_AUDIT_BEFORE_POSTING' USING ERRCODE = '22023';
+        END IF;
+        RAISE EXCEPTION 'R6_LEGACY_CREATE_AUDIT_AFTER_POSTING' USING ERRCODE = '22012';
+      END IF;
+      RETURN NEW;
+    END $$`);
+  await prisma.$executeRawUnsafe(`
+    CREATE TRIGGER "${auditTrigger}" BEFORE INSERT ON "AuditLog"
+    FOR EACH ROW EXECUTE FUNCTION "${auditFunction}"()`);
+}
 
 /** @description Exige éxito real del wrapper. @param result Resultado. @returns Datos. */
 function unwrap<T>(result: ActionResponse<T>): T {
@@ -167,6 +217,7 @@ describe('G5 — actions y adaptadores reales', { timeout: 90_000 }, () => {
   });
 
   afterAll(async () => {
+    await removeAuditFailpoint();
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     auth.user = null;
@@ -380,4 +431,61 @@ describe('G5 — actions y adaptadores reales', { timeout: 90_000 }, () => {
       gate.mockRestore();
     }
   });
+
+  it.each([
+    { kind: 'loan' as const, keyed: false },
+    { kind: 'loan' as const, keyed: true },
+    { kind: 'debt' as const, keyed: false },
+    { kind: 'debt' as const, keyed: true },
+  ])('R6 $kind alta legacy keyed=$keyed revierte efectos tras auditoría SQL tardía',
+    async ({ kind, keyed }) => {
+      const key = `rollback-${crypto.randomUUID()}`;
+      const input = {
+        ...createInput(key),
+        ...(kind === 'loan' ? { clienteId } : { proveedorId }),
+        idempotencyKey: keyed ? key : undefined,
+      };
+      const url = `http://localhost/api/contabilidad/${kind === 'loan'
+        ? 'prestamos-cash' : 'deudas-cash'}`;
+      const send = () => (kind === 'loan' ? legacyLoanCreate : legacyDebtCreate)(
+        request(url, input), {},
+      );
+      const before = await snapshot();
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        await installAuditFailpoint(kind);
+        const failed = await send();
+        expect(failed.status, await failed.clone().text()).toBe(500);
+        const evidence = errors.mock.calls.map((args) => args.map((value: unknown) =>
+          value instanceof Error ? `${value.message} ${JSON.stringify(value)}`
+            : JSON.stringify(value)).join(' ')).join('\n');
+        expect(evidence).toContain('R6_LEGACY_CREATE_AUDIT_AFTER_POSTING');
+        expect(evidence).toContain('22012');
+        expect(evidence).not.toContain('R6_AUDIT_BEFORE_POSTING');
+        expect(await snapshot()).toBe(before);
+      } finally {
+        await removeAuditFailpoint();
+        errors.mockRestore();
+      }
+
+      // La misma intención puede completarse: el rollback no reserva la clave.
+      const retry = await send();
+      expect(retry.status, await retry.clone().text()).toBe(201);
+      const body = await retry.json();
+      const entity = kind === 'loan' ? body.prestamo : body.deuda;
+      const origin = kind === 'loan' ? 'prestamo_cash' : 'deuda_cash';
+      const entry = await prisma.asiento.findFirstOrThrow({ where: {
+        tenantId, origenTipo: origin, origenId: entity.id,
+      }, include: { lineas: true } });
+      expect(entry.lineas).toHaveLength(2);
+      expect(await prisma.auditLog.count({ where: {
+        usuarioId: userId, entidadId: entity.id, accion: 'CREATE',
+        entidad: kind === 'loan' ? 'PRESTAMO_CASH' : 'DEUDA_CASH',
+      } })).toBe(1);
+      if (keyed) {
+        expect(await prisma.reconciliacionVenta.count({ where: {
+          tenantId, idempotencyKey: key,
+        } })).toBe(1);
+      }
+    });
 });

@@ -22,33 +22,11 @@ import { assertDisposableDatabase } from '../../../../../../../scripts/ci/dispos
 
 assertDisposableDatabase(process.env);
 
-vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: {
-    log: async () => undefined,
-    logStrict: async (params: {
-      accion: string;
-      entidad: string;
-      entidadId: string;
-      usuarioId: string;
-      detalles?: Record<string, unknown>;
-    }, client: { auditLog: { create: (args: unknown) => Promise<unknown> } }) =>
-      client.auditLog.create({
-        data: {
-          accion: params.accion,
-          entidad: params.entidad,
-          entidadId: params.entidadId,
-          usuarioId: params.usuarioId,
-          detalles: params.detalles ?? {},
-          ip: 'internal',
-          userAgent: 'system',
-        },
-      }),
-  },
-}));
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
 
 const prefix = `cta-http-idem-${crypto.randomUUID()}`;
 const fecha = '2026-02-20T12:00:00.000Z';
+const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 let tenantId = '';
 let userId = '';
 let token = '';
@@ -68,6 +46,27 @@ function requestCobro(body: Record<string, unknown>, idempotencyKey?: string): N
     },
     body: JSON.stringify(body),
   });
+}
+
+/**
+ * @description Captura filas completas de negocio, posting, auditoría y outbox del fixture.
+ * @returns {Promise<string>} Snapshot determinista, excluyendo sesión y caché del guard.
+ */
+async function financialSnapshot(): Promise<string> {
+  const rows = await Promise.all([
+    prisma.cuentaBancaria.findMany({ where: { tenantId }, orderBy: { cuentaId: 'asc' } }),
+    prisma.venta.findMany({ where: { tenantId }, orderBy: { ventaId: 'asc' } }),
+    prisma.factura.findMany({ where: { tenantId }, orderBy: { idFactura: 'asc' } }),
+    prisma.cuentaPorCobrar.findMany({ where: { tenantId }, orderBy: { idCC: 'asc' } }),
+    prisma.reconciliacionVenta.findMany({ where: { tenantId },
+      orderBy: { reconciliacionId: 'asc' } }),
+    prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+    prisma.auditLog.findMany({ where: { usuarioId: userId }, orderBy: { id: 'asc' } }),
+    prisma.shadowPosteoOutbox.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+  ]);
+  return JSON.stringify(rows, (_key, value: unknown) =>
+    typeof value === 'bigint' ? value.toString() : value);
 }
 
 describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 60_000 }, () => {
@@ -166,7 +165,7 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
         rateEffectiveAt: evidence.rateEffectiveAt,
         fxProvenanceKind: evidence.evidence.fxProvenanceKind,
         fxProvenanceSource: evidence.evidence.fxProvenanceSource,
-        fxEvidenceJson: evidence.evidence,
+        fxEvidenceJson: JSON.parse(JSON.stringify(evidence.evidence)),
         fxEvidenceFingerprint: evidence.evidence.fxEvidenceFingerprint,
         fxEvidenceVersion: evidence.evidence.fxEvidenceVersion,
       },
@@ -187,7 +186,8 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
   });
 
   afterAll(async () => {
-    delete process.env.CONTABILIDAD_FORMAL_MODE;
+    if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+    else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
     if (!tenantId) return;
     const reconciliacionIds = (await prisma.reconciliacionVenta.findMany({
       where: { tenantId },
@@ -291,9 +291,30 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
       .toBe(reconciliacionesAntes);
   });
 
-  it('revierte el pago y el asiento si falla el insert del audit log en la transacción', async () => {
-    const functionName = 'reject_reconciliation_audit_for_test';
-    const triggerName = 'reject_reconciliation_audit_for_test';
+  it('revierte el pago y el asiento ante auditoría SQL tardía con sesión Bearer real', async () => {
+    const operationKey = crypto.randomUUID();
+    const successfulResponse = await POST(requestCobro({
+      ventaId: saleId, cuentaId, tipoPagoId, monto: 10,
+      moneda: 'USD', tasaCambio: 25, fechaReconciliacion: fecha,
+    }, operationKey));
+    expect(successfulResponse.status, await successfulResponse.clone().text()).toBe(201);
+    const successful = await successfulResponse.json();
+    const successfulAudit = await prisma.auditLog.findFirstOrThrow({
+      where: {
+        usuarioId: userId,
+        entidad: 'RECONCILIACION',
+        entidadId: successful.reconciliacion.reconciliacionId,
+        accion: 'CREATE',
+      },
+    });
+    expect(successfulAudit.detalles).toMatchObject({ tipo: 'VENTA', ventaId: saleId });
+    const successfulEntry = await prisma.asiento.findFirstOrThrow({ where: {
+      tenantId, origenTipo: 'reconciliacion_venta',
+      origenId: successful.reconciliacion.reconciliacionId,
+    }, include: { lineas: true } });
+    expect(successfulEntry.lineas.length).toBeGreaterThanOrEqual(2);
+    const financialBefore = await financialSnapshot();
+
     const saldoAntes = await prisma.cuentaBancaria.findFirstOrThrow({
       where: { cuentaId, tenantId },
       select: { saldo: true },
@@ -306,14 +327,44 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
       where: { tenantId, ventaId: saleId },
     });
     const asientosAntes = await prisma.asiento.count({ where: { tenantId } });
+    const auditAntes = await prisma.auditLog.findMany({
+      where: { usuarioId: userId, entidad: 'RECONCILIACION' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, accion: true, entidadId: true, detalles: true },
+    });
+    const asientoAntes = await prisma.asiento.findMany({
+      where: { tenantId },
+      orderBy: [{ fecha: 'asc' }, { asientoId: 'asc' }],
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+    });
+    const reconciliacionesSnapshotAntes = await prisma.reconciliacionVenta.findMany({
+      where: { tenantId, ventaId: saleId },
+      orderBy: [{ fechaReconciliacion: 'asc' }, { reconciliacionId: 'asc' }],
+    });
+    const cacheAntes = await prisma.periodoCache.findMany({
+      where: { tenantId }, orderBy: [{ cacheKey: 'asc' }],
+    });
+    const suffix = crypto.randomUUID().replaceAll('-', '');
+    const functionName = `reject_reconciliation_audit_${suffix}_fn`;
+    const triggerName = `reject_reconciliation_audit_${suffix}`;
 
     await prisma.$executeRawUnsafe(`
       DROP TRIGGER IF EXISTS "${triggerName}" ON "AuditLog"
     `);
     await prisma.$executeRawUnsafe(`
-      CREATE OR REPLACE FUNCTION "${functionName}"() RETURNS trigger AS $$
+      CREATE FUNCTION "${functionName}"() RETURNS trigger AS $$
       BEGIN
-        RAISE EXCEPTION 'audit insert rejected' USING ERRCODE = '23514';
+        IF NEW."usuarioId" = '${userId}' AND NEW."entidad" = 'RECONCILIACION'
+          AND NEW."accion" = 'CREATE' THEN
+          IF NOT EXISTS (SELECT 1 FROM "asientos" a
+            WHERE a."tenantId" = '${tenantId}'
+              AND a."origenTipo" = 'reconciliacion_venta'
+              AND a."origenId" = NEW."entidadId") THEN
+            RAISE EXCEPTION 'R6_RECONCILIATION_AUDIT_BEFORE_POSTING' USING ERRCODE = '22023';
+          END IF;
+          RAISE EXCEPTION 'physical reconciliation AuditLog rejected' USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
       END;
       $$ LANGUAGE plpgsql
     `);
@@ -322,13 +373,22 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
       FOR EACH ROW EXECUTE FUNCTION "${functionName}"()
     `);
 
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
       const response = await POST(requestCobro({
         ventaId: saleId, cuentaId, tipoPagoId, monto: 10,
         moneda: 'USD', tasaCambio: 25, fechaReconciliacion: fecha,
-      }, 'idem-audit-fail'));
+      }, crypto.randomUUID()));
       expect(response.status).toBe(500);
+      const evidence = errors.mock.calls.map((args) => args.map((value: unknown) =>
+        value instanceof Error ? `${value.message} ${JSON.stringify(value)}`
+          : JSON.stringify(value)).join(' ')).join('\n');
+      expect(evidence).toContain('physical reconciliation AuditLog rejected');
+      expect(evidence).toContain('22012');
+      expect(evidence).not.toContain('R6_RECONCILIATION_AUDIT_BEFORE_POSTING');
+      expect(await financialSnapshot()).toBe(financialBefore);
     } finally {
+      errors.mockRestore();
       await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "AuditLog"`);
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
     }
@@ -347,5 +407,22 @@ describe('POST reconciliación ventas — HTTP real e idempotencia', { timeout: 
     expect(await prisma.reconciliacionVenta.count({ where: { tenantId, ventaId: saleId } }))
       .toBe(reconciliacionesAntes);
     expect(await prisma.asiento.count({ where: { tenantId } })).toBe(asientosAntes);
+    expect(await prisma.auditLog.findMany({
+      where: { usuarioId: userId, entidad: 'RECONCILIACION' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, accion: true, entidadId: true, detalles: true },
+    })).toEqual(auditAntes);
+    expect(await prisma.asiento.findMany({
+      where: { tenantId },
+      orderBy: [{ fecha: 'asc' }, { asientoId: 'asc' }],
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+    })).toEqual(asientoAntes);
+    expect(await prisma.reconciliacionVenta.findMany({
+      where: { tenantId, ventaId: saleId },
+      orderBy: [{ fechaReconciliacion: 'asc' }, { reconciliacionId: 'asc' }],
+    })).toEqual(reconciliacionesSnapshotAntes);
+    expect(await prisma.periodoCache.findMany({
+      where: { tenantId }, orderBy: [{ cacheKey: 'asc' }],
+    })).toEqual(cacheAntes);
   });
 });

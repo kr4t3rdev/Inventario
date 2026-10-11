@@ -2573,6 +2573,18 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   Las cuatro carreras usan commits/guard reales con intercalado determinista mediante spy.
   Evidencia común: `cash-g5-acceptance-real.test.ts`; límites y firma en acta 11-10.
 
+**Continuación R6 tras commit G5 `dd0d30c4` (11-10):**
+- [x] **R6-HTTP-ALTA-CASH (#4, ampliación #2):** POST legacy loan/debt con JWT/sesión
+  reales, keyed/no-key, failpoint físico de AuditLog que exige asiento previo en tx,
+  `22012`, snapshot sin efectos y retry exitoso. Suite G5/R6 ampliada 16/16.
+- [x] **R6-HTTP-RECONCILIACION (#5):** POST legacy de venta/CxC con sesión real y
+  auditoría SQL tardía, `22012`, snapshot completo banco/venta/factura/CxC/asiento/líneas/
+  reconciliación/auditoría/outbox. `http-real-idempotencia.test.ts` 4/4.
+- [x] **R6-DEUDA-EXTERNA-ALTA (#15):** positivo y rollback SQL de AuditLog después del
+  asiento para `DEUDA_EXTERNA`, distintos de `CAPITAL_SOCIAL`. Suite bank-transfers 13/13.
+  Estos checks certifican casos nominativos; R6 global, #31 por variante/caller y los
+  gates de baseline/operación siguen pendientes. Ver matriz writers y acta 11-10.
+
 - [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
   **Firma 06-10 REABIERTA por auditoría 07-10** (`auditoria-correcciones-2026-10-07.md`):
   la firma prematura no se sostenía. A1–A6 tienen correcciones con evidencia focal;
