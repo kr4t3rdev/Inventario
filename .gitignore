@@ -112,3 +112,6 @@ playwright-report/
 
 # Logs de corridas k6 (no commitear)
 load-tests/*.log
+
+# Playwright artifacts
+test-results/

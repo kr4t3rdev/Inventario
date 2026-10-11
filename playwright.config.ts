@@ -2,7 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: ['**/auth.setup.ts', '**/global-setup.ts'],
+  // El spec de renovación siembra/borra fixtures crudas: solo corre con el
+  // config dedicado (playwright.renewal.config.ts) + ALLOW_DISPOSABLE_TEST_DB=1
+  testIgnore: ['**/auth.setup.ts', '**/global-setup.ts', '**/admin-licencias-renew.spec.ts'],
   timeout: 30000,
   expect: {
     timeout: 5000
