@@ -201,5 +201,8 @@ dimensiones, ramas ni adaptadores de los 31 callsites. Los trabajos históricos 
 conservan su alcance.
 
 R0.5 mantiene las dependencias declaradas de A8/R6, baseline por entorno y A9/R7.
+La continuación de baseline está en `r6-baseline-entornos-2026-10-11.md`: diagnóstico
+local read-only con guards operativos, pero sin historial Prisma; producción elegida
+por el responsable y pendiente de conexión segura y corrida propia.
 A10 captura actual sigue verificada y no requiere reconstrucción histórica. Este
 dictamen no autoriza modos operativos, replay, release ni un nuevo intento cloud.

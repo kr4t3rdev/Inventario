@@ -2768,6 +2768,12 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   períodos y la cobertura global por writer siguen pendientes.
   Los tests unitarios no sustituyen esa evidencia.
 - [ ] **R6-BASELINE — Completar baseline y guards por entorno; el plan heredado existe.**
+  **Corte 11-10:** `r6-baseline-entornos-2026-10-11.md` y nuevo diagnóstico SQL de solo
+  lectura. Local: 11 triggers activos en sus tablas, 11 CHECKs validados e índice
+  idempotente válido; no hay `_prisma_migrations`, por lo que historial/checksums no
+  están acreditados. Producción elegida por el responsable; pendiente de URL segura
+  y nombre esperado accesibles al proceso de herramientas. No se leyó `.env` ni se
+  modificó schema/historial/negocio. Artefacto local JSON no certifica producción.
   **Evidencia parcial 06-10:** `verify-accounting-sql-guards.mjs` confirma
   `[db-guards] Required accounting SQL guards are present` en la DB desechable; las
   migraciones `20261005160000_merma_idempotency_key` y `20261006000000_ajuste_idempotency_key`
