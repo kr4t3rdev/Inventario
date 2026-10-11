@@ -1289,7 +1289,7 @@ describe('Admin Server Actions', () => {
       ] as any);
       vi.mocked(prisma.tenantLicense.updateMany).mockResolvedValue({ count: 2 } as any);
 
-      const r = await cleanupExpiredDemoLicenciasAction({ dryRun: true });
+      const r = await cleanupExpiredDemoLicenciasAction({ dryRun: false });
 
       expect(r.success).toBe(true);
       if (!r.success) expect.unreachable('Se esperaba que la accion tuviera exito');

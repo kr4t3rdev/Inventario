@@ -206,6 +206,7 @@ model Tenant {
   affiliateCommissionEntries     AffiliateCommissionLedger[]      @relation("ReferrerAffiliateCommissionEntries")
   salesAgentReferral             SalesAgentReferral?
   tenantLicensePayments          TenantLicensePayment[]
+  licenseRenewalOperations       LicenseRenewalOperation[]
   ajustesBancarios               AjusteBancario[]
   almacenes                      Almacen[]
   anticipos                      Anticipo[]
@@ -383,6 +384,7 @@ model TenantLicense {
   appliedAffiliateCommissions AffiliateCommissionLedger[]  @relation("AffiliateAppliedLicense")
   salesAgentCommissionEntries SalesAgentCommissionLedger[] @relation("SalesAgentSourceLicense")
   salesAgentPayments          TenantLicensePayment[]
+  renewalOperations           LicenseRenewalOperation[]
 
   @@index([tenantId])
   @@index([planId])
@@ -1074,6 +1076,26 @@ model TenantLicensePayment {
   @@index([tenantId, confirmedAt])
   @@index([tenantLicenseId])
   @@index([confirmedByAdminId])
+}
+
+/// Immutable receipt for a keyed license-renewal operation. Stores the request
+/// fingerprint and the committed outcome so retries replay the original
+/// result instead of extending the license again.
+model LicenseRenewalOperation {
+  id                 String        @id @default(cuid())
+  tenantId           String
+  keyHash            String
+  payloadFingerprint String
+  tenantLicenseId    String?
+  responseSnapshot   Json?
+  createdAt          DateTime      @default(now())
+
+  tenant             Tenant        @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  license            TenantLicense? @relation(fields: [tenantLicenseId], references: [tenantLicenseId], onDelete: SetNull)
+
+  @@unique([tenantId, keyHash])
+  @@index([tenantId, createdAt])
+  @@map("license_renewal_operations")
 }
 
 model SalesAgentBalance {

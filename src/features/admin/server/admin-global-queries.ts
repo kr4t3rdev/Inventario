@@ -40,6 +40,7 @@ import {
 	adminLicenciaIdSchema,
 	adminRenewLicenciaSchema,
 } from "../schemas";
+import { renewTenantLicense } from "../services/renew-licencia-service";
 import type {
 	GetLicenciasQueryInput,
 	LicenciasStatsQueryInput,
@@ -1337,7 +1338,7 @@ export async function resendAdminUserVerification(
 }
 
 /**
- * @description Asigna un usuario a una empresa o lo cambia de empresa.
+ * @description Asigna un usuario a una empresa o lo mueve de empresa.
  * @param {AdminAssignTenantInput} input - Usuario, empresa, rol y cambio de empresa.
  * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
  * @returns {Promise<object>} Membresía resultante y mensaje.
@@ -1407,7 +1408,7 @@ export async function assignAdminUserTenant(
 }
 
 /**
- * @description Cambia el rol de un usuario dentro de una empresa.
+ * @description Actualiza el rol de un usuario dentro de una empresa.
  * @param {AdminChangeTenantRoleInput} input - Usuario, empresa y nuevo rol.
  * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
  * @returns {Promise<object>} Membresía actualizada y mensaje.
@@ -1528,98 +1529,13 @@ export async function renewAdminLicense(
   assertPlatformAdmin(user);
   const parsed = adminRenewLicenciaSchema.parse(input ?? {});
 
-  const outcome = await prisma.$transaction(async (tx) => {
-    const [license, newPlan] = await Promise.all([
-      tx.tenantLicense.findUnique({
-        where: { tenantLicenseId: parsed.tenantLicenseId },
-        include: { plan: true },
-      }),
-      parsed.planId
-        ? tx.plan.findUnique({ where: { planId: parsed.planId } })
-        : Promise.resolve(null),
-    ]);
-
-    if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
-    if (parsed.planId && !newPlan)
-      throw new ActionError("Plan no encontrado", "NOT_FOUND");
-
-    const targetPlan = newPlan ?? license.plan;
-    if (!targetPlan) {
-      throw new ActionError(
-        "La licencia no tiene un plan asociado",
-        "VALIDATION",
-      );
-    }
-
-    const durationDays = resolveLicenseDurationDays(
-      targetPlan.duracionDias,
-      parsed.durationDays,
-    );
-    if (!durationDays) {
-      throw new ActionError(
-        "No se pudo resolver la duración de la licencia",
-        "VALIDATION",
-      );
-    }
-
-    const now = new Date();
-    const baseExpiracion =
-      license.expiracion.getTime() > now.getTime() ? license.expiracion : now;
-    const newExpiracion = addDays(baseExpiracion, durationDays);
-    const samePlan = targetPlan.planId === license.planId;
-
-    const updated = await tx.tenantLicense.update({
-      where: { tenantLicenseId: license.tenantLicenseId },
-      data: {
-        planId: targetPlan.planId,
-        expiracion: newExpiracion,
-        activa: true,
-        maxUsuarios: targetPlan.maxUsuarios,
-        maxAlmacenes: targetPlan.maxAlmacenes,
-        maxProductos: targetPlan.maxProductos,
-        maxClientes: targetPlan.maxClientes,
-        features: samePlan
-          ? (license.features as Prisma.InputJsonValue)
-          : Prisma.JsonNull,
-        featureOverrides: samePlan ? (license.featureOverrides ?? {}) : {},
-        ...resolveLicensePricing(Number(targetPlan.precio), false),
-      },
-    });
-
-    await tx.user.updateMany({
-      where: {
-        tenantMemberships: {
-          some: { tenantId: license.tenantId, isActive: true },
-        },
-        isActive: true,
-      } as never,
-      data: { expiresAt: newExpiracion, isActive: true },
-    });
-
-    await AuditLogService.logStrict(
-      {
-        accion: "UPDATE",
-        entidad: "TENANT_LICENSE",
-        entidadId: updated.tenantLicenseId,
-        usuarioId: user.userId,
-        detalles: {
-          previousExpiracion: license.expiracion.toISOString(),
-          newExpiracion: newExpiracion.toISOString(),
-          previousPlanId: license.planId,
-          newPlanId: targetPlan.planId,
-          via: "mobile-admin",
-        },
-      },
-      tx,
-    );
-
-    return {
-      tenantLicenseId: updated.tenantLicenseId,
-      newExpiracion,
-      newPlanId: targetPlan.planId,
-      previousExpiracion: license.expiracion,
-      previousPlanId: license.planId ?? null,
-    };
+  const outcome = await renewTenantLicense({
+    tenantLicenseId: parsed.tenantLicenseId,
+    planId: parsed.planId,
+    durationDaysOverride: parsed.durationDays,
+    requireActiveMembership: false,
+    via: "mobile-admin",
+    actingAdminId: user.userId,
   });
 
   revalidatePath("/admin");

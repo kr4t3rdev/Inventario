@@ -142,6 +142,11 @@ export const renewLicenciaSchema = z.object({
   },
 );
 
+export const quoteRenewalLicenciaSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1),
+});
+
 // ─── Planes ────────────────────────────────────────────────
 
 export const createPlanSchema = z.object({
@@ -197,6 +202,7 @@ export type CleanupExpiredDemoLicenciasInput = z.infer<
 >;
 export type ChangePlanInput = z.infer<typeof changePlanSchema>;
 export type RenewLicenciaInput = z.infer<typeof renewLicenciaSchema>;
+export type QuoteRenewalLicenciaInput = z.infer<typeof quoteRenewalLicenciaSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;

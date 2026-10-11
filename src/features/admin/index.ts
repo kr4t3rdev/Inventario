@@ -23,6 +23,7 @@ export {
 	convertDemoToPaidPlanAction,
 	changePlanAction,
 	renewLicenciaAction,
+	quoteRenewalLicenciaAction,
 	updateLicenciaAction,
 	updateLicenseAccountingOverridesAction,
 	deleteLicenciaAction,

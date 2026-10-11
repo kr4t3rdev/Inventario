@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useCallback, useDeferredValue, useState, useEffect } from 'react'
+import { useCallback, useDeferredValue, useState, useEffect, useMemo } from 'react'
 import { LazyMotion, m as motion } from 'framer-motion'
 import {
   Key,
@@ -89,6 +89,7 @@ import {
   convertDemoToPaidPlanAction,
   changePlanAction,
   renewLicenciaAction,
+  quoteRenewalLicenciaAction,
   getLicenciasPaginatedAction,
   getLicenciasStatsAction,
   updateLicenseAccountingOverridesAction,
@@ -97,6 +98,21 @@ import {
   ACCOUNTING_OVERRIDE_FEATURES,
   buildAccountingFeatureToggleStates,
 } from '@/features/admin/license-feature-overrides'
+
+/**
+ * @description Cotización de renovación devuelta por el servidor: el monto
+ * exigible del plan SELECCIONADO (con descuento por referido) y la vista
+ * previa de la nueva expiración.
+ */
+interface RenewalQuotePreview {
+  tenantLicenseId: string
+  planId: string
+  listPriceUsd: number
+  finalPriceUsd: number
+  duracionDias: number
+  newExpiracion: string
+  esReferido: boolean
+}
 
 function SortIndicator({
   column,
@@ -144,6 +160,7 @@ export default function AdminLicenciasPage() {
     registerPayment: boolean
     amountPaidUsd?: number
     idempotencyKey?: string
+    quote?: RenewalQuotePreview
   }>({ planId: '', registerPayment: false })
   const [isRenewing, setIsRenewing] = useState(false)
   const [licenseToConvert, setLicenseToConvert] = useState<any>(null)
@@ -473,10 +490,16 @@ export default function AdminLicenciasPage() {
     }
   }
 
-  function buildRenewalKey(tenantId: string, planId: string) {
-    const ts = new Date().toISOString().slice(0, 10)
-    return `renewal:${tenantId}:${planId}:${ts}`
-  }
+  const buildRenewalKey = useCallback(
+    (tenantLicenseId: string, planId: string, registerPayment: boolean) => {
+      // Clave por licencia + plan + variante + ventana de segundos: cada sesión
+      // del dialog es una intención nueva; los reintentos de una sesión reusan
+      // la misma clave (guardada en el draft) y hacen replay del resultado.
+      const ts = new Date().toISOString().slice(0, 19)
+      return `renewal:${tenantLicenseId}:${planId}:${registerPayment ? 'pay' : 'nopay'}:${ts}`
+    },
+    [],
+  )
 
   function handleRenew(licencia: any) {
     setLicenseToRenew(licencia)
@@ -494,6 +517,7 @@ export default function AdminLicenciasPage() {
     registerPayment: boolean
     amountPaidUsd?: number
     idempotencyKey?: string
+    quote?: RenewalQuotePreview
   }) {
     setRenewDraft(draft)
     setRenewDialogOpen(false)
@@ -532,9 +556,21 @@ export default function AdminLicenciasPage() {
           : newExp
             ? format(new Date(newExp), 'dd/MM/yyyy')
             : null
-      toast.success(
-        fechaTxt ? `Licencia renovada hasta el ${fechaTxt}` : 'Licencia renovada',
+      const wasDuplicate = Boolean(
+        (result.data as { duplicate?: boolean } | undefined)?.duplicate,
       )
+      if (wasDuplicate) {
+        // Replay idempotente: la renovación ya estaba aplicada con esta clave
+        toast.info(
+          fechaTxt
+            ? `Esta renovación ya estaba aplicada: vigencia hasta el ${fechaTxt}`
+            : 'Esta renovación ya estaba aplicada con esta clave',
+        )
+      } else {
+        toast.success(
+          fechaTxt ? `Licencia renovada hasta el ${fechaTxt}` : 'Licencia renovada',
+        )
+      }
       setRenewConfirmOpen(false)
       setLicenseToRenew(null)
       await refreshLicenciasData()
@@ -1737,15 +1773,18 @@ function RenewLicenciaDialog({
     registerPayment: boolean
     amountPaidUsd?: number
     idempotencyKey?: string
+    quote?: RenewalQuotePreview
   }) => void
   planes: any[]
   licencia: any | null
-  buildRenewalKey: (tenantId: string, planId: string) => string
+  buildRenewalKey: (tenantLicenseId: string, planId: string, registerPayment: boolean) => string
 }) {
   const [planId, setPlanId] = useState('')
   const [registerPayment, setRegisterPayment] = useState(false)
   const [amountPaidUsd, setAmountPaidUsd] = useState<string>('')
   const [idempotencyKey, setIdempotencyKey] = useState('')
+  const [quote, setQuote] = useState<RenewalQuotePreview | null>(null)
+  const [isQuoting, setIsQuoting] = useState(false)
 
   useEffect(() => {
     if (!open || !licencia) return
@@ -1753,44 +1792,80 @@ function RenewLicenciaDialog({
     setRegisterPayment(false)
     setAmountPaidUsd('')
     setIdempotencyKey('')
+    setQuote(null)
   }, [open, licencia])
 
+  // Cotización de servidor: el monto exigible del plan SELECCIONADO con el
+  // descuento por referido detectado en servidor (nunca el precio viejo de
+  // la licencia). Se revalida al abrir el dialog o cambiar de plan; las
+  // respuestas desactualizadas se descartan.
+  useEffect(() => {
+    if (!open || !licencia || !planId) {
+      setQuote(null)
+      return
+    }
+    let stale = false
+    setIsQuoting(true)
+    quoteRenewalLicenciaAction({
+      tenantLicenseId: licencia.tenantLicenseId,
+      planId,
+    })
+      .then((result) => {
+        if (stale) return
+        setQuote(result.success && result.data ? result.data : null)
+      })
+      .catch(() => {
+        if (!stale) setQuote(null)
+      })
+      .finally(() => {
+        if (!stale) setIsQuoting(false)
+      })
+    return () => {
+      stale = true
+    }
+  }, [open, licencia, planId])
+
   const selectedPlan = planes.find((p: any) => p.planId === planId)
-  const newPlanDuration = selectedPlan?.duracionDias ?? licencia?.plan?.duracionDias ?? 0
 
-  const baseExpiracion = (() => {
-    if (!licencia?.expiracion) return new Date()
-    const exp = new Date(licencia.expiracion)
-    return exp.getTime() > Date.now() ? exp : new Date()
-  })()
-  const newExpiracion = addDays(baseExpiracion, newPlanDuration)
+  // El monto exigible viene del servidor: precio del plan seleccionado con
+  // descuento por referido. Nunca el precio viejo de la licencia.
+  const exigible = quote?.finalPriceUsd ?? 0
 
-  const exigible = (() => {
-    const list = Number(licencia?.listPriceUsd ?? selectedPlan?.precio ?? 0)
-    const final = Number(licencia?.finalPriceUsd ?? list)
-    return final || list
-  })()
+  // Sugerencia de clave estable por (licencia, plan, variante): no recalcula
+  // cada render, así lo mostrado y lo enviado son exactamente la misma clave
+  const suggestedKey = useMemo(
+    () =>
+      licencia
+        ? buildRenewalKey(licencia.tenantLicenseId ?? 'licencia', planId, registerPayment)
+        : '',
+    [licencia, planId, registerPayment, buildRenewalKey],
+  )
 
   const handleClose = () => {
     onClose()
   }
 
   const handleContinue = () => {
-    if (!licencia || !planId) return
-    const finalKey =
-      idempotencyKey ||
-      buildRenewalKey(licencia.tenantId ?? 'tenant', planId)
+    if (!licencia || !planId || !quote) return
+    const finalKey = idempotencyKey || suggestedKey
     const amount = amountPaidUsd ? Number(amountPaidUsd) : undefined
     onContinue({
       planId,
       registerPayment,
-      ...(amount !== undefined ? { amountPaidUsd: amount } : {}),
-      idempotencyKey: registerPayment ? finalKey : undefined,
+      ...(registerPayment && amount !== undefined ? { amountPaidUsd: amount } : {}),
+      // La clave protege la renovación completa (con o sin pago): un retry
+      // devuelve el resultado original en lugar de extender otra vez.
+      idempotencyKey: finalKey,
+      quote,
     })
   }
 
+  // Deshabilitado mientras la cotización está en vuelo o falló: no se puede
+  // confirmar un monto que el servidor no validó.
   const canContinue = Boolean(
     planId &&
+      quote !== null &&
+      !isQuoting &&
       (!registerPayment ||
         !amountPaidUsd ||
         Number(amountPaidUsd) > 0),
@@ -1850,7 +1925,12 @@ function RenewLicenciaDialog({
             <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
               <Checkbox
                 checked={registerPayment}
-                onCheckedChange={(v) => setRegisterPayment(v === true)}
+                onCheckedChange={(v) => {
+                  setRegisterPayment(v === true)
+                  // El monto solo aplica al pago: limpiarlo evita diferencias
+                  // de huella entre reintentos con y sin pago
+                  if (v !== true) setAmountPaidUsd('')
+                }}
               />
               Registrar pago de renovación
             </label>
@@ -1862,7 +1942,17 @@ function RenewLicenciaDialog({
                 <span className="text-xs text-muted-foreground">
                   Monto exigible
                 </span>
-                <div className="font-medium">${exigible.toFixed(2)}</div>
+                <div className="font-medium">
+                  {isQuoting ? (
+                    <span className="text-muted-foreground">Cotizando...</span>
+                  ) : quote ? (
+                    `$${exigible.toFixed(2)}${quote.esReferido ? ' (con descuento por referido)' : ''}`
+                  ) : (
+                    <span className="text-muted-foreground">
+                      No se pudo cotizar el monto
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="grid gap-2">
                 <span className="text-xs text-muted-foreground">
@@ -1882,17 +1972,9 @@ function RenewLicenciaDialog({
                   Clave de idempotencia
                 </span>
                 <Input
-                  value={
-                    idempotencyKey ||
-                    (licencia
-                      ? buildRenewalKey(
-                          licencia.tenantId ?? 'tenant',
-                          planId,
-                        )
-                      : '')
-                  }
+                  value={idempotencyKey || suggestedKey}
                   onChange={(e) => setIdempotencyKey(e.target.value)}
-                  placeholder="renewal:tenantId:planId:fecha"
+                  placeholder="renewal:licencia:plan:variante:fecha-hora"
                 />
               </div>
             </div>
@@ -1931,22 +2013,27 @@ function RenewConfirmAlertDialog({
     registerPayment: boolean
     amountPaidUsd?: number
     idempotencyKey?: string
+    quote?: RenewalQuotePreview
   }
   isSubmitting: boolean
 }) {
   const newPlan = planes.find((p: any) => p.planId === draft.planId)
   const currentPlan = licencia?.plan
-  const newDuration = newPlan?.duracionDias ?? currentPlan?.duracionDias ?? 0
+  // Duración y fechas priorizan la cotización de servidor; el cálculo local
+  // queda solo como fallback defensivo
+  const newDuration = draft.quote?.duracionDias ?? newPlan?.duracionDias ?? currentPlan?.duracionDias ?? 0
 
   const baseExpiracion = (() => {
     if (!licencia?.expiracion) return new Date()
     const exp = new Date(licencia.expiracion)
     return exp.getTime() > Date.now() ? exp : new Date()
   })()
-  const newExpiracion = addDays(baseExpiracion, newDuration)
+  const newExpiracion = draft.quote
+    ? new Date(draft.quote.newExpiracion)
+    : addDays(baseExpiracion, newDuration)
 
   const precio = Number(newPlan?.precio ?? currentPlan?.precio ?? 0)
-  const precioFinal = Number(licencia?.finalPriceUsd ?? precio)
+  const precioFinal = draft.quote?.finalPriceUsd ?? precio
 
   return (
     <AlertDialog
