@@ -255,6 +255,7 @@ describe("API contabilidad/deudas-cash", () => {
 					updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 				},
 				reconciliacionVenta: {
+					update: vi.fn().mockResolvedValue({}),
 					create: vi.fn().mockResolvedValue({
 						reconciliacionId: "rec-deuda-1",
 						monto: 3000,
@@ -374,6 +375,7 @@ describe("API contabilidad/deudas-cash", () => {
 					updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 				},
 				reconciliacionVenta: {
+					update: vi.fn().mockResolvedValue({}),
 					create: vi.fn().mockResolvedValue({
 						reconciliacionId: "rec-deuda-1",
 						monto: 3000,
@@ -665,7 +667,10 @@ describe("API contabilidad/deudas-cash", () => {
 					update: vi.fn().mockResolvedValue({}),
 					updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 				},
-				reconciliacionVenta: { create: recCreate },
+				reconciliacionVenta: {
+					create: recCreate,
+					update: vi.fn().mockResolvedValue({}),
+				},
 			};
 			return callback(tx);
 		});
@@ -734,7 +739,10 @@ describe("API contabilidad/deudas-cash", () => {
 			},
 			cuentaPorPagar: { create: vi.fn().mockResolvedValue({ cuentaPorPagarId: 'cxp-mlc' }) },
 			cuentaBancaria: { updateMany: accountUpdateMany },
-			reconciliacionVenta: { create: recCreate },
+			reconciliacionVenta: {
+				create: recCreate,
+				update: vi.fn().mockResolvedValue({}),
+			},
 			tipoPago: { findFirst: vi.fn().mockResolvedValue({ tipoId: 'tp-mlc' }) },
 		}));
 

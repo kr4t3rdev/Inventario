@@ -49,6 +49,7 @@ let cuentaId = '';
 let cuentaFxId = '';
 let otherCuentaId = '';
 let cuentaIdPagar = '';
+let cuentaIdA5 = '';
 let deudaPagarId = '';
 let cuentaPorPagarPagarId = '';
 let trigger = '';
@@ -87,6 +88,10 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
     cuentaIdPagar = (await prisma.cuentaBancaria.create({ data: {
       tenantId, nombreBanco: `${prefix}-pago`, numeroCuenta: `${prefix}-pago`,
       tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 5000,
+    } })).cuentaId;
+    cuentaIdA5 = (await prisma.cuentaBancaria.create({ data: {
+      tenantId, nombreBanco: `${prefix}-a5`, numeroCuenta: `${prefix}-a5`,
+      tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 1,
     } })).cuentaId;
     await prisma.tipoPago.create({ data: { tenantId, nombre: 'Transferencia' } });
     await prisma.tipoPago.create({ data: { tenantId: otherTenantId, nombre: 'Transferencia' } });
@@ -186,7 +191,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
     expect(rec.montoConvertido?.toString()).toBe('3000');
     expect(rec.tasaCambio?.toString()).toBe('1');
     expect(rec.fxEvidenceFingerprint).toBeTruthy();
-    expect(rec.deudaCashId).toBeNull();
+    expect(rec.deudaCashId).toBe(deuda.id);
     const asientos = await prisma.asiento.findMany({ where: {
       tenantId, origenTipo: 'deuda_cash', origenId: deuda.id,
     }, include: { lineas: true } });
@@ -322,6 +327,69 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       linea.fxEvidenceFingerprint === rec.fxEvidenceFingerprint)).toBe(true);
   });
 
+  it('preserva cuatro decimales de la deuda y su pago funcional al pagar 0.0123 CUP (A5)', async () => {
+    const cxp = await prisma.cuentaPorPagar.create({ data: {
+      tenantId,
+      numeroFactura: `DC-A5-${crypto.randomUUID()}`,
+      proveedorId,
+      proveedorNombre: prefix,
+      montoDeuda: 1000,
+      montoPagado: 0,
+      saldoPendiente: 1000,
+      montoDeudaFuncional: 1000,
+      montoPagadoFuncional: 0,
+      monedaFuncional: 'CUP',
+      tasaCambio: 1,
+      moneda: 'CUP',
+      tipo: 'compra',
+      tipoDeuda: 'DEUDA_CASH',
+      estado: 'PENDIENTE',
+    } });
+    const deuda = await prisma.deudaCash.create({ data: {
+      tenantId,
+      proveedorId,
+      cuentaPorPagarId: cxp.cuentaPorPagarId,
+      montoCapital: 1000,
+      moneda: 'CUP',
+      cuentaBancariaId: cuentaIdA5,
+      createdById: 'actor-real',
+    } });
+    const saldoAntes = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaIdA5 },
+    })).saldo;
+
+    const response = await POST_PAGAR(new NextRequest(
+      `http://localhost/api/contabilidad/deudas-cash/${deuda.id}/pagar`, {
+        method: 'POST',
+        body: JSON.stringify({ monto: 0.0123, cuentaId: cuentaIdA5,
+          tipoPagoId: (await prisma.tipoPago.findFirstOrThrow({
+            where: { tenantId, nombre: 'Transferencia' },
+          })).tipoId }),
+      }), { params: Promise.resolve({ id: deuda.id }) });
+
+    expect(response.status).toBe(201);
+    const { reconciliacion } = await response.json();
+    const cxpActualizada = await prisma.cuentaPorPagar.findUniqueOrThrow({
+      where: { cuentaPorPagarId: cxp.cuentaPorPagarId },
+    });
+    expect(cxpActualizada.montoPagado.toString()).toBe('0.0123');
+    expect(cxpActualizada.montoPagadoFuncional?.toString()).toBe('0.0123');
+    // El saldo operativo conserva el redondeo monetario a centavos del helper.
+    expect(cxpActualizada.saldoPendiente.toString()).toBe('999.99');
+
+    const rec = await prisma.reconciliacionVenta.findUniqueOrThrow({
+      where: { reconciliacionId: reconciliacion.reconciliacionId },
+    });
+    expect(rec.tipoReconciliacion).toBe('DEUDA_CASH');
+    expect(rec.deudaCashId).toBe(deuda.id);
+    expect(rec.monto.toString()).toBe('0.0123');
+    expect(rec.montoConvertido?.toString()).toBe('0.0123');
+    expect(rec.montoCuenta?.toString()).toBe('0.0123');
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaIdA5 },
+    })).saldo).toBeCloseTo(saldoAntes - 0.0123, 10);
+  });
+
   it('servicio canónico crea deuda USD y hereda la FX persistida al único asiento', async () => {
     const saldoAntes = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
       where: { cuentaId: cuentaFxId },
@@ -340,7 +408,7 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
     const rec = await prisma.reconciliacionVenta.findFirstOrThrow({ where: {
       tenantId,
       tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO',
-      deudaCashId: null,
+      deudaCashId: deuda.id,
       monto: 100,
       moneda: 'USD',
     } });
@@ -660,5 +728,76 @@ describe('deudas cash legacy — PostgreSQL aislado', { timeout: 90_000 }, () =>
       where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: deudaPagarId },
     })).toBe(recsAntes + 1);
   });
-});
 
+  it('protege la creación legacy y los pagos parciales/finales con claves idempotentes', async () => {
+    const cuentaAlta = await prisma.cuentaBancaria.create({ data: {
+      tenantId, nombreBanco: `${prefix}-idem`, numeroCuenta: `${prefix}-idem`,
+      tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 0,
+    } });
+    const createInput = {
+      proveedorId, montoCapital: 1000, cuentaBancariaId: cuentaAlta.cuentaId,
+    };
+    const createKey = `${prefix}-debt-create`;
+    const createUrl = 'http://localhost/api/contabilidad/deudas-cash';
+    const create = (input: typeof createInput) => POST_CREAR(new NextRequest(createUrl, {
+      method: 'POST',
+      headers: { 'idempotency-key': createKey },
+      body: JSON.stringify(input),
+    }), {});
+    const createFirst = await create(createInput);
+    expect(createFirst.status, await createFirst.clone().text()).toBe(201);
+    const createdDebt = (await createFirst.json()).deuda;
+    const bankAfterCreate = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaAlta.cuentaId },
+    })).saldo.toString();
+    const createReplay = await create(createInput);
+    expect(createReplay.status, await createReplay.clone().text()).toBe(201);
+    expect((await createReplay.json()).deuda.id).toBe(createdDebt.id);
+    const createConflict = await create({ ...createInput, montoCapital: 1001 });
+    expect(createConflict.status).toBe(409);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaAlta.cuentaId } }))
+      .saldo.toString()).toBe(bankAfterCreate);
+    expect(await prisma.deudaCash.count({ where: { tenantId, proveedorId } })).toBeGreaterThan(0);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', idempotencyKey: createKey },
+    })).toBe(1);
+
+    const tipoPagoId = (await prisma.tipoPago.findFirstOrThrow({
+      where: { tenantId, nombre: 'Transferencia' },
+    })).tipoId;
+    const pay = (monto: number, idempotencyKey: string) => POST_PAGAR(new NextRequest(
+      `http://localhost/api/contabilidad/deudas-cash/${createdDebt.id}/pagar`, {
+        method: 'POST', headers: { 'idempotency-key': idempotencyKey },
+        body: JSON.stringify({ monto, cuentaId: cuentaIdPagar, tipoPagoId }),
+      }), { params: Promise.resolve({ id: createdDebt.id }) });
+    const partialKey = `${prefix}-debt-partial`;
+    const partial = await pay(400, partialKey);
+    expect(partial.status, await partial.clone().text()).toBe(201);
+    const partialId = (await partial.json()).reconciliacion.reconciliacionId;
+    const bankAfterPartial = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaIdPagar },
+    })).saldo.toString();
+    const partialReplay = await pay(400, partialKey);
+    expect(partialReplay.status).toBe(201);
+    expect((await partialReplay.json()).reconciliacion.reconciliacionId).toBe(partialId);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaIdPagar } }))
+      .saldo.toString()).toBe(bankAfterPartial);
+    expect((await pay(401, partialKey)).status).toBe(409);
+
+    const finalKey = `${prefix}-debt-final`;
+    const final = await pay(600, finalKey);
+    expect(final.status, await final.clone().text()).toBe(201);
+    const finalId = (await final.json()).reconciliacion.reconciliacionId;
+    const finalReplay = await pay(600, finalKey);
+    expect(finalReplay.status).toBe(201);
+    expect((await finalReplay.json()).reconciliacion.reconciliacionId).toBe(finalId);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: createdDebt.id },
+    })).toBe(2);
+    const finalDebt = await prisma.deudaCash.findUniqueOrThrow({
+      where: { id: createdDebt.id }, include: { cuentaPorPagar: true },
+    });
+    expect(finalDebt.cuentaPorPagar.montoPagado.toString()).toBe('1000');
+    expect(finalDebt.estado).toBe('PAGADO');
+  });
+});

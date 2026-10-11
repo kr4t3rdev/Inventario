@@ -18,9 +18,6 @@ import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-data
 
 assertDisposableDatabase(process.env);
 
-vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: { log: async () => undefined, logStrict: async () => undefined },
-}));
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
 
 const prefix = `cta-actions-retry-${crypto.randomUUID()}`;
@@ -42,6 +39,75 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 
 const { registrarPagoPrestamoAction } = await import('@/features/contabilidad/actions-prestamos-cash');
 const { registrarPagoDeudaAction } = await import('@/features/contabilidad/actions-deudas-cash');
+
+type NormalizedCashPaymentSnapshot = {
+  account: { saldo: string };
+  entries: Array<{
+    origenId: string;
+    lineas: Array<{ debe: string; haber: string }>;
+  }>;
+};
+
+async function cashPaymentSnapshot({
+  kind,
+  operationId,
+  obligationId,
+  accountId,
+}: {
+  kind: 'loan' | 'debt';
+  operationId: string;
+  obligationId: string;
+  accountId: string;
+}) {
+  const relation = kind === 'loan' ? { prestamoCashId: operationId } : { deudaCashId: operationId };
+  const reconciliations = await prisma.reconciliacionVenta.findMany({
+    where: { tenantId, ...relation },
+    orderBy: { reconciliacionId: 'asc' },
+  });
+  const reconciliationIds = reconciliations.map((row) => row.reconciliacionId);
+  const [account, receivable, payable, operation, entries, auditLogs] = await Promise.all([
+    prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: accountId },
+    }),
+    prisma.cuentaPorCobrar.findUnique({ where: { id: obligationId } }),
+    prisma.cuentaPorPagar.findUnique({ where: { cuentaPorPagarId: obligationId } }),
+    kind === 'loan'
+      ? prisma.prestamoCash.findFirst({ where: { id: operationId, tenantId } })
+      : prisma.deudaCash.findFirst({ where: { id: operationId, tenantId } }),
+    prisma.asiento.findMany({
+      where: {
+        tenantId,
+        origenTipo: 'reconciliacion_venta',
+        origenId: { in: reconciliationIds },
+      },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+      orderBy: { asientoId: 'asc' },
+    }),
+    prisma.auditLog.findMany({
+      where: { entidadId: { in: reconciliationIds } },
+      orderBy: { id: 'asc' },
+    }),
+  ]);
+  return JSON.parse(JSON.stringify({
+    reconciliations,
+    account,
+    receivable,
+    payable,
+    operation,
+    entries,
+    auditLogs,
+  }, (_key, value: unknown) => typeof value === 'bigint' ? value.toString() : value)) as
+    NormalizedCashPaymentSnapshot;
+}
+
+function expectPostedFunctionalAmount(snapshot: Awaited<ReturnType<typeof cashPaymentSnapshot>>, id: string) {
+  const entry = snapshot.entries.find((row) => row.origenId === id);
+  expect(entry).toBeDefined();
+  const debitTotal = entry!.lineas.reduce((total, line) => total + Number(line.debe), 0);
+  const creditTotal = entry!.lineas.reduce((total, line) => total + Number(line.haber), 0);
+  expect(debitTotal).toBeCloseTo(3.69, 10);
+  expect(creditTotal).toBeCloseTo(3.69, 10);
+}
 
 describe('server actions cash — reintento no duplica (G5)', { timeout: 90_000 }, () => {
   beforeAll(async () => {
@@ -237,6 +303,248 @@ describe('server actions cash — reintento no duplica (G5)', { timeout: 90_000 
     expect(conflicto.success).toBe(false);
     if (conflicto.success) expect.unreachable('Se esperaba conflicto de idempotencia');
     expect(conflicto.error.code).toBe('IDEMPOTENCY_CONFLICT');
+  });
+
+  it('registrarPagoPrestamoAction: pagos parciales concurrentes con la misma clave aplican una vez', async () => {
+    const loan = await AccountingCashOperationsMutationService.createCashLoan({
+      input: { clienteId, montoCapital: 500, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId },
+      user: { userId, tenantId, tenantRole: 'manager',
+        planFeatures: { 'prestamos-cash': true } } as never,
+    });
+    const key = `loan-partial-race-${crypto.randomUUID()}`;
+    const input = {
+      id: loan.id,
+      monto: 0.0123,
+      cuentaId: cuentaPagoId,
+      tipoPagoId,
+      idempotencyKey: key,
+    };
+    const saldoCuentaAntes = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaPagoId },
+      select: { saldo: true },
+    })).saldo);
+
+    const [primera, segunda] = await Promise.all([
+      registrarPagoPrestamoAction(input),
+      registrarPagoPrestamoAction(input),
+    ]);
+
+    expect([primera.success, segunda.success]).toEqual([true, true]);
+    if (!primera.success || !segunda.success) {
+      throw new Error('Ambas solicitudes concurrentes deben responder con éxito.');
+    }
+    expect(segunda.data.reconciliacion.reconciliacionId)
+      .toBe(primera.data.reconciliacion.reconciliacionId);
+
+    const cxc = await prisma.cuentaPorCobrar.findUniqueOrThrow({
+      where: { id: loan.cuentaPorCobrarId },
+      select: { montoPagado: true, montoPagadoFuncional: true },
+    });
+    expect(cxc.montoPagado.toString()).toBe('0.0123');
+    expect(cxc.montoPagadoFuncional?.toString()).toBe('0.0123');
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, idempotencyKey: key, prestamoCashId: loan.id },
+    })).toBe(1);
+    expect(Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaPagoId },
+      select: { saldo: true },
+    })).saldo)).toBeCloseTo(saldoCuentaAntes + 0.0123, 10);
+  });
+
+  it('registrarPagoDeudaAction: pagos parciales concurrentes con la misma clave aplican una vez', async () => {
+    const debt = await AccountingCashOperationsMutationService.createCashDebt({
+      input: { proveedorId, montoCapital: 500, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId },
+      user: { userId, tenantId, tenantRole: 'manager',
+        planFeatures: { 'deudas-cash': true } } as never,
+    });
+    const key = `debt-partial-race-${crypto.randomUUID()}`;
+    const input = {
+      id: debt.id,
+      monto: 0.0123,
+      cuentaId: cuentaOrigenId,
+      tipoPagoId,
+      idempotencyKey: key,
+    };
+    const saldoCuentaAntes = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaOrigenId },
+      select: { saldo: true },
+    })).saldo);
+
+    const [primera, segunda] = await Promise.all([
+      registrarPagoDeudaAction(input),
+      registrarPagoDeudaAction(input),
+    ]);
+
+    expect([primera.success, segunda.success]).toEqual([true, true]);
+    if (!primera.success || !segunda.success) {
+      throw new Error('Ambas solicitudes concurrentes deben responder con éxito.');
+    }
+    expect(segunda.data.reconciliacion.reconciliacionId)
+      .toBe(primera.data.reconciliacion.reconciliacionId);
+
+    const cxp = await prisma.cuentaPorPagar.findUniqueOrThrow({
+      where: { cuentaPorPagarId: debt.cuentaPorPagarId },
+      select: { montoPagado: true, montoPagadoFuncional: true },
+    });
+    expect(cxp.montoPagado.toString()).toBe('0.0123');
+    expect(cxp.montoPagadoFuncional?.toString()).toBe('0.0123');
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, idempotencyKey: key, deudaCashId: debt.id },
+    })).toBe(1);
+    expect(Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaOrigenId },
+      select: { saldo: true },
+    })).saldo)).toBeCloseTo(saldoCuentaAntes - 0.0123, 10);
+  });
+
+  it('registrarPagoPrestamoAction: el cambio de tasa con la misma clave no altera el estado persistido', async () => {
+    const loan = await AccountingCashOperationsMutationService.createCashLoan({
+      input: {
+        clienteId,
+        montoCapital: 0.05,
+        moneda: 'USD',
+        tasaCambioAlCrear: 300,
+        cuentaBancariaId: cuentaOrigenId,
+      },
+      user: { userId, tenantId, tenantRole: 'manager',
+        planFeatures: { 'prestamos-cash': true } } as never,
+    });
+    const key = `loan-fx-conflict-${crypto.randomUUID()}`;
+    const input = {
+      id: loan.id,
+      monto: 0.0123,
+      moneda: 'USD',
+      tasaCambio: 300,
+      observaciones: 'Pago parcial con FX',
+      cuentaId: cuentaPagoId,
+      tipoPagoId,
+      idempotencyKey: key,
+    };
+    const bankBalanceBeforePayment = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaPagoId },
+      select: { saldo: true },
+    })).saldo);
+
+    const first = await registrarPagoPrestamoAction(input);
+    expect(first.success).toBe(true);
+    if (!first.success) throw new Error('El pago inicial del préstamo debe completarse.');
+    expect(first.data.reconciliacion.monto.toString()).toBe('0.0123');
+    expect(first.data.reconciliacion.tasaCambio?.toString()).toBe('300');
+    expect(first.data.reconciliacion.montoConvertido?.toFixed(4)).toBe('3.6900');
+    expect(first.data.reconciliacion.montoCuenta?.toFixed(4)).toBe('3.6900');
+
+    const receivableAfterPayment = await prisma.cuentaPorCobrar.findUniqueOrThrow({
+      where: { id: loan.cuentaPorCobrarId },
+      select: { montoPagadoFuncional: true },
+    });
+    expect(receivableAfterPayment.montoPagadoFuncional?.toFixed(4)).toBe('3.6900');
+
+    const exactReplay = await registrarPagoPrestamoAction(input);
+    expect(exactReplay.success).toBe(true);
+    if (!exactReplay.success) throw new Error('El reintento exacto debe reproducir el pago.');
+    expect(exactReplay.data.reconciliacion.reconciliacionId)
+      .toBe(first.data.reconciliacion.reconciliacionId);
+    const beforeConflict = await cashPaymentSnapshot({
+      kind: 'loan', operationId: loan.id, obligationId: loan.cuentaPorCobrarId, accountId: cuentaPagoId,
+    });
+    expect(Number(beforeConflict.account.saldo) - bankBalanceBeforePayment).toBeCloseTo(3.69, 10);
+    expectPostedFunctionalAmount(beforeConflict, first.data.reconciliacion.reconciliacionId);
+
+    const conflict = await registrarPagoPrestamoAction({ ...input, tasaCambio: 301 });
+    expect(conflict.success).toBe(false);
+    if (conflict.success) expect.unreachable('Se esperaba conflicto por cambio de tasa.');
+    expect(conflict.error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(await cashPaymentSnapshot({
+      kind: 'loan', operationId: loan.id, obligationId: loan.cuentaPorCobrarId, accountId: cuentaPagoId,
+    })).toEqual(beforeConflict);
+
+    const observationConflict = await registrarPagoPrestamoAction({
+      ...input,
+      observaciones: 'Observación distinta',
+    });
+    expect(observationConflict.success).toBe(false);
+    if (observationConflict.success) {
+      expect.unreachable('Se esperaba conflicto por cambio de observaciones.');
+    }
+    expect(observationConflict.error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(await cashPaymentSnapshot({
+      kind: 'loan', operationId: loan.id, obligationId: loan.cuentaPorCobrarId, accountId: cuentaPagoId,
+    })).toEqual(beforeConflict);
+  });
+
+  it('registrarPagoDeudaAction: el cambio de tasa con la misma clave no altera el estado persistido', async () => {
+    const debt = await AccountingCashOperationsMutationService.createCashDebt({
+      input: {
+        proveedorId,
+        montoCapital: 0.05,
+        moneda: 'USD',
+        tasaCambio: 300,
+        cuentaBancariaId: cuentaOrigenId,
+      },
+      user: { userId, tenantId, tenantRole: 'manager',
+        planFeatures: { 'deudas-cash': true } } as never,
+    });
+    const key = `debt-fx-conflict-${crypto.randomUUID()}`;
+    const input = {
+      id: debt.id,
+      monto: 0.0123,
+      moneda: 'USD',
+      tasaCambio: 300,
+      observaciones: 'Pago parcial con FX',
+      cuentaId: cuentaOrigenId,
+      tipoPagoId,
+      idempotencyKey: key,
+    };
+    const bankBalanceBeforePayment = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaOrigenId },
+      select: { saldo: true },
+    })).saldo);
+
+    const first = await registrarPagoDeudaAction(input);
+    expect(first.success).toBe(true);
+    if (!first.success) throw new Error('El pago inicial de la deuda debe completarse.');
+    expect(first.data.reconciliacion.monto.toString()).toBe('0.0123');
+    expect(first.data.reconciliacion.tasaCambio?.toString()).toBe('300');
+    expect(first.data.reconciliacion.montoConvertido?.toFixed(4)).toBe('3.6900');
+    expect(first.data.reconciliacion.montoCuenta?.toFixed(4)).toBe('3.6900');
+
+    const payableAfterPayment = await prisma.cuentaPorPagar.findUniqueOrThrow({
+      where: { cuentaPorPagarId: debt.cuentaPorPagarId },
+      select: { montoPagadoFuncional: true },
+    });
+    expect(payableAfterPayment.montoPagadoFuncional?.toFixed(4)).toBe('3.6900');
+
+    const exactReplay = await registrarPagoDeudaAction(input);
+    expect(exactReplay.success).toBe(true);
+    if (!exactReplay.success) throw new Error('El reintento exacto debe reproducir el pago.');
+    expect(exactReplay.data.reconciliacion.reconciliacionId)
+      .toBe(first.data.reconciliacion.reconciliacionId);
+    const beforeConflict = await cashPaymentSnapshot({
+      kind: 'debt', operationId: debt.id, obligationId: debt.cuentaPorPagarId, accountId: cuentaOrigenId,
+    });
+    expect(bankBalanceBeforePayment - Number(beforeConflict.account.saldo)).toBeCloseTo(3.69, 10);
+    expectPostedFunctionalAmount(beforeConflict, first.data.reconciliacion.reconciliacionId);
+
+    const conflict = await registrarPagoDeudaAction({ ...input, tasaCambio: 301 });
+    expect(conflict.success).toBe(false);
+    if (conflict.success) expect.unreachable('Se esperaba conflicto por cambio de tasa.');
+    expect(conflict.error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(await cashPaymentSnapshot({
+      kind: 'debt', operationId: debt.id, obligationId: debt.cuentaPorPagarId, accountId: cuentaOrigenId,
+    })).toEqual(beforeConflict);
+
+    const observationConflict = await registrarPagoDeudaAction({
+      ...input,
+      observaciones: 'Observación distinta',
+    });
+    expect(observationConflict.success).toBe(false);
+    if (observationConflict.success) {
+      expect.unreachable('Se esperaba conflicto por cambio de observaciones.');
+    }
+    expect(observationConflict.error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(await cashPaymentSnapshot({
+      kind: 'debt', operationId: debt.id, obligationId: debt.cuentaPorPagarId, accountId: cuentaOrigenId,
+    })).toEqual(beforeConflict);
   });
 
   it('createCashLoan: replay idempotente no duplica saldo, CxC, reconciliación ni asiento', async () => {

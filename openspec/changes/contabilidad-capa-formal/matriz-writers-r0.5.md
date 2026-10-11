@@ -1,5 +1,11 @@
 # R0.5 — Inventario de posteo y reconciliaciones (25-09-2026)
 
+> **ESTADO ACTUAL — 2026-10-09:** inventario/correcciones locales no equivalen a
+> `31/31 PASS`. R0.5-ACCEPT permanece sin firma; R6-ROLLBACK global, R6-BASELINE por
+> entorno y R7 operacional de siete días siguen abiertos. A10 tiene evidencia focal de
+> captura actual; reconstrucción histórica por fecha no es requisito de A10. Las
+> filas conservan evidencia con su alcance/fecha. Ver `auditoria-correcciones-2026-10-07.md`.
+
 **Alcance:** inspección estática de `src/` en el worktree actual; no prueba ejecutada ni
 certificación global de seguridad. El inventario reproducible vigente detecta **31 callsites
 productivos en 19 archivos** (excluidos definición, tests e integración); «16 writers / 18
@@ -46,6 +52,25 @@ posteo formal están detallados en `revision-cierre-2026-10-03.md` §3.
 **R0.5/R6 global sigue abierto:** cerrar estas filas no certifica los 31 callsites ni sus
 adaptadores. Las filas todavía parciales, huérfanas o sin cobertura HTTP permanecen
 señaladas en la matriz y en `tasks.md`; no se habilitó el rollout operativo.
+
+## Estado documental vigente (2026-10-09)
+
+Este inventario conserva sus cortes históricos y resultados focales; no es una firma
+actual de aceptación. **31 callsites inventariados no significa 31/31 aprobados en ocho
+dimensiones.** Las celdas expresan evidencia del alcance y fecha indicados en cada fila;
+R0.5-ACCEPT sigue sin firma. No se habilita `shadow`, `enforce` ni replay. El dictamen
+consolidado y la evaluación A1–A10 vigentes están en
+`auditoria-correcciones-2026-10-07.md`, sección «Reconciliación documental vigente —
+2026-10-09».
+
+**Rectificación focal del receipt POS (2026-10-09):** el hallazgo histórico de ausencia
+de clave/receipt en `VentaMutationService.create` está corregido para el backend y cinco
+callers web verificados. Historia limpia con 145 migraciones y receipt PostgreSQL 5/5;
+seis suites HTTP/web 26/26 y pruebas enhanced/pedido 4/4. La clave estable web y body/
+header/409 están verificados en ese alcance. El caller nativo
+`mobile/src/SalesSurface.tsx` queda fuera de este checkout y sin clave; recarga completa
+no está probada. El test de moneda cubre cancelación/reintento, no rotación tras éxito.
+La evidencia solo reemplaza el gap para estos canales; no firma R0.5-ACCEPT.
 
 ## Continuación de auditoría (2026-10-04)
 
@@ -319,6 +344,74 @@ Todas las filas tienen F y tx a menos que se indique otra cosa. «Permiso» dife
 feature funcional del permiso explícito `requirePermission`: `—` indica no observado
 en el writer, y requiere inspección del adaptador; no se presume autorizado.
 
+> **Reapertura 2026-10-09 — alcance de idem/retry para venta POS:** la unicidad del
+> origen formal cubre un `ventaId` ya creado, no deduplica el request que llama a
+> `VentaMutationService.create`. `createVentaSchema` no acepta clave de request y el
+> modelo `Venta` no guarda una clave única; un retry puede crear otro `ventaId` y otro
+> origen formal. Los resultados de retry en filas 2/3 para callers de lifecycle/ofertas
+> conservan su alcance, pero no certifican replay del request POS. Ver matriz ACCEPT y
+> tarea de cierre abierta; no activar replay ni inferir cierre global.
+
+> **R6 venta — evidencia separada, corte 2026-10-09:** bundle de cinco suites de
+> rollback: **57/57 PostgreSQL** y `typecheck:tests` PASS, con revisión independiente
+> sin bloqueadores. El failpoint de AuditLog en venta (`formal-shadow-cash-sale.test.ts`)
+> ocurre en `PRICE_OVERRIDE` antes de FIFO; acredita ese gate temprano, no un fallo de
+> AuditLog posterior a efectos FIFO. El failpoint separado de asiento sí acredita rollback
+> tras FIFO/COGS. Cuatro suites restantes prueban falla física de AuditLog en su writer.
+> Es evidencia focal; R6 global, baseline y gates operacionales siguen abiertos.
+
+### R6 — mapa de evidencia física por callsite (corte 2026-10-11)
+
+Reconciliación posterior: `reconciliacion-r05-g5-2026-10-11.md`. El mapa de 31 entradas
+ya existe; los pendientes son pruebas por rama/adapter y aceptación, no su creación.
+G5 se cruza en ese documento con 18 combinaciones operación × canal, ahora verificadas
+y firmadas para identidad/reintento cash. R6 global conserva sus gates pendientes.
+
+Este mapa enlaza las 31 invocaciones productivas del inventario reproducible con su
+frontera transaccional y evidencia de rollback disponible. `Física (histórica)` significa
+que la suite PostgreSQL y el caso existen y la matriz conserva su resultado fechado; no
+significa que se reejecutaron en este corte. `Código/éxito` no prueba fallo físico tardío.
+Un failpoint en un servicio compartido tampoco certifica automáticamente cada adaptador.
+
+| # | Callsite vivo → frontera tx/adapter | Evidencia física y alcance | Estado R6 por callsite |
+|---|---|---|---|
+| 1 | `deudas-cash/[id]/pagar/route.ts:258` → ruta web legacy | `cash-writers-audit-rollback-real.test.ts`, caso de rollback del POST legacy de pago de deuda (AuditLog); `deudas-cash-real.test.ts` cubre fallo SQL de posteo del pago canónico. | Física histórica; adapter web no equivale a todos los canales. |
+| 2 | `deudas-cash/route.ts:362` → alta web legacy | `cash-writers-audit-rollback-real.test.ts`, rollback del POST legacy de alta de deuda (AuditLog). | Física histórica para el POST/AuditLog; no es failpoint de asiento tardío. |
+| 3 | `prestamos-cash/[id]/pagar/route.ts:269` → ruta web legacy | `cash-writers-audit-rollback-real.test.ts`, rollback del POST legacy de pago; `prestamos-cash-pagar-real.test.ts` cubre error SQL de `postEvento` en el writer. | Física histórica en rutas/canónico; no asumir cobertura de cada transporte. |
+| 4 | `prestamos-cash/route.ts:354` → alta web, writer de préstamo | `prestamos-cash-pagar-real.test.ts`, rollback de creación canónica al fallar `postEvento`; test HTTP/Bearer prueba el canal separado. | Física histórica del writer; el canal HTTP no tiene ese mismo failpoint. |
+| 5 | `reconciliacion/ventas/route.ts:884` → adaptador web a reconciliación | `reconciliar-servicio-real.test.ts` invoca `POST_LEGACY_VENTA` y fuerza `22012` en UPDATE de CxC: acredita rollback de banco/CxC/reconciliación/asiento de esa ruta con auth estabilizada. También cubre fallo del core `reconcileSale`; `http-real-idempotencia.test.ts` prueba sesión/reintento por separado. | Física histórica de la ruta en failpoint CxC y del core; no equivale a failpoint exacto de posteo/auditoría con sesión HTTP real en el mismo caso. |
+| 6 | `produccion/ordenes/[id]/completar/route.ts:204` → transacción de completar orden | `rollback-real.test.ts`, caso “revierte stock, orden, historial y reconciliación al fallar el INSERT” (`asientos`, SQLSTATE 22012). | Física histórica, específica del writer. |
+| 7 | `compras-productos/actions.ts:446` → workflow compra/pago | `purchase-credit-fx-real.test.ts` dispara error SQL en asiento y comprueba rollback de compra, reconciliación y saldo. | Física histórica, específica del workflow cubierto. |
+| 8 | `compras-servicios/actions.ts:155` → `GASTO_CREDITO` inicial antes de aplicar anticipo proveedor | `src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts` amplía el positivo real de compra con anticipo: el devengo bruto debita GASTOS_OPERATIVOS (`6.1`) 100 CUP y acredita CXP_PROVEEDORES (`2.1.01`) 100; la aplicación posterior debita CxP (`2.1.01`) 40 y acredita ANTICIPOS_PROVEEDORES (`1.2.03`) 40. Verifica IDs/códigos, ambos lados e importes exactos, CxP bruta 100/pagada 40/saldo 60, anticipo aplicado y ausencia de reconciliación de gasto adicional. Caso nuevo instala trigger PostgreSQL `BEFORE INSERT ON asientos` por tenant + `origenTipo=compra_servicio` + `EXISTS` sobre CompraServicio con el `numeroFactura` único de este escenario; exige `COMPRA_SERVICIO_INITIAL_GASTO_CREDITO_FAILPOINT` y SQLSTATE `22012`. Snapshot normalizado completo de CompraServicio, CxP, Anticipo, movimientos, Asiento con líneas y outbox permanece idéntico. Suite focal 11/11 el 2026-10-11 con identidad SQL local desechable confirmada; `pnpm run typecheck:tests` limpio. | Física actual del `postEvento` inicial `GASTO_CREDITO`, separada del posteo de aplicación posterior; no certifica R6 global. |
+| 9 | `accounting-cash-operations-mutation-service.ts:683` → servicio canónico de alta de préstamo | `prestamos-cash-pagar-real.test.ts`, error SQL en creación canónica revierte cuenta por cobrar y reconciliación. | Física histórica, servicio canónico. |
+| 10 | `accounting-cash-operations-mutation-service.ts:947` → pago canónico de préstamo | Misma suite, caso “revierte el pago canónico … si falla postEvento”. | Física histórica, servicio canónico. |
+| 11 | `accounting-cash-operations-mutation-service.ts:1169` → alta canónica de deuda | `cash-writers-audit-rollback-real.test.ts`, fallo físico de AuditLog en `createCashDebt`; `deudas-cash-real.test.ts` documenta rollback SQL del desembolso. | Física histórica; separar failpoint de auditoría y failpoint de asiento. |
+| 12 | `accounting-cash-operations-mutation-service.ts:1415` → pago canónico de deuda | `deudas-cash-real.test.ts`, rollback SQL durante `postEvento`; `cash-writers-audit-rollback-real.test.ts` también fuerza AuditLog. | Física histórica, servicio canónico. |
+| 13 | `accounting-operations-mutation-service.ts:597` → transferencia bancaria | `accounting-bank-transfers-real.test.ts`, AuditLog transaccional y fallo SQL de asiento con rollback de ambas cuentas. | Física histórica, servicio canónico. |
+| 14 | `accounting-operations-mutation-service.ts:758` → ajuste bancario | Misma suite, “revierte ajuste, saldo y asiento si AuditLog rechaza AJUSTE_BANCARIO”. | Física histórica, servicio canónico. |
+| 15 | `accounting-operations-mutation-service.ts:985` → deuda externa/inyección | Misma suite, “revierte inyección, saldo y asiento si AuditLog rechaza INYECCION_CAPITAL”. | Física histórica para inyección; rama de deuda externa no queda diferenciada por ese caso. |
+| 16 | `accounting-operations-mutation-service.ts:1172` → pago deuda de capital | Misma suite, “revierte pago, saldo pendiente, banco y asiento si AuditLog rechaza PAGO_DEUDA”. | Física histórica, servicio canónico. |
+| 17 | `accounting-reconciliation-service.ts:551` → `reconcileSale` compartido | `reconciliar-servicio-real.test.ts`, AuditLog físico y fallo SQL del asiento para `reconcileSale`; ruta web legacy tiene además rollback de CxC. | Física histórica del core; no certifica por sí sola todos los adapters. |
+| 18 | `accounting-reconciliation-service.ts:1306` → `reconcileService` compartido | Misma suite, caso “revierte caja, reconciliación y asiento si falla la auditoría transaccional” y fallo SQL en `postEvento`. | Física histórica del core; adapters que lo delegan conservan frontera propia. |
+| 19 | `mermas/actions.ts:197` → acción de merma, tx de inventario + evento | `merma-formal-real.test.ts`, trigger SQL sobre `asiento_lineas`, rollback de merma, stock y documento espejo. | Física histórica, específica del writer. |
+| 20 | `productos/actions-restock.ts:620` → acción restock, tx de gasto + stock | `restock-formal-real.test.ts`, trigger SQL sobre `asiento_lineas`, rollback de stock y gasto. | Física histórica, específica del writer. |
+| 21 | `venta-servicios/actions.ts:701` → flujo mixto de varias líneas | `service-devengo-directo-real.test.ts`, caso “el flujo mixto revierte venta, CxC y asiento si falla el devengo SQL”: éxito previo en `MIXED_LINES`; trigger `BEFORE INSERT asientos` confirma `22012`; snapshot normalizado de filas completas de venta/CxC/asiento y líneas asociado permanece idéntico, sin IDs de líneas nuevos. | Física actual, caso focal del callsite mixto; suite 3/3 el 2026-10-11. |
+| 22 | `venta-servicios/actions.ts:871` → flujo legacy de servicio individual | `service-devengo-directo-real.test.ts`, rollback legacy compara filas completas y líneas asociadas; `anticipos-devengo-bruto-real.test.ts` aporta evidencia de devengo bruto/aplicación en este camino legacy, no del #21 mixto. | Física actual A6 (2 casos legacy); evidencia de anticipos no se extiende a #21. |
+| 23 | `devolucion-venta-service.ts:586` → devolución/FIFO y asiento en una tx | `devolucion-fifo.test.ts`, AuditLog físico tras progreso y failpoint SQL de asiento; rollback de devolución, ítems, kardex y CxC. | Física histórica, específica del writer. |
+| 24 | `facturacion-workflow.ts:641` → VENTA_CONTADO de flujo contra pago | `src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts` añade dos casos focales en `enforce`: el positivo persiste una reconciliación de 900 CUP, incrementa el banco, marca la factura PAGADA y verifica el asiento de origen `reconciliacion_venta` con dos líneas balanceadas; el rollback instala un trigger PostgreSQL `BEFORE INSERT ON asientos`, filtrado por tenant y por una reconciliación de la venta creada en la misma transacción, que exige el marcador y SQLSTATE `22012`. Snapshot normalizado de filas completas de Factura, Venta, CxC, cuenta bancaria, reconciliaciones, asientos con líneas y outbox permanece idéntico. Verificado el 2026-10-11: suite focal 10/10 con `vitest run --config vitest.integration.config.mjs src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts` (env explícito de DB local desechable); `pnpm run typecheck:tests` limpio. | Física actual del callsite contra_pago en `enforce`; evidencia focal, no certifica R6 global. |
+| 25 | `facturacion-workflow.ts:726` → VENTA_CONTADO de flujo mixto | `src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts` verifica en `enforce` un cobro parcial de 300 CUP sobre factura de 900: reconciliación única y saldo bancario +300; `VENTA_CONTADO` debita BANCOS (`1.1.02`) 300 y acredita VENTAS_PRODUCTOS (`4.1`) 300; el evento `VENTA_CREDITO` por el remanente debita CXC_CLIENTES (`1.2.01`) 600 y acredita VENTAS_PRODUCTOS (`4.1`) 600. Se comprueban los IDs y códigos de cuenta, debe/haber y monto original de cada línea; la factura sigue PENDIENTE y CxC conserva 600. El rollback instala trigger PostgreSQL `BEFORE INSERT ON asientos`, filtrado por tenant y reconciliación de la venta creada en la misma tx; exige `VENTACONTADO_PARCIAL_POSTEVENTO_FAILPOINT` y SQLSTATE `22012`; snapshot normalizado de Factura, Venta, CxC, banco, reconciliaciones, asientos con líneas y outbox queda idéntico. Suite focal 12/12 el 2026-10-11 con DB desechable local explícita; `pnpm run typecheck:tests` limpio. | Física actual focal para cobro parcial mixto; el contrato de montos coincide con el remanente calculado por el workflow y la plantilla de eventos; no certifica R6 global. |
+| 26 | `facturacion-workflow.ts:837` → VENTA_CREDITO | `src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts`, caso “revierte factura, CxC y asiento ante fallo SQL tardío del posteo VENTA_CREDITO”: trigger PostgreSQL `BEFORE INSERT` sobre `asientos`, filtrado por tenant + `origenTipo=factura` + `origenId=facturaId`; exige el mensaje del failpoint y SQLSTATE `22012`. Snapshot normalizado de filas completas de factura, CxC y asientos con todas sus líneas permanece idéntico; el caso positivo previo confirma el writer y sus dos líneas persistidas. Ejecución focal 8/8 el 2026-10-11. | Física actual para el callsite de crédito; evidencia focal, no certifica el R6 global. |
+| 27 | `venta-mutation-service.ts:536` → COSTO_VENTA_DEVENGADO valorado | `formal-shadow-cash-sale.test.ts`, el AuditLog `PRICE_OVERRIDE` ocurre antes de FIFO; otro caso fuerza error SQL al insertar asiento COGS después de FIFO y revierte venta/stock/FIFO. | Física histórica; el caso COGS cubre rollback tardío; no atribuirle el caso `PRICE_OVERRIDE`. |
+| 28 | `venta-mutation-service.ts:554` → rama shadow no valorizada | `formal-shadow-cash-sale.test.ts` fuerza fallo SQL del posteo shadow y verifica venta + `ERROR_SHADOW` durable; en shadow es recuperación diseñada, no rollback total. | Física histórica, resultado intencional distinto; no es evidencia de atomicidad de la rama enforce. |
+| 29 | `anticipos-workflow.ts:233` → creación del anticipo y movimiento inicial | `anticipos-fx-real.test.ts` incluye fallo físico de AuditLog y fallo SQL del posteo que revierte anticipo/movimiento/fondos. | Física histórica, writer cubierto. |
+| 30 | `anticipos-workflow.ts:574` → aplicación de anticipo dentro del workflow documental | `anticipos-devengo-bruto-real.test.ts`, caso de fallo SQL al aplicar revierte devengo, CxP y anticipo. | Física histórica del flujo documental; no certifica aplicaciones fuera de ese workflow. |
+| 31 | `pago-gastos-workflow.ts:666` → liquidación de CxP/nómina/compra/gasto | Evidencia física histórica ya existente en `src/lib/services/__integration__/pago-gastos-workflow-real.test.ts`, caso “revierte pago, reconciliación y asiento si falla la auditoría transaccional”: el writer ejecuta `postEvento` antes del trigger PostgreSQL `BEFORE INSERT ON AuditLog`, que rechaza la auditoría `RECONCILIACION` con SQLSTATE `22012`; el test compara saldo, reconciliaciones, asientos y estado pagado del gasto. Esta suite no se volvió a ejecutar en el alcance focal actual. | Física histórica para el callsite del workflow; no extender a todos sus tipos/callers ni contar como certificación R6 global. |
+
+**Cierre de este gap focal:** el rollback del callsite mixto #21 se verificó con un camino
+positivo seguido por failpoint `22012`; el snapshot de filas completas (incluidas las líneas
+de los asientos asociados) y sus IDs se conserva exactamente, sin líneas nuevas. El conteo
+31 continúa siendo inventario, no 31/31 certificaciones; R6 global permanece sin firma.
+
 | # | Writer:línea → evento; origen tipo/id | Actor, tenant y permiso | FX / moneda / tasa / fingerprint | Estado y acción/test focal |
 |---|---|---|---|---|
 | 1 | **RETIRADO (05-10):** `reconciliarVentaDirecta` y `ReconciliacionDirectaParams` no tenían callers productivos en `src/` (code graph + búsqueda del árbol, reverificado 02-10); se eliminó la función de `V/facturacion-workflow.ts` junto con su rama `VENTA_CONTADO` dedicada. Los caminos vivos de venta al contado son `applyFacturacionCobroWorkflow` (filas 2 y 30). **Decisión G4:** retirar con tombstone, no excluir del inventario | No es writer vigente | — | Tombstone de inventario: nunca existió adaptador productivo; no certificar permiso por delegación |
@@ -352,41 +445,41 @@ en el writer, y requiere inspección del adaptador; no se presume autorizado.
 | 29 | `A/produccion/ordenes/[id]/completar/route.ts` → PRODUCCION_SALIDA; `orden_produccion/ordenId` | **CERRADO (03-10):** `withAuthPost`, requireTenant, feature/permisos; cuenta y tipo de pago se validan tenant-scoped y la cuenta debe usar moneda funcional | **CERRADO (03-10):** decisión del usuario: ingredientes se valorizan desde `Producto.precioCosto` en moneda funcional del tenant; reconciliación y builder reciben moneda/importe funcionales explícitos. El costo sigue siendo suma de costo unitario funcional × cantidad base × desperdicio × cantidad producida | **CERRADO (03-10):** `rollback-real.test.ts` 3/3 en DB desechable: USD funcional calcula/postea costo USD 10 cuadrado, rollback SQL revierte stock/orden/historial/reconciliación/asiento, dependiente denegado sin mutaciones. `withAuthPost` se inyecta en test; sesión HTTP real no cubierta |
 | 30 | `V/facturacion-workflow.ts:761` → VENTA_CONTADO (porción cobrada hoy de una venta mixta con vencimiento); `reconciliacion_venta/reconciliacionContado.reconciliacionId` | **CERTIFICADO ESTRUCTURAL (02-10):** mismo `tx: Prisma.TransactionClient` recibido por `applyFacturacionCobroWorkflow`; actor `params.usuarioId` y `params.tenantId` propagados desde la acción autenticada (callers y gates: fila 3); la `ReconciliacionVenta` contado se crea dentro del mismo tx inmediatamente antes del hook; rama exclusiva: `contra_pago`/cobro total retorna en fila 2, aquí solo corre si `0 < cobradoHoy < montoTotal`; coexiste con VENTA_CREDITO (fila 3) por origen distinto; unicidad DB `(tenantId, origenTipo, origenId)` | **CERRADO (05-10), mismo patrón de fila 2:** `requireMonedaFuncionalVenta` dentro del tx (antes CUP por defecto); porción contado USD con funcional USD usa tasa 1 y evidencia USD; sin política falla cerrado `FX_INSUFICIENTE` antes de crear la reconciliación o mover banco | **Drift del conteo detectado y certificado 02-10 (37→39):** callsite nuevo del flujo MIXTO con vencimiento. Cobertura propia existente: unitario `src/features/ventas/__tests__/venta-mixto-vencimiento.test.ts` (3) e integración PostgreSQL `src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts` (8); suites caller+builder de filas 2/3. **Evidencia 05-10:** 2 casos nuevos en `facturacion-workflow-gate.test.ts` (mixta contado USD con funcional USD; sin política `FX_INSUFICIENTE` sin mutación); **FX-3:** la rama persiste `montoCuenta`/`monedaCuenta` nativos vía `resolveAccountingAccountMovement` (mismo patrón que fila 2); typecheck limpio |
 | 31 | `V/venta-mutation-service.ts:498` → COSTO_VENTA_DEVENGADO **sin valoración** (`costoFifo: null, monedaFuncional: null`); `venta_costo/venta.ventaId` (mismo origen que fila 4, entrega mutuamente excluyente por try/catch) | **CERTIFICADO ESTRUCTURAL (02-10):** mismo tx de creación de venta del servicio (fila 4); actor `user.userId` y `tenantId` del contexto autenticado; la rama `catch` solo alcanza este callsite en modo `shadow` cuando el resolvedor `getCostoFifoVentaValorado` lanzó `ActionError FX_INSUFICIENTE`; con cualquier otro modo (`off` no entra al bloque; `enforce`) u otro error relanza antes, fail-closed | **Sin valoración a propósito:** el motor shadow no inserta asiento y registra la carencia en el outbox con causa durable; la venta se conserva | **Drift del conteo detectado y certificado 02-10 (37→39):** el apéndice contaba 1 callsite en el archivo y existen 2 desde el slice COGS valorado (fila 4, 01-10). Semántica cubierta por `formal-shadow-cash-sale.test.ts` 8/8 PostgreSQL (shadow conserva venta con outbox no valorizado; rollback por falta FX) |
-**Nota de conteo vigente (05-10):** seis filas son tombstones RETIRADO (1, 8 y 13–16); el
+**Nota de conteo vigente (11-10):** seis filas son tombstones RETIRADO (1, 8 y 13–16); el
 apéndice reproducible detecta 31 invocaciones productivas
 en 19 archivos. El conteo detecta drift, no declara R0.5 terminado ni convierte esta tabla
-en aceptación. **Exactitud de líneas:** las filas 2–4 y 30–31 citan líneas del
-árbol al 02-10; las demás filas conservan la línea del slice que las certificó (el código
-creció después) — la identidad vigente por archivo es la del apéndice.
+en aceptación. **Exactitud de líneas:** las filas de la matriz larga conservan anclas de
+slices históricos; el inventario y el crosswalk R6 contienen las ubicaciones actuales de
+las llamadas vigentes, verificadas contra el árbol el 2026-10-11.
 
 ### Inventario reproducible de archivos (31 callsites productivos en 19 archivos)
 
 La prueba `src/features/contabilidad-formal/__tests__/writers-matrix.test.ts` recorre
 `src/`, excluye definición, tests e integración, cuenta `postEvento(` y exige que cada
 archivo aparezca aquí. El conteo sirve para detectar drift del inventario; no certifica
-por sí solo permisos, FX, atomicidad ni autorización. Conteos y líneas verificados
-contra el árbol el 2026-10-05 (19 archivos, 31 invocaciones; seis filas tombstone retiradas
+por sí solo permisos, FX, atomicidad ni autorización. Conteos y líneas de llamadas directas
+verificados contra el árbol el 2026-10-11 (19 archivos, 31 invocaciones; seis filas tombstone retiradas
 —1, 8, 13–16— y la ruta legacy de servicios delega al servicio canónico):
 
-- `src/app/api/contabilidad/deudas-cash/[id]/pagar/route.ts` — 1: `:164` PAGO_DEUDA
-- `src/app/api/contabilidad/deudas-cash/route.ts` — 1: `:284` DEUDA_RECIBIDA
-- `src/app/api/contabilidad/prestamos-cash/[id]/pagar/route.ts` — 1: `:181` COBRO_PRESTAMO
-- `src/app/api/contabilidad/prestamos-cash/route.ts` — 1: `:273` PRESTAMO_OTORGADO
-- `src/app/api/contabilidad/reconciliacion/ventas/route.ts` — 1: `:933` COBRO_CXC
-- `src/app/api/produccion/ordenes/[id]/completar/route.ts` — 1: `:207` PRODUCCION_SALIDA
-- `src/features/compras-productos/actions.ts` — 1: `:445` COMPRA_CREDITO
-- `src/features/compras-servicios/actions.ts` — 1: `:141` GASTO_CON_ANTICIPO_PROVEEDOR
-- `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts` — 4: `:208` PRESTAMO_OTORGADO, `:406` COBRO_PRESTAMO, `:560` DEUDA_RECIBIDA, `:725` PAGO_DEUDA
-- `src/features/contabilidad/services/accounting-operations-mutation-service.ts` — 4: `:307` TRANSFERENCIA_BANCARIA, `:424` AJUSTE_BANCARIO, `:568` DEUDA_RECIBIDA/INYECCION_CAPITAL, `:698` PAGO_DEUDA_CAPITAL
-- `src/features/contabilidad/services/accounting-reconciliation-service.ts` — 2: `:547` COBRO_CXC/VENTA_CONTADO (reconcileSale), `:1140` COBRO_SERVICIO (reconcileService)
-- `src/features/mermas/actions.ts` — 1: `:183` MERMA_INVENTARIO
-- `src/features/productos/actions-restock.ts` — 1: `:575` COMPRA_CONTADO (restock)
-- `src/features/venta-servicios/actions.ts` — 2: `:267` y `:397` VENTA_SERVICIO_CREDITO (devengo bruto del documento)
-- `src/features/ventas/services/devolucion-venta-service.ts` — 1: `:585` DEVOLUCION_VENTA
+- `src/app/api/contabilidad/deudas-cash/[id]/pagar/route.ts` — 1: `:258` PAGO_DEUDA
+- `src/app/api/contabilidad/deudas-cash/route.ts` — 1: `:362` DEUDA_RECIBIDA
+- `src/app/api/contabilidad/prestamos-cash/[id]/pagar/route.ts` — 1: `:269` COBRO_PRESTAMO
+- `src/app/api/contabilidad/prestamos-cash/route.ts` — 1: `:354` PRESTAMO_OTORGADO
+- `src/app/api/contabilidad/reconciliacion/ventas/route.ts` — 1: `:884` COBRO_CXC
+- `src/app/api/produccion/ordenes/[id]/completar/route.ts` — 1: `:204` PRODUCCION_SALIDA
+- `src/features/compras-productos/actions.ts` — 1: `:446` COMPRA_CREDITO
+- `src/features/compras-servicios/actions.ts` — 1: `:155` GASTO_CON_ANTICIPO_PROVEEDOR
+- `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts` — 4: `:683` PRESTAMO_OTORGADO, `:947` COBRO_PRESTAMO, `:1169` DEUDA_RECIBIDA, `:1415` PAGO_DEUDA
+- `src/features/contabilidad/services/accounting-operations-mutation-service.ts` — 4: `:597` TRANSFERENCIA_BANCARIA, `:758` AJUSTE_BANCARIO, `:985` DEUDA_RECIBIDA/INYECCION_CAPITAL, `:1172` PAGO_DEUDA_CAPITAL
+- `src/features/contabilidad/services/accounting-reconciliation-service.ts` — 2: `:551` COBRO_CXC/VENTA_CONTADO (reconcileSale), `:1306` COBRO_SERVICIO (reconcileService)
+- `src/features/mermas/actions.ts` — 1: `:197` MERMA_INVENTARIO
+- `src/features/productos/actions-restock.ts` — 1: `:620` COMPRA_CONTADO (restock)
+- `src/features/venta-servicios/actions.ts` — 2: `:701` MIXED_LINES / `:871` legacy; VENTA_SERVICIO_CREDITO
+- `src/features/ventas/services/devolucion-venta-service.ts` — 1: `:586` DEVOLUCION_VENTA
 - `src/features/ventas/services/facturacion-workflow.ts` — 3: `:641`, `:726` VENTA_CONTADO; `:837` VENTA_CREDITO
-- `src/features/ventas/services/venta-mutation-service.ts` — 2: `:480` y `:498` COSTO_VENTA_DEVENGADO (valorado / shadow no valorizado, exclusivos)
-- `src/lib/services/anticipos-workflow.ts` — 2: `:248` ANTICIPO_CLIENTE_RECIBIDO/PROVEEDOR_ENTREGADO, `:686` ANTICIPO_*_APLICADO
-- `src/lib/services/pago-gastos-workflow.ts` — 1: `:623` PAGO_CXP/PAGO_NOMINA/COMPRA_CONTADO/GASTO_CONTADO
+- `src/features/ventas/services/venta-mutation-service.ts` — 2: `:536` y `:554` COSTO_VENTA_DEVENGADO (valorado / shadow no valorizado, exclusivos)
+- `src/lib/services/anticipos-workflow.ts` — 2: `:233` ANTICIPO_CLIENTE_RECIBIDO/PROVEEDOR_ENTREGADO, `:574` ANTICIPO_*_APLICADO
+- `src/lib/services/pago-gastos-workflow.ts` — 1: `:666` PAGO_CXP/PAGO_NOMINA/COMPRA_CONTADO/GASTO_CONTADO
 
 ## Writers de reconciliación SIN hook local (no confundir con llamadas anteriores)
 
@@ -630,6 +723,30 @@ de operación aprobado; handler huérfano persiste (filas 15/16 PARCIAL); filas
 GAP; numeración `DC-N` global sin filtro tenant (contrato caja, no en scope);
 préstamos `[id]/pagar` (fila 14) y demás canales sin certificar. No activar
 shadow/enforce/replay. R0.5/R6 siguen abiertos.
+
+## A10 — Reconciliación vigente (2026-10-09)
+
+Captura cash verificada en alcance focal, no aceptación global: **6/6 PostgreSQL**,
+**5/5 unitarios**, cierre/rollback **8/8**, ambos typechecks y `git diff --check` PASS.
+El cierre comparte con `CashSnapshotService` su cliente `Serializable`; lecturas CxC/CxP
+permanecen coherentes frente a actualización concurrente. La carrera de capturas al mismo
+corte deja exactamente 2/0 y 0/2 creados/existentes. Standalone se reintenta toda la tx
+hasta tres intentos solo para `P2034`/`40P01`; con cliente externo no se reintenta su tx.
+`fechaCorte` identifica el corte de captura del estado observado al instante: no reconstruye
+saldos históricos, y eso no constituye un requisito de A10. No inferir comparabilidad
+histórica global ni firma R0.5-ACCEPT.
+
+### Evidencia de caller nativo POS — 2026-10-09
+
+El `SalesSurface` nativo tiene ahora un adaptador de creación verificado que conserva
+clave por intención pendiente, la transporta en el encabezado `Idempotency-Key` sin
+alterar el body y mantiene la clave ante rechazo/cambio de payload; el doble tap queda
+protegido sincrónicamente y el éxito la limpia antes del refresh. Verificación focal:
+tests nativos 505 PASS/4 omitidos en 109 archivos, typecheck PASS y pruebas del writer
+14/14 en cuatro archivos; revisión fresca sin bloqueos. Las pruebas E2E de dispositivo
+fueron omitidas. La generación de clave tiene forma UUID pero usa `Math.random`: es opaca,
+no criptográficamente segura ni un secreto. El alcance es el caller nativo comprobado;
+no cambia los estados/GAP de otros writers o adaptadores de la matriz ni firma G5/R0.5.
 
 ## Revalidación de valoración de VENTA_CREDITO (2026-09-27)
 

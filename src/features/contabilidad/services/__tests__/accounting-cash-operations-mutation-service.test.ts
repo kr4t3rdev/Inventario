@@ -143,6 +143,38 @@ describe('AccountingCashOperationsMutationService — deuda cash', () => {
 		);
 	});
 
+	it('vincula la conciliación del desembolso a la deuda aunque no haya clave idempotente', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+
+		await service.createCashDebt({
+			input: { proveedorId: 'vendor-a', montoCapital: 500, cuentaBancariaId: 'bank-a' },
+			user: userConAcceso,
+		});
+
+		expect(mock.tx.reconciliacionVenta.update).toHaveBeenCalledWith({
+			where: { reconciliacionId: 'rec-a' },
+			data: { deudaCashId: 'debt-a' },
+		});
+	});
+
+	it('vincula la conciliación del desembolso del préstamo aunque no haya clave idempotente', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+
+		await service.createCashLoan({
+			input: { clienteId: 'client-a', montoCapital: 500, cuentaBancariaId: 'bank-a' },
+			user: userConAcceso,
+		});
+
+		expect(mock.tx.reconciliacionVenta.update).toHaveBeenCalledWith({
+			where: { reconciliacionId: 'rec-a' },
+			data: { prestamoCashId: 'loan-a' },
+		});
+	});
+
 	it('scopea proveedor y cuenta bancaria al tenant al crear deuda', async () => {
 		const { AccountingCashOperationsMutationService: service } = await import(
 			'../accounting-cash-operations-mutation-service'
@@ -498,7 +530,8 @@ describe('AccountingCashOperationsMutationService — deuda cash', () => {
 		});
 		const data = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data;
 		mock.reconciliationFindUnique.mockResolvedValueOnce({
-			reconciliacionId: 'rec-a', idempotencyPayloadHash: data.idempotencyPayloadHash,
+			reconciliacionId: 'rec-a', deudaCashId: 'debt-a',
+			idempotencyPayloadHash: data.idempotencyPayloadHash,
 		});
 		await service.registerCashDebtPayment({
 			input: {
@@ -511,7 +544,7 @@ describe('AccountingCashOperationsMutationService — deuda cash', () => {
 		expect(mock.tx.reconciliacionVenta.create).toHaveBeenCalledTimes(1);
 
 		mock.reconciliationFindUnique.mockResolvedValueOnce({
-			idempotencyPayloadHash: data.idempotencyPayloadHash,
+			deudaCashId: 'debt-a', idempotencyPayloadHash: data.idempotencyPayloadHash,
 		});
 		await expect(service.registerCashDebtPayment({
 			input: {
@@ -521,6 +554,234 @@ describe('AccountingCashOperationsMutationService — deuda cash', () => {
 			},
 			user: userConAcceso,
 		})).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+	});
+
+	it('busca replay de préstamo bajo el lock writer y verifica préstamo y payload', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const input = {
+			id: 'loan-a', monto: 100, cuentaId: 'bank-a', tipoPagoId: 'cash-a', moneda: 'CUP',
+			tasaCambio: 1, observaciones: 'Cuota 1', idempotencyKey: 'loan-payment-key',
+		};
+		await service.registerCashLoanPayment({ input, user: userConAcceso });
+		const persisted = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data;
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-loan-a', prestamoCashId: 'loan-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+
+		const replay = await service.findCashLoanPaymentReplay({ input, user: userConAcceso });
+		expect(replay?.reconciliacionId).toBe('rec-loan-a');
+		const lockOrder = mock.lock.mock.invocationCallOrder.at(-1)!;
+		const readOrder = mock.reconciliationFindUnique.mock.invocationCallOrder.at(-1)!;
+		expect(lockOrder).toBeLessThan(readOrder);
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-loan-a', prestamoCashId: 'loan-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashLoanPaymentReplay({
+			input: { ...input, monto: 101 }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-loan-a', prestamoCashId: 'other-loan',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashLoanPaymentReplay({ input, user: userConAcceso }))
+			.rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+	});
+
+	it('persiste la fecha explícita del pago de préstamo y la incluye en el fingerprint', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const input = {
+			id: 'loan-a', monto: 100, cuentaId: 'bank-a', tipoPagoId: 'cash-a', moneda: 'CUP',
+			fechaOperacion: new Date('2026-09-30T12:30:00.000Z'), idempotencyKey: 'loan-date-key',
+		};
+		await service.registerCashLoanPayment({ input, user: userConAcceso });
+		const persisted = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data;
+		expect(persisted.fechaReconciliacion).toEqual(input.fechaOperacion);
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-loan-date', prestamoCashId: 'loan-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashLoanPaymentReplay({ input, user: userConAcceso }))
+			.resolves.toMatchObject({ reconciliacionId: 'rec-loan-date' });
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-loan-date', prestamoCashId: 'loan-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashLoanPaymentReplay({
+			input: { ...input, fechaOperacion: new Date('2026-10-01T12:30:00.000Z') },
+			user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+	});
+
+	it('enforces the 64-character key bound at loan/debt replay and writer boundaries', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const longKey = 'k'.repeat(65);
+		await expect(service.findCashLoanPaymentReplay({
+			input: { id: 'loan-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: longKey }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+		await expect(service.findCashDebtPaymentReplay({
+			input: { id: 'debt-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: longKey }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+		await expect(service.registerCashLoanPayment({
+			input: { id: 'loan-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: longKey }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+		await expect(service.registerCashDebtPayment({
+			input: { id: 'debt-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: longKey }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+
+		const maxKey = 'k'.repeat(64);
+		await expect(service.findCashLoanPaymentReplay({
+			input: { id: 'loan-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: maxKey }, user: userConAcceso,
+		})).resolves.toBeNull();
+		await expect(service.findCashDebtPaymentReplay({
+			input: { id: 'debt-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: maxKey }, user: userConAcceso,
+		})).resolves.toBeNull();
+	});
+
+	it('busca replay bajo el mismo lock writer y exige coincidencia de deuda y payload', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const input = {
+			id: 'debt-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a', moneda: 'USD', tasaCambio: 24,
+			fechaOperacion: new Date('2026-10-03T12:00:00.000Z'),
+			idempotencyKey: 'debt-payment-key',
+		};
+		await service.registerCashDebtPayment({ input, user: userConAcceso });
+		const persisted = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data;
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-a', deudaCashId: 'debt-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+
+		const replay = await service.findCashDebtPaymentReplay({ input, user: userConAcceso });
+		expect(replay).toMatchObject({ reconciliacionId: 'rec-a' });
+		expect(replay?.reconciliacionId).toBe('rec-a');
+		const lockOrder = mock.lock.mock.invocationCallOrder.at(-1)!;
+		const readOrder = mock.reconciliationFindUnique.mock.invocationCallOrder.at(-1)!;
+		expect(lockOrder).toBeLessThan(readOrder);
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-a', deudaCashId: 'debt-a',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashDebtPaymentReplay({
+			input: { ...input, fechaOperacion: new Date('2026-10-04T12:00:00.000Z') },
+			user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			reconciliacionId: 'rec-other', deudaCashId: 'other-debt',
+			idempotencyPayloadHash: persisted.idempotencyPayloadHash,
+		});
+		await expect(service.findCashDebtPaymentReplay({ input, user: userConAcceso }))
+			.rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+		await expect(service.findCashDebtPaymentReplay({
+			input: { ...input, monto: Number.NaN }, user: userConAcceso,
+		})).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+	});
+
+	it('resuelve replay de altas de préstamo y deuda antes de validar datos dependientes', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const loanInput = {
+			clienteId: 'client-a', montoCapital: 500, cuentaBancariaId: 'bank-a',
+			idempotencyKey: 'loan-create-replay',
+		};
+		await service.createCashLoan({ input: loanInput, user: userConAcceso });
+		const loanHash = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data
+			.idempotencyPayloadHash;
+		const loanReplay = { id: 'loan-a', cliente: { clienteId: 'client-a' } };
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			prestamoCashId: 'loan-a', idempotencyPayloadHash: loanHash,
+		});
+		mock.tx.prestamoCash.findFirst.mockResolvedValueOnce(loanReplay);
+		mock.clienteFindFirst.mockResolvedValueOnce(null);
+		await expect(service.findCashLoanCreateReplay({ input: loanInput, user: userConAcceso }))
+			.resolves.toBe(loanReplay);
+		const loanLockOrder = mock.lock.mock.invocationCallOrder.at(-1)!;
+		const loanReadOrder = mock.reconciliationFindUnique.mock.invocationCallOrder.at(-1)!;
+		expect(loanLockOrder).toBeLessThan(loanReadOrder);
+
+		const debtInput = {
+			proveedorId: 'vendor-a', montoCapital: 500, cuentaBancariaId: 'bank-a',
+			idempotencyKey: 'debt-create-replay',
+		};
+		await service.createCashDebt({ input: debtInput, user: userConAcceso });
+		const debtHash = mock.tx.reconciliacionVenta.create.mock.calls.at(-1)![0].data
+			.idempotencyPayloadHash;
+		const debtReplay = { id: 'debt-a', proveedor: { vendorId: 'vendor-a' } };
+		mock.reconciliationFindUnique.mockResolvedValueOnce({
+			deudaCashId: 'debt-a', idempotencyPayloadHash: debtHash,
+		});
+		mock.tx.deudaCash.findFirst.mockResolvedValueOnce(debtReplay);
+		mock.vendorFindFirst.mockResolvedValueOnce(null);
+		await expect(service.findCashDebtCreateReplay({ input: debtInput, user: userConAcceso }))
+			.resolves.toBe(debtReplay);
+		const debtLockOrder = mock.lock.mock.invocationCallOrder.at(-1)!;
+		const debtReadOrder = mock.reconciliationFindUnique.mock.invocationCallOrder.at(-1)!;
+		expect(debtLockOrder).toBeLessThan(debtReadOrder);
+	});
+
+	it('persiste el timestamp confiable de periodo en los cuatro writers sin hashearlo', async () => {
+		const { AccountingCashOperationsMutationService: service } = await import(
+			'../accounting-cash-operations-mutation-service'
+		);
+		const operationDate = new Date('2026-10-09T04:00:00.000Z');
+		mock.clienteFindFirst.mockReset().mockResolvedValue({
+			clienteId: 'client-a', limiteCredito: null,
+		});
+		mock.accountFindFirst.mockReset().mockResolvedValue({
+			cuentaId: 'bank-a', tenantId: 'tenant-a', moneda: 'CUP', saldo: 100_000,
+			isActive: true, tipoCuenta: 'BANCO',
+		});
+		mock.vendorFindFirst.mockReset().mockResolvedValue({ vendorId: 'vendor-a', nombre: 'Proveedor A' });
+		await service.createCashLoan({
+			input: { clienteId: 'client-a', montoCapital: 500, cuentaBancariaId: 'bank-a',
+				idempotencyKey: 'loan-time-key' },
+			user: userConAcceso,
+			operationDate,
+		});
+		await service.createCashDebt({
+			input: { proveedorId: 'vendor-a', montoCapital: 500, cuentaBancariaId: 'bank-a',
+				idempotencyKey: 'debt-time-key' },
+			user: userConAcceso,
+			operationDate,
+		});
+		await service.registerCashLoanPayment({
+			input: { id: 'loan-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a',
+				idempotencyKey: 'loan-payment-time-key' },
+			user: userConAcceso,
+			operationDate,
+		});
+		await service.registerCashDebtPayment({
+			input: { id: 'debt-a', monto: 10, cuentaId: 'bank-a', tipoPagoId: 'cash-a', moneda: 'USD',
+				tasaCambio: 24, idempotencyKey: 'debt-payment-time-key' },
+			user: userConAcceso,
+			operationDate,
+		});
+
+		const persistedRows = mock.tx.reconciliacionVenta.create.mock.calls.map(
+			([args]: [Prisma.ReconciliacionVentaCreateArgs]) => args.data,
+		);
+		expect(persistedRows).toHaveLength(4);
+		for (const row of persistedRows) {
+			expect(row.fechaReconciliacion).toBe(operationDate);
+			expect(row.idempotencyPayloadHash).toEqual(expect.any(String));
+		}
 	});
 
 	it('conserva cuatro decimales en acumulados funcionales de pago parcial', async () => {

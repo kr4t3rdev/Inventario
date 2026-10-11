@@ -15,6 +15,7 @@ import { ActionError } from '@/lib/server-actions';
 import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
 import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
 import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
+import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -22,8 +23,20 @@ const pagoSchema = z.object({
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
-  observaciones: z.string().optional()
+  observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
+
+/** @description Resuelve la clave del cuerpo antes que la cabecera y aplica sus límites. */
+function resolveIdempotencyKey(bodyKey: string | undefined, headerKey: string | null): string | undefined {
+  if (bodyKey !== undefined) return bodyKey;
+  if (headerKey === null) return undefined;
+  const key = headerKey.trim();
+  if (!key || key.length > 64) {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR');
+  }
+  return key;
+}
 
 /**
  * @description Verifica si el módulo de préstamos cash está habilitado
@@ -50,6 +63,44 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
     const body = pagoSchema.parse(await request.json())
+    const idempotencyKey = resolveIdempotencyKey(
+      body.idempotencyKey,
+      request.headers.get('idempotency-key'),
+    );
+
+    if (idempotencyKey) {
+      const input = { ...body, id, idempotencyKey };
+      const replay = await AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+        input,
+        user,
+      });
+      if (replay) return NextResponse.json({ reconciliacion: replay }, { status: 201 });
+
+      const operationDate = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date();
+      const validacionPeriodo = await validarEscrituraPeriodo({
+        fecha: operationDate,
+        tenantId,
+        tipoOperacion: 'pago_prestamo_cash',
+        actor: user.userId,
+      });
+      if (!validacionPeriodo.permitido) {
+        const replayAfterGate = await AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+          input,
+          user,
+        });
+        if (replayAfterGate) return NextResponse.json({ reconciliacion: replayAfterGate }, { status: 201 });
+        return NextResponse.json(
+          { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+          { status: 400 },
+        );
+      }
+      const reconciliacion = await AccountingCashOperationsMutationService.registerCashLoanPayment({
+        input,
+        user,
+        operationDate,
+      });
+      return NextResponse.json({ reconciliacion }, { status: 201 });
+    }
 
     // Búsqueda tenant-scoped: un préstamo de otro tenant es inexistente.
     const prestamo = await prisma.prestamoCash.findFirst({
@@ -254,6 +305,8 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         ? 403
         : error.code === 'NOT_FOUND'
           ? 404
+          : error.code === 'IDEMPOTENCY_CONFLICT'
+            ? 409
           : error.code === 'FX_INSUFICIENTE'
             ? 400
             : 409

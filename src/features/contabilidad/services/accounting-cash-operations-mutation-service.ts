@@ -1,9 +1,48 @@
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { ActionError } from '@/lib/server-actions';
+import { AuditLogService } from '@/lib/services/audit-log-service';
+import {
+  auditarCreditoOverride,
+  bloquearClienteCredito,
+  validarCreditoOrigen,
+} from '@/features/ventas/services/credito-override';
+import { calcularMontoTotalACobrar, calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash';
+import {
+  calcularSaldoPendienteDeuda,
+  calcularTotalDeudaConInteres,
+} from '@/lib/utils/deuda-cash';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { resolveCashDebtCurrencyAmounts } from './cash-debt-payment-valuation';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import {
+  buildEventoDeudaRecibida,
+  buildEventoPagoDeuda,
+  buildEventoPrestamoOtorgado,
+  buildEventoCobroPrestamo,
+} from '@/features/contabilidad-formal/lib/event-builders';
 
 function sha256Hex(s: string): string {
   return createHash('sha256').update(s).digest('hex');
+}
+
+const CASH_PAYMENT_IDEMPOTENCY_KEY_MAX_LENGTH = 64;
+
+function normalizeCashPaymentIdempotencyKey(value: unknown): string | null {
+  if (value === undefined) return null;
+  if (typeof value !== 'string') {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR');
+  }
+  const idempotencyKey = value.trim();
+  if (!idempotencyKey || idempotencyKey.length > CASH_PAYMENT_IDEMPOTENCY_KEY_MAX_LENGTH) {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR');
+  }
+  return idempotencyKey;
 }
 
 /**
@@ -50,31 +89,216 @@ function sameIdempotencyDecimal(
     return canonicalIdempotencyValue(leftValue) === canonicalIdempotencyValue(rightValue);
   }
 }
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
-import { ActionError } from '@/lib/server-actions';
-import { AuditLogService } from '@/lib/services/audit-log-service';
-import {
-  auditarCreditoOverride,
-  bloquearClienteCredito,
-  validarCreditoOrigen,
-} from '@/features/ventas/services/credito-override';
-import { calcularMontoTotalACobrar, calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash';
-import {
-  calcularSaldoPendienteDeuda,
-  calcularTotalDeudaConInteres,
-} from '@/lib/utils/deuda-cash';
-import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
-import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
-import { resolveCashDebtCurrencyAmounts } from './cash-debt-payment-valuation';
-import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
-import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
-import {
-  buildEventoDeudaRecibida,
-  buildEventoPagoDeuda,
-  buildEventoPrestamoOtorgado,
-  buildEventoCobroPrestamo,
-} from '@/features/contabilidad-formal/lib/event-builders';
+
+type CashDebtPaymentInput = {
+  id: string;
+  monto: number;
+  cuentaId: string;
+  tipoPagoId: string;
+  moneda?: string;
+  tasaCambio?: number;
+  observaciones?: string;
+  fechaOperacion?: Date;
+  idempotencyKey?: string;
+};
+
+type CashLoanPaymentInput = {
+  id: string;
+  monto: number;
+  cuentaId: string;
+  tipoPagoId: string;
+  moneda?: string;
+  tasaCambio?: number;
+  observaciones?: string;
+  fechaOperacion?: Date;
+  idempotencyKey?: string;
+};
+
+type CashLoanCreateInput = {
+  clienteId: string;
+  montoCapital: number;
+  moneda?: string;
+  tasaInteres?: number;
+  tasaCambioAlCrear?: number;
+  fechaVencimiento?: string;
+  observaciones?: string;
+  cuentaBancariaId: string;
+  solicitarCreditoOverride?: boolean;
+  motivoCreditoOverride?: string | null;
+  idempotencyKey?: string;
+};
+
+type CashDebtCreateInput = {
+  proveedorId: string;
+  montoCapital: number;
+  moneda?: string;
+  tasaInteres?: number;
+  tasaCambio?: number;
+  fechaVencimiento?: string;
+  observaciones?: string;
+  comprobanteUrl?: string;
+  cuentaBancariaId: string;
+  idempotencyKey?: string;
+};
+
+function cashLoanCreatePayloadHash(input: CashLoanCreateInput): string {
+  return sha256Hex(canonicalIdempotencyValue({
+    operation: 'CREATE_PRESTAMO_CASH',
+    clienteId: input.clienteId,
+    montoCapital: input.montoCapital,
+    moneda: input.moneda ?? null,
+    tasaInteres: input.tasaInteres ?? null,
+    tasaCambioAlCrear: input.tasaCambioAlCrear ?? null,
+    fechaVencimiento: input.fechaVencimiento ?? null,
+    observaciones: input.observaciones ?? null,
+    cuentaBancariaId: input.cuentaBancariaId,
+    solicitarCreditoOverride: input.solicitarCreditoOverride ?? null,
+    motivoCreditoOverride: input.motivoCreditoOverride ?? null,
+  }));
+}
+
+function cashDebtCreatePayloadHash(input: CashDebtCreateInput): string {
+  return sha256Hex(canonicalIdempotencyValue({
+    operation: 'CREATE_DEUDA_CASH',
+    proveedorId: input.proveedorId,
+    montoCapital: input.montoCapital,
+    moneda: input.moneda ?? null,
+    tasaInteres: input.tasaInteres ?? null,
+    tasaCambio: input.tasaCambio ?? null,
+    fechaVencimiento: input.fechaVencimiento ?? null,
+    observaciones: input.observaciones ?? null,
+    comprobanteUrl: input.comprobanteUrl ?? null,
+    cuentaBancariaId: input.cuentaBancariaId,
+  }));
+}
+
+function cashLoanPaymentPayloadHash(input: CashLoanPaymentInput): string {
+  return sha256Hex(canonicalIdempotencyValue({
+    prestamoId: input.id,
+    monto: input.monto,
+    cuentaId: input.cuentaId,
+    tipoPagoId: input.tipoPagoId,
+    moneda: input.moneda?.trim().toUpperCase() ?? null,
+    tasaCambio: input.tasaCambio ?? null,
+    observaciones: input.observaciones ?? null,
+    ...(input.fechaOperacion ? { fechaOperacion: input.fechaOperacion.toISOString() } : {}),
+  }));
+}
+
+function validateCashLoanReplayInput(input: CashLoanPaymentInput): void {
+  if (
+    typeof input.id !== 'string' || !input.id.trim() ||
+    typeof input.monto !== 'number' || !Number.isFinite(input.monto) || input.monto <= 0 ||
+    typeof input.cuentaId !== 'string' || !input.cuentaId.trim() ||
+    typeof input.tipoPagoId !== 'string' || !input.tipoPagoId.trim() ||
+    (input.moneda !== undefined && typeof input.moneda !== 'string') ||
+    (input.tasaCambio !== undefined &&
+      (typeof input.tasaCambio !== 'number' || !Number.isFinite(input.tasaCambio) || input.tasaCambio <= 0)) ||
+    (input.fechaOperacion !== undefined &&
+      (!(input.fechaOperacion instanceof Date) || !Number.isFinite(input.fechaOperacion.getTime()))) ||
+    (input.observaciones !== undefined && typeof input.observaciones !== 'string')
+  ) {
+    throw new ActionError('Los datos del pago del préstamo no son válidos', 'VALIDATION_ERROR');
+  }
+}
+
+function matchCashLoanPaymentReplay<
+  T extends {
+    idempotencyPayloadHash: string | null;
+    prestamoCashId: string | null;
+    tasaCambio?: unknown;
+    observaciones?: string | null;
+  },
+>(existing: T, input: CashLoanPaymentInput, payloadHash: string): T {
+  const legacyPayloadHash = sha256Hex(JSON.stringify({
+    prestamoId: input.id,
+    monto: input.monto,
+    cuentaId: input.cuentaId,
+    tipoPagoId: input.tipoPagoId,
+    moneda: input.moneda ?? null,
+  }));
+  const optionalFieldsOmitted = input.tasaCambio === undefined && input.observaciones === undefined &&
+    input.fechaOperacion === undefined;
+  const matchesLegacyPayload = existing.idempotencyPayloadHash === legacyPayloadHash && optionalFieldsOmitted;
+  const matchesPersistedOptionalFields = existing.idempotencyPayloadHash === legacyPayloadHash &&
+    input.fechaOperacion === undefined &&
+    sameIdempotencyDecimal(existing.tasaCambio, input.tasaCambio) &&
+    (existing.observaciones ?? null) === (input.observaciones ?? null);
+  if (
+    existing.prestamoCashId !== input.id ||
+    (existing.idempotencyPayloadHash !== payloadHash &&
+      !matchesLegacyPayload && !matchesPersistedOptionalFields)
+  ) {
+    throw new ActionError(
+      'La clave de idempotencia ya fue usada con datos diferentes',
+      'IDEMPOTENCY_CONFLICT',
+    );
+  }
+  return existing;
+}
+
+/** @description Construye la misma huella usada por escrituras y búsquedas de replay. */
+function cashDebtPaymentPayloadHash(input: CashDebtPaymentInput): string {
+  return sha256Hex(canonicalIdempotencyValue({
+    operation: 'PAGO_DEUDA_CASH',
+    deudaId: input.id,
+    monto: input.monto,
+    cuentaId: input.cuentaId,
+    tipoPagoId: input.tipoPagoId,
+    moneda: input.moneda ?? null,
+    tasaCambio: input.tasaCambio ?? null,
+    observaciones: input.observaciones ?? null,
+    ...(input.fechaOperacion ? { fechaOperacion: input.fechaOperacion.toISOString() } : {}),
+  }));
+}
+
+/**
+ * @description Rechaza antes del replay payloads que no representan un pago válido.
+ * @param {CashDebtPaymentInput} input - Pago recibido por el canal móvil.
+ * @returns {void} No retorna cuando los datos son inválidos.
+ */
+function validateCashDebtReplayInput(input: CashDebtPaymentInput): void {
+  if (
+    typeof input.id !== 'string' || !input.id.trim() ||
+    typeof input.monto !== 'number' || !Number.isFinite(input.monto) || input.monto <= 0 ||
+    typeof input.cuentaId !== 'string' || !input.cuentaId.trim() ||
+    typeof input.tipoPagoId !== 'string' || !input.tipoPagoId.trim() ||
+    (input.moneda !== undefined && typeof input.moneda !== 'string') ||
+    (input.tasaCambio !== undefined &&
+      (typeof input.tasaCambio !== 'number' || !Number.isFinite(input.tasaCambio) || input.tasaCambio <= 0)) ||
+    (input.fechaOperacion !== undefined &&
+      (!(input.fechaOperacion instanceof Date) || !Number.isFinite(input.fechaOperacion.getTime()))) ||
+    (input.observaciones !== undefined && typeof input.observaciones !== 'string')
+  ) {
+    throw new ActionError('Los datos del pago de deuda no son válidos', 'VALIDATION_ERROR');
+  }
+}
+
+/**
+ * @description Comprueba que la clave identifica el mismo pago y la misma deuda.
+ * @param {object} existing - Reconciliación encontrada dentro del tenant.
+ * @param {CashDebtPaymentInput} input - Payload entrante.
+ * @param {string} payloadHash - Huella canónica del payload.
+ * @returns {object} Reconciliación idéntica ya confirmada.
+ */
+function matchCashDebtPaymentReplay<
+  T extends { idempotencyPayloadHash: string | null; deudaCashId: string | null },
+>(
+  existing: T,
+  input: CashDebtPaymentInput,
+  payloadHash: string,
+): T {
+  if (
+    existing.idempotencyPayloadHash !== payloadHash ||
+    existing.deudaCashId !== input.id
+  ) {
+    throw new ActionError(
+      'La clave de idempotencia ya fue usada con datos diferentes',
+      'IDEMPOTENCY_CONFLICT',
+    );
+  }
+  return existing;
+}
 
 function prestamosCashEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false';
@@ -100,9 +324,144 @@ function requireDeudaMutationAccess(user: AuthenticatedUser, action: string): vo
  * @description Servicio compartido de mutaciones para préstamos/deudas cash reutilizable por web y mobile.
  */
 export const AccountingCashOperationsMutationService = {
+  async findCashLoanCreateReplay({
+    input,
+    user,
+  }: {
+    input: CashLoanCreateInput;
+    user: AuthenticatedUser;
+  }) {
+    if (!prestamosCashEnabled()) {
+      throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
+    }
+    const tenantId = requireTenant(user);
+    requireCashLoanMutationAccess(user, 'crear préstamos cash');
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    if (!idempotencyKey) return null;
+    const payloadHash = cashLoanCreatePayloadHash(input);
+
+    return prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      const existing = await tx.reconciliacionVenta.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (!existing) return null;
+      if (
+        existing.idempotencyPayloadHash !== payloadHash ||
+        typeof existing.prestamoCashId !== 'string' || !existing.prestamoCashId
+      ) {
+        throw new ActionError(
+          'La clave de idempotencia ya fue usada con datos diferentes', 'IDEMPOTENCY_CONFLICT',
+        );
+      }
+      const replay = await tx.prestamoCash.findFirst({
+        where: { id: existing.prestamoCashId, tenantId, deletedAt: null },
+        include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
+      });
+      if (!replay) {
+        throw new ActionError('La operación idempotente no está disponible', 'IDEMPOTENCY_CONFLICT');
+      }
+      return replay;
+    });
+  },
+
+  async findCashDebtCreateReplay({
+    input,
+    user,
+  }: {
+    input: CashDebtCreateInput;
+    user: AuthenticatedUser;
+  }) {
+    if (!deudasCashEnabled()) {
+      throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
+    }
+    const tenantId = requireTenant(user);
+    requireDeudaMutationAccess(user, 'registrar deudas cash');
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    if (!idempotencyKey) return null;
+    const payloadHash = cashDebtCreatePayloadHash(input);
+
+    return prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      const existing = await tx.reconciliacionVenta.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (!existing) return null;
+      if (
+        existing.idempotencyPayloadHash !== payloadHash ||
+        typeof existing.deudaCashId !== 'string' || !existing.deudaCashId
+      ) {
+        throw new ActionError(
+          'La clave de idempotencia ya fue usada con datos diferentes', 'IDEMPOTENCY_CONFLICT',
+        );
+      }
+      const replay = await tx.deudaCash.findFirst({
+        where: { id: existing.deudaCashId, tenantId, deletedAt: null },
+        include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
+      });
+      if (!replay) {
+        throw new ActionError('La operación idempotente no está disponible', 'IDEMPOTENCY_CONFLICT');
+      }
+      return replay;
+    });
+  },
+
+  async findCashLoanPaymentReplay({
+    input,
+    user,
+  }: {
+    input: CashLoanPaymentInput;
+    user: AuthenticatedUser;
+  }) {
+    if (!prestamosCashEnabled()) {
+      throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
+    }
+    const tenantId = requireTenant(user);
+    requireCashLoanMutationAccess(user, 'registrar pagos de préstamos cash');
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    if (!idempotencyKey) return null;
+    validateCashLoanReplayInput(input);
+    const payloadHash = cashLoanPaymentPayloadHash(input);
+
+    return prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      const existing = await tx.reconciliacionVenta.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      return existing ? matchCashLoanPaymentReplay(existing, input, payloadHash) : null;
+    });
+  },
+
+  async findCashDebtPaymentReplay({
+    input,
+    user,
+  }: {
+    input: CashDebtPaymentInput;
+    user: AuthenticatedUser;
+  }) {
+    if (!deudasCashEnabled()) {
+      throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
+    }
+    const tenantId = requireTenant(user);
+    requireDeudaMutationAccess(user, 'registrar pagos de deuda cash');
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    if (!idempotencyKey) return null;
+    validateCashDebtReplayInput(input);
+    const payloadHash = cashDebtPaymentPayloadHash(input);
+
+    return prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      const existing = await tx.reconciliacionVenta.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      return existing ? matchCashDebtPaymentReplay(existing, input, payloadHash) : null;
+    });
+  },
+
   async createCashLoan({
     input,
     user,
+    operationDate,
   }: {
     input: {
       clienteId: string;
@@ -118,6 +477,7 @@ export const AccountingCashOperationsMutationService = {
       idempotencyKey?: string;
     };
     user: AuthenticatedUser;
+    operationDate?: Date;
   }) {
     if (!prestamosCashEnabled()) {
       throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
@@ -125,22 +485,8 @@ export const AccountingCashOperationsMutationService = {
 
     const tenantId = requireTenant(user);
     requireCashLoanMutationAccess(user, 'crear préstamos cash');
-    const idempotencyKey = input.idempotencyKey?.trim() || null;
-    const idempotencyPayloadHash = idempotencyKey
-      ? sha256Hex(canonicalIdempotencyValue({
-          operation: 'CREATE_PRESTAMO_CASH',
-          clienteId: input.clienteId,
-          montoCapital: input.montoCapital,
-          moneda: input.moneda ?? null,
-          tasaInteres: input.tasaInteres ?? null,
-          tasaCambioAlCrear: input.tasaCambioAlCrear ?? null,
-          fechaVencimiento: input.fechaVencimiento ?? null,
-          observaciones: input.observaciones ?? null,
-          cuentaBancariaId: input.cuentaBancariaId,
-          solicitarCreditoOverride: input.solicitarCreditoOverride ?? null,
-          motivoCreditoOverride: input.motivoCreditoOverride ?? null,
-        }))
-      : null;
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    const idempotencyPayloadHash = idempotencyKey ? cashLoanCreatePayloadHash(input) : null;
 
     const [cliente, cuentaOrigen] = await Promise.all([
       prisma.cliente.findFirst({
@@ -166,7 +512,7 @@ export const AccountingCashOperationsMutationService = {
       );
     }
 
-    const fechaReconciliacion = new Date();
+    const fechaReconciliacion = operationDate ?? new Date();
     const moneda = input.moneda || 'CUP';
 
     const prestamo = await prisma.$transaction(async (tx: any) => {
@@ -329,12 +675,10 @@ export const AccountingCashOperationsMutationService = {
         include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
       });
 
-      if (idempotencyKey) {
-        await tx.reconciliacionVenta.update({
-          where: { reconciliacionId: reconciliacion.reconciliacionId },
-          data: { prestamoCashId: prestamoCreado.id },
-        });
-      }
+      await tx.reconciliacionVenta.update({
+        where: { reconciliacionId: reconciliacion.reconciliacionId },
+        data: { prestamoCashId: prestamoCreado.id },
+      });
 
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
         prestamoId: prestamoCreado.id,
@@ -423,18 +767,21 @@ export const AccountingCashOperationsMutationService = {
   async registerCashLoanPayment({
     input,
     user,
+    operationDate,
   }: {
     input: {
       id: string;
       monto: number;
       cuentaId: string;
       tipoPagoId: string;
-      moneda?: string;
-      tasaCambio?: number;
-      observaciones?: string;
-      idempotencyKey?: string;
+        moneda?: string;
+        tasaCambio?: number;
+        observaciones?: string;
+        fechaOperacion?: Date;
+        idempotencyKey?: string;
     };
     user: AuthenticatedUser;
+    operationDate?: Date;
   }) {
     if (!prestamosCashEnabled()) {
       throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
@@ -445,27 +792,8 @@ export const AccountingCashOperationsMutationService = {
 
     // Idempotencia: misma clave + mismo payload → devuelve el pago existente;
     // misma clave + payload distinto → 409 IDEMPOTENCY_CONFLICT.
-    const idempotencyKey = input.idempotencyKey?.trim() || null;
-    let idempotencyPayloadHash: string | null = null;
-    if (idempotencyKey) {
-      const payload = canonicalIdempotencyValue({
-        prestamoId: input.id,
-        monto: input.monto,
-        cuentaId: input.cuentaId,
-        tipoPagoId: input.tipoPagoId,
-        moneda: input.moneda?.trim().toUpperCase() ?? null,
-        tasaCambio: input.tasaCambio ?? null,
-        observaciones: input.observaciones ?? null,
-      });
-      idempotencyPayloadHash = sha256Hex(payload);
-      const legacyPayloadHash = sha256Hex(JSON.stringify({
-        prestamoId: input.id,
-        monto: input.monto,
-        cuentaId: input.cuentaId,
-        tipoPagoId: input.tipoPagoId,
-        moneda: input.moneda ?? null,
-      }));
-    }
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    const idempotencyPayloadHash = idempotencyKey ? cashLoanPaymentPayloadHash(input) : null;
 
     const resultado = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -479,32 +807,7 @@ export const AccountingCashOperationsMutationService = {
           where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
         });
         if (existente) {
-          const legacyPayloadHash = sha256Hex(JSON.stringify({
-            prestamoId: input.id,
-            monto: input.monto,
-            cuentaId: input.cuentaId,
-            tipoPagoId: input.tipoPagoId,
-            moneda: input.moneda ?? null,
-          }));
-          const optionalFieldsOmitted =
-            input.tasaCambio === undefined && input.observaciones === undefined;
-          const matchesLegacyPayload =
-            existente.idempotencyPayloadHash === legacyPayloadHash && optionalFieldsOmitted;
-          const matchesPersistedOptionalFields =
-            existente.idempotencyPayloadHash === legacyPayloadHash &&
-            sameIdempotencyDecimal(existente.tasaCambio, input.tasaCambio) &&
-            (existente.observaciones ?? null) === (input.observaciones ?? null);
-          if (
-            existente.idempotencyPayloadHash !== idempotencyPayloadHash &&
-            !matchesLegacyPayload &&
-            !matchesPersistedOptionalFields
-          ) {
-            throw new ActionError(
-              'La clave de idempotencia ya fue usada con datos diferentes',
-              'IDEMPOTENCY_CONFLICT',
-            );
-          }
-          return existente;
+          return matchCashLoanPaymentReplay(existente, input, idempotencyPayloadHash!);
         }
       }
 
@@ -550,7 +853,7 @@ export const AccountingCashOperationsMutationService = {
         throw new ActionError('La cuenta o el tipo de pago no pertenecen al tenant', 'VALIDATION_ERROR');
       }
 
-      const fechaReconciliacion = new Date();
+      const fechaReconciliacion = input.fechaOperacion ?? operationDate ?? new Date();
       const moneda = input.moneda || String(prestamo.moneda);
       const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
       const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
@@ -672,6 +975,7 @@ export const AccountingCashOperationsMutationService = {
   async createCashDebt({
     input,
     user,
+    operationDate,
   }: {
     input: {
       proveedorId: string;
@@ -686,6 +990,7 @@ export const AccountingCashOperationsMutationService = {
       idempotencyKey?: string;
     };
     user: AuthenticatedUser;
+    operationDate?: Date;
   }) {
     if (!deudasCashEnabled()) {
       throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
@@ -693,21 +998,8 @@ export const AccountingCashOperationsMutationService = {
 
     const tenantId = requireTenant(user);
     requireDeudaMutationAccess(user, 'registrar deudas cash');
-    const idempotencyKey = input.idempotencyKey?.trim() || null;
-    const idempotencyPayloadHash = idempotencyKey
-      ? sha256Hex(canonicalIdempotencyValue({
-          operation: 'CREATE_DEUDA_CASH',
-          proveedorId: input.proveedorId,
-          montoCapital: input.montoCapital,
-          moneda: input.moneda ?? null,
-          tasaInteres: input.tasaInteres ?? null,
-          tasaCambio: input.tasaCambio ?? null,
-          fechaVencimiento: input.fechaVencimiento ?? null,
-          observaciones: input.observaciones ?? null,
-          comprobanteUrl: input.comprobanteUrl ?? null,
-          cuentaBancariaId: input.cuentaBancariaId,
-        }))
-      : null;
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    const idempotencyPayloadHash = idempotencyKey ? cashDebtCreatePayloadHash(input) : null;
     const totalDeuda = calcularTotalDeudaConInteres(input.montoCapital, input.tasaInteres);
     const [proveedor, cuentaOrigen] = await Promise.all([
       prisma.vendor.findFirst({
@@ -722,7 +1014,7 @@ export const AccountingCashOperationsMutationService = {
     if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
     if (!cuentaOrigen) throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
 
-    const fechaReconciliacion = new Date();
+    const fechaReconciliacion = operationDate ?? new Date();
     const moneda = input.moneda || 'CUP';
 
     const deuda = await prisma.$transaction(async (tx: any) => {
@@ -869,12 +1161,10 @@ export const AccountingCashOperationsMutationService = {
         include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
       });
 
-      if (idempotencyKey) {
-        await tx.reconciliacionVenta.update({
-          where: { reconciliacionId: reconciliacion.reconciliacionId },
-          data: { deudaCashId: deudaCreada.id },
-        });
-      }
+      await tx.reconciliacionVenta.update({
+        where: { reconciliacionId: reconciliacion.reconciliacionId },
+        data: { deudaCashId: deudaCreada.id },
+      });
 
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoDeudaRecibida({
         deudaId: deudaCreada.id,
@@ -952,6 +1242,7 @@ export const AccountingCashOperationsMutationService = {
   async registerCashDebtPayment({
     input,
     user,
+    operationDate,
   }: {
     input: {
       id: string;
@@ -961,9 +1252,11 @@ export const AccountingCashOperationsMutationService = {
       moneda?: string;
       tasaCambio?: number;
       observaciones?: string;
+      fechaOperacion?: Date;
       idempotencyKey?: string;
     };
     user: AuthenticatedUser;
+    operationDate?: Date;
   }) {
     if (!deudasCashEnabled()) {
       throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
@@ -971,21 +1264,10 @@ export const AccountingCashOperationsMutationService = {
 
     const tenantId = requireTenant(user);
     requireDeudaMutationAccess(user, 'registrar pagos de deuda cash');
-    const idempotencyKey = input.idempotencyKey?.trim() || null;
-    const idempotencyPayloadHash = idempotencyKey
-      ? sha256Hex(canonicalIdempotencyValue({
-          operation: 'PAGO_DEUDA_CASH',
-          deudaId: input.id,
-          monto: input.monto,
-          cuentaId: input.cuentaId,
-          tipoPagoId: input.tipoPagoId,
-          moneda: input.moneda ?? null,
-          tasaCambio: input.tasaCambio ?? null,
-          observaciones: input.observaciones ?? null,
-        }))
-      : null;
+    const idempotencyKey = normalizeCashPaymentIdempotencyKey(input.idempotencyKey);
+    const idempotencyPayloadHash = idempotencyKey ? cashDebtPaymentPayloadHash(input) : null;
 
-    const fechaReconciliacion = new Date();
+    const fechaReconciliacion = input.fechaOperacion ?? operationDate ?? new Date();
 
     const resultado = await prisma.$transaction(async (tx) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -995,13 +1277,7 @@ export const AccountingCashOperationsMutationService = {
           where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
         });
         if (existente) {
-          if (existente.idempotencyPayloadHash !== idempotencyPayloadHash) {
-            throw new ActionError(
-              'La clave de idempotencia ya fue usada con datos diferentes',
-              'IDEMPOTENCY_CONFLICT',
-            );
-          }
-          return existente;
+          return matchCashDebtPaymentReplay(existente, input, idempotencyPayloadHash!);
         }
       }
 

@@ -14,6 +14,7 @@ import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services
 import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoDeudaRecibida } from '@/features/contabilidad-formal/lib/event-builders';
+import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -32,8 +33,20 @@ const createSchema = z.object({
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().url().optional(),
-  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
+  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
+
+/** @description Resuelve la clave del cuerpo antes que la cabecera y aplica sus límites. */
+function resolveIdempotencyKey(bodyKey: string | undefined, headerKey: string | null): string | undefined {
+  if (bodyKey !== undefined) return bodyKey;
+  if (headerKey === null) return undefined;
+  const key = headerKey.trim();
+  if (!key || key.length > 64) {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR');
+  }
+  return key;
+}
 
 /**
  * @description Verifica si el módulo de deudas cash está habilitado
@@ -150,6 +163,46 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const rawBody = await request.json()
     console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
+    const idempotencyKey = resolveIdempotencyKey(
+      body.idempotencyKey,
+      request.headers.get('idempotency-key'),
+    );
+
+    if (idempotencyKey) {
+      const input = { ...body, idempotencyKey };
+      const replay = await AccountingCashOperationsMutationService.findCashDebtCreateReplay({
+        input,
+        user,
+      });
+      if (replay) return NextResponse.json({ deuda: replay }, { status: 201 });
+
+      // The canonical create writer persists the operation at server time; due date
+      // and legacy body date aliases cannot bypass a closed current period.
+      const operationDate = new Date();
+      const validacionPeriodo = await validarEscrituraPeriodo({
+        fecha: operationDate,
+        tenantId,
+        tipoOperacion: 'deuda_cash',
+        actor: user.userId,
+      });
+      if (!validacionPeriodo.permitido) {
+        const replayAfterGate = await AccountingCashOperationsMutationService.findCashDebtCreateReplay({
+          input,
+          user,
+        });
+        if (replayAfterGate) return NextResponse.json({ deuda: replayAfterGate }, { status: 201 });
+        return NextResponse.json(
+          { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+          { status: 400 },
+        );
+      }
+      const deuda = await AccountingCashOperationsMutationService.createCashDebt({
+        input,
+        user,
+        operationDate,
+      });
+      return NextResponse.json({ deuda }, { status: 201 });
+    }
 
     // Validar período contable antes de crear la deuda
     const fechaOperacion = extraerFechaDeBody(rawBody) ?? new Date()
@@ -298,6 +351,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           cuentaPorPagar: true
         }
       })
+      await tx.reconciliacionVenta.update({
+        where: { reconciliacionId: reconciliacion.reconciliacionId },
+        data: { deudaCashId: deudaCreada.id },
+      })
 
       // Capa de contabilidad formal (CTA-1/R6): deuda recibida de terceros, una vez
       // por origen dentro de la misma transacción; valoración heredada de la fila
@@ -339,8 +396,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
     console.error('Error creando deuda cash:', error)
     if (error instanceof ActionError) {
-      const status = error.code === 'FORBIDDEN' || error.code === 'TENANT_REQUIRED' ? 403
-        : error.code === 'NOT_FOUND' ? 404 : 400;
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' || error.code === 'TENANT_REQUIRED' ? 403
+        : error.code === 'NOT_FOUND' ? 404
+          : error.code === 'IDEMPOTENCY_CONFLICT' ? 409 : 400;
       return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     return NextResponse.json({ error: 'Error creando deuda cash' }, { status: 500 })

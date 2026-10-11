@@ -591,5 +591,91 @@ describe('préstamos cash legacy [id]/pagar — PostgreSQL aislado', { timeout: 
       where: { tenantId, tipoReconciliacion: 'PRESTAMO_CASH', prestamoCashId: prestamoPagarId },
     })).toBe(recsAntes + 1);
   });
-});
 
+  it('protege la creación legacy y los pagos parciales/finales con claves idempotentes', async () => {
+    const clienteNuevo = (await prisma.cliente.create({ data: { tenantId, nombre: `${prefix}-idem` } }))
+      .clienteId;
+    const cuentaAlta = (await prisma.cuentaBancaria.create({ data: {
+      tenantId, nombreBanco: `${prefix}-idem`, numeroCuenta: `${prefix}-idem`,
+      tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 1000,
+    } })).cuentaId;
+    const createInput = {
+      clienteId: clienteNuevo, montoCapital: 100, cuentaBancariaId: cuentaAlta,
+    };
+    const createKey = `${prefix}-loan-create`;
+    const createUrl = 'http://localhost/api/contabilidad/prestamos-cash';
+    const create = (input: typeof createInput) => POST_CREAR(new NextRequest(createUrl, {
+      method: 'POST',
+      headers: { 'idempotency-key': createKey },
+      body: JSON.stringify(input),
+    }), {});
+    const createFirst = await create(createInput);
+    expect(createFirst.status, await createFirst.clone().text()).toBe(201);
+    const createdLoan = (await createFirst.json()).prestamo;
+    const saldoTrasAlta = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaAlta },
+    })).saldo.toString();
+    const createReplay = await create(createInput);
+    expect(createReplay.status, await createReplay.clone().text()).toBe(201);
+    expect((await createReplay.json()).prestamo.id).toBe(createdLoan.id);
+    const createConflict = await create({ ...createInput, montoCapital: 101 });
+    expect(createConflict.status).toBe(409);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaAlta } }))
+      .saldo.toString()).toBe(saldoTrasAlta);
+    expect(await prisma.prestamoCash.count({ where: { tenantId, clienteId: clienteNuevo } })).toBe(1);
+
+    const paymentAccount = await prisma.cuentaBancaria.create({ data: {
+      tenantId, nombreBanco: `${prefix}-idem-pay`, numeroCuenta: `${prefix}-idem-pay`,
+      tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 0,
+    } });
+    const cxc = await prisma.cuentaPorCobrar.create({ data: {
+      tenantId, clienteId: clienteNuevo, montoDeuda: 1000, montoPagado: 0,
+      tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
+    } });
+    const loanId = (await prisma.prestamoCash.create({ data: {
+      tenantId, clienteId: clienteNuevo, cuentaPorCobrarId: cxc.id, montoCapital: 1000,
+      moneda: 'CUP', cuentaBancariaId: paymentAccount.cuentaId, createdById: 'actor-real',
+    } })).id;
+    const tipoPagoId = (await prisma.tipoPago.findFirstOrThrow({
+      where: { tenantId, nombre: 'Transferencia' },
+    })).tipoId;
+    const paymentUrl = `http://localhost/api/contabilidad/prestamos-cash/${loanId}/pagar`;
+    const pay = (input: Record<string, unknown>, idempotencyKey?: string) => POST_PAGAR(new NextRequest(paymentUrl, {
+      method: 'POST',
+      headers: idempotencyKey ? { 'idempotency-key': idempotencyKey } : undefined,
+      body: JSON.stringify({ cuentaId: paymentAccount.cuentaId, tipoPagoId, ...input }),
+    }), { params: Promise.resolve({ id: loanId }) });
+    const partialInput = { monto: 400 };
+    const partialKey = `${prefix}-loan-partial`;
+    const partial = await pay(partialInput, partialKey);
+    expect(partial.status, await partial.clone().text()).toBe(201);
+    const partialId = (await partial.json()).reconciliacion.reconciliacionId;
+    const bankAfterPartial = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: paymentAccount.cuentaId },
+    })).saldo.toString();
+    const partialReplay = await pay(partialInput, partialKey);
+    expect(partialReplay.status).toBe(201);
+    expect((await partialReplay.json()).reconciliacion.reconciliacionId).toBe(partialId);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: paymentAccount.cuentaId },
+    })).saldo.toString()).toBe(bankAfterPartial);
+    const conflict = await pay({ ...partialInput, monto: 401 }, partialKey);
+    expect(conflict.status).toBe(409);
+
+    const finalInput = { monto: 600 };
+    const finalKey = `${prefix}-loan-final`;
+    const final = await pay(finalInput, finalKey);
+    expect(final.status, await final.clone().text()).toBe(201);
+    const finalId = (await final.json()).reconciliacion.reconciliacionId;
+    const finalReplay = await pay(finalInput, finalKey);
+    expect(finalReplay.status).toBe(201);
+    expect((await finalReplay.json()).reconciliacion.reconciliacionId).toBe(finalId);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'PRESTAMO_CASH', prestamoCashId: loanId },
+    })).toBe(2);
+    expect((await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc.id } }))
+      .montoPagado.toString()).toBe('1000');
+    expect((await prisma.prestamoCash.findUniqueOrThrow({ where: { id: loanId } })).estado)
+      .toBe('PAGADO');
+  });
+});

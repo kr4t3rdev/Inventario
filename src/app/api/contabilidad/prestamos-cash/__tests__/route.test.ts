@@ -186,6 +186,7 @@ describe("API contabilidad/prestamos-cash", () => {
 				cliente: { findFirst: vi.fn().mockResolvedValue({ clienteId: 'c-1', limiteCredito: null }) },
 				prestamoCash: { create: vi.fn().mockResolvedValue(mockPrestamo) },
 				reconciliacionVenta: {
+					update: vi.fn().mockResolvedValue({}),
 					create: vi
 						.fn()
 						.mockResolvedValue({ reconciliacionId: "rec-prestamo-1", monto: 500,
@@ -247,7 +248,10 @@ describe("API contabilidad/prestamos-cash", () => {
 			prestamoCash: { create: vi.fn().mockResolvedValue({
 				id: 'p-mlc', clienteId: 'c-1', cuentaPorCobrar: {},
 			}) },
-			reconciliacionVenta: { create: txReconciliationCreate },
+			reconciliacionVenta: {
+				create: txReconciliationCreate,
+				update: vi.fn().mockResolvedValue({}),
+			},
 		}));
 
 		const { POST } = await import('../route');

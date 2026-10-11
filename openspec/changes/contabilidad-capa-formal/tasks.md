@@ -1,5 +1,18 @@
 # Tasks — Capa de contabilidad formal (serie CTA)
 
+> **ESTADO ACTUAL — 2026-10-11:** hay correcciones locales con evidencia focal, pero eso
+> **no equivale a 31/31 PASS ni cierra R0.5-ACCEPT**. R6-ROLLBACK global y R6-BASELINE
+> por entorno siguen abiertos; R7 requiere siete días de operación real. A10 tiene evidencia
+> focal verificada para captura del estado actual; reconstrucción histórica no es requisito.
+> Ante la alternativa planteada por el usuario, A9 se conserva pendiente como opción
+> conservadora, no descartado ni eximido: la ventana operativa no inició y el
+> Preview aislado terminó en `ERROR/ENOENT` antes de completar validaciones; no hay resultados
+> verificables de esas validaciones. El despliegue cloud está suspendido, sin apagar recursos
+> Railway ni habilitar `shadow`, `enforce` o replay.
+> Los `[x]` de este plan registran tareas
+> o slices acotados con su evidencia fechada; no son una firma global. Ver la reconciliación
+> A1–A10 al final de este archivo y en `auditoria-correcciones-2026-10-07.md`.
+
 Plan SDD/TDD. Reglas (memorias del proyecto): TDD estricto con evidencia del fallo RED, tests con rutas explícitas (`pnpm exec vitest run <rutas>` y para DB real `__integration__` con `DATABASE_URL_TEST`), code review + commit por fase con **stage selectivo** (worktree compartido: revisar `git diff --cached --name-only` y desetagear lo ajeno antes de cada commit), migraciones con `--create-only` + revisión SQL. Los runtime de producción usan `prisma migrate deploy`; las bases heredadas que se actualizaron con `db push` requieren baseline verificado antes de adoptarlo (los backfills no corren solos). Independiente de la ventana shadow del change `aislamiento-sistemico-tenant`; los modelos nuevos nacen clasificados `scoped` (CTA-0 T3).
 
 Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge de `codex/upgrade-next-16`).
@@ -2541,11 +2554,30 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 ### R0.5 — Certificación completa del inventario
 
+**Reconciliación de firma 11-10:** `reconciliacion-r05-g5-2026-10-11.md` registra
+firma G5 de identidad/reintento cash para 18 combinaciones, con cuatro condiciones cerradas.
+Continuación: 78/78 PostgreSQL (ocho archivos) y suite final ampliada 12/12; no sumar
+corridas superpuestas. El bloqueo action de replay post-cierre fue reproducido y corregido.
+R0.5 global sigue abierto por sus gates de R6/baseline/A9-R7.
+El crosswalk R6 de 31 callsites ya existe. Los errores de tipos del corte 07-10 inferior
+son históricos: ambos typechecks pasan actualmente con heap explícito, sin firmar los gaps.
+
+- [x] **G5-SA-ALTA:** PostgreSQL alta/replay/conflicto/carrera por `createPrestamoCashAction`
+  y `createDeudaCashAction`, con schemas/wrappers reales.
+- [x] **G5-FINAL-KEY:** replay keyed/conflicto de pago final por ambas actions y ambas rutas
+  móviles, comprobando IDs y ausencia de nuevos efectos.
+- [x] **G5-SA-PERIODO:** contrato de replay post-cierre en las cuatro actions. RED cuatro
+  fallos; GREEN con replay autorizado antes del guard y misma fecha validada/escrita.
+- [x] **G5-ADAPTER-CIERRE:** evidencia física de carreras legacy de replay/rechazo de período
+  y conflicto de payload del pago móvil de préstamo, según matriz nominativa.
+  Las cuatro carreras usan commits/guard reales con intercalado determinista mediante spy.
+  Evidencia común: `cash-g5-acceptance-real.test.ts`; límites y firma en acta 11-10.
+
 - [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
   **Firma 06-10 REABIERTA por auditoría 07-10** (`auditoria-correcciones-2026-10-07.md`):
   la firma prematura no se sostenía. A1–A6 tienen correcciones con evidencia focal;
-  A7 queda alineado en el inventario actual; A8–A10 permanecen pendientes de evidencia
-  operativa/física:
+  A7 queda alineado en el inventario actual; A8–A9 permanecen pendientes de evidencia
+  operativa/física; A10 tiene evidencia focal verificada, sin cerrar la aceptación global:
   - A1 (venta-servicios): corte actual **actions 40/40** y `typecheck` de aplicación
     verde. Los commits `25173027` y `0f2d3278` se conservan como historial de la
     corrección, no como sustituto de esta evidencia. **Corte posterior:** el replay
@@ -2573,11 +2605,15 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     cubre rollback físico por fallo de `AuditLog` en CxP create, CxC create/update/anular;
     A8 sigue pendiente para aceptación global porque no acredita por sí sola el
     commit/entorno de períodos ni el baseline operativo.
-  - A10 (snapshots cash): `cash-snapshots-real.test.ts` **4/4** y cierre formal
-    focal **8/8** en PostgreSQL desechable; `CashSnapshotService` reutiliza el cliente
-    transaccional del cierre y revierte junto con el período. La captura queda
-    explícitamente limitada al estado observado al instante: no reconstruye históricos
-    por fecha de corte, por lo que A10 sigue pendiente para aceptación global.
+  - A10 (snapshots cash): **6/6 PostgreSQL** en la suite física y **5/5 unitarios**;
+    la evidencia física independiente confirmó 6/6 y 5/5 en PostgreSQL aislado. Cierre
+    formal/rollback **8/8**, typecheck de aplicación y tests PASS, `git diff --check` PASS.
+    El cierre pasa el mismo `Prisma.TransactionClient` Serializable a la captura; dos
+    lecturas CxC/CxP quedan en una vista coherente bajo actualización concurrente y la
+    carrera de capturas al mismo corte arroja conteos exactos 2/0 y 0/2. La captura
+    representa el estado leído en el momento real, no una reconstrucción histórica por
+    fecha pasada/futura; esa reconstrucción no es requisito de A10. A10 queda verificada
+    en el alcance focal actual, no acredita comparabilidad histórica ni firma global.
   La tanda formal de siete suites queda en **194/194** tras corregir los fixtures de
   replay, permisos y evidencia FX. El filtro de errores de `typecheck:tests` sobre
   `contabilidad/**`, `contabilidad-formal/**` y el test CxC de venta-servicios queda
@@ -2598,7 +2634,7 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   física de rollback.
   **Fase B 05-10:** matriz sistemática en `matriz-accept-r0.5.md` (31 callsites ×
   adaptadores vivos × 8 dimensiones). Sus checks son evidencia focal/histórica, no una
-  certificación global: la aceptación permanece reabierta hasta resolver A8–A10 y los
+  certificación global: la aceptación permanece reabierta hasta resolver A8–A9 y los
   gaps explícitos de Fase C. G4 sí queda cerrado con el retiro de `reconciliarVentaDirecta`
   (sin caller). Gaps para Fase C:
   - [x] G1: rollback físico por fallo de AuditLog en `pago-gastos-workflow` (trigger SQL
@@ -2638,6 +2674,9 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     archivos. Evidencia: `writers-matrix.test.ts` (guard de conteo) y los tests de
     `facturacion-workflow` sin referencias a la función; typecheck limpio.
   - [x] G5: reintento por adaptador en `accounting-cash-operations-mutation-service`.
+    **Firma vigente 11-10:** 18 combinaciones cash de identidad/reintento; cuatro gaps
+    nominativos cerrados en el acta `reconciliacion-r05-g5-2026-10-11.md`.
+    Los cortes inferiores son evidencia histórica, no amplían esta firma a R0.5 global.
     **Cerrado 05-10:** 6 adaptadores con test de reintento propio (no duplican):
     web (`prestamos-cash-pagar-real`, `deudas-cash-real`), mobile Bearer (`cash-loans-http-real`,
     `cash-debts-http-real`), actions (`cash-actions-retry-real`).
@@ -2722,5 +2761,427 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 **Estado global:** R6 permanece **abierto**: R6-LOGS y la disposición documental de
 R6-ORPHANS están verificadas, pero R6-ROLLBACK y R6-BASELINE siguen pendientes. R0.5
-permanece `[ ]`; A8–A10 impiden declarar aceptación global o activar modo operativo.
+permanece `[ ]`; A8–A9 impiden declarar aceptación global o activar modo operativo.
 El smoke local no actualiza el baseline de ningún entorno heredado.
+
+#### Reconciliación vigente — 2026-10-09
+
+Los apartados anteriores preservan evidencia y recuentos de sus cortes fechados; cuando
+un recuento histórico difiera, prevalece el alcance específico aquí consignado, no una
+extrapolación a toda la matriz. **R0.5-ACCEPT continúa `[ ]`**: 31 callsites es el
+inventario, no 31/31 aprobaciones en ocho dimensiones. No se firma ni se habilita
+`shadow`, `enforce` o replay.
+
+- Evidencia focal ya registrada: contrato de venta-servicios, payload, concurrencia y
+  precisión; pruebas físicas cash de creación de préstamo con AuditLog **2/2** y de los
+  seis writers cash canónicos/legacy **6/6** (combinado **8/8**); vínculo de conciliación
+  de desembolso siempre al ID creado **22/22 unitarias + 35/35 PostgreSQL**; y cuatro
+  adaptadores HTTP legacy cash con clave **77/77 unitarias + 38/38 PostgreSQL**.
+  Estos resultados son por flujo, no aceptación global de sus filas/adaptadores.
+- Las dos rutas móviles de creación cash tienen implementación de replay/clave en el
+  cambio concurrente, con evidencia del worker **14/14 unitarias + 19/19 PostgreSQL**;
+  el responsable verificó **14/14 unitarias, 19/19 PostgreSQL, typecheck y pruebas: PASS**.
+  La revisión fresca final confirma que los snapshots ampliados incluyen entidad y líneas,
+  sin bloqueos funcionales en las rutas. El slice móvil queda verificado; esto no firma G5
+  global. La corrida RED inicial tuvo un mock extractor ausente y no fue un RED funcional
+  limpio; no presentarla como prueba de TDD funcional para ese caso.
+- **G5 legacy cash:** el recheck de replay tras rechazo de período ya está implementado.
+  RED funcional genuino: **5 fallos unitarios** antes del cambio; GREEN **13/13 unitarios**
+  después, revisión fresca sin bloqueos. La línea base PostgreSQL de **32 tests PASS** no
+  reproduce determinísticamente esa carrera; no presentarla como prueba física de la ventana
+  race. Esto verifica el protocolo unitario, no cierra G5 global.
+- **Idempotencia cash física:** el bundle original del audit reportó **8 suites unitarias /
+  112 PASS** y **14 suites PostgreSQL / 89 PASS**. En la suite física de préstamo, dos
+  fixtures excedían el límite de longitud de la clave; se corrigió solo el prefijo, preservando
+  el UUID, y la corrida posterior de 89 PostgreSQL pasó. No contar el intento previo como
+  evidencia válida.
+- **FX/payload e identidad histórica con PostgreSQL:** dos archivos focales adicionales pasan
+  **17/17** (cash **12**, venta-servicios **5**); typecheck y revisión final PASS, sin cambios
+  de código productivo. En cash, USD **0.0123 × 300 = 3.6900** funcional se refleja en
+  obligación/reconciliación y banco ±**3.69**, con débito/crédito de **3.69**; retry idéntico
+  devuelve el mismo ID. FX independiente **301** o mismatch de observación da conflicto sin
+  cambio en snapshot completo de préstamo/deuda, banco, CxC/CxP, reconciliación, asiento/líneas
+  y auditoría. En venta-servicios, la clave histórica `v1:YQA:<hash>` persiste en formato
+  `raw:hash` dentro del límite `<140` y reejecuta el mismo ID; clave cruda `a` crea otra venta,
+  y cantidad **2** conflictiva no duplica filas. El run inicial tenía un
+  typo de entorno y el guard lo detuvo antes de ejecutar tests; solo cuenta el rerun corregido
+  **17/17**, no un RED. Estos 17 tests son un bundle separado del original de 112/89.
+- **UI/lifecycle:** un worker reporta **7 tests** sobre retención de clave previa en los
+  componentes de préstamo, deuda, formulario de servicio y carrito. Root confirmó **7/7 PASS**,
+  `typecheck:tests` PASS y revisión fresca final sin falsos positivos. Slice focal verificado;
+  no cambió comportamiento productivo. Sus 7 tests son una suite separada, no sumar al bundle
+  original de 112 unitarios/89 PostgreSQL como si fueran la misma corrida.
+- El probe temporal de 9 casos no está versionado y no es evidencia reproducible; no atribuirle
+  un resultado exacto `9/9 GREEN`. La FX de pago cash, conflicto por observación y colisión de
+  namespace descritos arriba ya tienen cobertura PostgreSQL focal; esto no cambia las brechas
+  originales de aceptación global. R0.5, R6, baseline, R7 y snapshots siguen abiertos.
+  La paridad SDK estaba abierta en este corte y queda supersedida por la verificación posterior.
+- **Corte histórico supersedido:** en este punto la paridad global de los cuatro SDK
+  parecía abierta por 15 operaciones Admin ausentes (110/125). La regeneración y
+  verificación fechadas posteriores documentan 125 operaciones únicas, 46/46 paridad,
+  3/3 smoke y generación determinista; no atribuir al estado actual la ausencia histórica.
+  Esto tampoco acredita compilación completa de los SDK ni aceptación R0.5 global.
+- **R6-ROLLBACK** sigue abierto a nivel global; pruebas anteriores cubren solo sus writers
+  explícitos, no a todos los writers contables ni las ocho dimensiones. **Nueva evidencia
+  focal:** `accounting-bank-transfers-real.test.ts` acredita
+  3 fallos de INSERT `AuditLog` y rollback en `createBankAdjustment` (`AJUSTE_BANCARIO`),
+  `createCapitalInjection` (`INYECCION_CAPITAL`) y `registerCapitalPayment` (`PAGO_DEUDA`).
+  La suite reporta 12/12 PostgreSQL PASS después de restaurar el entorno previo; revisión fresca
+  sin bloqueos y snapshots completos de ajuste/inyección/pago, banco, conciliación, asiento/líneas,
+  AuditLog y período/cache. Se aislaron actores/logs/triggers únicos; sin cleanup por wildcard de
+  esquema. `typecheck:tests` sigue corriendo en root (run 10940; el worker lo había pasado antes);
+  los 12/12 PostgreSQL y la revisión final se pueden registrar, pero no atribuir PASS al typecheck
+  root hasta que termine el run.
+- Restan cinco gaps de evidencia física de fallo de AuditLog, sin bug demostrado: (1) COGS de
+  venta valorada, `VentaMutationService.create` (`formal-shadow-cash-sale.test.ts`); (2) devolución,
+  `DevolucionVentaService.registrar` (`devolucion-fifo.test.ts`); (3) `reconcileSale`
+  (`reconciliar-servicio-real.test.ts`; `reconcileService` sí está cubierto aparte); (4) POST
+  legacy de conciliación de ventas (`http-real-idempotencia.test.ts`, AuditLog mockeado); y
+  (5) `createAnticipo` (`anticipos-fx-real.test.ts`, AuditLog mockeado). Esto acota cobertura de
+  rollback, no reporta defectos funcionales. **R6-BASELINE** requiere verificación en cada entorno
+  heredado; tests/baseline local no la sustituyen.
+- **R7.3/R7.4** requieren observación operacional real durante siete días. Tests unitarios,
+  PostgreSQL desechable, snapshots locales y corridas `shadow` de prueba no son evidencia
+  de tráfico real ni completan la ventana.
+
+La matriz A1–A10 y el estado de los gates se consolidan en
+`auditoria-correcciones-2026-10-07.md` («Reconciliación documental vigente — 2026-10-09»).
+
+### Corte de evidencia focal — 08-10-2026 (sin firma global)
+
+- Capital payload/concurrencia: integración PostgreSQL **4/4**; header móvil OpenAPI
+  **12/12**.
+- Ajustes: integración PostgreSQL **5/5**. Cash: `cash-actions-retry-real.test.ts` y
+  `deudas-cash-real.test.ts` pasan **26/26** combinadas en PostgreSQL, con altas, replay y
+  carrera de pagos parciales, más precisión funcional `0.0123`. La ruta móvil de pago de
+  préstamo pasa **3/3**: clave por body/header, precedencia del body y conflicto HTTP 409.
+- Venta-servicios: acciones y allowlist SQL **51/51** combinadas; pruebas físicas **3/3**
+  cubren payloads divergentes e iguales y conflicto por vencimiento histórico. Relectura bajo
+  advisory lock tenant/clave en la misma transacción evita duplicados. Se retiraron los
+  fallbacks P2002 fuera del lock; errores únicos ajenos conservan `P2002`. El fallback
+  histórico ahora compara CxC, anticipos y auditoría de override; solo el vencimiento tiene
+  evidencia física. Si falta evidencia histórica no predeterminada, falla cerrado y puede no
+  reproducir el mismo payload; esa compatibilidad legacy sigue abierta.
+- Devengo directo: prueba física **2/2**; el corte actual ya tenía actor válido. La
+  corrección nueva robustece el error SQL esperado, snapshot de rollback y cleanup;
+  no amplía R6 más allá de este flujo focal.
+- `pnpm run typecheck` PASS. `typecheck:tests` y la re-firma global no se vuelven a
+  declarar cerrados por estas pruebas focales.
+
+- Revalidación A4: los hallazgos de código sobre falta de identidad en escritores cash,
+  omisión de clave en formularios web y mapeo móvil distinto de 409 ya no aplican al corte
+  actual. La evidencia de UI/HTTP no cubre todos los canales; G5 conserva su gate global.
+- Revalidación del fallback legacy: cambios de vencimiento/anticipo/override se comparan contra
+  datos persistidos; 47/47 unitarios de venta-servicios pasan y la prueba física nueva cubre
+  fecha divergente, sin certificar todavía anticipos/override ni replay de override sin log.
+
+**Estado:** los resultados actualizan A1/A2/A3/A5/A6 únicamente como evidencia focal.
+R0.5-ACCEPT, R6-ROLLBACK global, R6-BASELINE, R7 operacional y snapshots históricos
+continúan `[ ]`; el inventario de 31 callsites no demuestra 31/31 en ocho dimensiones.
+
+### Actualización final de esta pasada — 08-10-2026
+
+Esta actualización reemplaza los recuentos y límites de la revalidación anterior de
+venta-servicios; no modifica los gates globales.
+
+- Namespace nuevo `v2`: prefijo de al menos 141 caracteres, superior al máximo de 140
+  de una clave histórica válida persistida. Regresión RED/GREEN para `a` frente a
+  `v1:YQA:<hash>`; revisión independiente sin bloqueo de namespace.
+- Replay histórico simple: contrasta vencimiento, movimientos ejecutados de anticipos
+  y evidencia de override. PostgreSQL acredita divergencias de esos campos.
+- Replay histórico mixto: ahora contrasta CxC por venta, vencimiento y auditoría de
+  override dentro de la transacción. Crédito mixto histórico sin auditoría falla cerrado:
+  no puede reconstruirse si el request original pidió un override innecesario.
+- Verificación directa: acciones + allowlist **57/57**; PostgreSQL idempotencia + devengo
+  **6/6** (4 pruebas de idempotencia y 2 de devengo). La prueba mixta acredita replay
+  idéntico con CxC/auditoría persistidos; no certifica todos los adaptadores.
+- `typecheck:tests` mantiene 68 diagnósticos en el último corte, sin errores en los tres
+  archivos de venta-servicios intervenidos. No se declara suite global verde.
+- La última entrega del worker falló por un 403 del servicio de agentes; el código
+  existente se verificó directamente. La revisión independiente final del comparador
+  mixto queda pendiente; no se amplía el cierre global.
+
+R0.5-ACCEPT, R6-ROLLBACK global, R6-BASELINE, G5 global, R7 operacional y snapshots
+históricos siguen abiertos. No se hizo commit ni push.
+
+### Continuación verificada — 08-10-2026
+
+- Revisión independiente del comparador mixto terminada: sin otros hallazgos en CxC,
+  vencimiento, origen de auditoría o tenant. Detectó el caso inverso en legacy simple;
+  corregido con RED/GREEN: crédito histórico sin evidencia rechaza también intención
+  default. Otra revisión confirmó que CONTADO y replay con hash permanecen intactos.
+- Corregidos ocho diagnósticos en seis tests contables. `typecheck:tests` baja de 68 a
+  **60 diagnósticos restantes**; no quedan errores en esos seis archivos. El chequeo
+  global continúa fallando, no se declara resuelto.
+- Verificación directa: **68 unitarios aprobados y 2 TODO** en cuatro archivos,
+  **30 PostgreSQL aprobados** en seis suites. Los tests UI emiten advertencias de act;
+  no se presenta la corrida como libre de advertencias. Typecheck de aplicación PASS.
+- La ejecución física encontró que compras FX esperaba un envelope mientras su mock
+  devolvía datos crudos. Ahora utiliza `withAction` productivo y contexto autenticado;
+  los negativos exigen `INTERNAL_ERROR`, el mensaje exacto del trigger en el error
+  registrado y los snapshots originales de rollback. Suite de compras **7/7**.
+
+Estos resultados sustituyen los recuentos anteriores, no cierran R0.5-ACCEPT, G5,
+R6-ROLLBACK global, R6-BASELINE, R7 operacional ni snapshots históricos.
+
+### Evidencia focal G5 — ajuste bancario móvil (08-10-2026)
+
+- `POST /bank-adjustments` resuelve replays antes del control de período, conservando
+  autenticación, tenant, feature y permiso. El helper usa el mismo advisory lock
+  transaccional que el writer; una lectura simple no bastaba para commits pendientes.
+- Sin clave, se conserva el control de período; payload keyed inválido devuelve 400.
+  Replay idéntico después de cerrar período devuelve la operación previa; payload
+  divergente devuelve 409; operaciones nuevas siguen bloqueadas por período cerrado.
+- Verificación directa: ruta + servicio **51/51 unitarios**; canales HTTP reales
+  **6/6 PostgreSQL**, incluyendo header-only, saldo/filas/asientos sin duplicación y
+  espera observable del lock. Revisión fresca final sin bloqueos en este alcance.
+- Cuatro suites de contratos de ventas corregidas: **26/26 PostgreSQL**. La suite
+  venta-crédito se repitió junto con canales HTTP: **13/13** combinadas.
+- Typecheck de aplicación y ESLint focal PASS. `typecheck:tests` conserva **55
+  diagnósticos restantes**, cero en los archivos de estas dos correcciones.
+
+Este slice acredita el adaptador móvil de ajustes, no todos los adaptadores G5.
+R0.5-ACCEPT, G5 global, R6-ROLLBACK global, R6-BASELINE, R7 operacional y snapshots
+históricos permanecen abiertos. No se hizo commit ni push.
+
+
+### Evidencia focal adicional — 2026-10-08: pagos móviles de deuda cash
+
+- Replay con clave resuelto antes del gate de período bajo el mismo lock del writer;
+  mantiene permisos, tenant y deuda indicada por la ruta. Payload divergente: 409;
+  nueva operación en período cerrado: rechazada.
+- Fecha explícita incluida en huella, conciliación y FX; fechas ISO imposibles
+  (por ejemplo 2026-02-30) rechazadas antes de normalización. Retorno de replay
+  conserva la fila completa. Revisión fresca final sin bloqueadores focales.
+- Verificación directa final: **27/27 unitarios** ruta/servicio y **23/23 PostgreSQL**
+  deuda legacy + HTTP móvil. Reparaciones unitarias de compras: **55/55**.
+- Snapshot actual de `typecheck:tests`: **44 diagnósticos**; existen cambios
+  concurrentes ajenos a este slice, por lo que la reducción no se atribuye toda
+  a esta corrección. No equivale a typecheck global aprobado.
+- Pendientes: alinear fecha/replay en OpenAPI y SDK de deuda, y resolver el gate
+  previo al replay en pagos móviles de préstamos. G5 y cierre global siguen abiertos.
+- Sin commit ni push.
+
+
+### Corte histórico — 2026-10-08: préstamos móviles y contrato pagos cash (supersedido)
+
+- Replay móvil de préstamo resuelto antes del gate de período, con reread tras
+  rechazo; helper y writer comparten lock de tenant y controles de permisos.
+  ID de ruta autoritativo. Fecha explícita participa en hash, conciliación y FX.
+- Ambos pagos cash exigen fecha ISO válida; timestamps requieren Z/offset.
+  Claves normalizadas de 1–64 caracteres verificadas en rutas y servicio.
+- OpenAPI/documentación y 20 archivos SDK de pagos regenerados para ambos
+  canales: fechaOperacion, idempotencyKey y header Idempotency-Key.
+- Verificación directa final: **56/56 unitarios** (rutas/servicio/contrato/hardening),
+  **4/4** regresiones SDK focales y **29/29 PostgreSQL** (préstamos HTTP, deudas
+  HTTP y deuda legacy). Revisión fresca sin bloqueadores focales.
+- Typecheck aplicación y **typecheck:tests PASS** en snapshot actual. Existen
+  reparaciones concurrentes ajenas; no se atribuye todo el cambio a este slice.
+- Corte anterior a la regeneración completa: se observaban cuatro expectativas de 110
+  operaciones frente a 125 y artefactos ajenos obsoletos; `git diff --check` registró
+  espacios finales en documentación Dart/Swift. La ausencia SDK de 15 operaciones queda
+  supersedida por la verificación posterior (125 únicas, 46/46, 3/3); no usar este corte
+  como estado actual. La nota de whitespace es histórica y no se revalidó en esta pasada.
+- G5 global, R0.5-ACCEPT, R6 global/baseline, R7 operacional y snapshots históricos
+  siguen abiertos. Sin commit ni push.
+
+
+### Hallazgo histórico SDK — 2026-10-09 (estado pre-regeneración, supersedido)
+
+En este corte previo se observaban 110 operaciones SDK frente a 125 en OpenAPI,
+incluidas 15 operaciones Admin faltantes. La afirmación se conserva como historia
+de la brecha, no como estado actual: la regeneración y verificación posteriores
+registradas abajo alinean los cuatro SDK con 125 operaciones únicas (46/46 paridad,
+3/3 smoke y generación determinista). No se afirma compilación completa de todos los
+lenguajes ni cierre de aceptación global.
+
+Siguiente evidencia R6: creación de préstamo cash con AuditLog real. La suite
+existente mockea logStrict y su rollback bloquea asientos; no acredita falla física
+del INSERT de AuditLog para ese writer. Nueva prueba física en preparación.
+
+
+### R6-ROLLBACK focal — 2026-10-09: creación préstamo cash / AuditLog real
+
+- Nueva suite `cash-loan-create-audit-rollback-real.test.ts`: **2/2 PostgreSQL**
+  verificados directamente. Sin mock de AuditLogService. Happy path acredita
+  banco, préstamo, CxC, conciliación, asiento con líneas y AuditLog durable.
+- Trigger físico de AuditLog filtrado por actor único y entidad PRESTAMO_CASH;
+  se exige el mensaje exacto del error. Falla de creación con clave única.
+- Después de una creación exitosa preexistente, se compara snapshot completo
+  normalizado de banco, préstamos, CxC, conciliaciones, asientos/líneas y auditoría
+  antes/después del fallo; también se conservan conteos/saldo. Revisión fresca
+  confirma rollback real del estado original, no falso positivo anterior al INSERT.
+- `typecheck:tests` PASS. Evidencia focal solo para creación de préstamo con clave;
+  vínculo de conciliación en creación sin clave se investiga por separado.
+- No cierra R6 global ni los gates operacionales; sin commit/push.
+
+
+### Corrección trazabilidad cash — 2026-10-09
+
+- Creaciones de préstamos/deudas, canónicas y legacy, vinculan ahora siempre
+  la conciliación del desembolso al ID de la entidad creada, con o sin clave,
+  dentro de la misma transacción. Historial de pagos conserva filtros de tipo.
+- RED confirmado: creación sin clave no efectuaba actualización FK. GREEN:
+  **22/22 unitarios**, **35/35 PostgreSQL** en cuatro suites (HTTP préstamos/deudas,
+  deuda legacy y rollback AuditLog de creación préstamo). `typecheck:tests` PASS.
+- Se corrigieron dos contratos legacy que esperaban FK null; las aserciones
+  de FX y asientos permanecen. Revisión fresca no halló explotación tenant ni
+  regresión: el ID actualizado proviene de una fila tenant-scoped recién creada
+  en la misma transacción; no es una referencia de reconciliación del usuario.
+- Verificación focal, no cierre global; pendientes SDK global y gates previos
+  siguen abiertos. Sin commit/push.
+
+
+### R6-ROLLBACK cash físico — 2026-10-09
+
+- Nueva suite `cash-writers-audit-rollback-real.test.ts`: **6/6 PostgreSQL**
+  para loan payment/debt create/debt payment canónicos y sus tres handlers legacy.
+  AuditLogService, Prisma y posting reales; solo autenticación estabilizada en test.
+- Happy path acredita AuditLog durable y asiento con líneas. Trigger real de
+  AuditLog filtra actor/entidad únicos y error exacto; snapshots completos incluyen
+  banco, préstamo/deuda, CxC/CxP, conciliación, asientos/líneas, período/cache y auditoría.
+- Verificación directa combinada con préstamo create: **8/8 PostgreSQL**; revisión
+  fresca sin bloqueadores. Se corrigió typing del mock y restauración env en finally.
+- No afirmar R6 global: faltan dimensiones/writers ajenos al alcance probado.
+
+Pendientes G5 concretos identificados (no solo etiqueta global): los cuatro POST
+legacy cash de alta/pago ignoran claves porque sus schemas no las incluyen y
+escriben directamente; los dos POST móviles de altas validan período antes de
+replay y carecen de prueba HTTP de conflicto. La UI actual usa Server Actions,
+pero los endpoints legacy permanecen activos. Siguiente corrección por adaptadores.
+Sin commit/push; no cierre 31/31.
+
+
+### G5 focal — 2026-10-09: cuatro adaptadores HTTP legacy cash (corte previo)
+
+- POST alta/pago de préstamos y deudas ahora aceptan claves body/header de
+  1–64 caracteres; body tiene precedencia e ID de ruta permanece autoritativo.
+  Replay bajo lock tenant antes del gate de período; nuevas escrituras con
+  clave delegan al servicio canónico. Sin clave se conserva la rama compatible.
+- Helpers de altas comparten fingerprint completo, controles de acceso, lock y
+  búsqueda tenant-scoped de entidad vinculada. La misma fecha interna capturada
+  se valida y persiste; no se incluye el reloj generado en la huella idempotente.
+- Verificación directa: **77/77 unitarios**, **38/38 PostgreSQL** (legacy préstamo,
+  deuda y rollback AuditLog). Header-only, replay de alta/pago parcial/final,
+  conflicto y no duplicación; precedencia body/header en pruebas de adaptador.
+  Revisión fresca final sin bloqueadores. Typecheck aplicación PASS; se reparó
+  un diagnóstico TS7031 nuevo en el test y typecheck:tests PASS.
+- Replay histórico de pago mantiene permisos/tenant/clave/ID aunque la entidad
+  se haya eliminado lógicamente; no se trata como una mutación nueva.
+- **Corte previo, supersedido por la reconciliación final:** el pendiente G5 siguiente
+  era que los dos POST móviles de altas gateaban
+  período antes de replay y usan aliases de fecha que el writer no persiste.
+  Deben validar la fecha real de posteo; añadir replay/conflicto HTTP post-cierre.
+- Diff focal limpio en ese corte; el diff global tenía whitespace SDK generado (estado
+  supersedido por regeneración/check final). Sin commit
+  ni push; no certifica G5 global ni 31/31.
+
+
+### Reapertura histórica R0.5 — retry de solicitud POS (2026-10-09, supersedida para web)
+
+- [ ] Terminar la cobertura de idempotencia por cada adaptador de venta. En este corte
+  histórico el caller nativo seguía sin verificar; la actualización posterior de
+  2026-10-09 verificó `mobile/src/SalesSurface.tsx` focalmente. Quedan callers/adaptadores
+  no verificados; no confundir esa cobertura incompleta con un gap vigente de clave nativa.
+- [ ] Distinguir el contrato de `VentaMutationService.create` de los otros
+  callers de `applyFacturacionCobroWorkflow` (lifecycle, ofertas y reparaciones);
+  no extender resultados de replay de un caller a los demás sin evidencia propia.
+- La unicidad de origen/evento formal sigue siendo necesaria, pero es distinta del
+  receipt de request. Los checks idem/retry se consideran PASS en callers web probados;
+  el caller nativo específico tiene verificación focal posterior. No hay evidencia de
+  retención tras recarga ni de rotación exitosa del test de moneda.
+  No se atribuye un incidente de producción ni se habilita replay global.
+- No modificar ni cerrar los gates globales: aceptación `31 × 8`, R6 global,
+  R6-BASELINE por entorno, ventana R7 real y snapshots históricos permanecen abiertos.
+
+
+### R6 focal — revisión independiente de cinco suites (2026-10-09)
+
+- Evidencia confirmada independientemente: **57/57 PostgreSQL** en cinco suites y
+  `typecheck:tests` PASS; revisión sin bloqueadores en ese scope.
+- El failpoint de AuditLog de venta es `PRICE_OVERRIDE` y precede efectos FIFO.
+  El failpoint separado de asiento formal acredita rollback después de FIFO/COGS;
+  no presentarlos como el mismo punto de fallo. Cuatro pruebas restantes sí tienen
+  failpoint físico de AuditLog para sus writers.
+- Evidencia focal no certifica R6 global, baseline, R7, snapshots ni aceptación global.
+
+### Corte de reconciliación previo — 2026-10-09 (actualizado por secciones posteriores)
+
+Esta actualización prevalece sobre los pendientes focales incompatibles de los cortes
+anteriores; no modifica la historia ni cierra los gates globales.
+
+- **Venta POS — receipt y callers web:** sobre una BD desechable limpia se aplicaron
+  las 145 migraciones completas y la suite física del receipt pasó 5/5; el esquema
+  conserva unicidad tenant/clave y venta, snapshot nullable y FKs Cascade/SetNull.
+  Las cinco superficies web verificadas mantienen clave estable; body/header y 409
+  se ejercitan en seis suites (26/26), con regresiones enhanced/pedido 4/4. El test
+  de moneda cubre cancelar/reintentar con la misma clave, no rotación exitosa; tampoco
+  se verificó retención tras recarga completa. **La afirmación de este corte** de que
+  `mobile/src/SalesSurface.tsx` seguía sin clave quedó supersedida por la actualización
+  focal nativa posterior de 2026-10-09 (505 PASS/4 omitidos, typecheck y writer focal
+  registrados más abajo). Persisten los límites de cobertura de otros adaptadores y
+  R0.5-ACCEPT.
+- **SDK/OpenAPI:** la regeneración completa alinea los cuatro SDKs con las 125
+  operaciones únicas del contrato, incluyendo las 15 operaciones Admin que faltaban;
+  el checker compara el conjunto exacto de nombres y no oculta duplicados con `Set`.
+  `pnpm run openapi:check` terminó exit 0 en una verificación independiente: lint,
+  46/46 paridad, 3/3 smoke y generación determinista del árbol completo. Se preservó
+  `pnpm-lock.yaml`; Dart/Gradle/kotlinc no están disponibles, así que no se afirma
+  compilación de esos SDK. El scope generado fue 1.293 archivos tracked y 281 nuevos.
+- **Cash G5:** el pendiente anterior sobre replay/fecha de los dos POST móviles de
+  altas queda supersedido: creación y pagos cash resuelven replay antes del gate de
+  período, usan la fecha real confiable y reconsultan tras denegación. Esto no prueba
+  todos los adapters ni cambia que G5 global siga abierto.
+- **Cobertura adicional del receipt:** el test mejorado incluye un único caso de
+  cancelación de moneda con reintento, no éxito seguido de nueva intención. No se
+  declara bug ni requisito de persistir claves tras desmontaje/recarga: ambos puntos
+  permanecen fuera de la evidencia/contrato confirmado.
+- **Auditoría física:** cinco suites focales suman 57/57 PostgreSQL. No existe un
+  failpoint físico de AuditLog tardío en venta: `PRICE_OVERRIDE` ocurre antes de FIFO;
+  el fallo SQL de asiento COGS posterior a FIFO es evidencia distinta. No exigir una
+  auditoría tardía no implementada ni inventar un defecto; R6 global permanece abierto.
+
+R0.5-ACCEPT, R6-ROLLBACK global, R6-BASELINE por entorno, G5 global, R7 de siete días
+y comparabilidad histórica de snapshots no está certificada. A10 sí tiene verificación
+focal de captura actual (detallada en la reconciliación al final). No se afirma despliegue
+productivo, compilación completa de SDK, ni activación de `shadow`, `enforce` o replay.
+
+### Estado operativo A9 — 2026-10-11
+
+Ante la alternativa del usuario de descartar o dejar pendiente Shadow, se adopta la opción
+conservadora de conservar A9 **pendiente**, no descartado. La ventana operativa real de
+siete días no ha comenzado; las tandas/tests históricos no la sustituyen. El Preview
+aislado terminó en estado terminal `ERROR/ENOENT`
+antes de completar las validaciones planificadas y no aporta resultados verificables de
+build/tests. No se concede waiver del requisito de siete días ni del gate de release. El
+scope de despliegue cloud queda suspendido: no se harán nuevos intentos ni se apagarán los
+recursos Railway existentes sin autorización específica. Este estado no cambia el alcance
+ni la evidencia de los cierres focales, y no certifica 31/31, G5 global, R7 ni aceptación
+global; no habilita `shadow`, `enforce` ni replay.
+
+### Actualización focal — caller nativo de creación POS verificado — 2026-10-09
+
+La nota anterior que dejaba `mobile/src/SalesSurface.tsx` pendiente queda supersedida
+para este caller. El adaptador nativo ahora conserva una clave estable por intención
+pendiente y la reenvía en `Idempotency-Key`; el body de venta no cambia. La protección
+sincrónica contra doble tap comparte la intención, errores/409 y cambios de payload
+mantienen la clave para reintentar de forma fail-closed, y un éxito la limpia antes de
+refrescar la lista. La clave usa forma UUID de 36 caracteres generada con `Math.random`;
+es un identificador opaco, no un secreto ni una fuente criptográficamente segura.
+
+Verificación: **505 tests PASS, 4 skipped en 109 archivos** en la corrida nativa root;
+typecheck nativo PASS (sesión 14695, salida 0); cobertura focal del writer **14/14**
+en cuatro archivos; revisión fresca sin bloqueos. Dos pruebas RTL cubren el render del
+reintento y el doble tap. No hubo E2E en dispositivo (4 pruebas E2E omitidas). La clave
+vive en memoria del componente montado; no se establece persistencia tras desmontaje,
+navegación o recarga como requisito ni evidencia.
+
+Esto completa el gap del caller nativo específico, no la aceptación de todos los canales
+ni R0.5-ACCEPT/G5 global: siguen pendientes la cobertura de callers no verificados, las
+ocho dimensiones por writer/adaptador y los gates globales R6, baseline, R7 y snapshots.
+
+### Validación focal A6 — devengo directo de venta de servicio — 2026-10-11
+
+- [x] **Prueba focal PostgreSQL verificada (2/2):** `src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts`, contra `tcp_test_local` desechable (rol `arturo`, puerto 5433). El positivo persistió venta, CxC y asiento; el caso negativo alcanzó un `INSERT` real mediante trigger `BEFORE INSERT` en `asientos`, obtuvo exactamente `asiento bloqueado` / SQLSTATE `22012` y dejó iguales los snapshots completos de ventas, CxC y asientos.
+- [x] `pnpm run typecheck:tests` y `git diff --check` focal: PASS. Evidencia guardada en Engram obs. 5182.
+- **Alcance:** cierra solo esta verificación focal A6. No representa R6 global, no constituye mapeo físico de 31 callsites ni prueba universal; ese mapeo y sus failpoints siguen pendientes. No se demostró un bug global ni se habilitan `shadow`, `enforce` o replay.

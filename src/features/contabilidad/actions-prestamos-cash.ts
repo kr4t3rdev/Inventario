@@ -9,11 +9,11 @@ import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
-import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service'
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service'
+import { runCashActionWithReplay } from '@/features/contabilidad/services/cash-action-replay';
 
 function prestamosCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false' }
 
@@ -85,20 +85,29 @@ export const getPrestamoCashHistorialAction = withAction(async (id: string, user
   return AccountingCashOperationsService.getCashLoanHistory({ tenantId, id })
 })
 
-export const createPrestamoCashAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el desembolso
-  () => new Date(),
+/**
+ * @description Crea o reproduce un préstamo; valida período solo para escrituras nuevas.
+ * @param {z.infer<typeof createSchema>} input - Datos y clave de la intención de alta.
+ * @param {AuthenticatedUser} user - Actor autenticado del tenant.
+ * @returns {Promise<unknown>} Préstamo confirmado.
+ */
+export const createPrestamoCashAction = withAction(
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
     const body = createSchema.parse(input)
-    const prestamo = await AccountingCashOperationsMutationService.createCashLoan({
-      input: body,
+    const prestamo = await runCashActionWithReplay({
       user,
+      findReplay: () => AccountingCashOperationsMutationService.findCashLoanCreateReplay({
+        input: body, user,
+      }),
+      write: (operationDate) => AccountingCashOperationsMutationService.createCashLoan({
+        input: body, user, operationDate,
+      }),
     })
     revalidatePath('/busy/contabilidad/prestamos-cash')
     return prestamo
   }
-));
+);
 
 export const updatePrestamoCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
@@ -115,9 +124,13 @@ export const updatePrestamoCashAction = withAction(async (
   return prestamo
 })
 
-export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el pago
-  () => new Date(),
+/**
+ * @description Registra o reproduce un pago de préstamo sin duplicar sus efectos.
+ * @param {z.infer<typeof pagoSchema>} input - Pago y clave de intención.
+ * @param {AuthenticatedUser} user - Actor autenticado del tenant.
+ * @returns {Promise<unknown>} Reconciliación confirmada.
+ */
+export const registrarPagoPrestamoAction = withAction(
   async (
     input: { id: string } & z.infer<typeof pagoSchema>,
     user: AuthenticatedUser
@@ -126,14 +139,20 @@ export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
     const {
     id, ...body
     } = pagoSchema.parse(input)
-    const resultado = await AccountingCashOperationsMutationService.registerCashLoanPayment({
-      input: { id, ...body },
+    const payment = { id, ...body };
+    const resultado = await runCashActionWithReplay({
       user,
+      findReplay: () => AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+        input: payment, user,
+      }),
+      write: (operationDate) => AccountingCashOperationsMutationService.registerCashLoanPayment({
+        input: payment, user, operationDate,
+      }),
     })
     revalidatePath('/busy/contabilidad/prestamos-cash')
     return { reconciliacion: resultado }
   }
-));
+);
 
 export const getPrestamosCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'prestamos-cash', 'ver estadísticas de préstamos cash');

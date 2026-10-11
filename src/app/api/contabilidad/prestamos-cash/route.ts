@@ -15,6 +15,7 @@ import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/servi
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoPrestamoOtorgado } from '@/features/contabilidad-formal/lib/event-builders';
 import { auditarCreditoOverride, validarCreditoOrigen } from '@/features/ventas/services/credito-override';
+import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -34,8 +35,20 @@ const createSchema = z.object({
   observaciones: z.string().optional(),
   solicitarCreditoOverride: z.boolean().optional(),
   motivoCreditoOverride: z.string().trim().max(500).optional(),
-  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
+  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
+
+/** @description Resuelve la clave del cuerpo antes que la cabecera y aplica sus límites. */
+function resolveIdempotencyKey(bodyKey: string | undefined, headerKey: string | null): string | undefined {
+  if (bodyKey !== undefined) return bodyKey;
+  if (headerKey === null) return undefined;
+  const key = headerKey.trim();
+  if (!key || key.length > 64) {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR');
+  }
+  return key;
+}
 
 /**
  * @description Verifica si el módulo de préstamos cash está habilitado
@@ -146,6 +159,46 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     requirePermission(user, 'financiero.contabilidad.acceder', 'crear préstamos cash');
 
     const body = createSchema.parse(await request.json())
+    const idempotencyKey = resolveIdempotencyKey(
+      body.idempotencyKey,
+      request.headers.get('idempotency-key'),
+    );
+
+    if (idempotencyKey) {
+      const input = { ...body, idempotencyKey };
+      const replay = await AccountingCashOperationsMutationService.findCashLoanCreateReplay({
+        input,
+        user,
+      });
+      if (replay) return NextResponse.json({ prestamo: replay }, { status: 201 });
+
+      // The canonical create writer persists the operation at server time; due date
+      // is not the posting date and must not let a closed current period be bypassed.
+      const operationDate = new Date();
+      const validacionPeriodo = await validarEscrituraPeriodo({
+        fecha: operationDate,
+        tenantId,
+        tipoOperacion: 'prestamo_cash',
+        actor: user.userId,
+      });
+      if (!validacionPeriodo.permitido) {
+        const replayAfterGate = await AccountingCashOperationsMutationService.findCashLoanCreateReplay({
+          input,
+          user,
+        });
+        if (replayAfterGate) return NextResponse.json({ prestamo: replayAfterGate }, { status: 201 });
+        return NextResponse.json(
+          { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+          { status: 400 },
+        );
+      }
+      const prestamo = await AccountingCashOperationsMutationService.createCashLoan({
+        input,
+        user,
+        operationDate,
+      });
+      return NextResponse.json({ prestamo }, { status: 201 });
+    }
 
     // Validar período contable antes de crear el préstamo
     const fechaOperacion = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date()
@@ -294,6 +347,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           cuentaPorCobrar: true
         }
       });
+      await tx.reconciliacionVenta.update({
+        where: { reconciliacionId: reconciliacion.reconciliacionId },
+        data: { prestamoCashId: creado.id },
+      });
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
         prestamoId: creado.id,
         valoracion: {
@@ -327,7 +384,13 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     return NextResponse.json({ prestamo }, { status: 201 })
   } catch (error) {
     if (error instanceof ActionError) {
-      const status = error.code === 'FORBIDDEN' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400;
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' || error.code === 'TENANT_REQUIRED'
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : error.code === 'IDEMPOTENCY_CONFLICT'
+            ? 409
+            : 400;
       return NextResponse.json({ error: error.message, code: error.code }, { status });
     }
     if (error instanceof z.ZodError) {

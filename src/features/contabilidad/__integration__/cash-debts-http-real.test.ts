@@ -16,6 +16,7 @@ import {
 } from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { POST as MOBILE_POST_CREAR } from '@/app/api/mobile/v1/accounting/cash-debts/route';
 import { POST as MOBILE_POST_PAGO } from '@/app/api/mobile/v1/accounting/cash-debts/[id]/payments/route';
+import { POST as LEGACY_POST_CREAR } from '@/app/api/contabilidad/deudas-cash/route';
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '@/lib/secrets';
@@ -160,6 +161,7 @@ describe('canal móvil cash-debts — sesión Bearer real y numeración', { time
     const rec = await prisma.reconciliacionVenta.findFirstOrThrow({ where: {
       tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', reconciliadoPor: userId,
     } });
+    expect(rec.deudaCashId).toBe(deudaId);
     expect(rec.monto.toString()).toBe('100');
     expect(rec.fxEvidenceFingerprint).toBeTruthy();
     const deuda = await prisma.deudaCash.findUniqueOrThrow({ where: { id: deudaId } });
@@ -209,7 +211,7 @@ describe('canal móvil cash-debts — sesión Bearer real y numeración', { time
     expect(response.status, await response.clone().text()).toBe(200);
     const data = await response.json();
     const rec = await prisma.reconciliacionVenta.findFirstOrThrow({ where: {
-      tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', deudaCashId: null,
+      tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', deudaCashId: data.id,
       monto: 100, moneda: 'USD',
     } });
     expect(Number(rec.montoConvertido)).toBe(2400);
@@ -219,6 +221,43 @@ describe('canal móvil cash-debts — sesión Bearer real y numeración', { time
     expect(await prisma.asiento.count({ where: {
       tenantId, origenTipo: 'deuda_cash', origenId: data.id,
     } })).toBe(1);
+  });
+
+  it('vincula el desembolso idempotente y lo excluye del historial de pagos', async () => {
+    const payload = {
+      proveedorId, montoCapital: 51, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId,
+      idempotencyKey: `debt-create-${Date.now()}`,
+    };
+    const create = () => MOBILE_POST_CREAR(requestMovil(
+      'http://localhost/api/mobile/v1/accounting/cash-debts', payload,
+    ));
+    const first = await create();
+    expect(first.status, await first.clone().text()).toBe(200);
+    const debt = await first.json();
+    const retry = await create();
+    expect(retry.status, await retry.clone().text()).toBe(200);
+    expect((await retry.json()).id).toBe(debt.id);
+
+    const disbursement = await prisma.reconciliacionVenta.findFirstOrThrow({ where: {
+      tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', deudaCashId: debt.id,
+    } });
+    expect(disbursement.idempotencyKey).toBe(payload.idempotencyKey);
+    expect(await prisma.reconciliacionVenta.findMany({ where: {
+      tenantId, deudaCashId: debt.id, tipoReconciliacion: 'DEUDA_CASH',
+    } })).toEqual([]);
+  });
+
+  it('vincula el desembolso de deuda creado por la ruta legacy', async () => {
+    const response = await LEGACY_POST_CREAR(requestMovil(
+      'http://localhost/api/contabilidad/deudas-cash',
+      { proveedorId, montoCapital: 25, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId },
+    ), {});
+    expect(response.status, await response.clone().text()).toBe(201);
+    const { deuda } = await response.json();
+    const reconciliation = await prisma.reconciliacionVenta.findFirstOrThrow({ where: {
+      tenantId, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO', deudaCashId: deuda.id,
+    } });
+    expect(reconciliation.deudaCashId).toBe(deuda.id);
   });
 
   it('convierte pago USD a deuda CUP y debita CUP funcional en el canal móvil', async () => {
@@ -320,5 +359,124 @@ describe('canal móvil cash-debts — sesión Bearer real y numeración', { time
     expect(await prisma.reconciliacionVenta.count({
       where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: nuevaId },
     })).toBe(recsAntes + 1);
+  });
+
+  it('reproduce el mismo pago tras cierre y bloquea payload o clave nuevos', async () => {
+    const crear = await MOBILE_POST_CREAR(requestMovil(
+      'http://localhost/api/mobile/v1/accounting/cash-debts',
+      { proveedorId, montoCapital: 100, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId },
+    ));
+    expect(crear.status, await crear.clone().text()).toBe(200);
+    const nuevaId = (await crear.json()).id as string;
+    const url = `http://localhost/api/mobile/v1/accounting/cash-debts/${nuevaId}/payments`;
+    const payload = {
+      monto: 25, cuentaId: cuentaPagoId, tipoPagoId, moneda: 'CUP', idempotencyKey: 'close-replay-key',
+      fechaPago: '2026-10-03T12:00:00.000Z',
+    };
+    const primera = await MOBILE_POST_PAGO(requestMovil(url, payload), {
+      params: Promise.resolve({ id: nuevaId }),
+    });
+    expect(primera.status, await primera.clone().text()).toBe(200);
+    const primeraData = await primera.json();
+    const persistedPayment = await prisma.reconciliacionVenta.findUniqueOrThrow({
+      where: { reconciliacionId: primeraData.reconciliacionId },
+    });
+    expect(persistedPayment.fechaReconciliacion.toISOString()).toBe('2026-10-03T12:00:00.000Z');
+    const saldoTrasPago = (await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaPagoId },
+    })).saldo.toString();
+    const pagoCount = await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: nuevaId },
+    });
+    const asientoCount = await prisma.asiento.count({
+      where: { tenantId, origenTipo: 'reconciliacion_venta', origenId: primeraData.reconciliacionId },
+    });
+    await prisma.periodoContable.updateMany({
+      where: { tenantId, estado: 'ABIERTO' }, data: { estado: 'CERRADO' },
+    });
+
+    const retry = await MOBILE_POST_PAGO(requestMovil(url, payload), {
+      params: Promise.resolve({ id: nuevaId }),
+    });
+    expect(retry.status, await retry.clone().text()).toBe(200);
+    expect((await retry.json()).reconciliacionId).toBe(primeraData.reconciliacionId);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: nuevaId },
+    })).toBe(pagoCount);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuentaPagoId },
+    })).saldo.toString()).toBe(saldoTrasPago);
+    expect(await prisma.asiento.count({
+      where: { tenantId, origenTipo: 'reconciliacion_venta', origenId: primeraData.reconciliacionId },
+    })).toBe(asientoCount);
+
+    const changed = await MOBILE_POST_PAGO(requestMovil(url, { ...payload, monto: 26 }), {
+      params: Promise.resolve({ id: nuevaId }),
+    });
+    expect(changed.status).toBe(409);
+    const newKey = await MOBILE_POST_PAGO(requestMovil(url, {
+      ...payload, monto: 10, idempotencyKey: 'different-key',
+    }), { params: Promise.resolve({ id: nuevaId }) });
+    expect(newKey.status).toBe(400);
+    expect(await prisma.reconciliacionVenta.count({
+      where: { tenantId, tipoReconciliacion: 'DEUDA_CASH', deudaCashId: nuevaId },
+    })).toBe(pagoCount);
+  });
+
+  it('reproduce creación cash tras cierre, pero no permite nueva creación usando fecha cliente antigua', async () => {
+    await prisma.periodoContable.updateMany({
+      where: { tenantId }, data: { estado: 'ABIERTO' },
+    });
+    const payload = {
+      proveedorId, montoCapital: 11, moneda: 'CUP', cuentaBancariaId: cuentaOrigenId,
+      idempotencyKey: `debt-create-close-${Date.now()}`,
+    };
+    const create = (body: Record<string, unknown>) => MOBILE_POST_CREAR(requestMovil(
+      'http://localhost/api/mobile/v1/accounting/cash-debts', body,
+    ));
+    const created = await create(payload);
+    expect(created.status, await created.clone().text()).toBe(200);
+    const original = await created.json();
+    const debt = await prisma.deudaCash.findUniqueOrThrow({ where: { id: original.id } });
+    const snapshot = async () => {
+      const [bank, receivables, payables, debtRows, reconciliations, entries, audits] = await Promise.all([
+        prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaOrigenId } }),
+        prisma.cuentaPorCobrar.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+        prisma.cuentaPorPagar.findMany({ where: { tenantId }, orderBy: { cuentaPorPagarId: 'asc' } }),
+        prisma.deudaCash.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+        prisma.reconciliacionVenta.findMany({ where: { tenantId }, orderBy: { reconciliacionId: 'asc' } }),
+        prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' } }),
+        prisma.auditLog.findMany({ where: { usuarioId: userId }, orderBy: { id: 'asc' } }),
+      ]);
+      const sourceEntry = entries.find((entry) =>
+        entry.origenTipo === 'deuda_cash' && entry.origenId === debt.id,
+      );
+      const lines = sourceEntry
+        ? await prisma.asientoLinea.findMany({
+            where: { asientoId: sourceEntry.asientoId },
+            orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }],
+          })
+        : [];
+      return { bank, receivables, payables, debtRows, reconciliations, entries, lines, audits };
+    };
+    const beforeCloseReplay = await snapshot();
+    await prisma.periodoContable.updateMany({
+      where: { tenantId, estado: 'ABIERTO' }, data: { estado: 'CERRADO' },
+    });
+
+    const replay = await create({ ...payload, createdAt: '2026-10-01T00:00:00.000Z' });
+    expect(replay.status, await replay.clone().text()).toBe(200);
+    expect(await replay.json()).toMatchObject(original);
+    expect(await snapshot()).toEqual(beforeCloseReplay);
+
+    const changed = await create({ ...payload, montoCapital: 12 });
+    expect(changed.status).toBe(409);
+    expect(await snapshot()).toEqual(beforeCloseReplay);
+
+    const newKey = await create({ ...payload, idempotencyKey: `${payload.idempotencyKey}-new`,
+      fechaOperacion: '2026-10-01T00:00:00.000Z' });
+    expect(newKey.status).toBe(400);
+    expect((await newKey.json()).code).toBe('PERIODO_CERRADO');
+    expect(await snapshot()).toEqual(beforeCloseReplay);
   });
 });

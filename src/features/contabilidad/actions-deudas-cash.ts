@@ -9,13 +9,13 @@ import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
-import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset'
 import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service'
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service'
+import { runCashActionWithReplay } from '@/features/contabilidad/services/cash-action-replay';
 
 function deudasCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false' }
 
@@ -81,16 +81,25 @@ export const getDeudaCashByIdAction = withAction(async (id: string, user: Authen
   return AccountingCashOperationsService.getCashDebtById({ tenantId, id })
 })
 
-export const createDeudaCashAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el desembolso
-  () => new Date(),
+/**
+ * @description Crea o reproduce una deuda; valida período solo para escrituras nuevas.
+ * @param {z.infer<typeof createSchema>} input - Datos y clave de la intención de alta.
+ * @param {AuthenticatedUser} user - Actor autenticado del tenant.
+ * @returns {Promise<unknown>} Deuda confirmada.
+ */
+export const createDeudaCashAction = withAction(
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'deudas-cash', 'crear deudas cash');
     const body = createSchema.parse(input)
     const tenantId = requireTenant(user)
-    const deuda = await AccountingCashOperationsMutationService.createCashDebt({
-      input: body,
+    const deuda = await runCashActionWithReplay({
       user,
+      findReplay: () => AccountingCashOperationsMutationService.findCashDebtCreateReplay({
+        input: body, user,
+      }),
+      write: (operationDate) => AccountingCashOperationsMutationService.createCashDebt({
+        input: body, user, operationDate,
+      }),
     })
     if (body.comprobanteAsset) {
       await recordOwnerAsset({
@@ -104,7 +113,7 @@ export const createDeudaCashAction = withAction(withPeriodValidation(
     revalidatePath('/busy/contabilidad/deudas-cash')
     return deuda
   }
-));
+);
 
 export const updateDeudaCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
@@ -121,9 +130,13 @@ export const updateDeudaCashAction = withAction(async (
   return deuda
 })
 
-export const registrarPagoDeudaAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el pago
-  () => new Date(),
+/**
+ * @description Registra o reproduce un pago de deuda sin duplicar sus efectos.
+ * @param {z.infer<typeof pagoSchema>} input - Pago y clave de intención.
+ * @param {AuthenticatedUser} user - Actor autenticado del tenant.
+ * @returns {Promise<unknown>} Reconciliación confirmada.
+ */
+export const registrarPagoDeudaAction = withAction(
   async (
     input: { id: string } & z.infer<typeof pagoSchema>,
     user: AuthenticatedUser
@@ -132,14 +145,20 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
     const {
     id, ...body
     } = pagoSchema.parse(input)
-    const resultado = await AccountingCashOperationsMutationService.registerCashDebtPayment({
-      input: { id, ...body },
+    const payment = { id, ...body };
+    const resultado = await runCashActionWithReplay({
       user,
+      findReplay: () => AccountingCashOperationsMutationService.findCashDebtPaymentReplay({
+        input: payment, user,
+      }),
+      write: (operationDate) => AccountingCashOperationsMutationService.registerCashDebtPayment({
+        input: payment, user, operationDate,
+      }),
     })
     revalidatePath('/busy/contabilidad/deudas-cash')
     return { reconciliacion: resultado }
   }
-));
+);
 
 export const getDeudasCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'deudas-cash', 'ver estadísticas de deudas cash');
