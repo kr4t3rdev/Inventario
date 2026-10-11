@@ -147,7 +147,15 @@ Class | Method | HTTP request | Description
 *ClientsAPI* | [**mobileGetClientsById**](docs/ClientsAPI.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente
 *ClientsAPI* | [**mobilePostClientsCreate**](docs/ClientsAPI.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente
 *ClientsAPI* | [**mobilePutClientsById**](docs/ClientsAPI.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente
+*DashboardAPI* | [**mobileGetDashboardDailyAverage**](docs/DashboardAPI.md#mobilegetdashboarddailyaverage) | **GET** /dashboard/daily-average | Consultar promedio diario de ingresos
+*DashboardAPI* | [**mobileGetDashboardIncomeExpenses**](docs/DashboardAPI.md#mobilegetdashboardincomeexpenses) | **GET** /dashboard/income-expenses | Consultar ingresos vs gastos del panel
+*DashboardAPI* | [**mobileGetDashboardInventoryValue**](docs/DashboardAPI.md#mobilegetdashboardinventoryvalue) | **GET** /dashboard/inventory-value | Consultar valor total del inventario
+*DashboardAPI* | [**mobileGetDashboardLowStock**](docs/DashboardAPI.md#mobilegetdashboardlowstock) | **GET** /dashboard/low-stock | Consultar productos con stock bajo
 *DashboardAPI* | [**mobileGetDashboardStats**](docs/DashboardAPI.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal
+*DashboardAPI* | [**mobileGetDashboardStockDistribution**](docs/DashboardAPI.md#mobilegetdashboardstockdistribution) | **GET** /dashboard/stock-distribution | Consultar distribución de stock
+*DashboardAPI* | [**mobileGetDashboardTodaySales**](docs/DashboardAPI.md#mobilegetdashboardtodaysales) | **GET** /dashboard/today-sales | Consultar ventas de hoy
+*DashboardAPI* | [**mobileGetDashboardTopProducts**](docs/DashboardAPI.md#mobilegetdashboardtopproducts) | **GET** /dashboard/top-products | Consultar productos más vendidos
+*DashboardAPI* | [**mobileGetDashboardTransfers**](docs/DashboardAPI.md#mobilegetdashboardtransfers) | **GET** /dashboard/transfers | Consultar transferencias entre ubicaciones
 *ProductsAPI* | [**mobileGetProducts**](docs/ProductsAPI.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsAPI* | [**mobileGetProductsById**](docs/ProductsAPI.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsAPI* | [**mobileGetProductsStock**](docs/ProductsAPI.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
@@ -252,6 +260,26 @@ Class | Method | HTTP request | Description
  - [ClienteListResponse](docs/ClienteListResponse.md)
  - [ClienteUpdateRequest](docs/ClienteUpdateRequest.md)
  - [Currency](docs/Currency.md)
+ - [DashboardDatosPorMes](docs/DashboardDatosPorMes.md)
+ - [DashboardDatosPorSemana](docs/DashboardDatosPorSemana.md)
+ - [DashboardDistribucionStockItem](docs/DashboardDistribucionStockItem.md)
+ - [DashboardIncomeExpensePoint](docs/DashboardIncomeExpensePoint.md)
+ - [DashboardIncomeExpenseResponse](docs/DashboardIncomeExpenseResponse.md)
+ - [DashboardLowStockItem](docs/DashboardLowStockItem.md)
+ - [DashboardLowStockResponse](docs/DashboardLowStockResponse.md)
+ - [DashboardProductoMasVendido](docs/DashboardProductoMasVendido.md)
+ - [DashboardProductoStockBajo](docs/DashboardProductoStockBajo.md)
+ - [DashboardProductoStockBajoCategoria](docs/DashboardProductoStockBajoCategoria.md)
+ - [DashboardProductoStockBajoUnidad](docs/DashboardProductoStockBajoUnidad.md)
+ - [DashboardStockDistributionResponse](docs/DashboardStockDistributionResponse.md)
+ - [DashboardStockSlice](docs/DashboardStockSlice.md)
+ - [DashboardTopProduct](docs/DashboardTopProduct.md)
+ - [DashboardTopProductsResponse](docs/DashboardTopProductsResponse.md)
+ - [DashboardTransferItem](docs/DashboardTransferItem.md)
+ - [DashboardTransferenciasStats](docs/DashboardTransferenciasStats.md)
+ - [DashboardTransfersResponse](docs/DashboardTransfersResponse.md)
+ - [DashboardValueResponse](docs/DashboardValueResponse.md)
+ - [DashboardVentasDiarias](docs/DashboardVentasDiarias.md)
  - [DeleteAccountingAdvancesIdResponse](docs/DeleteAccountingAdvancesIdResponse.md)
  - [DeleteAccountingPaymentTypesIdResponse](docs/DeleteAccountingPaymentTypesIdResponse.md)
  - [ExchangeRate](docs/ExchangeRate.md)

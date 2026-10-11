@@ -166,7 +166,15 @@ All URIs are relative to */api/mobile/v1*
 | *ClientsApi* | [**mobileGetClientsById**](docs/ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente |
 | *ClientsApi* | [**mobilePostClientsCreate**](docs/ClientsApi.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente |
 | *ClientsApi* | [**mobilePutClientsById**](docs/ClientsApi.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente |
+| *DashboardApi* | [**mobileGetDashboardDailyAverage**](docs/DashboardApi.md#mobilegetdashboarddailyaverage) | **GET** /dashboard/daily-average | Consultar promedio diario de ingresos |
+| *DashboardApi* | [**mobileGetDashboardIncomeExpenses**](docs/DashboardApi.md#mobilegetdashboardincomeexpenses) | **GET** /dashboard/income-expenses | Consultar ingresos vs gastos del panel |
+| *DashboardApi* | [**mobileGetDashboardInventoryValue**](docs/DashboardApi.md#mobilegetdashboardinventoryvalue) | **GET** /dashboard/inventory-value | Consultar valor total del inventario |
+| *DashboardApi* | [**mobileGetDashboardLowStock**](docs/DashboardApi.md#mobilegetdashboardlowstock) | **GET** /dashboard/low-stock | Consultar productos con stock bajo |
 | *DashboardApi* | [**mobileGetDashboardStats**](docs/DashboardApi.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal |
+| *DashboardApi* | [**mobileGetDashboardStockDistribution**](docs/DashboardApi.md#mobilegetdashboardstockdistribution) | **GET** /dashboard/stock-distribution | Consultar distribución de stock |
+| *DashboardApi* | [**mobileGetDashboardTodaySales**](docs/DashboardApi.md#mobilegetdashboardtodaysales) | **GET** /dashboard/today-sales | Consultar ventas de hoy |
+| *DashboardApi* | [**mobileGetDashboardTopProducts**](docs/DashboardApi.md#mobilegetdashboardtopproducts) | **GET** /dashboard/top-products | Consultar productos más vendidos |
+| *DashboardApi* | [**mobileGetDashboardTransfers**](docs/DashboardApi.md#mobilegetdashboardtransfers) | **GET** /dashboard/transfers | Consultar transferencias entre ubicaciones |
 | *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
 | *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto |
 | *ProductsApi* | [**mobileGetProductsStock**](docs/ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación |
@@ -272,6 +280,26 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.ClienteListResponse](docs/ClienteListResponse.md)
  - [com.tcp.mobile.v1.models.ClienteUpdateRequest](docs/ClienteUpdateRequest.md)
  - [com.tcp.mobile.v1.models.Currency](docs/Currency.md)
+ - [com.tcp.mobile.v1.models.DashboardDatosPorMes](docs/DashboardDatosPorMes.md)
+ - [com.tcp.mobile.v1.models.DashboardDatosPorSemana](docs/DashboardDatosPorSemana.md)
+ - [com.tcp.mobile.v1.models.DashboardDistribucionStockItem](docs/DashboardDistribucionStockItem.md)
+ - [com.tcp.mobile.v1.models.DashboardIncomeExpensePoint](docs/DashboardIncomeExpensePoint.md)
+ - [com.tcp.mobile.v1.models.DashboardIncomeExpenseResponse](docs/DashboardIncomeExpenseResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardLowStockItem](docs/DashboardLowStockItem.md)
+ - [com.tcp.mobile.v1.models.DashboardLowStockResponse](docs/DashboardLowStockResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardProductoMasVendido](docs/DashboardProductoMasVendido.md)
+ - [com.tcp.mobile.v1.models.DashboardProductoStockBajo](docs/DashboardProductoStockBajo.md)
+ - [com.tcp.mobile.v1.models.DashboardProductoStockBajoCategoria](docs/DashboardProductoStockBajoCategoria.md)
+ - [com.tcp.mobile.v1.models.DashboardProductoStockBajoUnidad](docs/DashboardProductoStockBajoUnidad.md)
+ - [com.tcp.mobile.v1.models.DashboardStockDistributionResponse](docs/DashboardStockDistributionResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardStockSlice](docs/DashboardStockSlice.md)
+ - [com.tcp.mobile.v1.models.DashboardTopProduct](docs/DashboardTopProduct.md)
+ - [com.tcp.mobile.v1.models.DashboardTopProductsResponse](docs/DashboardTopProductsResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardTransferItem](docs/DashboardTransferItem.md)
+ - [com.tcp.mobile.v1.models.DashboardTransferenciasStats](docs/DashboardTransferenciasStats.md)
+ - [com.tcp.mobile.v1.models.DashboardTransfersResponse](docs/DashboardTransfersResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardValueResponse](docs/DashboardValueResponse.md)
+ - [com.tcp.mobile.v1.models.DashboardVentasDiarias](docs/DashboardVentasDiarias.md)
  - [com.tcp.mobile.v1.models.DeleteAccountingAdvancesIdResponse](docs/DeleteAccountingAdvancesIdResponse.md)
  - [com.tcp.mobile.v1.models.DeleteAccountingPaymentTypesIdResponse](docs/DeleteAccountingPaymentTypesIdResponse.md)
  - [com.tcp.mobile.v1.models.ExchangeRate](docs/ExchangeRate.md)

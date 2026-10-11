@@ -10495,6 +10495,654 @@
         "description": "Resume ventas, ingresos y alertas de inventario para una ubicación operativa. Permite precisar la consulta mediante ubicación, tipo de ubicación."
       }
     },
+    "/dashboard/income-expenses": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar ingresos vs gastos del panel",
+        "operationId": "mobileGetDashboardIncomeExpenses",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardIncomeExpenseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ingresos y gastos totales más la serie mensual para la gráfica del panel."
+      }
+    },
+    "/dashboard/top-products": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar productos más vendidos",
+        "operationId": "mobileGetDashboardTopProducts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTopProductsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Top 10 de productos más vendidos del período."
+      }
+    },
+    "/dashboard/stock-distribution": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar distribución de stock",
+        "operationId": "mobileGetDashboardStockDistribution",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStockDistributionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Distribución de stock por categoría."
+      }
+    },
+    "/dashboard/transfers": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar transferencias entre ubicaciones",
+        "operationId": "mobileGetDashboardTransfers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTransfersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Conteo de transferencias entre almacenes y puntos de venta."
+      }
+    },
+    "/dashboard/low-stock": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar productos con stock bajo",
+        "operationId": "mobileGetDashboardLowStock",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLowStockResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Productos con stock bajo o crítico (top 5)."
+      }
+    },
+    "/dashboard/today-sales": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar ventas de hoy",
+        "operationId": "mobileGetDashboardTodaySales",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardValueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ingresos por ventas del día actual."
+      }
+    },
+    "/dashboard/daily-average": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar promedio diario de ingresos",
+        "operationId": "mobileGetDashboardDailyAverage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardValueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Promedio de ingresos diarios (30 días)."
+      }
+    },
+    "/dashboard/inventory-value": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Consultar valor total del inventario",
+        "operationId": "mobileGetDashboardInventoryValue",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ubicacionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Valor de ubicacionId aceptado por el handler."
+          },
+          {
+            "name": "tipoUbicacion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "almacen",
+                "punto_venta"
+              ]
+            },
+            "description": "Valor de tipoUbicacion aceptado por el handler."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardValueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Valor total del inventario en stock."
+      }
+    },
     "/products": {
       "get": {
         "tags": [
@@ -16485,21 +17133,513 @@
         ],
         "additionalProperties": false
       },
+      "DashboardIncomeExpensePoint": {
+        "type": "object",
+        "description": "Punto mensual de ingresos vs gastos.",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "ingresos": {
+            "type": "number"
+          },
+          "gastos": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardIncomeExpenseResponse": {
+        "type": "object",
+        "description": "Respuesta de GET /dashboard/income-expenses.",
+        "properties": {
+          "ingresos": {
+            "type": "number"
+          },
+          "gastos": {
+            "type": "number"
+          },
+          "serie": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardIncomeExpensePoint"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardTopProduct": {
+        "type": "object",
+        "description": "Producto dentro del top de más vendidos.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardTopProductsResponse": {
+        "type": "object",
+        "description": "Respuesta de GET /dashboard/top-products.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTopProduct"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardStockSlice": {
+        "type": "object",
+        "description": "Slice de distribución de stock por categoría.",
+        "properties": {
+          "categoria": {
+            "type": "string"
+          },
+          "cantidad": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardStockDistributionResponse": {
+        "type": "object",
+        "description": "Respuesta de GET /dashboard/stock-distribution.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardStockSlice"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardTransferItem": {
+        "type": "object",
+        "description": "Conteo de transferencias por tipo de movimiento.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "monto": {
+            "type": "number"
+          },
+          "estado": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardTransfersResponse": {
+        "type": "object",
+        "description": "Respuesta de GET /dashboard/transfers.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTransferItem"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardLowStockItem": {
+        "type": "object",
+        "description": "Producto con stock bajo.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "stock": {
+            "type": "number"
+          },
+          "minimo": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardLowStockResponse": {
+        "type": "object",
+        "description": "Respuesta de GET /dashboard/low-stock.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardLowStockItem"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardValueResponse": {
+        "type": "object",
+        "description": "Respuesta de valor único del dashboard.",
+        "properties": {
+          "value": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardDatosPorMes": {
+        "type": "object",
+        "description": "Agregado mensual del dashboard (últimos 6 meses).",
+        "properties": {
+          "mes": {
+            "type": "string",
+            "description": "Mes (abreviatura en español)."
+          },
+          "ingresosVentas": {
+            "type": "number"
+          },
+          "ingresosServicios": {
+            "type": "number"
+          },
+          "gastosMermas": {
+            "type": "number"
+          },
+          "gastosDeExplotacion": {
+            "type": "number"
+          },
+          "gastosDeExplotacionCantidad": {
+            "type": "number"
+          },
+          "gastosCompras": {
+            "type": "number"
+          },
+          "gastosComprasCantidad": {
+            "type": "number"
+          },
+          "gastosSalarios": {
+            "type": "number"
+          },
+          "gastosSalariosCantidad": {
+            "type": "number"
+          },
+          "ventasCantidad": {
+            "type": "number"
+          },
+          "ventasServiciosCantidad": {
+            "type": "number"
+          },
+          "mermasCantidad": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardDatosPorSemana": {
+        "type": "object",
+        "description": "Agregado semanal del dashboard (últimas 12 semanas con actividad).",
+        "properties": {
+          "semana": {
+            "type": "string",
+            "description": "Semana ISO (YYYY-Www)."
+          },
+          "ingresosVentas": {
+            "type": "number"
+          },
+          "ingresosServicios": {
+            "type": "number"
+          },
+          "gastosMermas": {
+            "type": "number"
+          },
+          "gastosDeExplotacion": {
+            "type": "number"
+          },
+          "gastosDeExplotacionCantidad": {
+            "type": "number"
+          },
+          "gastosCompras": {
+            "type": "number"
+          },
+          "gastosComprasCantidad": {
+            "type": "number"
+          },
+          "gastosSalarios": {
+            "type": "number"
+          },
+          "gastosSalariosCantidad": {
+            "type": "number"
+          },
+          "ventasCantidad": {
+            "type": "number"
+          },
+          "ventasServiciosCantidad": {
+            "type": "number"
+          },
+          "mermasCantidad": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardVentasDiarias": {
+        "type": "object",
+        "description": "Métricas de ventas diarias (últimos 60 días).",
+        "properties": {
+          "ventasHoy": {
+            "type": "number"
+          },
+          "ingresosHoy": {
+            "type": "number"
+          },
+          "ventasAyer": {
+            "type": "number"
+          },
+          "ingresosAyer": {
+            "type": "number"
+          },
+          "promedioVentasDiarias": {
+            "type": "number"
+          },
+          "promedioIngresosDiarios": {
+            "type": "number"
+          },
+          "diasConVentas": {
+            "type": "number"
+          },
+          "totalDias": {
+            "type": "number"
+          },
+          "totalIngresosPeriodo": {
+            "type": "number"
+          },
+          "totalCantidadPeriodo": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardProductoMasVendido": {
+        "type": "object",
+        "description": "Producto dentro del top 10 de más vendidos.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "ventas": {
+            "type": "number"
+          },
+          "ingresos": {
+            "type": "number"
+          },
+          "stock": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardProductoStockBajo": {
+        "type": "object",
+        "description": "Producto con stock bajo o crítico (top 5 por menor stock).",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "stock": {
+            "type": "number"
+          },
+          "stockMinimo": {
+            "type": "number"
+          },
+          "precioCosto": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "precioVenta": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "almacenId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "puntoDeVentaId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categoria": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "nombre": {
+                "type": "string"
+              }
+            }
+          },
+          "unidad": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "simbolo": {
+                "type": "string"
+              }
+            }
+          },
+          "stockTotal": {
+            "type": "number"
+          },
+          "diferencia": {
+            "type": "number"
+          },
+          "umbralUsado": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardDistribucionStockItem": {
+        "type": "object",
+        "description": "Distribución de stock por categoría.",
+        "properties": {
+          "categoria": {
+            "type": "string"
+          },
+          "productos": {
+            "type": "number"
+          },
+          "stockTotal": {
+            "type": "number"
+          },
+          "valorTotal": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardTransferenciasStats": {
+        "type": "object",
+        "description": "Conteo de transferencias entre ubicaciones.",
+        "properties": {
+          "almacenAAlmacen": {
+            "type": "number"
+          },
+          "almacenAPuntoVenta": {
+            "type": "number"
+          },
+          "puntoVentaAAlmacen": {
+            "type": "number"
+          },
+          "puntoVentaAPuntoVenta": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
       "GetDashboardStatsResponse": {
         "type": "object",
         "description": "Respuesta de GET /dashboard/stats.",
         "properties": {
-          "total": {
+          "totalProductos": {
             "type": "number"
           },
-          "pendiente": {
+          "totalAlmacenes": {
             "type": "number"
           },
-          "pagado": {
+          "totalPuntosVenta": {
             "type": "number"
           },
-          "vencido": {
+          "totalVentas": {
             "type": "number"
+          },
+          "totalMermas": {
+            "type": "number"
+          },
+          "totalTransferencias": {
+            "type": "number"
+          },
+          "totalIngresos": {
+            "type": "number"
+          },
+          "totalGastosMermas": {
+            "type": "number"
+          },
+          "totalGastos": {
+            "type": "number"
+          },
+          "totalBeneficio": {
+            "type": "number"
+          },
+          "valorTotalInventario": {
+            "type": "number"
+          },
+          "datosPorMes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDatosPorMes"
+            }
+          },
+          "datosPorSemana": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDatosPorSemana"
+            }
+          },
+          "ventasDiarias": {
+            "$ref": "#/components/schemas/DashboardVentasDiarias"
+          },
+          "productosMasVendidos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardProductoMasVendido"
+            }
+          },
+          "productosStockBajo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardProductoStockBajo"
+            }
+          },
+          "distribucionStock": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDistribucionStockItem"
+            }
+          },
+          "transferenciasStats": {
+            "$ref": "#/components/schemas/DashboardTransferenciasStats"
           }
         },
         "additionalProperties": false

@@ -8,6 +8,7 @@ interface DashboardStatsArgs extends DashboardStatsQueryFilters {
 }
 
 const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<DashboardStats>>();
 const CACHE_DURATION = 30 * 1000;
 
 /**
@@ -36,11 +37,21 @@ export async function getDashboardStatsData({
     return cached.data as DashboardStats;
   }
 
-  const data = await getDashboardStatsQuery(tenantId, {
-    ubicacionId,
-    tipoUbicacion,
-  });
+  // Single-flight: las secciones del panel mobile disparan varias lecturas
+  // concurrentes; solo la primera ejecuta la query pesada.
+  let pending = inflight.get(cacheKey);
+  if (!pending) {
+    pending = getDashboardStatsQuery(tenantId, {
+      ubicacionId,
+      tipoUbicacion,
+    }).then((data) => {
+      cache.set(cacheKey, { data, timestamp: Date.now() });
+      return data;
+    }).finally(() => {
+      inflight.delete(cacheKey);
+    });
+    inflight.set(cacheKey, pending);
+  }
 
-  cache.set(cacheKey, { data, timestamp: Date.now() });
-  return data;
+  return pending;
 }

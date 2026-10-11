@@ -20,6 +20,12 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import com.tcp.mobile.v1.models.ApiError
+import com.tcp.mobile.v1.models.DashboardIncomeExpenseResponse
+import com.tcp.mobile.v1.models.DashboardLowStockResponse
+import com.tcp.mobile.v1.models.DashboardStockDistributionResponse
+import com.tcp.mobile.v1.models.DashboardTopProductsResponse
+import com.tcp.mobile.v1.models.DashboardTransfersResponse
+import com.tcp.mobile.v1.models.DashboardValueResponse
 import com.tcp.mobile.v1.models.GetDashboardStatsResponse
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -44,6 +50,410 @@ class DashboardApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "/api/mobile/v1")
         }
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardDailyAverage(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/daily-average
+     * Consultar promedio diario de ingresos
+     * Promedio de ingresos diarios (30 días).
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardValueResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardDailyAverage(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardDailyAverage? = null) : DashboardValueResponse {
+        val localVarResponse = mobileGetDashboardDailyAverageWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardValueResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/daily-average
+     * Consultar promedio diario de ingresos
+     * Promedio de ingresos diarios (30 días).
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardValueResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardDailyAverageWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardDailyAverage?) : ApiResponse<DashboardValueResponse?> {
+        val localVariableConfig = mobileGetDashboardDailyAverageRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardValueResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardDailyAverage
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardDailyAverageRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardDailyAverage?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/daily-average",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardIncomeExpenses(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/income-expenses
+     * Consultar ingresos vs gastos del panel
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardIncomeExpenseResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardIncomeExpenses(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardIncomeExpenses? = null) : DashboardIncomeExpenseResponse {
+        val localVarResponse = mobileGetDashboardIncomeExpensesWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardIncomeExpenseResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/income-expenses
+     * Consultar ingresos vs gastos del panel
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardIncomeExpenseResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardIncomeExpensesWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardIncomeExpenses?) : ApiResponse<DashboardIncomeExpenseResponse?> {
+        val localVariableConfig = mobileGetDashboardIncomeExpensesRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardIncomeExpenseResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardIncomeExpenses
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardIncomeExpensesRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardIncomeExpenses?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/income-expenses",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardInventoryValue(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/inventory-value
+     * Consultar valor total del inventario
+     * Valor total del inventario en stock.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardValueResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardInventoryValue(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardInventoryValue? = null) : DashboardValueResponse {
+        val localVarResponse = mobileGetDashboardInventoryValueWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardValueResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/inventory-value
+     * Consultar valor total del inventario
+     * Valor total del inventario en stock.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardValueResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardInventoryValueWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardInventoryValue?) : ApiResponse<DashboardValueResponse?> {
+        val localVariableConfig = mobileGetDashboardInventoryValueRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardValueResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardInventoryValue
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardInventoryValueRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardInventoryValue?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/inventory-value",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardLowStock(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/low-stock
+     * Consultar productos con stock bajo
+     * Productos con stock bajo o crítico (top 5).
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardLowStockResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardLowStock(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardLowStock? = null) : DashboardLowStockResponse {
+        val localVarResponse = mobileGetDashboardLowStockWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardLowStockResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/low-stock
+     * Consultar productos con stock bajo
+     * Productos con stock bajo o crítico (top 5).
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardLowStockResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardLowStockWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardLowStock?) : ApiResponse<DashboardLowStockResponse?> {
+        val localVariableConfig = mobileGetDashboardLowStockRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardLowStockResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardLowStock
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardLowStockRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardLowStock?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/low-stock",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
     }
 
     /**
@@ -140,6 +550,410 @@ class DashboardApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/dashboard/stats",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardStockDistribution(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/stock-distribution
+     * Consultar distribución de stock
+     * Distribución de stock por categoría.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardStockDistributionResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardStockDistribution(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardStockDistribution? = null) : DashboardStockDistributionResponse {
+        val localVarResponse = mobileGetDashboardStockDistributionWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardStockDistributionResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/stock-distribution
+     * Consultar distribución de stock
+     * Distribución de stock por categoría.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardStockDistributionResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardStockDistributionWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardStockDistribution?) : ApiResponse<DashboardStockDistributionResponse?> {
+        val localVariableConfig = mobileGetDashboardStockDistributionRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardStockDistributionResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardStockDistribution
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardStockDistributionRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardStockDistribution?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/stock-distribution",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardTodaySales(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/today-sales
+     * Consultar ventas de hoy
+     * Ingresos por ventas del día actual.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardValueResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardTodaySales(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardTodaySales? = null) : DashboardValueResponse {
+        val localVarResponse = mobileGetDashboardTodaySalesWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardValueResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/today-sales
+     * Consultar ventas de hoy
+     * Ingresos por ventas del día actual.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardValueResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardTodaySalesWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTodaySales?) : ApiResponse<DashboardValueResponse?> {
+        val localVariableConfig = mobileGetDashboardTodaySalesRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardValueResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardTodaySales
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardTodaySalesRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTodaySales?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/today-sales",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardTopProducts(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/top-products
+     * Consultar productos más vendidos
+     * Top 10 de productos más vendidos del período.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardTopProductsResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardTopProducts(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardTopProducts? = null) : DashboardTopProductsResponse {
+        val localVarResponse = mobileGetDashboardTopProductsWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardTopProductsResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/top-products
+     * Consultar productos más vendidos
+     * Top 10 de productos más vendidos del período.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardTopProductsResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardTopProductsWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTopProducts?) : ApiResponse<DashboardTopProductsResponse?> {
+        val localVariableConfig = mobileGetDashboardTopProductsRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardTopProductsResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardTopProducts
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardTopProductsRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTopProducts?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/top-products",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+     enum class TipoUbicacionMobileGetDashboardTransfers(val value: kotlin.String) {
+         @JsonProperty(value = "almacen") almacen("almacen"),
+         @JsonProperty(value = "punto_venta") punto_venta("punto_venta");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
+     }
+
+    /**
+     * GET /dashboard/transfers
+     * Consultar transferencias entre ubicaciones
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return DashboardTransfersResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetDashboardTransfers(ubicacionId: kotlin.String? = null, tipoUbicacion: TipoUbicacionMobileGetDashboardTransfers? = null) : DashboardTransfersResponse {
+        val localVarResponse = mobileGetDashboardTransfersWithHttpInfo(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DashboardTransfersResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /dashboard/transfers
+     * Consultar transferencias entre ubicaciones
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return ApiResponse<DashboardTransfersResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetDashboardTransfersWithHttpInfo(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTransfers?) : ApiResponse<DashboardTransfersResponse?> {
+        val localVariableConfig = mobileGetDashboardTransfersRequestConfig(ubicacionId = ubicacionId, tipoUbicacion = tipoUbicacion)
+
+        return request<Unit, DashboardTransfersResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetDashboardTransfers
+     *
+     * @param ubicacionId Valor de ubicacionId aceptado por el handler. (optional)
+     * @param tipoUbicacion Valor de tipoUbicacion aceptado por el handler. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetDashboardTransfersRequestConfig(ubicacionId: kotlin.String?, tipoUbicacion: TipoUbicacionMobileGetDashboardTransfers?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (ubicacionId != null) {
+                    put("ubicacionId", listOf(ubicacionId.toString()))
+                }
+                if (tipoUbicacion != null) {
+                    put("tipoUbicacion", listOf(tipoUbicacion.value))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/dashboard/transfers",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

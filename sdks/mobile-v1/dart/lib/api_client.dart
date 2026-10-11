@@ -346,6 +346,46 @@ class ApiClient {
           return ClienteUpdateRequest.fromJson(value);
         case 'Currency':
           return Currency.fromJson(value);
+        case 'DashboardDatosPorMes':
+          return DashboardDatosPorMes.fromJson(value);
+        case 'DashboardDatosPorSemana':
+          return DashboardDatosPorSemana.fromJson(value);
+        case 'DashboardDistribucionStockItem':
+          return DashboardDistribucionStockItem.fromJson(value);
+        case 'DashboardIncomeExpensePoint':
+          return DashboardIncomeExpensePoint.fromJson(value);
+        case 'DashboardIncomeExpenseResponse':
+          return DashboardIncomeExpenseResponse.fromJson(value);
+        case 'DashboardLowStockItem':
+          return DashboardLowStockItem.fromJson(value);
+        case 'DashboardLowStockResponse':
+          return DashboardLowStockResponse.fromJson(value);
+        case 'DashboardProductoMasVendido':
+          return DashboardProductoMasVendido.fromJson(value);
+        case 'DashboardProductoStockBajo':
+          return DashboardProductoStockBajo.fromJson(value);
+        case 'DashboardProductoStockBajoCategoria':
+          return DashboardProductoStockBajoCategoria.fromJson(value);
+        case 'DashboardProductoStockBajoUnidad':
+          return DashboardProductoStockBajoUnidad.fromJson(value);
+        case 'DashboardStockDistributionResponse':
+          return DashboardStockDistributionResponse.fromJson(value);
+        case 'DashboardStockSlice':
+          return DashboardStockSlice.fromJson(value);
+        case 'DashboardTopProduct':
+          return DashboardTopProduct.fromJson(value);
+        case 'DashboardTopProductsResponse':
+          return DashboardTopProductsResponse.fromJson(value);
+        case 'DashboardTransferItem':
+          return DashboardTransferItem.fromJson(value);
+        case 'DashboardTransferenciasStats':
+          return DashboardTransferenciasStats.fromJson(value);
+        case 'DashboardTransfersResponse':
+          return DashboardTransfersResponse.fromJson(value);
+        case 'DashboardValueResponse':
+          return DashboardValueResponse.fromJson(value);
+        case 'DashboardVentasDiarias':
+          return DashboardVentasDiarias.fromJson(value);
         case 'DeleteAccountingAdvancesIdResponse':
           return DeleteAccountingAdvancesIdResponse.fromJson(value);
         case 'DeleteAccountingPaymentTypesIdResponse':

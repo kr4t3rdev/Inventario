@@ -13,33 +13,89 @@ import AnyCodable
 /** Respuesta de GET /dashboard/stats. */
 public struct GetDashboardStatsResponse: Codable, JSONEncodable, Hashable {
 
-    public var total: Double?
-    public var pendiente: Double?
-    public var pagado: Double?
-    public var vencido: Double?
+    public var totalProductos: Double?
+    public var totalAlmacenes: Double?
+    public var totalPuntosVenta: Double?
+    public var totalVentas: Double?
+    public var totalMermas: Double?
+    public var totalTransferencias: Double?
+    public var totalIngresos: Double?
+    public var totalGastosMermas: Double?
+    public var totalGastos: Double?
+    public var totalBeneficio: Double?
+    public var valorTotalInventario: Double?
+    public var datosPorMes: [DashboardDatosPorMes]?
+    public var datosPorSemana: [DashboardDatosPorSemana]?
+    public var ventasDiarias: DashboardVentasDiarias?
+    public var productosMasVendidos: [DashboardProductoMasVendido]?
+    public var productosStockBajo: [DashboardProductoStockBajo]?
+    public var distribucionStock: [DashboardDistribucionStockItem]?
+    public var transferenciasStats: DashboardTransferenciasStats?
 
-    public init(total: Double? = nil, pendiente: Double? = nil, pagado: Double? = nil, vencido: Double? = nil) {
-        self.total = total
-        self.pendiente = pendiente
-        self.pagado = pagado
-        self.vencido = vencido
+    public init(totalProductos: Double? = nil, totalAlmacenes: Double? = nil, totalPuntosVenta: Double? = nil, totalVentas: Double? = nil, totalMermas: Double? = nil, totalTransferencias: Double? = nil, totalIngresos: Double? = nil, totalGastosMermas: Double? = nil, totalGastos: Double? = nil, totalBeneficio: Double? = nil, valorTotalInventario: Double? = nil, datosPorMes: [DashboardDatosPorMes]? = nil, datosPorSemana: [DashboardDatosPorSemana]? = nil, ventasDiarias: DashboardVentasDiarias? = nil, productosMasVendidos: [DashboardProductoMasVendido]? = nil, productosStockBajo: [DashboardProductoStockBajo]? = nil, distribucionStock: [DashboardDistribucionStockItem]? = nil, transferenciasStats: DashboardTransferenciasStats? = nil) {
+        self.totalProductos = totalProductos
+        self.totalAlmacenes = totalAlmacenes
+        self.totalPuntosVenta = totalPuntosVenta
+        self.totalVentas = totalVentas
+        self.totalMermas = totalMermas
+        self.totalTransferencias = totalTransferencias
+        self.totalIngresos = totalIngresos
+        self.totalGastosMermas = totalGastosMermas
+        self.totalGastos = totalGastos
+        self.totalBeneficio = totalBeneficio
+        self.valorTotalInventario = valorTotalInventario
+        self.datosPorMes = datosPorMes
+        self.datosPorSemana = datosPorSemana
+        self.ventasDiarias = ventasDiarias
+        self.productosMasVendidos = productosMasVendidos
+        self.productosStockBajo = productosStockBajo
+        self.distribucionStock = distribucionStock
+        self.transferenciasStats = transferenciasStats
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case total
-        case pendiente
-        case pagado
-        case vencido
+        case totalProductos
+        case totalAlmacenes
+        case totalPuntosVenta
+        case totalVentas
+        case totalMermas
+        case totalTransferencias
+        case totalIngresos
+        case totalGastosMermas
+        case totalGastos
+        case totalBeneficio
+        case valorTotalInventario
+        case datosPorMes
+        case datosPorSemana
+        case ventasDiarias
+        case productosMasVendidos
+        case productosStockBajo
+        case distribucionStock
+        case transferenciasStats
     }
 
     // Encodable protocol methods
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(total, forKey: .total)
-        try container.encodeIfPresent(pendiente, forKey: .pendiente)
-        try container.encodeIfPresent(pagado, forKey: .pagado)
-        try container.encodeIfPresent(vencido, forKey: .vencido)
+        try container.encodeIfPresent(totalProductos, forKey: .totalProductos)
+        try container.encodeIfPresent(totalAlmacenes, forKey: .totalAlmacenes)
+        try container.encodeIfPresent(totalPuntosVenta, forKey: .totalPuntosVenta)
+        try container.encodeIfPresent(totalVentas, forKey: .totalVentas)
+        try container.encodeIfPresent(totalMermas, forKey: .totalMermas)
+        try container.encodeIfPresent(totalTransferencias, forKey: .totalTransferencias)
+        try container.encodeIfPresent(totalIngresos, forKey: .totalIngresos)
+        try container.encodeIfPresent(totalGastosMermas, forKey: .totalGastosMermas)
+        try container.encodeIfPresent(totalGastos, forKey: .totalGastos)
+        try container.encodeIfPresent(totalBeneficio, forKey: .totalBeneficio)
+        try container.encodeIfPresent(valorTotalInventario, forKey: .valorTotalInventario)
+        try container.encodeIfPresent(datosPorMes, forKey: .datosPorMes)
+        try container.encodeIfPresent(datosPorSemana, forKey: .datosPorSemana)
+        try container.encodeIfPresent(ventasDiarias, forKey: .ventasDiarias)
+        try container.encodeIfPresent(productosMasVendidos, forKey: .productosMasVendidos)
+        try container.encodeIfPresent(productosStockBajo, forKey: .productosStockBajo)
+        try container.encodeIfPresent(distribucionStock, forKey: .distribucionStock)
+        try container.encodeIfPresent(transferenciasStats, forKey: .transferenciasStats)
     }
 }
 

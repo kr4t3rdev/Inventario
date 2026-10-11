@@ -121,6 +121,7 @@ export interface DashboardStats {
   totalTransferencias: number
   totalIngresos: number
   totalGastosMermas: number
+  totalGastos: number
   totalBeneficio: number
   valorTotalInventario: number
   datosPorMes: Array<Record<string, any>>
@@ -650,7 +651,7 @@ export async function getDashboardStatsQuery(
     totalVentas: ventasData.length,
     totalMermas: mermasData.length,
     totalTransferencias: transferenciasData.length,
-    totalIngresos, totalGastosMermas, totalBeneficio, valorTotalInventario,
+    totalIngresos, totalGastosMermas, totalGastos, totalBeneficio, valorTotalInventario,
     datosPorMes, datosPorSemana: semanasCompletas,
     ventasDiarias, productosMasVendidos, productosStockBajo,
     distribucionStock, transferenciasStats,

@@ -15,32 +15,95 @@
 
 package com.tcp.mobile.v1.models
 
+import com.tcp.mobile.v1.models.DashboardDatosPorMes
+import com.tcp.mobile.v1.models.DashboardDatosPorSemana
+import com.tcp.mobile.v1.models.DashboardDistribucionStockItem
+import com.tcp.mobile.v1.models.DashboardProductoMasVendido
+import com.tcp.mobile.v1.models.DashboardProductoStockBajo
+import com.tcp.mobile.v1.models.DashboardTransferenciasStats
+import com.tcp.mobile.v1.models.DashboardVentasDiarias
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Respuesta de GET /dashboard/stats.
  *
- * @param total 
- * @param pendiente 
- * @param pagado 
- * @param vencido 
+ * @param totalProductos 
+ * @param totalAlmacenes 
+ * @param totalPuntosVenta 
+ * @param totalVentas 
+ * @param totalMermas 
+ * @param totalTransferencias 
+ * @param totalIngresos 
+ * @param totalGastosMermas 
+ * @param totalGastos 
+ * @param totalBeneficio 
+ * @param valorTotalInventario 
+ * @param datosPorMes 
+ * @param datosPorSemana 
+ * @param ventasDiarias 
+ * @param productosMasVendidos 
+ * @param productosStockBajo 
+ * @param distribucionStock 
+ * @param transferenciasStats 
  */
 
 
 data class GetDashboardStatsResponse (
 
-    @get:JsonProperty("total")
-    val total: java.math.BigDecimal? = null,
+    @get:JsonProperty("totalProductos")
+    val totalProductos: java.math.BigDecimal? = null,
 
-    @get:JsonProperty("pendiente")
-    val pendiente: java.math.BigDecimal? = null,
+    @get:JsonProperty("totalAlmacenes")
+    val totalAlmacenes: java.math.BigDecimal? = null,
 
-    @get:JsonProperty("pagado")
-    val pagado: java.math.BigDecimal? = null,
+    @get:JsonProperty("totalPuntosVenta")
+    val totalPuntosVenta: java.math.BigDecimal? = null,
 
-    @get:JsonProperty("vencido")
-    val vencido: java.math.BigDecimal? = null
+    @get:JsonProperty("totalVentas")
+    val totalVentas: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalMermas")
+    val totalMermas: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalTransferencias")
+    val totalTransferencias: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalIngresos")
+    val totalIngresos: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalGastosMermas")
+    val totalGastosMermas: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalGastos")
+    val totalGastos: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("totalBeneficio")
+    val totalBeneficio: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("valorTotalInventario")
+    val valorTotalInventario: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("datosPorMes")
+    val datosPorMes: kotlin.collections.List<DashboardDatosPorMes>? = null,
+
+    @get:JsonProperty("datosPorSemana")
+    val datosPorSemana: kotlin.collections.List<DashboardDatosPorSemana>? = null,
+
+    @get:JsonProperty("ventasDiarias")
+    val ventasDiarias: DashboardVentasDiarias? = null,
+
+    @get:JsonProperty("productosMasVendidos")
+    val productosMasVendidos: kotlin.collections.List<DashboardProductoMasVendido>? = null,
+
+    @get:JsonProperty("productosStockBajo")
+    val productosStockBajo: kotlin.collections.List<DashboardProductoStockBajo>? = null,
+
+    @get:JsonProperty("distribucionStock")
+    val distribucionStock: kotlin.collections.List<DashboardDistribucionStockItem>? = null,
+
+    @get:JsonProperty("transferenciasStats")
+    val transferenciasStats: DashboardTransferenciasStats? = null
 
 ) {
 

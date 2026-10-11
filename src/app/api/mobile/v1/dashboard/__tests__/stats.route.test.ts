@@ -23,6 +23,7 @@ const dashboardStatsFixture = {
   totalTransferencias: 0,
   totalIngresos: 0,
   totalGastosMermas: 0,
+  totalGastos: 0,
   totalBeneficio: 0,
   valorTotalInventario: 0,
   datosPorMes: [{ mes: 'Junio', ventas: 0 }],
