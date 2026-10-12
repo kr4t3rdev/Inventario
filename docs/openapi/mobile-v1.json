@@ -21538,9 +21538,8 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "object"
-            },
-            "description": "Listado de facturas"
+              "$ref": "#/components/schemas/Factura"
+            }
           },
           "pagination": {
             "$ref": "#/components/schemas/Pagination"
@@ -21556,8 +21555,7 @@
         "description": "GET /facturas/{id}.",
         "properties": {
           "factura": {
-            "type": "object",
-            "description": "Detalle de factura"
+            "$ref": "#/components/schemas/Factura"
           }
         },
         "required": [
@@ -21572,12 +21570,8 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "object"
-            },
-            "description": "Listado de ofertas"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
+              "$ref": "#/components/schemas/Oferta"
+            }
           }
         },
         "required": [
@@ -21590,8 +21584,7 @@
         "description": "GET /ofertas/{id}.",
         "properties": {
           "oferta": {
-            "type": "object",
-            "description": "Detalle de oferta"
+            "$ref": "#/components/schemas/Oferta"
           }
         },
         "required": [
@@ -21606,9 +21599,8 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "object"
-            },
-            "description": "Listado de compras"
+              "$ref": "#/components/schemas/Compra"
+            }
           },
           "pagination": {
             "$ref": "#/components/schemas/Pagination"
@@ -21624,8 +21616,7 @@
         "description": "GET /compras/{id}.",
         "properties": {
           "compra": {
-            "type": "object",
-            "description": "Detalle de compra"
+            "$ref": "#/components/schemas/Compra"
           }
         },
         "required": [
@@ -22476,6 +22467,260 @@
           "id",
           "nombre",
           "simbolo"
+        ],
+        "additionalProperties": false
+      },
+      "Factura": {
+        "type": "object",
+        "description": "Factura.",
+        "properties": {
+          "facturaId": {
+            "type": "string",
+            "description": "ID de la factura"
+          },
+          "numeroFactura": {
+            "type": "string",
+            "description": "Número de factura"
+          },
+          "tipoDocumento": {
+            "type": "string",
+            "description": "Tipo de documento"
+          },
+          "ventaId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ID de la venta asociada"
+          },
+          "clienteId": {
+            "type": "string",
+            "description": "ID del cliente"
+          },
+          "clienteNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nombre del cliente"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Subtotal"
+          },
+          "impuestos": {
+            "type": "number",
+            "description": "Impuestos"
+          },
+          "descuento": {
+            "type": "number",
+            "description": "Descuento"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total"
+          },
+          "estado": {
+            "type": "string",
+            "description": "Estado"
+          },
+          "fechaEmision": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de emisión"
+          },
+          "fechaVencimiento": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fecha de vencimiento"
+          },
+          "observaciones": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Observaciones"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creación"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Actualización"
+          }
+        },
+        "required": [
+          "facturaId",
+          "numeroFactura",
+          "tipoDocumento",
+          "clienteId",
+          "subtotal",
+          "total",
+          "estado",
+          "fechaEmision"
+        ],
+        "additionalProperties": false
+      },
+      "Oferta": {
+        "type": "object",
+        "description": "Oferta.",
+        "properties": {
+          "ofertaId": {
+            "type": "string",
+            "description": "ID de la oferta"
+          },
+          "numeroOferta": {
+            "type": "string",
+            "description": "Número de oferta"
+          },
+          "clienteId": {
+            "type": "string",
+            "description": "ID del cliente"
+          },
+          "clienteNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nombre del cliente"
+          },
+          "fechaEmision": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de emisión"
+          },
+          "fechaVencimiento": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fecha de vencimiento"
+          },
+          "estado": {
+            "type": "string",
+            "description": "Estado"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Subtotal"
+          },
+          "impuestos": {
+            "type": "number",
+            "description": "Impuestos"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total"
+          },
+          "observaciones": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Observaciones"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creación"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Actualización"
+          }
+        },
+        "required": [
+          "ofertaId",
+          "numeroOferta",
+          "clienteId",
+          "fechaEmision",
+          "estado",
+          "subtotal",
+          "total"
+        ],
+        "additionalProperties": false
+      },
+      "Compra": {
+        "type": "object",
+        "description": "Compra.",
+        "properties": {
+          "compraId": {
+            "type": "string",
+            "description": "ID de la compra"
+          },
+          "numeroFactura": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número de factura"
+          },
+          "proveedorId": {
+            "type": "string",
+            "description": "ID del proveedor"
+          },
+          "proveedorNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nombre del proveedor"
+          },
+          "fechaCompra": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fecha de compra"
+          },
+          "estado": {
+            "type": "string",
+            "description": "Estado"
+          },
+          "tipoOperacion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipo de operación"
+          },
+          "formaPago": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Forma de pago"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Subtotal"
+          },
+          "impuestos": {
+            "type": "number",
+            "description": "Impuestos"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creación"
+          }
+        },
+        "required": [
+          "compraId",
+          "proveedorId",
+          "estado",
+          "subtotal",
+          "total"
         ],
         "additionalProperties": false
       }
