@@ -6,6 +6,15 @@ El commit `4be1b3b0f7b41224077359c9c7646e4f7d36128a` guarda el baseline, reparac
 alineación y evidencias anteriores. Push aprobado a `origin/feat/contabilidad-capa-formal`;
 incluye los cuatro commits locales previos. Producción sigue separada en main.
 
+La continuación está guardada y enviada en
+`a05bffb4deb9fd2bc5af2d7ecc0991dd7edda8b3`. Se reconstruyó su paquete dos veces desde
+ese commit publicado y se aplicó a otra copia nueva: deploy/replay/status exit 0,
+diff vacío, 23 guards, 148 checksums coincidentes y 123 filas originales completas
+del historial conservadas (152 totales). Las rutas Git `src`, `prisma`, package.json,
+pnpm-lock.yaml, config/setup de integración y tsconfig.json son idénticas al snapshot
+que pasó los 80 casos. No se atribuyen pruebas del checkout sucio al commit publicado.
+Vínculo: `r6-published-commit-package-2026-10-12.json`.
+
 ## Hallazgos de la revisión desde Git fijo
 
 Se exportó el commit, sin archivos de entorno ni cambios compartidos del checkout.
@@ -105,6 +114,14 @@ No ejecutarlo con la config del checkout, que carga archivos de entorno.
 Pruebas del constructor: reproducibilidad pese a checkout sucio, recuperación sin
 commit histórico disponible, rechazo de checksum inválido y protección de destino
 existente. **3/3**, más **3/3** del comparador de catálogo. ESLint/typecheck aprobados.
+
+Comando reproducible del corte publicado:
+
+```bash
+python3 scripts/ops/build-accounting-inherited-package.py \
+  --commit a05bffb4deb9fd2bc5af2d7ecc0991dd7edda8b3 \
+  --output <DIRECTORIO_PRIVADO_NUEVO>
+```
 
 ## Cadena posterior con reparación
 

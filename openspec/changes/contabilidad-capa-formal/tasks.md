@@ -2823,6 +2823,11 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   142 tablas sin cambios. Constructor Git-only reproduce 148 migraciones (119+29),
   usando 15 SQL históricos exactos versionados; dos paquetes idénticos y diff vacío.
   Trial8 encadena reparación/replay: 0 diferencias tenant, 23 guards, 152 filas history.
+  Continuación publicada en a05bffb4: paquete reconstruido dos veces desde ese commit,
+  deploy/replay/status aprobados y diff vacío en otra copia nueva; 148 checksums y
+  123 filas completas de history original preservadas. Subárboles fuente/schema y
+  archivos de deps/config idénticos al snapshot con 80 PASS; evidencia publicada
+  `r6-published-commit-package-2026-10-12.json`.
   Bootstrap vacío, matriz R6 completa, build/deploy/rollback cloud y A9/R7 pendientes.
   No se leyó `.env` ni se modificó schema/historial/negocio de producción.
   Artefacto local JSON no certifica producción.
