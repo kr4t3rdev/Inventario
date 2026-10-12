@@ -2816,6 +2816,14 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   Trial7: deploy/replay aprobados y diff Prisma vacío, 23 guards, 153 filas históricas,
   reconciliaciones sin diferencias tenant. Regresión física conjunta 26/26 y typecheck
   aprobados. No acredita aún regresión de negocio heredada ni firma global.
+  Corte release 12-10 (`r6-inherited-release-regression-2026-10-12.md`): commit/push
+  4be1b3b0 completados. Revisión desde Git fijo detecta dependencia histórica de capital
+  y fixtures incompatibles/con cleanup global de tasas; corregidos en snapshot privado.
+  Regresión sobre nueva copia heredada: 80/80 en 9 suites, 1.353 filas originales de
+  142 tablas sin cambios. Constructor Git-only reproduce 148 migraciones (119+29),
+  usando 15 SQL históricos exactos versionados; dos paquetes idénticos y diff vacío.
+  Trial8 encadena reparación/replay: 0 diferencias tenant, 23 guards, 152 filas history.
+  Bootstrap vacío, matriz R6 completa, build/deploy/rollback cloud y A9/R7 pendientes.
   No se leyó `.env` ni se modificó schema/historial/negocio de producción.
   Artefacto local JSON no certifica producción.
   **Evidencia parcial 06-10:** `verify-accounting-sql-guards.mjs` confirma

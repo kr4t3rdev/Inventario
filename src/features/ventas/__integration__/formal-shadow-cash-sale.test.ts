@@ -318,12 +318,16 @@ describe('cash sale formal shadow — real PostgreSQL writer', { timeout: 90_000
 			const venta = await prisma.venta.findFirstOrThrow({
 				where: { tenantId, clienteId: customerId }, orderBy: { createdAt: 'desc' },
 			});
+			const factura = await prisma.factura.findFirstOrThrow({
+				where: { tenantId, ventaId: venta.ventaId },
+				select: { idFactura: true },
+			});
 			const reconciliaciones = await prisma.reconciliacionVenta.findMany({
 				where: { tenantId, ventaId: venta.ventaId },
 				select: { reconciliacionId: true },
 			});
 			const origenes = [
-				{ origenTipo: 'factura', origenId: venta.data.facturaId ?? '' },
+				{ origenTipo: 'factura', origenId: factura.idFactura },
 				{ origenTipo: 'venta_costo', origenId: venta.ventaId },
 				...reconciliaciones.map(({ reconciliacionId }) => ({
 					origenTipo: 'reconciliacion_venta', origenId: reconciliacionId,

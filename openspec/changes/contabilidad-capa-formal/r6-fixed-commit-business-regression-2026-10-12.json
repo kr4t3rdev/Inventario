@@ -1,0 +1,289 @@
+{
+  "targetCommit": "4be1b3b0f7b41224077359c9c7646e4f7d36128a",
+  "database": "tcp_test_r6_release_4be1b3b0",
+  "runExit": 1,
+  "testCount": 59,
+  "passed": 50,
+  "failed": 9,
+  "scope": "fixed commit synthetic business fixtures on inherited database; suite-specific mocks apply",
+  "suites": [
+    {
+      "path": "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts",
+      "status": "failed",
+      "tests": [
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra compra extranjera y hereda FX al asiento de CxP",
+          "status": "failed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado anular una compra a cr\u00e9dito crea reverso formal y preserva evidencia FX",
+          "status": "failed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra PAGO_COMPLETO como COMPRA_CONTADO, debita la cuenta y es idempotente",
+          "status": "failed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado mantiene precio de inventario y asiento en la moneda funcional no-CUP",
+          "status": "failed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte compra, reconciliaci\u00f3n y saldo si falla el asiento de PAGO_COMPLETO",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado devenga compra bruta, aplica anticipo al CxP sin segundo movimiento bancario",
+          "status": "failed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte CxP y documento si falla SQL en el asiento de compra",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad-formal/__integration__/apertura-revision-approval.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL posts a balanced single journal with independent maker/checker and remains idempotent",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL rolls back journal and approval together when PostgreSQL rejects the journal insert",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL serializes competing approvals for two presented revisions of one opening",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL freezes presented and approved revisions and lines at the database level",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+      "status": "failed",
+      "tests": [
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n venta USD a cr\u00e9dito crea CxC con snapshot FX v2 desde el cat\u00e1logo",
+          "status": "failed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n pago parcial en USD liquida al valor en libros y transmite la diferencia FX",
+          "status": "failed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n pago final completa la CxC, marca reconciliado y contabiliza el cierre FX",
+          "status": "failed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n sesi\u00f3n HTTP real: 401 sin token y 200 con Bearer en el canal servicios",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo devengo directo crea venta, CxC y asiento VENTA_SERVICIO_CREDITO",
+          "status": "passed"
+        },
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo fallo en el asiento revierte venta y CxC (rollback)",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) reejecutar vencimiento preserva pago, estado y snapshot de una CxC pagada",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO/vencimiento: la deuda queda por el total completo con pagado 0 (precommit y postcommit)",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) centavos: Decimal conserva 0,01 exactos en deuda y pago de la fila existente",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) moneda: una CxC hist\u00f3rica sin snapshot funcional se rechaza fail-closed",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) rollback: tras un error dentro de la tx la CxC queda exactamente como antes",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) contra_pago + MIXTO: cobra el total sin CxC y deja la factura PAGADA",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO+fecha con porci\u00f3n cobrada hoy: concilia 40 hoy y la CxC queda por 60",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO+fecha donde lo cobrado hoy cubre el total: sin CxC y factura PAGADA",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+      "status": "failed",
+      "tests": [
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts a balanced real VENTA_CONTADO in enforce with original tenant actor",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer anular una venta revierte todos sus asientos formales sin borrar el historial",
+          "status": "failed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer eliminar una n\u00f3mina revierte los asientos PAGO_NOMINA junto con caja y reconciliaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts COSTO_VENTA_DEVENGADO at the persisted functional purchase value",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer shadow preserves sale and records durable COGS valuation failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls sale, stock and FIFO allocation back when source FX is absent",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls back the sale and FIFO allocation when the COGS asiento insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back a USD cash sale without applied FX evidence",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer commits the cash sale and durable ERROR_SHADOW after a real formal posting SQL failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back the sale when durable shadow outbox insertion fails",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'venta_servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter caller de alta compra PAGO_COMPLETO revierte tambi\u00e9n documento, stock y costo",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

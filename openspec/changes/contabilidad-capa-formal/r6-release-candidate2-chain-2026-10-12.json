@@ -1,0 +1,33 @@
+{
+  "precommitSnapshot": "b5d866d1b6e552d5372c4223d75a5c6eeee84687",
+  "derivedFrom": "tcp_test_r6_candidate_b5d866d1",
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial8",
+  "reproduciblePackagesIdentical": true,
+  "allSqlAndSchemaMatchTestedPackage": true,
+  "manifestSha256": "0c13f91d4d1c622b0063ba83796e442342ee7ddc0f8f662a714d19bebd1bc6e1",
+  "recoverySources": {
+    "target-commit": 133,
+    "versioned-verified-crosswalk": 15
+  },
+  "migrationCount": 148,
+  "repairRuns": [
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial8",
+      "auditRows": 15,
+      "trialOnly": true,
+      "repairedReferences": 13,
+      "createdPaymentTypes": 2
+    },
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial8",
+      "auditRows": 0,
+      "trialOnly": true,
+      "repairedReferences": 0,
+      "createdPaymentTypes": 0
+    }
+  ],
+  "guardsReady": 23,
+  "historyRows": 152,
+  "remainingTenantMismatch": 0,
+  "scope": "local chain only, release rollout not accepted"
+}

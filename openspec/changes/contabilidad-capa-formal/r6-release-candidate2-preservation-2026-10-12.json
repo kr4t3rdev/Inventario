@@ -1,0 +1,863 @@
+{
+  "precommitSnapshot": "b5d866d1b6e552d5372c4223d75a5c6eeee84687",
+  "database": "tcp_test_r6_candidate_b5d866d1",
+  "derivedFrom": "tcp_r6_prod_clone_4ae12d4e4c1f",
+  "tablesCompared": 142,
+  "method": "UTC-normalized multiset of MD5 original-column JSON projections; additions allowed, missing/changed original rows rejected; change detector not cryptographic proof",
+  "originalRows": 1353,
+  "missingOrChangedOriginalRows": 0,
+  "comparisons": [
+    {
+      "table": "AffiliateCommissionLedger",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AffiliateCreditBalance",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AffiliatePerkGrant",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AffiliateProfile",
+      "originalRows": 12,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AffiliateReferral",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AjusteBancario",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AjusteInventario",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AlertHistory",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Almacen",
+      "originalRows": 23,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "Anticipo",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AnticipoMovimiento",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Attendance",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "AuditLog",
+      "originalRows": 58,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 8
+    },
+    {
+      "table": "CatalogoReparacionConfig",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Categoria",
+      "originalRows": 49,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "CierreContable",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Cliente",
+      "originalRows": 6,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "CloudinaryAsset",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "CompraDocumento",
+      "originalRows": 8,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "CompraDocumentoItem",
+      "originalRows": 29,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "CompraProducto",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "CompraServicio",
+      "originalRows": 6,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ConfiguracionSistema",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ConteoInventario",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ConteoLinea",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Contrato",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ContratoAlerta",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ContratoAprobacion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ContratoArchivo",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ContratoFirma",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ContratoVersion",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "CuentaBancaria",
+      "originalRows": 14,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "CuentaPorCobrar",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "CuentaPorPagar",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "DefectacionCatalogo",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "DeudaCash",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Empleado",
+      "originalRows": 12,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "EmployeeWorkSchedule",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "EquipoReparacion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "GastoCompra",
+      "originalRows": 7,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "GastoConcepto",
+      "originalRows": 22,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "GastoElemento",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "GastosDE",
+      "originalRows": 13,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "InyeccionCapital",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ListaPrecio",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Merma",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "MiEmpresa",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Moneda",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Notification",
+      "originalRows": 29,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Oferta",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OfertaItem",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenCompra",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenCompraItem",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenProduccion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenProduccionHistorial",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenReparacion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenReparacionEquipo",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenReparacionItem",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "OrdenReparacionMaterial",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "PagoCuentaPorPagar",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "PagoDeuda",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Pagosalario",
+      "originalRows": 10,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "PiezaReparacion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Plan",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "PrecioProducto",
+      "originalRows": 20,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "PrestamoCash",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Producto",
+      "originalRows": 63,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "ProductoCostHistory",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ProductoCostSheetTemplate",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "PuntoDeVenta",
+      "originalRows": 10,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "Recepcion",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "RecepcionItem",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Receta",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "RecetaIngrediente",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReconciliacionGasto",
+      "originalRows": 32,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReconciliacionServicio",
+      "originalRows": 11,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReconciliacionVenta",
+      "originalRows": 14,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "ReferralPerkCatalog",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReferralPerkRequest",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReglaReabastecimiento",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ReportHistory",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentBalance",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentCommissionLedger",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentEmailDelivery",
+      "originalRows": 6,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentPayout",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentProfile",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "SalesAgentReferral",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ScenarioSimulation",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ScheduledReport",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Servicios",
+      "originalRows": 10,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "StockMoveLine",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 6
+    },
+    {
+      "table": "StockUbicacion",
+      "originalRows": 49,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "TasaCambio",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "TenantLicensePayment",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "TipoContratoCustom",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "TipoPago",
+      "originalRows": 9,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "TransaccionMoneda",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "Transferencia",
+      "originalRows": 19,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "TransferenciaBancaria",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Unidad",
+      "originalRows": 18,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "User",
+      "originalRows": 13,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 21
+    },
+    {
+      "table": "UserActivityLog",
+      "originalRows": 333,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "UserSession",
+      "originalRows": 159,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "VacationAccrual",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "VacationRequest",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ValeSalida",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "ValeSalidaItem",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Vendor",
+      "originalRows": 18,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "VendorCodeSequence",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "Venta",
+      "originalRows": 17,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 5
+    },
+    {
+      "table": "VentaServicios",
+      "originalRows": 16,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "accounting_policy_rollout_entries",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "accounting_policy_rollout_runs",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "accounting_policy_tenant_approvals",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "apertura_periodos",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "arqueos_caja",
+      "originalRows": 6,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "auditoria_periodos",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "backup_logs",
+      "originalRows": 12,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "backup_plans",
+      "originalRows": 1,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "cobro_notas",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "devoluciones_venta",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "devoluciones_venta_items",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "facturas",
+      "originalRows": 5,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "financial_auxiliary_checkpoints",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "fiscal_documents",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "fiscal_emision_events",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "fx_evidence",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "periodo_cache",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 4
+    },
+    {
+      "table": "periodos_contables",
+      "originalRows": 4,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 6
+    },
+    {
+      "table": "purchase_allocations",
+      "originalRows": 15,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 3
+    },
+    {
+      "table": "review_prompts",
+      "originalRows": 22,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "reviews",
+      "originalRows": 5,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "saldos_snapshot",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "series_facturacion",
+      "originalRows": 3,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "snapshot_periodos",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "tenant_accounting_policies",
+      "originalRows": 2,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "tenant_licenses",
+      "originalRows": 9,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "tenant_memberships",
+      "originalRows": 7,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 8
+    },
+    {
+      "table": "tenant_roles",
+      "originalRows": 0,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "tenants",
+      "originalRows": 48,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 6
+    },
+    {
+      "table": "turnos_punto_venta",
+      "originalRows": 7,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "venta_items",
+      "originalRows": 16,
+      "missingOrChangedOriginalRows": 0,
+      "newOrChangedRows": 5
+    }
+  ]
+}

@@ -1,22 +1,21 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { seedPlanContable } from '@/features/contabilidad-formal/services/seed-plan-contable';
+import {
+  seedPlanContable,
+  seedPlantillasGlobales,
+} from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
 import {
   anularCompraProductoAction as _anularCompraProductoAction,
   createCompraProductoAction as _createCompraProductoAction,
 } from '@/features/compras-productos/actions'
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import type { ServerAction } from '@/lib/server-actions/types';
-type RawAction<A> = A extends ServerAction<infer I, infer O> ? (input: I, user: AuthenticatedUser) => Promise<O> : never;
-const anularCompraProductoAction = _anularCompraProductoAction as unknown as RawAction<typeof _anularCompraProductoAction>;
-const createCompraProductoAction = _createCompraProductoAction as unknown as RawAction<typeof _createCompraProductoAction>;
 import { createAnticipo } from '@/lib/services/anticipos-workflow';
 
-vi.mock('@/lib/server-actions', async (importOriginal) => {
-	const original = await importOriginal<typeof import('@/lib/server-actions')>();
-	return { ...original, withAction: (handler: (...args: any[]) => unknown) => handler };
-});
+const actionContext = vi.hoisted(() => ({ user: null as AuthenticatedUser | null }));
+vi.mock('@/lib/server-actions/get-current-user', () => ({
+  getCurrentUser: vi.fn(async () => actionContext.user),
+}));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/features/inventario/movimientos', () => ({
 	registrarMovimiento: vi.fn(),
@@ -46,6 +45,10 @@ const manager = () => ({
 	userId: usuarioId, tenantId, tenantRole: 'manager',
 	planFeatures: { compras: true, anticipos: true, 'contabilidad-formal': true },
 }) as never;
+
+beforeEach(() => {
+  actionContext.user = manager();
+});
 
 /** @description Prueba el writer de compra a crédito y su FX contra PostgreSQL aislado. */
 describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 90_000 }, () => {
@@ -80,9 +83,10 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			tenantId, planId, expiracion: new Date('2099-01-01'),
 		} });
       await prisma.$transaction((tx) => seedPlanContable(tx, tenantId));
+      await prisma.$transaction((tx) => seedPlantillasGlobales(tx));
       await prisma.moneda.upsert({
         where: { codigo: 'USD' },
-        update: { isActive: true },
+        update: {},
         create: { codigo: 'USD', nombre: 'Dólar', simbolo: '$', esPrincipal: false },
       });
       await prisma.tenantAccountingPolicy.create({ data: {
@@ -149,7 +153,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 	});
 
   it('registra compra extranjera y hereda FX al asiento de CxP', async () => {
-		const result = await createCompraProductoAction({
+		const result = await _createCompraProductoAction({
 			proveedorId,
 			formaPago: 'PAGO_PARCIAL',
 			estado: 'PENDIENTE',
@@ -157,7 +161,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			tasaCambio: 24,
 			fechaTasa: new Date().toISOString(),
 			items: [{ productoId, precioCosto: 100, cantidad: 1 }],
-		}, manager());
+		});
 		expect(result.success).toBe(true);
 		if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(result.data.compraDocumentoId).toBeTruthy();
@@ -178,7 +182,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
   });
 
   it('anular una compra a crédito crea reverso formal y preserva evidencia FX', async () => {
-    const result = await createCompraProductoAction({
+    const result = await _createCompraProductoAction({
       proveedorId,
       formaPago: 'PAGO_PARCIAL',
       estado: 'PENDIENTE',
@@ -186,7 +190,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
       tasaCambio: 24,
       fechaTasa: new Date().toISOString(),
       items: [{ productoId, precioCosto: 75, cantidad: 1 }],
-    }, manager());
+    });
     expect(result.success).toBe(true)
     if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
     const original = await prisma.asiento.findUniqueOrThrow({
@@ -202,7 +206,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 
     expect(result.success).toBe(true);
     if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
-    await anularCompraProductoAction({ id: result.data.compraDocumentoId }, manager());
+    await _anularCompraProductoAction({ id: result.data.compraDocumentoId });
 
     const anulado = await prisma.asiento.findUniqueOrThrow({
       where: { asientoId: original.asientoId },
@@ -247,11 +251,13 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
       items: [{ productoId, precioCosto: 100, cantidad: 1 }],
     };
 
-    const compra = await createCompraProductoAction(input, manager());
-    const retry = await createCompraProductoAction(input, manager());
+    const compra = await _createCompraProductoAction(input);
+    const retry = await _createCompraProductoAction(input);
+    expect(compra.success).toBe(true);
+    if (!compra.success) expect.unreachable('Se esperaba que la compra inicial tuviera exito');
     expect(retry.success).toBe(true);
     if (!retry.success) expect.unreachable('Se esperaba que la accion tuviera exito');
-    expect(retry.data.data.compraDocumentoId).toBe(compra.compraDocumentoId);
+    expect(retry.data.compraDocumentoId).toBe(compra.data.compraDocumentoId);
     const saldoFinal = (await prisma.cuentaBancaria.findUniqueOrThrow({
       where: { cuentaId: cuentaAnticipoId },
     })).saldo;
@@ -268,6 +274,9 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
       estado: 'PAGADA', moneda: 'USD',
     });
     expect(reconciliacion.tasaCambio?.toString()).toBe('24');
+    if (reconciliacion.montoConvertido === null) {
+      throw new Error('La reconciliación debía conservar el monto convertido');
+    }
     expect(reconciliacion.montoConvertido.toString()).toBe('2400');
     const asiento = await prisma.asiento.findMany({ where: {
       tenantId, origenTipo: 'reconciliacion_gasto', origenId: reconciliacion.reconciliacionId,
@@ -322,11 +331,21 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
       fechaFin: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59)),
     } });
     try {
+      actionContext.user = {
+        userId: usuarioUsd.userId,
+        name: `${prefixUsd} User`,
+        email: `${prefixUsd}@test.local`,
+        role: 'admin',
+        isActive: true,
+        tenantId: tenantUsdId,
+        tenantRole: 'manager',
+        planFeatures: { compras: true, anticipos: true, 'contabilidad-formal': true },
+      };
       const claveIdempotencia = `compra-usd-func-${crypto.randomUUID()}`;
       const saldoInicial = (await prisma.cuentaBancaria.findUniqueOrThrow({
         where: { cuentaId: cuentaUsd },
       })).saldo;
-      const compra = await createCompraProductoAction({
+      const compra = await _createCompraProductoAction({
         proveedorId: proveedorUsd.vendorId,
         formaPago: 'PAGO_COMPLETO',
         estado: 'PAGADA',
@@ -337,8 +356,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
         tipoPagoId: tipoPagoUsd,
         claveIdempotencia,
         items: [{ productoId: productoUsd.id, precioCosto: 100, cantidad: 1 }],
-      }, { userId: usuarioUsd.userId, tenantId: tenantUsdId, tenantRole: 'manager',
-        planFeatures: { compras: true, anticipos: true, 'contabilidad-formal': true } } as never);
+      });
       expect(compra.success).toBe(true);
       if (!compra.success) expect.unreachable('Se esperaba que la accion tuviera exito');
       expect(compra.data.compraDocumentoId).toBeTruthy();
@@ -405,18 +423,27 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
     })).saldo;
     const comprasAntes = await prisma.compraDocumento.count({ where: { tenantId } });
     const reconciliacionesAntes = await prisma.reconciliacionGasto.count({ where: { tenantId } });
+    const serverActionErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
-      await expect(createCompraProductoAction({
+      const result = await _createCompraProductoAction({
         proveedorId, formaPago: 'PAGO_COMPLETO', estado: 'PAGADA', moneda: 'CUP',
         cuentaId: cuentaAnticipoId, tipoPagoId: tipoPagoAnticipoId,
         items: [{ productoId, precioCosto: 101, cantidad: 1 }],
-      }, manager())).rejects.toThrow('pago contado fallido');
+      });
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba que el wrapper capturara el error SQL');
+      expect(result.error.code).toBe('INTERNAL_ERROR');
+      expect(serverActionErrorSpy).toHaveBeenCalledWith(
+        'Server Action Error:',
+        expect.objectContaining({ message: expect.stringContaining('pago contado fallido') }),
+      );
       expect(await prisma.compraDocumento.count({ where: { tenantId } })).toBe(comprasAntes);
       expect(await prisma.reconciliacionGasto.count({ where: { tenantId } })).toBe(reconciliacionesAntes);
       expect((await prisma.cuentaBancaria.findUniqueOrThrow({
         where: { cuentaId: cuentaAnticipoId },
       })).saldo).toEqual(saldoAntes);
     } finally {
+      serverActionErrorSpy.mockRestore();
       await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
       trigger = '';
@@ -441,7 +468,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 		} })).toBe(1);
 
     const compraClaveIdempotencia = `compra-${crypto.randomUUID()}`;
-    const compra = await createCompraProductoAction({
+    const compra = await _createCompraProductoAction({
 			proveedorId,
 			formaPago: 'ANTICIPO_PAGO',
 			estado: 'PAGADA',
@@ -450,7 +477,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			idempotencyKey: `advance-${crypto.randomUUID()}`,
       claveIdempotencia: compraClaveIdempotencia,
 			items: [{ productoId, precioCosto: 100, cantidad: 1 }],
-		}, manager());
+		});
 		expect(compra.success).toBe(true);
 		if (!compra.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 		expect(compra.data.compraDocumentoId).toBeTruthy();
@@ -495,14 +522,23 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			FOR EACH ROW WHEN (NEW."tenantId" = '${tenantId}') EXECUTE FUNCTION ${trigger}()`);
 		const comprasAntes = await prisma.compraDocumento.count({ where: { tenantId } });
 		const cxpAntes = await prisma.cuentaPorPagar.count({ where: { tenantId } });
+		const serverActionErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 		try {
-			await expect(createCompraProductoAction({
+			const result = await _createCompraProductoAction({
 				proveedorId, formaPago: 'PAGO_PARCIAL', estado: 'PENDIENTE', moneda: 'CUP',
 				items: [{ productoId, precioCosto: 101, cantidad: 1 }],
-			}, manager())).rejects.toThrow('compra posteo fallido');
+			});
+			expect(result.success).toBe(false);
+			if (result.success) expect.unreachable('Se esperaba que el wrapper capturara el error SQL');
+			expect(result.error.code).toBe('INTERNAL_ERROR');
+			expect(serverActionErrorSpy).toHaveBeenCalledWith(
+				'Server Action Error:',
+				expect.objectContaining({ message: expect.stringContaining('compra posteo fallido') }),
+			);
 			expect(await prisma.compraDocumento.count({ where: { tenantId } })).toBe(comprasAntes);
 			expect(await prisma.cuentaPorPagar.count({ where: { tenantId } })).toBe(cxpAntes);
 		} finally {
+			serverActionErrorSpy.mockRestore();
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
 			trigger = '';

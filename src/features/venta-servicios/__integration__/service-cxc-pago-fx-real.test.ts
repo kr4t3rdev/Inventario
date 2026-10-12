@@ -53,6 +53,7 @@ let tipoPagoId = '';
 let ventaUsdId = '';
 let ventaCupId = '';
 let cxcUsdId = 0;
+let fixtureRateId = '';
 const admin = (targetTenantId: string): AuthenticatedUser => ({
   userId: 'actor-serv-fx', name: 'Actor Integracion', email: 'actor-integracion@test.local',
   role: 'admin', isActive: true, tenantId: targetTenantId,
@@ -130,12 +131,12 @@ describe('fila 23 — pagos CxC servicios con FX de liquidación', { timeout: 90
     await prisma.tenantAccountingPolicy.create({
       data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId },
     });
-    await prisma.tasaCambio.create({
+    fixtureRateId = (await prisma.tasaCambio.create({
       data: {
         monedaOrigenId: 'USD', monedaDestino: 'CUP', tasa: 24,
-        fechaVigencia: new Date('2026-01-01T00:00:00Z'),
+        fechaVigencia: new Date(),
       },
-    });
+    })).tasaId;
     await prisma.$transaction(async (tx) => {
       await seedPlanContable(tx, tenantId);
       await seedPlantillasGlobales(tx);
@@ -166,9 +167,9 @@ describe('fila 23 — pagos CxC servicios con FX de liquidación', { timeout: 90
     await prisma.reconciliacionVenta.deleteMany({ where: { tenantId } });
     await prisma.cuentaPorCobrar.deleteMany({ where: { tenantId } });
     await prisma.ventaServicios.deleteMany({ where: { tenantId } });
-    await prisma.tasaCambio.deleteMany({
-      where: { monedaOrigenId: 'USD', monedaDestino: 'CUP' },
-    });
+    if (fixtureRateId) {
+      await prisma.tasaCambio.deleteMany({ where: { tasaId: fixtureRateId } });
+    }
     await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
     await prisma.tipoPago.deleteMany({ where: { tenantId } });
     await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });

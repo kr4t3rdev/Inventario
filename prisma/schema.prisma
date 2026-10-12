@@ -82,6 +82,7 @@ model InyeccionCapital {
   id                 String         @id @default(cuid())
   tenantId           String?
   idempotencyKey     String?
+  payloadFingerprint String?
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")

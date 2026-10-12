@@ -1,0 +1,107 @@
+{
+  "targetCommit": "4be1b3b0f7b41224077359c9c7646e4f7d36128a",
+  "database": "tcp_test_r6_release_4be1b3b0",
+  "runExit": 0,
+  "testCount": 21,
+  "passed": 21,
+  "failed": 0,
+  "scope": "fixed commit source with synthetic fixtures on inherited production-derived disposable database; mocks retain each suite original scope",
+  "suites": [
+    {
+      "path": "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: alta action concurrente, replay post-cierre y conflicto sin efectos",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: alta action concurrente, replay post-cierre y conflicto sin efectos",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pago parcial y final action keyed con replay post-cierre",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pago parcial y final action keyed con replay post-cierre",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pagos parcial/final m\u00f3vil conservan respuesta y estado ante replay/conflicto",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pagos parcial/final m\u00f3vil conservan respuesta y estado ante replay/conflicto",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: el replay action revalida permiso y rechaza claves inv\u00e1lidas",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: el replay action revalida permiso y rechaza claves inv\u00e1lidas",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: alta legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: alta legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pago legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pago legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'loan' alta legacy keyed=false revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'loan' alta legacy keyed=true revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'debt' alta legacy keyed=false revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'debt' alta legacy keyed=true revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) rejects requests without a Bearer session (401) on the three channels",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) posts one formal asiento per operation with the real actor in enforce",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) web transfer endpoint delegates to the same tenant-scoped formal writer",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) serializes concurrent PAGO_DEUDA_CAPITAL requests through the real Bearer channel",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) reintento de transferencia con mismo comprobante devuelve 409 sin duplicar (C3/G2)",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,386 @@
+{
+  "precommitSnapshot": "b5d866d1b6e552d5372c4223d75a5c6eeee84687",
+  "sourceTree": "9d279525d598e10941263fb669c7c3ecf6cd23d8",
+  "database": "tcp_test_r6_candidate_b5d866d1",
+  "runExit": 0,
+  "testCount": 80,
+  "passed": 80,
+  "failed": 0,
+  "scope": "synthetic fixtures/adapters on inherited state from fixed staged snapshot; no production acceptance",
+  "suites": [
+    {
+      "path": "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'venta_servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter caller de alta compra PAGO_COMPLETO revierte tambi\u00e9n documento, stock y costo",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra compra extranjera y hereda FX al asiento de CxP",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado anular una compra a cr\u00e9dito crea reverso formal y preserva evidencia FX",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra PAGO_COMPLETO como COMPRA_CONTADO, debita la cuenta y es idempotente",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado mantiene precio de inventario y asiento en la moneda funcional no-CUP",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte compra, reconciliaci\u00f3n y saldo si falla el asiento de PAGO_COMPLETO",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado devenga compra bruta, aplica anticipo al CxP sin segundo movimiento bancario",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte CxP y documento si falla SQL en el asiento de compra",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad-formal/__integration__/apertura-revision-approval.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL posts a balanced single journal with independent maker/checker and remains idempotent",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL rolls back journal and approval together when PostgreSQL rejects the journal insert",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL serializes competing approvals for two presented revisions of one opening",
+          "status": "passed"
+        },
+        {
+          "name": "manual CUP opening approval \u2014 disposable PostgreSQL freezes presented and approved revisions and lines at the database level",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: alta action concurrente, replay post-cierre y conflicto sin efectos",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: alta action concurrente, replay post-cierre y conflicto sin efectos",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pago parcial y final action keyed con replay post-cierre",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pago parcial y final action keyed con replay post-cierre",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pagos parcial/final m\u00f3vil conservan respuesta y estado ante replay/conflicto",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pagos parcial/final m\u00f3vil conservan respuesta y estado ante replay/conflicto",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: el replay action revalida permiso y rechaza claves inv\u00e1lidas",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: el replay action revalida permiso y rechaza claves inv\u00e1lidas",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: alta legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: alta legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales loan: pago legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales debt: pago legacy relee un commit intercalado antes del rechazo real del per\u00edodo",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'loan' alta legacy keyed=false revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'loan' alta legacy keyed=true revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'debt' alta legacy keyed=false revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        },
+        {
+          "name": "G5 \u2014 actions y adaptadores reales R6 'debt' alta legacy keyed=true revierte efectos tras auditor\u00eda SQL tard\u00eda",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) rejects requests without a Bearer session (401) on the three channels",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) posts one formal asiento per operation with the real actor in enforce",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) web transfer endpoint delegates to the same tenant-scoped formal writer",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) serializes concurrent PAGO_DEUDA_CAPITAL requests through the real Bearer channel",
+          "status": "passed"
+        },
+        {
+          "name": "operaciones contables \u2014 canales HTTP reales (filas 17\u201320) reintento de transferencia con mismo comprobante devuelve 409 sin duplicar (C3/G2)",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n venta USD a cr\u00e9dito crea CxC con snapshot FX v2 desde el cat\u00e1logo",
+          "status": "passed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n pago parcial en USD liquida al valor en libros y transmite la diferencia FX",
+          "status": "passed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n pago final completa la CxC, marca reconciliado y contabiliza el cierre FX",
+          "status": "passed"
+        },
+        {
+          "name": "fila 23 \u2014 pagos CxC servicios con FX de liquidaci\u00f3n sesi\u00f3n HTTP real: 401 sin token y 200 con Bearer en el canal servicios",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo devengo directo crea venta, CxC y asiento VENTA_SERVICIO_CREDITO",
+          "status": "passed"
+        },
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo fallo en el asiento revierte venta y CxC (rollback)",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) reejecutar vencimiento preserva pago, estado y snapshot de una CxC pagada",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO/vencimiento: la deuda queda por el total completo con pagado 0 (precommit y postcommit)",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) centavos: Decimal conserva 0,01 exactos en deuda y pago de la fila existente",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) moneda: una CxC hist\u00f3rica sin snapshot funcional se rechaza fail-closed",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) rollback: tras un error dentro de la tx la CxC queda exactamente como antes",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) contra_pago + MIXTO: cobra el total sin CxC y deja la factura PAGADA",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO+fecha con porci\u00f3n cobrada hoy: concilia 40 hoy y la CxC queda por 60",
+          "status": "passed"
+        },
+        {
+          "name": "gate 1.2: upsert de facturaci\u00f3n sobre CxC real (PostgreSQL aislado) MIXTO+fecha donde lo cobrado hoy cubre el total: sin CxC y factura PAGADA",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts a balanced real VENTA_CONTADO in enforce with original tenant actor",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer anular una venta revierte todos sus asientos formales sin borrar el historial",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer eliminar una n\u00f3mina revierte los asientos PAGO_NOMINA junto con caja y reconciliaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts COSTO_VENTA_DEVENGADO at the persisted functional purchase value",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer shadow preserves sale and records durable COGS valuation failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls sale, stock and FIFO allocation back when source FX is absent",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls back the sale and FIFO allocation when the COGS asiento insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back a USD cash sale without applied FX evidence",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer commits the cash sale and durable ERROR_SHADOW after a real formal posting SQL failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back the sale when durable shadow outbox insertion fails",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}
