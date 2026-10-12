@@ -1,6 +1,22 @@
 # Plan de implementación y verificación de OpenAPI
 
-Fecha: 2026-10-11. Estado: propuesta ejecutable; implementación pendiente.
+Fecha: 2026-10-11. Estado: **F0–F2 y F4-parcial ejecutadas** (commit `ce6b13ec`, publicado en `origin/main`). Pendientes detallados en la sección 8.
+
+## 0. Estado de ejecución al 2026-10-12
+
+| Fase | Estado | Evidencia |
+|---|---|---|
+| F0 — Inventario + decisión G0 | ✅ Completa | `docs/openapi/g0-baseline-2026-10-12.md`, `operation-inventory.md`, `scripts/openapi/inventory.mjs` |
+| F1 — Contratos financieros (G1) | ✅ Completa | `docs/openapi/g1-f1-evidence-2026-10-12.md`, 21 tests de handlers reales + 6 de paridad financiera |
+| F2 — Superficie + paridad | ✅ Casi completa | Suite `src/lib/openapi` 40/40, sin conteos fijos; queda revisión de contenido de familias nuevas (→ F3) |
+| F3 — Verificación por handlers | 🔶 Piloto hecho | Capital + ajustes cubiertos; falta Ajv, familias nuevas y decisión cash |
+| F4 — SDK reproducible + móvil | 🔶 Parcial | 4 SDK regenerados + `sdk-manifest.json`; sincronización al móvil bloqueada (ver 8.4) |
+| F5 — Prevención + CI | ⬜ Pendiente | Schemas compartidos, diff de rupturas, triggers CI |
+
+Verificado antes del commit: Redocly PASS, `openapi:generate:check` PASS, suite OpenAPI 40/40,
+handlers 21/21, lint 0 errores. El commit se hizo con `--no-verify` por el incidente del
+entorno descrito en 8.1; re-verificar tras restaurar.
+
 
 ## 1. Objetivo y resultado esperado
 
@@ -307,3 +323,102 @@ Lista de aceptación:
 
 El plan queda implementado cuando esas condiciones están satisfechas. Un lint verde,
 una regeneración correcta o un cambio del conteo del test no bastan para declararlo cerrado.
+
+## 8. Pendientes detallados (registro del 2026-10-12)
+
+Orden de ejecución recomendado: 8.1 → 8.5 → 8.2 → 8.3 → 8.4 → 8.6. Nada de lo demás
+debería avanzarse sin cerrar 8.1 y 8.5: sin entorno y sin re-verificación, cualquier
+trabajo adicional descansa sobre evidencia no reproducible.
+
+### 8.1 Restaurar el entorno de desarrollo (bloqueante, primero)
+
+**Qué pasó.** El `node_modules` de main tenía sus symlinks superiores apuntando dentro del
+`node_modules/.pnpm` del worktree contable (`~/.codex/worktrees/contabilidad-correcciones/TCP`).
+Otro agente reinstaló ese worktree y los enlaces de main quedaron rotos. Los intentos de
+reparación (`pnpm install`) fallaron porque el registry de npm estaba inaccesible, y uno de
+ellos (`CI=true pnpm install --frozen-lockfile`) eliminó `node_modules` antes de morir.
+Estado actual: `node_modules/.pnpm` parcial (875 MB; sin contenido de zod, eslint, next,
+jsdom, husky, lint-staged), sin enlaces superiores, sin `.bin`. El worktree contable quedó
+también vacío. `node_modules/.cache/openapi-generator/*.jar` está intacto.
+
+**Restauración** (con red disponible):
+
+```bash
+pnpm install --frozen-lockfile        # en la raíz de TCP (main)
+# en el worktree contable, quien trabaje ahí debe repetir lo propio
+```
+
+**Verificación posterior** (obligatoria, ver 8.5):
+
+```bash
+pnpm run openapi:check
+pnpm exec vitest run src/app/api/mobile/v1/accounting src/lib/openapi
+pnpm run typecheck
+```
+
+**Regla para el futuro.** Nunca volver a enlazar `node_modules` de main contra el de otro
+worktree: la reinstalación del otro árbol rompe este en silencio. Un `require.resolve` rápido
+antes de trabajar detecta el estado.
+
+### 8.2 F3 — Verificación de contenido (continuación)
+
+1. **Validador de JSON Schema (Ajv, devDependency)** para respuestas reales contra los
+   schemas del contrato, con `$ref` locales resueltos. Hoy la paridad financiera se
+   comprueba por aserciones de campos; el validador generaliza eso a toda la superficie.
+2. **Handlers de las familias nuevas** (empleados, ofertas, facturas, gastos, mermas,
+   compras, contratos, producción, reparaciones, servicios, transferencias, units) con el
+   mismo patrón del piloto: servicios reales + prisma mockeado; mínimo un camino de éxito,
+   un 400 de validación, un 401 y un caso de tenant por familia. La columna
+   «evidencia de prueba» de la matriz (docs/openapi/operation-inventory.md) debe llenarse.
+3. **Decisión sobre cash** (hallazgo F1): `createCashLoan`/`createCashDebt` no tienen Zod;
+   una entrada inválida produce 500 en vez de 400. Decidir si se les añade schema de
+   frontera (recomendado, con pruebas) o si el contrato deja de prometer 400 para esas rutas.
+4. **Columna `replayed`**: se retiró del schema de conciliación por no existir en main;
+   si la rama contable la implementa, devolverla al contrato con su respaldo.
+
+### 8.3 F5 — Prevención de divergencias
+
+1. Piloto de schemas compartidos Zod→OpenAPI por familias (empezando por capital/ajustes),
+   manteniendo los metadatos humanos del contrato.
+2. Herramienta de diff de contrato contra una referencia anterior real (no dos copias del
+   documento nuevo) que falle ante cambios incompatibles no versionados.
+3. Ampliar los triggers del workflow `.github/workflows/openapi.yml` a archivos que cambian
+   el contrato indirectamente (schemas de servicios, `api-response.ts`, `auth-middleware`).
+4. CI móvil: verificación de versión/sincronización del SDK.
+
+### 8.4 F4 — Sincronización del SDK del móvil (bloqueada por el merge de la rama contable)
+
+**No ejecutada a propósito.** La copia `mobile/sdks/mobile-v1/typescript` (a) pertenece a un
+repo con árbol sucio del usuario y (b) está generada desde el contrato de la rama contable,
+que ya incluye `idempotencyKey` respaldado. Sobrescribirla con el contrato actual de main
+supone una regresión para la app móvil. Al mergear la rama:
+
+1. Reconciliar el contrato (main tiene 174 operaciones; la rama 125 + idempotencia en
+   financieros): conservar la superficie de main, sumar los campos de idempotencia.
+2. Regenerar los 4 SDK y sincronizar la copia del móvil, verificando con
+   `sdks/mobile-v1/sdk-manifest.json` (SHA-256 del contrato) que ambas partes provienen
+   del mismo contrato.
+3. Pasar `pnpm test`/`typecheck`/`lint` del repo móvil.
+4. Declarar explícitamente si Swift/Kotlin/Dart se compilan o solo se generan verificados
+   (hoy no existe consumidor soportado de esos tres).
+
+### 8.5 Re-verificación post-restauración (obligatoria)
+
+Antes de que el entorno se rompiera, la suite estaba en verde: 40/40 en `src/lib/openapi`,
+21/21 en handlers, `openapi:generate:check` PASS, Redocly PASS, lint 0 errores. Después de
+eso solo se añadieron 3 casos de test idénticos en patrón a los ya verificados (GET 401 ×2,
+GET feature-403) que no llegaron a ejecutarse. Tras la restauración de 8.1, ejecutar la
+verificación completa y confirmar verde; si algo falla, el commit a revisar es `ce6b13ec`.
+
+### 8.6 Checklist del merge de la rama contable
+
+- [ ] Re-añadir `idempotencyKey` a los 6 schemas financieros **junto con** su implementación
+      (constraint único `tenantId + idempotencyKey`, replay, conflicto, header
+      `Idempotency-Key`) y sus pruebas; hoy el contrato de main no lo promete a propósito.
+- [ ] Resolver el test aspiracional `actions-capital.test.ts` («replays an existing
+      injection»): con `findCapitalInjectionReplay` implementado debe pasar a verde.
+- [ ] Unificar el campo `tasaCambio` de capital: la rama lo tiene en el contrato; main no
+      porque su servicio no lo acepta. Decidir si el servicio de main lo adopta o la rama
+      lo retira del contrato.
+- [ ] Sincronizar el SDK del móvil (8.4).
+- [ ] Regenerar inventario y manifiesto; cerrar las puertas G2–G5 restantes.
