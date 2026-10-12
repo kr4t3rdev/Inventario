@@ -16101,20 +16101,31 @@
       },
       "Pagination": {
         "type": "object",
+        "description": "Paginación.",
         "properties": {
           "page": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Página actual"
           },
           "limit": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Por página"
           },
           "total": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Total"
           },
           "totalPages": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Total páginas"
           }
         },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ],
         "additionalProperties": false
       },
       "Identifier": {
@@ -21522,103 +21533,951 @@
       },
       "GetFacturasListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetFacturasListResponse)."
+        "description": "GET /facturas.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Listado de facturas"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetFacturasDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetFacturasDetailResponse)."
+        "description": "GET /facturas/{id}.",
+        "properties": {
+          "factura": {
+            "type": "object",
+            "description": "Detalle de factura"
+          }
+        },
+        "required": [
+          "factura"
+        ],
+        "additionalProperties": false
       },
       "GetOfertasListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetOfertasListResponse)."
+        "description": "GET /ofertas.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Listado de ofertas"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetOfertasDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetOfertasDetailResponse)."
+        "description": "GET /ofertas/{id}.",
+        "properties": {
+          "oferta": {
+            "type": "object",
+            "description": "Detalle de oferta"
+          }
+        },
+        "required": [
+          "oferta"
+        ],
+        "additionalProperties": false
       },
       "GetComprasListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetComprasListResponse)."
+        "description": "GET /compras.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Listado de compras"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetComprasDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetComprasDetailResponse)."
+        "description": "GET /compras/{id}.",
+        "properties": {
+          "compra": {
+            "type": "object",
+            "description": "Detalle de compra"
+          }
+        },
+        "required": [
+          "compra"
+        ],
+        "additionalProperties": false
       },
       "GetTransferenciasListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetTransferenciasListResponse)."
+        "description": "GET /transferencias.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transferencia"
+            },
+            "description": ""
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetTransferenciasDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetTransferenciasDetailResponse)."
+        "description": "GET /transferencias/{id}.",
+        "properties": {
+          "transferencia": {
+            "$ref": "#/components/schemas/Transferencia"
+          }
+        },
+        "required": [
+          "transferencia"
+        ],
+        "additionalProperties": false
       },
       "GetMermasListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetMermasListResponse)."
+        "description": "GET /mermas.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Merma"
+            },
+            "description": ""
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetMermasDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetMermasDetailResponse)."
+        "description": "GET /mermas/{id}.",
+        "properties": {
+          "merma": {
+            "$ref": "#/components/schemas/Merma"
+          }
+        },
+        "required": [
+          "merma"
+        ],
+        "additionalProperties": false
       },
       "GetServiciosListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetServiciosListResponse)."
+        "description": "GET /servicios.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Servicio"
+            },
+            "description": ""
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetServiciosDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetServiciosDetailResponse)."
+        "description": "GET /servicios/{id}.",
+        "properties": {
+          "servicio": {
+            "$ref": "#/components/schemas/Servicio"
+          }
+        },
+        "required": [
+          "servicio"
+        ],
+        "additionalProperties": false
       },
       "GetContratosListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetContratosListResponse)."
+        "description": "GET /contratos.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Contrato"
+            },
+            "description": ""
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetContratosDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetContratosDetailResponse)."
+        "description": "GET /contratos/{id}.",
+        "properties": {
+          "contrato": {
+            "$ref": "#/components/schemas/Contrato"
+          }
+        },
+        "required": [
+          "contrato"
+        ],
+        "additionalProperties": false
       },
       "GetProduccionListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetProduccionListResponse)."
+        "description": "GET /produccion.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrdenProduccion"
+            },
+            "description": ""
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetProduccionDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetProduccionDetailResponse)."
+        "description": "GET /produccion/{id}.",
+        "properties": {
+          "orden": {
+            "$ref": "#/components/schemas/OrdenProduccion"
+          }
+        },
+        "required": [
+          "orden"
+        ],
+        "additionalProperties": false
       },
       "GetReparacionesListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetReparacionesListResponse)."
+        "description": "GET /reparaciones.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrdenReparacion"
+            },
+            "description": ""
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetReparacionesDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetReparacionesDetailResponse)."
+        "description": "GET /reparaciones/{id}.",
+        "properties": {
+          "orden": {
+            "$ref": "#/components/schemas/OrdenReparacion"
+          }
+        },
+        "required": [
+          "orden"
+        ],
+        "additionalProperties": false
       },
       "GetEmpleadosListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetEmpleadosListResponse)."
+        "description": "GET /empleados.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Empleado"
+            },
+            "description": ""
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetEmpleadosDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetEmpleadosDetailResponse)."
+        "description": "GET /empleados/{id}.",
+        "properties": {
+          "empleado": {
+            "$ref": "#/components/schemas/Empleado"
+          }
+        },
+        "required": [
+          "empleado"
+        ],
+        "additionalProperties": false
       },
       "GetGastosListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetGastosListResponse)."
+        "description": "GET /gastos.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Gasto"
+            },
+            "description": ""
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetGastosDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetGastosDetailResponse)."
+        "description": "GET /gastos/{id}.",
+        "properties": {
+          "gasto": {
+            "$ref": "#/components/schemas/Gasto"
+          }
+        },
+        "required": [
+          "gasto"
+        ],
+        "additionalProperties": false
       },
       "GetUnitsListResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetUnitsListResponse)."
+        "description": "GET /units.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Unit"
+            },
+            "description": ""
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
       },
       "GetUnitsDetailResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (GetUnitsDetailResponse)."
+        "description": "GET /units/{id}.",
+        "properties": {
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          }
+        },
+        "required": [
+          "unit"
+        ],
+        "additionalProperties": false
       },
       "DeleteUnitResponse": {
         "type": "object",
-        "description": "Respuesta del endpoint mobile v1 (DeleteUnitResponse)."
+        "description": "DELETE /units/{id}.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operación exitosa"
+          }
+        },
+        "required": [
+          "success"
+        ],
+        "additionalProperties": false
+      },
+      "Transferencia": {
+        "type": "object",
+        "description": "Transferencia entre ubicaciones.",
+        "properties": {
+          "transferenciaId": {
+            "type": "string",
+            "description": ""
+          },
+          "numeroTransferencia": {
+            "type": "string",
+            "description": ""
+          },
+          "productoId": {
+            "type": "string",
+            "description": ""
+          },
+          "productoNombre": {
+            "type": "string",
+            "description": ""
+          },
+          "productoCodigo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "cantidad": {
+            "type": "number",
+            "description": ""
+          },
+          "costoUnitario": {
+            "type": "number",
+            "description": ""
+          },
+          "costoTotal": {
+            "type": "number",
+            "description": ""
+          },
+          "origenNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "destinoNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "estado": {
+            "type": "string",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "transferenciaId",
+          "productoId",
+          "productoNombre",
+          "cantidad",
+          "estado",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "Merma": {
+        "type": "object",
+        "description": "Merma.",
+        "properties": {
+          "mermaId": {
+            "type": "string",
+            "description": ""
+          },
+          "productoId": {
+            "type": "string",
+            "description": ""
+          },
+          "productoNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "productoCodigo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "cantidad": {
+            "type": "number",
+            "description": ""
+          },
+          "motivo": {
+            "type": "string",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "mermaId",
+          "productoId",
+          "cantidad",
+          "motivo",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Servicio": {
+        "type": "object",
+        "description": "Servicio.",
+        "properties": {
+          "servicioId": {
+            "type": "string",
+            "description": ""
+          },
+          "nombre": {
+            "type": "string",
+            "description": ""
+          },
+          "descripcion": {
+            "type": "string",
+            "description": ""
+          },
+          "precio": {
+            "type": "number",
+            "description": ""
+          },
+          "moneda": {
+            "type": "string",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "servicioId",
+          "nombre",
+          "precio",
+          "moneda"
+        ],
+        "additionalProperties": false
+      },
+      "Contrato": {
+        "type": "object",
+        "description": "Contrato.",
+        "properties": {
+          "contratoId": {
+            "type": "string",
+            "description": ""
+          },
+          "clienteId": {
+            "type": "string",
+            "description": ""
+          },
+          "clienteNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "numeroContrato": {
+            "type": "string",
+            "description": ""
+          },
+          "observaciones": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "monto": {
+            "type": "number",
+            "description": ""
+          },
+          "estado": {
+            "type": "string",
+            "description": ""
+          },
+          "fechaInicio": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "fechaFin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "contratoId",
+          "clienteId",
+          "numeroContrato",
+          "monto",
+          "estado",
+          "fechaInicio"
+        ],
+        "additionalProperties": false
+      },
+      "Gasto": {
+        "type": "object",
+        "description": "Gasto.",
+        "properties": {
+          "gastoId": {
+            "type": "string",
+            "description": ""
+          },
+          "conceptoId": {
+            "type": "string",
+            "description": ""
+          },
+          "conceptoNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "monto": {
+            "type": "number",
+            "description": ""
+          },
+          "descripcion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "comprobante": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "estado": {
+            "type": "string",
+            "description": ""
+          },
+          "periodo": {
+            "type": "string",
+            "description": ""
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "gastoId",
+          "conceptoId",
+          "monto",
+          "estado",
+          "fecha"
+        ],
+        "additionalProperties": false
+      },
+      "Empleado": {
+        "type": "object",
+        "description": "Empleado.",
+        "properties": {
+          "empleadoId": {
+            "type": "string",
+            "description": ""
+          },
+          "nombre": {
+            "type": "string",
+            "description": ""
+          },
+          "apellido": {
+            "type": "string",
+            "description": ""
+          },
+          "telefono": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "cargo": {
+            "type": "string",
+            "description": ""
+          },
+          "salarioBases": {
+            "type": "integer",
+            "description": ""
+          },
+          "fechaContratacion": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "esTiempoCompleto": {
+            "type": "boolean",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "empleadoId",
+          "nombre",
+          "apellido",
+          "cargo"
+        ],
+        "additionalProperties": false
+      },
+      "OrdenProduccion": {
+        "type": "object",
+        "description": "Orden de producción.",
+        "properties": {
+          "ordenId": {
+            "type": "string",
+            "description": ""
+          },
+          "recetaId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "recetaNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "productoNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "cantidad": {
+            "type": "integer",
+            "description": ""
+          },
+          "estado": {
+            "type": "string",
+            "description": ""
+          },
+          "fechaProduccion": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "costoMateriales": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "ordenId",
+          "cantidad",
+          "estado"
+        ],
+        "additionalProperties": false
+      },
+      "OrdenReparacion": {
+        "type": "object",
+        "description": "Orden de reparación.",
+        "properties": {
+          "ordenId": {
+            "type": "string",
+            "description": ""
+          },
+          "numeroOrden": {
+            "type": "integer",
+            "description": ""
+          },
+          "clienteNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "equipoTipo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "marca": {
+            "type": "string",
+            "description": ""
+          },
+          "modelo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "problemaReportado": {
+            "type": "string",
+            "description": ""
+          },
+          "estado": {
+            "type": "string",
+            "description": ""
+          },
+          "prioridad": {
+            "type": "string",
+            "description": ""
+          },
+          "esGarantia": {
+            "type": "boolean",
+            "description": ""
+          },
+          "tecnicoNombre": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": ""
+          },
+          "fechaRecepcion": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "ordenId",
+          "numeroOrden",
+          "marca",
+          "problemaReportado",
+          "estado"
+        ],
+        "additionalProperties": false
+      },
+      "Unit": {
+        "type": "object",
+        "description": "Unidad de medida.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "nombre": {
+            "type": "string",
+            "description": ""
+          },
+          "simbolo": {
+            "type": "string",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "simbolo"
+        ],
+        "additionalProperties": false
       }
     }
   }
