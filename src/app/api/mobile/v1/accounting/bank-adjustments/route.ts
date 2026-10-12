@@ -1,4 +1,5 @@
 import { ActionError } from '@/lib/server-actions';
+import { z } from 'zod';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
@@ -35,10 +36,15 @@ export async function GET(request: Request) {
     return authResult as Response;
   }
 
+  const tenantId = authResult.user.tenantId;
+  if (!tenantId) {
+    return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const result = await AccountingOperationsReadService.getBankAdjustments({
-      tenantId: requireTenant(authResult.user),
+      tenantId,
       cuentaId: searchParams.get('cuentaId') || 'all',
       tipo: searchParams.get('tipo'),
       fechaInicio: searchParams.get('fechaInicio'),
@@ -88,6 +94,9 @@ export async function POST(request: Request) {
     });
     return successResponse(result);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return errorResponse('Los datos del ajuste bancario no son válidos', 400, 'VALIDATION_ERROR');
+    }
     if (error instanceof ActionError) {
       return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
     }

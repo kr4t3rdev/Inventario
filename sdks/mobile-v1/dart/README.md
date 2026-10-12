@@ -186,6 +186,10 @@ Class | Method | HTTP request | Description
 *ClientsApi* | [**mobileGetClientsById**](doc//ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente
 *ClientsApi* | [**mobilePostClientsCreate**](doc//ClientsApi.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente
 *ClientsApi* | [**mobilePutClientsById**](doc//ClientsApi.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente
+*ComprasApi* | [**mobileGetComprasById**](doc//ComprasApi.md#mobilegetcomprasbyid) | **GET** /compras/{id} | Detalle de compra
+*ComprasApi* | [**mobileListCompras**](doc//ComprasApi.md#mobilelistcompras) | **GET** /compras | Listar compras
+*ContratosApi* | [**mobileGetContratosById**](doc//ContratosApi.md#mobilegetcontratosbyid) | **GET** /contratos/{id} | Detalle de contrato
+*ContratosApi* | [**mobileListContratos**](doc//ContratosApi.md#mobilelistcontratos) | **GET** /contratos | Listar contratos
 *DashboardApi* | [**mobileGetDashboardDailyAverage**](doc//DashboardApi.md#mobilegetdashboarddailyaverage) | **GET** /dashboard/daily-average | Consultar promedio diario de ingresos
 *DashboardApi* | [**mobileGetDashboardIncomeExpenses**](doc//DashboardApi.md#mobilegetdashboardincomeexpenses) | **GET** /dashboard/income-expenses | Consultar ingresos vs gastos del panel
 *DashboardApi* | [**mobileGetDashboardInventoryValue**](doc//DashboardApi.md#mobilegetdashboardinventoryvalue) | **GET** /dashboard/inventory-value | Consultar valor total del inventario
@@ -195,6 +199,18 @@ Class | Method | HTTP request | Description
 *DashboardApi* | [**mobileGetDashboardTodaySales**](doc//DashboardApi.md#mobilegetdashboardtodaysales) | **GET** /dashboard/today-sales | Consultar ventas de hoy
 *DashboardApi* | [**mobileGetDashboardTopProducts**](doc//DashboardApi.md#mobilegetdashboardtopproducts) | **GET** /dashboard/top-products | Consultar productos más vendidos
 *DashboardApi* | [**mobileGetDashboardTransfers**](doc//DashboardApi.md#mobilegetdashboardtransfers) | **GET** /dashboard/transfers | Consultar transferencias entre ubicaciones
+*EmpleadosApi* | [**mobileGetEmpleadosById**](doc//EmpleadosApi.md#mobilegetempleadosbyid) | **GET** /empleados/{id} | Detalle de empleado
+*EmpleadosApi* | [**mobileListEmpleados**](doc//EmpleadosApi.md#mobilelistempleados) | **GET** /empleados | Listar empleados
+*FacturasApi* | [**mobileGetFacturasById**](doc//FacturasApi.md#mobilegetfacturasbyid) | **GET** /facturas/{id} | Detalle de factura
+*FacturasApi* | [**mobileListFacturas**](doc//FacturasApi.md#mobilelistfacturas) | **GET** /facturas | Listar facturas
+*GastosApi* | [**mobileGetGastosById**](doc//GastosApi.md#mobilegetgastosbyid) | **GET** /gastos/{id} | Detalle de gasto
+*GastosApi* | [**mobileListGastos**](doc//GastosApi.md#mobilelistgastos) | **GET** /gastos | Listar gastos
+*MermasApi* | [**mobileGetMermasById**](doc//MermasApi.md#mobilegetmermasbyid) | **GET** /mermas/{id} | Detalle de merma
+*MermasApi* | [**mobileListMermas**](doc//MermasApi.md#mobilelistmermas) | **GET** /mermas | Listar mermas
+*OfertasApi* | [**mobileGetOfertasById**](doc//OfertasApi.md#mobilegetofertasbyid) | **GET** /ofertas/{id} | Detalle de oferta
+*OfertasApi* | [**mobileListOfertas**](doc//OfertasApi.md#mobilelistofertas) | **GET** /ofertas | Listar ofertas
+*ProduccinApi* | [**mobileGetProduccionById**](doc//ProduccinApi.md#mobilegetproduccionbyid) | **GET** /produccion/{id} | Detalle de orden de producción
+*ProduccinApi* | [**mobileListProduccion**](doc//ProduccinApi.md#mobilelistproduccion) | **GET** /produccion | Listar órdenes de producción
 *ProductsApi* | [**mobileGetProducts**](doc//ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsApi* | [**mobileGetProductsById**](doc//ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsApi* | [**mobileGetProductsStock**](doc//ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
@@ -203,11 +219,21 @@ Class | Method | HTTP request | Description
 *ProvidersApi* | [**mobileGetProvidersById**](doc//ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
 *ProvidersApi* | [**mobilePostProvidersCreate**](doc//ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor
 *ProvidersApi* | [**mobilePutProvidersById**](doc//ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor
+*ReparacionesApi* | [**mobileGetReparacionesById**](doc//ReparacionesApi.md#mobilegetreparacionesbyid) | **GET** /reparaciones/{id} | Detalle de orden de reparación
+*ReparacionesApi* | [**mobileListReparaciones**](doc//ReparacionesApi.md#mobilelistreparaciones) | **GET** /reparaciones | Listar órdenes de reparación
 *SalesApi* | [**mobileGetSales**](doc//SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas
 *SalesApi* | [**mobileGetSalesById**](doc//SalesApi.md#mobilegetsalesbyid) | **GET** /sales/{id} | Consultar venta
 *SalesApi* | [**mobilePatchSalesByIdUpdate**](doc//SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta
 *SalesApi* | [**mobilePostSalesByIdCancel**](doc//SalesApi.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta
 *SalesApi* | [**mobilePostSalesCreate**](doc//SalesApi.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta
+*ServiciosApi* | [**mobileGetServiciosById**](doc//ServiciosApi.md#mobilegetserviciosbyid) | **GET** /servicios/{id} | Detalle de servicio
+*ServiciosApi* | [**mobileListServicios**](doc//ServiciosApi.md#mobilelistservicios) | **GET** /servicios | Listar servicios
+*TransferenciasApi* | [**mobileGetTransferenciasById**](doc//TransferenciasApi.md#mobilegettransferenciasbyid) | **GET** /transferencias/{id} | Detalle de transferencia
+*TransferenciasApi* | [**mobileListTransferencias**](doc//TransferenciasApi.md#mobilelisttransferencias) | **GET** /transferencias | Listar transferencias
+*UnitsApi* | [**mobileCreateUnit**](doc//UnitsApi.md#mobilecreateunit) | **POST** /units/create | Crear unidad
+*UnitsApi* | [**mobileDeleteUnit**](doc//UnitsApi.md#mobiledeleteunit) | **DELETE** /units/{id} | Eliminar unidad
+*UnitsApi* | [**mobileListUnits**](doc//UnitsApi.md#mobilelistunits) | **GET** /units | Listar unidades
+*UnitsApi* | [**mobileUpdateUnit**](doc//UnitsApi.md#mobileupdateunit) | **PUT** /units/{id} | Actualizar unidad
 *WarehousesApi* | [**mobileDeleteWarehousesById**](doc//WarehousesApi.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén
 *WarehousesApi* | [**mobileGetWarehouses**](doc//WarehousesApi.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes
 *WarehousesApi* | [**mobileGetWarehousesById**](doc//WarehousesApi.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén
@@ -263,6 +289,7 @@ Class | Method | HTTP request | Description
  - [AdminUserSummary](doc//AdminUserSummary.md)
  - [Advance](doc//Advance.md)
  - [AdvanceWorkflowResult](doc//AdvanceWorkflowResult.md)
+ - [AjusteBancario](doc//AjusteBancario.md)
  - [Almacen](doc//Almacen.md)
  - [AlmacenCreateRequest](doc//AlmacenCreateRequest.md)
  - [AlmacenDeleteResponse](doc//AlmacenDeleteResponse.md)
@@ -298,6 +325,8 @@ Class | Method | HTTP request | Description
  - [ClienteDeleteResponse](doc//ClienteDeleteResponse.md)
  - [ClienteListResponse](doc//ClienteListResponse.md)
  - [ClienteUpdateRequest](doc//ClienteUpdateRequest.md)
+ - [Compra](doc//Compra.md)
+ - [Contrato](doc//Contrato.md)
  - [Currency](doc//Currency.md)
  - [DashboardDatosPorMes](doc//DashboardDatosPorMes.md)
  - [DashboardDatosPorSemana](doc//DashboardDatosPorSemana.md)
@@ -321,9 +350,13 @@ Class | Method | HTTP request | Description
  - [DashboardVentasDiarias](doc//DashboardVentasDiarias.md)
  - [DeleteAccountingAdvancesIdResponse](doc//DeleteAccountingAdvancesIdResponse.md)
  - [DeleteAccountingPaymentTypesIdResponse](doc//DeleteAccountingPaymentTypesIdResponse.md)
+ - [DeleteUnitResponse](doc//DeleteUnitResponse.md)
+ - [Empleado](doc//Empleado.md)
  - [ExchangeRate](doc//ExchangeRate.md)
  - [ExpenseDistributionRequest](doc//ExpenseDistributionRequest.md)
  - [ExpenseReconciliationRequest](doc//ExpenseReconciliationRequest.md)
+ - [Factura](doc//Factura.md)
+ - [Gasto](doc//Gasto.md)
  - [GetAccountingAccountsPayableResponse](doc//GetAccountingAccountsPayableResponse.md)
  - [GetAccountingAccountsReceivableMetricsResponse](doc//GetAccountingAccountsReceivableMetricsResponse.md)
  - [GetAccountingAccountsReceivableResponse](doc//GetAccountingAccountsReceivableResponse.md)
@@ -377,15 +410,45 @@ Class | Method | HTTP request | Description
  - [GetAdminUserDetailResponse](doc//GetAdminUserDetailResponse.md)
  - [GetAdminUserLoginHistoryResponse](doc//GetAdminUserLoginHistoryResponse.md)
  - [GetAdminUsersResponse](doc//GetAdminUsersResponse.md)
+ - [GetComprasDetailResponse](doc//GetComprasDetailResponse.md)
+ - [GetComprasListResponse](doc//GetComprasListResponse.md)
+ - [GetContratosDetailResponse](doc//GetContratosDetailResponse.md)
+ - [GetContratosListResponse](doc//GetContratosListResponse.md)
  - [GetDashboardStatsResponse](doc//GetDashboardStatsResponse.md)
+ - [GetEmpleadosDetailResponse](doc//GetEmpleadosDetailResponse.md)
+ - [GetEmpleadosListResponse](doc//GetEmpleadosListResponse.md)
+ - [GetFacturasDetailResponse](doc//GetFacturasDetailResponse.md)
+ - [GetFacturasListResponse](doc//GetFacturasListResponse.md)
+ - [GetGastosDetailResponse](doc//GetGastosDetailResponse.md)
+ - [GetGastosListResponse](doc//GetGastosListResponse.md)
+ - [GetMermasDetailResponse](doc//GetMermasDetailResponse.md)
+ - [GetMermasListResponse](doc//GetMermasListResponse.md)
+ - [GetOfertasDetailResponse](doc//GetOfertasDetailResponse.md)
+ - [GetOfertasListResponse](doc//GetOfertasListResponse.md)
+ - [GetProduccionDetailResponse](doc//GetProduccionDetailResponse.md)
+ - [GetProduccionListResponse](doc//GetProduccionListResponse.md)
  - [GetProductsIdResponse](doc//GetProductsIdResponse.md)
  - [GetProductsResponse](doc//GetProductsResponse.md)
  - [GetProductsStockResponse](doc//GetProductsStockResponse.md)
+ - [GetReparacionesDetailResponse](doc//GetReparacionesDetailResponse.md)
+ - [GetReparacionesListResponse](doc//GetReparacionesListResponse.md)
  - [GetSalesIdResponse](doc//GetSalesIdResponse.md)
  - [GetSalesResponse](doc//GetSalesResponse.md)
+ - [GetServiciosDetailResponse](doc//GetServiciosDetailResponse.md)
+ - [GetServiciosListResponse](doc//GetServiciosListResponse.md)
+ - [GetTransferenciasDetailResponse](doc//GetTransferenciasDetailResponse.md)
+ - [GetTransferenciasListResponse](doc//GetTransferenciasListResponse.md)
+ - [GetUnitsDetailResponse](doc//GetUnitsDetailResponse.md)
+ - [GetUnitsListResponse](doc//GetUnitsListResponse.md)
  - [JsonValue](doc//JsonValue.md)
  - [LockAdminUserRequest](doc//LockAdminUserRequest.md)
  - [LoginRequest](doc//LoginRequest.md)
+ - [Merma](doc//Merma.md)
+ - [MobileCreateUnitRequest](doc//MobileCreateUnitRequest.md)
+ - [MobileUpdateUnitRequest](doc//MobileUpdateUnitRequest.md)
+ - [Oferta](doc//Oferta.md)
+ - [OrdenProduccion](doc//OrdenProduccion.md)
+ - [OrdenReparacion](doc//OrdenReparacion.md)
  - [Pagination](doc//Pagination.md)
  - [PatchAdminTenantsLicenseUpdateResponse](doc//PatchAdminTenantsLicenseUpdateResponse.md)
  - [PatchAdminTenantsUpdateResponse](doc//PatchAdminTenantsUpdateResponse.md)
@@ -471,6 +534,7 @@ Class | Method | HTTP request | Description
  - [SaleUpdateRequest](doc//SaleUpdateRequest.md)
  - [ServiceDistributionRequest](doc//ServiceDistributionRequest.md)
  - [ServiceReconciliationRequest](doc//ServiceReconciliationRequest.md)
+ - [Servicio](doc//Servicio.md)
  - [SuccessResponse](doc//SuccessResponse.md)
  - [SwitchTenantRequest](doc//SwitchTenantRequest.md)
  - [SwitchTenantResponse](doc//SwitchTenantResponse.md)
@@ -478,6 +542,8 @@ Class | Method | HTTP request | Description
  - [TenantSummary](doc//TenantSummary.md)
  - [Token](doc//Token.md)
  - [TokenPair](doc//TokenPair.md)
+ - [Transferencia](doc//Transferencia.md)
+ - [Unit](doc//Unit.md)
  - [UnlockAdminUserRequest](doc//UnlockAdminUserRequest.md)
  - [UpdateAdminTenantLicenseRequest](doc//UpdateAdminTenantLicenseRequest.md)
  - [UpdateAdminTenantRequest](doc//UpdateAdminTenantRequest.md)

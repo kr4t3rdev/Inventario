@@ -73,12 +73,6 @@ class PostAccountingReconciliationServicesResponseTest : ShouldSpec() {
             //modelInstance.fechaReconciliacion shouldBe ("TODO")
         }
 
-        // to test the property `replayed` - Indica si se devolvió una conciliación existente para la misma clave idempotente.
-        should("test replayed") {
-            // uncomment below to test the property
-            //modelInstance.replayed shouldBe ("TODO")
-        }
-
         // to test the property `observaciones`
         should("test observaciones") {
             // uncomment below to test the property

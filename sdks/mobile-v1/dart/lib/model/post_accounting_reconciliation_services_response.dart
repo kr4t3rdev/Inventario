@@ -21,7 +21,6 @@ class PostAccountingReconciliationServicesResponse {
     this.tasaCambio,
     this.montoConvertido,
     this.fechaReconciliacion,
-    this.replayed,
     this.observaciones,
   });
 
@@ -77,15 +76,6 @@ class PostAccountingReconciliationServicesResponse {
   ///
   DateTime? fechaReconciliacion;
 
-  /// Indica si se devolvió una conciliación existente para la misma clave idempotente.
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? replayed;
-
   String? observaciones;
 
   @override
@@ -98,7 +88,6 @@ class PostAccountingReconciliationServicesResponse {
     other.tasaCambio == tasaCambio &&
     other.montoConvertido == montoConvertido &&
     other.fechaReconciliacion == fechaReconciliacion &&
-    other.replayed == replayed &&
     other.observaciones == observaciones;
 
   @override
@@ -112,11 +101,10 @@ class PostAccountingReconciliationServicesResponse {
     (tasaCambio == null ? 0 : tasaCambio!.hashCode) +
     (montoConvertido == null ? 0 : montoConvertido!.hashCode) +
     (fechaReconciliacion == null ? 0 : fechaReconciliacion!.hashCode) +
-    (replayed == null ? 0 : replayed!.hashCode) +
     (observaciones == null ? 0 : observaciones!.hashCode);
 
   @override
-  String toString() => 'PostAccountingReconciliationServicesResponse[reconciliacionId=$reconciliacionId, cuentaId=$cuentaId, tipoPagoId=$tipoPagoId, monto=$monto, moneda=$moneda, tasaCambio=$tasaCambio, montoConvertido=$montoConvertido, fechaReconciliacion=$fechaReconciliacion, replayed=$replayed, observaciones=$observaciones]';
+  String toString() => 'PostAccountingReconciliationServicesResponse[reconciliacionId=$reconciliacionId, cuentaId=$cuentaId, tipoPagoId=$tipoPagoId, monto=$monto, moneda=$moneda, tasaCambio=$tasaCambio, montoConvertido=$montoConvertido, fechaReconciliacion=$fechaReconciliacion, observaciones=$observaciones]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -160,11 +148,6 @@ class PostAccountingReconciliationServicesResponse {
     } else {
       json[r'fechaReconciliacion'] = null;
     }
-    if (this.replayed != null) {
-      json[r'replayed'] = this.replayed;
-    } else {
-      json[r'replayed'] = null;
-    }
     if (this.observaciones != null) {
       json[r'observaciones'] = this.observaciones;
     } else {
@@ -204,7 +187,6 @@ class PostAccountingReconciliationServicesResponse {
             ? null
             : num.parse('${json[r'montoConvertido']}'),
         fechaReconciliacion: mapDateTime(json, r'fechaReconciliacion', r''),
-        replayed: mapValueOfType<bool>(json, r'replayed'),
         observaciones: mapValueOfType<String>(json, r'observaciones'),
       );
     }

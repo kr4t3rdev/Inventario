@@ -46,9 +46,13 @@ void main() {
       // TODO
     });
 
-    // Clave opcional para repetir la misma operación sin duplicarla.
-    // String idempotencyKey
-    test('to test the property `idempotencyKey`', () async {
+    // num tasaCambio
+    test('to test the property `tasaCambio`', () async {
+      // TODO
+    });
+
+    // DateTime fechaOperacion
+    test('to test the property `fechaOperacion`', () async {
       // TODO
     });
 

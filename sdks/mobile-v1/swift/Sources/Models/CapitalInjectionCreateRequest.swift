@@ -10,45 +10,74 @@ import Foundation
 import AnyCodable
 #endif
 
+/** Alta de inyección de capital. socio es obligatorio cuando tipo&#x3D;CAPITAL_SOCIAL; entidadPrestamista cuando tipo&#x3D;DEUDA_EXTERNA. */
 public struct CapitalInjectionCreateRequest: Codable, JSONEncodable, Hashable {
 
-    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
-    public var monto: Double
+    public enum Tipo: String, Codable, CaseIterable {
+        case capitalSocial = "CAPITAL_SOCIAL"
+        case deudaExterna = "DEUDA_EXTERNA"
+    }
+    public static let monedaRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let cuentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let descripcionRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let socioRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let entidadPrestamistaRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let tasaInteresRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
+    public var montoRecibido: Double
     public var moneda: String? = "CUP"
-    public var tipo: String? = "APORTE"
+    public var tipo: Tipo
+    public var cuentaId: String
     public var descripcion: String?
-    public var cuentaBancariaId: String?
-    /** Clave opcional para repetir la misma operación sin duplicarla. */
-    public var idempotencyKey: String?
+    public var socio: String?
+    public var entidadPrestamista: String?
+    public var tasaInteres: Double?
+    public var plazoMeses: Int?
+    public var fechaInicioPago: Date?
+    public var fechaOperacion: Date?
 
-    public init(monto: Double, moneda: String? = "CUP", tipo: String? = "APORTE", descripcion: String? = nil, cuentaBancariaId: String? = nil, idempotencyKey: String? = nil) {
-        self.monto = monto
+    public init(montoRecibido: Double, moneda: String? = "CUP", tipo: Tipo, cuentaId: String, descripcion: String? = nil, socio: String? = nil, entidadPrestamista: String? = nil, tasaInteres: Double? = nil, plazoMeses: Int? = nil, fechaInicioPago: Date? = nil, fechaOperacion: Date? = nil) {
+        self.montoRecibido = montoRecibido
         self.moneda = moneda
         self.tipo = tipo
+        self.cuentaId = cuentaId
         self.descripcion = descripcion
-        self.cuentaBancariaId = cuentaBancariaId
-        self.idempotencyKey = idempotencyKey
+        self.socio = socio
+        self.entidadPrestamista = entidadPrestamista
+        self.tasaInteres = tasaInteres
+        self.plazoMeses = plazoMeses
+        self.fechaInicioPago = fechaInicioPago
+        self.fechaOperacion = fechaOperacion
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case monto
+        case montoRecibido
         case moneda
         case tipo
+        case cuentaId
         case descripcion
-        case cuentaBancariaId
-        case idempotencyKey
+        case socio
+        case entidadPrestamista
+        case tasaInteres
+        case plazoMeses
+        case fechaInicioPago
+        case fechaOperacion
     }
 
     // Encodable protocol methods
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(monto, forKey: .monto)
+        try container.encode(montoRecibido, forKey: .montoRecibido)
         try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(tipo, forKey: .tipo)
+        try container.encode(tipo, forKey: .tipo)
+        try container.encode(cuentaId, forKey: .cuentaId)
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
-        try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
-        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
+        try container.encodeIfPresent(socio, forKey: .socio)
+        try container.encodeIfPresent(entidadPrestamista, forKey: .entidadPrestamista)
+        try container.encodeIfPresent(tasaInteres, forKey: .tasaInteres)
+        try container.encodeIfPresent(plazoMeses, forKey: .plazoMeses)
+        try container.encodeIfPresent(fechaInicioPago, forKey: .fechaInicioPago)
+        try container.encodeIfPresent(fechaOperacion, forKey: .fechaOperacion)
     }
 }
 

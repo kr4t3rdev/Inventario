@@ -7,7 +7,6 @@
 | **ventaServicioId** | **kotlin.String** |  |  |
 | **distribuciones** | [**kotlin.collections.List&lt;ServiceDistributionRequest&gt;**](ServiceDistributionRequest.md) |  |  |
 | **fechaReconciliacion** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  [optional] |
-| **idempotencyKey** | **kotlin.String** | Clave estable para reintentar una conciliación sin duplicar el pago. |  [optional] |
 
 
 

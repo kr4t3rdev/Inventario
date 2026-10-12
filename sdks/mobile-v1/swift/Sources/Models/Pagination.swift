@@ -10,14 +10,19 @@ import Foundation
 import AnyCodable
 #endif
 
+/** Paginación. */
 public struct Pagination: Codable, JSONEncodable, Hashable {
 
-    public var page: Int?
-    public var limit: Int?
-    public var total: Int?
-    public var totalPages: Int?
+    /** Página actual */
+    public var page: Int
+    /** Por página */
+    public var limit: Int
+    /** Total */
+    public var total: Int
+    /** Total páginas */
+    public var totalPages: Int
 
-    public init(page: Int? = nil, limit: Int? = nil, total: Int? = nil, totalPages: Int? = nil) {
+    public init(page: Int, limit: Int, total: Int, totalPages: Int) {
         self.page = page
         self.limit = limit
         self.total = total
@@ -35,10 +40,10 @@ public struct Pagination: Codable, JSONEncodable, Hashable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(page, forKey: .page)
-        try container.encodeIfPresent(limit, forKey: .limit)
-        try container.encodeIfPresent(total, forKey: .total)
-        try container.encodeIfPresent(totalPages, forKey: .totalPages)
+        try container.encode(page, forKey: .page)
+        try container.encode(limit, forKey: .limit)
+        try container.encode(total, forKey: .total)
+        try container.encode(totalPages, forKey: .totalPages)
     }
 }
 

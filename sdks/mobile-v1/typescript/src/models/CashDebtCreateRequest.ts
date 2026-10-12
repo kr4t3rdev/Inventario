@@ -67,12 +67,6 @@ export interface CashDebtCreateRequest {
      * @memberof CashDebtCreateRequest
      */
     cuentaBancariaId: string;
-    /**
-     * Clave opcional para repetir la misma operación sin duplicarla.
-     * @type {string}
-     * @memberof CashDebtCreateRequest
-     */
-    idempotencyKey?: string;
 }
 
 /**
@@ -103,7 +97,6 @@ export function CashDebtCreateRequestFromJSONTyped(json: any, ignoreDiscriminato
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
         'comprobanteUrl': json['comprobanteUrl'] == null ? undefined : json['comprobanteUrl'],
         'cuentaBancariaId': json['cuentaBancariaId'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -126,7 +119,6 @@ export function CashDebtCreateRequestToJSONTyped(value?: CashDebtCreateRequest |
         'observaciones': value['observaciones'],
         'comprobanteUrl': value['comprobanteUrl'],
         'cuentaBancariaId': value['cuentaBancariaId'],
-        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

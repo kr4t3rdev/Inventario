@@ -12,7 +12,6 @@ Name | Type
 `moneda` | string
 `tasaCambio` | number
 `observaciones` | string
-`idempotencyKey` | string
 
 ## Example
 
@@ -27,7 +26,6 @@ const example = {
   "moneda": null,
   "tasaCambio": null,
   "observaciones": null,
-  "idempotencyKey": null,
 } satisfies CashPaymentRequest
 
 console.log(example)

@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param fechaVencimiento 
  * @param observaciones 
  * @param comprobanteUrl 
- * @param idempotencyKey Clave opcional para repetir la misma operación sin duplicarla.
  */
 
 
@@ -57,11 +56,7 @@ data class CashDebtCreateRequest (
     val observaciones: kotlin.String? = null,
 
     @get:JsonProperty("comprobanteUrl")
-    val comprobanteUrl: java.net.URI? = null,
-
-    /* Clave opcional para repetir la misma operación sin duplicarla. */
-    @get:JsonProperty("idempotencyKey")
-    val idempotencyKey: kotlin.String? = null
+    val comprobanteUrl: java.net.URI? = null
 
 ) {
 

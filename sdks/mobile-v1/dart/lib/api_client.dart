@@ -274,6 +274,8 @@ class ApiClient {
           return Advance.fromJson(value);
         case 'AdvanceWorkflowResult':
           return AdvanceWorkflowResult.fromJson(value);
+        case 'AjusteBancario':
+          return AjusteBancario.fromJson(value);
         case 'Almacen':
           return Almacen.fromJson(value);
         case 'AlmacenCreateRequest':
@@ -344,6 +346,10 @@ class ApiClient {
           return ClienteListResponse.fromJson(value);
         case 'ClienteUpdateRequest':
           return ClienteUpdateRequest.fromJson(value);
+        case 'Compra':
+          return Compra.fromJson(value);
+        case 'Contrato':
+          return Contrato.fromJson(value);
         case 'Currency':
           return Currency.fromJson(value);
         case 'DashboardDatosPorMes':
@@ -390,12 +396,20 @@ class ApiClient {
           return DeleteAccountingAdvancesIdResponse.fromJson(value);
         case 'DeleteAccountingPaymentTypesIdResponse':
           return DeleteAccountingPaymentTypesIdResponse.fromJson(value);
+        case 'DeleteUnitResponse':
+          return DeleteUnitResponse.fromJson(value);
+        case 'Empleado':
+          return Empleado.fromJson(value);
         case 'ExchangeRate':
           return ExchangeRate.fromJson(value);
         case 'ExpenseDistributionRequest':
           return ExpenseDistributionRequest.fromJson(value);
         case 'ExpenseReconciliationRequest':
           return ExpenseReconciliationRequest.fromJson(value);
+        case 'Factura':
+          return Factura.fromJson(value);
+        case 'Gasto':
+          return Gasto.fromJson(value);
         case 'GetAccountingAccountsPayableResponse':
           return GetAccountingAccountsPayableResponse.fromJson(value);
         case 'GetAccountingAccountsReceivableMetricsResponse':
@@ -502,24 +516,84 @@ class ApiClient {
           return GetAdminUserLoginHistoryResponse.fromJson(value);
         case 'GetAdminUsersResponse':
           return GetAdminUsersResponse.fromJson(value);
+        case 'GetComprasDetailResponse':
+          return GetComprasDetailResponse.fromJson(value);
+        case 'GetComprasListResponse':
+          return GetComprasListResponse.fromJson(value);
+        case 'GetContratosDetailResponse':
+          return GetContratosDetailResponse.fromJson(value);
+        case 'GetContratosListResponse':
+          return GetContratosListResponse.fromJson(value);
         case 'GetDashboardStatsResponse':
           return GetDashboardStatsResponse.fromJson(value);
+        case 'GetEmpleadosDetailResponse':
+          return GetEmpleadosDetailResponse.fromJson(value);
+        case 'GetEmpleadosListResponse':
+          return GetEmpleadosListResponse.fromJson(value);
+        case 'GetFacturasDetailResponse':
+          return GetFacturasDetailResponse.fromJson(value);
+        case 'GetFacturasListResponse':
+          return GetFacturasListResponse.fromJson(value);
+        case 'GetGastosDetailResponse':
+          return GetGastosDetailResponse.fromJson(value);
+        case 'GetGastosListResponse':
+          return GetGastosListResponse.fromJson(value);
+        case 'GetMermasDetailResponse':
+          return GetMermasDetailResponse.fromJson(value);
+        case 'GetMermasListResponse':
+          return GetMermasListResponse.fromJson(value);
+        case 'GetOfertasDetailResponse':
+          return GetOfertasDetailResponse.fromJson(value);
+        case 'GetOfertasListResponse':
+          return GetOfertasListResponse.fromJson(value);
+        case 'GetProduccionDetailResponse':
+          return GetProduccionDetailResponse.fromJson(value);
+        case 'GetProduccionListResponse':
+          return GetProduccionListResponse.fromJson(value);
         case 'GetProductsIdResponse':
           return GetProductsIdResponse.fromJson(value);
         case 'GetProductsResponse':
           return GetProductsResponse.fromJson(value);
         case 'GetProductsStockResponse':
           return GetProductsStockResponse.fromJson(value);
+        case 'GetReparacionesDetailResponse':
+          return GetReparacionesDetailResponse.fromJson(value);
+        case 'GetReparacionesListResponse':
+          return GetReparacionesListResponse.fromJson(value);
         case 'GetSalesIdResponse':
           return GetSalesIdResponse.fromJson(value);
         case 'GetSalesResponse':
           return GetSalesResponse.fromJson(value);
+        case 'GetServiciosDetailResponse':
+          return GetServiciosDetailResponse.fromJson(value);
+        case 'GetServiciosListResponse':
+          return GetServiciosListResponse.fromJson(value);
+        case 'GetTransferenciasDetailResponse':
+          return GetTransferenciasDetailResponse.fromJson(value);
+        case 'GetTransferenciasListResponse':
+          return GetTransferenciasListResponse.fromJson(value);
+        case 'GetUnitsDetailResponse':
+          return GetUnitsDetailResponse.fromJson(value);
+        case 'GetUnitsListResponse':
+          return GetUnitsListResponse.fromJson(value);
         case 'JsonValue':
           return JsonValue.fromJson(value);
         case 'LockAdminUserRequest':
           return LockAdminUserRequest.fromJson(value);
         case 'LoginRequest':
           return LoginRequest.fromJson(value);
+        case 'Merma':
+          return Merma.fromJson(value);
+        case 'MobileCreateUnitRequest':
+          return MobileCreateUnitRequest.fromJson(value);
+        case 'MobileUpdateUnitRequest':
+          return MobileUpdateUnitRequest.fromJson(value);
+        case 'Oferta':
+          return Oferta.fromJson(value);
+        case 'OrdenProduccion':
+          return OrdenProduccion.fromJson(value);
+        case 'OrdenReparacion':
+          return OrdenReparacion.fromJson(value);
         case 'Pagination':
           return Pagination.fromJson(value);
         case 'PatchAdminTenantsLicenseUpdateResponse':
@@ -690,6 +764,8 @@ class ApiClient {
           return ServiceDistributionRequest.fromJson(value);
         case 'ServiceReconciliationRequest':
           return ServiceReconciliationRequest.fromJson(value);
+        case 'Servicio':
+          return Servicio.fromJson(value);
         case 'SuccessResponse':
           return SuccessResponse.fromJson(value);
         case 'SwitchTenantRequest':
@@ -704,6 +780,10 @@ class ApiClient {
           return Token.fromJson(value);
         case 'TokenPair':
           return TokenPair.fromJson(value);
+        case 'Transferencia':
+          return Transferencia.fromJson(value);
+        case 'Unit':
+          return Unit.fromJson(value);
         case 'UnlockAdminUserRequest':
           return UnlockAdminUserRequest.fromJson(value);
         case 'UpdateAdminTenantLicenseRequest':

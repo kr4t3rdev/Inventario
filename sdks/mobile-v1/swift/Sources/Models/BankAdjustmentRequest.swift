@@ -17,26 +17,27 @@ public struct BankAdjustmentRequest: Codable, JSONEncodable, Hashable {
         case egreso = "egreso"
     }
     public static let cuentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let monedaRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let descripcionRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let motivoRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
-    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var cuentaId: String
     public var tipo: Tipo
     public var monto: Double
     public var moneda: String? = "CUP"
     public var descripcion: String
     public var motivo: String
-    /** Clave opcional para repetir la misma operación sin duplicarla. */
-    public var idempotencyKey: String?
+    public var tasaCambio: Double?
+    public var fechaOperacion: Date?
 
-    public init(cuentaId: String, tipo: Tipo, monto: Double, moneda: String? = "CUP", descripcion: String, motivo: String, idempotencyKey: String? = nil) {
+    public init(cuentaId: String, tipo: Tipo, monto: Double, moneda: String? = "CUP", descripcion: String, motivo: String, tasaCambio: Double? = nil, fechaOperacion: Date? = nil) {
         self.cuentaId = cuentaId
         self.tipo = tipo
         self.monto = monto
         self.moneda = moneda
         self.descripcion = descripcion
         self.motivo = motivo
-        self.idempotencyKey = idempotencyKey
+        self.tasaCambio = tasaCambio
+        self.fechaOperacion = fechaOperacion
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -46,7 +47,8 @@ public struct BankAdjustmentRequest: Codable, JSONEncodable, Hashable {
         case moneda
         case descripcion
         case motivo
-        case idempotencyKey
+        case tasaCambio
+        case fechaOperacion
     }
 
     // Encodable protocol methods
@@ -59,7 +61,8 @@ public struct BankAdjustmentRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(moneda, forKey: .moneda)
         try container.encode(descripcion, forKey: .descripcion)
         try container.encode(motivo, forKey: .motivo)
-        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
+        try container.encodeIfPresent(tasaCambio, forKey: .tasaCambio)
+        try container.encodeIfPresent(fechaOperacion, forKey: .fechaOperacion)
     }
 }
 

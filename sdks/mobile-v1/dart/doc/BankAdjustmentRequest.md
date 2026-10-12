@@ -14,7 +14,8 @@ Name | Type | Description | Notes
 **moneda** | **String** |  | [optional] [default to 'CUP']
 **descripcion** | **String** |  | 
 **motivo** | **String** |  | 
-**idempotencyKey** | **String** | Clave opcional para repetir la misma operación sin duplicarla. | [optional] 
+**tasaCambio** | **num** |  | [optional] 
+**fechaOperacion** | [**DateTime**](DateTime.md) |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

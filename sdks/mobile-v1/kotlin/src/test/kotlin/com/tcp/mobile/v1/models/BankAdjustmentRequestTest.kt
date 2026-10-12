@@ -61,10 +61,16 @@ class BankAdjustmentRequestTest : ShouldSpec() {
             //modelInstance.moneda shouldBe ("TODO")
         }
 
-        // to test the property `idempotencyKey` - Clave opcional para repetir la misma operación sin duplicarla.
-        should("test idempotencyKey") {
+        // to test the property `tasaCambio`
+        should("test tasaCambio") {
             // uncomment below to test the property
-            //modelInstance.idempotencyKey shouldBe ("TODO")
+            //modelInstance.tasaCambio shouldBe ("TODO")
+        }
+
+        // to test the property `fechaOperacion`
+        should("test fechaOperacion") {
+            // uncomment below to test the property
+            //modelInstance.fechaOperacion shouldBe ("TODO")
         }
 
     }

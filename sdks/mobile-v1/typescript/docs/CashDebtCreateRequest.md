@@ -14,7 +14,6 @@ Name | Type
 `observaciones` | string
 `comprobanteUrl` | string
 `cuentaBancariaId` | string
-`idempotencyKey` | string
 
 ## Example
 
@@ -31,7 +30,6 @@ const example = {
   "observaciones": null,
   "comprobanteUrl": null,
   "cuentaBancariaId": null,
-  "idempotencyKey": null,
 } satisfies CashDebtCreateRequest
 
 console.log(example)

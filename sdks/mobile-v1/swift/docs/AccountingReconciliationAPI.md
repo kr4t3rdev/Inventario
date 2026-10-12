@@ -719,7 +719,7 @@ Distribuye el total de un servicio entre las cuentas y medios de pago enviados.
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let serviceReconciliationRequest = ServiceReconciliationRequest(ventaServicioId: "ventaServicioId_example", distribuciones: [ServiceDistributionRequest(cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", observaciones: "observaciones_example")], fechaReconciliacion: Date(), idempotencyKey: "idempotencyKey_example") // ServiceReconciliationRequest | 
+let serviceReconciliationRequest = ServiceReconciliationRequest(ventaServicioId: "ventaServicioId_example", distribuciones: [ServiceDistributionRequest(cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", observaciones: "observaciones_example")], fechaReconciliacion: Date()) // ServiceReconciliationRequest | 
 let fechaDesde = Date() // Date | Valor de fechaDesde aceptado por el handler. (optional)
 let fechaHasta = Date() // Date | Valor de fechaHasta aceptado por el handler. (optional)
 let page = 987 // Int | Página solicitada, comenzando en 1. (optional)

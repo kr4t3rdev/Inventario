@@ -16,7 +16,6 @@ Name | Type | Description | Notes
 **tasaCambio** | **num** |  | [optional] 
 **montoConvertido** | **num** |  | [optional] 
 **fechaReconciliacion** | [**DateTime**](DateTime.md) |  | [optional] 
-**replayed** | **bool** | Indica si se devolvió una conciliación existente para la misma clave idempotente. | [optional] 
 **observaciones** | **String** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

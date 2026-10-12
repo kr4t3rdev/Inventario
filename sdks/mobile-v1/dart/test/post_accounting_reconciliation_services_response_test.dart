@@ -56,12 +56,6 @@ void main() {
       // TODO
     });
 
-    // Indica si se devolvió una conciliación existente para la misma clave idempotente.
-    // bool replayed
-    test('to test the property `replayed`', () async {
-      // TODO
-    });
-
     // String observaciones
     test('to test the property `observaciones`', () async {
       // TODO

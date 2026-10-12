@@ -12,7 +12,8 @@ Name | Type
 `moneda` | string
 `descripcion` | string
 `motivo` | string
-`idempotencyKey` | string
+`tasaCambio` | number
+`fechaOperacion` | Date
 
 ## Example
 
@@ -27,7 +28,8 @@ const example = {
   "moneda": null,
   "descripcion": null,
   "motivo": null,
-  "idempotencyKey": null,
+  "tasaCambio": null,
+  "fechaOperacion": null,
 } satisfies BankAdjustmentRequest
 
 console.log(example)

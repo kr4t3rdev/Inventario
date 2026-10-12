@@ -14,7 +14,6 @@ Name | Type
 `fechaVencimiento` | Date
 `observaciones` | string
 `cuentaBancariaId` | string
-`idempotencyKey` | string
 
 ## Example
 
@@ -31,7 +30,6 @@ const example = {
   "fechaVencimiento": null,
   "observaciones": null,
   "cuentaBancariaId": null,
-  "idempotencyKey": null,
 } satisfies CashLoanCreateRequest
 
 console.log(example)

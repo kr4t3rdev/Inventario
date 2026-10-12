@@ -4,10 +4,10 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-| **page** | **kotlin.Int** |  |  [optional] |
-| **limit** | **kotlin.Int** |  |  [optional] |
-| **total** | **kotlin.Int** |  |  [optional] |
-| **totalPages** | **kotlin.Int** |  |  [optional] |
+| **page** | **kotlin.Int** | Página actual |  |
+| **limit** | **kotlin.Int** | Por página |  |
+| **total** | **kotlin.Int** | Total |  |
+| **totalPages** | **kotlin.Int** | Total páginas |  |
 
 
 

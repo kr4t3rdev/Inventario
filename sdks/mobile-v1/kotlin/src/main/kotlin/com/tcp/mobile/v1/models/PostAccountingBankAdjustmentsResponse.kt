@@ -15,56 +15,40 @@
 
 package com.tcp.mobile.v1.models
 
+import com.tcp.mobile.v1.models.AjusteBancario
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Respuesta de POST /accounting/bank-adjustments.
  *
- * @param ajusteId 
- * @param cuentaId 
- * @param tipo 
- * @param monto 
- * @param moneda 
- * @param descripcion 
- * @param motivo 
+ * @param ajuste 
+ * @param saldoAnterior 
+ * @param saldoNuevo 
+ * @param advertenciaSaldoNegativo 
+ * @param message 
  */
 
 
 data class PostAccountingBankAdjustmentsResponse (
 
-    @get:JsonProperty("ajusteId")
-    val ajusteId: kotlin.String? = null,
+    @get:JsonProperty("ajuste")
+    val ajuste: AjusteBancario,
 
-    @get:JsonProperty("cuentaId")
-    val cuentaId: kotlin.String? = null,
+    @get:JsonProperty("saldoAnterior")
+    val saldoAnterior: java.math.BigDecimal,
 
-    @get:JsonProperty("tipo")
-    val tipo: PostAccountingBankAdjustmentsResponse.Tipo? = null,
+    @get:JsonProperty("saldoNuevo")
+    val saldoNuevo: java.math.BigDecimal,
 
-    @get:JsonProperty("monto")
-    val monto: java.math.BigDecimal? = null,
+    @get:JsonProperty("advertenciaSaldoNegativo")
+    val advertenciaSaldoNegativo: kotlin.Boolean,
 
-    @get:JsonProperty("moneda")
-    val moneda: kotlin.String? = null,
-
-    @get:JsonProperty("descripcion")
-    val descripcion: kotlin.String? = null,
-
-    @get:JsonProperty("motivo")
-    val motivo: kotlin.String? = null
+    @get:JsonProperty("message")
+    val message: kotlin.String
 
 ) {
 
-    /**
-     * 
-     *
-     * Values: ingreso,egreso
-     */
-    enum class Tipo(val value: kotlin.String) {
-        @JsonProperty(value = "ingreso") ingreso("ingreso"),
-        @JsonProperty(value = "egreso") egreso("egreso");
-    }
 
 }
 

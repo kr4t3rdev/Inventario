@@ -31,12 +31,6 @@ void main() {
       // TODO
     });
 
-    // Clave estable para reintentar una conciliación sin duplicar el pago.
-    // String idempotencyKey
-    test('to test the property `idempotencyKey`', () async {
-      // TODO
-    });
-
 
   });
 

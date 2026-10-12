@@ -19,52 +19,41 @@ import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.models.PostAccountingBankAdjustmentsResponse
+import com.tcp.mobile.v1.models.AjusteBancario
 
 class PostAccountingBankAdjustmentsResponseTest : ShouldSpec() {
     init {
         // uncomment below to create an instance of PostAccountingBankAdjustmentsResponse
         //val modelInstance = PostAccountingBankAdjustmentsResponse()
 
-        // to test the property `ajusteId`
-        should("test ajusteId") {
+        // to test the property `ajuste`
+        should("test ajuste") {
             // uncomment below to test the property
-            //modelInstance.ajusteId shouldBe ("TODO")
+            //modelInstance.ajuste shouldBe ("TODO")
         }
 
-        // to test the property `cuentaId`
-        should("test cuentaId") {
+        // to test the property `saldoAnterior`
+        should("test saldoAnterior") {
             // uncomment below to test the property
-            //modelInstance.cuentaId shouldBe ("TODO")
+            //modelInstance.saldoAnterior shouldBe ("TODO")
         }
 
-        // to test the property `tipo`
-        should("test tipo") {
+        // to test the property `saldoNuevo`
+        should("test saldoNuevo") {
             // uncomment below to test the property
-            //modelInstance.tipo shouldBe ("TODO")
+            //modelInstance.saldoNuevo shouldBe ("TODO")
         }
 
-        // to test the property `monto`
-        should("test monto") {
+        // to test the property `advertenciaSaldoNegativo`
+        should("test advertenciaSaldoNegativo") {
             // uncomment below to test the property
-            //modelInstance.monto shouldBe ("TODO")
+            //modelInstance.advertenciaSaldoNegativo shouldBe ("TODO")
         }
 
-        // to test the property `moneda`
-        should("test moneda") {
+        // to test the property `message`
+        should("test message") {
             // uncomment below to test the property
-            //modelInstance.moneda shouldBe ("TODO")
-        }
-
-        // to test the property `descripcion`
-        should("test descripcion") {
-            // uncomment below to test the property
-            //modelInstance.descripcion shouldBe ("TODO")
-        }
-
-        // to test the property `motivo`
-        should("test motivo") {
-            // uncomment below to test the property
-            //modelInstance.motivo shouldBe ("TODO")
+            //modelInstance.message shouldBe ("TODO")
         }
 
     }

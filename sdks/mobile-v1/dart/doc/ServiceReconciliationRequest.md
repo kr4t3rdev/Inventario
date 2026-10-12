@@ -11,7 +11,6 @@ Name | Type | Description | Notes
 **ventaServicioId** | **String** |  | 
 **distribuciones** | [**List<ServiceDistributionRequest>**](ServiceDistributionRequest.md) |  | [default to const []]
 **fechaReconciliacion** | [**DateTime**](DateTime.md) |  | [optional] 
-**idempotencyKey** | **String** | Clave estable para reintentar una conciliación sin duplicar el pago. | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

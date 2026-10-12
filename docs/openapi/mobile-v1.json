@@ -2073,8 +2073,8 @@
               }
             }
           },
-          "500": {
-            "description": "Error interno",
+          "404": {
+            "description": "Transferencia bancaria no encontrada",
             "content": {
               "application/json": {
                 "schema": {
@@ -2083,8 +2083,8 @@
               }
             }
           },
-          "404": {
-            "description": "Transferencia bancaria no encontrada",
+          "500": {
+            "description": "Error interno",
             "content": {
               "application/json": {
                 "schema": {
@@ -14145,7 +14145,8 @@
                   "simbolo": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -14240,7 +14241,8 @@
                   "simbolo": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -16903,11 +16905,13 @@
             ]
           },
           "monto": {
-            "type": "number"
+            "type": "number",
+            "exclusiveMinimum": 0
           },
           "moneda": {
             "type": "string",
-            "default": "CUP"
+            "default": "CUP",
+            "minLength": 1
           },
           "descripcion": {
             "type": "string",
@@ -16917,11 +16921,13 @@
             "type": "string",
             "minLength": 1
           },
-          "idempotencyKey": {
+          "tasaCambio": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "fechaOperacion": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
+            "format": "date-time"
           }
         },
         "required": [
@@ -17004,33 +17010,61 @@
       "CapitalInjectionCreateRequest": {
         "type": "object",
         "additionalProperties": false,
+        "description": "Alta de inyección de capital. socio es obligatorio cuando tipo=CAPITAL_SOCIAL; entidadPrestamista cuando tipo=DEUDA_EXTERNA.",
         "properties": {
-          "monto": {
-            "type": "number"
+          "montoRecibido": {
+            "type": "number",
+            "exclusiveMinimum": 0
           },
           "moneda": {
             "type": "string",
-            "default": "CUP"
+            "default": "CUP",
+            "minLength": 1
           },
           "tipo": {
             "type": "string",
-            "default": "APORTE"
+            "enum": [
+              "CAPITAL_SOCIAL",
+              "DEUDA_EXTERNA"
+            ]
+          },
+          "cuentaId": {
+            "type": "string",
+            "minLength": 1
           },
           "descripcion": {
-            "type": "string"
-          },
-          "cuentaBancariaId": {
-            "type": "string"
-          },
-          "idempotencyKey": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
+            "minLength": 1
+          },
+          "socio": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entidadPrestamista": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tasaInteres": {
+            "type": "number",
+            "minimum": 0
+          },
+          "plazoMeses": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "fechaInicioPago": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaOperacion": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
-          "monto"
+          "montoRecibido",
+          "tipo",
+          "cuentaId"
         ]
       },
       "CapitalPaymentRequest": {
@@ -17088,12 +17122,6 @@
           "cuentaBancariaId": {
             "type": "string",
             "minLength": 1
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -17133,12 +17161,6 @@
           "cuentaBancariaId": {
             "type": "string",
             "minLength": 1
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -17186,12 +17208,6 @@
           },
           "observaciones": {
             "type": "string"
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
           }
         },
         "required": [
@@ -17435,12 +17451,6 @@
           "fechaReconciliacion": {
             "type": "string",
             "format": "date-time"
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128,
-            "description": "Clave estable para reintentar una conciliación sin duplicar el pago."
           }
         },
         "required": [
@@ -17894,9 +17904,42 @@
       },
       "PostAccountingBankAdjustmentsResponse": {
         "type": "object",
+        "additionalProperties": false,
         "description": "Respuesta de POST /accounting/bank-adjustments.",
         "properties": {
+          "ajuste": {
+            "$ref": "#/components/schemas/AjusteBancario"
+          },
+          "saldoAnterior": {
+            "type": "number"
+          },
+          "saldoNuevo": {
+            "type": "number"
+          },
+          "advertenciaSaldoNegativo": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ajuste",
+          "saldoAnterior",
+          "saldoNuevo",
+          "advertenciaSaldoNegativo",
+          "message"
+        ]
+      },
+      "AjusteBancario": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Fila de AjusteBancario creada. Los campos Decimal se serializan como texto.",
+        "properties": {
           "ajusteId": {
+            "type": "string"
+          },
+          "tenantId": {
             "type": "string"
           },
           "cuentaId": {
@@ -17910,19 +17953,60 @@
             ]
           },
           "monto": {
-            "type": "number"
+            "type": "string",
+            "description": "Decimal serializado como texto."
           },
           "moneda": {
             "type": "string"
+          },
+          "tasaCambio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "montoConvertido": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "descripcion": {
             "type": "string"
           },
           "motivo": {
             "type": "string"
+          },
+          "realizadoPor": {
+            "type": "string"
+          },
+          "fechaOperacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
-        "additionalProperties": false
+        "required": [
+          "ajusteId",
+          "tenantId",
+          "cuentaId",
+          "tipo",
+          "monto",
+          "moneda",
+          "descripcion",
+          "motivo",
+          "realizadoPor",
+          "fechaOperacion",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "GetAccountingBankTransfersResponse": {
         "type": "object",
@@ -18036,19 +18120,89 @@
       },
       "PostAccountingCapitalInjectionsResponse": {
         "type": "object",
-        "description": "Respuesta de POST /accounting/capital-injections.",
+        "additionalProperties": false,
+        "description": "Respuesta de POST /accounting/capital-injections: fila de InyeccionCapital creada. Los campos Decimal se serializan como texto.",
         "properties": {
-          "inyeccionId": {
+          "id": {
             "type": "string"
           },
-          "monto": {
-            "type": "number"
+          "tenantId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "CAPITAL_SOCIAL",
+              "DEUDA_EXTERNA"
+            ]
+          },
+          "montoRecibido": {
+            "type": "string",
+            "description": "Decimal serializado como texto."
           },
           "moneda": {
             "type": "string"
           },
-          "tipo": {
+          "tasaInteres": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "montoInteres": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "montoTotalDeuda": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "saldoPendiente": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plazoMeses": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "fechaInicioPago": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "socio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entidadPrestamista": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cuentaId": {
             "type": "string"
+          },
+          "estado": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "descripcion": {
             "type": [
@@ -18056,14 +18210,29 @@
               "null"
             ]
           },
-          "cuentaBancariaId": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "fechaRegistro": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
-        "additionalProperties": false
+        "required": [
+          "id",
+          "tipo",
+          "montoRecibido",
+          "moneda",
+          "cuentaId",
+          "fechaRegistro",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "PostAccountingCapitalInjectionsIdPaymentsResponse": {
         "type": "object",
@@ -18834,10 +19003,6 @@
           "fechaReconciliacion": {
             "type": "string",
             "format": "date-time"
-          },
-          "replayed": {
-            "type": "boolean",
-            "description": "Indica si se devolvió una conciliación existente para la misma clave idempotente."
           },
           "observaciones": {
             "type": [

@@ -442,7 +442,7 @@ Registra financiamiento recibido de un proveedor, incrementa la cuenta bancaria 
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let cashDebtCreateRequest = CashDebtCreateRequest(proveedorId: "proveedorId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", comprobanteUrl: "comprobanteUrl_example", cuentaBancariaId: "cuentaBancariaId_example", idempotencyKey: "idempotencyKey_example") // CashDebtCreateRequest | 
+let cashDebtCreateRequest = CashDebtCreateRequest(proveedorId: "proveedorId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", comprobanteUrl: "comprobanteUrl_example", cuentaBancariaId: "cuentaBancariaId_example") // CashDebtCreateRequest | 
 let estado = true // Bool | Estado usado para filtrar resultados. (optional)
 let proveedorId = "proveedorId_example" // String | Identificador del proveedor. (optional)
 let moneda = "moneda_example" // String | Código de moneda. (optional)
@@ -503,7 +503,7 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let cashPaymentRequest = CashPaymentRequest(monto: 123, cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", moneda: "moneda_example", tasaCambio: 123, observaciones: "observaciones_example", idempotencyKey: "idempotencyKey_example") // CashPaymentRequest | 
+let cashPaymentRequest = CashPaymentRequest(monto: 123, cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", moneda: "moneda_example", tasaCambio: 123, observaciones: "observaciones_example") // CashPaymentRequest | 
 
 // Registrar pago de deudas de efectivo
 AccountingCashFinancingAPI.mobilePostAccountingCashDebtsByIdPayments(id: id, cashPaymentRequest: cashPaymentRequest) { (response, error) in
@@ -554,7 +554,7 @@ Registra un préstamo a un cliente, descuenta fondos de la cuenta bancaria y cre
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let cashLoanCreateRequest = CashLoanCreateRequest(clienteId: "clienteId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, tasaCambioAlCrear: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", cuentaBancariaId: "cuentaBancariaId_example", idempotencyKey: "idempotencyKey_example") // CashLoanCreateRequest | 
+let cashLoanCreateRequest = CashLoanCreateRequest(clienteId: "clienteId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, tasaCambioAlCrear: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", cuentaBancariaId: "cuentaBancariaId_example") // CashLoanCreateRequest | 
 let estado = true // Bool | Estado usado para filtrar resultados. (optional)
 let clienteId = "clienteId_example" // String | Identificador del cliente. (optional)
 let moneda = "moneda_example" // String | Código de moneda. (optional)
@@ -615,7 +615,7 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let cashPaymentRequest = CashPaymentRequest(monto: 123, cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", moneda: "moneda_example", tasaCambio: 123, observaciones: "observaciones_example", idempotencyKey: "idempotencyKey_example") // CashPaymentRequest | 
+let cashPaymentRequest = CashPaymentRequest(monto: 123, cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", moneda: "moneda_example", tasaCambio: 123, observaciones: "observaciones_example") // CashPaymentRequest | 
 
 // Registrar pago de préstamos de efectivo
 AccountingCashFinancingAPI.mobilePostAccountingCashLoansByIdPayments(id: id, cashPaymentRequest: cashPaymentRequest) { (response, error) in

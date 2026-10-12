@@ -56,11 +56,17 @@ export interface BankAdjustmentRequest {
      */
     motivo: string;
     /**
-     * Clave opcional para repetir la misma operación sin duplicarla.
-     * @type {string}
+     * 
+     * @type {number}
      * @memberof BankAdjustmentRequest
      */
-    idempotencyKey?: string;
+    tasaCambio?: number;
+    /**
+     * 
+     * @type {Date}
+     * @memberof BankAdjustmentRequest
+     */
+    fechaOperacion?: Date;
 }
 
 
@@ -102,7 +108,8 @@ export function BankAdjustmentRequestFromJSONTyped(json: any, ignoreDiscriminato
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'descripcion': json['descripcion'],
         'motivo': json['motivo'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
+        'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
+        'fechaOperacion': json['fechaOperacion'] == null ? undefined : (new Date(json['fechaOperacion'])),
     };
 }
 
@@ -123,7 +130,8 @@ export function BankAdjustmentRequestToJSONTyped(value?: BankAdjustmentRequest |
         'moneda': value['moneda'],
         'descripcion': value['descripcion'],
         'motivo': value['motivo'],
-        'idempotencyKey': value['idempotencyKey'],
+        'tasaCambio': value['tasaCambio'],
+        'fechaOperacion': value['fechaOperacion'] == null ? value['fechaOperacion'] : value['fechaOperacion'].toISOString(),
     };
 }
 

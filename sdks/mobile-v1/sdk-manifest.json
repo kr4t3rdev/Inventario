@@ -1,0 +1,10 @@
+{
+  "contractPath": "docs/openapi/mobile-v1.json",
+  "contractSha256": "b3a541e7a6617e7cf41b7823971d64ec045ddc6868c43ef18a6050b0b92106ba",
+  "contractVersion": "1.0.0",
+  "operationCount": 174,
+  "schemaCount": 300,
+  "generatorVersion": "7.17.0",
+  "generatorSha256": "25d6bd8273dd2be99979d544b62ea43f0ce1975f1aa582678b5093d1e7fcfce8",
+  "generatedAt": "2026-10-12T06:28:33.910Z"
+}

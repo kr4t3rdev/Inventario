@@ -19,40 +19,68 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
+ * Alta de inyección de capital. socio es obligatorio cuando tipo=CAPITAL_SOCIAL; entidadPrestamista cuando tipo=DEUDA_EXTERNA.
  *
- * @param monto 
- * @param moneda 
+ * @param montoRecibido 
  * @param tipo 
+ * @param cuentaId 
+ * @param moneda 
  * @param descripcion 
- * @param cuentaBancariaId 
- * @param idempotencyKey Clave opcional para repetir la misma operación sin duplicarla.
+ * @param socio 
+ * @param entidadPrestamista 
+ * @param tasaInteres 
+ * @param plazoMeses 
+ * @param fechaInicioPago 
+ * @param fechaOperacion 
  */
 
 
 data class CapitalInjectionCreateRequest (
 
-    @get:JsonProperty("monto")
-    val monto: java.math.BigDecimal,
+    @get:JsonProperty("montoRecibido")
+    val montoRecibido: java.math.BigDecimal,
+
+    @get:JsonProperty("tipo")
+    val tipo: CapitalInjectionCreateRequest.Tipo,
+
+    @get:JsonProperty("cuentaId")
+    val cuentaId: kotlin.String,
 
     @get:JsonProperty("moneda")
     val moneda: kotlin.String? = "CUP",
 
-    @get:JsonProperty("tipo")
-    val tipo: kotlin.String? = "APORTE",
-
     @get:JsonProperty("descripcion")
     val descripcion: kotlin.String? = null,
 
-    @get:JsonProperty("cuentaBancariaId")
-    val cuentaBancariaId: kotlin.String? = null,
+    @get:JsonProperty("socio")
+    val socio: kotlin.String? = null,
 
-    /* Clave opcional para repetir la misma operación sin duplicarla. */
-    @get:JsonProperty("idempotencyKey")
-    val idempotencyKey: kotlin.String? = null
+    @get:JsonProperty("entidadPrestamista")
+    val entidadPrestamista: kotlin.String? = null,
+
+    @get:JsonProperty("tasaInteres")
+    val tasaInteres: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("plazoMeses")
+    val plazoMeses: kotlin.Int? = null,
+
+    @get:JsonProperty("fechaInicioPago")
+    val fechaInicioPago: java.time.OffsetDateTime? = null,
+
+    @get:JsonProperty("fechaOperacion")
+    val fechaOperacion: java.time.OffsetDateTime? = null
 
 ) {
 
+    /**
+     * 
+     *
+     * Values: CAPITAL_SOCIAL,DEUDA_EXTERNA
+     */
+    enum class Tipo(val value: kotlin.String) {
+        @JsonProperty(value = "CAPITAL_SOCIAL") CAPITAL_SOCIAL("CAPITAL_SOCIAL"),
+        @JsonProperty(value = "DEUDA_EXTERNA") DEUDA_EXTERNA("DEUDA_EXTERNA");
+    }
 
 }
 

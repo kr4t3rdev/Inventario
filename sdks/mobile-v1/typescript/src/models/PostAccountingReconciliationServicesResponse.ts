@@ -68,12 +68,6 @@ export interface PostAccountingReconciliationServicesResponse {
      */
     fechaReconciliacion?: Date;
     /**
-     * Indica si se devolvió una conciliación existente para la misma clave idempotente.
-     * @type {boolean}
-     * @memberof PostAccountingReconciliationServicesResponse
-     */
-    replayed?: boolean;
-    /**
      * 
      * @type {string}
      * @memberof PostAccountingReconciliationServicesResponse
@@ -106,7 +100,6 @@ export function PostAccountingReconciliationServicesResponseFromJSONTyped(json: 
         'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
         'montoConvertido': json['montoConvertido'] == null ? undefined : json['montoConvertido'],
         'fechaReconciliacion': json['fechaReconciliacion'] == null ? undefined : (new Date(json['fechaReconciliacion'])),
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
     };
 }
@@ -130,7 +123,6 @@ export function PostAccountingReconciliationServicesResponseToJSONTyped(value?: 
         'tasaCambio': value['tasaCambio'],
         'montoConvertido': value['montoConvertido'],
         'fechaReconciliacion': value['fechaReconciliacion'] == null ? value['fechaReconciliacion'] : value['fechaReconciliacion'].toISOString(),
-        'replayed': value['replayed'],
         'observaciones': value['observaciones'],
     };
 }

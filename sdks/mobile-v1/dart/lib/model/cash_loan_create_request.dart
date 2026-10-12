@@ -21,7 +21,6 @@ class CashLoanCreateRequest {
     this.fechaVencimiento,
     this.observaciones,
     required this.cuentaBancariaId,
-    this.idempotencyKey,
   });
 
   String clienteId;
@@ -70,15 +69,6 @@ class CashLoanCreateRequest {
 
   String cuentaBancariaId;
 
-  /// Clave opcional para repetir la misma operación sin duplicarla.
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? idempotencyKey;
-
   @override
   bool operator ==(Object other) => identical(this, other) || other is CashLoanCreateRequest &&
     other.clienteId == clienteId &&
@@ -88,8 +78,7 @@ class CashLoanCreateRequest {
     other.tasaCambioAlCrear == tasaCambioAlCrear &&
     other.fechaVencimiento == fechaVencimiento &&
     other.observaciones == observaciones &&
-    other.cuentaBancariaId == cuentaBancariaId &&
-    other.idempotencyKey == idempotencyKey;
+    other.cuentaBancariaId == cuentaBancariaId;
 
   @override
   int get hashCode =>
@@ -101,11 +90,10 @@ class CashLoanCreateRequest {
     (tasaCambioAlCrear == null ? 0 : tasaCambioAlCrear!.hashCode) +
     (fechaVencimiento == null ? 0 : fechaVencimiento!.hashCode) +
     (observaciones == null ? 0 : observaciones!.hashCode) +
-    (cuentaBancariaId.hashCode) +
-    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
+    (cuentaBancariaId.hashCode);
 
   @override
-  String toString() => 'CashLoanCreateRequest[clienteId=$clienteId, montoCapital=$montoCapital, moneda=$moneda, tasaInteres=$tasaInteres, tasaCambioAlCrear=$tasaCambioAlCrear, fechaVencimiento=$fechaVencimiento, observaciones=$observaciones, cuentaBancariaId=$cuentaBancariaId, idempotencyKey=$idempotencyKey]';
+  String toString() => 'CashLoanCreateRequest[clienteId=$clienteId, montoCapital=$montoCapital, moneda=$moneda, tasaInteres=$tasaInteres, tasaCambioAlCrear=$tasaCambioAlCrear, fechaVencimiento=$fechaVencimiento, observaciones=$observaciones, cuentaBancariaId=$cuentaBancariaId]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -137,11 +125,6 @@ class CashLoanCreateRequest {
       json[r'observaciones'] = null;
     }
       json[r'cuentaBancariaId'] = this.cuentaBancariaId;
-    if (this.idempotencyKey != null) {
-      json[r'idempotencyKey'] = this.idempotencyKey;
-    } else {
-      json[r'idempotencyKey'] = null;
-    }
     return json;
   }
 
@@ -172,7 +155,6 @@ class CashLoanCreateRequest {
         fechaVencimiento: mapDateTime(json, r'fechaVencimiento', r''),
         observaciones: mapValueOfType<String>(json, r'observaciones'),
         cuentaBancariaId: mapValueOfType<String>(json, r'cuentaBancariaId')!,
-        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;

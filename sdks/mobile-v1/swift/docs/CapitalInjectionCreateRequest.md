@@ -3,12 +3,17 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**monto** | **Double** |  | 
+**montoRecibido** | **Double** |  | 
 **moneda** | **String** |  | [optional] [default to "CUP"]
-**tipo** | **String** |  | [optional] [default to "APORTE"]
+**tipo** | **String** |  | 
+**cuentaId** | **String** |  | 
 **descripcion** | **String** |  | [optional] 
-**cuentaBancariaId** | **String** |  | [optional] 
-**idempotencyKey** | **String** | Clave opcional para repetir la misma operación sin duplicarla. | [optional] 
+**socio** | **String** |  | [optional] 
+**entidadPrestamista** | **String** |  | [optional] 
+**tasaInteres** | **Double** |  | [optional] 
+**plazoMeses** | **Int** |  | [optional] 
+**fechaInicioPago** | **Date** |  | [optional] 
+**fechaOperacion** | **Date** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

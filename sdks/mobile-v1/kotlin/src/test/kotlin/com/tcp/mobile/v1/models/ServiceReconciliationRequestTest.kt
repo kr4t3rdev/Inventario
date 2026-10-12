@@ -44,11 +44,5 @@ class ServiceReconciliationRequestTest : ShouldSpec() {
             //modelInstance.fechaReconciliacion shouldBe ("TODO")
         }
 
-        // to test the property `idempotencyKey` - Clave estable para reintentar una conciliación sin duplicar el pago.
-        should("test idempotencyKey") {
-            // uncomment below to test the property
-            //modelInstance.idempotencyKey shouldBe ("TODO")
-        }
-
     }
 }

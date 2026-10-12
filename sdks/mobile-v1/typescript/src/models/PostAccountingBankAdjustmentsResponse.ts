@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AjusteBancario } from './AjusteBancario';
+import {
+    AjusteBancarioFromJSON,
+    AjusteBancarioFromJSONTyped,
+    AjusteBancarioToJSON,
+    AjusteBancarioToJSONTyped,
+} from './AjusteBancario';
+
 /**
  * Respuesta de POST /accounting/bank-adjustments.
  * @export
@@ -21,63 +29,45 @@ import { mapValues } from '../runtime';
 export interface PostAccountingBankAdjustmentsResponse {
     /**
      * 
-     * @type {string}
+     * @type {AjusteBancario}
      * @memberof PostAccountingBankAdjustmentsResponse
      */
-    ajusteId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankAdjustmentsResponse
-     */
-    cuentaId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankAdjustmentsResponse
-     */
-    tipo?: PostAccountingBankAdjustmentsResponseTipoEnum;
+    ajuste: AjusteBancario;
     /**
      * 
      * @type {number}
      * @memberof PostAccountingBankAdjustmentsResponse
      */
-    monto?: number;
+    saldoAnterior: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PostAccountingBankAdjustmentsResponse
+     */
+    saldoNuevo: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PostAccountingBankAdjustmentsResponse
+     */
+    advertenciaSaldoNegativo: boolean;
     /**
      * 
      * @type {string}
      * @memberof PostAccountingBankAdjustmentsResponse
      */
-    moneda?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankAdjustmentsResponse
-     */
-    descripcion?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankAdjustmentsResponse
-     */
-    motivo?: string;
+    message: string;
 }
-
-
-/**
- * @export
- */
-export const PostAccountingBankAdjustmentsResponseTipoEnum = {
-    Ingreso: 'ingreso',
-    Egreso: 'egreso'
-} as const;
-export type PostAccountingBankAdjustmentsResponseTipoEnum = typeof PostAccountingBankAdjustmentsResponseTipoEnum[keyof typeof PostAccountingBankAdjustmentsResponseTipoEnum];
-
 
 /**
  * Check if a given object implements the PostAccountingBankAdjustmentsResponse interface.
  */
 export function instanceOfPostAccountingBankAdjustmentsResponse(value: object): value is PostAccountingBankAdjustmentsResponse {
+    if (!('ajuste' in value) || value['ajuste'] === undefined) return false;
+    if (!('saldoAnterior' in value) || value['saldoAnterior'] === undefined) return false;
+    if (!('saldoNuevo' in value) || value['saldoNuevo'] === undefined) return false;
+    if (!('advertenciaSaldoNegativo' in value) || value['advertenciaSaldoNegativo'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
     return true;
 }
 
@@ -91,13 +81,11 @@ export function PostAccountingBankAdjustmentsResponseFromJSONTyped(json: any, ig
     }
     return {
         
-        'ajusteId': json['ajusteId'] == null ? undefined : json['ajusteId'],
-        'cuentaId': json['cuentaId'] == null ? undefined : json['cuentaId'],
-        'tipo': json['tipo'] == null ? undefined : json['tipo'],
-        'monto': json['monto'] == null ? undefined : json['monto'],
-        'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
-        'motivo': json['motivo'] == null ? undefined : json['motivo'],
+        'ajuste': AjusteBancarioFromJSON(json['ajuste']),
+        'saldoAnterior': json['saldoAnterior'],
+        'saldoNuevo': json['saldoNuevo'],
+        'advertenciaSaldoNegativo': json['advertenciaSaldoNegativo'],
+        'message': json['message'],
     };
 }
 
@@ -112,13 +100,11 @@ export function PostAccountingBankAdjustmentsResponseToJSONTyped(value?: PostAcc
 
     return {
         
-        'ajusteId': value['ajusteId'],
-        'cuentaId': value['cuentaId'],
-        'tipo': value['tipo'],
-        'monto': value['monto'],
-        'moneda': value['moneda'],
-        'descripcion': value['descripcion'],
-        'motivo': value['motivo'],
+        'ajuste': AjusteBancarioToJSON(value['ajuste']),
+        'saldoAnterior': value['saldoAnterior'],
+        'saldoNuevo': value['saldoNuevo'],
+        'advertenciaSaldoNegativo': value['advertenciaSaldoNegativo'],
+        'message': value['message'],
     };
 }
 

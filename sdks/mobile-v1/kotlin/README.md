@@ -166,6 +166,10 @@ All URIs are relative to */api/mobile/v1*
 | *ClientsApi* | [**mobileGetClientsById**](docs/ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente |
 | *ClientsApi* | [**mobilePostClientsCreate**](docs/ClientsApi.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente |
 | *ClientsApi* | [**mobilePutClientsById**](docs/ClientsApi.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente |
+| *ComprasApi* | [**mobileGetComprasById**](docs/ComprasApi.md#mobilegetcomprasbyid) | **GET** /compras/{id} | Detalle de compra |
+| *ComprasApi* | [**mobileListCompras**](docs/ComprasApi.md#mobilelistcompras) | **GET** /compras | Listar compras |
+| *ContratosApi* | [**mobileGetContratosById**](docs/ContratosApi.md#mobilegetcontratosbyid) | **GET** /contratos/{id} | Detalle de contrato |
+| *ContratosApi* | [**mobileListContratos**](docs/ContratosApi.md#mobilelistcontratos) | **GET** /contratos | Listar contratos |
 | *DashboardApi* | [**mobileGetDashboardDailyAverage**](docs/DashboardApi.md#mobilegetdashboarddailyaverage) | **GET** /dashboard/daily-average | Consultar promedio diario de ingresos |
 | *DashboardApi* | [**mobileGetDashboardIncomeExpenses**](docs/DashboardApi.md#mobilegetdashboardincomeexpenses) | **GET** /dashboard/income-expenses | Consultar ingresos vs gastos del panel |
 | *DashboardApi* | [**mobileGetDashboardInventoryValue**](docs/DashboardApi.md#mobilegetdashboardinventoryvalue) | **GET** /dashboard/inventory-value | Consultar valor total del inventario |
@@ -175,6 +179,18 @@ All URIs are relative to */api/mobile/v1*
 | *DashboardApi* | [**mobileGetDashboardTodaySales**](docs/DashboardApi.md#mobilegetdashboardtodaysales) | **GET** /dashboard/today-sales | Consultar ventas de hoy |
 | *DashboardApi* | [**mobileGetDashboardTopProducts**](docs/DashboardApi.md#mobilegetdashboardtopproducts) | **GET** /dashboard/top-products | Consultar productos más vendidos |
 | *DashboardApi* | [**mobileGetDashboardTransfers**](docs/DashboardApi.md#mobilegetdashboardtransfers) | **GET** /dashboard/transfers | Consultar transferencias entre ubicaciones |
+| *EmpleadosApi* | [**mobileGetEmpleadosById**](docs/EmpleadosApi.md#mobilegetempleadosbyid) | **GET** /empleados/{id} | Detalle de empleado |
+| *EmpleadosApi* | [**mobileListEmpleados**](docs/EmpleadosApi.md#mobilelistempleados) | **GET** /empleados | Listar empleados |
+| *FacturasApi* | [**mobileGetFacturasById**](docs/FacturasApi.md#mobilegetfacturasbyid) | **GET** /facturas/{id} | Detalle de factura |
+| *FacturasApi* | [**mobileListFacturas**](docs/FacturasApi.md#mobilelistfacturas) | **GET** /facturas | Listar facturas |
+| *GastosApi* | [**mobileGetGastosById**](docs/GastosApi.md#mobilegetgastosbyid) | **GET** /gastos/{id} | Detalle de gasto |
+| *GastosApi* | [**mobileListGastos**](docs/GastosApi.md#mobilelistgastos) | **GET** /gastos | Listar gastos |
+| *MermasApi* | [**mobileGetMermasById**](docs/MermasApi.md#mobilegetmermasbyid) | **GET** /mermas/{id} | Detalle de merma |
+| *MermasApi* | [**mobileListMermas**](docs/MermasApi.md#mobilelistmermas) | **GET** /mermas | Listar mermas |
+| *OfertasApi* | [**mobileGetOfertasById**](docs/OfertasApi.md#mobilegetofertasbyid) | **GET** /ofertas/{id} | Detalle de oferta |
+| *OfertasApi* | [**mobileListOfertas**](docs/OfertasApi.md#mobilelistofertas) | **GET** /ofertas | Listar ofertas |
+| *ProduccinApi* | [**mobileGetProduccionById**](docs/ProduccinApi.md#mobilegetproduccionbyid) | **GET** /produccion/{id} | Detalle de orden de producción |
+| *ProduccinApi* | [**mobileListProduccion**](docs/ProduccinApi.md#mobilelistproduccion) | **GET** /produccion | Listar órdenes de producción |
 | *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
 | *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto |
 | *ProductsApi* | [**mobileGetProductsStock**](docs/ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación |
@@ -183,11 +199,21 @@ All URIs are relative to */api/mobile/v1*
 | *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor |
 | *ProvidersApi* | [**mobilePostProvidersCreate**](docs/ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor |
 | *ProvidersApi* | [**mobilePutProvidersById**](docs/ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor |
+| *ReparacionesApi* | [**mobileGetReparacionesById**](docs/ReparacionesApi.md#mobilegetreparacionesbyid) | **GET** /reparaciones/{id} | Detalle de orden de reparación |
+| *ReparacionesApi* | [**mobileListReparaciones**](docs/ReparacionesApi.md#mobilelistreparaciones) | **GET** /reparaciones | Listar órdenes de reparación |
 | *SalesApi* | [**mobileGetSales**](docs/SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas |
 | *SalesApi* | [**mobileGetSalesById**](docs/SalesApi.md#mobilegetsalesbyid) | **GET** /sales/{id} | Consultar venta |
 | *SalesApi* | [**mobilePatchSalesByIdUpdate**](docs/SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta |
 | *SalesApi* | [**mobilePostSalesByIdCancel**](docs/SalesApi.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta |
 | *SalesApi* | [**mobilePostSalesCreate**](docs/SalesApi.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta |
+| *ServiciosApi* | [**mobileGetServiciosById**](docs/ServiciosApi.md#mobilegetserviciosbyid) | **GET** /servicios/{id} | Detalle de servicio |
+| *ServiciosApi* | [**mobileListServicios**](docs/ServiciosApi.md#mobilelistservicios) | **GET** /servicios | Listar servicios |
+| *TransferenciasApi* | [**mobileGetTransferenciasById**](docs/TransferenciasApi.md#mobilegettransferenciasbyid) | **GET** /transferencias/{id} | Detalle de transferencia |
+| *TransferenciasApi* | [**mobileListTransferencias**](docs/TransferenciasApi.md#mobilelisttransferencias) | **GET** /transferencias | Listar transferencias |
+| *UnitsApi* | [**mobileCreateUnit**](docs/UnitsApi.md#mobilecreateunit) | **POST** /units/create | Crear unidad |
+| *UnitsApi* | [**mobileDeleteUnit**](docs/UnitsApi.md#mobiledeleteunit) | **DELETE** /units/{id} | Eliminar unidad |
+| *UnitsApi* | [**mobileListUnits**](docs/UnitsApi.md#mobilelistunits) | **GET** /units | Listar unidades |
+| *UnitsApi* | [**mobileUpdateUnit**](docs/UnitsApi.md#mobileupdateunit) | **PUT** /units/{id} | Actualizar unidad |
 | *WarehousesApi* | [**mobileDeleteWarehousesById**](docs/WarehousesApi.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén |
 | *WarehousesApi* | [**mobileGetWarehouses**](docs/WarehousesApi.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes |
 | *WarehousesApi* | [**mobileGetWarehousesById**](docs/WarehousesApi.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén |
@@ -244,6 +270,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.AdminUserSummary](docs/AdminUserSummary.md)
  - [com.tcp.mobile.v1.models.Advance](docs/Advance.md)
  - [com.tcp.mobile.v1.models.AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
+ - [com.tcp.mobile.v1.models.AjusteBancario](docs/AjusteBancario.md)
  - [com.tcp.mobile.v1.models.Almacen](docs/Almacen.md)
  - [com.tcp.mobile.v1.models.AlmacenCreateRequest](docs/AlmacenCreateRequest.md)
  - [com.tcp.mobile.v1.models.AlmacenDeleteResponse](docs/AlmacenDeleteResponse.md)
@@ -279,6 +306,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.ClienteDeleteResponse](docs/ClienteDeleteResponse.md)
  - [com.tcp.mobile.v1.models.ClienteListResponse](docs/ClienteListResponse.md)
  - [com.tcp.mobile.v1.models.ClienteUpdateRequest](docs/ClienteUpdateRequest.md)
+ - [com.tcp.mobile.v1.models.Compra](docs/Compra.md)
+ - [com.tcp.mobile.v1.models.Contrato](docs/Contrato.md)
  - [com.tcp.mobile.v1.models.Currency](docs/Currency.md)
  - [com.tcp.mobile.v1.models.DashboardDatosPorMes](docs/DashboardDatosPorMes.md)
  - [com.tcp.mobile.v1.models.DashboardDatosPorSemana](docs/DashboardDatosPorSemana.md)
@@ -302,9 +331,13 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.DashboardVentasDiarias](docs/DashboardVentasDiarias.md)
  - [com.tcp.mobile.v1.models.DeleteAccountingAdvancesIdResponse](docs/DeleteAccountingAdvancesIdResponse.md)
  - [com.tcp.mobile.v1.models.DeleteAccountingPaymentTypesIdResponse](docs/DeleteAccountingPaymentTypesIdResponse.md)
+ - [com.tcp.mobile.v1.models.DeleteUnitResponse](docs/DeleteUnitResponse.md)
+ - [com.tcp.mobile.v1.models.Empleado](docs/Empleado.md)
  - [com.tcp.mobile.v1.models.ExchangeRate](docs/ExchangeRate.md)
  - [com.tcp.mobile.v1.models.ExpenseDistributionRequest](docs/ExpenseDistributionRequest.md)
  - [com.tcp.mobile.v1.models.ExpenseReconciliationRequest](docs/ExpenseReconciliationRequest.md)
+ - [com.tcp.mobile.v1.models.Factura](docs/Factura.md)
+ - [com.tcp.mobile.v1.models.Gasto](docs/Gasto.md)
  - [com.tcp.mobile.v1.models.GetAccountingAccountsPayableResponse](docs/GetAccountingAccountsPayableResponse.md)
  - [com.tcp.mobile.v1.models.GetAccountingAccountsReceivableMetricsResponse](docs/GetAccountingAccountsReceivableMetricsResponse.md)
  - [com.tcp.mobile.v1.models.GetAccountingAccountsReceivableResponse](docs/GetAccountingAccountsReceivableResponse.md)
@@ -358,15 +391,45 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetAdminUserDetailResponse](docs/GetAdminUserDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetAdminUserLoginHistoryResponse](docs/GetAdminUserLoginHistoryResponse.md)
  - [com.tcp.mobile.v1.models.GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
+ - [com.tcp.mobile.v1.models.GetComprasDetailResponse](docs/GetComprasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetComprasListResponse](docs/GetComprasListResponse.md)
+ - [com.tcp.mobile.v1.models.GetContratosDetailResponse](docs/GetContratosDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetContratosListResponse](docs/GetContratosListResponse.md)
  - [com.tcp.mobile.v1.models.GetDashboardStatsResponse](docs/GetDashboardStatsResponse.md)
+ - [com.tcp.mobile.v1.models.GetEmpleadosDetailResponse](docs/GetEmpleadosDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetEmpleadosListResponse](docs/GetEmpleadosListResponse.md)
+ - [com.tcp.mobile.v1.models.GetFacturasDetailResponse](docs/GetFacturasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetFacturasListResponse](docs/GetFacturasListResponse.md)
+ - [com.tcp.mobile.v1.models.GetGastosDetailResponse](docs/GetGastosDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetGastosListResponse](docs/GetGastosListResponse.md)
+ - [com.tcp.mobile.v1.models.GetMermasDetailResponse](docs/GetMermasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetMermasListResponse](docs/GetMermasListResponse.md)
+ - [com.tcp.mobile.v1.models.GetOfertasDetailResponse](docs/GetOfertasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetOfertasListResponse](docs/GetOfertasListResponse.md)
+ - [com.tcp.mobile.v1.models.GetProduccionDetailResponse](docs/GetProduccionDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetProduccionListResponse](docs/GetProduccionListResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsResponse](docs/GetProductsResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsStockResponse](docs/GetProductsStockResponse.md)
+ - [com.tcp.mobile.v1.models.GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetReparacionesListResponse](docs/GetReparacionesListResponse.md)
  - [com.tcp.mobile.v1.models.GetSalesIdResponse](docs/GetSalesIdResponse.md)
  - [com.tcp.mobile.v1.models.GetSalesResponse](docs/GetSalesResponse.md)
+ - [com.tcp.mobile.v1.models.GetServiciosDetailResponse](docs/GetServiciosDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetServiciosListResponse](docs/GetServiciosListResponse.md)
+ - [com.tcp.mobile.v1.models.GetTransferenciasDetailResponse](docs/GetTransferenciasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetTransferenciasListResponse](docs/GetTransferenciasListResponse.md)
+ - [com.tcp.mobile.v1.models.GetUnitsDetailResponse](docs/GetUnitsDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetUnitsListResponse](docs/GetUnitsListResponse.md)
  - [com.tcp.mobile.v1.models.JsonValue](docs/JsonValue.md)
  - [com.tcp.mobile.v1.models.LockAdminUserRequest](docs/LockAdminUserRequest.md)
  - [com.tcp.mobile.v1.models.LoginRequest](docs/LoginRequest.md)
+ - [com.tcp.mobile.v1.models.Merma](docs/Merma.md)
+ - [com.tcp.mobile.v1.models.MobileCreateUnitRequest](docs/MobileCreateUnitRequest.md)
+ - [com.tcp.mobile.v1.models.MobileUpdateUnitRequest](docs/MobileUpdateUnitRequest.md)
+ - [com.tcp.mobile.v1.models.Oferta](docs/Oferta.md)
+ - [com.tcp.mobile.v1.models.OrdenProduccion](docs/OrdenProduccion.md)
+ - [com.tcp.mobile.v1.models.OrdenReparacion](docs/OrdenReparacion.md)
  - [com.tcp.mobile.v1.models.Pagination](docs/Pagination.md)
  - [com.tcp.mobile.v1.models.PatchAdminTenantsLicenseUpdateResponse](docs/PatchAdminTenantsLicenseUpdateResponse.md)
  - [com.tcp.mobile.v1.models.PatchAdminTenantsUpdateResponse](docs/PatchAdminTenantsUpdateResponse.md)
@@ -452,6 +515,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.SaleUpdateRequest](docs/SaleUpdateRequest.md)
  - [com.tcp.mobile.v1.models.ServiceDistributionRequest](docs/ServiceDistributionRequest.md)
  - [com.tcp.mobile.v1.models.ServiceReconciliationRequest](docs/ServiceReconciliationRequest.md)
+ - [com.tcp.mobile.v1.models.Servicio](docs/Servicio.md)
  - [com.tcp.mobile.v1.models.SuccessResponse](docs/SuccessResponse.md)
  - [com.tcp.mobile.v1.models.SwitchTenantRequest](docs/SwitchTenantRequest.md)
  - [com.tcp.mobile.v1.models.SwitchTenantResponse](docs/SwitchTenantResponse.md)
@@ -459,6 +523,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.TenantSummary](docs/TenantSummary.md)
  - [com.tcp.mobile.v1.models.Token](docs/Token.md)
  - [com.tcp.mobile.v1.models.TokenPair](docs/TokenPair.md)
+ - [com.tcp.mobile.v1.models.Transferencia](docs/Transferencia.md)
+ - [com.tcp.mobile.v1.models.Unit](docs/Unit.md)
  - [com.tcp.mobile.v1.models.UnlockAdminUserRequest](docs/UnlockAdminUserRequest.md)
  - [com.tcp.mobile.v1.models.UpdateAdminTenantLicenseRequest](docs/UpdateAdminTenantLicenseRequest.md)
  - [com.tcp.mobile.v1.models.UpdateAdminTenantRequest](docs/UpdateAdminTenantRequest.md)

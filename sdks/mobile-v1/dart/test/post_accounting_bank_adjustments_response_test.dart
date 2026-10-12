@@ -16,38 +16,28 @@ void main() {
   // final instance = PostAccountingBankAdjustmentsResponse();
 
   group('test PostAccountingBankAdjustmentsResponse', () {
-    // String ajusteId
-    test('to test the property `ajusteId`', () async {
+    // AjusteBancario ajuste
+    test('to test the property `ajuste`', () async {
       // TODO
     });
 
-    // String cuentaId
-    test('to test the property `cuentaId`', () async {
+    // num saldoAnterior
+    test('to test the property `saldoAnterior`', () async {
       // TODO
     });
 
-    // String tipo
-    test('to test the property `tipo`', () async {
+    // num saldoNuevo
+    test('to test the property `saldoNuevo`', () async {
       // TODO
     });
 
-    // num monto
-    test('to test the property `monto`', () async {
+    // bool advertenciaSaldoNegativo
+    test('to test the property `advertenciaSaldoNegativo`', () async {
       // TODO
     });
 
-    // String moneda
-    test('to test the property `moneda`', () async {
-      // TODO
-    });
-
-    // String descripcion
-    test('to test the property `descripcion`', () async {
-      // TODO
-    });
-
-    // String motivo
-    test('to test the property `motivo`', () async {
+    // String message
+    test('to test the property `message`', () async {
       // TODO
     });
 

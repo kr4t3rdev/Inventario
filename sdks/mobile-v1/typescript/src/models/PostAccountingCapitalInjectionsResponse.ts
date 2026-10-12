@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Respuesta de POST /accounting/capital-injections.
+ * Respuesta de POST /accounting/capital-injections: fila de InyeccionCapital creada. Los campos Decimal se serializan como texto.
  * @export
  * @interface PostAccountingCapitalInjectionsResponse
  */
@@ -24,25 +24,91 @@ export interface PostAccountingCapitalInjectionsResponse {
      * @type {string}
      * @memberof PostAccountingCapitalInjectionsResponse
      */
-    inyeccionId?: string;
+    id: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    tenantId?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    tipo: PostAccountingCapitalInjectionsResponseTipoEnum;
+    /**
+     * Decimal serializado como texto.
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    montoRecibido: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    moneda: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    tasaInteres?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    montoInteres?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    montoTotalDeuda?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    saldoPendiente?: string | null;
     /**
      * 
      * @type {number}
      * @memberof PostAccountingCapitalInjectionsResponse
      */
-    monto?: number;
+    plazoMeses?: number | null;
+    /**
+     * 
+     * @type {Date}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    fechaInicioPago?: Date | null;
     /**
      * 
      * @type {string}
      * @memberof PostAccountingCapitalInjectionsResponse
      */
-    moneda?: string;
+    socio?: string | null;
     /**
      * 
      * @type {string}
      * @memberof PostAccountingCapitalInjectionsResponse
      */
-    tipo?: string;
+    entidadPrestamista?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    cuentaId: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    estado?: string | null;
     /**
      * 
      * @type {string}
@@ -51,16 +117,47 @@ export interface PostAccountingCapitalInjectionsResponse {
     descripcion?: string | null;
     /**
      * 
-     * @type {string}
+     * @type {Date}
      * @memberof PostAccountingCapitalInjectionsResponse
      */
-    cuentaBancariaId?: string | null;
+    fechaRegistro: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    createdAt: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof PostAccountingCapitalInjectionsResponse
+     */
+    updatedAt: Date;
 }
+
+
+/**
+ * @export
+ */
+export const PostAccountingCapitalInjectionsResponseTipoEnum = {
+    CapitalSocial: 'CAPITAL_SOCIAL',
+    DeudaExterna: 'DEUDA_EXTERNA'
+} as const;
+export type PostAccountingCapitalInjectionsResponseTipoEnum = typeof PostAccountingCapitalInjectionsResponseTipoEnum[keyof typeof PostAccountingCapitalInjectionsResponseTipoEnum];
+
 
 /**
  * Check if a given object implements the PostAccountingCapitalInjectionsResponse interface.
  */
 export function instanceOfPostAccountingCapitalInjectionsResponse(value: object): value is PostAccountingCapitalInjectionsResponse {
+    if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('tipo' in value) || value['tipo'] === undefined) return false;
+    if (!('montoRecibido' in value) || value['montoRecibido'] === undefined) return false;
+    if (!('moneda' in value) || value['moneda'] === undefined) return false;
+    if (!('cuentaId' in value) || value['cuentaId'] === undefined) return false;
+    if (!('fechaRegistro' in value) || value['fechaRegistro'] === undefined) return false;
+    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+    if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
 }
 
@@ -74,12 +171,25 @@ export function PostAccountingCapitalInjectionsResponseFromJSONTyped(json: any, 
     }
     return {
         
-        'inyeccionId': json['inyeccionId'] == null ? undefined : json['inyeccionId'],
-        'monto': json['monto'] == null ? undefined : json['monto'],
-        'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'tipo': json['tipo'] == null ? undefined : json['tipo'],
+        'id': json['id'],
+        'tenantId': json['tenantId'] == null ? undefined : json['tenantId'],
+        'tipo': json['tipo'],
+        'montoRecibido': json['montoRecibido'],
+        'moneda': json['moneda'],
+        'tasaInteres': json['tasaInteres'] == null ? undefined : json['tasaInteres'],
+        'montoInteres': json['montoInteres'] == null ? undefined : json['montoInteres'],
+        'montoTotalDeuda': json['montoTotalDeuda'] == null ? undefined : json['montoTotalDeuda'],
+        'saldoPendiente': json['saldoPendiente'] == null ? undefined : json['saldoPendiente'],
+        'plazoMeses': json['plazoMeses'] == null ? undefined : json['plazoMeses'],
+        'fechaInicioPago': json['fechaInicioPago'] == null ? undefined : (new Date(json['fechaInicioPago'])),
+        'socio': json['socio'] == null ? undefined : json['socio'],
+        'entidadPrestamista': json['entidadPrestamista'] == null ? undefined : json['entidadPrestamista'],
+        'cuentaId': json['cuentaId'],
+        'estado': json['estado'] == null ? undefined : json['estado'],
         'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
-        'cuentaBancariaId': json['cuentaBancariaId'] == null ? undefined : json['cuentaBancariaId'],
+        'fechaRegistro': (new Date(json['fechaRegistro'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'updatedAt': (new Date(json['updatedAt'])),
     };
 }
 
@@ -94,12 +204,25 @@ export function PostAccountingCapitalInjectionsResponseToJSONTyped(value?: PostA
 
     return {
         
-        'inyeccionId': value['inyeccionId'],
-        'monto': value['monto'],
-        'moneda': value['moneda'],
+        'id': value['id'],
+        'tenantId': value['tenantId'],
         'tipo': value['tipo'],
+        'montoRecibido': value['montoRecibido'],
+        'moneda': value['moneda'],
+        'tasaInteres': value['tasaInteres'],
+        'montoInteres': value['montoInteres'],
+        'montoTotalDeuda': value['montoTotalDeuda'],
+        'saldoPendiente': value['saldoPendiente'],
+        'plazoMeses': value['plazoMeses'],
+        'fechaInicioPago': value['fechaInicioPago'] == null ? value['fechaInicioPago'] : value['fechaInicioPago'].toISOString(),
+        'socio': value['socio'],
+        'entidadPrestamista': value['entidadPrestamista'],
+        'cuentaId': value['cuentaId'],
+        'estado': value['estado'],
         'descripcion': value['descripcion'],
-        'cuentaBancariaId': value['cuentaBancariaId'],
+        'fechaRegistro': value['fechaRegistro'].toISOString(),
+        'createdAt': value['createdAt'].toISOString(),
+        'updatedAt': value['updatedAt'].toISOString(),
     };
 }
 
