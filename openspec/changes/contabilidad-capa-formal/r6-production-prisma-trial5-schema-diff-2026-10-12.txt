@@ -1,0 +1,67 @@
+
+[*] Changed the `Categoria` table
+  [-] Removed foreign key on columns (parentId)
+  [+] Added foreign key on columns (parentId)
+
+[*] Changed the `CompraDocumento` table
+  [*] Altered column `tasaCambio` (type changed)
+  [*] Altered column `montoConvertido` (type changed)
+
+[*] Changed the `InyeccionCapital` table
+  [*] Altered column `tasaCambio` (type changed)
+  [*] Altered column `montoConvertido` (type changed)
+
+[*] Changed the `PagoDeuda` table
+  [*] Altered column `tasaCambio` (type changed)
+  [*] Altered column `montoConvertido` (type changed)
+
+[*] Changed the `Producto` table
+  [-] Removed foreign key on columns (categoriaId)
+  [-] Removed foreign key on columns (puntoDeVentaId)
+  [+] Added foreign key on columns (categoriaId)
+  [+] Added foreign key on columns (puntoDeVentaId)
+
+[*] Changed the `RecetaIngrediente` table
+  [*] Altered column `id` (default changed from `Some(DbGenerated(Some("(gen_random_uuid())::text")))` to `None`)
+
+[*] Changed the `ReglaReabastecimiento` table
+  [*] Renamed index `ReglaReabastecimiento_tenantId_productoId_tipoUbicacion_ubicaci` to `ReglaReabastecimiento_tenantId_productoId_tipoUbicacion_ubi_key`
+
+[*] Changed the `StockMoveLine` table
+  [*] Renamed index `StockMoveLine_eventoKey_key` to `StockMoveLine_tenantId_tipoOrigen_origenId_productoId_tipoU_key`
+
+[*] Changed the `TransferenciaBancaria` table
+  [*] Altered column `montoConvertido` (type changed)
+
+[*] Changed the `accounting_policy_tenant_approvals` table
+  [*] Renamed index `accounting_policy_tenant_approvals_tenantId_functionalCurrencyC` to `accounting_policy_tenant_approvals_tenantId_functionalCurre_key`
+  [*] Renamed index `accounting_policy_tenant_approvals_tenantId_status_expiresAt_id` to `accounting_policy_tenant_approvals_tenantId_status_expiresA_idx`
+
+[*] Changed the `apertura_periodos` table
+  [-] Removed foreign key on columns (periodoId)
+  [*] Renamed the foreign key "apertura_periodos_periodoId_tenantId_fkey" to "apertura_periodos_tenantId_periodoId_fkey"
+
+[*] Changed the `apertura_revisiones` table
+  [*] Altered column `updatedAt` (default changed from `Some(Now)` to `None`)
+  [*] Renamed the foreign key "apertura_revisiones_opening_fkey" to "apertura_revisiones_tenantId_periodoId_aperturaId_fkey"
+  [*] Renamed the foreign key "apertura_revisiones_period_fkey" to "apertura_revisiones_tenantId_periodoId_fkey"
+  [*] Renamed the foreign key "apertura_revisiones_tenant_fkey" to "apertura_revisiones_tenantId_fkey"
+
+[*] Changed the `financial_auxiliary_checkpoints` table
+  [*] Renamed index `financial_auxiliary_checkpoints_tenantId_schemaVersion_cutoffAt` to `financial_auxiliary_checkpoints_tenantId_schemaVersion_cuto_idx`
+
+[*] Changed the `fx_evidence` table
+  [*] Renamed index `fx_evidence_tenant_source_captured_idx` to `fx_evidence_tenantId_sourceType_sourceId_capturedAt_idx`
+  [*] Renamed index `fx_evidence_tenant_source_cutoff_idx` to `fx_evidence_tenantId_sourceType_sourceId_cutoffAt_idx`
+  [*] Renamed index `fx_evidence_tenant_source_fingerprint_key` to `fx_evidence_tenantId_sourceType_sourceId_evidenceFingerprin_key`
+
+[*] Changed the `lineas_apertura_periodo` table
+  [*] Renamed the foreign key "lineas_apertura_periodo_aperturaId_tenantId_periodoId_fkey" to "lineas_apertura_periodo_tenantId_periodoId_aperturaId_fkey"
+  [*] Renamed the foreign key "lineas_apertura_periodo_periodoId_tenantId_fkey" to "lineas_apertura_periodo_tenantId_periodoId_fkey"
+  [*] Renamed the foreign key "lineas_apertura_periodo_revisionId_fkey" to "lineas_apertura_periodo_tenantId_periodoId_aperturaId_revi_fkey"
+
+[*] Changed the `saldos_snapshot` table
+  [*] Renamed index `SaldoSnapshot_tenantId_idx` to `saldos_snapshot_tenantId_idx`
+
+[*] Changed the `series_facturacion` table
+  [*] Renamed the foreign key "SerieFacturacion_tenantId_fkey" to "series_facturacion_tenantId_fkey"

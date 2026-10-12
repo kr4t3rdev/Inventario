@@ -1,0 +1,35 @@
+{
+  "capturedAt": "2026-10-12T05:05:52.329171+00:00",
+  "sourceBranch": "main",
+  "sourceCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "targetBranch": "feat/contabilidad-capa-formal",
+  "targetHead": "076baf3f04064af9f90b9bcca08aabea77a16003",
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial6",
+  "derivedFrom": "tcp_r6_prod_clone_4ae12d4e4c1f_trial5",
+  "repairSqlSha256": "986eee8c23572971b3feb4004c4eb06803704314ccec53d04f33bbf1279caac3",
+  "repairRuns": [
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial6",
+      "auditRows": 15,
+      "trialOnly": true,
+      "repairedReferences": 13,
+      "createdPaymentTypes": 2
+    },
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial6",
+      "auditRows": 0,
+      "trialOnly": true,
+      "repairedReferences": 0,
+      "createdPaymentTypes": 0
+    }
+  ],
+  "prismaReplay": {
+    "exit": 0,
+    "stdout": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"tcp_r6_prod_clone_4ae12d4e4c1f_trial6\", schema \"public\" at \"127.0.0.1:5433\"\n\n148 migrations found in prisma/migrations\n\n\nNo pending migrations to apply.\n",
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+  },
+  "guardsReady": 23,
+  "historyRows": 152,
+  "remainingPaymentTenantMismatches": 0,
+  "schemaDiffStillPending": true
+}

@@ -1,0 +1,258 @@
+{
+  "capturedAt": "2026-10-12T00:02:38.589721+00:00",
+  "sourceBranch": "main",
+  "sourceCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "targetBranch": "feat/contabilidad-capa-formal",
+  "targetHead": "076baf3f04064af9f90b9bcca08aabea77a16003",
+  "targetFrozenSql": [
+    {
+      "name": "20260924000000_contabilidad_shadow_outbox",
+      "sha256": "85071b2df4c866bfd6384361978f4c3c1fabd2024e0b2544d9ea8a50ab7db42a"
+    },
+    {
+      "name": "20260926000000_ajuste_bancario_fx_evidence",
+      "sha256": "7c504493b016821f285e882daa362ded1489e14b9b13dfe3abf95b16a67efb3f"
+    },
+    {
+      "name": "20260926000001_transferencia_bancaria_fx_evidence",
+      "sha256": "5c7696dded0168a5cbbc7c9f3f9238d14d9d75922bf3b199d481304eca2d01cd"
+    },
+    {
+      "name": "20260926000002_capital_cash_fx_evidence",
+      "sha256": "d75c82781f2ff4c12c594d06ffd43f15b629eb0336ee18d5830c1e23160c8c1e"
+    },
+    {
+      "name": "20260926000003_compra_documento_fx_evidence",
+      "sha256": "b4eb01e6005670ac3e9d91b7e09a48b22c9af56d8f6354ae5d07e3b64a19f606"
+    },
+    {
+      "name": "20260927000000_cxc_fx_valuation",
+      "sha256": "0979534cb0289a6394e1f15ceadcba65378ed2dc20dcc56fbdb025b69a15be59"
+    },
+    {
+      "name": "20260927120000_contabilidad_formal_core",
+      "sha256": "49ba2812233a5f2b97fc3d41f5ee98ccd896a5b87608190cd9b370f48c2b0c78"
+    },
+    {
+      "name": "20260928000000_contabilidad_formal_remediacion",
+      "sha256": "5d2739a020e95577536966c455edbe60c1eee58033ca47d0e0a04856f21f6d19"
+    },
+    {
+      "name": "20260929000000_r5_formal_schema_dependencies",
+      "sha256": "66118d5037c9463da1afda65977dac1779189f01750ea4d4e68b8369470032d7"
+    },
+    {
+      "name": "20260929120000_asiento_tenant_hash_sequence",
+      "sha256": "6b359385227401d423cf6d1705a771fbf54715bb436b58bba06c0ce8235a13ce"
+    },
+    {
+      "name": "20260930120000_formal_opening_evidence",
+      "sha256": "50dc969c757717fad4f9b3ffb007adb361eefe090f5cf66590c0cd5bbeff5b8c"
+    },
+    {
+      "name": "20261001090000_reconciliacion_venta_idempotencia",
+      "sha256": "a8780bb0cebb5c40d8ae25ce9aaf3a148363f23378f4291a8df3a07703e7a7ed"
+    },
+    {
+      "name": "20261002090000_anticipo_fx_snapshot",
+      "sha256": "cf6253f87c55f78bd69648859c8f222dfceb4028fb0c003d1fc7eb490894d435"
+    },
+    {
+      "name": "20261002100000_fiscal_incierta_attempt",
+      "sha256": "73985f6026a66b49ed4c6c90259236747d4fb9ac34af045971414360807fb816"
+    },
+    {
+      "name": "20261002100000_service_advance_obligation",
+      "sha256": "388e2404cc952eb5e9e6923a147c651436d9d8b44d3b04466d56b3a57e9086e6"
+    },
+    {
+      "name": "20261002110000_anticipo_creation_idempotency",
+      "sha256": "339d348ec1a8e469ebde350e0f1e8b63f4ae1383779f5068fe19e0e759866d44"
+    },
+    {
+      "name": "20261003120000_reconciliacion_servicio_idempotencia",
+      "sha256": "6c64274a2b4751981775c75fbfef189bb0820e4f0615fc86a236dc0924c0d32f"
+    },
+    {
+      "name": "20261004130000_reconciliacion_servicio_moneda_cuenta",
+      "sha256": "22ceab7248fe583eca7eaa5768a61310859add770d46ad8d5883aa74c7c0f861"
+    },
+    {
+      "name": "20261004150000_reconciliacion_venta_moneda_cuenta",
+      "sha256": "357e02ce09f305110d655a31f46508a808531f68fdb2563ebfcab749f00c97f2"
+    },
+    {
+      "name": "20261005120000_reconciliacion_gasto_moneda_cuenta",
+      "sha256": "836b8e72a6ab29d5595a94421c2a35cfe7f0500405d743a2a89ad7757421d209"
+    },
+    {
+      "name": "20261005160000_merma_idempotency_key",
+      "sha256": "10ec1bfa43b1f8a9f4ecd5e0320d1c310184dd9a620130edce7d26968ee6fbd3"
+    },
+    {
+      "name": "20261006000000_ajuste_idempotency_key",
+      "sha256": "a765e8169369c9dba74f6d1c5568224e39f3be7af3805e77bda7dcb4af233d0c"
+    },
+    {
+      "name": "20261006010000_capital_idempotency_key",
+      "sha256": "0d4e0ac0b863137332246e78a2827dd4bc6ae96d4e5096ede3aa7f6f6f354c45"
+    },
+    {
+      "name": "20261006020000_restock_factura_unique",
+      "sha256": "844e271dd73b9cadf2b3f93e729722c5ed8f4076c767ac0b30fdc975442a398a"
+    },
+    {
+      "name": "20261006100000_cxp_montos_funcionales",
+      "sha256": "0ab785789148b1649866a7cd90b4b71a9fa44f881b40008ca91b489160294648"
+    },
+    {
+      "name": "20261006120000_venta_servicios_idempotency",
+      "sha256": "eb22ea0f086c617168ae6aed4143fde35ddb8e848f681cfff3c837ad8aa7fec4"
+    },
+    {
+      "name": "20261006150000_cash_snapshots_funcionales",
+      "sha256": "7133d98ee1176140340ffcdc0e2b9b03ffb7c65fe737b037884a884f3474bba7"
+    },
+    {
+      "name": "20261009110000_venta_create_idempotency",
+      "sha256": "c9ce2d12b91bb89092776a771932cacc9e43e7a81085966d8009bdd66903650a"
+    },
+    {
+      "name": "20261010120000_licencia_renewal_idempotency",
+      "sha256": "c652dcd7b9a9d07deb4e60684e12a1a7920fadf0b748fb856ee29c3f0e7c4779"
+    }
+  ],
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial2",
+  "derivedFrom": "tcp_r6_prod_clone_4ae12d4e4c1f_trial1",
+  "inheritedSuccessfulFiles": 8,
+  "results": [
+    {
+      "name": "20260929000000_r5_formal_schema_dependencies",
+      "sha256": "66118d5037c9463da1afda65977dac1779189f01750ea4d4e68b8369470032d7",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20260929120000_asiento_tenant_hash_sequence",
+      "sha256": "6b359385227401d423cf6d1705a771fbf54715bb436b58bba06c0ce8235a13ce",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20260930120000_formal_opening_evidence",
+      "sha256": "50dc969c757717fad4f9b3ffb007adb361eefe090f5cf66590c0cd5bbeff5b8c",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261001090000_reconciliacion_venta_idempotencia",
+      "sha256": "a8780bb0cebb5c40d8ae25ce9aaf3a148363f23378f4291a8df3a07703e7a7ed",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261002090000_anticipo_fx_snapshot",
+      "sha256": "cf6253f87c55f78bd69648859c8f222dfceb4028fb0c003d1fc7eb490894d435",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261002100000_fiscal_incierta_attempt",
+      "sha256": "73985f6026a66b49ed4c6c90259236747d4fb9ac34af045971414360807fb816",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261002100000_service_advance_obligation",
+      "sha256": "388e2404cc952eb5e9e6923a147c651436d9d8b44d3b04466d56b3a57e9086e6",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261002110000_anticipo_creation_idempotency",
+      "sha256": "339d348ec1a8e469ebde350e0f1e8b63f4ae1383779f5068fe19e0e759866d44",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261003120000_reconciliacion_servicio_idempotencia",
+      "sha256": "6c64274a2b4751981775c75fbfef189bb0820e4f0615fc86a236dc0924c0d32f",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261004130000_reconciliacion_servicio_moneda_cuenta",
+      "sha256": "22ceab7248fe583eca7eaa5768a61310859add770d46ad8d5883aa74c7c0f861",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261004150000_reconciliacion_venta_moneda_cuenta",
+      "sha256": "357e02ce09f305110d655a31f46508a808531f68fdb2563ebfcab749f00c97f2",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261005120000_reconciliacion_gasto_moneda_cuenta",
+      "sha256": "836b8e72a6ab29d5595a94421c2a35cfe7f0500405d743a2a89ad7757421d209",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261005160000_merma_idempotency_key",
+      "sha256": "10ec1bfa43b1f8a9f4ecd5e0320d1c310184dd9a620130edce7d26968ee6fbd3",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006000000_ajuste_idempotency_key",
+      "sha256": "a765e8169369c9dba74f6d1c5568224e39f3be7af3805e77bda7dcb4af233d0c",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006010000_capital_idempotency_key",
+      "sha256": "0d4e0ac0b863137332246e78a2827dd4bc6ae96d4e5096ede3aa7f6f6f354c45",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006020000_restock_factura_unique",
+      "sha256": "844e271dd73b9cadf2b3f93e729722c5ed8f4076c767ac0b30fdc975442a398a",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006100000_cxp_montos_funcionales",
+      "sha256": "0ab785789148b1649866a7cd90b4b71a9fa44f881b40008ca91b489160294648",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006120000_venta_servicios_idempotency",
+      "sha256": "eb22ea0f086c617168ae6aed4143fde35ddb8e848f681cfff3c837ad8aa7fec4",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261006150000_cash_snapshots_funcionales",
+      "sha256": "7133d98ee1176140340ffcdc0e2b9b03ffb7c65fe737b037884a884f3474bba7",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261009110000_venta_create_idempotency",
+      "sha256": "c9ce2d12b91bb89092776a771932cacc9e43e7a81085966d8009bdd66903650a",
+      "exit": 0,
+      "errorSummary": []
+    },
+    {
+      "name": "20261010120000_licencia_renewal_idempotency",
+      "sha256": "c652dcd7b9a9d07deb4e60684e12a1a7920fadf0b748fb856ee29c3f0e7c4779",
+      "exit": 0,
+      "errorSummary": []
+    }
+  ],
+  "historyWritten": false,
+  "scope": "Direct SQL rehearsal, not Prisma migrate deploy or release acceptance"
+}

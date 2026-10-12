@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-11T22:49:46.449448+00:00",
+  "sourceBranch": "main",
+  "sourceCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "sourceDeployment": "46cd7a49-4711-4507-9d7c-13eb3e246c38",
+  "sourceDeploymentStatus": "SUCCESS",
+  "targetBranch": "feat/contabilidad-capa-formal",
+  "targetHead": "076baf3f04064af9f90b9bcca08aabea77a16003",
+  "targetIsSharedDirtyCheckout": true,
+  "cloneDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f",
+  "cloneHost": "127.0.0.1",
+  "clonePort": 5433,
+  "privateDirectory": "/private/var/folders/n_/2tnvb4k17q7bvzg4kk6lb14h0000gn/T/opencode/r6-production-clone-lggw2k9_",
+  "dumpSha256": "8db01500f7107efa533ab995cfee90a4f40988b7503284f20a8c3263019be999",
+  "dumpBytes": 605803,
+  "restored": true
+}

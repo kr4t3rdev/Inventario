@@ -19,7 +19,7 @@ model Categoria {
   parentId              String?
   clasSectionId         String?
   clasSpecificId        String?
-  parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Cascade)
+  parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Restrict)
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   tenant                Tenant      @relation(fields: [tenantId], references: [tenantId])
   productos             Producto[]
@@ -85,8 +85,8 @@ model InyeccionCapital {
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
-  tasaCambio         Decimal?
-  montoConvertido    Decimal?
+  tasaCambio         Decimal?       @db.Decimal(20, 10)
+  montoConvertido    Decimal?       @db.Decimal(20, 4)
   functionalCurrency    String?
   rateEffectiveAt       DateTime?
   fxProvenanceKind      String?
@@ -124,8 +124,8 @@ model PagoDeuda {
   inyeccionId    String
   montoPagado    Decimal
   moneda         String           @default("CUP")
-  tasaCambio     Decimal?
-  montoConvertido Decimal?
+  tasaCambio     Decimal?          @db.Decimal(20, 10)
+  montoConvertido Decimal?         @db.Decimal(20, 4)
   functionalCurrency    String?
   rateEffectiveAt       DateTime?
   fxProvenanceKind      String?
@@ -563,10 +563,10 @@ model Producto {
   ordenMateriales      OrdenReparacionMaterial[]
   precios              PrecioProducto[]
   almacen              Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
-  categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
+  categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Restrict)
   productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
   productosHijos       Producto[]                @relation("ProductoCompuesto")
-  puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
+  puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: SetNull)
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
   unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Restrict)
@@ -705,7 +705,7 @@ model StockMoveLine {
   producto         Producto             @relation(fields: [productoTenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   creadoPor        User?                @relation(fields: [creadoPorId], references: [userId], onDelete: SetNull)
 
-  @@unique([tenantId, tipoOrigen, origenId, productoId, tipoUbicacion, ubicacionId, secuencia], name: "eventoKey")
+  @@unique([tenantId, tipoOrigen, origenId, productoId, tipoUbicacion, ubicacionId, secuencia], name: "eventoKey", map: "StockMoveLine_eventoKey_key")
   @@index([tenantId, productoId, createdAt])
   @@index([tenantId, tipoOrigen, origenId])
   @@index([tenantId, ubicacionId, createdAt, id])
@@ -1463,8 +1463,8 @@ model CompraDocumento {
   facturaUrl        String                @default("")
   formaPago         String
   moneda            String                @default("CUP")
-  tasaCambio        Decimal?
-  montoConvertido   Decimal?
+  tasaCambio        Decimal?              @db.Decimal(20, 10)
+  montoConvertido   Decimal?              @db.Decimal(20, 4)
   functionalCurrency     String?
   rateEffectiveAt        DateTime?
   fxProvenanceKind       String?
@@ -1614,7 +1614,7 @@ model ReglaReabastecimiento {
   tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
   producto      Producto @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade)
 
-  @@unique([tenantId, productoId, tipoUbicacion, ubicacionId])
+  @@unique([tenantId, productoId, tipoUbicacion, ubicacionId], map: "ReglaReabastecimiento_tenantId_productoId_tipoUbicacion_ubicaci")
   @@index([tenantId, ubicacionId])
 }
 
@@ -1861,8 +1861,8 @@ model AccountingPolicyTenantApproval {
   createdAt              DateTime  @default(now())
   tenant                 Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 
-  @@unique([tenantId, functionalCurrencyCode, approvalHash])
-  @@index([tenantId, status, expiresAt])
+  @@unique([tenantId, functionalCurrencyCode, approvalHash], map: "accounting_policy_tenant_approvals_tenantId_functionalCurrencyC")
+  @@index([tenantId, status, expiresAt], map: "accounting_policy_tenant_approvals_tenantId_status_expiresAt_id")
   @@map("accounting_policy_tenant_approvals")
 }
 
@@ -1881,7 +1881,7 @@ model FinancialAuxiliaryCheckpoint {
   functionalCurrency     Moneda   @relation(fields: [functionalCurrencyCode], references: [codigo], onDelete: Restrict)
 
   @@unique([tenantId, cutoffAt])
-  @@index([tenantId, schemaVersion, cutoffAt])
+  @@index([tenantId, schemaVersion, cutoffAt], map: "financial_auxiliary_checkpoints_tenantId_schemaVersion_cutoffAt")
   @@index([tenantId, capturedAt])
   @@index([functionalCurrencyCode])
   @@map("financial_auxiliary_checkpoints")
@@ -1910,9 +1910,9 @@ model FxEvidence {
   createdAt           DateTime @default(now())
   tenant              Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 
-  @@unique([tenantId, sourceType, sourceId, evidenceFingerprint])
-  @@index([tenantId, sourceType, sourceId, cutoffAt])
-  @@index([tenantId, sourceType, sourceId, capturedAt])
+  @@unique([tenantId, sourceType, sourceId, evidenceFingerprint], map: "fx_evidence_tenant_source_fingerprint_key")
+  @@index([tenantId, sourceType, sourceId, cutoffAt], map: "fx_evidence_tenant_source_cutoff_idx")
+  @@index([tenantId, sourceType, sourceId, capturedAt], map: "fx_evidence_tenant_source_captured_idx")
   @@map("fx_evidence")
 }
 
@@ -2181,7 +2181,7 @@ model TransferenciaBancaria {
   montoDestino        Decimal
   monedaDestino       String
   tasaCambio          Decimal?
-  montoConvertido     Decimal?
+  montoConvertido     Decimal?       @db.Decimal(20, 4)
   functionalCurrency    String?
   rateEffectiveAt       DateTime?
   fxProvenanceKind      String?
@@ -2513,7 +2513,7 @@ model SerieFacturacion {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   facturas     Factura[]
-  tenant       Tenant    @relation(fields: [tenantId], references: [tenantId])
+  tenant       Tenant    @relation(fields: [tenantId], references: [tenantId], map: "SerieFacturacion_tenantId_fkey")
 
   @@unique([tenantId, prefijo])
   @@index([tenantId])
@@ -2932,7 +2932,7 @@ model RecetaIngrediente {
   desperdicio   Float    @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime
-  id            String   @id
+  id            String   @id @default(dbgenerated("(gen_random_uuid())::text"))
   unidadSimbolo String?
   Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
@@ -3329,7 +3329,7 @@ model AperturaPeriodo {
   monedaFuncional           String          @default("CUP")
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
-  periodo                   PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Cascade)
+  periodo                   PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Cascade, map: "apertura_periodos_periodoId_tenantId_fkey")
   tenant                    Tenant          @relation(fields: [tenantId], references: [tenantId])
   lineas                    LineaAperturaPeriodo[]
   revisiones                AperturaRevision[]
@@ -3367,9 +3367,9 @@ model LineaAperturaPeriodo {
   evidenciaVersion        Int
   evidenciaSha256         String
   createdAt               DateTime        @default(now())
-  apertura                AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict)
-  revision                AperturaRevision @relation(fields: [tenantId, periodoId, aperturaId, revisionId], references: [tenantId, periodoId, aperturaId, revisionId], onDelete: Restrict)
-  periodo                 PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  apertura                AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict, map: "lineas_apertura_periodo_aperturaId_tenantId_periodoId_fkey")
+  revision                AperturaRevision @relation(fields: [tenantId, periodoId, aperturaId, revisionId], references: [tenantId, periodoId, aperturaId, revisionId], onDelete: Restrict, map: "lineas_apertura_periodo_revisionId_fkey")
+  periodo                 PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict, map: "lineas_apertura_periodo_periodoId_tenantId_fkey")
   tenant                  Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 
   @@unique([tenantId, periodoId, revisionId, lineaId], map: "opening_line_revision_identity_key")
@@ -3397,10 +3397,10 @@ model AperturaRevision {
   evidenciaVersion Int?
   evidenciaSha256  String?
   createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  apertura         AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict)
-  periodo          PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
-  tenant           Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  updatedAt        DateTime        @default(now()) @updatedAt
+  apertura         AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict, map: "apertura_revisiones_opening_fkey")
+  periodo          PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict, map: "apertura_revisiones_period_fkey")
+  tenant           Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict, map: "apertura_revisiones_tenant_fkey")
   lineas           LineaAperturaPeriodo[]
 
   @@unique([aperturaId, version])
@@ -3422,7 +3422,7 @@ model SaldoSnapshot {
 
   @@index([periodoId])
   @@index([cuentaBancariaId])
-  @@index([tenantId])
+  @@index([tenantId], map: "SaldoSnapshot_tenantId_idx")
   @@map("saldos_snapshot")
 }
 

@@ -2771,9 +2771,53 @@ son históricos: ambos typechecks pasan actualmente con heap explícito, sin fir
   **Corte 11-10:** `r6-baseline-entornos-2026-10-11.md` y nuevo diagnóstico SQL de solo
   lectura. Local: 11 triggers activos en sus tablas, 11 CHECKs validados e índice
   idempotente válido; no hay `_prisma_migrations`, por lo que historial/checksums no
-  están acreditados. Producción elegida por el responsable; pendiente de URL segura
-  y nombre esperado accesibles al proceso de herramientas. No se leyó `.env` ni se
-  modificó schema/historial/negocio. Artefacto local JSON no certifica producción.
+  están acreditados. Producción consultada mediante CLI Railway autenticada: 9/23
+  guards ready, 119 migraciones aplicadas distintas; frente al commit desplegado
+  `e6c20706`, 117/117 registradas, 13 checksums discrepantes y 2 entradas adicionales.
+  Acceso resuelto; baseline pendiente de reconciliar drift y alcance formal.
+  Continuación: `r6-baseline-production-reconciliacion-2026-10-11.md` acredita SQL
+  histórico con checksum exacto para 15/15 entradas y confirma los efectos focales
+  de las dos adicionales. Equivalencia completa, invariantes de datos y ensayo del
+  plan heredado siguen pendientes; se observaron diferencias de FK actuales.
+  `r6-baseline-production-preflight-2026-10-11.md`: inventario de 29 migraciones,
+  78/523 declaraciones nominadas presentes (R5); no constituye diff semántico completo.
+  Agregados producción: 1 compra sin fuente exigida por R5 y 13 reconciliaciones con
+  TipoPago de otro tenant, sin candidato del mismo nombre; cuentas coherentes.
+  Reparación/ensayo pendientes, sin escrituras en producción.
+  Primer ensayo heredado: `r6-production-clone-trial1-2026-10-11.md`. Copia privada de
+  producción **main/e6c20706**, destino local derivado y 29 SQL congelados del checkout
+  **feat/contabilidad-capa-formal/076baf3f + cambios compartidos**. 8 archivos pasan;
+  R5 aborta por `tenant_unverifiable=1`. Decisión de procedencia de compra pendiente;
+  historial original conservado, sin migrate deploy, merge ni rollout de producción.
+  Continuación trial2 (`r6-production-clone-trial2-2026-10-11.md`): responsable autorizó
+  validar tenant existente por producto/proveedor; R5 corregido en rama contable,
+  TDD PostgreSQL 13/13. En copia local derivada pasan los 21 SQL restantes (29/29 con
+  los ocho heredados), guards 23/23 ready, agregados focales e historial conservados.
+  Las 13 referencias cross-tenant a TipoPago, estrategia Prisma y aceptación global
+  siguen pendientes. Producción main sin cambios.
+  Reparación local (`r6-production-payment-type-repair-2026-10-11.md`): responsable
+  eligió cuenta por defecto vacía; trial4 desde trial2 crea 2 tipos propios, corrige
+  13 referencias y registra 15 AuditLog sintéticos del ensayo. Replay sin cambios,
+  cuentas/asientos/valores financieros/tipos originales conservados, 0 diferencias
+  tenant y guards 23/23. Pruebas repair PostgreSQL 10/10, ESLint/typecheck aprobados.
+  Producción main conserva sus datos; Prisma/historial/rollout y firma global pendientes.
+  Corte 12-10 (`r6-production-prisma-rehearsal-2026-10-12.md`): paquete privado de
+  148 migraciones (119 históricas exactas + 29 pendientes) ejecuta migrate deploy
+  real sobre trial5 derivado de la línea base main. 29/29 aplicadas, replay sin
+  pendientes, 123 filas históricas conservadas/152 totales, checksums 148/148,
+  guards 23/23 y proyección de datos de 142 tablas originales sin diferencias.
+  Trial6 integra reparación de TipoPago y deploy repetido con 0 diferencias tenant.
+  Diff Prisma contra schema objetivo sigue no vacío en 17 tablas (FK catálogo,
+  precisiones FX, defaults/nombres); SQL generado no ejecutado. Bootstrap vacío,
+  alineación schema, regresión heredada y aceptación operacional permanecen pendientes.
+  Continuación 12-10 (`r6-schema-alignment-2026-10-12.md`): schema alineado con
+  precisiones FX y FK endurecidas; nombres/defaults físicos representados. Nueva
+  migración retira solo FK simple redundante con validación fail-closed de la compuesta.
+  Trial7: deploy/replay aprobados y diff Prisma vacío, 23 guards, 153 filas históricas,
+  reconciliaciones sin diferencias tenant. Regresión física conjunta 26/26 y typecheck
+  aprobados. No acredita aún regresión de negocio heredada ni firma global.
+  No se leyó `.env` ni se modificó schema/historial/negocio de producción.
+  Artefacto local JSON no certifica producción.
   **Evidencia parcial 06-10:** `verify-accounting-sql-guards.mjs` confirma
   `[db-guards] Required accounting SQL guards are present` en la DB desechable; las
   migraciones `20261005160000_merma_idempotency_key` y `20261006000000_ajuste_idempotency_key`

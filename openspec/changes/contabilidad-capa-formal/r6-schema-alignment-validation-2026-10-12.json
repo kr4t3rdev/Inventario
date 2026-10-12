@@ -1,0 +1,9 @@
+{
+  "alignedPackage": "/private/var/folders/n_/2tnvb4k17q7bvzg4kk6lb14h0000gn/T/opencode/r6-production-clone-lggw2k9_/prisma-aligned-package",
+  "schemaSha256": "77b608f77fd33bedd4e997e74df28c90d9ae0ca1b9558b39ecf3ddaf0e4ddcba",
+  "newMigration": "20261012090000_align_formal_schema_baseline",
+  "newMigrationSha256": "87d6d34a475cf8cb151ea286043ddc479d428a8c9236ff9547ec0f4b0424549e",
+  "validateExit": 0,
+  "stdout": "Prisma schema loaded from prisma/schema.prisma\nThe schema at prisma/schema.prisma is valid \ud83d\ude80\n",
+  "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+}

@@ -1,0 +1,16 @@
+{
+  "sourceBranch": "main",
+  "sourceCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "targetBranch": "feat/contabilidad-capa-formal",
+  "targetHead": "076baf3f04064af9f90b9bcca08aabea77a16003",
+  "dumpHashVerified": true,
+  "frozenSqlHashesVerified": true,
+  "focalAggregatesUnchangedBetweenBaselineAndTrial": true,
+  "trialChecks": {
+    "historyRows": 123,
+    "formalTables": true,
+    "formalHashVersion": false
+  },
+  "baselineDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f",
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial1"
+}

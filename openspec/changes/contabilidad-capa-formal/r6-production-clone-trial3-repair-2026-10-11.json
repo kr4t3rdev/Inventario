@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-10-12T00:31:08.156400+00:00",
+  "sourceBranch": "main",
+  "sourceCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "targetBranch": "feat/contabilidad-capa-formal",
+  "targetHead": "076baf3f04064af9f90b9bcca08aabea77a16003",
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial3",
+  "derivedFrom": "tcp_r6_prod_clone_4ae12d4e4c1f_trial2",
+  "repairSqlSha256": "0a180a3c8fd406356313ef0344498ac9590946ec1b6914b6a3f4e46a3d2d9573",
+  "defaultAccountPolicy": "CLEAR (owner selection)",
+  "runs": [
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial3",
+      "auditRows": 15,
+      "trialOnly": true,
+      "repairedReferences": 13,
+      "createdPaymentTypes": 2
+    },
+    {
+      "database": "tcp_r6_prod_clone_4ae12d4e4c1f_trial3",
+      "auditRows": 0,
+      "trialOnly": true,
+      "repairedReferences": 0,
+      "createdPaymentTypes": 0
+    }
+  ],
+  "beforeDigests": {
+    "asientos": "d751713988987e9331980363e24189ce",
+    "CuentaBancaria": "6593de419ebebcf5960aed00b5e94d46",
+    "asiento_lineas": "d751713988987e9331980363e24189ce",
+    "ReconciliacionGasto": "6d3b44f42f72dcae64d5c8688bc51930",
+    "ReconciliacionVenta": "5dd5ae96dfc4467636a661cd92839a53",
+    "originalPaymentTypes": "b3e4b70b76e1762af1dd60ce950cff84",
+    "ReconciliacionServicio": "7dbf66e45c578cdf3c3925c83bb0c2b5"
+  },
+  "afterDigests": {
+    "asientos": "d751713988987e9331980363e24189ce",
+    "CuentaBancaria": "6593de419ebebcf5960aed00b5e94d46",
+    "asiento_lineas": "d751713988987e9331980363e24189ce",
+    "ReconciliacionGasto": "6d3b44f42f72dcae64d5c8688bc51930",
+    "ReconciliacionVenta": "5dd5ae96dfc4467636a661cd92839a53",
+    "originalPaymentTypes": "b3e4b70b76e1762af1dd60ce950cff84",
+    "ReconciliacionServicio": "7dbf66e45c578cdf3c3925c83bb0c2b5"
+  },
+  "financialAndOriginalConfigurationPreserved": true,
+  "guardChecksReady": 23,
+  "paymentTenantMismatchesRemaining": 0,
+  "scope": "Local clone repair only; not production migration or global acceptance"
+}

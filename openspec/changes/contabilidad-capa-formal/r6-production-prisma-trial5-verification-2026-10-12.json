@@ -1,0 +1,1438 @@
+{
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial5",
+  "historyRows": 152,
+  "appliedDistinctMigrations": 148,
+  "newApplied": 29,
+  "allOriginalHistoryRowsPreservedUtcNormalized": true,
+  "allAppliedChecksumsMatchPackage": true,
+  "guardsReady": 23,
+  "originalTablesCompared": 142,
+  "originalColumnDigestDifferences": [],
+  "before": [
+    {
+      "name": "AffiliateCommissionLedger",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AffiliateCreditBalance",
+      "rows": 1,
+      "digest": "3765cd4ac032337bffe81a780a2542cd"
+    },
+    {
+      "name": "AffiliatePerkGrant",
+      "rows": 1,
+      "digest": "d6a51873b44e2bbcee8553ee4ab5679c"
+    },
+    {
+      "name": "AffiliateProfile",
+      "rows": 12,
+      "digest": "0954ba842a5c15ac826c72641ecfcbec"
+    },
+    {
+      "name": "AffiliateReferral",
+      "rows": 1,
+      "digest": "b93e6a345f6c5b3d165ccbb30a5d7bfb"
+    },
+    {
+      "name": "AjusteBancario",
+      "rows": 4,
+      "digest": "90899eda9cd3f4513a97d41f4788710b"
+    },
+    {
+      "name": "AjusteInventario",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AlertHistory",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Almacen",
+      "rows": 23,
+      "digest": "f35b980b6c35a8b0017f5263165907aa"
+    },
+    {
+      "name": "Anticipo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AnticipoMovimiento",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Attendance",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AuditLog",
+      "rows": 58,
+      "digest": "608c4efee6f302b137fa89be88aa6e72"
+    },
+    {
+      "name": "CatalogoReparacionConfig",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Categoria",
+      "rows": 49,
+      "digest": "aa1f947a6c3b900d087f1d5f565944de"
+    },
+    {
+      "name": "CierreContable",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Cliente",
+      "rows": 6,
+      "digest": "3dab250fe04154abdb5f3117882c00ad"
+    },
+    {
+      "name": "CloudinaryAsset",
+      "rows": 3,
+      "digest": "dfa92922ace19aa9c1cf3295530248b7"
+    },
+    {
+      "name": "CompraDocumento",
+      "rows": 8,
+      "digest": "60a4a59e414f0a2fa880a65731f93a34"
+    },
+    {
+      "name": "CompraDocumentoItem",
+      "rows": 29,
+      "digest": "422472b199d1d25a0345352e25e82774"
+    },
+    {
+      "name": "CompraProducto",
+      "rows": 1,
+      "digest": "8f48629dcd7601ff3a9a3fdef273e0a2"
+    },
+    {
+      "name": "CompraServicio",
+      "rows": 6,
+      "digest": "5a0ed92783f82af451f61e4b281b0d49"
+    },
+    {
+      "name": "ConfiguracionSistema",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ConteoInventario",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ConteoLinea",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Contrato",
+      "rows": 2,
+      "digest": "eb0f45c816941faaf48cf9ed7b009307"
+    },
+    {
+      "name": "ContratoAlerta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoAprobacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoArchivo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoFirma",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoVersion",
+      "rows": 2,
+      "digest": "5ccb3bb675ea7f462c111ad5478b9070"
+    },
+    {
+      "name": "CuentaBancaria",
+      "rows": 14,
+      "digest": "22e5b4913981b5aebdfcaa99d0689bb3"
+    },
+    {
+      "name": "CuentaPorCobrar",
+      "rows": 1,
+      "digest": "37d12ba4e04758e75e0fac73d81eea4c"
+    },
+    {
+      "name": "CuentaPorPagar",
+      "rows": 3,
+      "digest": "3ed9ccc5c369cc81874d93bd64f479eb"
+    },
+    {
+      "name": "DefectacionCatalogo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "DeudaCash",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Empleado",
+      "rows": 12,
+      "digest": "4282f320f59d4a0fce381e076eaf630e"
+    },
+    {
+      "name": "EmployeeWorkSchedule",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "EquipoReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "GastoCompra",
+      "rows": 7,
+      "digest": "eb9367f001ae7a2668aa59e115e4f4e0"
+    },
+    {
+      "name": "GastoConcepto",
+      "rows": 22,
+      "digest": "6c97138360b8c09aad4d49f1fc6338e5"
+    },
+    {
+      "name": "GastoElemento",
+      "rows": 1,
+      "digest": "9e58398e4a8ee230db3f9af1037e0360"
+    },
+    {
+      "name": "GastosDE",
+      "rows": 13,
+      "digest": "9912291d24f67184c229b5f96bf0d22b"
+    },
+    {
+      "name": "InyeccionCapital",
+      "rows": 4,
+      "digest": "e1e02429c8007466572411b54f814913"
+    },
+    {
+      "name": "ListaPrecio",
+      "rows": 4,
+      "digest": "596bd332e88b506e21c88b849e5c039d"
+    },
+    {
+      "name": "Merma",
+      "rows": 2,
+      "digest": "793e1fcdde996ac5acaee37622cada1a"
+    },
+    {
+      "name": "MiEmpresa",
+      "rows": 4,
+      "digest": "48b68e49b556f96220bef20ae18300b6"
+    },
+    {
+      "name": "Moneda",
+      "rows": 3,
+      "digest": "861cff56fe0753c41475dc5653f79aa6"
+    },
+    {
+      "name": "Notification",
+      "rows": 29,
+      "digest": "942c407911ca0a09d38a54490ed12622"
+    },
+    {
+      "name": "Oferta",
+      "rows": 1,
+      "digest": "5fe8ece5f85d3abe722e08ddd8e2dc06"
+    },
+    {
+      "name": "OfertaItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenCompra",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenCompraItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenProduccion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenProduccionHistorial",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionEquipo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionMaterial",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "PagoCuentaPorPagar",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "PagoDeuda",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Pagosalario",
+      "rows": 10,
+      "digest": "25415f92a96ba306bfa2b9ae7d6b4ab4"
+    },
+    {
+      "name": "PiezaReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Plan",
+      "rows": 3,
+      "digest": "eabef0b00ade2eaff4485082741c33cb"
+    },
+    {
+      "name": "PrecioProducto",
+      "rows": 20,
+      "digest": "7dd6dee06cb2359204eb30f62ff221ff"
+    },
+    {
+      "name": "PrestamoCash",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Producto",
+      "rows": 63,
+      "digest": "1eff21a14f0940e444aaf2bfa5cae1d5"
+    },
+    {
+      "name": "ProductoCostHistory",
+      "rows": 2,
+      "digest": "dc7e843976ca567f8762f6ba5713eeef"
+    },
+    {
+      "name": "ProductoCostSheetTemplate",
+      "rows": 1,
+      "digest": "dcf7ccee7ddd9fa73198270d5b4e85f7"
+    },
+    {
+      "name": "PuntoDeVenta",
+      "rows": 10,
+      "digest": "a2b5938c701cebb533d71d0c3c2ccded"
+    },
+    {
+      "name": "Recepcion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "RecepcionItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Receta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "RecetaIngrediente",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReconciliacionGasto",
+      "rows": 32,
+      "digest": "9a51ab965eb614dac8a464edbfe4a5c1"
+    },
+    {
+      "name": "ReconciliacionServicio",
+      "rows": 11,
+      "digest": "b68b6191910a96f2f92fedc5a98720f4"
+    },
+    {
+      "name": "ReconciliacionVenta",
+      "rows": 14,
+      "digest": "77fc8ebf1959a96046128cfe671722db"
+    },
+    {
+      "name": "ReferralPerkCatalog",
+      "rows": 3,
+      "digest": "e7dddc0b8360858a1c811a444d05e1a9"
+    },
+    {
+      "name": "ReferralPerkRequest",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReglaReabastecimiento",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReportHistory",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "SalesAgentBalance",
+      "rows": 4,
+      "digest": "6c7ab0df5c84e3f3fef901a525851c8e"
+    },
+    {
+      "name": "SalesAgentCommissionLedger",
+      "rows": 1,
+      "digest": "5a7e06a46a0e54751f6e531b2f44c169"
+    },
+    {
+      "name": "SalesAgentEmailDelivery",
+      "rows": 6,
+      "digest": "db4b183ec5c51c14533e2c4b345cf399"
+    },
+    {
+      "name": "SalesAgentPayout",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "SalesAgentProfile",
+      "rows": 4,
+      "digest": "4719ad14cab41c84b4325187f1e0d05f"
+    },
+    {
+      "name": "SalesAgentReferral",
+      "rows": 1,
+      "digest": "619339524ed3fce9def32e7aa4237ace"
+    },
+    {
+      "name": "ScenarioSimulation",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ScheduledReport",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Servicios",
+      "rows": 10,
+      "digest": "b1b32b3eaedf3ecfee617e02b209c783"
+    },
+    {
+      "name": "StockMoveLine",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "StockUbicacion",
+      "rows": 49,
+      "digest": "0f5f2184d63a2af75b7bcf4535ebbf60"
+    },
+    {
+      "name": "TasaCambio",
+      "rows": 3,
+      "digest": "9a96f6f86677b366326c3d90abaeb7ba"
+    },
+    {
+      "name": "TenantLicensePayment",
+      "rows": 1,
+      "digest": "b9e434249af502f4b6a9d98590cce002"
+    },
+    {
+      "name": "TipoContratoCustom",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "TipoPago",
+      "rows": 9,
+      "digest": "f8162049cfe159f84e9464b4460f0ee8"
+    },
+    {
+      "name": "TransaccionMoneda",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Transferencia",
+      "rows": 19,
+      "digest": "e19f1f1fd3a5a10a33331dafa12903fd"
+    },
+    {
+      "name": "TransferenciaBancaria",
+      "rows": 1,
+      "digest": "a86d230db0896b3526a4a792c0d4077d"
+    },
+    {
+      "name": "Unidad",
+      "rows": 18,
+      "digest": "eb3fd109a4187d8f844c4b0188cdb0e5"
+    },
+    {
+      "name": "User",
+      "rows": 13,
+      "digest": "58d826fc66af6d543f43f1f8579e2551"
+    },
+    {
+      "name": "UserActivityLog",
+      "rows": 333,
+      "digest": "be4edc62520b8de8ee56478ae2ab3fe5"
+    },
+    {
+      "name": "UserSession",
+      "rows": 159,
+      "digest": "308d4cf3ae131f9cef32b152175ca375"
+    },
+    {
+      "name": "VacationAccrual",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "VacationRequest",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ValeSalida",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ValeSalidaItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Vendor",
+      "rows": 18,
+      "digest": "0821c6e8ee197febe9b13cd24336b289"
+    },
+    {
+      "name": "VendorCodeSequence",
+      "rows": 1,
+      "digest": "499863d6bb9685ecf2c279191d544644"
+    },
+    {
+      "name": "Venta",
+      "rows": 17,
+      "digest": "038789af0d5339097dd662a88ef408eb"
+    },
+    {
+      "name": "VentaServicios",
+      "rows": 16,
+      "digest": "872016875a43fb458a1d3f9eb46e097c"
+    },
+    {
+      "name": "accounting_policy_rollout_entries",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "accounting_policy_rollout_runs",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "accounting_policy_tenant_approvals",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "apertura_periodos",
+      "rows": 3,
+      "digest": "2adeaa72a8c93accfd8ca97d6f812200"
+    },
+    {
+      "name": "arqueos_caja",
+      "rows": 6,
+      "digest": "87a5f71dc94a362f65e1152404d6f583"
+    },
+    {
+      "name": "auditoria_periodos",
+      "rows": 4,
+      "digest": "814bcac7d53debc5210bc5715f449596"
+    },
+    {
+      "name": "backup_logs",
+      "rows": 12,
+      "digest": "178669089a7fb632a78d9b6086bc7ea6"
+    },
+    {
+      "name": "backup_plans",
+      "rows": 1,
+      "digest": "0aec301e3deadd8ea44bdfb7c845c587"
+    },
+    {
+      "name": "cobro_notas",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "devoluciones_venta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "devoluciones_venta_items",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "facturas",
+      "rows": 5,
+      "digest": "b77a2bee255ec0e9a25b466fa9f400de"
+    },
+    {
+      "name": "financial_auxiliary_checkpoints",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fiscal_documents",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fiscal_emision_events",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fx_evidence",
+      "rows": 4,
+      "digest": "3b09dae417e9b91b1553ee94179839db"
+    },
+    {
+      "name": "periodo_cache",
+      "rows": 2,
+      "digest": "575a65defee7cd8383e7ebdea223e2c0"
+    },
+    {
+      "name": "periodos_contables",
+      "rows": 4,
+      "digest": "e54595f50e737ab64f580a7b653c906b"
+    },
+    {
+      "name": "purchase_allocations",
+      "rows": 15,
+      "digest": "60ff29f9d6b177e8c0d54744a3a77887"
+    },
+    {
+      "name": "review_prompts",
+      "rows": 22,
+      "digest": "528d05ee459b788ae7032ed26ce46eec"
+    },
+    {
+      "name": "reviews",
+      "rows": 5,
+      "digest": "c87b6e704f76afe73c9ec144046f0beb"
+    },
+    {
+      "name": "saldos_snapshot",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "series_facturacion",
+      "rows": 3,
+      "digest": "97c521b8b509cb620598eb3f815cbcfd"
+    },
+    {
+      "name": "snapshot_periodos",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "tenant_accounting_policies",
+      "rows": 2,
+      "digest": "c26b617ee4359865af1cd2d5b07a361a"
+    },
+    {
+      "name": "tenant_licenses",
+      "rows": 9,
+      "digest": "214fb79203465220ddf815fdab9b0497"
+    },
+    {
+      "name": "tenant_memberships",
+      "rows": 7,
+      "digest": "3ec174cb03b40f33166193ffca37d4df"
+    },
+    {
+      "name": "tenant_roles",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "tenants",
+      "rows": 48,
+      "digest": "dc1b6b9a56387d711a0c822f770f1deb"
+    },
+    {
+      "name": "turnos_punto_venta",
+      "rows": 7,
+      "digest": "ba1d177f8ad689b2c613094fa5adf4a9"
+    },
+    {
+      "name": "venta_items",
+      "rows": 16,
+      "digest": "8a3966b6eba6b6d716a52e9020378815"
+    }
+  ],
+  "after": [
+    {
+      "name": "AffiliateCommissionLedger",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AffiliateCreditBalance",
+      "rows": 1,
+      "digest": "3765cd4ac032337bffe81a780a2542cd"
+    },
+    {
+      "name": "AffiliatePerkGrant",
+      "rows": 1,
+      "digest": "d6a51873b44e2bbcee8553ee4ab5679c"
+    },
+    {
+      "name": "AffiliateProfile",
+      "rows": 12,
+      "digest": "0954ba842a5c15ac826c72641ecfcbec"
+    },
+    {
+      "name": "AffiliateReferral",
+      "rows": 1,
+      "digest": "b93e6a345f6c5b3d165ccbb30a5d7bfb"
+    },
+    {
+      "name": "AjusteBancario",
+      "rows": 4,
+      "digest": "90899eda9cd3f4513a97d41f4788710b"
+    },
+    {
+      "name": "AjusteInventario",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AlertHistory",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Almacen",
+      "rows": 23,
+      "digest": "f35b980b6c35a8b0017f5263165907aa"
+    },
+    {
+      "name": "Anticipo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AnticipoMovimiento",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Attendance",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "AuditLog",
+      "rows": 58,
+      "digest": "608c4efee6f302b137fa89be88aa6e72"
+    },
+    {
+      "name": "CatalogoReparacionConfig",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Categoria",
+      "rows": 49,
+      "digest": "aa1f947a6c3b900d087f1d5f565944de"
+    },
+    {
+      "name": "CierreContable",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Cliente",
+      "rows": 6,
+      "digest": "3dab250fe04154abdb5f3117882c00ad"
+    },
+    {
+      "name": "CloudinaryAsset",
+      "rows": 3,
+      "digest": "dfa92922ace19aa9c1cf3295530248b7"
+    },
+    {
+      "name": "CompraDocumento",
+      "rows": 8,
+      "digest": "60a4a59e414f0a2fa880a65731f93a34"
+    },
+    {
+      "name": "CompraDocumentoItem",
+      "rows": 29,
+      "digest": "422472b199d1d25a0345352e25e82774"
+    },
+    {
+      "name": "CompraProducto",
+      "rows": 1,
+      "digest": "8f48629dcd7601ff3a9a3fdef273e0a2"
+    },
+    {
+      "name": "CompraServicio",
+      "rows": 6,
+      "digest": "5a0ed92783f82af451f61e4b281b0d49"
+    },
+    {
+      "name": "ConfiguracionSistema",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ConteoInventario",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ConteoLinea",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Contrato",
+      "rows": 2,
+      "digest": "eb0f45c816941faaf48cf9ed7b009307"
+    },
+    {
+      "name": "ContratoAlerta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoAprobacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoArchivo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoFirma",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ContratoVersion",
+      "rows": 2,
+      "digest": "5ccb3bb675ea7f462c111ad5478b9070"
+    },
+    {
+      "name": "CuentaBancaria",
+      "rows": 14,
+      "digest": "22e5b4913981b5aebdfcaa99d0689bb3"
+    },
+    {
+      "name": "CuentaPorCobrar",
+      "rows": 1,
+      "digest": "37d12ba4e04758e75e0fac73d81eea4c"
+    },
+    {
+      "name": "CuentaPorPagar",
+      "rows": 3,
+      "digest": "3ed9ccc5c369cc81874d93bd64f479eb"
+    },
+    {
+      "name": "DefectacionCatalogo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "DeudaCash",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Empleado",
+      "rows": 12,
+      "digest": "4282f320f59d4a0fce381e076eaf630e"
+    },
+    {
+      "name": "EmployeeWorkSchedule",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "EquipoReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "GastoCompra",
+      "rows": 7,
+      "digest": "eb9367f001ae7a2668aa59e115e4f4e0"
+    },
+    {
+      "name": "GastoConcepto",
+      "rows": 22,
+      "digest": "6c97138360b8c09aad4d49f1fc6338e5"
+    },
+    {
+      "name": "GastoElemento",
+      "rows": 1,
+      "digest": "9e58398e4a8ee230db3f9af1037e0360"
+    },
+    {
+      "name": "GastosDE",
+      "rows": 13,
+      "digest": "9912291d24f67184c229b5f96bf0d22b"
+    },
+    {
+      "name": "InyeccionCapital",
+      "rows": 4,
+      "digest": "e1e02429c8007466572411b54f814913"
+    },
+    {
+      "name": "ListaPrecio",
+      "rows": 4,
+      "digest": "596bd332e88b506e21c88b849e5c039d"
+    },
+    {
+      "name": "Merma",
+      "rows": 2,
+      "digest": "793e1fcdde996ac5acaee37622cada1a"
+    },
+    {
+      "name": "MiEmpresa",
+      "rows": 4,
+      "digest": "48b68e49b556f96220bef20ae18300b6"
+    },
+    {
+      "name": "Moneda",
+      "rows": 3,
+      "digest": "861cff56fe0753c41475dc5653f79aa6"
+    },
+    {
+      "name": "Notification",
+      "rows": 29,
+      "digest": "942c407911ca0a09d38a54490ed12622"
+    },
+    {
+      "name": "Oferta",
+      "rows": 1,
+      "digest": "5fe8ece5f85d3abe722e08ddd8e2dc06"
+    },
+    {
+      "name": "OfertaItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenCompra",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenCompraItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenProduccion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenProduccionHistorial",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionEquipo",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "OrdenReparacionMaterial",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "PagoCuentaPorPagar",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "PagoDeuda",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Pagosalario",
+      "rows": 10,
+      "digest": "25415f92a96ba306bfa2b9ae7d6b4ab4"
+    },
+    {
+      "name": "PiezaReparacion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Plan",
+      "rows": 3,
+      "digest": "eabef0b00ade2eaff4485082741c33cb"
+    },
+    {
+      "name": "PrecioProducto",
+      "rows": 20,
+      "digest": "7dd6dee06cb2359204eb30f62ff221ff"
+    },
+    {
+      "name": "PrestamoCash",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Producto",
+      "rows": 63,
+      "digest": "1eff21a14f0940e444aaf2bfa5cae1d5"
+    },
+    {
+      "name": "ProductoCostHistory",
+      "rows": 2,
+      "digest": "dc7e843976ca567f8762f6ba5713eeef"
+    },
+    {
+      "name": "ProductoCostSheetTemplate",
+      "rows": 1,
+      "digest": "dcf7ccee7ddd9fa73198270d5b4e85f7"
+    },
+    {
+      "name": "PuntoDeVenta",
+      "rows": 10,
+      "digest": "a2b5938c701cebb533d71d0c3c2ccded"
+    },
+    {
+      "name": "Recepcion",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "RecepcionItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Receta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "RecetaIngrediente",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReconciliacionGasto",
+      "rows": 32,
+      "digest": "9a51ab965eb614dac8a464edbfe4a5c1"
+    },
+    {
+      "name": "ReconciliacionServicio",
+      "rows": 11,
+      "digest": "b68b6191910a96f2f92fedc5a98720f4"
+    },
+    {
+      "name": "ReconciliacionVenta",
+      "rows": 14,
+      "digest": "77fc8ebf1959a96046128cfe671722db"
+    },
+    {
+      "name": "ReferralPerkCatalog",
+      "rows": 3,
+      "digest": "e7dddc0b8360858a1c811a444d05e1a9"
+    },
+    {
+      "name": "ReferralPerkRequest",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReglaReabastecimiento",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ReportHistory",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "SalesAgentBalance",
+      "rows": 4,
+      "digest": "6c7ab0df5c84e3f3fef901a525851c8e"
+    },
+    {
+      "name": "SalesAgentCommissionLedger",
+      "rows": 1,
+      "digest": "5a7e06a46a0e54751f6e531b2f44c169"
+    },
+    {
+      "name": "SalesAgentEmailDelivery",
+      "rows": 6,
+      "digest": "db4b183ec5c51c14533e2c4b345cf399"
+    },
+    {
+      "name": "SalesAgentPayout",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "SalesAgentProfile",
+      "rows": 4,
+      "digest": "4719ad14cab41c84b4325187f1e0d05f"
+    },
+    {
+      "name": "SalesAgentReferral",
+      "rows": 1,
+      "digest": "619339524ed3fce9def32e7aa4237ace"
+    },
+    {
+      "name": "ScenarioSimulation",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ScheduledReport",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Servicios",
+      "rows": 10,
+      "digest": "b1b32b3eaedf3ecfee617e02b209c783"
+    },
+    {
+      "name": "StockMoveLine",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "StockUbicacion",
+      "rows": 49,
+      "digest": "0f5f2184d63a2af75b7bcf4535ebbf60"
+    },
+    {
+      "name": "TasaCambio",
+      "rows": 3,
+      "digest": "9a96f6f86677b366326c3d90abaeb7ba"
+    },
+    {
+      "name": "TenantLicensePayment",
+      "rows": 1,
+      "digest": "b9e434249af502f4b6a9d98590cce002"
+    },
+    {
+      "name": "TipoContratoCustom",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "TipoPago",
+      "rows": 9,
+      "digest": "f8162049cfe159f84e9464b4460f0ee8"
+    },
+    {
+      "name": "TransaccionMoneda",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Transferencia",
+      "rows": 19,
+      "digest": "e19f1f1fd3a5a10a33331dafa12903fd"
+    },
+    {
+      "name": "TransferenciaBancaria",
+      "rows": 1,
+      "digest": "a86d230db0896b3526a4a792c0d4077d"
+    },
+    {
+      "name": "Unidad",
+      "rows": 18,
+      "digest": "eb3fd109a4187d8f844c4b0188cdb0e5"
+    },
+    {
+      "name": "User",
+      "rows": 13,
+      "digest": "58d826fc66af6d543f43f1f8579e2551"
+    },
+    {
+      "name": "UserActivityLog",
+      "rows": 333,
+      "digest": "be4edc62520b8de8ee56478ae2ab3fe5"
+    },
+    {
+      "name": "UserSession",
+      "rows": 159,
+      "digest": "308d4cf3ae131f9cef32b152175ca375"
+    },
+    {
+      "name": "VacationAccrual",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "VacationRequest",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ValeSalida",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "ValeSalidaItem",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "Vendor",
+      "rows": 18,
+      "digest": "0821c6e8ee197febe9b13cd24336b289"
+    },
+    {
+      "name": "VendorCodeSequence",
+      "rows": 1,
+      "digest": "499863d6bb9685ecf2c279191d544644"
+    },
+    {
+      "name": "Venta",
+      "rows": 17,
+      "digest": "038789af0d5339097dd662a88ef408eb"
+    },
+    {
+      "name": "VentaServicios",
+      "rows": 16,
+      "digest": "872016875a43fb458a1d3f9eb46e097c"
+    },
+    {
+      "name": "accounting_policy_rollout_entries",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "accounting_policy_rollout_runs",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "accounting_policy_tenant_approvals",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "apertura_periodos",
+      "rows": 3,
+      "digest": "2adeaa72a8c93accfd8ca97d6f812200"
+    },
+    {
+      "name": "arqueos_caja",
+      "rows": 6,
+      "digest": "87a5f71dc94a362f65e1152404d6f583"
+    },
+    {
+      "name": "auditoria_periodos",
+      "rows": 4,
+      "digest": "814bcac7d53debc5210bc5715f449596"
+    },
+    {
+      "name": "backup_logs",
+      "rows": 12,
+      "digest": "178669089a7fb632a78d9b6086bc7ea6"
+    },
+    {
+      "name": "backup_plans",
+      "rows": 1,
+      "digest": "0aec301e3deadd8ea44bdfb7c845c587"
+    },
+    {
+      "name": "cobro_notas",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "devoluciones_venta",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "devoluciones_venta_items",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "facturas",
+      "rows": 5,
+      "digest": "b77a2bee255ec0e9a25b466fa9f400de"
+    },
+    {
+      "name": "financial_auxiliary_checkpoints",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fiscal_documents",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fiscal_emision_events",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "fx_evidence",
+      "rows": 4,
+      "digest": "3b09dae417e9b91b1553ee94179839db"
+    },
+    {
+      "name": "periodo_cache",
+      "rows": 2,
+      "digest": "575a65defee7cd8383e7ebdea223e2c0"
+    },
+    {
+      "name": "periodos_contables",
+      "rows": 4,
+      "digest": "e54595f50e737ab64f580a7b653c906b"
+    },
+    {
+      "name": "purchase_allocations",
+      "rows": 15,
+      "digest": "60ff29f9d6b177e8c0d54744a3a77887"
+    },
+    {
+      "name": "review_prompts",
+      "rows": 22,
+      "digest": "528d05ee459b788ae7032ed26ce46eec"
+    },
+    {
+      "name": "reviews",
+      "rows": 5,
+      "digest": "c87b6e704f76afe73c9ec144046f0beb"
+    },
+    {
+      "name": "saldos_snapshot",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "series_facturacion",
+      "rows": 3,
+      "digest": "97c521b8b509cb620598eb3f815cbcfd"
+    },
+    {
+      "name": "snapshot_periodos",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "tenant_accounting_policies",
+      "rows": 2,
+      "digest": "c26b617ee4359865af1cd2d5b07a361a"
+    },
+    {
+      "name": "tenant_licenses",
+      "rows": 9,
+      "digest": "214fb79203465220ddf815fdab9b0497"
+    },
+    {
+      "name": "tenant_memberships",
+      "rows": 7,
+      "digest": "3ec174cb03b40f33166193ffca37d4df"
+    },
+    {
+      "name": "tenant_roles",
+      "rows": 0,
+      "digest": "d751713988987e9331980363e24189ce"
+    },
+    {
+      "name": "tenants",
+      "rows": 48,
+      "digest": "dc1b6b9a56387d711a0c822f770f1deb"
+    },
+    {
+      "name": "turnos_punto_venta",
+      "rows": 7,
+      "digest": "ba1d177f8ad689b2c613094fa5adf4a9"
+    },
+    {
+      "name": "venta_items",
+      "rows": 16,
+      "digest": "8a3966b6eba6b6d716a52e9020378815"
+    }
+  ],
+  "remainingPaymentTenantMismatches": 13,
+  "allOriginalHistoryFullRowDigestsPreserved": true,
+  "originalHistoryFullRowsCompared": 123
+}

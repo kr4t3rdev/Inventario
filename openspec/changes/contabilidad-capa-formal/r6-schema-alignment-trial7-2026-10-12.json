@@ -1,0 +1,22 @@
+{
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial7",
+  "derivedFrom": "tcp_r6_prod_clone_4ae12d4e4c1f_trial6",
+  "schemaSha256": "77b608f77fd33bedd4e997e74df28c90d9ae0ca1b9558b39ecf3ddaf0e4ddcba",
+  "results": {
+    "deploy": {
+      "exit": 0,
+      "stdout": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"tcp_r6_prod_clone_4ae12d4e4c1f_trial7\", schema \"public\" at \"127.0.0.1:5433\"\n\n149 migrations found in prisma/migrations\n\nApplying migration `20261012090000_align_formal_schema_baseline`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  \u2514\u2500 20261012090000_align_formal_schema_baseline/\n    \u2514\u2500 migration.sql\n      \nAll migrations have been successfully applied.\n",
+      "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+    },
+    "replay": {
+      "exit": 0,
+      "stdout": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"tcp_r6_prod_clone_4ae12d4e4c1f_trial7\", schema \"public\" at \"127.0.0.1:5433\"\n\n149 migrations found in prisma/migrations\n\n\nNo pending migrations to apply.\n",
+      "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+    },
+    "diff": {
+      "exit": 0,
+      "stdout": "No difference detected.\n\n",
+      "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+    }
+  }
+}

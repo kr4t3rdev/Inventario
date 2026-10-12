@@ -1,0 +1,26 @@
+{
+  "deployedCommit": "e6c20706e8658766187fb648fe6950c2f25dd249",
+  "repositoryMigrations": 117,
+  "appliedDistinctMigrations": 119,
+  "checksumMismatches": [
+    "20260418000000_add_stock_ubicacion",
+    "20260418142214_remove_ultima_actualizacion_from_stock_ubicacion",
+    "20260423000000_add_compra_documento_cabecera_detalle",
+    "20260603000000_add_purchase_allocations",
+    "20260702093000_add_max_clientes_to_tenant_license",
+    "20260716120000_ficha_costo_enterprise_only",
+    "20260722120000_add_tenant_id_tipo_pago",
+    "20260806190000_add_tenant_scope_gastos_conceptos",
+    "20260822100000_add_fecha_operacion_ajuste_bancario",
+    "20260906000001_merma_trazabilidad",
+    "20260906000002_cliente_lista_precio",
+    "20260906120000_ordenes_compra_recepciones_reabastecimiento",
+    "20260914240000_add_devoluciones_nota_credito"
+  ],
+  "repositoryNotRecorded": [],
+  "databaseOnly": [
+    "20260722130000_make_tenant_id_required_tipo_pago",
+    "20260926000000_hardening_catalog_on_delete"
+  ],
+  "incompleteNotRolledBack": []
+}

@@ -2,7 +2,9 @@
 -- The CxP tenant is resolved only from an authoritative linked source; ambiguous
 -- or missing provenance aborts the migration transaction rather than fabricating scope.
 -- CompraProducto is also a tenant-owned parent in the current Prisma contract;
--- older deployed versions lack this field, so recover it only through its linked GastoCompra.
+-- older deployed versions lack this field, so backfill it only through linked GastoCompra.
+-- Existing ownership without that link is retained only when both product and vendor
+-- independently confirm the same tenant; missing or inconsistent provenance still aborts.
 -- Payroll ownership is inherited only from the canonical employee. Never infer it
 -- from a caller, period, or unrelated payroll reconciliation.
 ALTER TABLE "Pagosalario" ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
@@ -70,7 +72,20 @@ BEGIN
   SELECT COUNT(*) INTO unverifiable_purchase_count
   FROM "CompraProducto" p
   LEFT JOIN "GastoCompra" g ON g."gastoCompraId" = p."gastoCompraId"
-  WHERE p."gastoCompraId" IS NULL OR g."gastoCompraId" IS NULL OR g."tenantId" IS NULL;
+  LEFT JOIN "Producto" product ON product."id" = p."productoId"
+  LEFT JOIN "Vendor" vendor ON vendor."vendorId" = p."proveedorId"
+  WHERE (
+    p."gastoCompraId" IS NULL
+    AND (
+      p."tenantId" IS NULL
+      OR product."id" IS NULL OR vendor."vendorId" IS NULL
+      OR product."tenantId" IS DISTINCT FROM p."tenantId"
+      OR vendor."tenantId" IS DISTINCT FROM p."tenantId"
+    )
+  ) OR (
+    p."gastoCompraId" IS NOT NULL
+    AND (g."gastoCompraId" IS NULL OR g."tenantId" IS NULL)
+  );
 
   SELECT COUNT(*) INTO purchase_tenant_mismatch_count
   FROM "CompraProducto" p

@@ -1,0 +1,78 @@
+{
+  "payroll": {
+    "total": 10,
+    "tenant_null": 0,
+    "tenant_mismatch": 0,
+    "employee_missing": 0,
+    "employee_tenant_missing": 0
+  },
+  "restock": {
+    "duplicate_groups": 0
+  },
+  "database": "railway",
+  "payables": {
+    "total": 3,
+    "ambiguous": 0,
+    "tenant_null": 0,
+    "tenant_mismatch": 0,
+    "direct_source_missing": 0,
+    "unmapped_by_r5_sources": 0
+  },
+  "purchases": {
+    "total": 1,
+    "tenant_null": 0,
+    "source_missing": 0,
+    "tenant_mismatch": 0,
+    "vendor_tenant_mismatch": 0,
+    "product_tenant_mismatch": 0,
+    "tenant_unverifiable_by_r5_source": 1
+  },
+  "capturedAt": "2026-10-11T22:38:32.100812+00:00",
+  "reconciliations": [
+    {
+      "total": 32,
+      "orphan": 0,
+      "source": "gasto",
+      "tenant_null": 0,
+      "tenant_mismatch": 0,
+      "account_tenant_mismatch": 0,
+      "payment_tenant_mismatch": 0
+    },
+    {
+      "total": 11,
+      "orphan": 0,
+      "source": "servicio",
+      "tenant_null": 0,
+      "tenant_mismatch": 11,
+      "account_tenant_mismatch": 0,
+      "payment_tenant_mismatch": 11
+    },
+    {
+      "total": 14,
+      "orphan": 0,
+      "source": "venta",
+      "tenant_null": 0,
+      "tenant_mismatch": 2,
+      "account_tenant_mismatch": 0,
+      "payment_tenant_mismatch": 2
+    }
+  ],
+  "sourceTenantsNull": 0,
+  "transactionReadOnly": "on",
+  "transactionIsolation": "repeatable read",
+  "paymentTypeCandidates": [
+    {
+      "source": "servicio",
+      "no_same_name_candidate": 11,
+      "one_same_name_candidate": 0,
+      "ambiguous_same_name_candidates": 0
+    },
+    {
+      "source": "venta",
+      "no_same_name_candidate": 2,
+      "one_same_name_candidate": 0,
+      "ambiguous_same_name_candidates": 0
+    }
+  ],
+  "reversePayableSourceMissing": 0
+}

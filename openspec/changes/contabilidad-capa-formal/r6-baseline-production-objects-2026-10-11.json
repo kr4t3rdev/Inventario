@@ -1,0 +1,4343 @@
+{
+  "enums": [
+    {
+      "type": "ContextoAnticipo",
+      "label": "COMPRA_PRODUCTO"
+    },
+    {
+      "type": "ContextoAnticipo",
+      "label": "COMPRA_SERVICIO"
+    },
+    {
+      "type": "ContextoAnticipo",
+      "label": "FACTURA_OFERTA"
+    },
+    {
+      "type": "ContextoAnticipo",
+      "label": "FACTURA_DIRECTA"
+    },
+    {
+      "type": "ContextoAnticipo",
+      "label": "NOTA_CREDITO"
+    },
+    {
+      "type": "EstadoAnticipo",
+      "label": "RESERVADO"
+    },
+    {
+      "type": "EstadoAnticipo",
+      "label": "EJECUTADO"
+    },
+    {
+      "type": "EstadoAnticipo",
+      "label": "ANULADO"
+    },
+    {
+      "type": "EstadoDevolucion",
+      "label": "REGISTRADA"
+    },
+    {
+      "type": "EstadoDevolucion",
+      "label": "ANULADA"
+    },
+    {
+      "type": "TipoAnticipo",
+      "label": "PAGO"
+    },
+    {
+      "type": "TipoAnticipo",
+      "label": "COBRO"
+    }
+  ],
+  "database": "railway",
+  "relations": [
+    {
+      "columns": [
+        {
+          "name": "ajusteId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipo",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monto",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoConvertido",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "realizadoPor",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "fechaOperacion",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "AjusteBancario_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"AjusteBancario_pkey\" ON public.\"AjusteBancario\" USING btree (\"ajusteId\")"
+        },
+        {
+          "name": "AjusteBancario_tenantId_cuentaId_fechaOperacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"AjusteBancario_tenantId_cuentaId_fechaOperacion_idx\" ON public.\"AjusteBancario\" USING btree (\"tenantId\", \"cuentaId\", \"fechaOperacion\")"
+        },
+        {
+          "name": "AjusteBancario_tenantId_fechaOperacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"AjusteBancario_tenantId_fechaOperacion_idx\" ON public.\"AjusteBancario\" USING btree (\"tenantId\", \"fechaOperacion\")"
+        },
+        {
+          "name": "AjusteBancario_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"AjusteBancario_tenantId_idx\" ON public.\"AjusteBancario\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "AjusteBancario",
+      "constraints": [
+        {
+          "name": "AjusteBancario_cuentaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "AjusteBancario_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"ajusteId\")"
+        },
+        {
+          "name": "AjusteBancario_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "anticipoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipo",
+          "type": "\"TipoAnticipo\"",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "estado",
+          "type": "\"EstadoAnticipo\"",
+          "default": "'RESERVADO'::\"EstadoAnticipo\"",
+          "notNull": true
+        },
+        {
+          "name": "contratoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "proveedorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "clienteId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "facturaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "compraProductoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoOriginal",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "saldoDisponible",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "cuentaOrigenId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "tipoPagoOrigenId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "referenciaExterna",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "vigenciaHasta",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaReserva",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "fechaEjecucion",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdById",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Anticipo_clienteId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_clienteId_idx\" ON public.\"Anticipo\" USING btree (\"clienteId\")"
+        },
+        {
+          "name": "Anticipo_compraProductoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_compraProductoId_idx\" ON public.\"Anticipo\" USING btree (\"compraProductoId\")"
+        },
+        {
+          "name": "Anticipo_compraProductoId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Anticipo_compraProductoId_key\" ON public.\"Anticipo\" USING btree (\"compraProductoId\")"
+        },
+        {
+          "name": "Anticipo_contratoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_contratoId_idx\" ON public.\"Anticipo\" USING btree (\"contratoId\")"
+        },
+        {
+          "name": "Anticipo_estado_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_estado_idx\" ON public.\"Anticipo\" USING btree (estado)"
+        },
+        {
+          "name": "Anticipo_facturaId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_facturaId_idx\" ON public.\"Anticipo\" USING btree (\"facturaId\")"
+        },
+        {
+          "name": "Anticipo_facturaId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Anticipo_facturaId_key\" ON public.\"Anticipo\" USING btree (\"facturaId\")"
+        },
+        {
+          "name": "Anticipo_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Anticipo_pkey\" ON public.\"Anticipo\" USING btree (\"anticipoId\")"
+        },
+        {
+          "name": "Anticipo_proveedorId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_proveedorId_idx\" ON public.\"Anticipo\" USING btree (\"proveedorId\")"
+        },
+        {
+          "name": "Anticipo_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_tenantId_idx\" ON public.\"Anticipo\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "Anticipo_tipo_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Anticipo_tipo_idx\" ON public.\"Anticipo\" USING btree (tipo)"
+        }
+      ],
+      "relation": "Anticipo",
+      "constraints": [
+        {
+          "name": "Anticipo_clienteId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"clienteId\") REFERENCES \"Cliente\"(\"clienteId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Anticipo_compraProductoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"compraProductoId\") REFERENCES \"CompraProducto\"(\"compraProductoId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Anticipo_contratoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"contratoId\") REFERENCES \"Contrato\"(\"contratoId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Anticipo_createdById_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"createdById\") REFERENCES \"User\"(\"userId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Anticipo_facturaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"facturaId\") REFERENCES facturas(\"idFactura\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Anticipo_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"anticipoId\")"
+        },
+        {
+          "name": "Anticipo_proveedorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Anticipo_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "movimientoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "anticipoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoMovimiento",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "contexto",
+          "type": "\"ContextoAnticipo\"",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "documentoDestinoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "reconciliacionVentaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "reconciliacionGastoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "monto",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tasaAplicada",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoConvertido",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "saldoAntes",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "saldoDespues",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "usuarioId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "observaciones",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "AnticipoMovimiento_anticipoId_createdAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"AnticipoMovimiento_anticipoId_createdAt_idx\" ON public.\"AnticipoMovimiento\" USING btree (\"anticipoId\", \"createdAt\")"
+        },
+        {
+          "name": "AnticipoMovimiento_anticipoId_idempotencyKey_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"AnticipoMovimiento_anticipoId_idempotencyKey_key\" ON public.\"AnticipoMovimiento\" USING btree (\"anticipoId\", \"idempotencyKey\")"
+        },
+        {
+          "name": "AnticipoMovimiento_documentoDestinoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"AnticipoMovimiento_documentoDestinoId_idx\" ON public.\"AnticipoMovimiento\" USING btree (\"documentoDestinoId\")"
+        },
+        {
+          "name": "AnticipoMovimiento_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"AnticipoMovimiento_pkey\" ON public.\"AnticipoMovimiento\" USING btree (\"movimientoId\")"
+        }
+      ],
+      "relation": "AnticipoMovimiento",
+      "constraints": [
+        {
+          "name": "AnticipoMovimiento_anticipoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"anticipoId\") REFERENCES \"Anticipo\"(\"anticipoId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "AnticipoMovimiento_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"movimientoId\")"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "catId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "parentId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "clasSectionId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "clasSpecificId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Categoria_clasSectionId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Categoria_clasSectionId_idx\" ON public.\"Categoria\" USING btree (\"clasSectionId\")"
+        },
+        {
+          "name": "Categoria_clasSpecificId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Categoria_clasSpecificId_idx\" ON public.\"Categoria\" USING btree (\"clasSpecificId\")"
+        },
+        {
+          "name": "Categoria_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Categoria_pkey\" ON public.\"Categoria\" USING btree (\"catId\")"
+        },
+        {
+          "name": "Categoria_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Categoria_tenantId_idx\" ON public.\"Categoria\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "Categoria_tenantId_parentId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Categoria_tenantId_parentId_idx\" ON public.\"Categoria\" USING btree (\"tenantId\", \"parentId\")"
+        }
+      ],
+      "relation": "Categoria",
+      "constraints": [
+        {
+          "name": "Categoria_parentId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"parentId\") REFERENCES \"Categoria\"(\"catId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Categoria_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"catId\")"
+        },
+        {
+          "name": "Categoria_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "clienteId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "direccion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "logoUrl",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "numeroContrato",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "numeroCuentaCUP",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "numeroCuentaUSD",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "telefono",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "listaPrecioId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "taxIdCliente",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "limiteCredito",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Cliente_listaPrecioId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Cliente_listaPrecioId_idx\" ON public.\"Cliente\" USING btree (\"listaPrecioId\")"
+        },
+        {
+          "name": "Cliente_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Cliente_pkey\" ON public.\"Cliente\" USING btree (\"clienteId\")"
+        },
+        {
+          "name": "Cliente_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Cliente_tenantId_idx\" ON public.\"Cliente\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "Cliente",
+      "constraints": [
+        {
+          "name": "Cliente_listaPrecioId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"listaPrecioId\") REFERENCES \"ListaPrecio\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Cliente_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"clienteId\")"
+        },
+        {
+          "name": "Cliente_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "compraDocumentoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "proveedorId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroFactura",
+          "type": "text",
+          "default": "''::text",
+          "notNull": true
+        },
+        {
+          "name": "facturaUrl",
+          "type": "text",
+          "default": "''::text",
+          "notNull": true
+        },
+        {
+          "name": "formaPago",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoOperacion",
+          "type": "text",
+          "default": "'REGULAR'::text",
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaCompra",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "gastoCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "cuentaPorPagarId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "deletedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "updatedById",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ordenCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "claveIdempotencia",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "CompraDocumento_cuentaPorPagarId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraDocumento_cuentaPorPagarId_key\" ON public.\"CompraDocumento\" USING btree (\"cuentaPorPagarId\")"
+        },
+        {
+          "name": "CompraDocumento_deletedAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_deletedAt_idx\" ON public.\"CompraDocumento\" USING btree (\"deletedAt\")"
+        },
+        {
+          "name": "CompraDocumento_estado_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_estado_idx\" ON public.\"CompraDocumento\" USING btree (estado)"
+        },
+        {
+          "name": "CompraDocumento_fechaCompra_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_fechaCompra_idx\" ON public.\"CompraDocumento\" USING btree (\"fechaCompra\")"
+        },
+        {
+          "name": "CompraDocumento_gastoCompraId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraDocumento_gastoCompraId_key\" ON public.\"CompraDocumento\" USING btree (\"gastoCompraId\")"
+        },
+        {
+          "name": "CompraDocumento_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraDocumento_pkey\" ON public.\"CompraDocumento\" USING btree (\"compraDocumentoId\")"
+        },
+        {
+          "name": "CompraDocumento_proveedorId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_proveedorId_idx\" ON public.\"CompraDocumento\" USING btree (\"proveedorId\")"
+        },
+        {
+          "name": "CompraDocumento_tenantId_claveIdempotencia_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraDocumento_tenantId_claveIdempotencia_key\" ON public.\"CompraDocumento\" USING btree (\"tenantId\", \"claveIdempotencia\")"
+        },
+        {
+          "name": "CompraDocumento_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_tenantId_idx\" ON public.\"CompraDocumento\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "CompraDocumento_tenantId_ordenCompraId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumento_tenantId_ordenCompraId_idx\" ON public.\"CompraDocumento\" USING btree (\"tenantId\", \"ordenCompraId\")"
+        }
+      ],
+      "relation": "CompraDocumento",
+      "constraints": [
+        {
+          "name": "CompraDocumento_cuentaPorPagarId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaPorPagarId\") REFERENCES \"CuentaPorPagar\"(\"cuentaPorPagarId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CompraDocumento_gastoCompraId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastoCompraId\") REFERENCES \"GastoCompra\"(\"gastoCompraId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CompraDocumento_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"compraDocumentoId\")"
+        },
+        {
+          "name": "CompraDocumento_proveedorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "CompraDocumento_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "CompraDocumento_tenantId_ordenCompraId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\", \"ordenCompraId\") REFERENCES \"OrdenCompra\"(\"tenantId\", id) ON UPDATE CASCADE"
+        },
+        {
+          "name": "CompraDocumento_updatedById_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"updatedById\") REFERENCES \"User\"(\"userId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "compraDocumentoItemId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "compraDocumentoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "precioUnitario",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "totalLinea",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "CompraDocumentoItem_compraDocumentoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumentoItem_compraDocumentoId_idx\" ON public.\"CompraDocumentoItem\" USING btree (\"compraDocumentoId\")"
+        },
+        {
+          "name": "CompraDocumentoItem_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraDocumentoItem_pkey\" ON public.\"CompraDocumentoItem\" USING btree (\"compraDocumentoItemId\")"
+        },
+        {
+          "name": "CompraDocumentoItem_productoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumentoItem_productoId_idx\" ON public.\"CompraDocumentoItem\" USING btree (\"productoId\")"
+        },
+        {
+          "name": "CompraDocumentoItem_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraDocumentoItem_tenantId_idx\" ON public.\"CompraDocumentoItem\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "CompraDocumentoItem",
+      "constraints": [
+        {
+          "name": "CompraDocumentoItem_compraDocumentoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"compraDocumentoId\") REFERENCES \"CompraDocumento\"(\"compraDocumentoId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "CompraDocumentoItem_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"compraDocumentoItemId\")"
+        },
+        {
+          "name": "CompraDocumentoItem_productoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "CompraDocumentoItem_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "compraProductoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroFactura",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "facturaUrl",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "precioUnitario",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaCompra",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "gastoCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "cuentaPorPagarId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "proveedorId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "formaPago",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoOperacion",
+          "type": "text",
+          "default": "'REGULAR'::text",
+          "notNull": true
+        },
+        {
+          "name": "deletedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "updatedById",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "CompraProducto_cuentaPorPagarId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraProducto_cuentaPorPagarId_key\" ON public.\"CompraProducto\" USING btree (\"cuentaPorPagarId\")"
+        },
+        {
+          "name": "CompraProducto_deletedAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraProducto_deletedAt_idx\" ON public.\"CompraProducto\" USING btree (\"deletedAt\")"
+        },
+        {
+          "name": "CompraProducto_estado_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraProducto_estado_idx\" ON public.\"CompraProducto\" USING btree (estado)"
+        },
+        {
+          "name": "CompraProducto_gastoCompraId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraProducto_gastoCompraId_key\" ON public.\"CompraProducto\" USING btree (\"gastoCompraId\")"
+        },
+        {
+          "name": "CompraProducto_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CompraProducto_pkey\" ON public.\"CompraProducto\" USING btree (\"compraProductoId\")"
+        },
+        {
+          "name": "CompraProducto_productoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraProducto_productoId_idx\" ON public.\"CompraProducto\" USING btree (\"productoId\")"
+        },
+        {
+          "name": "CompraProducto_proveedorId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraProducto_proveedorId_idx\" ON public.\"CompraProducto\" USING btree (\"proveedorId\")"
+        },
+        {
+          "name": "CompraProducto_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CompraProducto_tenantId_idx\" ON public.\"CompraProducto\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "CompraProducto",
+      "constraints": [
+        {
+          "name": "CompraProducto_cuentaPorPagarId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaPorPagarId\") REFERENCES \"CuentaPorPagar\"(\"cuentaPorPagarId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CompraProducto_gastoCompraId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastoCompraId\") REFERENCES \"GastoCompra\"(\"gastoCompraId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CompraProducto_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"compraProductoId\")"
+        },
+        {
+          "name": "CompraProducto_productoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "CompraProducto_proveedorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "CompraProducto_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "cuentaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombreBanco",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroCuenta",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoCuenta",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "saldo",
+          "type": "double precision",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "CuentaBancaria_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CuentaBancaria_pkey\" ON public.\"CuentaBancaria\" USING btree (\"cuentaId\")"
+        },
+        {
+          "name": "CuentaBancaria_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaBancaria_tenantId_idx\" ON public.\"CuentaBancaria\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "CuentaBancaria_tenantId_numeroCuenta_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CuentaBancaria_tenantId_numeroCuenta_key\" ON public.\"CuentaBancaria\" USING btree (\"tenantId\", \"numeroCuenta\")"
+        }
+      ],
+      "relation": "CuentaBancaria",
+      "constraints": [
+        {
+          "name": "CuentaBancaria_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"cuentaId\")"
+        },
+        {
+          "name": "CuentaBancaria_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "cuentaPorPagarId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroFactura",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "gastoCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "gastosDEId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "proveedorNombre",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoDeuda",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "montoPagado",
+          "type": "numeric(65,30)",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "saldoPendiente",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "fechaEmision",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "fechaVencimiento",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "estado",
+          "type": "\"EstadoCuentaPorPagar\"",
+          "default": "'PENDIENTE'::\"EstadoCuentaPorPagar\"",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "proveedorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "tipo",
+          "type": "\"TipoCuentaPorPagar\"",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoDeuda",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "deletedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "CuentaPorPagar_deletedAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaPorPagar_deletedAt_idx\" ON public.\"CuentaPorPagar\" USING btree (\"deletedAt\")"
+        },
+        {
+          "name": "CuentaPorPagar_estado_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaPorPagar_estado_idx\" ON public.\"CuentaPorPagar\" USING btree (estado)"
+        },
+        {
+          "name": "CuentaPorPagar_gastoCompraId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CuentaPorPagar_gastoCompraId_key\" ON public.\"CuentaPorPagar\" USING btree (\"gastoCompraId\")"
+        },
+        {
+          "name": "CuentaPorPagar_gastosDEId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CuentaPorPagar_gastosDEId_key\" ON public.\"CuentaPorPagar\" USING btree (\"gastosDEId\")"
+        },
+        {
+          "name": "CuentaPorPagar_numeroFactura_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaPorPagar_numeroFactura_idx\" ON public.\"CuentaPorPagar\" USING btree (\"numeroFactura\")"
+        },
+        {
+          "name": "CuentaPorPagar_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"CuentaPorPagar_pkey\" ON public.\"CuentaPorPagar\" USING btree (\"cuentaPorPagarId\")"
+        },
+        {
+          "name": "CuentaPorPagar_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaPorPagar_tenantId_idx\" ON public.\"CuentaPorPagar\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "CuentaPorPagar_tipo_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"CuentaPorPagar_tipo_idx\" ON public.\"CuentaPorPagar\" USING btree (tipo)"
+        }
+      ],
+      "relation": "CuentaPorPagar",
+      "constraints": [
+        {
+          "name": "CuentaPorPagar_gastoCompraId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastoCompraId\") REFERENCES \"GastoCompra\"(\"gastoCompraId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CuentaPorPagar_gastosDEId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastosDEId\") REFERENCES \"GastosDE\"(\"gastosDEId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CuentaPorPagar_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"cuentaPorPagarId\")"
+        },
+        {
+          "name": "CuentaPorPagar_proveedorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "CuentaPorPagar_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "gastoCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "vendorId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "precioUnitario",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "fechaCompra",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "periodo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "numeroFactura",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "deletedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "GastoCompra_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastoCompra_pkey\" ON public.\"GastoCompra\" USING btree (\"gastoCompraId\")"
+        },
+        {
+          "name": "GastoCompra_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastoCompra_tenantId_idx\" ON public.\"GastoCompra\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "GastoCompra",
+      "constraints": [
+        {
+          "name": "GastoCompra_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"gastoCompraId\")"
+        },
+        {
+          "name": "GastoCompra_productoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "GastoCompra_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "GastoCompra_vendorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"vendorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "conceptoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "GastoConcepto_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastoConcepto_pkey\" ON public.\"GastoConcepto\" USING btree (\"conceptoId\")"
+        },
+        {
+          "name": "GastoConcepto_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastoConcepto_tenantId_idx\" ON public.\"GastoConcepto\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "GastoConcepto_tenantId_nombre_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastoConcepto_tenantId_nombre_key\" ON public.\"GastoConcepto\" USING btree (\"tenantId\", nombre)"
+        }
+      ],
+      "relation": "GastoConcepto",
+      "constraints": [
+        {
+          "name": "GastoConcepto_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"conceptoId\")"
+        },
+        {
+          "name": "GastoConcepto_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "elementoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "conceptoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "GastoElemento_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastoElemento_pkey\" ON public.\"GastoElemento\" USING btree (\"elementoId\")"
+        },
+        {
+          "name": "GastoElemento_tenantId_conceptoId_nombre_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastoElemento_tenantId_conceptoId_nombre_key\" ON public.\"GastoElemento\" USING btree (\"tenantId\", \"conceptoId\", nombre)"
+        },
+        {
+          "name": "GastoElemento_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastoElemento_tenantId_idx\" ON public.\"GastoElemento\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "GastoElemento",
+      "constraints": [
+        {
+          "name": "GastoElemento_conceptoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"conceptoId\") REFERENCES \"GastoConcepto\"(\"conceptoId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "GastoElemento_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"elementoId\")"
+        },
+        {
+          "name": "GastoElemento_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "gastosDEId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "conceptoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "elementoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "proveedor",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monto",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "periodo",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isPagado",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroFactura",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "proveedorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": "'APROBADO'::text",
+          "notNull": true
+        },
+        {
+          "name": "aprobadoPorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "GastosDE_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"GastosDE_pkey\" ON public.\"GastosDE\" USING btree (\"gastosDEId\")"
+        },
+        {
+          "name": "GastosDE_proveedorId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastosDE_proveedorId_idx\" ON public.\"GastosDE\" USING btree (\"proveedorId\")"
+        },
+        {
+          "name": "GastosDE_tenantId_createdAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastosDE_tenantId_createdAt_idx\" ON public.\"GastosDE\" USING btree (\"tenantId\", \"createdAt\")"
+        },
+        {
+          "name": "GastosDE_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"GastosDE_tenantId_idx\" ON public.\"GastosDE\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "GastosDE",
+      "constraints": [
+        {
+          "name": "GastosDE_aprobadoPorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"aprobadoPorId\") REFERENCES \"User\"(\"userId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "GastosDE_conceptoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"conceptoId\") REFERENCES \"GastoConcepto\"(\"conceptoId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "GastosDE_elementoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"elementoId\") REFERENCES \"GastoElemento\"(\"elementoId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "GastosDE_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"gastosDEId\")"
+        },
+        {
+          "name": "GastosDE_proveedorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "GastosDE_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "mermaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "costoTotal",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "almacenId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "creadoPorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Merma_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Merma_pkey\" ON public.\"Merma\" USING btree (\"mermaId\")"
+        },
+        {
+          "name": "Merma_tenantId_createdAt_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Merma_tenantId_createdAt_idx\" ON public.\"Merma\" USING btree (\"tenantId\", \"createdAt\")"
+        },
+        {
+          "name": "Merma_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Merma_tenantId_idx\" ON public.\"Merma\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "Merma",
+      "constraints": [
+        {
+          "name": "Merma_almacenId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"almacenId\") REFERENCES \"Almacen\"(\"almacenId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Merma_creadoPorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"creadoPorId\") REFERENCES \"User\"(\"userId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Merma_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"mermaId\")"
+        },
+        {
+          "name": "Merma_productoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "Merma_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "planId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "precio",
+          "type": "numeric(65,30)",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "duracionDias",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "maxUsuarios",
+          "type": "integer",
+          "default": "1",
+          "notNull": true
+        },
+        {
+          "name": "maxAlmacenes",
+          "type": "integer",
+          "default": "1",
+          "notNull": true
+        },
+        {
+          "name": "maxProductos",
+          "type": "integer",
+          "default": "100",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "features",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "notNull": true
+        },
+        {
+          "name": "incluyeBackups",
+          "type": "boolean",
+          "default": "false",
+          "notNull": true
+        },
+        {
+          "name": "maxClientes",
+          "type": "integer",
+          "default": "200",
+          "notNull": true
+        },
+        {
+          "name": "maxContratos",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "maxFacturasMes",
+          "type": "integer",
+          "default": "200",
+          "notNull": true
+        },
+        {
+          "name": "maxPuntosVenta",
+          "type": "integer",
+          "default": "1",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Plan_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Plan_pkey\" ON public.\"Plan\" USING btree (\"planId\")"
+        }
+      ],
+      "relation": "Plan",
+      "constraints": [
+        {
+          "name": "Plan_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"planId\")"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "precioCosto",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "precioVenta",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "stock",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "categoriaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "unidadId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "vendorId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "esCompuesto",
+          "type": "boolean",
+          "default": "false",
+          "notNull": true
+        },
+        {
+          "name": "almacenId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "puntoDeVentaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "stockMinimo",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "subcategoriaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "cantidadEnPack",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "productoPadreId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "codigoInterno",
+          "type": "character varying(11)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "codigoNegocio",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "proveedorCodigo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "idSeccionCodigo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "especificoCodigo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "surtidoCodigo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "dcCodigo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fotos",
+          "type": "text[]",
+          "default": "ARRAY[]::text[]",
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "Producto_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Producto_pkey\" ON public.\"Producto\" USING btree (id)"
+        },
+        {
+          "name": "Producto_tenantId_categoriaId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Producto_tenantId_categoriaId_idx\" ON public.\"Producto\" USING btree (\"tenantId\", \"categoriaId\")"
+        },
+        {
+          "name": "Producto_tenantId_codigoInterno_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Producto_tenantId_codigoInterno_key\" ON public.\"Producto\" USING btree (\"tenantId\", \"codigoInterno\")"
+        },
+        {
+          "name": "Producto_tenantId_codigoNegocio_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Producto_tenantId_codigoNegocio_key\" ON public.\"Producto\" USING btree (\"tenantId\", \"codigoNegocio\")"
+        },
+        {
+          "name": "Producto_tenantId_id_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"Producto_tenantId_id_key\" ON public.\"Producto\" USING btree (\"tenantId\", id)"
+        },
+        {
+          "name": "Producto_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Producto_tenantId_idx\" ON public.\"Producto\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "Producto_tenantId_subcategoriaId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Producto_tenantId_subcategoriaId_idx\" ON public.\"Producto\" USING btree (\"tenantId\", \"subcategoriaId\")"
+        },
+        {
+          "name": "Producto_tenantId_vendorId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"Producto_tenantId_vendorId_idx\" ON public.\"Producto\" USING btree (\"tenantId\", \"vendorId\")"
+        }
+      ],
+      "relation": "Producto",
+      "constraints": [
+        {
+          "name": "Producto_almacenId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"almacenId\") REFERENCES \"Almacen\"(\"almacenId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Producto_categoriaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"categoriaId\") REFERENCES \"Categoria\"(\"catId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Producto_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "Producto_productoPadreId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoPadreId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Producto_puntoDeVentaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"puntoDeVentaId\") REFERENCES \"PuntoDeVenta\"(\"pvId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Producto_subcategoriaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"subcategoriaId\") REFERENCES \"Categoria\"(\"catId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "Producto_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Producto_unidadId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"unidadId\") REFERENCES \"Unidad\"(\"unidadId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "Producto_vendorId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"vendorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "reconciliacionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoGasto",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "referenciaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoPagoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monto",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoConvertido",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "periodo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaReconciliacion",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "observaciones",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "reconciliadoPor",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaPorPagarId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "estado",
+          "type": "text",
+          "default": "'PENDIENTE'::text",
+          "notNull": true
+        },
+        {
+          "name": "gastoCompraId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "gastosDEId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isReconciliada",
+          "type": "boolean",
+          "default": "false",
+          "notNull": false
+        },
+        {
+          "name": "pgId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "functionalCurrency",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "rateEffectiveAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceKind",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceSource",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxCatalogRateId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceJson",
+          "type": "jsonb",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceFingerprint",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceVersion",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ReconciliacionGasto_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"ReconciliacionGasto_pkey\" ON public.\"ReconciliacionGasto\" USING btree (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionGasto_tenantId_cuentaId_fechaReconciliacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionGasto_tenantId_cuentaId_fechaReconciliacion_idx\" ON public.\"ReconciliacionGasto\" USING btree (\"tenantId\", \"cuentaId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionGasto_tenantId_fechaReconciliacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionGasto_tenantId_fechaReconciliacion_idx\" ON public.\"ReconciliacionGasto\" USING btree (\"tenantId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionGasto_tenantId_fxProvenanceKind_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionGasto_tenantId_fxProvenanceKind_idx\" ON public.\"ReconciliacionGasto\" USING btree (\"tenantId\", \"fxProvenanceKind\")"
+        },
+        {
+          "name": "ReconciliacionGasto_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionGasto_tenantId_idx\" ON public.\"ReconciliacionGasto\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "ReconciliacionGasto",
+      "constraints": [
+        {
+          "name": "ReconciliacionGasto_cuentaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionGasto_cuentaPorPagarId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaPorPagarId\") REFERENCES \"CuentaPorPagar\"(\"cuentaPorPagarId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionGasto_gastoCompraId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastoCompraId\") REFERENCES \"GastoCompra\"(\"gastoCompraId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionGasto_gastosDEId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"gastosDEId\") REFERENCES \"GastosDE\"(\"gastosDEId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionGasto_pgId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"pgId\") REFERENCES \"Pagosalario\"(\"pgId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionGasto_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionGasto_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionGasto_tipoPagoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tipoPagoId\") REFERENCES \"TipoPago\"(\"tipoId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "reconciliacionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoPagoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monto",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoConvertido",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaReconciliacion",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "observaciones",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "reconciliadoPor",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ventaServicioId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "functionalCurrency",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "rateEffectiveAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceKind",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceSource",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxCatalogRateId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceJson",
+          "type": "jsonb",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceFingerprint",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceVersion",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ReconciliacionServicio_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"ReconciliacionServicio_pkey\" ON public.\"ReconciliacionServicio\" USING btree (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionServicio_tenantId_cuentaId_fechaReconciliacio_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionServicio_tenantId_cuentaId_fechaReconciliacio_idx\" ON public.\"ReconciliacionServicio\" USING btree (\"tenantId\", \"cuentaId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionServicio_tenantId_fechaReconciliacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionServicio_tenantId_fechaReconciliacion_idx\" ON public.\"ReconciliacionServicio\" USING btree (\"tenantId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionServicio_tenantId_fxProvenanceKind_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionServicio_tenantId_fxProvenanceKind_idx\" ON public.\"ReconciliacionServicio\" USING btree (\"tenantId\", \"fxProvenanceKind\")"
+        },
+        {
+          "name": "ReconciliacionServicio_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionServicio_tenantId_idx\" ON public.\"ReconciliacionServicio\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "ReconciliacionServicio",
+      "constraints": [
+        {
+          "name": "ReconciliacionServicio_cuentaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionServicio_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionServicio_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionServicio_tipoPagoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tipoPagoId\") REFERENCES \"TipoPago\"(\"tipoId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionServicio_ventaServicioId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"ventaServicioId\") REFERENCES \"VentaServicios\"(\"ventaServicioId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "reconciliacionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ventaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "cuentaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoPagoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monto",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoConvertido",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaReconciliacion",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "observaciones",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "reconciliadoPor",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "idTransferencia",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "verificacionTransferenciaId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "deudaCashId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "prestamoCashId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "tipoReconciliacion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "functionalCurrency",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "rateEffectiveAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceKind",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxProvenanceSource",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxCatalogRateId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceJson",
+          "type": "jsonb",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceFingerprint",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fxEvidenceVersion",
+          "type": "integer",
+          "default": null,
+          "notNull": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ReconciliacionVenta_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"ReconciliacionVenta_pkey\" ON public.\"ReconciliacionVenta\" USING btree (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionVenta_tenantId_cuentaId_fechaReconciliacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionVenta_tenantId_cuentaId_fechaReconciliacion_idx\" ON public.\"ReconciliacionVenta\" USING btree (\"tenantId\", \"cuentaId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionVenta_tenantId_fechaReconciliacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionVenta_tenantId_fechaReconciliacion_idx\" ON public.\"ReconciliacionVenta\" USING btree (\"tenantId\", \"fechaReconciliacion\")"
+        },
+        {
+          "name": "ReconciliacionVenta_tenantId_fxProvenanceKind_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionVenta_tenantId_fxProvenanceKind_idx\" ON public.\"ReconciliacionVenta\" USING btree (\"tenantId\", \"fxProvenanceKind\")"
+        },
+        {
+          "name": "ReconciliacionVenta_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"ReconciliacionVenta_tenantId_idx\" ON public.\"ReconciliacionVenta\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "ReconciliacionVenta",
+      "constraints": [
+        {
+          "name": "ReconciliacionVenta_cuentaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionVenta_deudaCashId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"deudaCashId\") REFERENCES \"DeudaCash\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionVenta_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"reconciliacionId\")"
+        },
+        {
+          "name": "ReconciliacionVenta_prestamoCashId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"prestamoCashId\") REFERENCES \"PrestamoCash\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "ReconciliacionVenta_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionVenta_tipoPagoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tipoPagoId\") REFERENCES \"TipoPago\"(\"tipoId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "ReconciliacionVenta_ventaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"ventaId\") REFERENCES \"Venta\"(\"ventaId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoUbicacion",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ubicacionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "cantidadReservada",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "cantidadDisponible",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "StockUbicacion_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"StockUbicacion_pkey\" ON public.\"StockUbicacion\" USING btree (id)"
+        },
+        {
+          "name": "StockUbicacion_productoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"StockUbicacion_productoId_idx\" ON public.\"StockUbicacion\" USING btree (\"productoId\")"
+        },
+        {
+          "name": "StockUbicacion_productoId_tipoUbicacion_ubicacionId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"StockUbicacion_productoId_tipoUbicacion_ubicacionId_key\" ON public.\"StockUbicacion\" USING btree (\"productoId\", \"tipoUbicacion\", \"ubicacionId\")"
+        },
+        {
+          "name": "StockUbicacion_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"StockUbicacion_tenantId_idx\" ON public.\"StockUbicacion\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "StockUbicacion_ubicacionId_tipoUbicacion_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"StockUbicacion_ubicacionId_tipoUbicacion_idx\" ON public.\"StockUbicacion\" USING btree (\"ubicacionId\", \"tipoUbicacion\")"
+        }
+      ],
+      "relation": "StockUbicacion",
+      "constraints": [
+        {
+          "name": "StockUbicacion_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "StockUbicacion_productoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "StockUbicacion_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "tipoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "nombre",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "requiereCuenta",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "cuentaDefecto",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isActive",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "TipoPago_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"TipoPago_pkey\" ON public.\"TipoPago\" USING btree (\"tipoId\")"
+        },
+        {
+          "name": "TipoPago_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"TipoPago_tenantId_idx\" ON public.\"TipoPago\" USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "TipoPago",
+      "constraints": [
+        {
+          "name": "TipoPago_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"tipoId\")"
+        },
+        {
+          "name": "TipoPago_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "transferenciaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "numeroComprobante",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaOrigenId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cuentaDestinoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "montoOrigen",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monedaOrigen",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "montoDestino",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "monedaDestino",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descripcion",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "fechaTransferencia",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "comprobanteGenerado",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "rutaComprobante",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "existe",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "TransferenciaBancaria_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"TransferenciaBancaria_pkey\" ON public.\"TransferenciaBancaria\" USING btree (\"transferenciaId\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_cuentaDestinoId_fechaTransfe_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"TransferenciaBancaria_tenantId_cuentaDestinoId_fechaTransfe_idx\" ON public.\"TransferenciaBancaria\" USING btree (\"tenantId\", \"cuentaDestinoId\", \"fechaTransferencia\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_cuentaOrigenId_fechaTransfer_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"TransferenciaBancaria_tenantId_cuentaOrigenId_fechaTransfer_idx\" ON public.\"TransferenciaBancaria\" USING btree (\"tenantId\", \"cuentaOrigenId\", \"fechaTransferencia\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_fechaTransferencia_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"TransferenciaBancaria_tenantId_fechaTransferencia_idx\" ON public.\"TransferenciaBancaria\" USING btree (\"tenantId\", \"fechaTransferencia\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"TransferenciaBancaria_tenantId_idx\" ON public.\"TransferenciaBancaria\" USING btree (\"tenantId\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_numeroComprobante_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"TransferenciaBancaria_tenantId_numeroComprobante_key\" ON public.\"TransferenciaBancaria\" USING btree (\"tenantId\", \"numeroComprobante\")"
+        }
+      ],
+      "relation": "TransferenciaBancaria",
+      "constraints": [
+        {
+          "name": "TransferenciaBancaria_cuentaDestinoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaDestinoId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "TransferenciaBancaria_cuentaOrigenId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"cuentaOrigenId\") REFERENCES \"CuentaBancaria\"(\"cuentaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "TransferenciaBancaria_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"transferenciaId\")"
+        },
+        {
+          "name": "TransferenciaBancaria_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "devolucionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ventaId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "estado",
+          "type": "\"EstadoDevolucion\"",
+          "default": "'REGISTRADA'::\"EstadoDevolucion\"",
+          "notNull": true
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "subtotal",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "descuento",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "moneda",
+          "type": "text",
+          "default": "'CUP'::text",
+          "notNull": true
+        },
+        {
+          "name": "tasaCambio",
+          "type": "numeric(65,30)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "facturaNotaCreditoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "anticipoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "turnoReembolsoId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "montoAplicadoCxc",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "montoSaldoFavor",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "montoReembolsado",
+          "type": "integer",
+          "default": "0",
+          "notNull": true
+        },
+        {
+          "name": "idempotencyKey",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "createdById",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "devoluciones_venta_anticipoId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"devoluciones_venta_anticipoId_key\" ON public.devoluciones_venta USING btree (\"anticipoId\")"
+        },
+        {
+          "name": "devoluciones_venta_facturaNotaCreditoId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"devoluciones_venta_facturaNotaCreditoId_key\" ON public.devoluciones_venta USING btree (\"facturaNotaCreditoId\")"
+        },
+        {
+          "name": "devoluciones_venta_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX devoluciones_venta_pkey ON public.devoluciones_venta USING btree (\"devolucionId\")"
+        },
+        {
+          "name": "devoluciones_venta_tenantId_idempotencyKey_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"devoluciones_venta_tenantId_idempotencyKey_key\" ON public.devoluciones_venta USING btree (\"tenantId\", \"idempotencyKey\")"
+        },
+        {
+          "name": "devoluciones_venta_tenantId_turnoReembolsoId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"devoluciones_venta_tenantId_turnoReembolsoId_idx\" ON public.devoluciones_venta USING btree (\"tenantId\", \"turnoReembolsoId\")"
+        },
+        {
+          "name": "devoluciones_venta_tenantId_ventaId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"devoluciones_venta_tenantId_ventaId_idx\" ON public.devoluciones_venta USING btree (\"tenantId\", \"ventaId\")"
+        }
+      ],
+      "relation": "devoluciones_venta",
+      "constraints": [
+        {
+          "name": "devoluciones_venta_anticipoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"anticipoId\") REFERENCES \"Anticipo\"(\"anticipoId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "devoluciones_venta_facturaNotaCreditoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"facturaNotaCreditoId\") REFERENCES facturas(\"idFactura\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "devoluciones_venta_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"devolucionId\")"
+        },
+        {
+          "name": "devoluciones_venta_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "devoluciones_venta_turnoReembolsoId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"turnoReembolsoId\") REFERENCES turnos_punto_venta(id) ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "devoluciones_venta_ventaId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"ventaId\") REFERENCES \"Venta\"(\"ventaId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "devolucionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ventaItemId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "productoId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "precioUnitario",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "total",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "costoUnitarioDevolucion",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tipoUbicacion",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ubicacionId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "devoluciones_venta_items_devolucionId_ventaItemId_key",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX \"devoluciones_venta_items_devolucionId_ventaItemId_key\" ON public.devoluciones_venta_items USING btree (\"devolucionId\", \"ventaItemId\")"
+        },
+        {
+          "name": "devoluciones_venta_items_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX devoluciones_venta_items_pkey ON public.devoluciones_venta_items USING btree (id)"
+        },
+        {
+          "name": "devoluciones_venta_items_ventaItemId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"devoluciones_venta_items_ventaItemId_idx\" ON public.devoluciones_venta_items USING btree (\"ventaItemId\")"
+        }
+      ],
+      "relation": "devoluciones_venta_items",
+      "constraints": [
+        {
+          "name": "devoluciones_venta_items_devolucionId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"devolucionId\") REFERENCES devoluciones_venta(\"devolucionId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "devoluciones_venta_items_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "devoluciones_venta_items_ventaItemId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"ventaItemId\") REFERENCES venta_items(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "compraDocumentoItemId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "ventaItemId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "cantidad",
+          "type": "integer",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "purchase_allocations_compraDocumentoItemId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"purchase_allocations_compraDocumentoItemId_idx\" ON public.purchase_allocations USING btree (\"compraDocumentoItemId\")"
+        },
+        {
+          "name": "purchase_allocations_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX purchase_allocations_pkey ON public.purchase_allocations USING btree (id)"
+        },
+        {
+          "name": "purchase_allocations_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"purchase_allocations_tenantId_idx\" ON public.purchase_allocations USING btree (\"tenantId\")"
+        },
+        {
+          "name": "purchase_allocations_ventaItemId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"purchase_allocations_ventaItemId_idx\" ON public.purchase_allocations USING btree (\"ventaItemId\")"
+        }
+      ],
+      "relation": "purchase_allocations",
+      "constraints": [
+        {
+          "name": "purchase_allocations_compraDocumentoItemId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"compraDocumentoItemId\") REFERENCES \"CompraDocumentoItem\"(\"compraDocumentoItemId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        },
+        {
+          "name": "purchase_allocations_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "purchase_allocations_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+        },
+        {
+          "name": "purchase_allocations_ventaItemId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"ventaItemId\") REFERENCES venta_items(id) ON UPDATE CASCADE ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "name": "tenantLicenseId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "tenantId",
+          "type": "text",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "planId",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "activa",
+          "type": "boolean",
+          "default": "true",
+          "notNull": true
+        },
+        {
+          "name": "inicio",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "expiracion",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp(3) without time zone",
+          "default": "CURRENT_TIMESTAMP",
+          "notNull": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp(3) without time zone",
+          "default": null,
+          "notNull": true
+        },
+        {
+          "name": "maxUsuarios",
+          "type": "integer",
+          "default": "1",
+          "notNull": true
+        },
+        {
+          "name": "maxAlmacenes",
+          "type": "integer",
+          "default": "1",
+          "notNull": true
+        },
+        {
+          "name": "maxProductos",
+          "type": "integer",
+          "default": "100",
+          "notNull": true
+        },
+        {
+          "name": "features",
+          "type": "jsonb",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isDemo",
+          "type": "boolean",
+          "default": "false",
+          "notNull": true
+        },
+        {
+          "name": "createdBy",
+          "type": "text",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "maxClientes",
+          "type": "integer",
+          "default": "200",
+          "notNull": true
+        },
+        {
+          "name": "creditAppliedUsd",
+          "type": "numeric(10,2)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "creditSnapshotUsd",
+          "type": "numeric(10,2)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "featureOverrides",
+          "type": "jsonb",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "finalPriceUsd",
+          "type": "numeric(10,2)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "listPriceUsd",
+          "type": "numeric(10,2)",
+          "default": null,
+          "notNull": false
+        },
+        {
+          "name": "isAdminTest",
+          "type": "boolean",
+          "default": "false",
+          "notNull": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "tenant_licenses_pkey",
+          "ready": true,
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX tenant_licenses_pkey ON public.tenant_licenses USING btree (\"tenantLicenseId\")"
+        },
+        {
+          "name": "tenant_licenses_planId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"tenant_licenses_planId_idx\" ON public.tenant_licenses USING btree (\"planId\")"
+        },
+        {
+          "name": "tenant_licenses_tenantId_idx",
+          "ready": true,
+          "valid": true,
+          "unique": false,
+          "definition": "CREATE INDEX \"tenant_licenses_tenantId_idx\" ON public.tenant_licenses USING btree (\"tenantId\")"
+        }
+      ],
+      "relation": "tenant_licenses",
+      "constraints": [
+        {
+          "name": "tenant_licenses_pkey",
+          "validated": true,
+          "definition": "PRIMARY KEY (\"tenantLicenseId\")"
+        },
+        {
+          "name": "tenant_licenses_planId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"planId\") REFERENCES \"Plan\"(\"planId\") ON UPDATE CASCADE ON DELETE SET NULL"
+        },
+        {
+          "name": "tenant_licenses_tenantId_fkey",
+          "validated": true,
+          "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE CASCADE"
+        }
+      ]
+    }
+  ],
+  "capturedAt": "2026-10-11T21:59:17.267752+00:00",
+  "transactionReadOnly": "on",
+  "transactionIsolation": "repeatable read"
+}

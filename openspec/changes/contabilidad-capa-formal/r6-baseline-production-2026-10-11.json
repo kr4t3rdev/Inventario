@@ -1,0 +1,1044 @@
+{
+  "schema": "public",
+  "indexes": [
+    {
+      "name": "ReconciliacionServicio_tenantId_idempotencyKey_key",
+      "ready": false,
+      "definition": null
+    }
+  ],
+  "identity": {
+    "role": "postgres",
+    "database": "railway",
+    "inRecovery": false,
+    "serverPort": 5432,
+    "serverAddress": "10.145.126.255",
+    "serverVersion": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transactionReadOnly": "on",
+    "transactionIsolation": "repeatable read"
+  },
+  "triggers": [
+    {
+      "name": "apertura_revisiones_lineas_immutable",
+      "ready": false,
+      "enabled": null,
+      "relation": "lineas_apertura_periodo",
+      "definition": null,
+      "function_hash": null
+    },
+    {
+      "name": "apertura_revisiones_protect_lifecycle",
+      "ready": false,
+      "enabled": null,
+      "relation": "apertura_revisiones",
+      "definition": null,
+      "function_hash": null
+    },
+    {
+      "name": "financial_auxiliary_checkpoints_immutable_delete",
+      "ready": true,
+      "enabled": "O",
+      "relation": "financial_auxiliary_checkpoints",
+      "definition": "CREATE TRIGGER financial_auxiliary_checkpoints_immutable_delete BEFORE DELETE ON public.financial_auxiliary_checkpoints FOR EACH ROW EXECUTE FUNCTION reject_financial_auxiliary_checkpoint_mutation()",
+      "function_hash": "16ef8f03aca0d9eea92fba1837a735c1"
+    },
+    {
+      "name": "financial_auxiliary_checkpoints_immutable_update",
+      "ready": true,
+      "enabled": "O",
+      "relation": "financial_auxiliary_checkpoints",
+      "definition": "CREATE TRIGGER financial_auxiliary_checkpoints_immutable_update BEFORE UPDATE ON public.financial_auxiliary_checkpoints FOR EACH ROW EXECUTE FUNCTION reject_financial_auxiliary_checkpoint_mutation()",
+      "function_hash": "16ef8f03aca0d9eea92fba1837a735c1"
+    },
+    {
+      "name": "fx_evidence_immutable_delete",
+      "ready": true,
+      "enabled": "O",
+      "relation": "fx_evidence",
+      "definition": "CREATE TRIGGER fx_evidence_immutable_delete BEFORE DELETE ON public.fx_evidence FOR EACH ROW EXECUTE FUNCTION reject_fx_evidence_mutation()",
+      "function_hash": "e8aff2f37053ad22001d66f784c5e8e6"
+    },
+    {
+      "name": "fx_evidence_immutable_update",
+      "ready": true,
+      "enabled": "O",
+      "relation": "fx_evidence",
+      "definition": "CREATE TRIGGER fx_evidence_immutable_update BEFORE UPDATE ON public.fx_evidence FOR EACH ROW EXECUTE FUNCTION reject_fx_evidence_mutation()",
+      "function_hash": "e8aff2f37053ad22001d66f784c5e8e6"
+    },
+    {
+      "name": "snapshot_periodos_approved_immutable_delete",
+      "ready": true,
+      "enabled": "O",
+      "relation": "snapshot_periodos",
+      "definition": "CREATE TRIGGER snapshot_periodos_approved_immutable_delete BEFORE DELETE ON public.snapshot_periodos FOR EACH ROW EXECUTE FUNCTION reject_approved_financial_snapshot_mutation()",
+      "function_hash": "7578cf61da7d9a7bc68455c8a90a4474"
+    },
+    {
+      "name": "snapshot_periodos_approved_immutable_update",
+      "ready": true,
+      "enabled": "O",
+      "relation": "snapshot_periodos",
+      "definition": "CREATE TRIGGER snapshot_periodos_approved_immutable_update BEFORE UPDATE ON public.snapshot_periodos FOR EACH ROW EXECUTE FUNCTION reject_approved_financial_snapshot_mutation()",
+      "function_hash": "7578cf61da7d9a7bc68455c8a90a4474"
+    },
+    {
+      "name": "stock_move_line_no_delete",
+      "ready": true,
+      "enabled": "O",
+      "relation": "StockMoveLine",
+      "definition": "CREATE TRIGGER stock_move_line_no_delete BEFORE DELETE ON public.\"StockMoveLine\" FOR EACH ROW EXECUTE FUNCTION stock_move_line_inmutable()",
+      "function_hash": "0721a10171f62c15481ce112d7d8c1a7"
+    },
+    {
+      "name": "stock_move_line_no_update",
+      "ready": true,
+      "enabled": "O",
+      "relation": "StockMoveLine",
+      "definition": "CREATE TRIGGER stock_move_line_no_update BEFORE UPDATE ON public.\"StockMoveLine\" FOR EACH ROW EXECUTE FUNCTION stock_move_line_inmutable()",
+      "function_hash": "0721a10171f62c15481ce112d7d8c1a7"
+    },
+    {
+      "name": "tenant_accounting_policy_currency_immutable_after_evidence",
+      "ready": true,
+      "enabled": "O",
+      "relation": "tenant_accounting_policies",
+      "definition": "CREATE TRIGGER tenant_accounting_policy_currency_immutable_after_evidence BEFORE UPDATE ON public.tenant_accounting_policies FOR EACH ROW EXECUTE FUNCTION reject_used_functional_currency_change()",
+      "function_hash": "07a65805ef92128a0582c9c77f69e3ca"
+    }
+  ],
+  "capturedAt": "2026-10-11T21:53:14.1745+00:00",
+  "migrations": [
+    {
+      "checksum": "30963f7108fd3ba8be5525569c62235b653764801acb11676e96ffcc8d261dd7",
+      "finishedAt": "2026-07-03T20:04:07.415209+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250514033506_init",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "623817bf05867dcc5fecbae6a98de37170e37818b435216b9cb52e6a92c4fc07",
+      "finishedAt": "2026-07-03T20:04:25.413749+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250620152300_add_cost_sheet_template",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "363b3cb12f3f93395717ed91908102e52f56ceba4eca5cb2b5144ec0e96f50bb",
+      "finishedAt": "2026-07-03T20:04:42.35768+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250814152906_add_subcategory_support",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "42f7c47fa1185da4c9e8876b7f002e7526b24899d7f75ac916799770bda8b1de",
+      "finishedAt": "2026-07-03T20:05:00.712668+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250821011400_make_cliente_id_optional",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "8fd2fdc9f8361264ffa5efc46bca630fe0e41c14f9d89285c5d4a8d49b94de23",
+      "finishedAt": "2026-07-03T20:05:28.067889+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250821105943_lol",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "1bfdfed9f77ddc36d6c26b1aee551a0807215860038494884a8f1c602e25fbe8",
+      "finishedAt": "2026-07-03T20:05:48.049999+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250823184634_add_contabilidad_models",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "5fcdfc38b93f9f5480fecb68311d93fabacd83c4553547306eb5d4fcb3b3f215",
+      "finishedAt": "2026-07-03T20:06:12.564761+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20250823184635_add_contabilidad_indexes",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "058ecb62781ecf4b02e430df995b93c3d923c2dd13fe465fd2ad3bc024369f12",
+      "finishedAt": "2026-07-03T20:08:05.914639+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260124000000_add_propietario_to_mi_empresa",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "b914225f9ea3fadb9402d11b726ce6422296eb8200560c7a29245ebf37c5f5a0",
+      "finishedAt": "2026-07-03T20:08:08.153173+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260206000000_add_compra_producto",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "308886476d2257f1ee2c4fa5cdf845eb8d82dd24397bab663ed3d2754c1a496b",
+      "finishedAt": "2026-07-03T20:08:10.922336+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260217000000_add_transferencia_cabecera",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "46dff5aa79c4c109e6fe60a011fe027736b975a8281d629722750dd52fda2b34",
+      "finishedAt": "2026-07-03T20:08:13.463437+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260217190000_add_soft_delete_and_audit_fields",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "e35978d2bd786eefc969a33bde5264c04b30037275163e9a3c4ef6fed2e1422c",
+      "finishedAt": "2026-07-03T20:08:16.288072+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260311001000_add_codigo_interno_producto",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "6e70dce49ec5f6300246d0afdae0ef6537a2bdb2a058af3f07ac8e08eacff2fe",
+      "finishedAt": "2026-07-03T20:08:18.872296+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260312090000_add_producto_taxonomia",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "ff1714bad0cd4633ea5ecbbdcd90d6a3db7437e307da9703294431334f05c3d7",
+      "finishedAt": "2026-07-03T20:08:21.111664+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260313103000_ean13_segments",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "d9c59b51d3d78c6fcc483053643969c09bc435e8257baa12bd534f899ec782af",
+      "finishedAt": "2026-07-03T20:08:23.122118+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260314125500_expand_servicios_catalog",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "bcb14ccf277262fe336fb69dc16d83d711a6d0e43d827bfe5431685ff942463d",
+      "finishedAt": "2026-07-03T20:08:26.551874+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260314174003_add_cost_to_transferencia",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "42f3df826e49dcf2a968db674f0401886fc97af8052b8a2c948b211512fe8860",
+      "finishedAt": "2026-07-03T20:08:29.818319+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260315230206_remove_codigos_from_servicios",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "6f62aeea20da3d7126d7ec364eb6cd831ed01abd56870617ef7b6b1b21ec3a6a",
+      "finishedAt": "2026-07-03T20:08:32.280576+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260327023000_add_catalogo_modo_clasificacion",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "53dba236a5401df5deef266aa35ac9be13664f80017eef144b496b98be83214a",
+      "finishedAt": "2026-07-03T20:08:34.842244+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260327032000_fix_producto_compuesto_columns",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "a9f2cf4b0ca2e67fbe6a823bf6a10a99300dbc08662ec5b3b1262097b173e635",
+      "finishedAt": "2026-07-03T20:08:37.018332+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260327033000_fix_vendor_proveedor_codigo",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "e59fc04d3705dd410da6e414fd0c345d08be6be3719f2ee32289a7c172a35930",
+      "finishedAt": "2026-07-03T20:08:40.281834+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260406142908_add_usa_codigo_ean13_to_mi_empresa",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "c90160aa2136b5d86adfa006c24eab50fd2330f644be471a97852887b9f597df",
+      "finishedAt": "2026-07-03T20:08:43.171157+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260407070000_add_ean13_fields_to_producto",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "cf16066601675166a9a29e8c47a451aebd8c47e8d131b2ca713145a738b3aa70",
+      "finishedAt": "2026-07-03T20:08:45.883955+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260416120000_change_contrato_tipo_to_string",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "e5f7b48c22047c56072bd27b4d14690f35126bc0fc48c4dc0cab76c86083c4c5",
+      "finishedAt": "2026-07-03T20:08:48.769126+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260418000000_add_stock_ubicacion",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "90e8092dbfcb811eaaca00b12e01abdaaceeb81ccc56555bf3c6ea6bd99bd5dc",
+      "finishedAt": "2026-07-03T20:08:50.999571+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260418142214_remove_ultima_actualizacion_from_stock_ubicacion",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "0d3109fbd19746afeee1327edb41f75837ae289843cebeb7377464980f70dca6",
+      "finishedAt": "2026-07-03T20:08:53.27192+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260422182335_add_clas_fields_to_categoria",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "4a40f183caffacf148a48e5dc8c816e3f497d978c70dec55470d0c35f5c5dffe",
+      "finishedAt": "2026-07-03T20:08:59.448923+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260423000000_add_compra_documento_cabecera_detalle",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "c81e42f16c418525f136778553b9006156714b9b94921a4bcbb31772eedf4ff1",
+      "finishedAt": null,
+      "rolledBackAt": "2026-09-15T18:17:33.061613+00:00",
+      "migrationName": "20260430000000_repair_vendor_vendor_code",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "6fad88ec04e8aeee2b49c034cdbc014f9ab536020fca519fdf451c05c4123446",
+      "finishedAt": "2026-09-15T18:25:59.107867+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260430000000_repair_vendor_vendor_code",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "147512ed4d8218d05b861375d396ce7f883cb2578c21028b69310af2e3eda048",
+      "finishedAt": "2026-07-03T20:09:01.910247+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260501000000_add_tenant_models",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "4b98f6b37ea4b02ab38638cca78121c06d516702d78052fe369771cc5ba3502d",
+      "finishedAt": "2026-07-03T20:09:05.175972+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260501000001_add_tenant_id_master_tables",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "76fcc07e751fec44d26a54192b6113962254a41e6d8f42ea5c12e8b8f5d8183f",
+      "finishedAt": "2026-07-03T20:09:07.669333+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260501000002_add_tenant_id_transactional_tables",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "456eb19eb40deee52a1695a9ff7e17e246ca695fbe9adf3c1cd8e5cb29e65117",
+      "finishedAt": "2026-07-03T20:09:09.884291+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260517000000_add_moneda_to_servicios",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "78b94f2f258b8358493c4b86004222b1fba1be53e70a35219c2638d6f0e5397b",
+      "finishedAt": "2026-07-03T20:09:12.663961+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260527000000_control_caja_pos",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "3c7322149e9ee6a190db6e6d791e82734b0fc9353cc8c8439d69a0b020ef1d29",
+      "finishedAt": "2026-07-03T20:09:15.162975+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260528000000_add_deleted_at_to_venta",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "8db118135c5b5e7d7ad60b0650dda19dfc25345f8be1e45f6353c6f95724aee7",
+      "finishedAt": "2026-07-03T20:09:31.934152+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260528000001_add_almacen_id_to_merma",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "810820e8a14b11b12f1518c94395467a78eb48d2deff4155931c05eae084318c",
+      "finishedAt": "2026-07-03T20:10:05.403634+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260603000000_add_purchase_allocations",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "049e1821c8ed26c14e1972432aa1d42289af6c43a7ab16bfba800637fdf552e6",
+      "finishedAt": "2026-07-03T20:10:08.924854+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260608000000_harden_categoria_indexes",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "5f8096efa42fd48df4b7e66fce61b36d541e8aca9011093d6e40de7b77daa4fc",
+      "finishedAt": "2026-09-15T18:25:59.119606+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260609000000_add_user_onboarding_fields",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "a30f35f7f202b962ff0359159f1402d7aa5fc5c3e94561a5d5f4f76150d17c64",
+      "finishedAt": "2026-07-03T20:10:14.358631+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260610000000_make_onboarding_status_nullable",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "bc5da268a384d58ceb29cdeb50d8c31bcd268a7b1debc5d4ead7df5867f40ca5",
+      "finishedAt": "2026-07-03T20:10:17.652829+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260621093000_add_notification_link",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "afb9de854a3431b298d47c0d314385dd1b7aaba5895d2acf5041c7bedb363a11",
+      "finishedAt": "2026-07-03T20:10:21.623541+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260622235500_add_cloudinary_asset_metadata",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "5420f760fac8e717561fbeabc04882101bbbb7407f5e988472e071e57246e5e8",
+      "finishedAt": "2026-07-03T20:10:24.473985+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260626000100_add_is_demo_to_tenant_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "3ede4fbfbc2b846f9ff823c7d359d4b8a72f12318a2348a8f7999fd7ee7bb645",
+      "finishedAt": "2026-07-03T20:10:27.27867+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260626000200_add_createdby_to_tenant_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "c677bf27b78c5b6253cf8417adacea9ce46689d0483db8f55396d7ff0b416476",
+      "finishedAt": "2026-07-03T20:10:30.039893+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260629030500_fix_cost_sheet_versioning",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "2e89216b5999967ff4cedaf191b240fcf52636608bdf118d9aa90e6e40a26c19",
+      "finishedAt": "2026-07-03T20:10:33.658626+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260630001000_add_moneda_to_compra_servicio",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "ca893f865c8770ac82dc01bd45ea077e957c6092247d7050dcc9e9e58c52abfd",
+      "finishedAt": "2026-07-03T20:10:36.500877+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260702093000_add_max_clientes_to_tenant_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "152fe9fb915fb6d694d410cc72d5ad27aafddb1dc1d2c8bdc45b6b239d34c5b8",
+      "finishedAt": "2026-09-15T18:25:59.131376+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260702100000_repair_plan_max_clientes",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "886c17a868332e02844d2829793c5ecc23c989a455d2c75c251b1d78ad583c28",
+      "finishedAt": "2026-07-03T20:10:43.159788+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260703113000_add_feature_overrides_to_tenant_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "a6bee730dfdb59cff55f1bd29f7451233f50eb8302f7ad4efd667f8b2b12451f",
+      "finishedAt": "2026-07-03T20:10:54.67752+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260703160000_add_affiliate_program",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "5c8e95b220b244b2a7df83e75a25926c2ce8914374a48672773ce4afcf31c639",
+      "finishedAt": "2026-07-04T10:18:50.084372+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260703210000_add_pending_referral_code_to_user",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "4f1bc636f55641b459a683b0ae0a38f87c9e63a2642506a400976a965adef651",
+      "finishedAt": "2026-08-07T01:55:47.389626+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260707120000_add_is_admin_test_to_tenant_license",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "4f1bc636f55641b459a683b0ae0a38f87c9e63a2642506a400976a965adef651",
+      "finishedAt": "2026-07-18T20:13:25.317461+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260707120000_add_is_admin_test_to_tenant_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "debd1cc11f31e93099338a0c89d4eb35d78129c45c861008015ea55b738b3d44",
+      "finishedAt": "2026-07-18T20:13:39.343835+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260716120000_ficha_costo_enterprise_only",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "21f332e79c68d3738dfce7ede2de70b57cdfe7347f824c39dcab5dc4adc8c308",
+      "finishedAt": "2026-09-15T18:25:59.148142+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260716130000_repair_plan_features",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "0e8e31d5935a4d6e73f697d9ab5bb637644f28bdc47cb5704760f4b7c1bcde32",
+      "finishedAt": "2026-07-22T19:45:52.220477+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260722120000_add_tenant_id_tipo_pago",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "07b3d7eeeed2315a057e4259f6ff329355c8fb01314beee0d2c8363422bb03b3",
+      "finishedAt": "2026-07-22T19:45:52.220477+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260722130000_make_tenant_id_required_tipo_pago",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "d4bd7554333f46a7fc2d048ba65b1ada741dfc9f7bfc7fae2576e5cf241179f6",
+      "finishedAt": "2026-09-15T18:25:59.17594+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260722130000_repair_cuenta_bancaria_tenant",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "d73ab70ffcb1beefa858f88c2f1b4afae58dd9f694df6047bd0559cbd73fc902",
+      "finishedAt": "2026-08-07T02:23:53.996701+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260727123000_add_sales_agent_phase_one",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "afda0c14d2ee9ecc5a74bd7f06333af845d1302e6d2df6b39716239b9a91015c",
+      "finishedAt": "2026-08-07T02:34:57.443276+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260727190000_add_sales_agent_notification_email_outbox",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "273fe3477979c578b0bd3da72fb0b6ef94f0b9193b75e0736d8669505de7a40f",
+      "finishedAt": "2026-08-07T02:34:57.446141+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260727210000_add_sales_agent_delivery_claim",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "b43e2e97d36d6f6979f60de57ae4c01063a3cb560e11f29b7adc80add4df8f1c",
+      "finishedAt": "2026-08-07T02:34:57.447624+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260727223000_enforce_one_sales_agent_payment_per_license_cycle",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "fe74b69b0a1f82ae8fb6775424cbb17cd64a6f6c55c5e665a8a7e7bbf7f1c6e9",
+      "finishedAt": "2026-08-07T02:34:57.447909+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260801090000_add_explicit_cxc_anulada_state",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "5f3623953edd05c7098bc1e9ed9dd7abab40c0f6cf1dfde1f97b90203e2a4e64",
+      "finishedAt": "2026-08-05T20:05:26.943013+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260805160000_add_unique_affiliate_source_license",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "9f9c14f31226b79e32004333e63a8d81ba8ea7598c33300bd439a28807659c27",
+      "finishedAt": "2026-08-07T01:42:41.980444+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260806000000_add_password_reset_fields",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "f63c1015471ff5d923dc475b884754253c1f71d5fa64f42c8da0ae70e93f17ea",
+      "finishedAt": "2026-08-07T02:39:14.334252+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260806190000_add_tenant_scope_gastos_conceptos",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "307f2d4a5a73f00810387aa8cadf8490d9923ad10cb2d3b05ade396911ae274c",
+      "finishedAt": "2026-08-07T02:39:14.353274+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260806210000_remove_legacy_licencia_models",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "31afe37ffa76faa85eee779850e89815dc72957a55e7efeea9806bcb57b756dc",
+      "finishedAt": "2026-08-24T15:12:54.408241+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260822100000_add_fecha_operacion_ajuste_bancario",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "87879e60c43e3d7227309d48398525df4e3710cfdafe2a0eece9f8cbc0acf984",
+      "finishedAt": "2026-09-15T18:25:59.196686+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260822110000_repair_accounting_tenant_fields",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "6a50f209c0de4b305c39cd7eafcd577ec65196f12bf8ea6bbabbff1dd62cada6",
+      "finishedAt": "2026-08-24T15:12:54.437608+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260823120000_add_fx_evidence_reconciliations",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "3a3c902a6277ddf8fdce9de0e7eb36ef6efd3e085082e8a4301a43b37800b3c8",
+      "finishedAt": "2026-08-24T15:12:54.517262+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260824120000_add_accounting_policy_and_auxiliary_checkpoints",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "3f8a34f9a37ea6a14c5bc1c15f2543c4df263e1a69357009c0d567450c3dab39",
+      "finishedAt": "2026-09-15T18:25:59.217163+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260824120500_repair_financial_snapshot_base",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "3c10bd06e0f2cc46c2c4e9573f4378418cd4e7cb4691e27ea9a312770e7a2c90",
+      "finishedAt": "2026-08-24T15:12:54.548168+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260824121000_add_financial_snapshot_v3",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "daaba20899f28deee91dbb77dda017aa66ba2ef028848b5cb4d272af950da369",
+      "finishedAt": "2026-08-26T21:50:18.741432+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260825160000_accounting_policy_provisioning",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "6b9b5086a47b74a05e52b38dd64a87a4f7dbbc14b658d95e5bc020cc04924450",
+      "finishedAt": "2026-08-30T12:33:18.442176+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260830120000_add_immutable_fx_evidence",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "62e14bff39ef9c82e85bfd876a6c4d536d5d9f4abd79db632fbec6f63db85166",
+      "finishedAt": "2026-09-02T15:13:09.639151+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054001_add_accounting_report_read_index_ajuste",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "968971e4863cbf15ff7db84cc24ee47dfba455016b28dae9d975274f55fb4a95",
+      "finishedAt": "2026-09-02T15:13:09.647693+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054002_add_accounting_report_read_index_capital",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "688898929d17d4dc4e9a3853b0c0ea9e94731e1e38cd418a4f933e1a0ff70f48",
+      "finishedAt": "2026-09-02T15:13:09.6618+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054003_add_accounting_report_read_index_debt",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "761bf0f53c64e66c394bc19c73b12f2218ec1d72ac56c19c53c0e9a2603cd89c",
+      "finishedAt": "2026-09-02T15:13:09.670963+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054004_add_accounting_report_read_index_expense_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "8abb452b66957946d664318ef261c5b20dde7066406a96eb7f265a0db32174bb",
+      "finishedAt": "2026-09-02T15:13:09.68265+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054005_add_accounting_report_read_index_expense_account_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "3035b68607cf8a59ed7a4334e9172776e14d144f2062b61cebeaacf34d8b2e97",
+      "finishedAt": "2026-09-02T15:13:09.690283+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054006_add_accounting_report_read_index_service_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "02a56d1064c71e49cfbf36b2adf8a7f6aeae7dbbc2c092fa0a865b231e905284",
+      "finishedAt": "2026-09-02T15:13:09.69846+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054007_add_accounting_report_read_index_service_account_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "34893bd016b92c819d11aab61ce55bcccc1f2dd85b94434bfbc2c8db096b6f03",
+      "finishedAt": "2026-09-02T15:13:09.710205+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054008_add_accounting_report_read_index_sale_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "544f1f1dd1abe7023f1e7f31316219f748215c9ec81db48f7dc1e7ae078da4da",
+      "finishedAt": "2026-09-02T15:13:09.719019+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054009_add_accounting_report_read_index_sale_account_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "eceea7168532fa8dbf4196df49de1745720353fc345fd9d6519554b6e7c8c32f",
+      "finishedAt": "2026-09-02T15:13:09.72802+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054010_add_accounting_report_read_index_transfer_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "ff8d707d68e7e1394cdf144d0d0692e7ca894e3ed5113a8d0a1f3b995d7965ac",
+      "finishedAt": "2026-09-02T15:13:09.749826+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054011_add_accounting_report_read_index_transfer_origin_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "41319b91d0b6c6692c900241fa5ff4618de070f671ce6ec4374488b71e0993a1",
+      "finishedAt": "2026-09-02T15:13:09.759637+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260902054012_add_accounting_report_read_index_transfer_destination_date",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "a67e1284ec157ba245fe43f86d01996c567c7e47273b414805a05e0c7be4a364",
+      "finishedAt": "2026-09-03T18:40:16.092839+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260903120000_venta_servicios_moneda_snapshot",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "075e81e531180bc000e53511fb046d1b4e19b868a76e5b9b1c2e93187bab3c83",
+      "finishedAt": "2026-09-06T14:02:46.984058+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260905130000_add_stock_move_lines",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "77dabede97b6403d6a20f055cb6ad64cf573ce757aac0a1ac5cee19e695d2dc0",
+      "finishedAt": "2026-09-06T14:02:47.003239+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260905130001_inventario_flags_plans",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "d43e678ac2b3c0ec67f62ea95b6fd560d938d6fb2251afcc203b36e52a51bc85",
+      "finishedAt": "2026-09-06T06:34:59.526352+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906000000_restrict_almacen_delete",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "b2a4b2bc0e9fd777acc823a167b240ba062fffad798a295fad79c8e445bc2ec3",
+      "finishedAt": "2026-09-06T06:34:59.542603+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906000001_merma_trazabilidad",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "c42a54b3e2a8ee1c644984ec645896d4320d8909c0bfb9e527ee166fc0f11c76",
+      "finishedAt": "2026-09-06T06:34:59.564992+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906000002_cliente_lista_precio",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "c8ade8722daf7942ff66cc4929c1b27e0e2593c18b7166a8dfa59ae9ada91079",
+      "finishedAt": "2026-09-06T06:34:59.585719+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906000003_ventaservicios_venta_link",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "02d25a90bd1c1a6313d87940ae9f3e34d9b5136d07179c6c29eb909e86071be0",
+      "finishedAt": "2026-09-06T14:02:47.028985+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906031708_tenant_custom_roles",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "e94d8797de4086734397873ab86c674bb245e51a389366d429b15d6c816eea14",
+      "finishedAt": "2026-09-07T18:41:41.98678+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906090000_ajuste_conteo_inventario",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "ab230687633222e9c424ed86d33194a388588ad4f6f3ced7ea09e19bf8cad0f6",
+      "finishedAt": "2026-09-07T18:41:42.030621+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260906120000_ordenes_compra_recepciones_reabastecimiento",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "afc12b46b5b9289cbe8c6e29d08fcb3d77627c39d3abd2842d4cbcdaa928bed2",
+      "finishedAt": "2026-09-07T18:41:42.039327+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260907100000_recepcion_idempotencia",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "c61cffd90285503c1a54c8d32e03ac47c7a6c86b7847488da000a471a1be51cc",
+      "finishedAt": "2026-09-07T18:41:42.056319+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260907110000_fk_compuestas_tenant_fase3",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "4c3d420cd01decdbbb4f3bf399241bd29db39e7bd664a05514811f33d895be38",
+      "finishedAt": "2026-09-08T00:03:27.458269+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260907120000_idempotencia_tenant_y_factura",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "bff2e92786ab6977116c2c5685631fe0296a3ea903acae4b59ed9294de1d80ea",
+      "finishedAt": "2026-09-07T18:41:42.072121+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260908000000_add_tenant_id_transaccion_moneda",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "b3b441ede0a5887a872e9608e00c8feffa10fc30d5fc8a774f79f9570e9a76f4",
+      "finishedAt": "2026-09-08T10:24:16.69866+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260908000001_add_tenant_id_audit_models",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "ca34262e25282403c563ae0a34b8200091c7babecb87a968ad2f8e3d6674c3d2",
+      "finishedAt": "2026-09-08T10:46:52.072895+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260908000002_add_tenant_id_ola3_models",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "54f90ce3ba57c120ccf1244136551858a0ae130ed67ad53dc35ed72d35d39b9d",
+      "finishedAt": "2026-09-13T12:35:57.518727+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000000_pagosalario_horas_extras_unidades",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "a031d5fe3c9c07f5cc5061d8480cdf3d6b2dcd53c0f3467e516e04f286a15550",
+      "finishedAt": "2026-09-13T12:35:57.543317+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000001_vendor_delete_restrict",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "017121e4205c94362aad814bdcff1d670fb5c18e144865132c9ff63a27f4e262",
+      "finishedAt": "2026-09-13T12:35:57.550741+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000002_compradocumento_moneda",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "5a6d8ef2592e40c63138137111c00b52b1908969a517e2292c8f2597057dd080",
+      "finishedAt": null,
+      "rolledBackAt": "2026-09-15T17:45:40.621415+00:00",
+      "migrationName": "20260912000003_transferencia_numero_tenant_parcial",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "978ef84876cbec04c848f3b50f1a644deca99360557009a057796aae44749e03",
+      "finishedAt": "2026-09-15T18:25:59.242136+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000003_transferencia_numero_tenant_parcial",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "7434c372cd1c78e0d8288433b3dc10e77947bdc802c46e50cfde16a18b87531c",
+      "finishedAt": "2026-09-15T18:25:59.262301+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000004_gastosde_proveedor_aprobacion",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "269a18b6c88a2abe62b422b37e7d4793d33d829516993ef115d69b7932cb55a0",
+      "finishedAt": "2026-09-15T18:25:59.282509+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260912000005_cxc_venta_servicio",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "b82f85716c6fae0ec5eb46aaf89004289a20b8a716c1794d66c643017f733660",
+      "finishedAt": "2026-09-15T18:25:59.308962+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260914000000_repair_stock_ubicacion_history",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "8ac4b7fa458c59294e9bb4db7676aed81f8a472247b343753241817d34231c29",
+      "finishedAt": "2026-09-15T18:25:59.328619+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260914230000_add_estado_ciclo_venta",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "592454f2ce56702f0c0c1a241561bd3acc927421cfd34fbf07b5b810288c7db7",
+      "finishedAt": "2026-09-17T10:11:07.69242+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260914240000_add_devoluciones_nota_credito",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "1a7d1909c8d05bb445a5ad4b1c3aadc1f2f7ce025ef710b3caedcd7dea25ebee",
+      "finishedAt": null,
+      "rolledBackAt": "2026-09-15T18:46:24.18243+00:00",
+      "migrationName": "20260915000000_repair_integration_schema_core",
+      "appliedStepsCount": 0
+    },
+    {
+      "checksum": "8105194225957f8748db5b23d0c7504064a5456635e62e0b3d766ce3acde073a",
+      "finishedAt": "2026-09-15T18:50:27.354312+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260915000000_repair_integration_schema_core",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "e3364309b3e3dd0ccaf138f2f82f31acc87a986eebb9e74ea8fcc94fa81fb596",
+      "finishedAt": "2026-09-17T10:11:07.711355+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260916100000_add_vuelto_venta",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "609b9b3d78df47a6d42dc94ea433a2b9db871096519454a53073a79bfaf3d9d4",
+      "finishedAt": "2026-09-17T11:13:34.606262+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260916100001_add_fiscal_documents",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "c72ffd6ea321ed0dcd9700e78ad34362b67b934df86bdadee75053aa2a83f5ab",
+      "finishedAt": "2026-09-17T19:19:02.289496+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260916100002_empleado_comisiones",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "11861d465f53ec07d94dd691a3aa858d3d71341050b54da5f81d6dc2f663a42c",
+      "finishedAt": "2026-09-17T21:59:39.221624+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260916100003_crm_limite_credito",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "d1d58b64c045a41534a5c3491f9a9407dac9aff2a08b9b2b8191a22c287259a3",
+      "finishedAt": "2026-09-18T13:43:29.08204+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260918000000_repair_serie_facturacion_tenant",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "84a344ae79ec680d97c85d19aad0a68d285a37b68021bf162462737f9c7a8e3d",
+      "finishedAt": "2026-09-18T13:43:29.106344+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260918000001_repair_cuenta_por_cobrar_tenant",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "059d416cdea5b07892fc854281e95573a68264d39b06f31628a6b5c61a33f4bd",
+      "finishedAt": "2026-09-26T17:58:35.190532+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20260926000000_hardening_catalog_on_delete",
+      "appliedStepsCount": 1
+    },
+    {
+      "checksum": "3f51178eb88220b499cd994cec0e4380647437c70420394fd9c8567aaebf1918",
+      "finishedAt": "2026-10-11T10:03:33.041349+00:00",
+      "rolledBackAt": null,
+      "migrationName": "20261008130000_capital_idempotency_payload_fingerprint",
+      "appliedStepsCount": 1
+    }
+  ],
+  "constraints": [
+    {
+      "name": "contab_replay_approval_different_actor_check",
+      "ready": false,
+      "relation": "contabilidad_replay_approvals",
+      "definition": null
+    },
+    {
+      "name": "contab_replay_preflight_24h_expiry_check",
+      "ready": false,
+      "relation": "contabilidad_replay_preflights",
+      "definition": null
+    },
+    {
+      "name": "lineas_apertura_periodo_evidencia_sha256_check",
+      "ready": false,
+      "relation": "lineas_apertura_periodo",
+      "definition": null
+    },
+    {
+      "name": "lineas_apertura_periodo_fx_evidence_complete_check",
+      "ready": false,
+      "relation": "lineas_apertura_periodo",
+      "definition": null
+    },
+    {
+      "name": "lineas_apertura_periodo_lado_check",
+      "ready": false,
+      "relation": "lineas_apertura_periodo",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionGasto_accountAmountPair_check",
+      "ready": false,
+      "relation": "ReconciliacionGasto",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionServicio_accountAmountPair_check",
+      "ready": false,
+      "relation": "ReconciliacionServicio",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionServicio_idempotencyPair_check",
+      "ready": false,
+      "relation": "ReconciliacionServicio",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionServicio_sourceAccountAmountPair_check",
+      "ready": false,
+      "relation": "ReconciliacionServicio",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionVenta_accountAmountPair_check",
+      "ready": false,
+      "relation": "ReconciliacionVenta",
+      "definition": null
+    },
+    {
+      "name": "ReconciliacionVenta_sourceAccountAmountPair_check",
+      "ready": false,
+      "relation": "ReconciliacionVenta",
+      "definition": null
+    }
+  ],
+  "guardsReady": false,
+  "migrationHistoryPresent": true
+}

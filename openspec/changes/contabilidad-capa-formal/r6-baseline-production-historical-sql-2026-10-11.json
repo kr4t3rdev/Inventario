@@ -1,0 +1,182 @@
+[
+  {
+    "migration": "20260418000000_add_stock_ubicacion",
+    "recordedChecksum": "e5f7b48c22047c56072bd27b4d14690f35126bc0fc48c4dc0cab76c86083c4c5",
+    "historicalVersionsChecked": 4,
+    "matches": [
+      {
+        "commit": "dc2bf7d86986691edad6dd25ea93f02e38741435",
+        "sha256": "e5f7b48c22047c56072bd27b4d14690f35126bc0fc48c4dc0cab76c86083c4c5",
+        "sql": "-- CreateTable StockUbicacion\nCREATE TABLE \"StockUbicacion\" (\n    \"id\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"tipoUbicacion\" TEXT NOT NULL,\n    \"ubicacionId\" TEXT NOT NULL,\n    \"cantidad\" INTEGER NOT NULL DEFAULT 0,\n    \"cantidadReservada\" INTEGER NOT NULL DEFAULT 0,\n    \"cantidadDisponible\" INTEGER NOT NULL DEFAULT 0,\n    \"ultimaActualizacion\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"StockUbicacion_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"StockUbicacion_productoId_tipoUbicacion_ubicacionId_key\" ON \"StockUbicacion\"(\"productoId\", \"tipoUbicacion\", \"ubicacionId\");\n\n-- CreateIndex\nCREATE INDEX \"StockUbicacion_ubicacionId_tipoUbicacion_idx\" ON \"StockUbicacion\"(\"ubicacionId\", \"tipoUbicacion\");\n\n-- CreateIndex\nCREATE INDEX \"StockUbicacion_productoId_idx\" ON \"StockUbicacion\"(\"productoId\");\n\n-- AddForeignKey\nALTER TABLE \"StockUbicacion\" ADD CONSTRAINT \"StockUbicacion_productoId_fkey\" FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260418142214_remove_ultima_actualizacion_from_stock_ubicacion",
+    "recordedChecksum": "90e8092dbfcb811eaaca00b12e01abdaaceeb81ccc56555bf3c6ea6bd99bd5dc",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "da1bfdbc7139382907839dc477bdefa9d3a03aa1",
+        "sha256": "90e8092dbfcb811eaaca00b12e01abdaaceeb81ccc56555bf3c6ea6bd99bd5dc",
+        "sql": "-- AlterTable: Remove ultimaActualizacion from StockUbicacion\nALTER TABLE \"StockUbicacion\" DROP COLUMN \"ultimaActualizacion\";\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260423000000_add_compra_documento_cabecera_detalle",
+    "recordedChecksum": "4a40f183caffacf148a48e5dc8c816e3f497d978c70dec55470d0c35f5c5dffe",
+    "historicalVersionsChecked": 3,
+    "matches": [
+      {
+        "commit": "62ba3b8e6544740c3ea1b230cca68a884234d25b",
+        "sha256": "4a40f183caffacf148a48e5dc8c816e3f497d978c70dec55470d0c35f5c5dffe",
+        "sql": "-- AlterTable: Add soft delete and audit fields to CompraProducto\nALTER TABLE \"CompraProducto\" ADD COLUMN \"deletedAt\" TIMESTAMP(3);\nALTER TABLE \"CompraProducto\" ADD COLUMN \"updatedById\" TEXT;\nCREATE INDEX \"CompraProducto_deletedAt_idx\" ON \"CompraProducto\"(\"deletedAt\");\n\n-- AlterTable: Add soft delete to GastoCompra\nALTER TABLE \"GastoCompra\" ADD COLUMN \"deletedAt\" TIMESTAMP(3);\n\n-- AlterTable: Add soft delete to CuentaPorPagar\nALTER TABLE \"CuentaPorPagar\" ADD COLUMN \"deletedAt\" TIMESTAMP(3);\nCREATE INDEX \"CuentaPorPagar_deletedAt_idx\" ON \"CuentaPorPagar\"(\"deletedAt\");\n\n-- CreateTable: CompraDocumento (cabecera de compra m\u00faltiple)\nCREATE TABLE \"CompraDocumento\" (\n    \"compraDocumentoId\" TEXT NOT NULL,\n    \"proveedorId\" TEXT NOT NULL,\n    \"numeroFactura\" TEXT NOT NULL DEFAULT '',\n    \"facturaUrl\" TEXT NOT NULL DEFAULT '',\n    \"formaPago\" TEXT NOT NULL,\n    \"estado\" TEXT NOT NULL,\n    \"tipoOperacion\" TEXT NOT NULL DEFAULT 'REGULAR',\n    \"descripcion\" TEXT,\n    \"fechaCompra\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"total\" INTEGER NOT NULL DEFAULT 0,\n    \"gastoCompraId\" TEXT,\n    \"cuentaPorPagarId\" TEXT,\n    \"deletedAt\" TIMESTAMP(3),\n    \"updatedById\" TEXT,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"CompraDocumento_pkey\" PRIMARY KEY (\"compraDocumentoId\")\n);\n\n-- CreateTable: CompraDocumentoItem (l\u00edneas de detalle)\nCREATE TABLE \"CompraDocumentoItem\" (\n    \"compraDocumentoItemId\" TEXT NOT NULL,\n    \"compraDocumentoId\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"cantidad\" INTEGER NOT NULL,\n    \"precioUnitario\" INTEGER NOT NULL,\n    \"totalLinea\" INTEGER NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"CompraDocumentoItem_pkey\" PRIMARY KEY (\"compraDocumentoItemId\")\n);\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"CompraDocumento_gastoCompraId_key\" ON \"CompraDocumento\"(\"gastoCompraId\");\nCREATE UNIQUE INDEX \"CompraDocumento_cuentaPorPagarId_key\" ON \"CompraDocumento\"(\"cuentaPorPagarId\");\nCREATE INDEX \"CompraDocumento_estado_idx\" ON \"CompraDocumento\"(\"estado\");\nCREATE INDEX \"CompraDocumento_proveedorId_idx\" ON \"CompraDocumento\"(\"proveedorId\");\nCREATE INDEX \"CompraDocumento_fechaCompra_idx\" ON \"CompraDocumento\"(\"fechaCompra\");\nCREATE INDEX \"CompraDocumento_deletedAt_idx\" ON \"CompraDocumento\"(\"deletedAt\");\nCREATE INDEX \"CompraDocumentoItem_compraDocumentoId_idx\" ON \"CompraDocumentoItem\"(\"compraDocumentoId\");\nCREATE INDEX \"CompraDocumentoItem_productoId_idx\" ON \"CompraDocumentoItem\"(\"productoId\");\n\n-- AddForeignKey\nALTER TABLE \"CompraDocumento\" ADD CONSTRAINT \"CompraDocumento_proveedorId_fkey\" FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"CompraDocumento\" ADD CONSTRAINT \"CompraDocumento_gastoCompraId_fkey\" FOREIGN KEY (\"gastoCompraId\") REFERENCES \"GastoCompra\"(\"gastoCompraId\") ON DELETE SET NULL ON UPDATE CASCADE;\nALTER TABLE \"CompraDocumento\" ADD CONSTRAINT \"CompraDocumento_cuentaPorPagarId_fkey\" FOREIGN KEY (\"cuentaPorPagarId\") REFERENCES \"CuentaPorPagar\"(\"cuentaPorPagarId\") ON DELETE SET NULL ON UPDATE CASCADE;\nALTER TABLE \"CompraDocumento\" ADD CONSTRAINT \"CompraDocumento_updatedById_fkey\" FOREIGN KEY (\"updatedById\") REFERENCES \"User\"(\"userId\") ON DELETE SET NULL ON UPDATE CASCADE;\nALTER TABLE \"CompraDocumentoItem\" ADD CONSTRAINT \"CompraDocumentoItem_compraDocumentoId_fkey\" FOREIGN KEY (\"compraDocumentoId\") REFERENCES \"CompraDocumento\"(\"compraDocumentoId\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"CompraDocumentoItem\" ADD CONSTRAINT \"CompraDocumentoItem_productoId_fkey\" FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260603000000_add_purchase_allocations",
+    "recordedChecksum": "810820e8a14b11b12f1518c94395467a78eb48d2deff4155931c05eae084318c",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "5f6f3025e3ed3ca14863abfb019ffdfe7afc793b",
+        "sha256": "810820e8a14b11b12f1518c94395467a78eb48d2deff4155931c05eae084318c",
+        "sql": "-- CreateTable: PurchaseAllocation (FIFO tracking)\nCREATE TABLE \"purchase_allocations\" (\n    \"id\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"compraDocumentoItemId\" TEXT NOT NULL,\n    \"ventaItemId\" TEXT NOT NULL,\n    \"cantidad\" INTEGER NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"purchase_allocations_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateIndexes\nCREATE INDEX \"purchase_allocations_compraDocumentoItemId_idx\" ON \"purchase_allocations\"(\"compraDocumentoItemId\");\nCREATE INDEX \"purchase_allocations_ventaItemId_idx\" ON \"purchase_allocations\"(\"ventaItemId\");\nCREATE INDEX \"purchase_allocations_tenantId_idx\" ON \"purchase_allocations\"(\"tenantId\");\n\n-- AddForeignKeys\nALTER TABLE \"purchase_allocations\" ADD CONSTRAINT \"purchase_allocations_compraDocumentoItemId_fkey\" FOREIGN KEY (\"compraDocumentoItemId\") REFERENCES \"CompraDocumentoItem\"(\"compraDocumentoItemId\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"purchase_allocations\" ADD CONSTRAINT \"purchase_allocations_ventaItemId_fkey\" FOREIGN KEY (\"ventaItemId\") REFERENCES \"venta_items\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"purchase_allocations\" ADD CONSTRAINT \"purchase_allocations_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"Tenant\"(\"tenantId\") ON DELETE CASCADE ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260702093000_add_max_clientes_to_tenant_license",
+    "recordedChecksum": "ca893f865c8770ac82dc01bd45ea077e957c6092247d7050dcc9e9e58c52abfd",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "05bf0a1c7b2c1cc013e1494fddccfca1fc25f386",
+        "sha256": "ca893f865c8770ac82dc01bd45ea077e957c6092247d7050dcc9e9e58c52abfd",
+        "sql": "-- Migration: Add maxClientes to TenantLicense\n-- Keeps tenant license client limits aligned with the selected plan.\n\nALTER TABLE \"tenant_licenses\"\n  ADD COLUMN IF NOT EXISTS \"maxClientes\" INTEGER NOT NULL DEFAULT 200;\n\nUPDATE \"tenant_licenses\" AS tl\nSET \"maxClientes\" = p.\"maxClientes\"\nFROM \"Plan\" AS p\nWHERE tl.\"planId\" = p.\"planId\";\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260716120000_ficha_costo_enterprise_only",
+    "recordedChecksum": "debd1cc11f31e93099338a0c89d4eb35d78129c45c861008015ea55b738b3d44",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "683b091f7fafcfdb4c2ab1c908de7b45decd5c44",
+        "sha256": "debd1cc11f31e93099338a0c89d4eb35d78129c45c861008015ea55b738b3d44",
+        "sql": "-- Restrict Ficha de Costo to Empresarial/Enterprise plans and legacy licenses.\nUPDATE \"Plan\"\nSET \"features\" = CASE\n  WHEN lower(\"nombre\") IN ('empresarial', 'enterprise') THEN\n    (CASE WHEN jsonb_typeof(\"features\") = 'object' THEN \"features\" ELSE '{}'::jsonb END)\n      || '{\"ficha-costo\": true, \"ficha-costo-bulk\": true}'::jsonb\n  WHEN lower(\"nombre\") IN ('b\u00e1sico', 'basico', 'profesional') THEN\n    (CASE WHEN jsonb_typeof(\"features\") = 'object' THEN \"features\" ELSE '{}'::jsonb END)\n      || '{\"ficha-costo\": false, \"ficha-costo-bulk\": false}'::jsonb\n  ELSE \"features\"\nEND\nWHERE lower(\"nombre\") IN ('b\u00e1sico', 'basico', 'profesional', 'empresarial', 'enterprise');\n\nWITH license_plans AS (\n  SELECT license.\"tenantLicenseId\", plan.\"nombre\" AS \"planNombre\"\n  FROM \"tenant_licenses\" AS license\n  LEFT JOIN \"Plan\" AS plan ON plan.\"planId\" = license.\"planId\"\n)\nUPDATE \"tenant_licenses\" AS license\nSET\n  \"features\" = CASE\n    WHEN lower(COALESCE(license_plans.\"planNombre\", '')) IN ('empresarial', 'enterprise') THEN\n      (CASE WHEN jsonb_typeof(license.\"features\") = 'object' THEN license.\"features\" ELSE '{}'::jsonb END)\n        || '{\"ficha-costo\": true, \"ficha-costo-bulk\": true}'::jsonb\n    ELSE\n      (CASE WHEN jsonb_typeof(license.\"features\") = 'object' THEN license.\"features\" ELSE '{}'::jsonb END)\n        || '{\"ficha-costo\": false, \"ficha-costo-bulk\": false}'::jsonb\n  END,\n  \"featureOverrides\" =\n    (CASE WHEN jsonb_typeof(license.\"featureOverrides\") = 'object' THEN license.\"featureOverrides\" ELSE '{}'::jsonb END)\n      - 'ficha-costo' - 'ficha-costo-bulk'\nFROM license_plans\nWHERE license.\"tenantLicenseId\" = license_plans.\"tenantLicenseId\";\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260722120000_add_tenant_id_tipo_pago",
+    "recordedChecksum": "0e8e31d5935a4d6e73f697d9ab5bb637644f28bdc47cb5704760f4b7c1bcde32",
+    "historicalVersionsChecked": 3,
+    "matches": [
+      {
+        "commit": "7d5e41c34d631f6f331788c9d19a26454c70328e",
+        "sha256": "0e8e31d5935a4d6e73f697d9ab5bb637644f28bdc47cb5704760f4b7c1bcde32",
+        "sql": "-- Add tenantId to TipoPago (nullable initially for backfill)\nALTER TABLE \"TipoPago\" ADD COLUMN \"tenantId\" TEXT;\n\n-- Add index on tenantId for performance\nCREATE INDEX \"TipoPago_tenantId_idx\" ON \"TipoPago\"(\"tenantId\");\n\n-- Add foreign key constraint\nALTER TABLE \"TipoPago\" ADD CONSTRAINT \"TipoPago_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260806190000_add_tenant_scope_gastos_conceptos",
+    "recordedChecksum": "f63c1015471ff5d923dc475b884754253c1f71d5fa64f42c8da0ae70e93f17ea",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "ff26387a9d2d76f2e2082dd89f6d44b77cf0f344",
+        "sha256": "f63c1015471ff5d923dc475b884754253c1f71d5fa64f42c8da0ae70e93f17ea",
+        "sql": "-- Tenant scoping para GastoConcepto y GastoElemento.\n--\n-- Los conceptos y elementos eran un cat\u00e1logo global compartido por todos los\n-- tenants. Esta migraci\u00f3n:\n--   1. Agrega tenantId (nullable primero, hay datos globales que migrar).\n--   2. Clona el cat\u00e1logo global por cada tenant que tenga GastosDE\n--      referenciando conceptos/elementos (IDs deterministas).\n--   3. Remapea GastosDE.conceptoId/elementoId a las copias del tenant.\n--   4. Elimina los registros globales hu\u00e9rfanos.\n--   5. Aplica NOT NULL, \u00edndices, unicidad por tenant y FKs.\n\n-- El \u00edndice \u00fanico global sobre nombre impide insertar las copias (mismo\n-- nombre) mientras exista; se elimina primero.\nDROP INDEX \"GastoConcepto_nombre_key\";\n\n-- 1) Columnas tenantId nullable\nALTER TABLE \"GastoConcepto\" ADD COLUMN     \"tenantId\" TEXT;\nALTER TABLE \"GastoElemento\" ADD COLUMN     \"tenantId\" TEXT;\n\n-- 2) Clonar el cat\u00e1logo por tenant\nDO $$\nDECLARE\n  t TEXT;\n  c RECORD;\n  e RECORD;\n  new_concepto_id TEXT;\n  new_elemento_id TEXT;\nBEGIN\n  FOR t IN\n    SELECT DISTINCT \"tenantId\" FROM \"GastosDE\"\n    WHERE \"conceptoId\" IS NOT NULL OR \"elementoId\" IS NOT NULL\n  LOOP\n    -- Solo los conceptos globales originales; las copias ya llevan tenantId\n    -- asignado y quedar\u00edan fuera del cursor (misma transacci\u00f3n ve sus cambios).\n    FOR c IN SELECT * FROM \"GastoConcepto\" WHERE \"tenantId\" IS NULL\n    LOOP\n      new_concepto_id := 'gc-clone-' || md5(c.\"conceptoId\" || ':' || t);\n      IF NOT EXISTS (SELECT 1 FROM \"GastoConcepto\" WHERE \"conceptoId\" = new_concepto_id) THEN\n        INSERT INTO \"GastoConcepto\" (\"conceptoId\", \"tenantId\", \"nombre\", \"descripcion\", \"isActive\", \"createdAt\", \"updatedAt\")\n        VALUES (new_concepto_id, t, c.\"nombre\", c.\"descripcion\", c.\"isActive\", c.\"createdAt\", c.\"updatedAt\");\n\n        FOR e IN SELECT * FROM \"GastoElemento\" WHERE \"conceptoId\" = c.\"conceptoId\" AND \"tenantId\" IS NULL\n        LOOP\n          new_elemento_id := 'ge-clone-' || md5(e.\"elementoId\" || ':' || t);\n          INSERT INTO \"GastoElemento\" (\"elementoId\", \"tenantId\", \"conceptoId\", \"nombre\", \"descripcion\", \"isActive\", \"createdAt\", \"updatedAt\")\n          VALUES (new_elemento_id, t, new_concepto_id, e.\"nombre\", e.\"descripcion\", e.\"isActive\", e.\"createdAt\", e.\"updatedAt\");\n        END LOOP;\n      END IF;\n    END LOOP;\n  END LOOP;\nEND $$;\n\n-- 3) Remapear GastosDE a las copias del tenant (misma funci\u00f3n determinista)\nUPDATE \"GastosDE\" g\nSET \"conceptoId\" = 'gc-clone-' || md5(g.\"conceptoId\" || ':' || g.\"tenantId\"),\n    \"elementoId\" = 'ge-clone-' || md5(g.\"elementoId\" || ':' || g.\"tenantId\")\nWHERE g.\"conceptoId\" IS NOT NULL OR g.\"elementoId\" IS NOT NULL;\n\n-- 4) Eliminar cat\u00e1logo global hu\u00e9rfano (elementos antes que conceptos)\nDELETE FROM \"GastoElemento\" WHERE \"tenantId\" IS NULL;\nDELETE FROM \"GastoConcepto\" WHERE \"tenantId\" IS NULL;\n\n-- 5) Constraints, \u00edndices y FKs\nALTER TABLE \"GastoConcepto\" ALTER COLUMN \"tenantId\" SET NOT NULL;\nALTER TABLE \"GastoElemento\" ALTER COLUMN \"tenantId\" SET NOT NULL;\n\nCREATE INDEX \"GastoConcepto_tenantId_idx\" ON \"GastoConcepto\"(\"tenantId\");\nCREATE UNIQUE INDEX \"GastoConcepto_tenantId_nombre_key\" ON \"GastoConcepto\"(\"tenantId\", \"nombre\");\nCREATE INDEX \"GastoElemento_tenantId_idx\" ON \"GastoElemento\"(\"tenantId\");\nCREATE UNIQUE INDEX \"GastoElemento_tenantId_conceptoId_nombre_key\" ON \"GastoElemento\"(\"tenantId\", \"conceptoId\", \"nombre\");\n\nALTER TABLE \"GastoConcepto\" ADD CONSTRAINT \"GastoConcepto_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"GastoElemento\" ADD CONSTRAINT \"GastoElemento_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260822100000_add_fecha_operacion_ajuste_bancario",
+    "recordedChecksum": "31afe37ffa76faa85eee779850e89815dc72957a55e7efeea9806bcb57b756dc",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "2e15d986d44ebd5531dc9bd2ca024d75fe21220b",
+        "sha256": "31afe37ffa76faa85eee779850e89815dc72957a55e7efeea9806bcb57b756dc",
+        "sql": "ALTER TABLE \"AjusteBancario\"\nADD COLUMN \"fechaOperacion\" TIMESTAMP(3);\n\nUPDATE \"AjusteBancario\"\nSET \"fechaOperacion\" = \"createdAt\"\nWHERE \"fechaOperacion\" IS NULL;\n\nALTER TABLE \"AjusteBancario\"\nALTER COLUMN \"fechaOperacion\" SET NOT NULL,\nALTER COLUMN \"fechaOperacion\" SET DEFAULT CURRENT_TIMESTAMP;\n\nCREATE INDEX \"AjusteBancario_tenantId_fechaOperacion_idx\"\nON \"AjusteBancario\"(\"tenantId\", \"fechaOperacion\");\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260906000001_merma_trazabilidad",
+    "recordedChecksum": "b2a4b2bc0e9fd777acc823a167b240ba062fffad798a295fad79c8e445bc2ec3",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "985e23cacbe428270b52b3eb7f8e6d0e30207a99",
+        "sha256": "b2a4b2bc0e9fd777acc823a167b240ba062fffad798a295fad79c8e445bc2ec3",
+        "sql": "-- Trazabilidad de mermas (CU-07): autor opcional y consulta por tenant y fecha.\n\nALTER TABLE \"Merma\" ADD COLUMN \"creadoPorId\" TEXT;\n\nALTER TABLE \"Merma\" ADD CONSTRAINT \"Merma_creadoPorId_fkey\" FOREIGN KEY (\"creadoPorId\") REFERENCES \"User\"(\"userId\") ON DELETE SET NULL ON UPDATE CASCADE;\n\nCREATE INDEX \"Merma_tenantId_createdAt_idx\" ON \"Merma\"(\"tenantId\", \"createdAt\");\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260906000002_cliente_lista_precio",
+    "recordedChecksum": "c42a54b3e2a8ee1c644984ec645896d4320d8909c0bfb9e527ee166fc0f11c76",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "6dd6552f6c28d0e5107771dc7e8ac5adad3f019c",
+        "sha256": "c42a54b3e2a8ee1c644984ec645896d4320d8909c0bfb9e527ee166fc0f11c76",
+        "sql": "-- Lista de precios preferencial por cliente (CU-08).\n\nALTER TABLE \"Cliente\" ADD COLUMN \"listaPrecioId\" TEXT;\n\nALTER TABLE \"Cliente\" ADD CONSTRAINT \"Cliente_listaPrecioId_fkey\" FOREIGN KEY (\"listaPrecioId\") REFERENCES \"ListaPrecio\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\n\nCREATE INDEX \"Cliente_listaPrecioId_idx\" ON \"Cliente\"(\"listaPrecioId\");\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260906120000_ordenes_compra_recepciones_reabastecimiento",
+    "recordedChecksum": "ab230687633222e9c424ed86d33194a388588ad4f6f3ced7ea09e19bf8cad0f6",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "26dc8977bef64c4fe05b5c1c6e70498b857271c6",
+        "sha256": "ab230687633222e9c424ed86d33194a388588ad4f6f3ced7ea09e19bf8cad0f6",
+        "sql": "-- \u00d3rdenes de compra, recepciones parciales y reglas min/max.\nALTER TABLE \"CompraDocumento\" ADD COLUMN \"ordenCompraId\" TEXT;\nCREATE INDEX \"CompraDocumento_tenantId_ordenCompraId_idx\"\n  ON \"CompraDocumento\"(\"tenantId\", \"ordenCompraId\");\n\nCREATE TABLE \"OrdenCompra\" (\n    \"id\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"proveedorId\" TEXT NOT NULL,\n    \"estado\" TEXT NOT NULL DEFAULT 'BORRADOR',\n    \"total\" INTEGER NOT NULL DEFAULT 0,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n    CONSTRAINT \"OrdenCompra_pkey\" PRIMARY KEY (\"id\")\n);\n\nCREATE TABLE \"OrdenCompraItem\" (\n    \"id\" TEXT NOT NULL,\n    \"ordenId\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"cantidadPedida\" INTEGER NOT NULL,\n    \"cantidadRecibida\" INTEGER NOT NULL DEFAULT 0,\n    \"precioUnitario\" INTEGER NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n    CONSTRAINT \"OrdenCompraItem_pkey\" PRIMARY KEY (\"id\")\n);\n\nCREATE TABLE \"Recepcion\" (\n    \"id\" TEXT NOT NULL,\n    \"ordenId\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"fecha\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"creadoPorId\" TEXT,\n    CONSTRAINT \"Recepcion_pkey\" PRIMARY KEY (\"id\")\n);\n\nCREATE TABLE \"RecepcionItem\" (\n    \"id\" TEXT NOT NULL,\n    \"recepcionId\" TEXT NOT NULL,\n    \"ordenItemId\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"cantidad\" INTEGER NOT NULL,\n    CONSTRAINT \"RecepcionItem_pkey\" PRIMARY KEY (\"id\")\n);\n\nCREATE TABLE \"ReglaReabastecimiento\" (\n    \"id\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"tipoUbicacion\" TEXT NOT NULL DEFAULT 'almacen',\n    \"ubicacionId\" TEXT NOT NULL,\n    \"min\" INTEGER NOT NULL,\n    \"max\" INTEGER NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n    CONSTRAINT \"ReglaReabastecimiento_pkey\" PRIMARY KEY (\"id\")\n);\n\nCREATE UNIQUE INDEX \"ReglaReabastecimiento_tenantId_productoId_tipoUbicacion_ubicacionId_key\"\n  ON \"ReglaReabastecimiento\"(\"tenantId\", \"productoId\", \"tipoUbicacion\", \"ubicacionId\");\nCREATE INDEX \"OrdenCompra_tenantId_estado_idx\" ON \"OrdenCompra\"(\"tenantId\", \"estado\");\nCREATE INDEX \"OrdenCompra_tenantId_proveedorId_idx\" ON \"OrdenCompra\"(\"tenantId\", \"proveedorId\");\nCREATE INDEX \"OrdenCompraItem_tenantId_ordenId_idx\" ON \"OrdenCompraItem\"(\"tenantId\", \"ordenId\");\nCREATE INDEX \"OrdenCompraItem_tenantId_productoId_idx\" ON \"OrdenCompraItem\"(\"tenantId\", \"productoId\");\nCREATE INDEX \"Recepcion_tenantId_ordenId_idx\" ON \"Recepcion\"(\"tenantId\", \"ordenId\");\nCREATE INDEX \"RecepcionItem_tenantId_recepcionId_idx\" ON \"RecepcionItem\"(\"tenantId\", \"recepcionId\");\nCREATE INDEX \"RecepcionItem_tenantId_ordenItemId_idx\" ON \"RecepcionItem\"(\"tenantId\", \"ordenItemId\");\nCREATE INDEX \"ReglaReabastecimiento_tenantId_ubicacionId_idx\"\n  ON \"ReglaReabastecimiento\"(\"tenantId\", \"ubicacionId\");\n\nALTER TABLE \"CompraDocumento\"\n  ADD CONSTRAINT \"CompraDocumento_ordenCompraId_fkey\"\n  FOREIGN KEY (\"ordenCompraId\") REFERENCES \"OrdenCompra\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nALTER TABLE \"OrdenCompra\"\n  ADD CONSTRAINT \"OrdenCompra_tenantId_fkey\"\n  FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"OrdenCompra\"\n  ADD CONSTRAINT \"OrdenCompra_proveedorId_fkey\"\n  FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"OrdenCompraItem\"\n  ADD CONSTRAINT \"OrdenCompraItem_ordenId_fkey\"\n  FOREIGN KEY (\"ordenId\") REFERENCES \"OrdenCompra\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"OrdenCompraItem\"\n  ADD CONSTRAINT \"OrdenCompraItem_tenantId_fkey\"\n  FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"OrdenCompraItem\"\n  ADD CONSTRAINT \"OrdenCompraItem_productoId_fkey\"\n  FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"Recepcion\"\n  ADD CONSTRAINT \"Recepcion_ordenId_fkey\"\n  FOREIGN KEY (\"ordenId\") REFERENCES \"OrdenCompra\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"Recepcion\"\n  ADD CONSTRAINT \"Recepcion_tenantId_fkey\"\n  FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"RecepcionItem\"\n  ADD CONSTRAINT \"RecepcionItem_recepcionId_fkey\"\n  FOREIGN KEY (\"recepcionId\") REFERENCES \"Recepcion\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\nALTER TABLE \"RecepcionItem\"\n  ADD CONSTRAINT \"RecepcionItem_ordenItemId_fkey\"\n  FOREIGN KEY (\"ordenItemId\") REFERENCES \"OrdenCompraItem\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"RecepcionItem\"\n  ADD CONSTRAINT \"RecepcionItem_productoId_fkey\"\n  FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"RecepcionItem\"\n  ADD CONSTRAINT \"RecepcionItem_tenantId_fkey\"\n  FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"ReglaReabastecimiento\"\n  ADD CONSTRAINT \"ReglaReabastecimiento_tenantId_fkey\"\n  FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\nALTER TABLE \"ReglaReabastecimiento\"\n  ADD CONSTRAINT \"ReglaReabastecimiento_productoId_fkey\"\n  FOREIGN KEY (\"productoId\") REFERENCES \"Producto\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260914240000_add_devoluciones_nota_credito",
+    "recordedChecksum": "592454f2ce56702f0c0c1a241561bd3acc927421cfd34fbf07b5b810288c7db7",
+    "historicalVersionsChecked": 2,
+    "matches": [
+      {
+        "commit": "52bb30ce74250454f3feb8c2b9aba93e72d40bd5",
+        "sha256": "592454f2ce56702f0c0c1a241561bd3acc927421cfd34fbf07b5b810288c7db7",
+        "sql": "-- DNC-T1: devoluciones parciales de ventas + nota de cr\u00e9dito.\n-- Incluye: Anticipo.contratoId pasa a opcional (saldos a favor sin contrato),\n-- ContextoAnticipo.NOTA_CREDITO y las tablas devoluciones_venta(+_items).\n\n-- CreateEnum\nCREATE TYPE \"EstadoDevolucion\" AS ENUM ('REGISTRADA', 'ANULADA');\n\n-- AlterEnum\nALTER TYPE \"ContextoAnticipo\" ADD VALUE 'NOTA_CREDITO';\n\n-- DropForeignKey\nALTER TABLE \"Anticipo\" DROP CONSTRAINT \"Anticipo_contratoId_fkey\";\n\n-- AlterTable\nALTER TABLE \"Anticipo\" ALTER COLUMN \"contratoId\" DROP NOT NULL;\n\n-- CreateTable\nCREATE TABLE \"devoluciones_venta\" (\n    \"devolucionId\" TEXT NOT NULL,\n    \"tenantId\" TEXT NOT NULL,\n    \"ventaId\" TEXT NOT NULL,\n    \"estado\" \"EstadoDevolucion\" NOT NULL DEFAULT 'REGISTRADA',\n    \"motivo\" TEXT,\n    \"subtotal\" INTEGER NOT NULL,\n    \"descuento\" INTEGER NOT NULL,\n    \"total\" INTEGER NOT NULL,\n    \"moneda\" TEXT NOT NULL DEFAULT 'CUP',\n    \"tasaCambio\" DECIMAL(65,30),\n    \"facturaNotaCreditoId\" TEXT,\n    \"anticipoId\" TEXT,\n    \"turnoReembolsoId\" TEXT,\n    \"montoAplicadoCxc\" INTEGER NOT NULL DEFAULT 0,\n    \"montoSaldoFavor\" INTEGER NOT NULL DEFAULT 0,\n    \"montoReembolsado\" INTEGER NOT NULL DEFAULT 0,\n    \"idempotencyKey\" TEXT,\n    \"createdById\" TEXT NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"devoluciones_venta_pkey\" PRIMARY KEY (\"devolucionId\")\n);\n\n-- CreateTable\nCREATE TABLE \"devoluciones_venta_items\" (\n    \"id\" TEXT NOT NULL,\n    \"devolucionId\" TEXT NOT NULL,\n    \"ventaItemId\" TEXT NOT NULL,\n    \"productoId\" TEXT NOT NULL,\n    \"cantidad\" INTEGER NOT NULL,\n    \"precioUnitario\" INTEGER NOT NULL,\n    \"total\" INTEGER NOT NULL,\n    \"costoUnitarioDevolucion\" INTEGER NOT NULL,\n    \"tipoUbicacion\" TEXT NOT NULL,\n    \"ubicacionId\" TEXT NOT NULL,\n\n    CONSTRAINT \"devoluciones_venta_items_pkey\" PRIMARY KEY (\"id\")\n);\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"devoluciones_venta_facturaNotaCreditoId_key\" ON \"devoluciones_venta\"(\"facturaNotaCreditoId\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"devoluciones_venta_anticipoId_key\" ON \"devoluciones_venta\"(\"anticipoId\");\n\n-- CreateIndex\nCREATE INDEX \"devoluciones_venta_tenantId_ventaId_idx\" ON \"devoluciones_venta\"(\"tenantId\", \"ventaId\");\n\n-- CreateIndex\nCREATE INDEX \"devoluciones_venta_tenantId_turnoReembolsoId_idx\" ON \"devoluciones_venta\"(\"tenantId\", \"turnoReembolsoId\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"devoluciones_venta_tenantId_idempotencyKey_key\" ON \"devoluciones_venta\"(\"tenantId\", \"idempotencyKey\");\n\n-- CreateIndex\nCREATE INDEX \"devoluciones_venta_items_ventaItemId_idx\" ON \"devoluciones_venta_items\"(\"ventaItemId\");\n\n-- CreateIndex\nCREATE UNIQUE INDEX \"devoluciones_venta_items_devolucionId_ventaItemId_key\" ON \"devoluciones_venta_items\"(\"devolucionId\", \"ventaItemId\");\n\n-- AddForeignKey\nALTER TABLE \"Anticipo\" ADD CONSTRAINT \"Anticipo_contratoId_fkey\" FOREIGN KEY (\"contratoId\") REFERENCES \"Contrato\"(\"contratoId\") ON DELETE SET NULL ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta\" ADD CONSTRAINT \"devoluciones_venta_ventaId_fkey\" FOREIGN KEY (\"ventaId\") REFERENCES \"Venta\"(\"ventaId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta\" ADD CONSTRAINT \"devoluciones_venta_facturaNotaCreditoId_fkey\" FOREIGN KEY (\"facturaNotaCreditoId\") REFERENCES \"facturas\"(\"idFactura\") ON DELETE SET NULL ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta\" ADD CONSTRAINT \"devoluciones_venta_anticipoId_fkey\" FOREIGN KEY (\"anticipoId\") REFERENCES \"Anticipo\"(\"anticipoId\") ON DELETE SET NULL ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta\" ADD CONSTRAINT \"devoluciones_venta_turnoReembolsoId_fkey\" FOREIGN KEY (\"turnoReembolsoId\") REFERENCES \"turnos_punto_venta\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta\" ADD CONSTRAINT \"devoluciones_venta_tenantId_fkey\" FOREIGN KEY (\"tenantId\") REFERENCES \"tenants\"(\"tenantId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta_items\" ADD CONSTRAINT \"devoluciones_venta_items_devolucionId_fkey\" FOREIGN KEY (\"devolucionId\") REFERENCES \"devoluciones_venta\"(\"devolucionId\") ON DELETE CASCADE ON UPDATE CASCADE;\n\n-- AddForeignKey\nALTER TABLE \"devoluciones_venta_items\" ADD CONSTRAINT \"devoluciones_venta_items_ventaItemId_fkey\" FOREIGN KEY (\"ventaItemId\") REFERENCES \"venta_items\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260722130000_make_tenant_id_required_tipo_pago",
+    "recordedChecksum": "07b3d7eeeed2315a057e4259f6ff329355c8fb01314beee0d2c8363422bb03b3",
+    "historicalVersionsChecked": 1,
+    "matches": [
+      {
+        "commit": "7d5e41c34d631f6f331788c9d19a26454c70328e",
+        "sha256": "07b3d7eeeed2315a057e4259f6ff329355c8fb01314beee0d2c8363422bb03b3",
+        "sql": "-- Make tenantId NOT NULL after backfill\n-- IMPORTANTE: Ejecutar prisma/seed/backfill-tipos-pago-tenant.ts ANTES de esta migraci\u00f3n\nALTER TABLE \"TipoPago\" ALTER COLUMN \"tenantId\" SET NOT NULL;\n"
+      }
+    ]
+  },
+  {
+    "migration": "20260926000000_hardening_catalog_on_delete",
+    "recordedChecksum": "059d416cdea5b07892fc854281e95573a68264d39b06f31628a6b5c61a33f4bd",
+    "historicalVersionsChecked": 1,
+    "matches": [
+      {
+        "commit": "868b48db07ff0ac47c408241a56779ddcf471012",
+        "sha256": "059d416cdea5b07892fc854281e95573a68264d39b06f31628a6b5c61a33f4bd",
+        "sql": "-- A-1 (correcciones-urgentes-2-datos): cascadas destructivas del cat\u00e1logo \u2192 no destructivas.\n-- Endurece las FK que permit\u00edan destruir el cat\u00e1logo al borrar un punto de\n-- venta o una categor\u00eda (hallazgo \"cascade gemelo\" de la re-auditor\u00eda).\n\n-- Producto.puntoDeVenta: Cascade \u2192 SetNull (FK nullable: desvincula, no destruye).\nALTER TABLE \"Producto\" DROP CONSTRAINT \"Producto_puntoDeVentaId_fkey\";\nALTER TABLE \"Producto\" ADD CONSTRAINT \"Producto_puntoDeVentaId_fkey\" FOREIGN KEY (\"puntoDeVentaId\") REFERENCES \"PuntoDeVenta\"(\"pvId\") ON DELETE SET NULL ON UPDATE CASCADE;\n\n-- Producto.categoria: Cascade \u2192 Restrict (FK requerido; deleteCategoriaAction bloquea con productos).\nALTER TABLE \"Producto\" DROP CONSTRAINT \"Producto_categoriaId_fkey\";\nALTER TABLE \"Producto\" ADD CONSTRAINT \"Producto_categoriaId_fkey\" FOREIGN KEY (\"categoriaId\") REFERENCES \"Categoria\"(\"catId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n\n-- Categoria.parent: Cascade \u2192 Restrict (el guard impide borrar con subcategor\u00edas).\nALTER TABLE \"Categoria\" DROP CONSTRAINT \"Categoria_parentId_fkey\";\nALTER TABLE \"Categoria\" ADD CONSTRAINT \"Categoria_parentId_fkey\" FOREIGN KEY (\"parentId\") REFERENCES \"Categoria\"(\"catId\") ON DELETE RESTRICT ON UPDATE CASCADE;\n"
+      }
+    ]
+  }
+]

@@ -3,7 +3,7 @@
 ## Dictamen vigente
 
 **Local: catálogos de guards verificados; historial Prisma no acreditado.**
-**Producción: seleccionado por el responsable, pendiente de acceso y ejecución.**
+**Producción: diagnóstico Railway ejecutado; guards formales incompletos y drift de checksums.**
 R6-BASELINE global sigue abierto; ninguna evidencia local se atribuye a producción.
 
 Checkout de la revisión: `feat/contabilidad-capa-formal`, `8d6167fa`, con cambios
@@ -56,11 +56,15 @@ pueden existir objetos creados por otra vía. Tampoco permite afirmar que sus ch
 coincidan con el repositorio. No se creó historial ni se ejecutó `migrate resolve`,
 `deploy`, `db push`, reset, seed o cambio de modo operativo.
 
-## Producción: preparación y bloqueo
+## Producción: acceso Railway y resultado
 
-El responsable eligió **Producción** y **Configurar conexión**. Esta sesión no tiene
-`PRODUCTION_DATABASE_URL`, `DATABASE_URL_PRODUCTION`, `DATABASE_URL` ni `DIRECT_URL`
-exportadas; tampoco un acceso cloud disponible por token. No se leyeron archivos `.env`.
+El responsable confirmó acceso a Railway. La CLI autenticada permitió obtener las
+variables de `FinanceMDM` y `Postgres`, en el proyecto FinanceMDM
+`0dbb20f0-2d06-4de0-ad0b-509121846ccd`, entorno `production`
+`415edf54-171b-4777-b58e-8b65ae1e4ed2`. Se comprobó igualdad exacta entre las URLs
+internas de aplicación y base antes de usar la URL pública de Postgres. Credenciales
+capturadas en memoria y transmitidas a psql por entorno, sin imprimirlas ni persistirlas.
+No se leyeron archivos `.env` ni se cambiaron variables Railway.
 
 Preparar por un canal seguro, accesible al proceso que ejecutará herramientas:
 - `PRODUCTION_DATABASE_URL`: conexión directa autorizada para diagnóstico.
@@ -76,12 +80,54 @@ psql -X -w -qAt "$PRODUCTION_DATABASE_URL" \
   > openspec/changes/contabilidad-capa-formal/r6-baseline-production-2026-10-11.json
 ```
 
-Aún no existe resultado de esa corrida. El próximo dictamen debe contrastar los
-objetos/definiciones e historial con la versión efectivamente desplegada en producción,
-no asumir que el checkout local es esa versión. Si el historial existe, comparar los
-checksums SHA-256 de `migration.sql` y distinguir aplicadas, revertidas e incompletas.
-Si no existe o hay drift, documentar el baseline heredado y su plan específico;
-este diagnóstico no ejecuta el plan ni marca migraciones como aplicadas.
+La ejecución efectiva usó `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
+en el entorno del proceso y además `default_transaction_read_only=on`.
+Base esperada: `railway`, obtenida de `PGDATABASE` del servicio Postgres y contrastada
+con la URL pública. Transacción verificada: read-only `on`, repeatable read.
+
+Artefactos:
+- `r6-baseline-production-2026-10-11.json`: catálogo e historial (123 filas).
+- `r6-baseline-production-history-2026-10-11.json`: comparación SHA-256 contra el
+  árbol Git del commit desplegado, sin usar el contenido modificado del checkout.
+
+Railway reporta despliegue `46cd7a49-4711-4507-9d7c-13eb3e246c38`, `SUCCESS`, creado
+`2026-10-11T09:58:49.470Z`, rama `main`, commit
+`e6c20706e8658766187fb648fe6950c2f25dd249`. Esto acredita metadata del despliegue,
+no constituye una prueba funcional o aceptación contable del release.
+
+| Check de producción | Resultado |
+|---|---|
+| PostgreSQL / base | 17.11 / `railway` |
+| Guards del alcance formal | 9/11 triggers, 0/11 CHECKs, 0/1 índice ready |
+| Historial aplicado distinto | 119 migraciones; 0 incompletas sin revertir |
+| Migraciones del commit desplegado | 117; todas registradas como aplicadas |
+| Checksums diferentes del commit desplegado | 13 |
+| Migraciones solo en historial | 2 |
+
+Faltan los triggers nominados de `apertura_revisiones` y `lineas_apertura_periodo`,
+los 11 CHECKs y el índice idempotente de servicios enumerados en el JSON. La ausencia
+corresponde a los nombres/tablas del alcance; no certifica ausencia de toda protección
+equivalente. No se valida la semántica de los nueve triggers presentes.
+
+Las dos migraciones solo en historial son
+`20260722130000_make_tenant_id_required_tipo_pago` y
+`20260926000000_hardening_catalog_on_delete`. Los 13 checksums discrepantes se listan
+en el artefacto de historial; requieren reconstruir el SQL realmente aplicado y
+comparar objetos para determinar su causa, sin sobrescribir el historial.
+
+Contra el checkout contable hay 146 migraciones, 29 sin registro aplicado. Esas 29
+no pertenecen al árbol de 117 migraciones del release desplegado: no se clasifican
+como fallo de ejecución de ese release ni se aplica el checkout a producción.
+
+**Dictamen:** el acceso deja de ser bloqueo. R6-BASELINE permanece abierto por drift
+del historial y preparación/despliegue pendiente del alcance formal. Siguiente paso:
+reconciliar las 13 discrepancias y dos entradas adicionales con sus objetos SQL,
+y preparar un plan de actualización contable basado en el estado real heredado.
+Esta corrida no ejecuta migraciones, resolve, reset ni cambios de negocio.
+La continuación `r6-baseline-production-reconciliacion-2026-10-11.md` recupera SQL
+histórico exacto para 15/15 entradas, contrasta catálogos de 27 tablas y confirma los
+efectos focales de las dos migraciones adicionales. No cierra equivalencia global:
+documenta diferencias de FK, límites de datos y plan de actualización heredado.
 
 R6-ROLLBACK y R0.5 global mantienen sus límites de cobertura; A9/R7 requieren proceso
 y sesión operativos verificados y una ventana real de siete días. Este reporte no

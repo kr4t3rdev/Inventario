@@ -1,0 +1,13 @@
+{
+  "trialDatabase": "tcp_r6_prod_clone_4ae12d4e4c1f_trial5",
+  "replay": {
+    "exit": 0,
+    "stdout": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"tcp_r6_prod_clone_4ae12d4e4c1f_trial5\", schema \"public\" at \"127.0.0.1:5433\"\n\n148 migrations found in prisma/migrations\n\n\nNo pending migrations to apply.\n",
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502  Update available 6.19.1 -> 8.0.0-rc.22                 \u2502\n\u2502                                                         \u2502\n\u2502  This is a major update - please follow the guide at    \u2502\n\u2502  https://pris.ly/d/major-version-upgrade                \u2502\n\u2502                                                         \u2502\n\u2502  Run the following to update                            \u2502\n\u2502    npm i --save-dev prisma@latest                       \u2502\n\u2502    npm i @prisma/client@latest                          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
+  },
+  "status": {
+    "exit": 0,
+    "stdout": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"tcp_r6_prod_clone_4ae12d4e4c1f_trial5\", schema \"public\" at \"127.0.0.1:5433\"\n\n148 migrations found in prisma/migrations\n\nDatabase schema is up to date!\n",
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+  }
+}

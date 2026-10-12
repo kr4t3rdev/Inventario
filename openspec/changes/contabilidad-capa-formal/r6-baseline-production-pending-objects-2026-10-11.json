@@ -1,0 +1,4303 @@
+{
+  "scope": "quoted CREATE TABLE/INDEX/TRIGGER and ALTER TABLE ADD declarations",
+  "limits": "No comparison of SQL semantics, types, defaults, functions, enum changes, ALTER COLUMN, DML or unquoted declarations; not migration acceptance.",
+  "catalogCapturedAt": "2026-10-11T22:32:25.446008+00:00",
+  "migrations": [
+    {
+      "migration": "20260924000000_contabilidad_shadow_outbox",
+      "sqlSha256": "85071b2df4c866bfd6384361978f4c3c1fabd2024e0b2544d9ea8a50ab7db42a",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 15,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "causa",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "duracionMs",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "entregadoAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "estado",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "id",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "origenId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "origenTipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "shadow_posteo_outbox",
+          "name": "tipoEvento",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "shadow_posteo_outbox",
+          "name": "shadow_posteo_outbox_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "shadow_posteo_outbox",
+          "name": "shadow_posteo_outbox_entregadoAt_createdAt_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "shadow_posteo_outbox",
+          "name": "shadow_posteo_outbox_tenantId_tipoEvento_estado_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "shadow_posteo_outbox",
+          "name": "shadow_posteo_outbox_tenantId_tipoEvento_origenTipo_origenI_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "shadow_posteo_outbox",
+          "name": "shadow_posteo_outbox",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260926000000_ajuste_bancario_fx_evidence",
+      "sqlSha256": "7c504493b016821f285e882daa362ded1489e14b9b13dfe3abf95b16a67efb3f",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 9,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "functionalCurrency",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "AjusteBancario",
+          "name": "AjusteBancario_tenantId_fxProvenanceKind_idx",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260926000001_transferencia_bancaria_fx_evidence",
+      "sqlSha256": "5c7696dded0168a5cbbc7c9f3f9238d14d9d75922bf3b199d481304eca2d01cd",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 10,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "functionalCurrency",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "montoConvertido",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "TransferenciaBancaria",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "TransferenciaBancaria",
+          "name": "TransferenciaBancaria_tenantId_fxProvenanceKind_idx",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260926000002_capital_cash_fx_evidence",
+      "sqlSha256": "d75c82781f2ff4c12c594d06ffd43f15b629eb0336ee18d5830c1e23160c8c1e",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 23,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "functionalCurrency",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "montoConvertido",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "functionalCurrency",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "moneda",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "montoConvertido",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "PagoDeuda",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "InyeccionCapital",
+          "name": "InyeccionCapital_tenantId_fxProvenanceKind_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "PagoDeuda",
+          "name": "PagoDeuda_tenantId_fxProvenanceKind_idx",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260926000003_compra_documento_fx_evidence",
+      "sqlSha256": "b4eb01e6005670ac3e9d91b7e09a48b22c9af56d8f6354ae5d07e3b64a19f606",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 11,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "functionalCurrency",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "montoConvertido",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CompraDocumento",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "CompraDocumento",
+          "name": "CompraDocumento_tenantId_fxProvenanceKind_idx",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260927000000_cxc_fx_valuation",
+      "sqlSha256": "0979534cb0289a6394e1f15ceadcba65378ed2dc20dcc56fbdb025b69a15be59",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 13,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "monedaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "monedaOriginal",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "montoDeudaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "montoOriginal",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "montoPagadoFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorCobrar",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260927120000_contabilidad_formal_core",
+      "sqlSha256": "49ba2812233a5f2b97fc3d41f5ee98ccd896a5b87608190cd9b370f48c2b0c78",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 99,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "asientoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "cuentaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "debe",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "haber",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "lineaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "monedaOriginal",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "montoOriginal",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "orden",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "referencia",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asiento_lineas",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "asientoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "createdBy",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "descripcion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "diarioId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "estado",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "fecha",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "hash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "hashAnterior",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "numero",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "observaciones",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "origenId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "origenTipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "periodoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "revertidoPorId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "updatedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "aceptaMovimiento",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "activa",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "codigo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "cuentaContableId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "esDeSistema",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "naturaleza",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "nivel",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "nombre",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "padreId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "tipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_contables",
+          "name": "updatedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentaRolId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "rol",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cuentas_roles_tenant",
+          "name": "updatedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "activo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "codigo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "diarioId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "nombre",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "diarios_contables",
+          "name": "tipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "activa",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "condicion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "evento",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "lado",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "montoRegla",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "orden",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "plantillaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "rolCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "plantillas_asiento",
+          "name": "version",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas_asientoId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas_cuentaId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asientos",
+          "name": "asientos_diarioId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asientos",
+          "name": "asientos_periodoId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asientos",
+          "name": "asientos_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asientos",
+          "name": "asientos_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_padreId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentas_roles_tenant_cuentaId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentas_roles_tenant_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentas_roles_tenant_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "diarios_contables",
+          "name": "diarios_contables_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "diarios_contables",
+          "name": "diarios_contables_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "plantillas_asiento",
+          "name": "plantillas_asiento_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas_asientoId_orden_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas_cuentaId_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_diarioId_periodoId_numero_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_fecha_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_hash_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_origenTipo_origenId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_periodoId_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_tenantId_codigo_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_tenantId_padreId_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables_tenantId_tipo_activa_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentas_roles_tenant_tenantId_rol_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "diarios_contables",
+          "name": "diarios_contables_tenantId_codigo_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "diarios_contables",
+          "name": "diarios_contables_tenantId_tipo_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "plantillas_asiento",
+          "name": "plantillas_asiento_evento_orden_version_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "asiento_lineas",
+          "name": "asiento_lineas",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "asientos",
+          "name": "asientos",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "cuentas_contables",
+          "name": "cuentas_contables",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "cuentas_roles_tenant",
+          "name": "cuentas_roles_tenant",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "diarios_contables",
+          "name": "diarios_contables",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "plantillas_asiento",
+          "name": "plantillas_asiento",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260928000000_contabilidad_formal_remediacion",
+      "sqlSha256": "5d2739a020e95577536966c455edbe60c1eee58033ca47d0e0a04856f21f6d19",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 78,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "replayRunId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "approvedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "approvedByUserId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "digest",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "digestVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "replayApprovalId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "replayPreflightId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "requestedByUserId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "status",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_approvals",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "digest",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "digestVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "expiresAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "generatedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "periodoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "replayPreflightId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "requestedByUserId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "snapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "status",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_preflights",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "ambiguousCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "completedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "diagnostic",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "digest",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "digestVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "noCostCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "noFxCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "omittedCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "outOfPeriodCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "postedCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "replayApprovalId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "replayPreflightId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "replayRunId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "sourceCount",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "startedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "startedByUserId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "status",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "contabilidad_replay_runs",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "asientos",
+          "name": "asientos_tenantId_replayRunId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_different_actor_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_approvedByUserId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_replayPreflightId_r_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_requestedByUserId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contab_replay_preflight_24h_expiry_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_tenantId_periodoId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_tenantId_requestedByUserId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_replayPreflightId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_replayPreflightId_replay_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_startedByUserId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_replayRunId_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_actor_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_binding_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_digest_binding_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_preflight_digest_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contab_replay_approval_preflight_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_approvedByUserId_app_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals_tenantId_replayApprovalId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contab_replay_preflight_digest_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contab_replay_preflight_id_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contab_replay_preflight_requester_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_tenantId_expiresAt_status_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights_tenantId_periodoId_generated_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_replayPreflightId_started_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_replayRunId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs_tenantId_status_startedAt_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "periodos_contables",
+          "name": "periodos_contables_tenantId_periodoId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "contabilidad_replay_approvals",
+          "name": "contabilidad_replay_approvals",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "contabilidad_replay_preflights",
+          "name": "contabilidad_replay_preflights",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "contabilidad_replay_runs",
+          "name": "contabilidad_replay_runs",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260929000000_r5_formal_schema_dependencies",
+      "sqlSha256": "c0dd486898df49e50cf1205d4c1c683a583d3dd6ac168a4585267978afff6d06",
+      "classification": "names_present",
+      "ready": 78,
+      "total": 78,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "CompraProducto",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "tipoDeuda",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tipoDeuda",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "comprobanteUrl",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "comprobanteUrl",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "createdAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "createdAt",
+            "type": "timestamp(3) without time zone",
+            "default": "CURRENT_TIMESTAMP",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "createdById",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "createdById",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "cuentaBancariaId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "cuentaBancariaId",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "cuentaPorPagarId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "cuentaPorPagarId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "deletedAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "deletedAt",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "estado",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "estado",
+            "type": "text",
+            "default": "'ACTIVO'::text",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "fechaVencimiento",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "fechaVencimiento",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "id",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "id",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "idNumerico",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "idNumerico",
+            "type": "integer",
+            "default": "nextval('\"DeudaCash_idNumerico_seq\"'::regclass)",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "moneda",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "moneda",
+            "type": "text",
+            "default": "'CUP'::text",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "montoCapital",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "montoCapital",
+            "type": "numeric(65,30)",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "observaciones",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "observaciones",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "proveedorId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "proveedorId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "tasaInteres",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tasaInteres",
+            "type": "numeric(65,30)",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "DeudaCash",
+          "name": "updatedAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "updatedAt",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "Pagosalario",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "clienteId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "clienteId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "createdAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "createdAt",
+            "type": "timestamp(3) without time zone",
+            "default": "CURRENT_TIMESTAMP",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "createdById",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "createdById",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "cuentaBancariaId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "cuentaBancariaId",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "cuentaPorCobrarId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "cuentaPorCobrarId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "deletedAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "deletedAt",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "estado",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "estado",
+            "type": "text",
+            "default": "'ACTIVO'::text",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "fechaOtorgamiento",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "fechaOtorgamiento",
+            "type": "timestamp(3) without time zone",
+            "default": "CURRENT_TIMESTAMP",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "fechaVencimiento",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "fechaVencimiento",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "id",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "id",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "idNumerico",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "idNumerico",
+            "type": "integer",
+            "default": "nextval('\"PrestamoCash_idNumerico_seq\"'::regclass)",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "moneda",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "moneda",
+            "type": "text",
+            "default": "'CUP'::text",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "montoCapital",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "montoCapital",
+            "type": "numeric(65,30)",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "observaciones",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "observaciones",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "tasaCambioAlCrear",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tasaCambioAlCrear",
+            "type": "numeric(65,30)",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "tasaInteres",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tasaInteres",
+            "type": "numeric(65,30)",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "PrestamoCash",
+          "name": "updatedAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "updatedAt",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "deudaCashId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "deudaCashId",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "prestamoCashId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "prestamoCashId",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "tipoReconciliacion",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tipoReconciliacion",
+            "type": "text",
+            "default": null,
+            "notNull": false
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "cacheKey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "cacheKey",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "createdAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "createdAt",
+            "type": "timestamp(3) without time zone",
+            "default": "CURRENT_TIMESTAMP",
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "expiresAt",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "expiresAt",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "fecha",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "fecha",
+            "type": "timestamp(3) without time zone",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "resultadoJson",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "resultadoJson",
+            "type": "jsonb",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "column",
+          "relation": "periodo_cache",
+          "name": "tenantId",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "tenantId",
+            "type": "text",
+            "default": null,
+            "notNull": true
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "CompraProducto",
+          "name": "CompraProducto_tenantId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "CompraProducto_tenantId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "CuentaPorPagar",
+          "name": "CuentaPorPagar_tenantId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "CuentaPorPagar_tenantId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_cuentaPorPagarId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_cuentaPorPagarId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"cuentaPorPagarId\") REFERENCES \"CuentaPorPagar\"(\"cuentaPorPagarId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_pkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_proveedorId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_proveedorId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"proveedorId\") REFERENCES \"Vendor\"(\"vendorId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_tenantId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_tenantId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "Pagosalario",
+          "name": "Pagosalario_tenantId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "Pagosalario_tenantId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_clienteId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_clienteId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"clienteId\") REFERENCES \"Cliente\"(\"clienteId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_cuentaPorCobrarId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_cuentaPorCobrarId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"cuentaPorCobrarId\") REFERENCES \"CuentaPorCobrar\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_pkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_tenantId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_tenantId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"tenantId\") REFERENCES tenants(\"tenantId\") ON UPDATE CASCADE ON DELETE RESTRICT"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionVenta",
+          "name": "ReconciliacionVenta_deudaCashId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "ReconciliacionVenta_deudaCashId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"deudaCashId\") REFERENCES \"DeudaCash\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionVenta",
+          "name": "ReconciliacionVenta_prestamoCashId_fkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "ReconciliacionVenta_prestamoCashId_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (\"prestamoCashId\") REFERENCES \"PrestamoCash\"(id) ON UPDATE CASCADE ON DELETE SET NULL"
+          }
+        },
+        {
+          "kind": "constraint",
+          "relation": "periodo_cache",
+          "name": "periodo_cache_pkey",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "periodo_cache_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (\"cacheKey\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "CompraProducto",
+          "name": "CompraProducto_tenantId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "CompraProducto_tenantId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"CompraProducto_tenantId_idx\" ON public.\"CompraProducto\" USING btree (\"tenantId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "CuentaPorPagar",
+          "name": "CuentaPorPagar_tenantId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "CuentaPorPagar_tenantId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"CuentaPorPagar_tenantId_idx\" ON public.\"CuentaPorPagar\" USING btree (\"tenantId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_cuentaPorPagarId_key",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_cuentaPorPagarId_key",
+            "ready": true,
+            "valid": true,
+            "unique": true,
+            "definition": "CREATE UNIQUE INDEX \"DeudaCash_cuentaPorPagarId_key\" ON public.\"DeudaCash\" USING btree (\"cuentaPorPagarId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_estado_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_estado_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"DeudaCash_estado_idx\" ON public.\"DeudaCash\" USING btree (estado)"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_proveedorId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_proveedorId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"DeudaCash_proveedorId_idx\" ON public.\"DeudaCash\" USING btree (\"proveedorId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "DeudaCash",
+          "name": "DeudaCash_tenantId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "DeudaCash_tenantId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"DeudaCash_tenantId_idx\" ON public.\"DeudaCash\" USING btree (\"tenantId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "Pagosalario",
+          "name": "Pagosalario_tenantId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "Pagosalario_tenantId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"Pagosalario_tenantId_idx\" ON public.\"Pagosalario\" USING btree (\"tenantId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_clienteId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_clienteId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"PrestamoCash_clienteId_idx\" ON public.\"PrestamoCash\" USING btree (\"clienteId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_cuentaPorCobrarId_key",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_cuentaPorCobrarId_key",
+            "ready": true,
+            "valid": true,
+            "unique": true,
+            "definition": "CREATE UNIQUE INDEX \"PrestamoCash_cuentaPorCobrarId_key\" ON public.\"PrestamoCash\" USING btree (\"cuentaPorCobrarId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_estado_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_estado_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"PrestamoCash_estado_idx\" ON public.\"PrestamoCash\" USING btree (estado)"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash_tenantId_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "PrestamoCash_tenantId_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"PrestamoCash_tenantId_idx\" ON public.\"PrestamoCash\" USING btree (\"tenantId\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "periodo_cache",
+          "name": "periodo_cache_expiresAt_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "periodo_cache_expiresAt_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"periodo_cache_expiresAt_idx\" ON public.periodo_cache USING btree (\"expiresAt\")"
+          }
+        },
+        {
+          "kind": "index",
+          "relation": "periodo_cache",
+          "name": "periodo_cache_tenantId_expiresAt_idx",
+          "presentAndOperational": true,
+          "actual": {
+            "name": "periodo_cache_tenantId_expiresAt_idx",
+            "ready": true,
+            "valid": true,
+            "unique": false,
+            "definition": "CREATE INDEX \"periodo_cache_tenantId_expiresAt_idx\" ON public.periodo_cache USING btree (\"tenantId\", \"expiresAt\")"
+          }
+        },
+        {
+          "kind": "table",
+          "relation": "DeudaCash",
+          "name": "DeudaCash",
+          "presentAndOperational": true,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "PrestamoCash",
+          "name": "PrestamoCash",
+          "presentAndOperational": true,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "periodo_cache",
+          "name": "periodo_cache",
+          "presentAndOperational": true,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260929120000_asiento_tenant_hash_sequence",
+      "sqlSha256": "6b359385227401d423cf6d1705a771fbf54715bb436b58bba06c0ce8235a13ce",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 3,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "hashVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "asientos",
+          "name": "tenantSequence",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "asientos",
+          "name": "asientos_tenantId_tenantSequence_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20260930120000_formal_opening_evidence",
+      "sqlSha256": "50dc969c757717fad4f9b3ffb007adb361eefe090f5cf66590c0cd5bbeff5b8c",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 76,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "apertura_periodos",
+          "name": "monedaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "aperturaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "digestSha256",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "digestVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "estado",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "evidenciaSha256",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "evidenciaVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "fechaCorte",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "periodoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "presentadaAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "presentadaPor",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "revisadaAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "revisadaPor",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "revisionId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "updatedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "apertura_revisiones",
+          "name": "version",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "aperturaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "cuentaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "evidenciaSha256",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "evidenciaVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fechaEfectiva",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fechaTasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fuenteId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fuenteSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fuenteTasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fuenteTipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "fxFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "importeFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "importeNativo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "lado",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "monedaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "monedaNativa",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "periodoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "revisionId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "rolCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "lineas_apertura_periodo",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_periodos",
+          "name": "apertura_periodos_periodoId_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_approval_metadata_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_digest_sha256_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_evidence_sha256_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_opening_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_period_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_status_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_submission_metadata_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_tenant_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_version_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_aperturaId_tenantId_periodoId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_catalog_rate_evidence_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_evidencia_sha256_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_fx_evidence_complete_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_fx_fingerprint_sha256_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_lado_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_periodoId_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_revisionId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "apertura_periodos",
+          "name": "apertura_periodos_tenantId_periodoId_aperturaId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "apertura_periodos",
+          "name": "apertura_periodos_tenantId_periodoId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_aperturaId_version_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_tenantId_periodoId_estado_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "apertura_revisiones",
+          "name": "opening_revision_composite_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_aperturaId_fechaEfectiva_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_tenantId_periodoId_monedaNativa_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo_tenantId_periodoId_rolCuenta_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "lineas_apertura_periodo",
+          "name": "opening_line_revision_identity_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "lineas_apertura_periodo",
+          "name": "lineas_apertura_periodo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "trigger",
+          "relation": "apertura_revisiones",
+          "name": "apertura_revisiones_protect_lifecycle",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "trigger",
+          "relation": "lineas_apertura_periodo",
+          "name": "apertura_revisiones_lineas_immutable",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261001090000_reconciliacion_venta_idempotencia",
+      "sqlSha256": "a8780bb0cebb5c40d8ae25ce9aaf3a148363f23378f4291a8df3a07703e7a7ed",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 3,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "idempotencyPayloadHash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "ReconciliacionVenta",
+          "name": "ReconciliacionVenta_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261002090000_anticipo_fx_snapshot",
+      "sqlSha256": "cf6253f87c55f78bd69648859c8f222dfceb4028fb0c003d1fc7eb490894d435",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "Anticipo",
+          "name": "fxSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "AnticipoMovimiento",
+          "name": "fxSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261002100000_fiscal_incierta_attempt",
+      "sqlSha256": "73985f6026a66b49ed4c6c90259236747d4fb9ac34af045971414360807fb816",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "fiscal_documents",
+          "name": "attemptId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "fiscal_emision_events",
+          "name": "attemptId",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261002100000_service_advance_obligation",
+      "sqlSha256": "388e2404cc952eb5e9e6923a147c651436d9d8b44d3b04466d56b3a57e9086e6",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 4,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "compraServicioId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "CuentaPorPagar",
+          "name": "CuentaPorPagar_compraServicioId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "CuentaPorPagar",
+          "name": "CuentaPorPagar_compraServicioId_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261002110000_anticipo_creation_idempotency",
+      "sqlSha256": "339d348ec1a8e469ebde350e0f1e8b63f4ae1383779f5068fe19e0e759866d44",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 3,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "Anticipo",
+          "name": "creationHash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "Anticipo",
+          "name": "creationKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "Anticipo",
+          "name": "Anticipo_tenantId_creationKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261003120000_reconciliacion_servicio_idempotencia",
+      "sqlSha256": "6c64274a2b4751981775c75fbfef189bb0820e4f0615fc86a236dc0924c0d32f",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 4,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "idempotencyHash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionServicio",
+          "name": "ReconciliacionServicio_idempotencyPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "ReconciliacionServicio",
+          "name": "ReconciliacionServicio_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261004130000_reconciliacion_servicio_moneda_cuenta",
+      "sqlSha256": "22ceab7248fe583eca7eaa5768a61310859add770d46ad8d5883aa74c7c0f861",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 7,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "cuentaOrigenId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "monedaCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "monedaCuentaOrigen",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "montoCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionServicio",
+          "name": "montoCuentaOrigen",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionServicio",
+          "name": "ReconciliacionServicio_accountAmountPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionServicio",
+          "name": "ReconciliacionServicio_sourceAccountAmountPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261004150000_reconciliacion_venta_moneda_cuenta",
+      "sqlSha256": "357e02ce09f305110d655a31f46508a808531f68fdb2563ebfcab749f00c97f2",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 7,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "cuentaOrigenId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "monedaCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "monedaCuentaOrigen",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "montoCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionVenta",
+          "name": "montoCuentaOrigen",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionVenta",
+          "name": "ReconciliacionVenta_accountAmountPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionVenta",
+          "name": "ReconciliacionVenta_sourceAccountAmountPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261005120000_reconciliacion_gasto_moneda_cuenta",
+      "sqlSha256": "836b8e72a6ab29d5595a94421c2a35cfe7f0500405d743a2a89ad7757421d209",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 3,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "ReconciliacionGasto",
+          "name": "monedaCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "ReconciliacionGasto",
+          "name": "montoCuenta",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "ReconciliacionGasto",
+          "name": "ReconciliacionGasto_accountAmountPair_check",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261005160000_merma_idempotency_key",
+      "sqlSha256": "10ec1bfa43b1f8a9f4ecd5e0320d1c310184dd9a620130edce7d26968ee6fbd3",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "Merma",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "Merma",
+          "name": "Merma_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006000000_ajuste_idempotency_key",
+      "sqlSha256": "a765e8169369c9dba74f6d1c5568224e39f3be7af3805e77bda7dcb4af233d0c",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "AjusteBancario",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "AjusteBancario",
+          "name": "AjusteBancario_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006010000_capital_idempotency_key",
+      "sqlSha256": "0d4e0ac0b863137332246e78a2827dd4bc6ae96d4e5096ede3aa7f6f6f354c45",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "InyeccionCapital",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "InyeccionCapital",
+          "name": "InyeccionCapital_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006020000_restock_factura_unique",
+      "sqlSha256": "844e271dd73b9cadf2b3f93e729722c5ed8f4076c767ac0b30fdc975442a398a",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 1,
+      "checks": [
+        {
+          "kind": "index",
+          "relation": "GastoCompra",
+          "name": "GastoCompra_tenantId_numeroFactura_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006100000_cxp_montos_funcionales",
+      "sqlSha256": "0ab785789148b1649866a7cd90b4b71a9fa44f881b40008ca91b489160294648",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 11,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxCatalogRateId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxEvidenceJson",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxEvidenceVersion",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxProvenanceKind",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "fxProvenanceSource",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "monedaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "montoDeudaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "montoPagadoFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "CuentaPorPagar",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006120000_venta_servicios_idempotency",
+      "sqlSha256": "eb22ea0f086c617168ae6aed4143fde35ddb8e848f681cfff3c837ad8aa7fec4",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 2,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "VentaServicios",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "VentaServicios",
+          "name": "VentaServicios_tenantId_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261006150000_cash_snapshots_funcionales",
+      "sqlSha256": "7133d98ee1176140340ffcdc0e2b9b03ffb7c65fe737b037884a884f3474bba7",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 26,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "capturedAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "cuentaPorCobrarId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "cuentaPorPagarId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "fechaCorte",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "fxEvidenceFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "idempotencyKey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "monedaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "montoDeudaFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "montoPagadoFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "motivo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "origenId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "periodoId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "rateEffectiveAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "saldoFuncional",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "snapshotId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "tasaCambio",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "cash_snapshots",
+          "name": "tipo",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_idempotencyKey_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_periodoId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_tenantId_fechaCorte_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots_tenantId_tipo_origenId_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "cash_snapshots",
+          "name": "cash_snapshots",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261009110000_venta_create_idempotency",
+      "sqlSha256": "c9ce2d12b91bb89092776a771932cacc9e43e7a81085966d8009bdd66903650a",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 14,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "id",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "keyHash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "payloadFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "responseSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "VentaCreateIdempotency",
+          "name": "ventaId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_ventaId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_tenantId_createdAt_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_tenantId_keyHash_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency_ventaId_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "VentaCreateIdempotency",
+          "name": "VentaCreateIdempotency",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "migration": "20261010120000_licencia_renewal_idempotency",
+      "sqlSha256": "c652dcd7b9a9d07deb4e60684e12a1a7920fadf0b748fb856ee29c3f0e7c4779",
+      "classification": "names_absent",
+      "ready": 0,
+      "total": 13,
+      "checks": [
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "createdAt",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "id",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "keyHash",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "payloadFingerprint",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "responseSnapshot",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "tenantId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "column",
+          "relation": "license_renewal_operations",
+          "name": "tenantLicenseId",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations_pkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations_tenantId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "constraint",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations_tenantLicenseId_fkey",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations_tenantId_createdAt_idx",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "index",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations_tenantId_keyHash_key",
+          "presentAndOperational": false,
+          "actual": null
+        },
+        {
+          "kind": "table",
+          "relation": "license_renewal_operations",
+          "name": "license_renewal_operations",
+          "presentAndOperational": false,
+          "actual": null
+        }
+      ]
+    }
+  ]
+}
