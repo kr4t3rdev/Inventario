@@ -180,7 +180,16 @@ async function mobileConsumers(mobileSrcDirectory, operationIds) {
   const consumers = new Map(operationIds.map((operationId) => [operationId, []]));
 
   async function scanDirectory(directory) {
-    const entries = await readdir(directory, { withFileTypes: true });
+    let entries;
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        console.warn(`[inventory] ${directory} no existe (p. ej. checkout sin mobile/): consumidores vacíos.`);
+        return;
+      }
+      throw error;
+    }
     for (const entry of entries) {
       const entryPath = path.join(directory, entry.name);
       if (entry.isDirectory()) {
