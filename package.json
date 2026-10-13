@@ -61,6 +61,7 @@
     "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check",
     "ops:monitor:accounting-reports": "tsx scripts/ops/accounting-reports-monitor.ts",
     "test:integration": "vitest run --config vitest.integration.config.mjs",
+    "verify:staging": "node scripts/vercel/bootstrap-test-db.mjs",
     "e2e:prep": "playwright test --config playwright.cart.config.ts e2e/prep-auth.spec.ts",
     "test:smoke:prod": "playwright test --config playwright.smoke.config.ts",
     "test:ci:contracts": "vitest run --config vitest.ci-contract.config.mjs"
