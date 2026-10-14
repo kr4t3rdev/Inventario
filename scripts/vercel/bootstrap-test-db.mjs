@@ -23,19 +23,48 @@ async function main() {
   const originalDb = decodeURIComponent(sourceUrl.pathname.replace(/^\//, '')) || 'neondb';
   const testDb = `${originalDb.replace(/-/g, '_')}_verify_test`;
 
-  const testUrl = new URL(source);
+  // Diagnóstico sin secretos: forma del endpoint (pooler, host, bd).
+  const isPooler = sourceUrl.hostname.includes('-pooler');
+  console.log(
+    `[staging-db] url=OK esPooler=${isPooler} host=…${sourceUrl.hostname.split('.').slice(-3).join('.')} `
+    + `bdOriginal=${originalDb} bdPruebas=${testDb}`,
+  );
+
+  // DDL (CREATE DATABASE, prisma db push) NO se admite sobre endpoints pooler
+  // de Neon: se deriva el endpoint directo eliminando el sufijo -pooler.
+  const directUrl = new URL(sourceUrl);
+  directUrl.hostname = directUrl.hostname.replace('-pooler', '');
+
+  const testUrl = new URL(directUrl);
   testUrl.pathname = `/${testDb}`;
   if (!testUrl.searchParams.has('sslmode')) testUrl.searchParams.set('sslmode', 'require');
 
-  const adminUrl = new URL(source);
-  adminUrl.pathname = '/postgres';
-  if (!adminUrl.searchParams.has('sslmode')) adminUrl.searchParams.set('sslmode', 'require');
+  const adminCandidates = ['/postgres', `/${originalDb}`].map((pathname) => {
+    const adminUrl = new URL(directUrl);
+    adminUrl.pathname = pathname;
+    if (!adminUrl.searchParams.has('sslmode')) adminUrl.searchParams.set('sslmode', 'require');
+    return adminUrl.toString();
+  });
 
-  const isNeon = adminUrl.hostname.includes('neon.tech');
-  console.log(`[staging-db] host=${adminUrl.hostname.split('.')[0]}… esNeon=${isNeon} bdPruebas=${testDb}`);
+  const isNeon = directUrl.hostname.includes('neon.tech');
+  console.log(`[staging-db] endpointDirecto=${directUrl.hostname.split('.')[0]}… esNeon=${isNeon}`);
 
-  const client = new pg.Client({ connectionString: adminUrl.toString() });
-  await client.connect();
+  let client;
+  let lastAdminError = null;
+  for (const candidate of adminCandidates) {
+    try {
+      const attempt = new pg.Client({ connectionString: candidate });
+      await attempt.connect();
+      client = attempt;
+      console.log(`[staging-db] conexión admin establecida (${new URL(candidate).pathname}).`);
+      break;
+    } catch (error) {
+      lastAdminError = error instanceof Error ? error.message : String(error);
+      console.warn(`[staging-db] admin no disponible en ${new URL(candidate).pathname}: ${lastAdminError}`);
+    }
+  }
+  if (!client) throw new Error(`sin conexión admin: ${lastAdminError}`);
+
   try {
     const exists = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [testDb]);
     if (exists.rowCount === 0) {
