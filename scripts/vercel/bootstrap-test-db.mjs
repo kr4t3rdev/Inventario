@@ -53,7 +53,15 @@ async function main() {
   let lastAdminError = null;
   for (const candidate of adminCandidates) {
     try {
-      const attempt = new pg.Client({ connectionString: candidate });
+      const attempt = new pg.Client({
+        connectionString: candidate,
+        // El endpoint de staging del proyecto tiene un certificado autofirmado
+        // en la cadena: las conexiones Prisma (sslmode=require, semántica
+        // postgres = sin verificación) lo toleran; pg crudo verifica y falla.
+        // El bootstrap solo prepara la BD de pruebas: se desactiva la
+        // verificación de cadena aquí, igual que hace el resto del stack.
+        ssl: { rejectUnauthorized: false },
+      });
       await attempt.connect();
       client = attempt;
       console.log(`[staging-db] conexión admin establecida (${new URL(candidate).pathname}).`);
