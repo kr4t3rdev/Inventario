@@ -60,12 +60,12 @@ async function main() {
     { label: 'OpenAPI paridad + smoke', cmd: ['pnpm', 'run', 'openapi:parity'] },
     { label: 'SDK smoke móvil', cmd: ['pnpm', 'run', 'mobile:smoke'] },
     {
-      // Exclusión EXPLÍCITA y documentada: cash-obligation-balances es un rojo
-      // aspiracional preexistente en main (test añadido solo en e6c20706; la
-      // implementación de precisión 4-decimales vive en la rama contable).
-      // El CI de GitHub sigue ejecutándolo sin excluir.
-      label: 'Suite unitaria completa (excluye rojo aspiracional documentado)',
-      cmd: ['pnpm', 'test:run', '--exclude', 'src/lib/utils/cash-obligation-balances.test.ts'],
+      // Exclusión EXPLÍCITA y documentada (vitest.staging.config.mjs):
+      // cash-obligation-balances es un rojo aspiracional preexistente en main
+      // (test añadido solo en e6c20706; la implementación de precisión
+      // 4-decimales vive en la rama contable). El CI de GitHub lo ejecuta.
+      label: 'Suite unitaria completa (config de staging)',
+      cmd: ['pnpm', 'run', 'test:staging'],
     },
     { label: 'Integración PostgreSQL (Neon pruebas)', cmd: ['pnpm', 'test:integration'] },
     { label: 'Build Next.js', cmd: ['pnpm', 'build'] },

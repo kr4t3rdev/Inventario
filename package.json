@@ -17,6 +17,7 @@
     "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:staging": "vitest run --config vitest.staging.config.mjs",
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
     "seed:plans": "tsx prisma/seed/plans-seed.ts",

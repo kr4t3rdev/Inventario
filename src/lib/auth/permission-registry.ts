@@ -204,6 +204,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		sensitive: true,
 	},
 	{
+		key: 'rrhh.empleados.consultar',
+		label: 'Consultar empleados',
+		description: 'Ver listado y detalle de empleados del tenant (incluye salario base).',
+		category: 'rrhh',
+		defaultRoles: ['manager'],
+	},
+	{
 		key: 'rrhh.empleados.crear',
 		label: 'Crear empleados',
 		description: 'Dar de alta empleados del tenant.',

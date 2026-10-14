@@ -100,6 +100,18 @@ const MOBILE_GROUP_KEYS_MAP: Record<string, string | null> = {
   pos: 'operaciones.pos.gestionar',
   expenses: 'financiero.gastos.acceder',
   'expense-concepts': 'financiero.gastos.acceder',
+  // ── Duplicados en español de los módulos v1 (merge de los 12 módulos,
+  //    PG-07): misma política que sus contrapartes ya mapeadas ──
+  compras: 'compras.compras.gestionar',
+  contratos: 'ventas.contratos.gestionar',
+  empleados: 'rrhh.empleados.consultar',
+  facturas: 'ventas.facturas.consultar',
+  gastos: 'financiero.gastos.acceder',
+  ofertas: 'ventas.ofertas.gestionar',
+  produccion: 'produccion.vales.gestionar',
+  reparaciones: 'produccion.reparaciones.gestionar',
+  servicios: 'operaciones.servicios.acceder',
+  transferencias: 'inventario.transferencias.gestionar',
   // Exentas:
   auth: null, // login/register/refresh/me/tenants — público o autenticado genérico
   admin: null, // salud y administración de plataforma (role admin) — ver memberships abajo
