@@ -422,3 +422,37 @@ verificación completa y confirmar verde; si algo falla, el commit a revisar es 
       lo retira del contrato.
 - [ ] Sincronizar el SDK del móvil (8.4).
 - [ ] Regenerar inventario y manifiesto; cerrar las puertas G2–G5 restantes.
+
+### 8.7 Staging Vercel — registro de la cacería (2026-10-14)
+
+Pipeline de verificación en el host de Vercel (vercel.json buildCommand
+`verify:staging` + orquestador `scripts/vercel/bootstrap-test-db.mjs`,
+proyecto `finance-mdm-staging` conectado a GitHub). Capas resueltas:
+
+1. **Upload local imposible** (red mata transfers masivas a los 0.0B):
+   resuelto con `vercel git connect` — Vercel construye desde GitHub.
+2. **Install moría en postinstall**: Vercel inyecta Prisma CLI 7.10.0 en el
+   PATH al detectar `prisma.config.ts`; el `prisma generate` del postinstall
+   resolvía el 7.10.0 inyectado en vez del 6.19.1 del lockfile y rechazaba
+   el schema v6 (P1012). Fix: postinstall invoca `node_modules/.bin/prisma`
+   (binario local explícito, inmune al PATH).
+3. **Schema v6 vs Prisma 7 irreconciliable**: v6 exige `url` en el datasource,
+   v7 la prohíbe. Confirmado por CI (P1012 «url is missing» sin url) y por
+   Vercel (P1012 «url no longer supported» con url). El blindaje del
+   postinstall es el puente; la migración real a Prisma 7 (prisma.config.ts
+   ya preparado por el equipo; bump de prisma/@prisma/client a v7 + patrón
+   de constructor con adapter) queda como decisión del equipo.
+4. **PG-07**: 20 rutas del merge de los 12 módulos registradas con paridad
+   de política + clave nueva `rrhh.empleados.consultar` (manager-only) +
+   fixture de paridad actualizado.
+5. **Vitest CLI**: `--exclude` REEMPLAZA las exclusiones del config —
+   sustituido por `vitest.staging.config.mjs` (excluye rojos aspiracionales
+   documentados: cash 4-decimales y replay de capital; el CI los ejecuta).
+6. **TLS del bootstrap**: el endpoint de BD del staging sirve cadena con
+   certificado autofirmado; Prisma (sslmode=require) no verifica y pg crudo
+   sí → `rejectUnauthorized: false` puntual en el bootstrap (commit 12ce3a52,
+   pendiente de push por apagón de DNS).
+
+Pendiente: push de 12ce3a52 (bucle de reintento activo), build de Vercel con
+todas las capas despejadas y verificación final del pipeline completo
+(bootstrap BD Neon → db push → openapi → suite → integración → build).
