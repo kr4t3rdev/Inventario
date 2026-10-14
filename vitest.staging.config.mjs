@@ -39,7 +39,12 @@ export default defineConfig({
       '**/*.spec.tsx',
       '**/*.live.test.ts',
       '**/*.live.test.tsx',
+      // Rojos aspiracionales preexistentes en main (implementación en la rama
+      // contable): precisión 4-decimales de cash (test solo, e6c20706) y
+      // replay idempotente de capital (findCapitalInjectionReplay). El CI de
+      // GitHub los ejecuta.
       'src/lib/utils/cash-obligation-balances.test.ts',
+      'src/features/contabilidad/actions-capital.test.ts',
     ],
     coverage: {
       provider: 'v8',
