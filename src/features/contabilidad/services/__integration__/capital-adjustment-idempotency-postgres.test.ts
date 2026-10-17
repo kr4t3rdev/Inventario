@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { assertDisposableDatabase } from '../../../../../scripts/ci/disposable-database.mjs';
+import {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+} from '../../../../../scripts/ci/disposable-database.mjs';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
 import { withTestTenant } from '@/lib/db/tenant-context';
@@ -9,7 +12,6 @@ import { AccountingOperationsMutationService } from '../accounting-operations-mu
 assertDisposableDatabase(process.env);
 
 const suffix = randomUUID().replaceAll('-', '');
-const databaseTarget = new URL(process.env.DATABASE_URL as string);
 const tenantAId = `it_capital_a_${suffix}`;
 const tenantBId = `it_capital_b_${suffix}`;
 const accountAId = `it_capital_bank_a_${suffix}`;
@@ -49,21 +51,15 @@ async function accountBalance(cuentaId: string) {
 describe('capital and bank-adjustment idempotency on isolated PostgreSQL', { timeout: 90_000 }, () => {
   beforeAll(async () => {
     const identity = await prisma.$queryRaw<Array<{
-      database: string;
-      host: string;
-      port: number;
-      role: string;
+      databaseName: string;
+      roleName: string;
+      serverPort: number;
     }>>`
-      SELECT current_database() AS database,
-        host(inet_server_addr()) AS host,
-        inet_server_port() AS port,
-        current_user AS role
+      SELECT current_database() AS "databaseName",
+        current_user AS "roleName", inet_server_port() AS "serverPort"
     `;
     expect(identity).toHaveLength(1);
-    expect(identity[0].database).toBe(databaseTarget.pathname.slice(1));
-    expect(identity[0].host).toBe(databaseTarget.hostname);
-    expect(Number(identity[0].port)).toBe(Number(databaseTarget.port));
-    expect(identity[0].role).toBe(databaseTarget.username);
+    assertDisposableDatabaseIdentity(identity[0], process.env);
 
     await prisma.tenant.createMany({
       data: [

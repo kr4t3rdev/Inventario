@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
-import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-database.mjs';
+import {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+} from '../../../../scripts/ci/disposable-database.mjs';
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -44,22 +47,13 @@ describe('service sale idempotency — PostgreSQL', { timeout: 90_000 }, () => {
     prisma = prismaModule.prisma;
     createVentaServicioAction = actionModule.createVentaServicioAction;
 
-    const target = new URL(process.env.DATABASE_URL ?? '');
     const identity = await prisma.$queryRaw<Array<{
-      db: string; user: string; host: string; port: number;
+      databaseName: string; roleName: string; serverPort: number;
     }>>`
-      SELECT current_database() AS db, current_user AS user,
-        host(inet_server_addr()) AS host, inet_server_port() AS port
+      SELECT current_database() AS "databaseName", current_user AS "roleName",
+        inet_server_port() AS "serverPort"
     `;
-    expect(identity[0]).toMatchObject({
-      db: target.pathname.slice(1),
-      user: target.username,
-      host: target.hostname,
-      port: Number(target.port),
-    });
-    expect(target.hostname).toBe('127.0.0.1');
-    expect(Number(target.port)).toBeGreaterThan(0);
-    expect(target.pathname.slice(1)).toMatch(/^tcp_test_[a-z0-9_]+$/);
+    assertDisposableDatabaseIdentity(identity[0], process.env);
 
     const tenant = await prisma.tenant.create({ data: { nombre: prefix, slug: prefix } });
     tenantId = tenant.tenantId;

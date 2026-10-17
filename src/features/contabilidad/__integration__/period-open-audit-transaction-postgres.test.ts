@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
-import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-database.mjs';
+import {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+} from '../../../../scripts/ci/disposable-database.mjs';
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { TipoPeriodo } from '@/lib/services/periodo-contable-types';
@@ -46,20 +49,13 @@ describe('period open strict audit — PostgreSQL', { timeout: 90_000 }, () => {
     prisma = prismaModule.prisma;
     abrirPeriodoAction = actionModule.abrirPeriodoAction;
 
-    const target = new URL(process.env.DATABASE_URL ?? '');
     const identity = await prisma.$queryRaw<Array<{
-      db: string; user: string; host: string; port: number;
+      databaseName: string; roleName: string; serverPort: number;
     }>>`
-      SELECT current_database() AS db, current_user AS user,
-        host(inet_server_addr()) AS host, inet_server_port() AS port
+      SELECT current_database() AS "databaseName", current_user AS "roleName",
+        inet_server_port() AS "serverPort"
     `;
-    expect(identity[0]).toMatchObject({
-      db: target.pathname.slice(1),
-      user: target.username,
-      host: target.hostname,
-      port: Number(target.port),
-    });
-    expect(target.pathname.slice(1)).toMatch(/^tcp_test_[a-z0-9_]+$/);
+    assertDisposableDatabaseIdentity(identity[0], process.env);
 
     const plan = await prisma.plan.create({
       data: { nombre: tenantName, duracionDias: 365, features: { contabilidad: true } },

@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { assertDisposableDatabase } from '../../../../../scripts/ci/disposable-database.mjs';
+import {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+} from '../../../../../scripts/ci/disposable-database.mjs';
 
 const migrationPath = resolve(
   process.cwd(),
@@ -101,14 +104,15 @@ beforeAll(async () => {
   await client.connect();
   const identity = await client.query(`
     SELECT current_database() AS database_name, current_user AS role_name,
-      host(inet_server_addr()) AS server_address, inet_server_port() AS server_port
+      inet_server_port() AS server_port
   `);
-  expect(identity.rows[0]).toEqual({
-    database_name: url.pathname.slice(1),
-    role_name: url.username,
-    server_address: '127.0.0.1',
-    server_port: Number(url.port),
-  });
+  assertDisposableDatabaseIdentity({
+    databaseName: identity.rows[0]?.database_name,
+    roleName: identity.rows[0]?.role_name,
+    serverPort: identity.rows[0]?.server_port,
+  }, process.env);
+  expect(url.hostname).toBe('127.0.0.1');
+  expect(url.port).toMatch(/^\d+$/);
   expect(createHash('sha256').update(migrationSql).digest('hex')).toBe(expectedMigrationSha256);
 }, 30000);
 

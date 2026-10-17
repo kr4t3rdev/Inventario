@@ -8,7 +8,12 @@ import { AccountingCashOperationsMutationService } from '../accounting-cash-oper
 import { construirHashAsientoV2 } from '@/features/contabilidad-formal/services/posting-engine';
 import { validateHashChain } from '@/features/contabilidad-formal/services/hash-chain-integrity';
 import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
-import { assertDisposableDatabase } from '../../../../../scripts/ci/disposable-database.mjs';
+import {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+} from '../../../../../scripts/ci/disposable-database.mjs';
+
+assertDisposableDatabase(process.env);
 
 const suffix = randomUUID().replaceAll('-', '');
 const tenantId = `formal_cash_${suffix}`;
@@ -176,14 +181,9 @@ describe('cash debt payment formal posting on isolated PostgreSQL', () => {
   beforeAll(async () => {
     process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
     const [identity] = await prisma.$queryRawUnsafe<Array<{
-      database: string; user: string; host: string; port: number;
-    }>>("SELECT current_database() AS database, current_user AS user, host(inet_server_addr()) AS host, inet_server_port() AS port");
-    const target = new URL(assertDisposableDatabase(process.env));
-    if (
-      identity?.database !== target.pathname.slice(1) ||
-      identity.user !== target.username || identity.host !== target.hostname ||
-      identity.port !== Number(target.port)
-    ) throw new Error('Formal posting integration test database identity mismatch');
+      databaseName: string; roleName: string; serverPort: number;
+    }>>("SELECT current_database() AS \"databaseName\", current_user AS \"roleName\", inet_server_port() AS \"serverPort\"");
+    assertDisposableDatabaseIdentity(identity, process.env);
     await prisma.tenant.create({
       data: { tenantId, nombre: 'formal-cash-payment-it', slug: `formal-cash-payment-${suffix}` },
     });
