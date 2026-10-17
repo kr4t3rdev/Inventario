@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de proveedores.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -58,11 +59,12 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockVendorRow = {
   vendorId: 'ven-1',
+  tenantId: 'tenant-test',
   nombre: 'Proveedor Test',
   vendorCode: '01',
   direccion: 'Calle 123',
@@ -88,9 +90,9 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorsAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].nombre).toBe('Proveedor Test');
-      expect(result.data![0].ean13Code).toBe('0100000000011');
+      expect(expectActionSuccess(result).data).toHaveLength(1);
+      expect(expectActionSuccess(result).data![0].nombre).toBe('Proveedor Test');
+      expect(expectActionSuccess(result).data![0].ean13Code).toBe('0100000000011');
     });
 
     it('retorna lista vacía si no hay proveedores', async () => {
@@ -100,7 +102,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorsAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      expect(expectActionSuccess(result).data).toEqual([]);
     });
   });
 
@@ -113,7 +115,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorByIdAction('ven-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.nombre).toBe('Proveedor Test');
+      expect(expectActionSuccess(result).data!.nombre).toBe('Proveedor Test');
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
@@ -123,7 +125,7 @@ describe('Vendors Server Actions', () => {
       const result = await getVendorByIdAction('ven-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -139,7 +141,7 @@ describe('Vendors Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(getNextVendorCode).toHaveBeenCalled();
-      expect(result.data!.vendorCode).toBe('05');
+      expect(expectActionSuccess(result).data!.vendorCode).toBe('05');
     });
 
     it('retorna error si el nombre está vacío', async () => {
@@ -148,7 +150,7 @@ describe('Vendors Server Actions', () => {
       const result = await createVendorAction({ nombre: '' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.code).toBe('VALIDATION_ERROR');
     });
   });
 
@@ -171,7 +173,7 @@ describe('Vendors Server Actions', () => {
       const result = await updateVendorAction({ vendorId: 'ven-noexiste', nombre: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -193,7 +195,7 @@ describe('Vendors Server Actions', () => {
       const result = await deleteVendorAction('ven-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -202,7 +204,7 @@ describe('Vendors Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getVendorsAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

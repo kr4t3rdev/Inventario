@@ -6,6 +6,7 @@
  * disponible para facturar contra la OC.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -51,7 +52,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const compraBase = {
@@ -144,7 +145,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		expect(mockTx.gastoCompra.update).not.toHaveBeenCalled();
 	});
@@ -158,7 +159,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 	});
 
@@ -177,7 +178,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("CXP_HAS_PAYMENTS");
+		expect(expectActionFailure(result).error?.code).toBe("CXP_HAS_PAYMENTS");
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		// El CAS dentro de la transacción se revierte con el rollback: nada persiste.
 		expect(mockTx.gastoCompra.update).not.toHaveBeenCalled();
@@ -191,7 +192,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("HAS_IMPACT");
+		expect(expectActionFailure(result).error?.code).toBe("HAS_IMPACT");
 	});
 
 	it("elimina la CxP sin pagos y continúa la anulación", async () => {
@@ -241,7 +242,7 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		const result = await anularCompraProductoAction({ id: "cd-x" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("una compra anulada (ya revertida) sí puede eliminarse", async () => {

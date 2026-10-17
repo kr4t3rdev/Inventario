@@ -7,6 +7,9 @@ const findFirst = vi.fn();
 const transaction = vi.fn();
 const acquireAccountingTenantLock = vi.fn();
 const capitalCreate = vi.fn();
+const capitalFindUnique = vi.fn();
+const capitalGlobalFindUnique = vi.fn();
+const adjustmentFindUnique = vi.fn();
 const inyeccionFindFirst = vi.fn();
 const inyeccionUpdate = vi.fn();
 const pagoCreate = vi.fn();
@@ -15,6 +18,7 @@ const auditLogCreate = vi.fn();
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     cuentaBancaria: { findUnique, findFirst },
+    inyeccionCapital: { findUnique: capitalGlobalFindUnique },
     $transaction: transaction,
   },
 }));
@@ -58,6 +62,9 @@ describe('AccountingOperationsMutationService', () => {
       moneda: 'CUP',
       cuentaId: 'account-1',
     });
+    capitalFindUnique.mockResolvedValue(null);
+    capitalGlobalFindUnique.mockResolvedValue(null);
+    adjustmentFindUnique.mockResolvedValue(null);
     auditLogCreate.mockResolvedValue({ id: 'audit-1' });
     inyeccionFindFirst.mockResolvedValue({
       id: 'inyeccion-1',
@@ -69,17 +76,37 @@ describe('AccountingOperationsMutationService', () => {
     inyeccionUpdate.mockResolvedValue({ id: 'inyeccion-1' });
     pagoCreate.mockResolvedValue({ id: 'pago-1' });
     transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
-      ajusteBancario: { create },
-      cuentaBancaria: { findFirst, update },
-      inyeccionCapital: { create: capitalCreate, findFirst: inyeccionFindFirst, update: inyeccionUpdate },
+      ajusteBancario: { create, findUnique: adjustmentFindUnique },
+      cuentaBancaria: { findFirst, update, updateMany: update },
+      inyeccionCapital: {
+        create: capitalCreate,
+        findFirst: inyeccionFindFirst,
+        findUnique: capitalFindUnique,
+        update: inyeccionUpdate,
+      },
       pagoDeuda: { create: pagoCreate },
       auditLog: { create: auditLogCreate },
     }));
   });
 
+  it('preserves the supplied FX rate in a capital injection payload', async () => {
+    const { createCapitalInjectionSchema } = await import('../accounting-operations-mutation-service');
+    const parsed = createCapitalInjectionSchema.parse({
+      montoRecibido: 1,
+      moneda: 'USD',
+      tipo: 'CAPITAL_SOCIAL',
+      cuentaId: 'account-1',
+      socio: 'Partner',
+      tasaCambio: 300,
+      idempotencyKey: 'capital-rate-key',
+    });
+
+    expect(parsed.tasaCambio).toBe(300);
+  });
+
   it('persiste la fecha de operación elegida para el ajuste', async () => {
     const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
-    const fechaOperacion = '2026-01-15T12:00:00.000Z';
+    const fechaOperacion = new Date('2026-01-15T12:00:00.000Z');
 
     await AccountingOperationsMutationService.createBankAdjustment({
       input: {
@@ -96,11 +123,105 @@ describe('AccountingOperationsMutationService', () => {
 
     expect(create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        montoConvertido: 100,
-        tasaCambio: 1,
-        fechaOperacion: new Date(fechaOperacion),
+        fechaOperacion,
       }),
     });
+    expect(String(create.mock.calls[0][0].data.montoConvertido)).toBe('100');
+    expect(String(create.mock.calls[0][0].data.tasaCambio)).toBe('1');
+  });
+
+  it('persists an adjustment key and replays an exact request without repeating effects', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      cuentaId: 'account-1',
+      tipo: 'ingreso' as const,
+      monto: 25,
+      moneda: 'CUP',
+      descripcion: 'Ajuste',
+      motivo: 'Corrección',
+      idempotencyKey: 'adjustment-key',
+    };
+
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    expect(create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ idempotencyKey: 'adjustment-key', payloadFingerprint: expect.any(String) }),
+    });
+    const persisted = {
+      ajusteId: 'adjustment-1',
+      cuentaId: 'account-1',
+      ...create.mock.calls[0][0].data,
+    };
+    adjustmentFindUnique.mockResolvedValueOnce(persisted);
+
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(create).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+  });
+
+  it('rejects an omitted adjustment date when the original keyed request specified one', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      cuentaId: 'account-1',
+      tipo: 'ingreso' as const,
+      monto: 25,
+      moneda: 'CUP',
+      descripcion: 'Ajuste',
+      motivo: 'Corrección',
+      fechaOperacion: new Date('2026-10-01T12:00:00.000Z'),
+      idempotencyKey: 'adjustment-date-key',
+    };
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    adjustmentFindUnique.mockResolvedValueOnce({
+      ajusteId: 'adjustment-1',
+      cuentaId: 'account-1',
+      ...create.mock.calls[0][0].data,
+    });
+
+    await expect(AccountingOperationsMutationService.createBankAdjustment({
+      input: { ...input, fechaOperacion: undefined },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(create).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+  });
+
+  it('replays repeated adjustment requests with an omitted date from their persisted fingerprint', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      cuentaId: 'account-1',
+      tipo: 'ingreso' as const,
+      monto: 25,
+      moneda: 'CUP',
+      descripcion: 'Ajuste sin fecha explícita',
+      motivo: 'Reintento',
+      idempotencyKey: 'adjustment-omitted-date-key',
+    };
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    adjustmentFindUnique.mockResolvedValueOnce({
+      ajusteId: 'adjustment-2',
+      cuentaId: 'account-1',
+      ...create.mock.calls[0][0].data,
+    });
+
+    await expect(AccountingOperationsMutationService.createBankAdjustment({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).resolves.toMatchObject({ ajuste: { ajusteId: 'adjustment-2' } });
+    expect(create).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
   });
 
   it('pasa dos mutaciones del mismo tenant por el lock contable común', async () => {
@@ -149,6 +270,7 @@ describe('AccountingOperationsMutationService', () => {
         cuentaId: 'account-1',
         socio: 'Socio fundador',
         descripcion: 'Aporte inicial adicional',
+        idempotencyKey: 'capital-create-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -165,20 +287,21 @@ describe('AccountingOperationsMutationService', () => {
     expect(capitalCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         tipo: 'CAPITAL_SOCIAL',
-        montoRecibido: 250,
         moneda: 'CUP',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
         entidadPrestamista: null,
       }),
     });
+    expect(String(capitalCreate.mock.calls[0][0].data.montoRecibido)).toBe('250');
     expect(capitalCreate.mock.calls[0][0].data).not.toHaveProperty('monto');
     expect(capitalCreate.mock.calls[0][0].data).not.toHaveProperty('cuentaBancariaId');
     expect(update).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledWith({
       where: { cuentaId: 'account-1' },
-      data: { saldo: { increment: 250 } },
+      data: { saldo: { increment: expect.anything() } },
     });
+    expect(String(update.mock.calls[0][0].data.saldo.increment)).toBe('250');
     expect(auditLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({ entidad: 'INYECCION_CAPITAL' }),
       expect.objectContaining({ inyeccionCapital: expect.objectContaining({ create: capitalCreate }) }),
@@ -197,6 +320,7 @@ describe('AccountingOperationsMutationService', () => {
         entidadPrestamista: 'Financiera externa',
         tasaInteres: 10,
         plazoMeses: 12,
+        idempotencyKey: 'capital-debt-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -204,17 +328,18 @@ describe('AccountingOperationsMutationService', () => {
     expect(capitalCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         tipo: 'DEUDA_EXTERNA',
-        montoRecibido: 1000,
         tasaInteres: 10,
-        montoInteres: 100,
-        montoTotalDeuda: 1100,
-        saldoPendiente: 1100,
         plazoMeses: 12,
         entidadPrestamista: 'Financiera externa',
         socio: null,
         estado: 'ACTIVA',
       }),
     });
+    const debtData = capitalCreate.mock.calls[0][0].data;
+    expect(String(debtData.montoRecibido)).toBe('1000');
+    expect(String(debtData.montoInteres)).toBe('100');
+    expect(String(debtData.montoTotalDeuda)).toBe('1100');
+    expect(String(debtData.saldoPendiente)).toBe('1100');
   });
 
   it('rechaza una cuenta inexistente o de otro tenant sin abrir escrituras', async () => {
@@ -228,6 +353,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'foreign-account',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-missing-account-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -253,6 +379,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-inactive-account-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
@@ -271,6 +398,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-currency-mismatch-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
@@ -290,6 +418,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-audit-rollback-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toThrow('audit failed');
@@ -298,9 +427,76 @@ describe('AccountingOperationsMutationService', () => {
     expect(auditLogCreate).toHaveBeenCalled();
   });
 
+  it('persists a capital key and fingerprint and replays it without repeating effects', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      idempotencyKey: 'capital-key',
+    };
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    expect(capitalCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        idempotencyKey: 'capital-key',
+        payloadFingerprint: expect.any(String),
+      }),
+    });
+    const persisted = { id: 'capital-1', ...capitalCreate.mock.calls[0][0].data };
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
+  });
+
+  it('recovers only a matching capital replay after the tenant-key unique race', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio para retry',
+      idempotencyKey: 'capital-p2002-key',
+    };
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    const persisted = {
+      id: 'capital-race-row',
+      ...capitalCreate.mock.calls[0][0].data,
+    };
+    capitalGlobalFindUnique.mockResolvedValueOnce(persisted);
+    transaction.mockRejectedValueOnce({
+      code: 'P2002',
+      meta: { target: ['tenantId', 'idempotencyKey'] },
+    });
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).resolves.toMatchObject({ id: 'capital-race-row' });
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
+  });
+
   it('persiste la fecha de operación que fue validada por el período', async () => {
     const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
-    const fechaOperacion = '2026-01-15T12:00:00.000Z';
+    const fechaOperacion = new Date('2026-01-15T12:00:00.000Z');
 
     await AccountingOperationsMutationService.createCapitalInjection({
       input: {
@@ -310,13 +506,14 @@ describe('AccountingOperationsMutationService', () => {
         cuentaId: 'account-1',
         socio: 'Socio fundador',
         fechaOperacion,
+        idempotencyKey: 'capital-operation-date-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
 
     expect(capitalCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        fechaRegistro: new Date(fechaOperacion),
+        fechaRegistro: fechaOperacion,
       }),
     });
   });

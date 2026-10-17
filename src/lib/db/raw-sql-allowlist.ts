@@ -172,4 +172,22 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Locks FOR UPDATE sobre fuentes, CxP y cuentas bancarias.',
     tenantGuarantee: 'SQL parametrizado incluye tenantId en cada tabla tenant-scoped.',
   },
+  {
+    file: 'src/features/contabilidad-formal/services/shadow-outbox.ts',
+    occurrences: 2,
+    reason: 'Lectura de métricas y selección bloqueante de eventos del outbox mediante SQL etiquetado.',
+    tenantGuarantee: 'Las métricas y el consumidor exigen tenantId no vacío y lo enlazan como parámetro en cada consulta; el consumidor solo procesa ese tenant.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/shadow-savepoint.ts',
+    occurrences: 3,
+    reason: 'SAVEPOINT, ROLLBACK TO y RELEASE con identificador SQL literal fijo para aislar intento shadow.',
+    tenantGuarantee: 'No accede a tablas ni acepta identificadores o SQL dinámico; opera solo sobre el TransactionClient de un writer tenant-scoped.',
+  },
+  {
+    file: 'src/features/venta-servicios/actions.ts',
+    occurrences: 1,
+    reason: 'Lock advisory transaccional para serializar la clave idempotente de venta de servicios.',
+    tenantGuarantee: 'SQL tagged parametriza JSON.stringify([tenantId, key]); tenantId proviene del usuario autenticado de la Server Action.',
+  },
 ] as const;

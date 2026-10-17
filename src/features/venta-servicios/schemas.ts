@@ -29,6 +29,7 @@ export const lineaMixtaSchema = z.object({
 export const ventaMixtaSchema = z.object({
   clienteId: z.string().optional().nullable(),
   observaciones: z.string().optional().nullable(),
+  idempotencyKey: z.string().trim().max(64).optional().nullable(),
   lineas: z.array(lineaMixtaSchema).min(1),
   // B-06: CONTADO (default) cobra al momento; CREDITO crea cuenta por cobrar.
   condicionPago: z.enum(['CONTADO', 'CREDITO']).optional().default('CONTADO'),
@@ -45,6 +46,7 @@ export const ventaServicioLegacySchema = z.object({
   // B-06: CONTADO (default) cobra al momento; CREDITO crea cuenta por cobrar.
   condicionPago: z.enum(['CONTADO', 'CREDITO']).optional().default('CONTADO'),
   fechaVencimiento: z.string().optional().nullable(),
+  idempotencyKey: z.string().trim().max(64).optional().nullable(),
   // Nota: `precioUnitario` y `total` se resuelven en el servidor desde el
   // catálogo (cantidad × precio); no se aceptan del cliente.
 }).strict();
@@ -59,6 +61,6 @@ export const updateVentaServicioSchema = z.object({
   // recalcula el total con el precio unitario derivado del registro.
 });
 
-export type VentaServicioInput = z.infer<typeof ventaServicioLegacySchema>;
-export type VentaMixtaInput = z.infer<typeof ventaMixtaSchema>;
+export type VentaServicioInput = z.input<typeof ventaServicioLegacySchema>;
+export type VentaMixtaInput = z.input<typeof ventaMixtaSchema>;
 export type VentaServicioUpdateInput = z.infer<typeof updateVentaServicioSchema>;

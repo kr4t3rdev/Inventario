@@ -83,6 +83,17 @@ describe('AS-01 contrato de clasificación de modelos', () => {
       ['InyeccionCapital', 'scoped'],
       ['PagoDeuda', 'scoped'],
       ['SaldoSnapshot', 'scoped'],
+      ['Asiento', 'scoped'],
+      ['AsientoLinea', 'scoped'],
+      ['CashPaymentInterestAllocation', 'scoped'],
+      ['CuentaContable', 'scoped'],
+      ['CuentaRolTenant', 'scoped'],
+      ['Diario', 'scoped'],
+      ['PlantillaAsiento', 'global'],
+      ['ReplayApproval', 'scoped'],
+      ['ReplayPreflight', 'scoped'],
+      ['ReplayRun', 'scoped'],
+      ['ShadowPosteoOutbox', 'scoped'],
       ['TipoContratoCustom', 'pending-scope'],
     ];
     for (const [model, scope] of expectations) {

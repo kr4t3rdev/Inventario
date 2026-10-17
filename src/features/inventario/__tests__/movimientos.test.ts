@@ -5,6 +5,7 @@ import {
   getMovimientosDeOrigen,
   registrarMovimiento,
   revertirMovimientosDeOrigen,
+  type FiltrosKardex,
 } from '@/features/inventario/movimientos';
 
 function createStore() {
@@ -61,7 +62,9 @@ describe('registrarMovimiento', () => {
       }),
       update: {},
     });
-    expect(store.stockMoveLine.create).toBeUndefined();
+    // Se comprueba que el registro usa upsert idempotente y NO una creacion
+    // directa: `create` ni siquiera existe en el cliente simulado.
+    expect((store.stockMoveLine as { create?: unknown }).create).toBeUndefined();
   });
 
   it('rechaza un movimiento con cantidad cero', async () => {
@@ -105,7 +108,7 @@ describe('getKardex', () => {
   it('requiere productoId para calcular saldos correctos', async () => {
     const store = createStore();
 
-    await expect(getKardex(store, { tenantId: 'tenant-1' })).rejects.toThrow(
+    await expect(getKardex(store, { tenantId: 'tenant-1' } as FiltrosKardex)).rejects.toThrow(
       'El kardex requiere un producto específico',
     );
   });

@@ -77,7 +77,7 @@ export const getTipoPagoAction = withAction(async (id: string, user: Authenticat
   return { ...tipo, cuentaDefectoInfo };
 });
 
-export const createTipoPagoAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+export const createTipoPagoAction = withAction(async (input: z.input<typeof createSchema>, user: AuthenticatedUser) => {
   requirePermission(user, 'financiero.tipos-pago.crear', 'crear tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = createSchema.parse(input);
@@ -111,7 +111,7 @@ export const createTipoPagoAction = withAction(async (input: z.infer<typeof crea
   return { data: nuevo };
 });
 
-export const updateTipoPagoAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
+export const updateTipoPagoAction = withAction(async (input: z.input<typeof updateSchema>, user: AuthenticatedUser) => {
   requirePermission(user, 'financiero.tipos-pago.editar', 'actualizar tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = updateSchema.parse(input);

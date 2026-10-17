@@ -14,7 +14,7 @@ describe('Backfill de kardex (integración)', { timeout: 60_000 }, () => {
   afterEach(async () => {
     if (!tenantId) return
     // StockMoveLine is append-only; truncate is reserved for this disposable DB cleanup.
-    await prisma.$executeRaw`TRUNCATE TABLE "StockMoveLine"` // @ts-expect-error Prisma raw query typing is narrower in integration tests.
+    await prisma.$executeRaw`TRUNCATE TABLE "StockMoveLine"`
     await prisma.$executeRaw`DELETE FROM "StockUbicacion" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "Venta" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "CompraDocumentoItem" WHERE "tenantId" = ${tenantId}`

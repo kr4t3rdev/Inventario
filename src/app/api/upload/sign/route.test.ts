@@ -5,6 +5,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { NextRequest } from 'next/server'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { POST } from './route'
 
 // Mockeamos los módulos de server-actions (getCurrentUser) y cloudinary
@@ -19,18 +21,19 @@ vi.mock('@/lib/cloudinary', () => ({
 import { getCurrentUser } from '@/lib/server-actions'
 import { generateUploadSignature } from '@/lib/cloudinary'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-test-1',
   name: 'Test User',
   email: 'test@example.com',
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test-1',
-  tenantRole: 'admin',
+  // 'admin' es rol global, no rol de tenant; la ruta no usa tenantRole.
+  tenantRole: 'manager',
 }
 
-function createRequest(body: unknown): Request {
-  return new Request('http://localhost/api/upload/sign', {
+function createRequest(body: unknown): NextRequest {
+  return new NextRequest('http://localhost/api/upload/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

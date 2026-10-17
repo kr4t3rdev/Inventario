@@ -26,9 +26,10 @@ const mockUser = vi.hoisted(
 	(): AuthenticatedUser => ({
 		userId: "user-1",
 		tenantId: "tenant-mock-1",
-		role: "ADMIN",
+		role: "admin",
 		email: "test@test.com",
 		name: "Test User",
+		isActive: true,
 	}),
 );
 
@@ -92,7 +93,7 @@ describe("getEsperadosArqueoAction", () => {
 	it("should calculate expected values from turno", async () => {
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(buildTurno());
 
-		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+		const result = await getEsperadosArqueoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -108,7 +109,7 @@ describe("getEsperadosArqueoAction", () => {
 			_sum: { montoReembolsado: 20000 },
 		});
 
-		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+		const result = await getEsperadosArqueoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -118,7 +119,7 @@ describe("getEsperadosArqueoAction", () => {
 		mockPrisma.devolucionVenta.aggregate.mockResolvedValue({
 			_sum: { montoReembolsado: null },
 		});
-		const result2 = await getEsperadosArqueoAction("turno-1", mockUser);
+		const result2 = await getEsperadosArqueoAction("turno-1");
 		if (result2.success && result2.data) {
 			expect(result2.data.esperadoEfectivoCup).toBe(100000);
 		}
@@ -131,7 +132,7 @@ describe("getEsperadosArqueoAction", () => {
 			}),
 		);
 
-		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+		const result = await getEsperadosArqueoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -149,7 +150,7 @@ describe("getEsperadosArqueoAction", () => {
 	it("should fail if turno does not exist", async () => {
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(null);
 
-		const result = await getEsperadosArqueoAction("nonexistent", mockUser);
+		const result = await getEsperadosArqueoAction("nonexistent");
 
 		expect(result.success).toBe(false);
 		if (!result.success && result.error) {
@@ -197,7 +198,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
@@ -237,7 +237,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
@@ -279,7 +278,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
@@ -328,7 +326,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(true);
@@ -365,7 +362,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(false);
@@ -400,7 +396,6 @@ describe("realizarArqueoAction", () => {
 				totalTransferencia: 0,
 				totalCredito: 0,
 			},
-			mockUser,
 		);
 
 		expect(result.success).toBe(false);

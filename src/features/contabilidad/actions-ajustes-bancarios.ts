@@ -23,6 +23,7 @@ const createSchema = z.object({
   motivo: z.string().min(1, 'Motivo es obligatorio'),
   tasaCambio: z.number().positive().optional(),
   fechaOperacion: z.coerce.date().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 });
 
 export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: string; page?: number; limit?: number; fechaInicio?: string; fechaFin?: string; tipo?: string }, user: AuthenticatedUser) => {
@@ -33,7 +34,7 @@ export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: st
   });
 });
 
-export const createAjusteBancarioAction = withAction(withPeriodValidation(
+const createAdjustmentWithPeriodValidation = withPeriodValidation(
   (input: z.infer<typeof createSchema>) => input.fechaOperacion ? new Date(input.fechaOperacion) : new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'ajustes-bancarios', 'registrar ajustes bancarios');
@@ -44,4 +45,27 @@ export const createAjusteBancarioAction = withAction(withPeriodValidation(
     revalidatePath('/busy/contabilidad/ajustes');
     return result;
   }
-));
+);
+
+export const createAjusteBancarioAction = withAction(async (
+  input: z.infer<typeof createSchema>,
+  user: AuthenticatedUser,
+) => {
+  requireFeature(user, 'ajustes-bancarios', 'registrar ajustes bancarios');
+  const existingReplay = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+    input,
+    user,
+  });
+  if (existingReplay) return existingReplay;
+
+  try {
+    return await createAdjustmentWithPeriodValidation(input, user);
+  } catch (error) {
+    const replayAfterGate = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+      input,
+      user,
+    });
+    if (replayAfterGate) return replayAfterGate;
+    throw error;
+  }
+});

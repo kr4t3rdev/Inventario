@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 const prismaMock = vi.hoisted(() => ({
   reconciliacionVenta: { findMany: vi.fn() },
@@ -31,8 +31,13 @@ const YEAR = 2026;
  * @param {unknown[]} inYearRows - Filas del período solicitado.
  * @returns {void} No devuelve valor; configura el mock recibido.
  */
-function scopeInYear(model: { findMany: (args?: unknown) => Promise<unknown[]> }, inYearRows: unknown[]): void {
-  model.findMany.mockImplementation((args?: { where?: { fechaReconciliacion?: Record<string, unknown> } }) => {
+function scopeInYear(
+  model: { findMany: Mock<(args?: unknown) => Promise<unknown[]>> },
+  inYearRows: unknown[],
+): void {
+  // Los metodos de Prisma son sobrecargados: al tipar el mock se resuelven como
+  // NormalizedProcedure<...> y el callback no encaja. Se acota aqui.
+  ;(model.findMany as any).mockImplementation((args?: { where?: { fechaReconciliacion?: Record<string, unknown> } }) => {
     const range = args?.where?.fechaReconciliacion;
     if (range && !('gte' in range)) return Promise.resolve([]);
     return Promise.resolve(inYearRows);

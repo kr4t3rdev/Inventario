@@ -10,6 +10,7 @@
  * - deleteAlmacenAction: eliminación con existencia check
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 // Mockeamos dependencias ANTES de importar el módulo
 vi.mock('@/lib/server-actions/get-current-user');
@@ -53,11 +54,12 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockAlmacenRow = {
   almacenId: 'alm-1',
+  tenantId: 'tenant-test',
   nombre: 'Almacén Principal',
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
@@ -80,8 +82,8 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].nombre).toBe('Almacén Principal');
+      expect(expectActionSuccess(result).data).toHaveLength(1);
+      expect(expectActionSuccess(result).data![0].nombre).toBe('Almacén Principal');
       expect(prisma.almacen.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ tenantId: 'tenant-test' }),
@@ -96,7 +98,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      expect(expectActionSuccess(result).data).toEqual([]);
     });
   });
 
@@ -110,7 +112,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenByIdAction('alm-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.nombre).toBe('Almacén Principal');
+      expect(expectActionSuccess(result).data!.nombre).toBe('Almacén Principal');
       expect(prisma.almacen.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { almacenId: 'alm-1', tenantId: 'tenant-test' },
@@ -125,7 +127,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenByIdAction('alm-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -157,7 +159,7 @@ describe('Almacenes Server Actions', () => {
       const result = await createAlmacenAction({ nombre: '' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.code).toBe('VALIDATION_ERROR');
     });
   });
 
@@ -191,7 +193,7 @@ describe('Almacenes Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -223,7 +225,7 @@ describe('Almacenes Server Actions', () => {
       const result = await deleteAlmacenAction('alm-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -236,7 +238,7 @@ describe('Almacenes Server Actions', () => {
       const result = await getAlmacenesAction();
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
 
     it('createAlmacenAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -245,7 +247,7 @@ describe('Almacenes Server Actions', () => {
       const result = await createAlmacenAction({ nombre: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
 
     it('deleteAlmacenAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -254,7 +256,7 @@ describe('Almacenes Server Actions', () => {
       const result = await deleteAlmacenAction('alm-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -63,7 +64,12 @@ describe('mobile v1 operation inventory', () => {
     const capital = inventory.rows.find((row) =>
       row.operation === 'POST /accounting/capital-injections');
     expect(capital?.requestSchemaName).toBe('CapitalInjectionCreateRequest');
-    expect(capital?.mobileConsumerFiles).toContain('capital-api.ts');
+    // Checkouts without mobile/ return an empty consumer inventory by design.
+    if (existsSync('mobile/src')) {
+      expect(capital?.mobileConsumerFiles).toContain('capital-api.ts');
+    } else {
+      expect(capital?.mobileConsumerFiles).toEqual([]);
+    }
   });
 
   it('reporta deltas estructurales sin depender de conteos fijos', async () => {

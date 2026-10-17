@@ -150,7 +150,7 @@ export const getCuentaBancariaByIdAction = withAction(async (cuentaId: string, u
 
 export const createCuentaBancariaAction = withAction(withPeriodValidation(
   (input: z.input<typeof createSchema>) => Number(input.saldo ?? 0) > 0 ? new Date() : null,
-  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  async (input: z.input<typeof createSchema>, user: AuthenticatedUser) => {
   requireFeature(user, 'contabilidad', 'crear cuentas bancarias');
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);

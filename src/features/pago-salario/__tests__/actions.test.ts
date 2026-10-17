@@ -48,7 +48,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('PagoSalario Server Actions', () => {
@@ -80,7 +80,7 @@ describe('PagoSalario Server Actions', () => {
   describe('createPagoSalarioAction', () => {
     it('crea pago exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' });
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
       vi.mocked(prisma.pagosalario.create).mockResolvedValue({ pgId: 'pg-1' } as any);
       const result = await createPagoSalarioAction({ empleadoId: 'emp-1', salario: 50000 });
       expect(result.success).toBe(true);
@@ -107,7 +107,7 @@ describe('PagoSalario Server Actions', () => {
   describe('updatePagoSalarioAction', () => {
     it('actualiza pago exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.pagosalario.findFirst).mockResolvedValue({ pgId: 'pg-1' });
+      vi.mocked(prisma.pagosalario.findFirst).mockResolvedValue({ pgId: 'pg-1' } as any);
       vi.mocked(prisma.pagosalario.update).mockResolvedValue({} as any);
       const result = await updatePagoSalarioAction({ pgId: 'pg-1', salario: 60000 });
       expect(result.success).toBe(true);
@@ -270,7 +270,7 @@ describe('PagoSalario Server Actions', () => {
     it('permite pagos con empleados:true aunque nomina:false', async () => {
       const basicPlanUser: AuthenticatedUser = {
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         planFeatures: {
           empleados: true,

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user', () => ({
   getCurrentUser: vi.fn(),
@@ -66,7 +67,7 @@ describe('getResumenCompletoAction', () => {
     const result = await getResumenCompletoAction({ fechaInicio: '2026-08-01', fechaFin: '2026-08-31' });
 
     expect(result.success).toBe(true);
-    expect(result.data).toMatchObject({
+    expect(expectActionSuccess(result).data).toMatchObject({
       resumen: resumenOk,
       monedas: [{ codigo: 'CUP', esPrincipal: true }],
       prestamosStats: { totalActivos: 2 },
@@ -82,8 +83,8 @@ describe('getResumenCompletoAction', () => {
     const result = await getResumenCompletoAction({});
 
     expect(result.success).toBe(true);
-    expect(result.data?.monedas).toEqual([]);
-    expect(result.data?.resumen).toEqual(resumenOk);
+    expect(expectActionSuccess(result).data?.monedas).toEqual([]);
+    expect(expectActionSuccess(result).data?.resumen).toEqual(resumenOk);
   });
 
   it('no consulta préstamos si el plan no los incluye', async () => {
@@ -96,7 +97,7 @@ describe('getResumenCompletoAction', () => {
 
     expect(result.success).toBe(true);
     expect(mocks.getPrestamosCashStatsAction).not.toHaveBeenCalled();
-    expect(result.data?.prestamosStats).toBeNull();
+    expect(expectActionSuccess(result).data?.prestamosStats).toBeNull();
   });
 
   it('rechaza usuarios sin la feature contabilidad', async () => {

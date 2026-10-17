@@ -2,6 +2,7 @@
  * @description Tests unitarios para filtros y métricas de licencias paginadas.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/lib/prisma', () => {
@@ -41,7 +42,7 @@ const adminUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-admin',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 describe('Admin license filters actions', () => {
@@ -89,7 +90,7 @@ describe('Admin license filters actions', () => {
     });
 
     expect(r.success).toBe(true);
-    expect(r.data).toEqual({
+    expect(expectActionSuccess(r).data).toEqual({
       total: 12,
       activas: 8,
       expiradas: 2,

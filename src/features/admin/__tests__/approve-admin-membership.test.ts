@@ -39,14 +39,15 @@ import { approveAdminMembership } from '../server/admin-global-queries';
 function buildManager(): AuthenticatedUser {
 	return {
 		userId: 'manager-1',
+		name: 'Manager',
 		email: 'manager@example.com',
 		role: 'regularUser',
 		isActive: true,
 		tenantId: 'tenant-1',
 		tenantRole: 'manager',
-		planFeatures: [],
+		planFeatures: {},
 		planName: 'Básico',
-		permissions: ['config.usuarios.gestionar'],
+		permissions: new Set(['config.usuarios.gestionar']),
 	} as AuthenticatedUser;
 }
 

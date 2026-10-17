@@ -88,7 +88,7 @@ describe('CU-05 precio de catálogo en venta de servicios (RED)', () => {
     } as any);
 
     expect(result.success).toBe(true);
-    expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+    expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ precioUnitario: 5000, total: 15000 }),
       }),

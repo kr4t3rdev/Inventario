@@ -28,6 +28,8 @@ import {
 	type PeriodoErrorCode,
 } from "./periodo-contable-types";
 
+export type PeriodoReadClient = Pick<typeof prisma, "periodoContable">;
+
 /**
  * @description Servicio de dominio para gestión de períodos contables.
  *
@@ -49,6 +51,7 @@ export class PeriodoContableService {
 		fecha: Date,
 		tenantId: string,
 		tipo?: TipoPeriodo,
+		client: PeriodoReadClient = prisma,
 	): Promise<ResolverPeriodoResult> {
 		const tiposBusqueda = tipo
 			? [tipo]
@@ -64,7 +67,7 @@ export class PeriodoContableService {
 		inicioDiaFinal.setUTCHours(0, 0, 0, 0);
 
 		for (const t of tiposBusqueda) {
-			const periodo = await prisma.periodoContable.findFirst({
+			const periodo = await client.periodoContable.findFirst({
 				where: {
 					tenantId,
 					tipo: t as any,
@@ -105,8 +108,9 @@ export class PeriodoContableService {
 		fecha: Date,
 		tenantId: string,
 		_tipoOperacion?: "caja" | "devengo",
+		client: PeriodoReadClient = prisma,
 	): Promise<ValidacionResult> {
-		const resultado = await this.resolverPeriodoActivo(fecha, tenantId);
+		const resultado = await this.resolverPeriodoActivo(fecha, tenantId, undefined, client);
 
 		if (resultado.estado === "NO_EXISTE") {
 			return {

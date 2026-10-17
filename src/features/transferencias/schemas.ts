@@ -49,7 +49,7 @@ export const rechazarTransferenciaSchema = z.object({
   motivo: z.string().min(1, 'El motivo de rechazo es requerido'),
 });
 
-export type CreateTransferenciaInput = z.infer<typeof createTransferenciaSchema>;
+export type CreateTransferenciaInput = z.input<typeof createTransferenciaSchema>;
 export type UpdateTransferenciaInput = z.infer<typeof updateTransferenciaSchema>;
 export type AprobarTransferenciaInput = z.infer<typeof aprobarTransferenciaSchema>;
 export type CompletarTransferenciaInput = z.infer<typeof completarTransferenciaSchema>;

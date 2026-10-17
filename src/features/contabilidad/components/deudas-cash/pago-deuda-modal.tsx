@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -56,6 +56,7 @@ export function PagoDeudaModal({
   onSuccess,
 }: PagoDeudaModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const requestIntent = useRef<{ signature: string; key: string } | null>(null)
 
   const saldoPendiente = useMemo(() => {
     if (!deuda?.cuentaPorPagar) return Number(deuda?.montoCapital ?? 0)
@@ -98,6 +99,10 @@ export function PagoDeudaModal({
 
     setIsLoading(true)
     try {
+      const signature = JSON.stringify({ debtId: deuda.id, values })
+      if (requestIntent.current?.signature !== signature) {
+        requestIntent.current = { signature, key: crypto.randomUUID() }
+      }
       const result = await registrarPagoDeudaAction({
         id: deuda.id,
         monto: values.monto,
@@ -106,6 +111,7 @@ export function PagoDeudaModal({
         moneda: values.moneda,
         tasaCambio: values.tasaCambio,
         observaciones: values.observaciones || undefined,
+        idempotencyKey: requestIntent.current.key,
       })
 
       if (!result.success) {
@@ -114,6 +120,7 @@ export function PagoDeudaModal({
       }
 
       toast.success("Pago registrado correctamente")
+      requestIntent.current = null
       onSuccess?.()
       onOpenChange(false)
     } catch (error) {
@@ -144,7 +151,7 @@ export function PagoDeudaModal({
                 <FormItem>
                   <FormLabel>Monto a pagar</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" max={saldoPendiente} {...field} />
+                    <Input type="number" step="0.0001" min="0" max={saldoPendiente} {...field} />
                   </FormControl>
                   {montoIngresado > saldoPendiente && (
                     <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(2)})</p>

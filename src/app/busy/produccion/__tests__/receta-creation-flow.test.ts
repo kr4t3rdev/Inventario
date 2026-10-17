@@ -10,11 +10,42 @@ import { describe, it, expect, beforeEach } from 'vitest'
  * 4. Busca y agrega productos a la receta
  * 5. Verifica que el costo unitario se calcula correctamente
  */
+/**
+ * @description Estado del formulario de receta simulado en este flujo E2E.
+ */
+interface EstadoReceta {
+  nombreReceta: string
+  rendimiento: number
+  selectedProducto: string | null
+  nuevoItems: Array<{
+    productoId: string
+    cantidad: number
+    unidadSimbolo: string
+    desperdicio: number
+  }>
+  busquedaProductos: string
+  dialogRecetaOpen: boolean
+}
+
+interface ProductoInventarioItem {
+  id: string
+  nombre: string
+  precioCosto: number
+  stock: number
+}
+
+interface NuevoItemReceta {
+  productoId: string
+  cantidad: number
+  unidadSimbolo: string
+  desperdicio: number
+}
+
 describe('E2E: Crear Receta Completa con Productos', () => {
   
   it('debe permitir crear una receta desde cero hasta completarla', async () => {
     // Simulamos el estado inicial del componente
-    let estado = {
+    const estado: EstadoReceta = {
       nombreReceta: '',
       rendimiento: 1,
       selectedProducto: '',
@@ -24,7 +55,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
     }
 
     // Mock de datos del servidor
-    const productosInventario = [
+    const productosInventario: ProductoInventarioItem[] = [
       { id: 'p1', nombre: 'Harina de Trigo', precioCosto: 100, stock: 500 },
       { id: 'p2', nombre: 'Azúcar Blanca', precioCosto: 80, stock: 300 },
       { id: 'p3', nombre: 'Sal de Mar', precioCosto: 20, stock: 200 },
@@ -154,11 +185,11 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe prevenir agregar el mismo producto dos veces', async () => {
-    let nuevoItems = [
-      { productoId: 'p1', cantidad: 1, unidadSimbolo: null, desperdicio: 0 },
+    const nuevoItems: NuevoItemReceta[] = [
+      { productoId: 'p1', cantidad: 1, unidadSimbolo: '', desperdicio: 0 },
     ]
 
-    const productosInventario = [
+    const productosInventario: ProductoInventarioItem[] = [
       { id: 'p1', nombre: 'Harina de Trigo', precioCosto: 100, stock: 500 },
       { id: 'p2', nombre: 'Azúcar Blanca', precioCosto: 80, stock: 300 },
     ]
@@ -174,9 +205,9 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe mostrar busqueda vacía cuando no hay coincidencias', () => {
-    const busquedaProductos = 'cemento'
+    const busquedaProductos: string = 'cemento'
     
-    const productosInventario = [
+    const productosInventario: ProductoInventarioItem[] = [
       { id: 'p1', nombre: 'Harina de Trigo', precioCosto: 100, stock: 500 },
       { id: 'p2', nombre: 'Azúcar Blanca', precioCosto: 80, stock: 300 },
     ]
@@ -189,9 +220,9 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe mostrar todos los productos si búsqueda está vacía', () => {
-    const busquedaProductos = ''
+    const busquedaProductos: string = ''
     
-    const productosInventario = [
+    const productosInventario: ProductoInventarioItem[] = [
       { id: 'p1', nombre: 'Harina de Trigo', precioCosto: 100, stock: 500 },
       { id: 'p2', nombre: 'Azúcar Blanca', precioCosto: 80, stock: 300 },
       { id: 'p3', nombre: 'Sal de Mar', precioCosto: 20, stock: 200 },
@@ -206,8 +237,8 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe permitir editar cantidad y unidad de producto agregado', () => {
-    let nuevoItems = [
-      { productoId: 'p1', cantidad: 1, unidadSimbolo: null, desperdicio: 0 },
+    const nuevoItems: NuevoItemReceta[] = [
+      { productoId: 'p1', cantidad: 1, unidadSimbolo: '', desperdicio: 0 },
     ]
 
     // Usuario edita cantidad
@@ -258,7 +289,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe permitir crear receta sin producto final', () => {
-    const selectedProducto = ''
+    const selectedProducto: string | null = ''
     const isValid = selectedProducto === '' || selectedProducto.length > 0
 
     expect(isValid).toBe(true)

@@ -38,6 +38,20 @@ const ajusteBancarioSchema = z.object({
 
 type AjusteBancarioFormData = z.infer<typeof ajusteBancarioSchema>
 
+/** @description Builds a bank-adjustment payload with a stable key for request retries. */
+export function buildBankAdjustmentPayload(data: AjusteBancarioFormData, idempotencyKey: string) {
+  return {
+    cuentaId: data.cuentaId,
+    tipo: data.tipo,
+    monto: Number(data.monto),
+    moneda: data.moneda,
+    descripcion: data.descripcion,
+    motivo: data.motivo,
+    fechaOperacion: new Date(`${data.fechaOperacion}T12:00:00.000Z`),
+    idempotencyKey,
+  }
+}
+
 interface AjusteBancarioFormProps {
   onSuccess?: () => void
   onCancel?: () => void
@@ -50,6 +64,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
     const [monedas, setMonedas] = useState<Moneda[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const isLoadingCuentas = useRef(true)
+    const pendingIdempotencyKey = useRef<string | null>(null)
 
     useEffect(() => {
       Promise.all([
@@ -151,25 +166,25 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
     submitAjuste(data)
   }
 
+  const handleCancel = () => {
+    pendingIdempotencyKey.current = null
+    onCancel?.()
+  }
+
   const submitAjuste = async (data: AjusteBancarioFormData) => {
     try {
       setIsSubmitting(true)
-      const monto = Number(data.monto)
-
-      const result = await createAjusteBancarioAction({
-        cuentaId: data.cuentaId,
-        tipo: data.tipo,
-        monto,
-        moneda: data.moneda,
-        descripcion: data.descripcion,
-        motivo: data.motivo,
-        fechaOperacion: new Date(`${data.fechaOperacion}T12:00:00.000Z`),
-      })
+      const idempotencyKey = pendingIdempotencyKey.current ?? crypto.randomUUID()
+      pendingIdempotencyKey.current = idempotencyKey
+      const result = await createAjusteBancarioAction(
+        buildBankAdjustmentPayload(data, idempotencyKey),
+      )
 
       if (!result.success) throw new Error(result.error?.message || 'Error al crear ajuste')
 
       sileo.success({ title: 'Ajuste bancario creado exitosamente.' })
       reset()
+      pendingIdempotencyKey.current = null
       setShowWarning(false)
       onSuccess?.()
     } catch (error: unknown) {
@@ -396,7 +411,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={onCancel}
+                  onClick={handleCancel}
                   disabled={isSubmitting}
                 >
                   Cancelar

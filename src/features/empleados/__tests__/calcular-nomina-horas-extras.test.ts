@@ -58,7 +58,7 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
     vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([]);
     vi.mocked(prisma.empleado.findMany).mockResolvedValue([empleado] as never);
     vi.mocked(prisma.pagosalario.create).mockImplementation(
-      async (args: never) => ({ pgId: 'pg-1', ...(args as { data: object }).data }) as never,
+      (async (args: any) => ({ pgId: 'pg-1', ...(args as { data: object }).data })) as never,
     );
   });
 

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   reconciliarHistorial,
   type ItemCompraMaterializado,
+  type ReconciliadorOptions,
 } from '../lib/reconciliador-historial'
 
 const FECHA_FIJA = new Date('2026-06-20T12:00:00Z')

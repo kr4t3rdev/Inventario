@@ -11,11 +11,15 @@ import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset'
-import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
+import { syncOwnerAssets } from '@/lib/upload/cloudinary-admin'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service'
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service'
+import {
+  isCashCreateIdempotencyUniqueConflict,
+  runCashCreateWithReplay,
+} from '@/lib/services/cash-create-idempotency'
 
 function deudasCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false' }
 
@@ -23,12 +27,15 @@ const createSchema = z.object({
   proveedorId: z.string().min(1, 'El proveedorId es requerido'),
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
-  tasaInteres: z.coerce.number().min(0).optional(),
+  tasaInteres: z.coerce.number().min(0),
+  tasaInteresMoratorio: z.coerce.number().min(0),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().optional(),
   comprobanteAsset: cloudinaryAssetSchema.optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const updateSchema = z.object({
@@ -38,12 +45,14 @@ const updateSchema = z.object({
 }).strict()
 
 const pagoSchema = z.object({
+  id: z.string().min(1),
   monto: z.coerce.number().positive('El monto debe ser positivo'),
   cuentaId: z.string().min(1, 'La cuenta bancaria es requerida'),
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
   observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const DEUDA_INCLUDE = {
@@ -77,30 +86,49 @@ export const getDeudaCashByIdAction = withAction(async (id: string, user: Authen
   return AccountingCashOperationsService.getCashDebtById({ tenantId, id })
 })
 
-export const createDeudaCashAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el desembolso
-  () => new Date(),
-  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-    requireFeature(user, 'deudas-cash', 'crear deudas cash');
-    const body = createSchema.parse(input)
-    const tenantId = requireTenant(user)
-    const deuda = await AccountingCashOperationsMutationService.createCashDebt({
+export const createDeudaCashAction = withAction(async (
+  input: z.infer<typeof createSchema>,
+  user: AuthenticatedUser
+) => {
+  requireFeature(user, 'deudas-cash', 'crear deudas cash');
+  const body = createSchema.parse(input)
+  const tenantId = requireTenant(user)
+  const operationDate = new Date()
+  const deuda = await runCashCreateWithReplay({
+    findReplay: () => AccountingCashOperationsMutationService.findCashDebtCreateReplay({
       input: body,
       user,
+    }),
+    validatePeriod: () => withPeriodValidation(
+      () => operationDate,
+      async () => undefined,
+    )(undefined, user),
+    write: () => AccountingCashOperationsMutationService.createCashDebt({
+      input: body,
+      user,
+      operationDate,
+    }),
+    canRecover: (error) => {
+      if (error instanceof ActionError && [
+        'PERIODO_CERRADO',
+        'PERIODO_APROBADO',
+        'PERIODO_EN_CIERRE',
+      ].includes(error.code ?? '')) return true
+      return isCashCreateIdempotencyUniqueConflict(error)
+    },
+  })
+  if (body.comprobanteAsset) {
+    await syncOwnerAssets({
+      tenantId,
+      ownerType: 'deudaCash',
+      ownerId: deuda.id,
+      slot: 'receipt',
+      assets: [body.comprobanteAsset],
     })
-    if (body.comprobanteAsset) {
-      await recordOwnerAsset({
-        tenantId,
-        ownerType: 'deudaCash',
-        ownerId: deuda.id,
-        slot: 'receipt',
-        asset: body.comprobanteAsset,
-      })
-    }
-    revalidatePath('/busy/contabilidad/deudas-cash')
-    return deuda
   }
-));
+  revalidatePath('/busy/contabilidad/deudas-cash')
+  return deuda
+})
 
 export const updateDeudaCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
@@ -117,26 +145,33 @@ export const updateDeudaCashAction = withAction(async (
   return deuda
 })
 
-export const registrarPagoDeudaAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el pago
-  () => new Date(),
-  async (
-    input: { id: string } & z.infer<typeof pagoSchema>,
-    user: AuthenticatedUser
-  ) => {
-    requireFeature(user, 'deudas-cash', 'registrar pagos de deudas cash');
-    const {
-    // @ts-expect-error Zod infers the intersection without preserving the external id field in destructuring.
-    id, ...body
-    } = pagoSchema.parse(input)
-    const resultado = await AccountingCashOperationsMutationService.registerCashDebtPayment({
-      input: { id, ...body },
+export const registrarPagoDeudaAction = withAction(async (
+  input: { id: string } & z.infer<typeof pagoSchema>,
+  user: AuthenticatedUser
+) => {
+  requireFeature(user, 'deudas-cash', 'registrar pagos de deudas cash');
+  const { id, ...body } = pagoSchema.parse(input);
+  const paymentInput = { id, ...body };
+  const resultado = await runCashCreateWithReplay({
+    findReplay: () => AccountingCashOperationsMutationService.findCashDebtPaymentReplay({
+      input: paymentInput,
       user,
-    })
-    revalidatePath('/busy/contabilidad/deudas-cash')
-    return { reconciliacion: resultado }
-  }
-));
+    }),
+    validatePeriod: () => withPeriodValidation(
+      () => new Date(),
+      async () => undefined,
+    )(paymentInput, user),
+    write: () => AccountingCashOperationsMutationService.registerCashDebtPayment({
+      input: paymentInput,
+      user,
+    }),
+    canRecover: (error) =>
+      isCashCreateIdempotencyUniqueConflict(error) ||
+      (error instanceof ActionError && error.code.startsWith('PERIODO_')),
+  });
+  revalidatePath('/busy/contabilidad/deudas-cash');
+  return { reconciliacion: resultado };
+});
 
 export const getDeudasCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'deudas-cash', 'ver estadísticas de deudas cash');

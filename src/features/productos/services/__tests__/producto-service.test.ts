@@ -72,7 +72,7 @@ describe('ProductoService', () => {
 
     await expect(
       ProductoService.getById({ tenantId: 'tenant-1', productId: 'missing-prod' }),
-    ).rejects.toMatchObject<ActionError>({
+    ).rejects.toMatchObject({
       code: 'NOT_FOUND',
       message: 'Producto no encontrado',
     });

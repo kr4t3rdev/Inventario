@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de backups.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -97,7 +98,7 @@ describe('Backups Server Actions', () => {
     const result = await createBackupAction({ type: 'tenant', tenantId: 'tenant-x' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     expect(backupEngineCtor).not.toHaveBeenCalled();
   });
 });

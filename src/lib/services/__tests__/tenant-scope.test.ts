@@ -12,6 +12,25 @@ import {
 } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
+/**
+ * @description Construye un usuario de prueba preservando EXACTAMENTE los
+ * valores literales recibidos.
+ *
+ * Varios casos de esta suite verifican compatibilidad con roles legados
+ * (`role: 'user'`) y el rechazo de roles de tenant invalidos
+ * (`tenantRole: 'cajero'`). Esos literales no pertenecen a `AppUserRole` ni a
+ * `TenantRole`, pero el codigo bajo prueba los lee tal cual: normalizarlos con
+ * `normalizeUserRole` / `normalizeTenantRole` cambiaria la autorizacion que el
+ * test comprueba (p. ej. `'cajero'` pasaria a `null`), asi que el valor debe
+ * sobrevivir intacto al tipado.
+ *
+ * @param {Record<string, unknown>} partial - Campos del usuario.
+ * @returns {AuthenticatedUser} Usuario tipado con los valores originales.
+ */
+function legacyUser(partial: Record<string, unknown>): AuthenticatedUser {
+  return partial as unknown as AuthenticatedUser;
+}
+
 describe('scopedWhere', () => {
   it('agrega tenantId al where vacío', () => {
     const result = scopedWhere('tenant-1')
@@ -68,23 +87,23 @@ describe('assertTenantAccess', () => {
 
 describe('requireTenant', () => {
   it('devuelve tenantId cuando el usuario tiene tenant', () => {
-    const user = { userId: 'u-1', tenantId: 'tenant-1' } as AuthenticatedUser
+    const user = legacyUser({ userId: 'u-1', tenantId: 'tenant-1' })
     expect(requireTenant(user)).toBe('tenant-1')
   })
 
   it('lanza error cuando el usuario no tiene tenantId', () => {
-    const user = { userId: 'u-1' } as AuthenticatedUser
+    const user = legacyUser({ userId: 'u-1' })
     expect(() => requireTenant(user))
       .toThrow('Se requiere una membresía de empresa activa para acceder a este recurso')
   })
 })
 
 describe('requireFeature', () => {
-  const userWithFeature = { userId: 'u-1', tenantId: 't-1', role: 'user', planFeatures: { clientes: true } } as AuthenticatedUser;
-  const userWithoutFeature = { userId: 'u-2', tenantId: 't-1', role: 'user', planFeatures: { clientes: false } } as AuthenticatedUser;
-  const userNoPlanFeatures = { userId: 'u-3', tenantId: 't-1', role: 'user' } as AuthenticatedUser;
-  const adminUser = { userId: 'u-4', role: 'admin' } as AuthenticatedUser;
-  const userNoTenant = { userId: 'u-5', role: 'user', planFeatures: { clientes: true } } as AuthenticatedUser;
+  const userWithFeature = legacyUser({ userId: 'u-1', tenantId: 't-1', role: 'user', planFeatures: { clientes: true } } );
+  const userWithoutFeature = legacyUser({ userId: 'u-2', tenantId: 't-1', role: 'user', planFeatures: { clientes: false } } );
+  const userNoPlanFeatures = legacyUser({ userId: 'u-3', tenantId: 't-1', role: 'user' });
+  const adminUser = legacyUser({ userId: 'u-4', role: 'admin' });
+  const userNoTenant = legacyUser({ userId: 'u-5', role: 'user', planFeatures: { clientes: true } } );
 
   it('permite acceso cuando planFeatures[key] es true', () => {
     expect(() => requireFeature(userWithFeature, 'clientes')).not.toThrow();
@@ -110,14 +129,14 @@ describe('requireFeature', () => {
   });
 
   describe('features del plan Profesional', () => {
-    const basicoUser = { userId: 'u-basico', tenantId: 't-1', role: 'user', planFeatures: {} } as AuthenticatedUser;
-    const profesionalUser = { userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
+    const basicoUser = legacyUser({ userId: 'u-basico', tenantId: 't-1', role: 'user', planFeatures: {} } );
+    const profesionalUser = legacyUser({ userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
       'transferencias-bancarias': true,
       'ajustes-bancarios': true,
       'ventas-factura': true,
       'multi-moneda': true,
       'facturacion': true,
-    } } as AuthenticatedUser;
+    } } );
 
     const PROFESIONAL_FEATURES: Array<{ key: string; label: string }> = [
       { key: 'transferencias-bancarias', label: 'transferencias bancarias' },
@@ -140,18 +159,18 @@ describe('requireFeature', () => {
   });
 
   describe('features de inventario por plan (paridad Odoo)', () => {
-    const basicoUser = { userId: 'u-bas', tenantId: 't-1', role: 'user', planFeatures: {
+    const basicoUser = legacyUser({ userId: 'u-bas', tenantId: 't-1', role: 'user', planFeatures: {
       kardex: true, 'ajustes-inventario': true, 'conteo-fisico': true,
-    } } as AuthenticatedUser;
-    const profesionalUser = { userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
+    } } );
+    const profesionalUser = legacyUser({ userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
       kardex: true, 'ajustes-inventario': true, 'conteo-fisico': true,
       'ordenes-compra': true, recepciones: true, reabastecimiento: true,
       'unidades-conversion': true, 'lotes-series': true, variantes: true,
       'ubicaciones-avanzadas': true,
-    } } as AuthenticatedUser;
-    const empresarialUser = { userId: 'u-emp', tenantId: 't-1', role: 'user', planFeatures: {
+    } } );
+    const empresarialUser = legacyUser({ userId: 'u-emp', tenantId: 't-1', role: 'user', planFeatures: {
       'mrp-avanzado': true,
-    } } as AuthenticatedUser;
+    } } );
 
     it('permite el núcleo auditable en plan Básico', () => {
       for (const key of ['kardex', 'ajustes-inventario', 'conteo-fisico']) {
@@ -176,26 +195,26 @@ describe('requireFeature', () => {
 })
 
 describe('role gates', () => {
-  const dependienteUser = {
+  const dependienteUser = legacyUser({
     userId: 'u-dep',
     tenantId: 't-1',
     tenantRole: 'dependiente',
-  } as AuthenticatedUser;
-  const economicoUser = {
+  });
+  const economicoUser = legacyUser({
     userId: 'u-eco',
     tenantId: 't-1',
     tenantRole: 'economico',
-  } as AuthenticatedUser;
-  const managerUser = {
+  });
+  const managerUser = legacyUser({
     userId: 'u-man',
     tenantId: 't-1',
     tenantRole: 'manager',
-  } as AuthenticatedUser;
-  const invalidRoleUser = {
+  });
+  const invalidRoleUser = legacyUser({
     userId: 'u-invalid',
     tenantId: 't-1',
     tenantRole: 'cajero',
-  } as AuthenticatedUser;
+  });
 
   it('requireManagerRole permite manager y rechaza economico', () => {
     expect(() => requireManagerRole(managerUser, 'administrar productos')).not.toThrow();
@@ -269,7 +288,7 @@ describe('requirePermission / hasPermission (PG-03)', () => {
   });
 
   it('lanza error de contexto si el usuario no tiene tenant (aunque tenga el permiso)', () => {
-    const noTenant = { ...userWith, tenantId: undefined } as AuthenticatedUser;
+    const noTenant = legacyUser({ ...userWith, tenantId: undefined });
     expect(() => requirePermission(noTenant, KEY, 'hacer algo')).toThrow(/membresía de empresa/);
   });
 
@@ -292,7 +311,7 @@ describe('requirePermission / hasPermission (PG-03)', () => {
     expect(hasPermission(userWith, KEY)).toBe(true);
     expect(hasPermission(userWithout, KEY)).toBe(false);
     expect(hasPermission(adminUser, KEY)).toBe(true);
-    expect(hasPermission({ ...userWith, permissions: undefined } as AuthenticatedUser, KEY)).toBe(false);
+    expect(hasPermission(legacyUser({ ...userWith, permissions: undefined }), KEY)).toBe(false);
   });
 
   it('lazy fallback: usuario sin permissions resueltos usa defaults de su rol fijo', () => {
@@ -328,21 +347,21 @@ describe('requirePermission / hasPermission (PG-03)', () => {
 
 
   it('orden con requireFeature: FEATURE_NOT_AVAILABLE precede a FORBIDDEN', () => {
-    const offPlanNoPerm = {
+    const offPlanNoPerm = legacyUser({
       ...userWithout,
       planFeatures: { servicios: false },
-    } as AuthenticatedUser;
-    const onPlanNoPerm = {
+    } );
+    const onPlanNoPerm = legacyUser({
       ...userWithout,
       planFeatures: { servicios: true },
-    } as AuthenticatedUser;
+    } );
 
     // Orden documentado: primero feature (eje comercial), después permiso.
     const compose = (user: AuthenticatedUser) => {
       requireFeature(user, 'servicios', 'ventas de servicios');
       requirePermission(user, KEY, 'eliminar ventas de servicios');
     };
-    const userWithBoth = { ...userWith, planFeatures: { servicios: true } } as AuthenticatedUser;
+    const userWithBoth = legacyUser({ ...userWith, planFeatures: { servicios: true } } );
 
     expect(() => compose(offPlanNoPerm)).toThrow(/Tu plan actual no incluye/);
     expect(() => compose(onPlanNoPerm)).toThrow(/No tienes permisos para eliminar ventas de servicios/);

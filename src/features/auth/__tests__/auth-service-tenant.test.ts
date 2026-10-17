@@ -87,14 +87,15 @@ function buildStoredUser(overrides: Record<string, unknown> = {}) {
 function buildAuthUser(overrides: Record<string, unknown> = {}): AuthenticatedUser {
 	return {
 		userId: 'user-1',
+		name: 'Ana',
 		email: 'ana@example.com',
 		role: 'regularUser',
 		isActive: true,
 		tenantId: 'tenant-a',
 		tenantRole: 'dependiente',
-		planFeatures: [],
+		planFeatures: {},
 		planName: 'Básico',
-		permissions: [],
+		permissions: new Set<string>(),
 		...overrides,
 	} as AuthenticatedUser;
 }

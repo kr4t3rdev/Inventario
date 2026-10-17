@@ -4,6 +4,7 @@
  * sin turno en una caja PRINCIPAL.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -49,7 +50,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('facturarOfertaAction – propagación de errores de turno', () => {
@@ -72,7 +73,8 @@ describe('facturarOfertaAction – propagación de errores de turno', () => {
     mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
     mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'Prod', tenantId: 'tenant-test' } as any);
     mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
-    mockTx.servicios = undefined;
+    // El caso simula que el cliente transaccional no expone `servicios`.
+    (mockTx as unknown as { servicios?: unknown }).servicios = undefined;
     mockTx.oferta.update.mockResolvedValue({ id: 'of-1', estado: 'FACTURADA' } as any);
   });
 
@@ -85,8 +87,8 @@ describe('facturarOfertaAction – propagación de errores de turno', () => {
     const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
 
     expect(result.success).toBe(false);
-    expect(result.error!.code).toBe('NO_TURNO_ACTIVO');
-    expect(result.error!.message).toContain('turno');
+    expect(expectActionFailure(result).error!.code).toBe('NO_TURNO_ACTIVO');
+    expect(expectActionFailure(result).error!.message).toContain('turno');
   });
 
   it('retrasa error cross-tenant cuando getOrCreateTurnoActivo detecta POS de otro tenant', async () => {
@@ -98,6 +100,6 @@ describe('facturarOfertaAction – propagación de errores de turno', () => {
     const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-b' });
 
     expect(result.success).toBe(false);
-    expect(result.error!.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
   });
 });

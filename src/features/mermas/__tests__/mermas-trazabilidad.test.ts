@@ -36,7 +36,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('CU-07 trazabilidad y costo de mermas (RED)', () => {

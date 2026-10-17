@@ -32,6 +32,7 @@ vi.mock('@/lib/prisma', () => {
   const tx = {
     $executeRaw: vi.fn(async () => 0),
     ajusteBancario: {
+      findUnique: vi.fn(async () => null),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         ajusteId: 'adj-1',
         tenantId: 'tenant-1',
@@ -49,7 +50,11 @@ vi.mock('@/lib/prisma', () => {
         updatedAt: '2026-10-12T00:00:00.000Z',
       })),
     },
-    cuentaBancaria: { update: vi.fn(async () => ({})) },
+    cuentaBancaria: {
+      findFirst: vi.fn(async () => state.cuenta),
+      update: vi.fn(async () => ({})),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
     auditLog: { create: vi.fn(async () => ({})) },
   };
   return {
@@ -67,6 +72,7 @@ vi.mock('@/lib/prisma', () => {
 import { authenticateUser } from '@/lib/auth-middleware';
 import { requireFeature } from '@/lib/services/tenant-scope';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import { GET, POST } from '../route';
 
 function request(url: string, init?: RequestInit): Request {
@@ -80,6 +86,8 @@ beforeEach(() => {
   vi.mocked(requireFeature).mockImplementation(() => undefined);
   vi.mocked(validarEscrituraPeriodo).mockReset();
   vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never);
+  vi.spyOn(AccountingOperationsMutationService, 'findBankAdjustmentReplay').mockRestore();
+  vi.spyOn(AccountingOperationsMutationService, 'createBankAdjustment').mockRestore();
   state.cuenta.saldo = '500';
 });
 
@@ -152,6 +160,43 @@ describe('POST /api/mobile/v1/accounting/bank-adjustments', () => {
     }) as never);
     expect(response.status).toBe(400);
     expect((await response.json()).code).toBe('PERIODO_CERRADO');
+  });
+
+  it('acepta la clave por header y busca replay antes de validar período', async () => {
+    const existing = { ajuste: { ajusteId: 'adj-existing' }, saldoNuevo: 600 };
+    vi.spyOn(AccountingOperationsMutationService, 'findBankAdjustmentReplay').mockResolvedValue(existing as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      error: { message: 'Período cerrado', code: 'PERIODO_CERRADO' },
+    } as never);
+
+    const response = await POST(request('http://localhost/x', {
+      method: 'POST',
+      body: JSON.stringify({ cuentaId: 'cuenta-1', tipo: 'ingreso', monto: 100, moneda: 'CUP', descripcion: 'D', motivo: 'M' }),
+      headers: { 'content-type': 'application/json', 'Idempotency-Key': 'header-key' },
+    }) as never);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(existing);
+    expect(AccountingOperationsMutationService.findBankAdjustmentReplay).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'header-key' }),
+      user: state.user,
+    });
+    expect(validarEscrituraPeriodo).not.toHaveBeenCalled();
+  });
+
+  it('maps idempotency conflicts to HTTP 409', async () => {
+    vi.spyOn(AccountingOperationsMutationService, 'findBankAdjustmentReplay').mockRejectedValue(
+      new ActionError('Conflicto', 'IDEMPOTENCY_CONFLICT'),
+    );
+    const response = await POST(request('http://localhost/x', {
+      method: 'POST',
+      body: JSON.stringify({ cuentaId: 'cuenta-1', tipo: 'ingreso', monto: 100, moneda: 'CUP', descripcion: 'D', motivo: 'M' }),
+      headers: { 'content-type': 'application/json', 'Idempotency-Key': 'header-key' },
+    }) as never);
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe('IDEMPOTENCY_CONFLICT');
   });
 });
 

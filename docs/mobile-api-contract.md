@@ -672,7 +672,8 @@ Usa el mismo payload lógico del backend actual:
 - `clienteId`
 - `montoCapital`
 - `moneda`
-- `tasaInteres` (opcional)
+- `tasaInteres` (obligatorio, tasa anual no negativa; usa `0` si no aplica)
+- `tasaInteresMoratorio` (obligatorio, tasa anual no negativa; usa `0` si no aplica)
 - `tasaCambioAlCrear` (opcional)
 - `fechaVencimiento` (opcional)
 - `observaciones` (opcional)
@@ -789,7 +790,8 @@ Usa el mismo payload lógico del backend actual:
 - `proveedorId`
 - `montoCapital`
 - `moneda`
-- `tasaInteres` (opcional)
+- `tasaInteres` (obligatorio, tasa anual no negativa; usa `0` si no aplica)
+- `tasaInteresMoratorio` (obligatorio, tasa anual no negativa; usa `0` si no aplica)
 - `fechaVencimiento` (opcional)
 - `observaciones` (opcional)
 - `comprobanteUrl` (opcional)

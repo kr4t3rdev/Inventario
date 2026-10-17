@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   moneda: {
@@ -85,7 +86,7 @@ describe('actions-exchange', () => {
     const result = await getTasasActualesAction()
 
     expect(result.success).toBe(true)
-    expect(result.data?.tasas).toHaveLength(1)
+    expect(expectActionSuccess(result).data?.tasas).toHaveLength(1)
   })
 
   it('persists a successful conversion with the shared quote contract', async () => {
@@ -109,7 +110,7 @@ describe('actions-exchange', () => {
     const result = await convertMoneyAction({ monto: 100, monedaOrigen: 'USD', monedaDestino: 'CUP', referenciaId: 'ref-1' })
 
     expect(result.success).toBe(true)
-    expect(result.data).toMatchObject({
+    expect(expectActionSuccess(result).data).toMatchObject({
       montoOriginal: 100,
       montoConvertido: 2450,
       tasaUsada: 24.5,
@@ -144,7 +145,7 @@ describe('actions-exchange', () => {
     const result = await convertMoneyAction({ monto: 100, monedaOrigen: 'USD', monedaDestino: 'EUR' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('NO_MAIN_CURRENCY')
+    expect(expectActionFailure(result).error?.code).toBe('NO_MAIN_CURRENCY')
     expect(prismaMock.transaccionMoneda.create).not.toHaveBeenCalled()
   })
 

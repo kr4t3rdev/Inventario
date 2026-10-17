@@ -16,6 +16,7 @@ const dashboardStatsFixture = {
   totalMermas: 0,
   totalTransferencias: 0,
   totalIngresos: 100,
+  totalGastos: 0,
   totalGastosMermas: 0,
   totalBeneficio: 100,
   valorTotalInventario: 42,

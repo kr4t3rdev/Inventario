@@ -31,6 +31,7 @@ vi.mock('@/lib/prisma', () => {
       update: vi.fn(async () => ({})),
     },
     inyeccionCapital: {
+      findUnique: vi.fn(async () => null),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: 'iny-1',
         tenantId: 'tenant-1',
@@ -57,6 +58,7 @@ vi.mock('@/lib/prisma', () => {
     prisma: {
       $transaction: vi.fn(async (cb: (client: unknown) => Promise<unknown>) => cb(tx)),
       cuentaBancaria: tx.cuentaBancaria,
+      inyeccionCapital: tx.inyeccionCapital,
       auditLog: tx.auditLog,
     },
   };
@@ -65,6 +67,7 @@ vi.mock('@/lib/prisma', () => {
 import { authenticateUser } from '@/lib/auth-middleware';
 import { requireFeature } from '@/lib/services/tenant-scope';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import { GET, POST } from '../route';
 
 function request(url: string, init?: RequestInit): Request {
@@ -78,6 +81,8 @@ beforeEach(() => {
   vi.mocked(requireFeature).mockImplementation(() => undefined);
   vi.mocked(validarEscrituraPeriodo).mockReset();
   vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never);
+  vi.spyOn(AccountingOperationsMutationService, 'findCapitalInjectionReplay').mockRestore();
+  vi.spyOn(AccountingOperationsMutationService, 'createCapitalInjection').mockRestore();
   state.cuenta.moneda = 'CUP';
   state.cuenta.saldo = '500';
 });
@@ -116,8 +121,8 @@ describe('POST /api/mobile/v1/accounting/capital-injections', () => {
 
   it('exige socio para CAPITAL_SOCIAL y entidadPrestamista para DEUDA_EXTERNA', async () => {
     for (const body of [
-      { montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', moneda: 'CUP' },
-      { montoRecibido: 100, tipo: 'DEUDA_EXTERNA', cuentaId: 'cuenta-1', moneda: 'CUP' },
+      { montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', moneda: 'CUP', idempotencyKey: 'k-invalid' },
+      { montoRecibido: 100, tipo: 'DEUDA_EXTERNA', cuentaId: 'cuenta-1', moneda: 'CUP', idempotencyKey: 'k-invalid' },
     ]) {
       const response = await POST(request('http://localhost/x', {
         method: 'POST', body: JSON.stringify(body),
@@ -131,7 +136,7 @@ describe('POST /api/mobile/v1/accounting/capital-injections', () => {
     state.cuenta.moneda = 'USD';
     const response = await POST(request('http://localhost/x', {
       method: 'POST',
-      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP' }),
+      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP', idempotencyKey: 'k-feature' }),
       headers: { 'content-type': 'application/json' },
     }) as never);
 
@@ -151,7 +156,7 @@ describe('POST /api/mobile/v1/accounting/capital-injections', () => {
     });
     const response = await POST(request('http://localhost/x', {
       method: 'POST',
-      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP' }),
+      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP', idempotencyKey: 'k-period' }),
       headers: { 'content-type': 'application/json' },
     }) as never);
     expect(response.status).toBe(403);
@@ -164,11 +169,48 @@ describe('POST /api/mobile/v1/accounting/capital-injections', () => {
     } as never);
     const response = await POST(request('http://localhost/x', {
       method: 'POST',
-      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP' }),
+      body: JSON.stringify({ montoRecibido: 100, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP', idempotencyKey: 'k-period' }),
       headers: { 'content-type': 'application/json' },
     }) as never);
     expect(response.status).toBe(400);
     expect((await response.json()).code).toBe('PERIODO_CERRADO');
+  });
+
+  it('acepta la clave por header y busca replay antes de validar período', async () => {
+    const existing = { id: 'iny-existing', montoRecibido: '10' };
+    vi.spyOn(AccountingOperationsMutationService, 'findCapitalInjectionReplay').mockResolvedValue(existing as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      error: { message: 'Período cerrado', code: 'PERIODO_CERRADO' },
+    } as never);
+
+    const response = await POST(request('http://localhost/x', {
+      method: 'POST',
+      body: JSON.stringify({ montoRecibido: 10, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP' }),
+      headers: { 'content-type': 'application/json', 'Idempotency-Key': 'header-key' },
+    }) as never);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(existing);
+    expect(AccountingOperationsMutationService.findCapitalInjectionReplay).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'header-key' }),
+      user: state.user,
+    });
+    expect(validarEscrituraPeriodo).not.toHaveBeenCalled();
+  });
+
+  it('maps idempotency conflicts to HTTP 409', async () => {
+    vi.spyOn(AccountingOperationsMutationService, 'findCapitalInjectionReplay').mockRejectedValue(
+      new ActionError('Conflicto', 'IDEMPOTENCY_CONFLICT'),
+    );
+    const response = await POST(request('http://localhost/x', {
+      method: 'POST',
+      body: JSON.stringify({ montoRecibido: 10, tipo: 'CAPITAL_SOCIAL', cuentaId: 'cuenta-1', socio: 'S', moneda: 'CUP' }),
+      headers: { 'content-type': 'application/json', 'Idempotency-Key': 'header-key' },
+    }) as never);
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe('IDEMPOTENCY_CONFLICT');
   });
 });
 

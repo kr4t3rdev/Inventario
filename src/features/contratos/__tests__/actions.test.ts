@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de contratos.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -43,9 +44,11 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
+// Fila minima a proposito: se acota una sola vez (los tests asertan sobre
+// estos campos).
 const mockContrato = {
   contratoId: 'ct-1',
   tenantId: 'tenant-test',
@@ -54,7 +57,7 @@ const mockContrato = {
   estado: 'BORRADOR',
   fechaInicio: new Date(),
   creadoPor: 'user-1',
-};
+} as any;
 
 describe('Contratos Server Actions', () => {
   beforeEach(() => { vi.clearAllMocks(); });
@@ -68,8 +71,8 @@ describe('Contratos Server Actions', () => {
       const result = await getContratosAction({ page: 1, limit: 10 });
 
       expect(result.success).toBe(true);
-      expect(result.data!.meta.total).toBe(1);
-      expect(result.data!.data).toHaveLength(1);
+      expect(expectActionSuccess(result).data!.meta.total).toBe(1);
+      expect(expectActionSuccess(result).data!.data).toHaveLength(1);
     });
   });
 
@@ -86,7 +89,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(prisma.contrato.findFirst).mockResolvedValue(null);
       const result = await getContratoByIdAction('ct-noexiste');
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -164,7 +167,7 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2', 'ct-3'], estado: 'ACTIVO' });
 
       expect(result.success).toBe(true);
-      expect(result.data!.count).toBe(3);
+      expect(expectActionSuccess(result).data!.count).toBe(3);
     });
   });
 
@@ -173,7 +176,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getContratosAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

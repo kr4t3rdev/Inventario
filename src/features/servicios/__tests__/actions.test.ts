@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -69,7 +70,7 @@ describe("getServiciosAction", () => {
     vi.mocked(prisma.servicios.findMany).mockResolvedValue([mockServicioRow]);
     const r = await getServiciosAction();
     expect(r.success).toBe(true);
-    expect(r.data).toEqual([serialized(mockServicioRow)]);
+    expect(expectActionSuccess(r).data).toEqual([serialized(mockServicioRow)]);
   });
 
   it("retorna array vacío si no hay servicios", async () => {
@@ -77,7 +78,7 @@ describe("getServiciosAction", () => {
     vi.mocked(prisma.servicios.findMany).mockResolvedValue([]);
     const r = await getServiciosAction();
     expect(r.success).toBe(true);
-    expect(r.data).toEqual([]);
+    expect(expectActionSuccess(r).data).toEqual([]);
   });
 });
 
@@ -87,7 +88,7 @@ describe("getServicioByIdAction", () => {
     vi.mocked(prisma.servicios.findFirst).mockResolvedValue(mockServicioRow);
     const r = await getServicioByIdAction("s1");
     expect(r.success).toBe(true);
-    expect(r.data).toEqual(serialized(mockServicioRow));
+    expect(expectActionSuccess(r).data).toEqual(serialized(mockServicioRow));
   });
 
   it("lanza NOT_FOUND si no existe", async () => {
@@ -95,7 +96,7 @@ describe("getServicioByIdAction", () => {
     vi.mocked(prisma.servicios.findFirst).mockResolvedValue(null);
     const r = await getServicioByIdAction("inexistente");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("NOT_FOUND");
+    expect(expectActionFailure(r).error?.code).toBe("NOT_FOUND");
   });
 });
 
@@ -109,7 +110,7 @@ describe("createServicioAction", () => {
       precio: 1000,
     });
     expect(r.success).toBe(true);
-    expect(r.data).toEqual(serialized(mockServicioRow));
+    expect(expectActionSuccess(r).data).toEqual(serialized(mockServicioRow));
   });
 
   it("crea servicio con moneda opcional", async () => {
@@ -122,7 +123,7 @@ describe("createServicioAction", () => {
       moneda: "USD",
     });
     expect(r.success).toBe(true);
-    expect(r.data?.moneda).toBe("USD");
+    expect(expectActionSuccess(r).data?.moneda).toBe("USD");
   });
 });
 
@@ -139,7 +140,7 @@ describe("updateServicioAction", () => {
       nombre: "Updated",
     });
     expect(r.success).toBe(true);
-    expect(r.data?.nombre).toBe("Updated");
+    expect(expectActionSuccess(r).data?.nombre).toBe("Updated");
   });
 
   it("lanza NOT_FOUND si no existe", async () => {
@@ -150,7 +151,7 @@ describe("updateServicioAction", () => {
       nombre: "Nope",
     });
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("NOT_FOUND");
+    expect(expectActionFailure(r).error?.code).toBe("NOT_FOUND");
   });
 });
 
@@ -163,8 +164,8 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.ofertaItem.count).mockResolvedValue(0);
     const r = await deleteServicioAction("s1");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("HAS_REFERENCES");
-    expect(r.error?.message).toContain("venta");
+    expect(expectActionFailure(r).error?.code).toBe("HAS_REFERENCES");
+    expect(expectActionFailure(r).error?.message).toContain("venta");
     expect(prisma.servicios.delete).not.toHaveBeenCalled();
   });
 
@@ -176,8 +177,8 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.ofertaItem.count).mockResolvedValue(0);
     const r = await deleteServicioAction("s1");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("HAS_REFERENCES");
-    expect(r.error?.message).toContain("compra");
+    expect(expectActionFailure(r).error?.code).toBe("HAS_REFERENCES");
+    expect(expectActionFailure(r).error?.message).toContain("compra");
     expect(prisma.servicios.delete).not.toHaveBeenCalled();
   });
 
@@ -189,8 +190,8 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.ofertaItem.count).mockResolvedValue(3);
     const r = await deleteServicioAction("s1");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("HAS_REFERENCES");
-    expect(r.error?.message).toContain("oferta");
+    expect(expectActionFailure(r).error?.code).toBe("HAS_REFERENCES");
+    expect(expectActionFailure(r).error?.message).toContain("oferta");
     expect(prisma.servicios.delete).not.toHaveBeenCalled();
   });
 
@@ -202,9 +203,9 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.ofertaItem.count).mockResolvedValue(0);
     const r = await deleteServicioAction("s1");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("HAS_REFERENCES");
-    expect(r.error?.message).toContain("venta");
-    expect(r.error?.message).toContain("compra");
+    expect(expectActionFailure(r).error?.code).toBe("HAS_REFERENCES");
+    expect(expectActionFailure(r).error?.message).toContain("venta");
+    expect(expectActionFailure(r).error?.message).toContain("compra");
   });
 
   it("elimina si no hay referencias", async () => {
@@ -216,7 +217,7 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.servicios.delete).mockResolvedValue({} as any);
     const r = await deleteServicioAction("s1");
     expect(r.success).toBe(true);
-    expect(r.data).toEqual({ id: "s1", eliminado: true });
+    expect(expectActionSuccess(r).data).toEqual({ id: "s1", eliminado: true });
     expect(prisma.servicios.delete).toHaveBeenCalledWith({ where: { servicioId: "s1" } });
   });
 
@@ -225,6 +226,6 @@ describe("deleteServicioAction (guarded)", () => {
     vi.mocked(prisma.servicios.findFirst).mockResolvedValue(null);
     const r = await deleteServicioAction("inexistente");
     expect(r.success).toBe(false);
-    expect(r.error?.code).toBe("NOT_FOUND");
+    expect(expectActionFailure(r).error?.code).toBe("NOT_FOUND");
   });
 });

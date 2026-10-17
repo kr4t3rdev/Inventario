@@ -65,7 +65,7 @@ export const createCuentaPorPagarSchema = z.object({
 
 // ═══ Types inferidos ═══
 
-export type GetCuentasPorCobrarInput = z.infer<
+export type GetCuentasPorCobrarInput = z.input<
 	typeof getCuentasPorCobrarSchema
 >;
 export type CreateCuentaPorCobrarInput = z.infer<
@@ -78,7 +78,7 @@ export type AnnulCuentaPorCobrarInput = z.infer<
 	typeof annulCuentaPorCobrarSchema
 >;
 
-export type GetCuentasPorPagarInput = z.infer<typeof getCuentasPorPagarSchema>;
-export type CreateCuentaPorPagarInput = z.infer<
+export type GetCuentasPorPagarInput = z.input<typeof getCuentasPorPagarSchema>;
+export type CreateCuentaPorPagarInput = z.input<
 	typeof createCuentaPorPagarSchema
 >;

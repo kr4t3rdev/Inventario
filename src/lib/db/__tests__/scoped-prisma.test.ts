@@ -124,7 +124,7 @@ describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
     '%s inyecta tenantId con AND sin mutar el original',
     (op) => {
       const args = { where: { nombre: 'x' } };
-      const out = applyTenantScope('Venta', op, args, TENANT_A) as {
+      const out = applyTenantScope('Venta', op, args, TENANT_A) as unknown as {
         where: { AND: unknown[] };
       };
       expect(out.where).toEqual({ AND: [{ nombre: 'x' }, { tenantId: TENANT_A }] });
@@ -156,6 +156,30 @@ describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
     expect(out.where).toEqual({ AND: [{ total: 5 }, { tenantId: TENANT_A }] });
   });
 
+  it.each(['updateMany', 'updateManyAndReturn'])(
+    '%s rechaza cambios de tenantId ajeno en data',
+    (op) => {
+      expect(() => applyTenantScope(
+        'Venta',
+        op,
+        { where: { estado: 'pendiente' }, data: { tenantId: TENANT_B } },
+        TENANT_A,
+      )).toThrow(TenantMismatchError);
+    },
+  );
+
+  it.each(['update', 'updateMany', 'updateManyAndReturn'])(
+    '%s rechaza tenantId foreign usando operación escalar set',
+    (op) => {
+      expect(() => applyTenantScope(
+        'Venta',
+        op,
+        { where: { ventaId: 'v1' }, data: { tenantId: { set: TENANT_B } } },
+        TENANT_A,
+      )).toThrow(TenantMismatchError);
+    },
+  );
+
   it('create inyecta tenantId cuando falta', () => {
     const out = applyTenantScope('Venta', 'create', { data: { total: 5 } }, TENANT_A) as {
       data: unknown;
@@ -180,6 +204,26 @@ describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
     }
     expect(error).toBeInstanceOf(TenantMismatchError);
     expect((error as TenantMismatchError).code).toBe('TENANT_MISMATCH');
+  });
+
+  it('nested create conserva el connect explícito al tenant y rechaza uno ajeno', () => {
+    const own = applyTenantScope(
+      'Contrato',
+      'create',
+      { data: { numeroContrato: 'C-1', tenant: { connect: { tenantId: TENANT_A } } } },
+      TENANT_A,
+    ) as { data: Record<string, unknown> };
+    expect(own.data).toEqual({
+      numeroContrato: 'C-1',
+      tenant: { connect: { tenantId: TENANT_A } },
+    });
+
+    expect(() => applyTenantScope(
+      'Contrato',
+      'create',
+      { data: { numeroContrato: 'C-2', tenant: { connect: { tenantId: TENANT_B } } } },
+      TENANT_A,
+    )).toThrow(TenantMismatchError);
   });
 
   it('createMany valida cada fila (arreglo y objeto único)', () => {

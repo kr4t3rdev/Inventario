@@ -1,6 +1,32 @@
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { loadMobileV1Contract } from '@/lib/openapi/contract-guards';
+
+/**
+ * @description Forma del contrato que estos tests recorren.
+ *
+ * `OpenApiContract` declara `components` como `Record<string, unknown>`, de modo
+ * que el acceso profundo a paths/responses/schemas no es tipable desde ahi. El
+ * contrato se decodifica desde un JSON ya versionado y cacheado, asi que la
+ * forma se declara una sola vez y cada acceso conserva su cast explicito.
+ */
+interface FinancialContractSections {
+  paths: Record<string, Record<string, any>>;
+  components: { schemas: Record<string, any> };
+}
+
+let cachedContract: Promise<FinancialContractSections> | null = null;
+
+/**
+ * @description Carga el contrato una vez por archivo de test.
+ * @returns {Promise<FinancialContractSections>} Secciones tipadas del contrato.
+ */
+function loadContract(): Promise<FinancialContractSections> {
+  cachedContract ??= loadMobileV1Contract() as unknown as Promise<FinancialContractSections>;
+  return cachedContract;
+}
 
 /**
  * Paridad de los contratos financieros sensibles de mobile v1 con el servicio real.
@@ -12,8 +38,8 @@ import { loadMobileV1Contract } from '@/lib/openapi/contract-guards';
  */
 describe('mobile v1 financial contract parity', () => {
   it('alinea CapitalInjectionCreateRequest con el schema del servicio', async () => {
-    const contract = await loadMobileV1Contract();
-    const schema = contract.components.schemas.CapitalInjectionCreateRequest as Record<string, any>;
+    const contract = await loadContract();
+    const schema = contract.components.schemas.CapitalInjectionCreateRequest;
 
     expect(schema.properties).toEqual({
       montoRecibido: { type: 'number', exclusiveMinimum: 0 },
@@ -33,10 +59,10 @@ describe('mobile v1 financial contract parity', () => {
   });
 
   it('describe la respuesta real del alta de capital (fila de InyeccionCapital)', async () => {
-    const contract = await loadMobileV1Contract();
+    const contract = await loadContract();
     const response = contract.paths['/accounting/capital-injections'].post.responses['200']
       .content['application/json'].schema as { $ref: string };
-    const schema = contract.components.schemas[response.$ref.split('/').at(-1)] as Record<string, any>;
+    const schema = contract.components.schemas[path.posix.basename(response.$ref)];
 
     expect(Object.keys(schema.properties)).toEqual(expect.arrayContaining([
       'id', 'tenantId', 'tipo', 'montoRecibido', 'moneda', 'tasaInteres', 'montoInteres',
@@ -53,8 +79,8 @@ describe('mobile v1 financial contract parity', () => {
   });
 
   it('alinea BankAdjustmentRequest con el schema del servicio', async () => {
-    const contract = await loadMobileV1Contract();
-    const schema = contract.components.schemas.BankAdjustmentRequest as Record<string, any>;
+    const contract = await loadContract();
+    const schema = contract.components.schemas.BankAdjustmentRequest;
 
     expect(schema.properties.monto).toEqual({ type: 'number', exclusiveMinimum: 0 });
     expect(schema.properties.tasaCambio).toEqual({ type: 'number', exclusiveMinimum: 0 });
@@ -65,10 +91,10 @@ describe('mobile v1 financial contract parity', () => {
   });
 
   it('describe el envelope real del alta de ajuste bancario', async () => {
-    const contract = await loadMobileV1Contract();
+    const contract = await loadContract();
     const response = contract.paths['/accounting/bank-adjustments'].post.responses['200']
       .content['application/json'].schema as { $ref: string };
-    const schema = contract.components.schemas[response.$ref.split('/').at(-1)] as Record<string, any>;
+    const schema = contract.components.schemas[path.posix.basename(response.$ref)];
 
     expect(Object.keys(schema.properties)).toEqual([
       'ajuste', 'saldoAnterior', 'saldoNuevo', 'advertenciaSaldoNegativo', 'message',
@@ -77,7 +103,7 @@ describe('mobile v1 financial contract parity', () => {
       'ajuste', 'saldoAnterior', 'saldoNuevo', 'advertenciaSaldoNegativo', 'message',
     ]);
     const ajusteRef = schema.properties.ajuste.$ref as string;
-    const ajuste = contract.components.schemas[ajusteRef.split('/').at(-1)] as Record<string, any>;
+    const ajuste = contract.components.schemas[path.posix.basename(ajusteRef)];
     expect(Object.keys(ajuste.properties)).toEqual(expect.arrayContaining([
       'ajusteId', 'tenantId', 'cuentaId', 'tipo', 'monto', 'moneda', 'tasaCambio',
       'montoConvertido', 'descripcion', 'motivo', 'realizadoPor', 'fechaOperacion',
@@ -87,7 +113,7 @@ describe('mobile v1 financial contract parity', () => {
   });
 
   it('solo publica idempotencyKey donde main tiene implementación respaldada', async () => {
-    const contract = await loadMobileV1Contract();
+    const contract = await loadContract();
 
     for (const name of [
       'BankAdjustmentRequest',
@@ -97,21 +123,21 @@ describe('mobile v1 financial contract parity', () => {
       'CashPaymentRequest',
       'ServiceReconciliationRequest',
     ]) {
-      const schema = contract.components.schemas[name] as Record<string, any>;
+      const schema = contract.components.schemas[name];
       expect(Object.keys(schema.properties), name).not.toContain('idempotencyKey');
     }
 
     const anticipos = contract.components.schemas
-      .AccountingAdvancesIdEjecutarPostRequest as Record<string, any>;
+      .AccountingAdvancesIdEjecutarPostRequest;
     expect(Object.keys(anticipos.properties)).toContain('idempotencyKey');
   });
 
   it('cierra los request schemas de units que el merge dejó abiertos', async () => {
-    const contract = await loadMobileV1Contract();
+    const contract = await loadContract();
     const create = contract.paths['/units/create'].post.requestBody
-      .content['application/json'].schema as Record<string, any>;
+      .content['application/json'].schema;
     const update = contract.paths['/units/{id}'].put.requestBody
-      .content['application/json'].schema as Record<string, any>;
+      .content['application/json'].schema;
 
     expect(create.additionalProperties).toBe(false);
     expect(update.additionalProperties).toBe(false);

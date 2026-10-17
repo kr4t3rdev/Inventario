@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const tx = vi.hoisted(() => ({
   gastosDE: { findUnique: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
@@ -90,7 +91,7 @@ describe('deleteGastosDEAction financial reversal', () => {
     const result = await deleteGastosDEAction('g-1');
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('ALREADY_DELETED');
+    expect(expectActionFailure(result).error?.code).toBe('ALREADY_DELETED');
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
     expect(tx.reconciliacionGasto.deleteMany).not.toHaveBeenCalled();
   });
@@ -132,7 +133,7 @@ describe('deleteGastosDEAction financial reversal', () => {
     const result = await deleteGastosDEAction('g-1');
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     expect(tx.cuentaPorPagar.delete).not.toHaveBeenCalled();
   });
 });

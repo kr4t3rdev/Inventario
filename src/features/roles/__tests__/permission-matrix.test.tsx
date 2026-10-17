@@ -4,12 +4,7 @@ import { axe } from 'vitest-axe';
 import { toHaveNoViolations } from 'vitest-axe/matchers';
 import { describe, expect, it } from 'vitest';
 
-expect.extend({ toHaveNoViolations: toHaveNoViolations as ExpectMatcherFn });
-
-type ExpectMatcherFn = (result: Awaited<ReturnType<typeof axe>>) => {
-  pass: boolean;
-  message: () => string;
-};
+expect.extend({ toHaveNoViolations });
 
 import { PermissionMatrix } from '../components/permission-matrix';
 

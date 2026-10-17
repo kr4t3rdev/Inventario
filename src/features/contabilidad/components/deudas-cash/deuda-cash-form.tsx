@@ -11,7 +11,6 @@ import { CurrencyInput } from "@/components/ui/currency-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { toast } from "sonner"
@@ -20,7 +19,6 @@ import {
   toCloudinaryAssetUploadResult,
   uploadAsset,
 } from "@/lib/upload/upload-asset"
-import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 import { useAuth } from "@/contexts/auth-context"
 import { hasPlanFeature } from "@/lib/plan-access"
 
@@ -28,7 +26,9 @@ const deudaSchema = z.object({
   proveedorId: z.string().min(1, "Seleccione un proveedor"),
   montoCapital: z.coerce.number().positive("El monto debe ser mayor que cero"),
   moneda: z.string().min(1, "Seleccione la moneda"),
-  tasaInteres: z.coerce.number().min(0).optional(),
+  tasaInteres: z.number().min(0, "Indique una tasa, incluso si es 0"),
+  tasaInteresMoratorio: z.number().min(0, "Indique una tasa, incluso si es 0"),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   cuentaBancariaId: z.string({ required_error: "Seleccione una cuenta bancaria" }).min(1, "Seleccione una cuenta bancaria"),
@@ -45,29 +45,17 @@ type DeudaFormValues = z.infer<typeof deudaSchema>
 function CuotasEstimadasDeuda({ control }: { control: any }) {
   const montoCapital = useWatch({ control, name: 'montoCapital' })
   const tasaInteres = useWatch({ control, name: 'tasaInteres' })
-  const fechaVencimiento = useWatch({ control, name: 'fechaVencimiento' })
+  const tasaMoratoria = useWatch({ control, name: 'tasaInteresMoratorio' })
   const moneda = useWatch({ control, name: 'moneda' })
 
   const monto = Number(montoCapital) || 0
-  const tasa = Number(tasaInteres) || 0
+  const tasa = Number(tasaInteres)
+  const mora = Number(tasaMoratoria)
 
   if (monto <= 0) return null
 
-  const totalConInteres = calcularTotalDeudaConInteres(monto, tasa)
-  const interes = totalConInteres - monto
-
-  let dias = 0
-  if (fechaVencimiento) {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const vencimiento = new Date(fechaVencimiento)
-    dias = Math.max(1, Math.ceil((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)))
-  }
-
   const fmt = (n: number) =>
     n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
-  const cuotaDiaria = dias > 0 ? totalConInteres / dias : null
 
   return (
     <div className="rounded-lg border bg-muted/40 p-4 space-y-3 text-sm">
@@ -78,37 +66,14 @@ function CuotasEstimadasDeuda({ control }: { control: any }) {
 
       <div className="space-y-1">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Capital</span>
+          <span className="text-muted-foreground">Capital inicial</span>
           <span className="font-medium">{fmt(monto)} {moneda}</span>
         </div>
-        {tasa > 0 && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Interés ({tasa}%)</span>
-            <span className="font-medium text-amber-500">+{fmt(interes)} {moneda}</span>
-          </div>
-        )}
-        <div className="flex justify-between font-semibold border-t pt-2">
-          <span>Total a pagar</span>
-          <span className="text-primary">{fmt(totalConInteres)} {moneda}</span>
-        </div>
+        <p className="border-t pt-2 text-xs text-muted-foreground">
+          Tasas anuales: ordinaria {Number.isFinite(tasa) ? tasa : '—'}%, moratoria {Number.isFinite(mora) ? mora : '—'}%.
+          El interés se calcula sobre el principal pendiente en cada pago.
+        </p>
       </div>
-
-      {cuotaDiaria !== null && (
-        <div className="space-y-2 border-t pt-3">
-          <p className="text-xs text-muted-foreground">Cuota fija estimada ({dias} días)</p>
-          <div className="flex gap-2 flex-wrap">
-            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-200 dark:text-blue-400 dark:border-blue-800">
-              Diaria &middot; {fmt(cuotaDiaria)} {moneda}
-            </Badge>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800">
-              Semanal &middot; {fmt(cuotaDiaria * 7)} {moneda}
-            </Badge>
-            <Badge variant="outline" className="bg-violet-500/10 text-violet-700 border-violet-200 dark:text-violet-400 dark:border-violet-800">
-              Mensual &middot; {fmt(cuotaDiaria * 30)} {moneda}
-            </Badge>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -134,6 +99,8 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
   const [uploadingImg, setUploadingImg] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requestInFlight = useRef(false)
+  const pendingCreateRequest = useRef<{ payload: string; key: string } | null>(null)
 
   const handleComprobanteChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -163,45 +130,56 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
       proveedorId: "",
       montoCapital: 0,
       moneda: "CUP",
-      tasaInteres: 0,
+      tasaInteres: undefined,
+      tasaInteresMoratorio: undefined,
+      tasaCambio: undefined,
       fechaVencimiento: "",
       observaciones: "",
       cuentaBancariaId: "",
     },
   })
 
-  const montoCapital = useWatch({ control: form.control, name: 'montoCapital' })
-  const tasaInteres = useWatch({ control: form.control, name: 'tasaInteres' })
-  const saldoPendientePreview = calcularTotalDeudaConInteres(Number(montoCapital) || 0, Number(tasaInteres) || 0)
   const canUploadReceipt = hasPlanFeature(user, 'upload-deudas-cash-receipt')
 
   const onSubmit = async (data: DeudaFormValues) => {
+    if (requestInFlight.current) return
+    requestInFlight.current = true
+    setIsLoading(true)
     try {
-      let comprobanteUrl: string | undefined
+      let comprobanteUrl: string | undefined = comprobanteAsset?.secureUrl
       let uploadedAsset: CloudinaryAssetUploadResult | null = comprobanteAsset
 
-      if (comprobante) {
+      if (comprobante && !uploadedAsset) {
         setUploadingImg(true)
         const uploaded = await uploadAsset(comprobante, {
           uploadKey: 'deudasCash.receipt',
         })
         const asset = toCloudinaryAssetUploadResult(uploaded)
-        comprobanteUrl = uploaded.url
+        comprobanteUrl = asset.secureUrl
         uploadedAsset = asset
         setComprobanteAsset(asset)
         setUploadingImg(false)
       }
 
+      const payload = JSON.stringify({ data, comprobanteUrl, comprobanteAsset: uploadedAsset })
+      const idempotencyKey = pendingCreateRequest.current?.payload === payload
+        ? pendingCreateRequest.current.key
+        : crypto.randomUUID()
+      pendingCreateRequest.current = { payload, key: idempotencyKey }
+
       const result = await createDeudaCashAction({
         proveedorId: data.proveedorId,
         montoCapital: data.montoCapital,
         moneda: data.moneda,
-        tasaInteres: data.tasaInteres || undefined,
+        tasaInteres: data.tasaInteres,
+        tasaInteresMoratorio: data.tasaInteresMoratorio,
+        tasaCambio: data.tasaCambio,
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         comprobanteUrl,
         comprobanteAsset: uploadedAsset,
         cuentaBancariaId: data.cuentaBancariaId,
+        idempotencyKey,
       })
 
       if (!result.success) {
@@ -210,6 +188,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
       }
 
       toast.success("Deuda en efectivo registrada exitosamente.")
+      pendingCreateRequest.current = null
       form.reset()
       clearComprobante()
       onOpenChange(false)
@@ -217,10 +196,15 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
     } catch (error) {
       setUploadingImg(false)
       toast.error("No se pudo registrar la deuda")
+    } finally {
+      requestInFlight.current = false
+      setIsLoading(false)
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (nextOpen?: boolean) => {
+    if (nextOpen === true || requestInFlight.current) return
+    pendingCreateRequest.current = null
     form.reset()
     clearComprobante()
     onOpenChange(false)
@@ -238,14 +222,6 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4 overflow-y-auto flex-1 pr-1">
-            {Number(montoCapital) > 0 && (
-              <div className="rounded-lg border bg-muted/40 p-4 text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Saldo a pagar</span>
-                  <span className="font-semibold text-primary">{saldoPendientePreview.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {form.watch('moneda')}</span>
-                </div>
-              </div>
-            )}
             <FormField
               control={form.control}
               name="cuentaBancariaId"
@@ -305,7 +281,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
                   <FormControl>
                     <CurrencyInput
                       value={field.value ?? ''}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -337,16 +313,49 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
               )}
             />
 
+            {form.watch('moneda') !== 'CUP' && (
+              <FormField
+                control={form.control}
+                name="tasaCambio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tasa aplicada a la moneda funcional</FormLabel>
+                    <FormControl>
+                      <CurrencyInput value={field.value ?? ''} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="tasaInteres"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tasa de Interés % (Opcional)</FormLabel>
+                  <FormLabel>Tasa anual ordinaria (%)</FormLabel>
                   <FormControl>
                     <CurrencyInput
                       value={field.value ?? ''}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tasaInteresMoratorio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tasa anual moratoria (%)</FormLabel>
+                  <FormControl>
+                    <CurrencyInput
+                      value={field.value ?? ''}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -435,7 +444,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={() => handleClose()} disabled={isLoading || uploadingImg}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading || uploadingImg}>

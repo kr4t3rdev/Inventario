@@ -19,6 +19,7 @@ const baseProduct = {
   vendorId: 'vendor-1',
   almacenId: 'alm-1',
   puntoDeVentaId: null,
+  stockMinimo: 5,
 };
 
 describe('restock-utils - propagación de codigoInterno', () => {

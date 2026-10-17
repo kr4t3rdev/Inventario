@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -111,7 +112,7 @@ describe('createAjusteAction', () => {
 	it('rechaza ajuste sin diferencia', async () => {
 		const result = await createAjusteAction({ ...baseInput, cantidadContada: 10 } as any);
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe('SIN_DIFERENCIA');
+		expect(expectActionFailure(result).error?.code).toBe('SIN_DIFERENCIA');
 	});
 
 	it('bloquea el ajuste manual si hay un conteo activo en la ubicación', async () => {
@@ -120,7 +121,7 @@ describe('createAjusteAction', () => {
 		const result = await createAjusteAction(baseInput as any);
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe('CONTEO_ACTIVO');
+		expect(expectActionFailure(result).error?.code).toBe('CONTEO_ACTIVO');
 	});
 
 	it('rechaza sin feature del plan', async () => {
@@ -132,7 +133,7 @@ describe('createAjusteAction', () => {
 		const result = await createAjusteAction(baseInput as any);
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 });
 

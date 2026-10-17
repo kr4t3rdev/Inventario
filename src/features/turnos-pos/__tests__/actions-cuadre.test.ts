@@ -30,9 +30,10 @@ const mockUser = vi.hoisted(
 	(): AuthenticatedUser => ({
 		userId: "user-1",
 		tenantId: "tenant-mock-1",
-		role: "ADMIN",
+		role: "admin",
 		email: "test@test.com",
 		name: "Test User",
+		isActive: true,
 	}),
 );
 
@@ -147,7 +148,7 @@ describe("getCuadreTurnoAction", () => {
 		// Mock aggregate de venta (totalVentaTurno)
 		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 65000 } }); // $650.00
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -180,7 +181,7 @@ describe("getCuadreTurnoAction", () => {
 	it("should fail when turno does not exist", async () => {
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(null);
 
-		const result = await getCuadreTurnoAction("nonexistent", mockUser);
+		const result = await getCuadreTurnoAction("nonexistent");
 
 		expect(result.success).toBe(false);
 		if (!result.success && result.error) {
@@ -193,7 +194,7 @@ describe("getCuadreTurnoAction", () => {
 			buildTurno({ arqueos: [] }),
 		);
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(false);
 		if (!result.success && result.error) {
@@ -207,7 +208,7 @@ describe("getCuadreTurnoAction", () => {
 		mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
 		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 0 } });
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -229,7 +230,7 @@ describe("getCuadreTurnoAction", () => {
 		mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
 		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 0 } });
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -273,7 +274,7 @@ describe("getCuadreTurnoAction", () => {
 
 		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 50000 } });
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {
@@ -324,7 +325,7 @@ describe("getCuadreTurnoAction", () => {
 
 		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 50000 } }); // $500.00
 
-		const result = await getCuadreTurnoAction("turno-1", mockUser);
+		const result = await getCuadreTurnoAction("turno-1");
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {

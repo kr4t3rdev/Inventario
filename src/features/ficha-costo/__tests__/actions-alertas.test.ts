@@ -1,10 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import type { ActionResponse } from '@/lib/server-actions/types'
+import type {
+  DashboardRentabilidadData,
+  ProductoMargenBajoItem,
+  VerificarMargenBajoResult,
+} from '../actions-alertas'
 import {
   getProductosMargenBajoAction,
   verificarMargenBajoAction,
   getDashboardRentabilidadAction,
 } from '../actions-alertas'
 
+// La sesion se resuelve dentro del withAction real; solo se fija el usuario.
+vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: {
@@ -13,9 +23,6 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-}))
 
 const { mockRequireFeature } = vi.hoisted(() => ({ mockRequireFeature: vi.fn() }))
 
@@ -24,6 +31,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
   requireFeature: mockRequireFeature,
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 
 const makeProducto = (overrides: any = {}) => ({
@@ -35,29 +43,45 @@ const makeProducto = (overrides: any = {}) => ({
   tenantId: overrides.tenantId ?? 'tenant-1',
 })
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Usuario Ficha',
+  email: 'ficha@test.com',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+  role: 'admin',
+}
 
 describe('getProductosMargenBajoAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
 
   it.each([
-    ['productos con margen bajo', () => getProductosMargenBajoAction({}, mockUser)],
-    ['verificación de margen', () => verificarMargenBajoAction({}, mockUser)],
-    ['dashboard de rentabilidad', () => getDashboardRentabilidadAction({}, mockUser)],
-  ])('deniega %s antes de consultar Prisma', async (_name, invoke) => {
-    mockUser.planFeatures['ficha-costo'] = false
+    ['productos con margen bajo', () => getProductosMargenBajoAction({})],
+    ['verificación de margen', () => verificarMargenBajoAction({})],
+    ['dashboard de rentabilidad', () => getDashboardRentabilidadAction({})],
+  ])('deniega %s antes de consultar Prisma', async (
+    _name,
+    invoke: () => Promise<
+      | ActionResponse<ProductoMargenBajoItem[]>
+      | ActionResponse<VerificarMargenBajoResult>
+      | ActionResponse<DashboardRentabilidadData>
+    >,
+  ) => {
+    const planFeatures = mockUser.planFeatures ?? {}
+    planFeatures['ficha-costo'] = false
 
-    await expect(invoke()).rejects.toThrow('plan actual no incluye')
+    // Las tres actions comparten la guarda de plan; la union se estrecha
+    // sobre la respuesta comun porque el thunk las envuelve a todas.
+    const failure = expectActionFailure<unknown>(await invoke() as ActionResponse<unknown>)
+    expect(failure.error.message).toContain('plan actual no incluye')
 
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
-    mockUser.planFeatures['ficha-costo'] = true
+    planFeatures['ficha-costo'] = true
   })
 
   it('retorna productos con margen < 10% ordenados ascendentemente', async () => {
@@ -67,7 +91,7 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'C', precioVenta: 100, precioCosto: 110 }), // margen=-10%
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await getProductosMargenBajoAction({})).data
 
     expect(data).toHaveLength(2) // solo B y C
     expect(data[0].id).toBe('C') // margen=-10% primero
@@ -81,7 +105,7 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'A', precioVenta: 100, precioCosto: 50 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await getProductosMargenBajoAction({})).data
 
     expect(data).toHaveLength(0)
   })
@@ -92,7 +116,7 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'B', precioVenta: 100, precioCosto: 95 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await getProductosMargenBajoAction({})).data
 
     expect(data).toHaveLength(1)
     expect(data[0].id).toBe('B')
@@ -101,7 +125,7 @@ describe('getProductosMargenBajoAction', () => {
   it('filtra por tenantId', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    await getProductosMargenBajoAction({}, mockUser)
+    await getProductosMargenBajoAction({})
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
       where: {
@@ -126,7 +150,9 @@ describe('getProductosMargenBajoAction', () => {
     )
     vi.mocked(prisma.producto.findMany).mockResolvedValue(productos as any)
 
-    const data = await getProductosMargenBajoAction({ limit: 5 }, mockUser)
+    const data = expectActionSuccess(await getProductosMargenBajoAction(
+      { limit: 5 },
+    )).data
 
     expect(data).toHaveLength(5)
   })
@@ -137,7 +163,7 @@ describe('getProductosMargenBajoAction', () => {
       makeProducto({ id: 'B', precioVenta: 100, precioCosto: 95 }),
     ] as any)
 
-    const data = await getProductosMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await getProductosMargenBajoAction({})).data
 
     expect(data).toHaveLength(1)
   })

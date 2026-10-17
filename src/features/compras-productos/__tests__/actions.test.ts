@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de compras de productos.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -69,6 +70,9 @@ import {
 	deleteCompraProductoAction,
 } from "@/features/compras-productos/actions";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import type { CreateCompraProductoInput } from "@/features/compras-productos/schemas";
+import { Prisma } from "@/generated/prisma";
+import type { AnticipoMovimiento, CompraDocumento, Producto, Vendor } from "@/generated/prisma";
 
 const mockUser: AuthenticatedUser = {
 	userId: "user-1",
@@ -77,8 +81,161 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
+
+const mockVendorRow: Vendor = {
+	vendorId: "ven-1",
+	tenantId: "tenant-test",
+	nombre: "Proveedor",
+	contacto: null,
+	createdAt: new Date("2025-01-01"),
+	updatedAt: new Date("2025-01-01"),
+	contrato: null,
+	cuentaCUP: null,
+	cuentaUSD: null,
+	direccion: null,
+	logo: null,
+	telefono: null,
+	vendorCode: null,
+};
+
+const mockProductRow: Producto = {
+	id: "prod-1",
+	nombre: "Producto de prueba",
+	tenantId: "tenant-test",
+	descripcion: null,
+	precioCosto: 500,
+	precioVenta: 1000,
+	stock: 10,
+	categoriaId: "cat-1",
+	unidadId: null,
+	vendorId: null,
+	createdAt: new Date("2025-01-01"),
+	updatedAt: new Date("2025-01-01"),
+	esCompuesto: false,
+	almacenId: "alm-1",
+	puntoDeVentaId: null,
+	stockMinimo: 0,
+	subcategoriaId: null,
+	cantidadEnPack: null,
+	productoPadreId: null,
+	codigoInterno: null,
+	codigoNegocio: null,
+	proveedorCodigo: null,
+	idSeccionCodigo: null,
+	especificoCodigo: null,
+	surtidoCodigo: null,
+	dcCodigo: null,
+	fotos: [],
+};
+
+const mockCompraDocumentoRow: CompraDocumento = {
+	compraDocumentoId: "cd-1",
+	tenantId: "tenant-test",
+	proveedorId: "ven-1",
+	numeroFactura: "",
+	facturaUrl: "",
+	formaPago: "PAGO_COMPLETO",
+	moneda: "CUP",
+	estado: "PAGADA",
+	tipoOperacion: "REGULAR",
+	descripcion: null,
+	fechaCompra: new Date("2025-01-01"),
+	total: 0,
+	gastoCompraId: null,
+	cuentaPorPagarId: null,
+	ordenCompraId: null,
+	deletedAt: null,
+	claveIdempotencia: null,
+	updatedById: null,
+	createdAt: new Date("2025-01-01"),
+	updatedAt: new Date("2025-01-01"),
+};
+
+const mockAnticipoMovimientoRow: AnticipoMovimiento = {
+	movimientoId: "mov-1",
+	anticipoId: "ant-1",
+	tipoMovimiento: "APLICADO",
+	contexto: "COMPRA_PRODUCTO",
+	documentoDestinoId: "cd-1",
+	reconciliacionVentaId: null,
+	reconciliacionGastoId: null,
+	monto: new Prisma.Decimal(1),
+	moneda: "CUP",
+	tasaAplicada: null,
+	montoConvertido: null,
+	saldoAntes: new Prisma.Decimal(1),
+	saldoDespues: new Prisma.Decimal(0),
+	usuarioId: "user-1",
+	idempotencyKey: null,
+	observaciones: null,
+	createdAt: new Date("2025-01-01"),
+};
+
+/**
+ * @description Mocks a vendor row using the current Prisma model contract.
+ * @param {Partial<Vendor>} overrides - Vendor fields specific to the test.
+ * @returns {void} No return value.
+ */
+function mockVendorResponse(overrides: Partial<Vendor> | null) {
+	vi.mocked(prisma.vendor.findFirst).mockResolvedValue(
+		overrides === null ? null : { ...mockVendorRow, ...overrides },
+	);
+}
+
+/**
+ * @description Mocks a product row using the current Prisma model contract.
+ * @param {Partial<Producto>} overrides - Product fields specific to the test.
+ * @returns {void} No return value.
+ */
+function mockProductResponse(overrides: Partial<Producto>) {
+	vi.mocked(prisma.producto.findFirst).mockResolvedValue({ ...mockProductRow, ...overrides });
+}
+
+/**
+ * @description Mocks a purchase row and optional included relations.
+ * @param {Partial<CompraDocumento> & { cuentaPorPagar?: object | null; items?: Array<{ compraDocumentoItemId: string }> } | null} overrides - Purchase fixture overrides.
+ * @returns {void} No return value.
+ */
+function mockCompraDocumentoResponse(
+	overrides: (Partial<CompraDocumento> & {
+		cuentaPorPagar?: { cuentaPorPagarId: string; montoDeuda: number; saldoPendiente: number; estado: string } | null;
+		items?: Array<{ compraDocumentoItemId: string }>;
+	}) | null,
+) {
+	vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue(
+		overrides === null ? null : { ...mockCompraDocumentoRow, ...overrides },
+	);
+}
+
+/**
+ * @description Mocks a typed advance movement fixture.
+ * @param {Partial<AnticipoMovimiento> | null} overrides - Movement fields or a missing row.
+ * @returns {void} No return value.
+ */
+function mockAnticipoMovimientoResponse(overrides: Partial<AnticipoMovimiento> | null) {
+	vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue(
+		overrides === null ? null : { ...mockAnticipoMovimientoRow, ...overrides },
+	);
+}
+
+/**
+ * @description Applies the documented schema defaults to purchase action fixtures.
+ * @param {Pick<CreateCompraProductoInput, "proveedorId" | "formaPago" | "estado" | "items"> & Partial<CreateCompraProductoInput>} input - Purchase input fixture.
+ * @returns {ReturnType<typeof createCompraProductoAction>} Typed action response.
+ */
+function createCompraProductoWithDefaults(
+	input: Pick<CreateCompraProductoInput, "proveedorId" | "formaPago" | "estado" | "items"> &
+		Partial<CreateCompraProductoInput>,
+) {
+	return createCompraProductoAction({
+		...input,
+		moneda: input.moneda ?? "CUP",
+		numeroFactura: input.numeroFactura ?? "",
+		facturaUrl: input.facturaUrl ?? "",
+	});
+}
 
 describe("ComprasProductos Server Actions", () => {
 	beforeEach(() => {
@@ -98,7 +255,7 @@ describe("ComprasProductos Server Actions", () => {
 	describe("getCompraProductoByIdAction", () => {
 		it("retorna compra por ID", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 			} as any);
 			const result = await getCompraProductoByIdAction("cd-1");
@@ -109,11 +266,11 @@ describe("ComprasProductos Server Actions", () => {
 	describe("createCompraProductoAction", () => {
 		it("crea compra exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({
+			mockVendorResponse({
 				vendorId: "ven-1",
 				nombre: "Proveedor",
 			});
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1",
 				stock: 10,
 				precioCosto: 500,
@@ -131,7 +288,7 @@ describe("ComprasProductos Server Actions", () => {
 				metodoCosto: "PONDERADO",
 			} as any);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				formaPago: "PAGO_COMPLETO",
 				estado: "PAGADA",
@@ -180,9 +337,9 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("rechaza si proveedor no existe", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue(null);
+			mockVendorResponse(null);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-noexiste",
 				formaPago: "PAGO_PARCIAL",
 				estado: "PENDIENTE",
@@ -190,12 +347,12 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("Proveedor no encontrado");
+			expect(expectActionFailure(result).error.message).toContain("Proveedor no encontrado");
 		});
 
 		it("factura una recepción sin duplicar stock ni kardex", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({
+			mockVendorResponse({
 				vendorId: "ven-1",
 				nombre: "Proveedor",
 			});
@@ -208,7 +365,7 @@ describe("ComprasProductos Server Actions", () => {
 				items: [{ productoId: "prod-1", precioUnitario: 500, recepciones: [{ cantidad: 10 }] }],
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1",
 				stock: 10,
 				precioCosto: 500,
@@ -224,7 +381,7 @@ describe("ComprasProductos Server Actions", () => {
 				metodoCosto: "PONDERADO",
 			} as any);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-1",
 				formaPago: "PAGO_COMPLETO",
@@ -245,7 +402,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("rechaza facturar cantidades ya facturadas de la misma orden", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
 				id: "oc-1",
@@ -256,11 +413,11 @@ describe("ComprasProductos Server Actions", () => {
 			mockTx.compraDocumento.findMany.mockResolvedValue([
 				{ items: [{ productoId: "prod-1", cantidad: 10 }] },
 			] as any);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-1",
 				formaPago: "PAGO_COMPLETO",
@@ -269,12 +426,12 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("FACTURA_EXCEDE_RECEPCION");
+			expect(expectActionFailure(result).error.code).toBe("FACTURA_EXCEDE_RECEPCION");
 		});
 
 		it("agrega líneas repetidas del mismo producto contra lo pendiente de facturar", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
 				id: "oc-1",
@@ -283,11 +440,11 @@ describe("ComprasProductos Server Actions", () => {
 				items: [{ productoId: "prod-1", precioUnitario: 500, recepciones: [{ cantidad: 10 }] }],
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-1",
 				formaPago: "PAGO_COMPLETO",
@@ -299,12 +456,12 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("FACTURA_EXCEDE_RECEPCION");
+			expect(expectActionFailure(result).error.code).toBe("FACTURA_EXCEDE_RECEPCION");
 		});
 
 		it("valoriza la factura vinculada solo sobre el stock restante, sin doble entrada", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			// La recepción dejó 10 unidades a costo 50 (precioUnitario de la línea OC).
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
@@ -314,7 +471,7 @@ describe("ComprasProductos Server Actions", () => {
 				items: [{ productoId: "prod-1", precioUnitario: 50, recepciones: [{ cantidad: 10 }] }],
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 50, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-oc-2" });
@@ -322,7 +479,7 @@ describe("ComprasProductos Server Actions", () => {
 			mockTx.compraDocumento.update.mockResolvedValue({} as any);
 			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-1",
 				formaPago: "PAGO_COMPLETO",
@@ -341,7 +498,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("acota el ajuste de CPP a las unidades que quedan en stock (sin explosión)", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			// OC de 100 unidades recibidas a costo 10.
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
@@ -351,7 +508,7 @@ describe("ComprasProductos Server Actions", () => {
 				items: [{ productoId: "prod-1", precioUnitario: 10, recepciones: [{ cantidad: 100 }] }],
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 8, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-expl" });
@@ -360,7 +517,7 @@ describe("ComprasProductos Server Actions", () => {
 			// Se vendieron 95 antes de facturar: solo quedan 5.
 			vi.mocked(getStockTotalProducto).mockResolvedValue(5);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-9",
 				formaPago: "PAGO_COMPLETO",
@@ -378,7 +535,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("ancla el ajuste de CPP al precio de la línea de OC, no al CPP actual", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
 				id: "oc-10",
@@ -388,7 +545,7 @@ describe("ComprasProductos Server Actions", () => {
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
 			// Otra compra directa movió el CPP a 50 mientras la OC esperaba factura.
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 50, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-anchor" });
@@ -396,7 +553,7 @@ describe("ComprasProductos Server Actions", () => {
 			mockTx.compraDocumento.update.mockResolvedValue({} as any);
 			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-10",
 				formaPago: "PAGO_COMPLETO",
@@ -414,7 +571,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("agrega el ajuste de CPP por producto cuando hay líneas duplicadas", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			mockVendorResponse({ vendorId: "ven-1" });
 			mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
 			mockTx.ordenCompra.findFirst.mockResolvedValue({
 				id: "oc-11",
@@ -423,7 +580,7 @@ describe("ComprasProductos Server Actions", () => {
 				items: [{ productoId: "prod-1", precioUnitario: 10, recepciones: [{ cantidad: 10 }] }],
 			} as any);
 			mockTx.compraDocumento.findMany.mockResolvedValue([]);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", precioCosto: 10, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-dup" });
@@ -431,7 +588,7 @@ describe("ComprasProductos Server Actions", () => {
 			mockTx.compraDocumento.update.mockResolvedValue({} as any);
 			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				ordenCompraId: "oc-11",
 				formaPago: "PAGO_COMPLETO",
@@ -459,46 +616,50 @@ describe("ComprasProductos Server Actions", () => {
 				tenantId: "tenant-test",
 				claveIdempotencia: "fact-key-1",
 			};
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue(existente as any);
+			mockCompraDocumentoResponse(existente);
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				formaPago: "PAGO_COMPLETO",
 				estado: "PAGADA",
 				claveIdempotencia: "fact-key-1",
 				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 3 }],
-			} as any);
+			});
 
 			expect(result.success).toBe(true);
-			expect(result.data?.compraDocumentoId).toBe("cd-prev");
+			expect(expectActionSuccess(result).data.compraDocumentoId).toBe("cd-prev");
 			expect(prisma.$transaction).not.toHaveBeenCalled();
 			expect(mockTx.compraDocumento.create).not.toHaveBeenCalled();
 		});
 
 		it("resuelve una carrera P2002 devolviendo la factura ganadora (C1)", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1", nombre: "P" });
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockVendorResponse({ vendorId: "ven-1", nombre: "P" });
+			mockProductResponse({
 				id: "prod-1", precioCosto: 100, almacenId: "alm-1", tenantId: "tenant-test",
 			});
 			// Pre-chequeo: no existe. Tras la carrera: ya existe la del ganador.
 			vi.mocked(prisma.compraDocumento.findFirst)
 				.mockResolvedValueOnce(null)
-				.mockResolvedValue({ compraDocumentoId: "cd-ganador", claveIdempotencia: "race-key-1" } as any);
+				.mockResolvedValue({
+					...mockCompraDocumentoRow,
+					compraDocumentoId: "cd-ganador",
+					claveIdempotencia: "race-key-1",
+				});
 			vi.mocked(getStockTotalProducto).mockResolvedValue(0);
 			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({ precioCostoNuevo: 100, metodoCosto: "PONDERADO" } as any);
 			mockTx.compraDocumento.create.mockRejectedValue({ code: "P2002" });
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				formaPago: "PAGO_COMPLETO",
 				estado: "PAGADA",
 				claveIdempotencia: "race-key-1",
 				items: [{ productoId: "prod-1", precioCosto: 100, cantidad: 2 }],
-			} as any);
+			});
 
 			expect(result.success).toBe(true);
-			expect(result.data?.compraDocumentoId).toBe("cd-ganador");
+			expect(expectActionSuccess(result).data.compraDocumentoId).toBe("cd-ganador");
 		});
 	});
 
@@ -533,7 +694,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("actualiza campos de cabecera sin impacto contable", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				formaPago: "PAGO_COMPLETO",
 				cuentaPorPagar: null,
@@ -615,7 +776,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("rechaza cambiar a ANTICIPO_PAGO (validado por schema Zod)", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				formaPago: "PAGO_COMPLETO",
 				cuentaPorPagar: null,
@@ -645,7 +806,7 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("ANTICIPO_PAGO");
+			expect(expectActionFailure(result).error.message).toContain("ANTICIPO_PAGO");
 		});
 
 		it("rechaza PAGO_PARCIAL → PAGO_COMPLETO con pagos parciales", async () => {
@@ -669,14 +830,14 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("pagos parciales");
+			expect(expectActionFailure(result).error.message).toContain("pagos parciales");
 		});
 	});
 
 	describe("deleteCompraProductoAction", () => {
 		it("rechaza borrar compra que ya impactó inventario", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				gastoCompraId: null,
 				cuentaPorPagarId: null,
@@ -685,19 +846,19 @@ describe("ComprasProductos Server Actions", () => {
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("impactó inventario");
+			expect(expectActionFailure(result).error.message).toContain("impactó inventario");
 			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
 		});
 
 		it("permite soft-delete solo si la compra no tiene items ni impacto", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				gastoCompraId: null,
 				cuentaPorPagarId: null,
 				items: [],
 			});
-			vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue(null);
+			mockAnticipoMovimientoResponse(null);
 			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
 
 			const result = await deleteCompraProductoAction("cd-1");
@@ -722,7 +883,7 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("rechaza borrar compra con gastoCompraId", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				gastoCompraId: "gc-1",
 				cuentaPorPagarId: null,
@@ -730,13 +891,13 @@ describe("ComprasProductos Server Actions", () => {
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("gasto contable");
+			expect(expectActionFailure(result).error.message).toContain("gasto contable");
 			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
 		});
 
 		it("rechaza borrar compra con cuentaPorPagarId", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				gastoCompraId: null,
 				cuentaPorPagarId: "cxp-1",
@@ -744,24 +905,24 @@ describe("ComprasProductos Server Actions", () => {
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("cuenta por pagar");
+			expect(expectActionFailure(result).error.message).toContain("cuenta por pagar");
 			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
 		});
 
 		it("rechaza borrar compra con anticipo aplicado", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			mockCompraDocumentoResponse({
 				compraDocumentoId: "cd-1",
 				gastoCompraId: null,
 				cuentaPorPagarId: null,
 			});
-			vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue({
+			mockAnticipoMovimientoResponse({
 				movimientoId: "mov-1",
 			});
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("anticipo");
+			expect(expectActionFailure(result).error.message).toContain("anticipo");
 			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
 		});
 	});
@@ -769,11 +930,11 @@ describe("ComprasProductos Server Actions", () => {
 	describe("moneda de la compra (B-02.1)", () => {
 		const setupCreateMocks = () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({
+			mockVendorResponse({
 				vendorId: "ven-1",
 				nombre: "Proveedor",
 			} as never);
-			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+			mockProductResponse({
 				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
 			} as never);
 			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-1" } as never);
@@ -789,7 +950,7 @@ describe("ComprasProductos Server Actions", () => {
 		it("propaga la moneda elegida al documento y a la CxP", async () => {
 			setupCreateMocks();
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				formaPago: "PAGO_PARCIAL",
 				estado: "PENDIENTE",
@@ -810,7 +971,7 @@ describe("ComprasProductos Server Actions", () => {
 		it("usa CUP por defecto cuando no se indica moneda", async () => {
 			setupCreateMocks();
 
-			const result = await createCompraProductoAction({
+			const result = await createCompraProductoWithDefaults({
 				proveedorId: "ven-1",
 				formaPago: "PAGO_PARCIAL",
 				estado: "PENDIENTE",

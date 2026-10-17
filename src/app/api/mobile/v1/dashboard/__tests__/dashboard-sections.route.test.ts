@@ -56,7 +56,7 @@ const statsFixture = {
       id: 'p-2', nombre: 'Azúcar', stock: 2, stockMinimo: 5,
       precioCosto: 1, precioVenta: 2, almacenId: 'a-1', puntoDeVentaId: null,
       categoria: { nombre: 'Básicos' }, unidad: { simbolo: 'kg' },
-      stockTotal: 2, stockMinimo: 5, diferencia: 3, umbralUsado: 5,
+      stockTotal: 2, diferencia: 3, umbralUsado: 5,
     },
   ],
   distribucionStock: [

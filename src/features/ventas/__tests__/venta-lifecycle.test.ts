@@ -89,14 +89,14 @@ const ventaPedido = {
 	tenantId: 'tenant-1',
 	estado: 'PEDIDO',
 	puntoDeVentaId: 'pv-1',
-	clienteId: 'cliente-1',
+	clienteId: 'cliente-1' as string | null,
 	deletedAt: null,
 	total: 1000,
 	descuento: 0,
 	turnoId: 't-0',
-	factura: null,
+	factura: null as { idFactura: string; tenantId: string } | null,
 	reconciliaciones: [],
-	turno: { estado: 'ABIERTO', arqueos: [] },
+	turno: { estado: 'ABIERTO', arqueos: [] as Array<{ id: string }> },
 	items: [
 		{
 			id: 'item-1',
@@ -380,7 +380,7 @@ describe('anularVentaPorEstado', () => {
 			factura: { idFactura: 'fac-1', tenantId: 'tenant-1' },
 		};
 		mirarVenta(ventaFacturada);
-		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: 'cxc-1' }]);
+		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: 'cxc-1' } as any]);
 		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
 
 		expect(mockTx.factura.update).toHaveBeenCalledWith(

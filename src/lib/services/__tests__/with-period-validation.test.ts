@@ -36,8 +36,10 @@ vi.mock("@/lib/server-actions/get-current-user", () => ({
 
 const mockUser: AuthenticatedUser = {
 	userId: "user-1",
+	name: "Test User",
 	tenantId: "tenant-1",
 	email: "test@test.com",
+	isActive: true,
 	role: "admin",
 };
 
@@ -223,8 +225,10 @@ describe("withPeriodValidation", () => {
 		it("saltea cuando el usuario no tiene tenantId", async () => {
 			const userSinTenant: AuthenticatedUser = {
 				userId: "user-1",
+				name: "Test User",
 				tenantId: "",
 				email: "test@test.com",
+				isActive: true,
 				role: "admin",
 			};
 

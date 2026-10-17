@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -63,7 +64,7 @@ const user = {
   userId: 'user-1',
   role: 'admin',
   tenantId: 'tenant-1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
   isActive: true,
 } as any;
 
@@ -183,7 +184,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('RECEPCION_EXCEDENTE');
+    expect(expectActionFailure(result).error?.code).toBe('RECEPCION_EXCEDENTE');
   });
 
   it('cancela con compare-and-set y falla si la orden ya cambió de estado', async () => {
@@ -202,7 +203,7 @@ describe('Órdenes de compra y recepciones', () => {
       }),
     }));
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('ESTADO_INVALIDO');
+    expect(expectActionFailure(result).error?.code).toBe('ESTADO_INVALIDO');
   });
 
   it('confirma con compare-and-set y falla si ya no está en BORRADOR', async () => {
@@ -232,7 +233,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     expect(prisma.reglaReabastecimiento.upsert).not.toHaveBeenCalled();
   });
 
@@ -248,7 +249,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('VALIDATION_ERROR');
+    expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
   });
 
   it('recibe el saldo restante y cierra la OC en RECIBIDA', async () => {
@@ -290,7 +291,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('RECEPCION_EXCEDENTE');
+    expect(expectActionFailure(result).error?.code).toBe('RECEPCION_EXCEDENTE');
     expect(mockTx.recepcion.create).not.toHaveBeenCalled();
   });
 
@@ -373,7 +374,7 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.data?.yaRegistrada).toBe(true);
+    expect(expectActionSuccess(result).data?.yaRegistrada).toBe(true);
     expect(prisma.recepcion.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 'tenant-1', claveIdempotencia: 'misma-clave' },
@@ -424,7 +425,7 @@ describe('Órdenes de compra y recepciones', () => {
     const result = await sugerirReabastecimientoAction({});
 
     expect(result.success).toBe(true);
-    expect(result.data).toEqual(expect.arrayContaining([
+    expect(expectActionSuccess(result).data).toEqual(expect.arrayContaining([
       expect.objectContaining({ productoId: 'prod-1', cantidadSugerida: 22, tipo: 'FABRICAR' }),
       expect.objectContaining({ productoId: 'prod-2', cantidadSugerida: 13, tipo: 'COMPRAR' }),
     ]));

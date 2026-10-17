@@ -1,8 +1,9 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
-import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,7 @@ function mapActionErrorStatus(code: string): number {
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'DISABLED':
       return 404;
@@ -28,9 +30,16 @@ export async function POST(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requireFeature(authResult.user, 'prestamos-cash', 'registrar pagos de préstamos cash');
     const { id } = await context.params;
     const body = await request.json();
-    const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
+    const input = { id, ...body };
+    const replay = await AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+      input,
+      user: authResult.user,
+    });
+    if (replay) return successResponse(replay);
+    const fechaOperacion = new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
       tenantId: authResult.user.tenantId ?? '',
@@ -47,7 +56,7 @@ export async function POST(
     }
 
     const result = await AccountingCashOperationsMutationService.registerCashLoanPayment({
-      input: { id, ...body },
+      input,
       user: authResult.user,
     });
 

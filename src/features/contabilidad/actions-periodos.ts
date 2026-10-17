@@ -392,16 +392,21 @@ export const abrirPeriodoAction = withAction(
 				tx,
 			);
 
+			await AuditLogService.logStrict({
+				accion: "CREATE",
+				entidad: "CIERRE_CONTABLE",
+				entidadId: p.periodoId,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: parsed.tipo,
+					fechaInicio: parsed.fechaInicio,
+					fechaFin: parsed.fechaFin,
+					accion: "ABRIR",
+				},
+			}, tx);
+
 			return { periodo: p };
 		});
-
-		AuditLogService.log({
-			accion: "CREATE",
-			entidad: "CIERRE_CONTABLE",
-			entidadId: periodo.periodoId,
-			usuarioId: user.userId,
-			detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin, accion: "ABRIR" },
-		}).catch((err) => console.error("[AuditLog] Error logging abrir periodo:", err));
 
 		await invalidateCache(tenantId);
 		revalidatePath("/busy/contabilidad/periodos");

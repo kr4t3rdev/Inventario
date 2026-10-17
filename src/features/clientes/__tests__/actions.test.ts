@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de clientes.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -35,17 +36,22 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockClienteRow = {
   clienteId: 'cli-1',
+  tenantId: 'tenant-test',
   nombre: 'Cliente Test',
   direccion: 'Calle 123',
   telefono: '555-1234',
   numeroCuentaCUP: null,
   numeroCuentaUSD: null,
   numeroContrato: null,
+  logoUrl: null,
+  listaPrecioId: null,
+  taxIdCliente: null,
+  limiteCredito: null,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -59,7 +65,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findMany).mockResolvedValue([mockClienteRow]);
       const result = await getClientesAction();
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
+      expect(expectActionSuccess(result).data).toHaveLength(1);
     });
 
     it('retorna lista vacía si no hay clientes', async () => {
@@ -67,7 +73,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findMany).mockResolvedValue([]);
       const result = await getClientesAction();
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      expect(expectActionSuccess(result).data).toEqual([]);
     });
   });
 
@@ -77,7 +83,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockClienteRow);
       const result = await getClienteByIdAction('cli-1');
       expect(result.success).toBe(true);
-      expect(result.data!.nombre).toBe('Cliente Test');
+      expect(expectActionSuccess(result).data!.nombre).toBe('Cliente Test');
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
@@ -85,7 +91,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await getClienteByIdAction('cli-noexiste');
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -101,7 +107,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       const result = await createClienteAction({ nombre: '' });
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.code).toBe('VALIDATION_ERROR');
     });
   });
 
@@ -119,7 +125,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await updateClienteAction({ clienteId: 'cli-noexiste', nombre: 'Test' });
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -137,7 +143,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
       const result = await deleteClienteAction('cli-noexiste');
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrado');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrado');
     });
   });
 
@@ -146,7 +152,7 @@ describe('Clientes Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getClientesAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 
@@ -154,14 +160,14 @@ describe('Clientes Server Actions', () => {
     it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye clientes', async () => {
       const restrictedUser: AuthenticatedUser = {
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         planFeatures: { clientes: false },
       };
       vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
       const result = await getClientesAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+      expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
     });
   });
 });

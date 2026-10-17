@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -157,7 +158,7 @@ describe('registrarConteoAction (doble captura ciega)', () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe('MISMO_CONTADOR');
+		expect(expectActionFailure(result).error?.code).toBe('MISMO_CONTADOR');
 	});
 });
 
@@ -243,7 +244,7 @@ describe('conciliarConteoAction', () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe('VARIANZA_SIN_RESOLVER');
+		expect(expectActionFailure(result).error?.code).toBe('VARIANZA_SIN_RESOLVER');
 	});
 });
 

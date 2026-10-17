@@ -897,3 +897,37 @@ describe("checkWritable estático", () => {
 		expect(result.error?.message).toBeDefined();
 	});
 });
+
+describe('auditoría obligatoria del asiento formal', () => {
+	beforeEach(async () => {
+		await clearCache();
+		resetEnv();
+		vi.clearAllMocks();
+		process.env.PERIODO_CONTABLE_MODE = 'enforce';
+		mockPrisma.periodoCache.findUnique.mockResolvedValue(null);
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(null);
+	});
+
+	it('bloquea el posteo si no puede persistir el intento de bypass con actor/origen', async () => {
+		mockPrisma.auditoriaPeriodo.create.mockRejectedValueOnce(new Error('audit unavailable'));
+
+		await expect(PeriodoGuard.assertWritable(
+			new Date('2026-10-14T12:00:00.000Z'),
+			TENANT,
+			'asiento',
+			{
+				actorId: ACTOR,
+				actorTipo: 'USUARIO',
+				origen: { tipo: 'reconciliacion_gasto', id: 'recon-1' },
+			},
+		)).rejects.toMatchObject({ code: 'AUDITORIA_FALLIDA' });
+
+		expect(mockPrisma.auditoriaPeriodo.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				tenantId: TENANT,
+				actor: ACTOR,
+				evento: 'INTENTO_BYPASS',
+			}),
+		}));
+	});
+});

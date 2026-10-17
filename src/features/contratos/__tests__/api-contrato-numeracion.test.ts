@@ -47,7 +47,7 @@ import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
-  userId: 'user-1', tenantId: 'tenant-A', tenantRole: 'admin',
+  userId: 'user-1', tenantId: 'tenant-A', tenantRole: 'manager',
   role: 'admin', name: 'Test', email: 'test@test.com', isActive: true,
 };
 

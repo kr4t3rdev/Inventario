@@ -90,7 +90,7 @@ describe('VentaReadService', () => {
 
     await expect(
       VentaReadService.getById({ tenantId: 'tenant-1', ventaId: 'missing-sale' }),
-    ).rejects.toMatchObject<ActionError>({
+    ).rejects.toMatchObject({
       code: 'NOT_FOUND',
       message: 'Venta no encontrada',
     });

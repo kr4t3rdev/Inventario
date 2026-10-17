@@ -102,6 +102,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Node-native tests
+        if: matrix.shard == 1
+        run: pnpm run test:node
+
       - name: Unit tests
         run: pnpm exec vitest run --maxWorkers=2 --coverage --reporter=blob --reporter=default --shard=${{ matrix.shard }}/${{ matrix.total }}
 

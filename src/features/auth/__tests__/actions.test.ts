@@ -94,6 +94,20 @@ function createMockUser(overrides: Record<string, unknown> = {}) {
 
 // ─── Tests loginAction ───────────────────────────────────
 
+/**
+ * @description Estrecha el resultado de estas actions a su variante de fallo.
+ *
+ * No devuelven el envoltorio ActionResponse sino una union local
+ * `{ success: true; data } | { success: false; error }`.
+ *
+ * @param {{ success: boolean; error?: { message: string; code?: string } }} result - Resultado.
+ * @returns {{ success: false; error: { message: string; code?: string } }} Variante de fallo.
+ */
+function expectFailure(result: { success: boolean; error?: { message: string; code?: string } }) {
+  if (result.success) throw new Error("Se esperaba un fallo");
+  return result as { success: false; error: { message: string; code?: string } };
+}
+
 describe("loginAction", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -140,7 +154,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "test@example.com", password: "wrong" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("INVALID_CREDENTIALS");
+		expect(expectFailure(result).error.code).toBe("INVALID_CREDENTIALS");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
 
@@ -151,7 +165,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "test@example.com", password: "password123" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("USER_INACTIVE");
+		expect(expectFailure(result).error.code).toBe("USER_INACTIVE");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
 
@@ -163,7 +177,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "locked@example.com", password: "password123" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("ACCOUNT_LOCKED");
+		expect(expectFailure(result).error.code).toBe("ACCOUNT_LOCKED");
 		expect(mockCookieSet).not.toHaveBeenCalled();
 	});
 
@@ -187,7 +201,7 @@ describe("loginAction", () => {
 		const result = await loginAction({ email: "no-es-un-email", password: "password123" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectFailure(result).error.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("RED: loginAction no devuelve token JWT en el body", async () => {

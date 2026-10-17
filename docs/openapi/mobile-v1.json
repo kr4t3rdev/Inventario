@@ -17107,7 +17107,12 @@
             "type": "string"
           },
           "tasaInteres": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
+          },
+          "tasaInteresMoratorio": {
+            "type": "number",
+            "minimum": 0
           },
           "tasaCambioAlCrear": {
             "type": "number"
@@ -17127,6 +17132,8 @@
         "required": [
           "clienteId",
           "montoCapital",
+          "tasaInteres",
+          "tasaInteresMoratorio",
           "cuentaBancariaId"
         ]
       },
@@ -17145,7 +17152,12 @@
             "type": "string"
           },
           "tasaInteres": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
+          },
+          "tasaInteresMoratorio": {
+            "type": "number",
+            "minimum": 0
           },
           "fechaVencimiento": {
             "type": "string",
@@ -17166,6 +17178,8 @@
         "required": [
           "proveedorId",
           "montoCapital",
+          "tasaInteres",
+          "tasaInteresMoratorio",
           "cuentaBancariaId"
         ]
       },
