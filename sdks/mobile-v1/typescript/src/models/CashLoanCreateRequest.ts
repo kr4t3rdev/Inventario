@@ -42,7 +42,13 @@ export interface CashLoanCreateRequest {
      * @type {number}
      * @memberof CashLoanCreateRequest
      */
-    tasaInteres?: number;
+    tasaInteres: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof CashLoanCreateRequest
+     */
+    tasaInteresMoratorio: number;
     /**
      * 
      * @type {number}
@@ -75,6 +81,8 @@ export interface CashLoanCreateRequest {
 export function instanceOfCashLoanCreateRequest(value: object): value is CashLoanCreateRequest {
     if (!('clienteId' in value) || value['clienteId'] === undefined) return false;
     if (!('montoCapital' in value) || value['montoCapital'] === undefined) return false;
+    if (!('tasaInteres' in value) || value['tasaInteres'] === undefined) return false;
+    if (!('tasaInteresMoratorio' in value) || value['tasaInteresMoratorio'] === undefined) return false;
     if (!('cuentaBancariaId' in value) || value['cuentaBancariaId'] === undefined) return false;
     return true;
 }
@@ -92,7 +100,8 @@ export function CashLoanCreateRequestFromJSONTyped(json: any, ignoreDiscriminato
         'clienteId': json['clienteId'],
         'montoCapital': json['montoCapital'],
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'tasaInteres': json['tasaInteres'] == null ? undefined : json['tasaInteres'],
+        'tasaInteres': json['tasaInteres'],
+        'tasaInteresMoratorio': json['tasaInteresMoratorio'],
         'tasaCambioAlCrear': json['tasaCambioAlCrear'] == null ? undefined : json['tasaCambioAlCrear'],
         'fechaVencimiento': json['fechaVencimiento'] == null ? undefined : (new Date(json['fechaVencimiento'])),
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
@@ -115,6 +124,7 @@ export function CashLoanCreateRequestToJSONTyped(value?: CashLoanCreateRequest |
         'montoCapital': value['montoCapital'],
         'moneda': value['moneda'],
         'tasaInteres': value['tasaInteres'],
+        'tasaInteresMoratorio': value['tasaInteresMoratorio'],
         'tasaCambioAlCrear': value['tasaCambioAlCrear'],
         'fechaVencimiento': value['fechaVencimiento'] == null ? value['fechaVencimiento'] : value['fechaVencimiento'].toISOString(),
         'observaciones': value['observaciones'],

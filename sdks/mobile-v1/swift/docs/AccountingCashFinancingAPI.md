@@ -442,7 +442,7 @@ Registra financiamiento recibido de un proveedor, incrementa la cuenta bancaria 
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let cashDebtCreateRequest = CashDebtCreateRequest(proveedorId: "proveedorId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", comprobanteUrl: "comprobanteUrl_example", cuentaBancariaId: "cuentaBancariaId_example") // CashDebtCreateRequest | 
+let cashDebtCreateRequest = CashDebtCreateRequest(proveedorId: "proveedorId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, tasaInteresMoratorio: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", comprobanteUrl: "comprobanteUrl_example", cuentaBancariaId: "cuentaBancariaId_example") // CashDebtCreateRequest | 
 let estado = true // Bool | Estado usado para filtrar resultados. (optional)
 let proveedorId = "proveedorId_example" // String | Identificador del proveedor. (optional)
 let moneda = "moneda_example" // String | Código de moneda. (optional)
@@ -554,7 +554,7 @@ Registra un préstamo a un cliente, descuenta fondos de la cuenta bancaria y cre
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let cashLoanCreateRequest = CashLoanCreateRequest(clienteId: "clienteId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, tasaCambioAlCrear: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", cuentaBancariaId: "cuentaBancariaId_example") // CashLoanCreateRequest | 
+let cashLoanCreateRequest = CashLoanCreateRequest(clienteId: "clienteId_example", montoCapital: 123, moneda: "moneda_example", tasaInteres: 123, tasaInteresMoratorio: 123, tasaCambioAlCrear: 123, fechaVencimiento: Date(), observaciones: "observaciones_example", cuentaBancariaId: "cuentaBancariaId_example") // CashLoanCreateRequest | 
 let estado = true // Bool | Estado usado para filtrar resultados. (optional)
 let clienteId = "clienteId_example" // String | Identificador del cliente. (optional)
 let moneda = "moneda_example" // String | Código de moneda. (optional)

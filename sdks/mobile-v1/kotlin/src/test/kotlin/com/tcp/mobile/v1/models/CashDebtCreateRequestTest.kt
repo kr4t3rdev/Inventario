@@ -37,6 +37,18 @@ class CashDebtCreateRequestTest : ShouldSpec() {
             //modelInstance.montoCapital shouldBe ("TODO")
         }
 
+        // to test the property `tasaInteres`
+        should("test tasaInteres") {
+            // uncomment below to test the property
+            //modelInstance.tasaInteres shouldBe ("TODO")
+        }
+
+        // to test the property `tasaInteresMoratorio`
+        should("test tasaInteresMoratorio") {
+            // uncomment below to test the property
+            //modelInstance.tasaInteresMoratorio shouldBe ("TODO")
+        }
+
         // to test the property `cuentaBancariaId`
         should("test cuentaBancariaId") {
             // uncomment below to test the property
@@ -47,12 +59,6 @@ class CashDebtCreateRequestTest : ShouldSpec() {
         should("test moneda") {
             // uncomment below to test the property
             //modelInstance.moneda shouldBe ("TODO")
-        }
-
-        // to test the property `tasaInteres`
-        should("test tasaInteres") {
-            // uncomment below to test the property
-            //modelInstance.tasaInteres shouldBe ("TODO")
         }
 
         // to test the property `fechaVencimiento`

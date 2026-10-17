@@ -13,21 +13,25 @@ import AnyCodable
 public struct CashDebtCreateRequest: Codable, JSONEncodable, Hashable {
 
     public static let proveedorIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let tasaInteresRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
+    public static let tasaInteresMoratorioRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
     public static let cuentaBancariaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public var proveedorId: String
     public var montoCapital: Double
     public var moneda: String?
-    public var tasaInteres: Double?
+    public var tasaInteres: Double
+    public var tasaInteresMoratorio: Double
     public var fechaVencimiento: Date?
     public var observaciones: String?
     public var comprobanteUrl: String?
     public var cuentaBancariaId: String
 
-    public init(proveedorId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double? = nil, fechaVencimiento: Date? = nil, observaciones: String? = nil, comprobanteUrl: String? = nil, cuentaBancariaId: String) {
+    public init(proveedorId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double, tasaInteresMoratorio: Double, fechaVencimiento: Date? = nil, observaciones: String? = nil, comprobanteUrl: String? = nil, cuentaBancariaId: String) {
         self.proveedorId = proveedorId
         self.montoCapital = montoCapital
         self.moneda = moneda
         self.tasaInteres = tasaInteres
+        self.tasaInteresMoratorio = tasaInteresMoratorio
         self.fechaVencimiento = fechaVencimiento
         self.observaciones = observaciones
         self.comprobanteUrl = comprobanteUrl
@@ -39,6 +43,7 @@ public struct CashDebtCreateRequest: Codable, JSONEncodable, Hashable {
         case montoCapital
         case moneda
         case tasaInteres
+        case tasaInteresMoratorio
         case fechaVencimiento
         case observaciones
         case comprobanteUrl
@@ -52,7 +57,8 @@ public struct CashDebtCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encode(proveedorId, forKey: .proveedorId)
         try container.encode(montoCapital, forKey: .montoCapital)
         try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(tasaInteres, forKey: .tasaInteres)
+        try container.encode(tasaInteres, forKey: .tasaInteres)
+        try container.encode(tasaInteresMoratorio, forKey: .tasaInteresMoratorio)
         try container.encodeIfPresent(fechaVencimiento, forKey: .fechaVencimiento)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
         try container.encodeIfPresent(comprobanteUrl, forKey: .comprobanteUrl)

@@ -6,7 +6,8 @@ Name | Type | Description | Notes
 **proveedorId** | **String** |  | 
 **montoCapital** | **Double** |  | 
 **moneda** | **String** |  | [optional] 
-**tasaInteres** | **Double** |  | [optional] 
+**tasaInteres** | **Double** |  | 
+**tasaInteresMoratorio** | **Double** |  | 
 **fechaVencimiento** | **Date** |  | [optional] 
 **observaciones** | **String** |  | [optional] 
 **comprobanteUrl** | **String** |  | [optional] 

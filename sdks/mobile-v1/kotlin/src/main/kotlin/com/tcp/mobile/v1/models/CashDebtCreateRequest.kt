@@ -23,9 +23,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
  *
  * @param proveedorId 
  * @param montoCapital 
+ * @param tasaInteres 
+ * @param tasaInteresMoratorio 
  * @param cuentaBancariaId 
  * @param moneda 
- * @param tasaInteres 
  * @param fechaVencimiento 
  * @param observaciones 
  * @param comprobanteUrl 
@@ -40,14 +41,17 @@ data class CashDebtCreateRequest (
     @get:JsonProperty("montoCapital")
     val montoCapital: java.math.BigDecimal,
 
+    @get:JsonProperty("tasaInteres")
+    val tasaInteres: java.math.BigDecimal,
+
+    @get:JsonProperty("tasaInteresMoratorio")
+    val tasaInteresMoratorio: java.math.BigDecimal,
+
     @get:JsonProperty("cuentaBancariaId")
     val cuentaBancariaId: kotlin.String,
 
     @get:JsonProperty("moneda")
     val moneda: kotlin.String? = null,
-
-    @get:JsonProperty("tasaInteres")
-    val tasaInteres: java.math.BigDecimal? = null,
 
     @get:JsonProperty("fechaVencimiento")
     val fechaVencimiento: java.time.OffsetDateTime? = null,
