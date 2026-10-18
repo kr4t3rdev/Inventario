@@ -1,3 +1,5 @@
+> **Sincronizado el 2026-09-26 (Sesión B, change `transferencias-cierre-flujo`):** verificado contra el código de `main` (b4be12ba). Los ítems 3.1–3.3 (BUG-3, agregados de stock de PV) NO están implementados en main: pertenecen a la Sesión A (`feat/correcciones-urgentes-2-datos`, re-integración pendiente vía revert-del-revert). El ítem 7.3 (verificación manual en dev server) queda abierto. 7.2 se re-verificó con eslint scoped: 0 errores.
+
 # Tasks: Fix transferencias bugs
 
 ## Task 1 — BUG-1: Agregar schema y tipos faltantes en TransferenciaForm
@@ -7,9 +9,9 @@
 **Dependencias:** Ninguna
 
 **Cambio:**
-- [ ] 1.1 Agregar `transferenciaSchema` (Zod object con productos array, tipoOrigen, origenId, tipoDestino, destinoId, descripcion)
-- [ ] 1.2 Agregar `type TransferenciaFormValues = z.infer<typeof transferenciaSchema>`
-- [ ] 1.3 Agregar `interface TransferenciaFormProps` con `initialData` opcional
+- [x] 1.1 Agregar `transferenciaSchema` (Zod object con productos array, tipoOrigen, origenId, tipoDestino, destinoId, descripcion)
+- [x] 1.2 Agregar `type TransferenciaFormValues = z.infer<typeof transferenciaSchema>`
+- [x] 1.3 Agregar `interface TransferenciaFormProps` con `initialData` opcional
 
 **Verificación:** Cargar `/busy/transferencias/new` sin `ReferenceError`
 
@@ -22,7 +24,7 @@
 **Dependencias:** Ninguna
 
 **Cambio:**
-- [ ] 2.1 En `getTransferenciasAction`, agregar `tenantId` al where del `prisma.transferencia.count()`
+- [x] 2.1 En `getTransferenciasAction`, agregar `tenantId` al where del `prisma.transferencia.count()`
 
 **Verificación:** Test `retorna lista paginada` pasa
 
@@ -50,7 +52,7 @@
 **Dependencias:** Ninguna
 
 **Cambio:**
-- [ ] 4.1 Reemplazar el objeto `data` hardcodeado en `updateTransferenciaAction` con construcción dinámica según `tipoOrigen`/`tipoDestino`
+- [x] 4.1 Reemplazar el objeto `data` hardcodeado en `updateTransferenciaAction` con construcción dinámica según `tipoOrigen`/`tipoDestino`
 
 **Verificación:** Tests de update pasan, revisión visual del diff
 
@@ -63,7 +65,7 @@
 **Dependencias:** Task 3 (misma área de código, mismo archivo)
 
 **Cambio:**
-- [ ] 5.1 En `createTransferenciaAction`, reemplazar validación `producto.stock < item.cantidad` por consulta a `prisma.stockUbicacion.findUnique` con `cantidadDisponible`
+- [x] 5.1 En `createTransferenciaAction`, reemplazar validación `producto.stock < item.cantidad` por consulta a `prisma.stockUbicacion.findUnique` con `cantidadDisponible`
 
 **Verificación:** Tests de `createTransferenciaAction` pasan con mocks actualizados
 
@@ -76,10 +78,10 @@
 **Dependencias:** Task 2, Task 5
 
 **Cambio:**
-- [ ] 6.1 Agregar `stockUbicacion: { findUnique: vi.fn() }` al mock de `prisma`
-- [ ] 6.2 Actualizar test `rechaza stock insuficiente` para mockear `stockUbicacion.findUnique` con stock bajo
-- [ ] 6.3 Actualizar test `crea transferencia exitosamente` para mockear `stockUbicacion.findUnique` con stock suficiente
-- [ ] 6.4 Agregar assertion sobre `tenantId` en el mock de `count` para paginación
+- [x] 6.1 Agregar `stockUbicacion: { findUnique: vi.fn() }` al mock de `prisma`
+- [x] 6.2 Actualizar test `rechaza stock insuficiente` para mockear `stockUbicacion.findUnique` con stock bajo
+- [x] 6.3 Actualizar test `crea transferencia exitosamente` para mockear `stockUbicacion.findUnique` con stock suficiente
+- [x] 6.4 Agregar assertion sobre `tenantId` en el mock de `count` para paginación
 
 **Verificación:** `pnpm run test:run src/features/transferencias/__tests__/actions.test.ts` pasa
 
@@ -90,8 +92,8 @@
 **Dependencias:** Tasks 1–6
 
 **Cambio:**
-- [ ] 7.1 Ejecutar `pnpm run test:run` para toda la suite de transferencias
-- [ ] 7.2 Ejecutar `pnpm exec eslint src/features/transferencias/` sin errores
+- [x] 7.1 Ejecutar `pnpm run test:run` para toda la suite de transferencias
+- [x] 7.2 Ejecutar `pnpm exec eslint src/features/transferencias/` sin errores
 - [ ] 7.3 Levantar dev server y verificar que `/busy/transferencias/new` carga sin errores
 
 **Verificación:** Sin errores de compilación, tests pasan, página carga
