@@ -112,6 +112,10 @@ const MOBILE_GROUP_KEYS_MAP: Record<string, string | null> = {
   reparaciones: 'produccion.reparaciones.gestionar',
   servicios: 'operaciones.servicios.acceder',
   transferencias: 'inventario.transferencias.gestionar',
+  // ── Gestión-4 (panel móvil): catálogos de gestión, solo lectura ──
+  categorias: 'inventario.categorias.gestionar',
+  'listas-precios': 'inventario.listas-precios.gestionar',
+  'puntos-venta': 'operaciones.pos.gestionar',
   // Exentas:
   auth: null, // login/register/refresh/me/tenants — público o autenticado genérico
   plans: null, // catálogo público de planes
