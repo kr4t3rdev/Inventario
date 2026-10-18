@@ -42,6 +42,7 @@ vi.mock("@/lib/prisma", () => ({
 	prisma: {
 		puntoDeVenta: { findFirst: vi.fn() },
 		cliente: { findFirst: vi.fn() },
+		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -118,11 +119,12 @@ function mockHappyPath() {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	// Defaults: PV sin lista, sin cliente, producto con precio base 500.
+	// Defaults: PV sin lista, sin lista default, sin cliente, producto con precio base 500.
 	vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 		pvId: "pv-1",
 		listaPrecioId: null,
 	} as any);
+	vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null as any);
 	vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
 	vi.mocked(prisma.producto.findMany).mockResolvedValue([
 		{ id: "prod-1", nombre: "Producto", precioVenta: 500, precios: [] },
@@ -241,6 +243,77 @@ describe("integridad de precios en createVentaAction", () => {
 		expect(result.success).toBe(false);
 		expect(result.error?.code).toBe("PRICE_MISMATCH");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
+	});
+
+	it("aplica la lista default del tenant cuando el PV no tiene lista (LP-1.2)", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+		// PV sin lista; el tenant tiene una lista default con entrada 850.
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: "lista-default" } as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([
+			{
+				id: "prod-1",
+				nombre: "Producto",
+				precioVenta: 1000,
+				precios: [{ listaPrecioId: "lista-default", precio: 850 }],
+			},
+		] as any);
+
+		// El precio base (1000) ya no es el vigente: la default manda.
+		const conBase = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 1000 }],
+		});
+		expect(conBase.success).toBe(false);
+		expect(conBase.error?.code).toBe("PRICE_MISMATCH");
+
+		// El precio de la lista default sí pasa.
+		mockHappyPath();
+		const conDefault = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 850 }],
+		});
+		expect(conDefault.success).toBe(true);
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					items: {
+						create: [expect.objectContaining({ precioUnitario: 850, total: 850 })],
+					},
+				}),
+			}),
+		);
+	});
+
+	it("la lista del cliente gana sobre la lista default del tenant", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: "lista-default" } as any);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+			clienteId: "cli-1",
+			listaPrecioId: "lista-cliente",
+		} as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([
+			{
+				id: "prod-1",
+				nombre: "Producto",
+				precioVenta: 1000,
+				precios: [
+					{ listaPrecioId: "lista-default", precio: 850 },
+					{ listaPrecioId: "lista-cliente", precio: 800 },
+				],
+			},
+		] as any);
+
+		// Mandar el precio de la default (850) se rechaza: el cliente manda (800).
+		const conDefault = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			clienteId: "cli-1",
+			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 850 }],
+		});
+		expect(conDefault.success).toBe(false);
+		expect(conDefault.error?.code).toBe("PRICE_MISMATCH");
 	});
 
 	it("exige el precio base cuando no hay listas aplicables", async () => {

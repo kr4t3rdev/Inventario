@@ -14,6 +14,7 @@ vi.mock("@/lib/prisma", () => ({
 		producto: { findMany: vi.fn() },
 		precioProducto: { findMany: vi.fn() },
 		cliente: { findFirst: vi.fn() },
+		listaPrecio: { findFirst: vi.fn() },
 		stockUbicacion: { findMany: vi.fn() },
 		transferencia: { aggregate: vi.fn() },
 		ventaItem: { aggregate: vi.fn() },
@@ -31,6 +32,8 @@ describe("getProductosPorUbicacion", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(getAuthenticatedContext).mockResolvedValue({ userId: "user-1", tenantId: "tenant-1" });
+		// Default: el tenant no tiene lista default marcada (LP-1.2).
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null as any);
 	});
 
 	it("should throw ServerActionError when location not found", async () => {
@@ -355,6 +358,163 @@ describe("getProductosPorUbicacion", () => {
 		expect(result).toHaveLength(1);
 		expect(result[0].precios).toEqual([{ listaPrecioId: "lp-1", precio: 160 }]);
 		expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("en PV sin lista, la lista default del tenant resuelve precioVentaResuelto (LP-1.2)", async () => {
+		const mockPV = { pvId: "pv-1", listaPrecioId: null };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 10,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPV as any);
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: "lp-default" } as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([
+			{ productoId: "prod-1", listaPrecioId: "lp-default", precio: 120 },
+		] as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 12,
+				cantidadReservada: 0,
+				cantidadDisponible: 12,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("pv-1");
+
+		expect(result).toHaveLength(1);
+		// La default aplica como fallback intermedio: base 150 → default 120.
+		expect(result[0].precioVentaResuelto).toBe(120);
+		expect(result[0].precioFuente).toBe("LISTA");
+		expect(result[0].listaPrecioDefaultId).toBe("lp-default");
+		// El array precios incluye las entradas de la default para que la UI
+		// resuelva la misma cadena cliente > PV > default > base.
+		expect(result[0].precios).toEqual([{ listaPrecioId: "lp-default", precio: 120 }]);
+		// El lookup de la default va scoped al tenant y filtrado por esDefault.
+		expect(prisma.listaPrecio.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ tenantId: "tenant-1", esDefault: true }),
+			}),
+		);
+	});
+
+	it("con clienteId, precios trae las entradas de PV, cliente y default (LP-1.2)", async () => {
+		const mockPV = { pvId: "pv-1", listaPrecioId: "lp-pv" };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 10,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPV as any);
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: "lp-default" } as any);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+			clienteId: "cli-1",
+			listaPrecioId: "lp-cli",
+		} as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([
+			{ productoId: "prod-1", listaPrecioId: "lp-pv", precio: 160 },
+			{ productoId: "prod-1", listaPrecioId: "lp-cli", precio: 140 },
+			{ productoId: "prod-1", listaPrecioId: "lp-default", precio: 155 },
+		] as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 12,
+				cantidadReservada: 0,
+				cantidadDisponible: 12,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("pv-1", "cli-1");
+
+		expect(result).toHaveLength(1);
+		// precioVentaResuelto sigue saliendo de la lista del PV (gana sobre la default).
+		expect(result[0].precioVentaResuelto).toBe(160);
+		expect(result[0].listaPrecioDefaultId).toBe("lp-default");
+		expect(result[0].precios).toEqual(
+			expect.arrayContaining([
+				{ listaPrecioId: "lp-pv", precio: 160 },
+				{ listaPrecioId: "lp-cli", precio: 140 },
+				{ listaPrecioId: "lp-default", precio: 155 },
+			]),
+		);
+	});
+
+	it("en almacén no aplica la lista default (sin contexto de venta)", async () => {
+		const mockAlmacen = { almacenId: "alm-1", nombre: "Almacen 1" };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 50,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(null);
+		vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacen as any);
+		vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: "lp-default" } as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 55,
+				cantidadReservada: 0,
+				cantidadDisponible: 55,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("alm-1");
+
+		expect(result).toHaveLength(1);
+		// Sin contexto de punto de venta la default no participa: precio base.
+		expect(result[0].precioVentaResuelto).toBe(150);
+		expect(result[0].precios).toEqual([]);
+		expect(prisma.listaPrecio.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("en almacén no incluye precios ni consulta cliente aunque llegue clienteId", async () => {
