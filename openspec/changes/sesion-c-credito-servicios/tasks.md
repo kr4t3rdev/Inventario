@@ -68,11 +68,11 @@ Base medida en `main` (b4be12ba): hallazgos 4 y 8 de la re-auditoría + informe 
 
 ## Cierre del change
 
-- [ ] Regresión focalizada verde: `pnpm exec vitest run src/features/venta-servicios src/features/clientes src/features/crm src/features/ventas src/features/contabilidad src/lib/services/__tests__/facturacion-ventas-workflow.test.ts src/lib/auth/__tests__`
-- [ ] `pnpm run lint` y `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit` sin errores nuevos.
-- [ ] Code review final del diff completo; críticos/altos resueltos.
-- [ ] Marcar criterios de aceptación de proposal.md §Criterios con evidencia.
-- [ ] Merge a main: SOLO con aviso explícito del usuario (dejar rama y push listos).
+- [x] Regresión focalizada verde: `pnpm exec vitest run src/features/venta-servicios src/features/clientes src/features/crm src/features/ventas src/features/contabilidad src/lib/services/__tests__/facturacion-ventas-workflow.test.ts src/lib/auth/__tests__` — 299/299 en el alcance de integración; suite completa 4657/4657 (ver §Integración).
+- [x] `pnpm run lint` y `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit` sin errores nuevos — lint 0 errores (416 warnings preexistentes de main); typecheck 0 errores.
+- [x] Code review final del diff completo; críticos/altos resueltos — review dual (2 agentes) pre-merge; 6 bloqueos + 2 medios corregidos con tests de regresión en `feat/sesion-c-integracion`.
+- [x] Marcar criterios de aceptación de proposal.md §Criterios con evidencia — evidencia por fase C-1..C-6 en §Evidencia de verificación + §Integración.
+- [x] Merge a main: SOLO con aviso explícito del usuario — autorizado el 2026-10-18; fast-forward `efb5b88c → bd18f805` y push.
 
 ## Integración con main + correcciones del review (2026-10-18, rama feat/sesion-c-integracion)
 
