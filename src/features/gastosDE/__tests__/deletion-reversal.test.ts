@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tx = vi.hoisted(() => ({
   gastosDE: { findUnique: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
@@ -32,6 +33,7 @@ const user = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  process.env.PERIODO_GUARD_ENABLED = 'false';
   vi.mocked(getCurrentUser).mockResolvedValue(user);
   prisma.$transaction.mockImplementation((callback: any) => callback(tx));
   tx.gastosDE.findUnique.mockResolvedValue({
@@ -136,4 +138,8 @@ describe('deleteGastosDEAction financial reversal', () => {
     expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     expect(tx.cuentaPorPagar.delete).not.toHaveBeenCalled();
   });
+});
+
+afterEach(() => {
+  delete process.env.PERIODO_GUARD_ENABLED;
 });

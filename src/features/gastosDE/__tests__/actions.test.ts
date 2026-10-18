@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({ prisma: { gastosDE: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoElemento: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoConcepto: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() }, vendor: { findFirst: vi.fn() } } }));
@@ -8,6 +9,16 @@ import { prisma } from '@/lib/prisma';
 import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, deleteGastosDEBulkAction, updateGastosDEAction, aprobarGastoDEAction, rechazarGastoDEAction, getGastoConceptosAction, createGastoConceptoAction, getGastoElementosAction, createGastoElementoAction } from '@/features/gastosDE/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'manager' };
+
+// Suite de CRUD/permisos: el enforcement de período se cubre en
+// periodo-cerrado.test.ts; aquí se desactiva el guard.
+beforeEach(() => {
+  process.env.PERIODO_GUARD_ENABLED = 'false';
+});
+afterEach(() => {
+  delete process.env.PERIODO_GUARD_ENABLED;
+});
+
 const featureBlockedUser: AuthenticatedUser = {
   userId: 'u2',
   name: 'Feature Blocked',

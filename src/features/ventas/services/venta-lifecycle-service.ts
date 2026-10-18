@@ -81,6 +81,7 @@ const ANULAR_SELECT = {
   tenantId: true,
   estado: true,
   puntoDeVentaId: true,
+  ofertaId: true,
   deletedAt: true,
   factura: { select: { idFactura: true, tenantId: true } },
   reconciliaciones: {
@@ -538,12 +539,28 @@ export const VentaLifecycleService = {
         data: {
           estado: 'ANULADA',
           deletedAt: new Date(),
+          // Limbo de ofertas: liberar el vínculo (unique) para que la oferta
+          // pueda reconvertirse/facturarse; los NULL no colisionan con el unique.
+          ofertaId: null,
           observaciones: parsed.motivo ? `ANULADA: ${parsed.motivo}` : 'ANULADA',
         },
       });
 
       if (marked.count !== 1) {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+
+      // Limbo de ofertas: una oferta cuya venta se anuló vuelve a ACEPTADA
+      // para permitir reintento de conversión o facturación directa.
+      if (currentVenta.ofertaId) {
+        await tx.oferta.updateMany({
+          where: {
+            id: currentVenta.ofertaId,
+            tenantId,
+            estado: { in: ['ACEPTADA', 'FACTURADA'] },
+          },
+          data: { estado: 'ACEPTADA' },
+        });
       }
 
       if (currentVenta.estado === 'PEDIDO') {

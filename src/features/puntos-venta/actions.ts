@@ -74,6 +74,25 @@ export const deletePuntoDeVentaAction = withAction(async (id: string, user: Auth
   const tenantId = requireTenant(user);
   const existing = await prisma.puntoDeVenta.findFirst({ where: { pvId: id, tenantId } });
   if (!existing) throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
+
+  const [productos, ventas, turnos, arqueos, transferencias] = await Promise.all([
+    prisma.producto.count({ where: { puntoDeVentaId: id, tenantId } }),
+    prisma.venta.count({ where: { puntoDeVentaId: id, tenantId } }),
+    prisma.turnoPuntoVenta.count({ where: { puntoDeVentaId: id, tenantId } }),
+    prisma.arqueoCaja.count({ where: { puntoDeVentaId: id, tenantId } }),
+    prisma.transferencia.count({
+      where: { tenantId, OR: [{ puntoDeVentaOrigenId: id }, { puntoDeVentaDestinoId: id }] },
+    }),
+  ]);
+
+  const total = productos + ventas + turnos + arqueos + transferencias;
+  if (total > 0) {
+    throw new ActionError(
+      `No se puede eliminar el punto de venta porque tiene registros asociados: ${productos} producto(s), ${ventas} venta(s), ${turnos} turno(s), ${arqueos} arqueo(s), ${transferencias} transferencia(s).`,
+      'PUNTO_VENTA_EN_USO',
+    );
+  }
+
   await prisma.puntoDeVenta.delete({ where: { pvId: id } });
   revalidatePath('/busy/puntosDeVenta');
   return { success: true, id };

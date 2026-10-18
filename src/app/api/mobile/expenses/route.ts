@@ -1,6 +1,7 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
+import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,23 @@ export async function POST(request: Request) {
     if (Number.isNaN(fechaDate.getTime())) {
       return errorResponse('Fecha inválida', 400, 'VALIDATION_ERROR');
     }
+
+    // Enforcement server del período contable cerrado (patrón de las rutas
+    // contables legacy); el bloqueo client-side es solo UX.
+    const validacion = await validarEscrituraPeriodo({
+      fecha: fechaDate,
+      tenantId,
+      tipoOperacion: 'devengo',
+      actor: authResult.user.userId,
+    });
+    if (!validacion.permitido) {
+      return errorResponse(
+        validacion.error?.message ?? 'Período no permite escrituras contables',
+        400,
+        validacion.error?.code ?? 'PERIODO_ERROR',
+      );
+    }
+
     const periodo = `${fechaDate.getUTCFullYear()}-${String(fechaDate.getUTCMonth() + 1).padStart(2, '0')}`;
 
     const created = (await prisma.gastosDE.create({

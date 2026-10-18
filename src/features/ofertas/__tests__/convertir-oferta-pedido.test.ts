@@ -164,4 +164,22 @@ describe('convertirOfertaAPedido (PVE-T4)', () => {
 			}),
 		).rejects.toMatchObject({ code: 'NOT_SUPPORTED' });
 	});
+
+	it('traduce la violación unique de ofertaId (P2002) en error de negocio', async () => {
+		const p2002 = Object.assign(
+			new Error('Unique constraint failed on the fields: (`ofertaId`)'),
+			{ code: 'P2002' },
+		);
+		mockTx.venta.create.mockRejectedValue(p2002);
+		await expect(
+			convertirOfertaAPedido({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tenantId: 'tenant-1',
+			}),
+		).rejects.toMatchObject({
+			code: 'VALIDATION_ERROR',
+			message: expect.stringContaining('venta vinculada'),
+		});
+	});
 });

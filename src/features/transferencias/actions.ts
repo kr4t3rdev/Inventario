@@ -30,6 +30,7 @@ import type {
 	CompletarTransferenciaInput,
 	RechazarTransferenciaInput,
 } from "./schemas";
+import { calcularAporteRecibido } from "./lib/stock-pv";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -38,28 +39,56 @@ async function getStockDisponibleEnPuntoVenta(
 	productoId: string,
 	puntoDeVentaId: string,
 ): Promise<number> {
-	const entrada = await prisma.transferencia.aggregate({
-		where: { productoId, puntoDeVentaDestinoId: puntoDeVentaId },
-		_sum: { cantidad: true },
-	});
-	const salida = await prisma.transferencia.aggregate({
-		where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
-		_sum: { cantidad: true },
-	});
-	const [ventasItems, ventasLegacy] = await Promise.all([
+	// BUG-3: las transferencias canceladas/rechazadas o eliminadas lógicamente
+	// no mueven stock; incluirlas distorsionaba el disponible del PV.
+	// Con la recepción PARCIAL de la Sesión B el stock solo se mueve al
+	// recibir, así que el aporte real de cada fila es lo recibido
+	// (cantidadRecibida), no lo enviado (cantidad); las filas sin recepción
+	// (PENDIENTE, APROBADA, EN_TRANSITO) aún no movieron nada.
+	const [entradas, salidas, ventasItems, ventasLegacy] = await Promise.all([
+		prisma.transferencia.findMany({
+			where: {
+				productoId,
+				puntoDeVentaDestinoId: puntoDeVentaId,
+				deletedAt: null,
+				estado: { notIn: ["CANCELADA", "RECHAZADA"] },
+			},
+			select: { estado: true, cantidad: true, cantidadRecibida: true },
+		}),
+		prisma.transferencia.findMany({
+			where: {
+				productoId,
+				puntoDeVentaOrigenId: puntoDeVentaId,
+				deletedAt: null,
+				estado: { notIn: ["CANCELADA", "RECHAZADA"] },
+			},
+			select: { estado: true, cantidad: true, cantidadRecibida: true },
+		}),
 		prisma.ventaItem.aggregate({
-			where: { productoId, venta: { puntoDeVentaId } },
+			where: {
+				productoId,
+				// Complemento del BUG-3: una venta anulada ya no consume stock.
+				venta: { puntoDeVentaId, deletedAt: null, estado: { not: "ANULADA" } },
+			},
 			_sum: { cantidad: true },
 		}),
 		prisma.venta.aggregate({
-			where: { productoId, puntoDeVentaId, items: { none: {} } },
+			where: {
+				productoId,
+				puntoDeVentaId,
+				deletedAt: null,
+				estado: { not: "ANULADA" },
+				items: { none: {} },
+			},
 			_sum: { cantidad: true },
 		}),
 	]);
 	const ventasTotal =
 		(ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0);
 	return (
-		(entrada._sum.cantidad || 0) - (salida._sum.cantidad || 0) - ventasTotal
+		calcularAporteRecibido(entradas) -
+		calcularAporteRecibido(salidas) -
+		ventasTotal
 	);
 }
 

@@ -79,28 +79,41 @@ export async function convertirOfertaAPedido({
       0,
     );
 
-    const venta = await tx.venta.create({
-      data: {
-        tenantId,
-        puntoDeVentaId,
-        clienteId: oferta.clienteId ?? null,
-        ofertaId: oferta.id,
-        estado: 'PEDIDO',
-        metodoPago: null,
-        descuento,
-        total: Math.max(Number(oferta.total), 0),
-        cantidad: totalCantidad,
-        esVentaUnica: true,
-        items: {
-          create: itemsProducto.map((item) => ({
-            productoId: item.productoId as string,
-            cantidad: item.cantidad,
-            precioUnitario: Number(item.precioUnitario),
-            total: Number(item.total),
-          })),
+    let venta: { ventaId: string };
+    try {
+      venta = await tx.venta.create({
+        data: {
+          tenantId,
+          puntoDeVentaId,
+          clienteId: oferta.clienteId ?? null,
+          ofertaId: oferta.id,
+          estado: 'PEDIDO',
+          metodoPago: null,
+          descuento,
+          total: Math.max(Number(oferta.total), 0),
+          cantidad: totalCantidad,
+          esVentaUnica: true,
+          items: {
+            create: itemsProducto.map((item) => ({
+              productoId: item.productoId as string,
+              cantidad: item.cantidad,
+              precioUnitario: Number(item.precioUnitario),
+              total: Number(item.total),
+            })),
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      // Red de seguridad (limbo de ofertas): la violación unique de ofertaId
+      // significa que otra venta viva tomó el vínculo en una carrera.
+      if ((error as { code?: string }).code === 'P2002') {
+        throw new ActionError(
+          'La oferta ya tiene una venta vinculada; recarga la página e inténtalo de nuevo.',
+          'VALIDATION_ERROR',
+        );
+      }
+      throw error;
+    }
 
     const updatedOferta = await tx.oferta.updateMany({
       where: { id: oferta.id, tenantId, estado: { in: ['PENDIENTE', 'ACEPTADA'] } },
