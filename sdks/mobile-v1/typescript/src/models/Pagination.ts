@@ -14,41 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Paginación.
  * @export
  * @interface Pagination
  */
 export interface Pagination {
     /**
-     * 
+     * Página actual
      * @type {number}
      * @memberof Pagination
      */
-    page?: number;
+    page: number;
     /**
-     * 
+     * Por página
      * @type {number}
      * @memberof Pagination
      */
-    limit?: number;
+    limit: number;
     /**
-     * 
+     * Total
      * @type {number}
      * @memberof Pagination
      */
-    total?: number;
+    total: number;
     /**
-     * 
+     * Total páginas
      * @type {number}
      * @memberof Pagination
      */
-    totalPages?: number;
+    totalPages: number;
 }
 
 /**
  * Check if a given object implements the Pagination interface.
  */
 export function instanceOfPagination(value: object): value is Pagination {
+    if (!('page' in value) || value['page'] === undefined) return false;
+    if (!('limit' in value) || value['limit'] === undefined) return false;
+    if (!('total' in value) || value['total'] === undefined) return false;
+    if (!('totalPages' in value) || value['totalPages'] === undefined) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function PaginationFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'page': json['page'] == null ? undefined : json['page'],
-        'limit': json['limit'] == null ? undefined : json['limit'],
-        'total': json['total'] == null ? undefined : json['total'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
+        'page': json['page'],
+        'limit': json['limit'],
+        'total': json['total'],
+        'totalPages': json['totalPages'],
     };
 }
 

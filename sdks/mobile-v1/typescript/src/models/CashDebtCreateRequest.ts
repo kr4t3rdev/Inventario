@@ -42,7 +42,13 @@ export interface CashDebtCreateRequest {
      * @type {number}
      * @memberof CashDebtCreateRequest
      */
-    tasaInteres?: number;
+    tasaInteres: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof CashDebtCreateRequest
+     */
+    tasaInteresMoratorio: number;
     /**
      * 
      * @type {Date}
@@ -75,6 +81,8 @@ export interface CashDebtCreateRequest {
 export function instanceOfCashDebtCreateRequest(value: object): value is CashDebtCreateRequest {
     if (!('proveedorId' in value) || value['proveedorId'] === undefined) return false;
     if (!('montoCapital' in value) || value['montoCapital'] === undefined) return false;
+    if (!('tasaInteres' in value) || value['tasaInteres'] === undefined) return false;
+    if (!('tasaInteresMoratorio' in value) || value['tasaInteresMoratorio'] === undefined) return false;
     if (!('cuentaBancariaId' in value) || value['cuentaBancariaId'] === undefined) return false;
     return true;
 }
@@ -92,7 +100,8 @@ export function CashDebtCreateRequestFromJSONTyped(json: any, ignoreDiscriminato
         'proveedorId': json['proveedorId'],
         'montoCapital': json['montoCapital'],
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'tasaInteres': json['tasaInteres'] == null ? undefined : json['tasaInteres'],
+        'tasaInteres': json['tasaInteres'],
+        'tasaInteresMoratorio': json['tasaInteresMoratorio'],
         'fechaVencimiento': json['fechaVencimiento'] == null ? undefined : (new Date(json['fechaVencimiento'])),
         'observaciones': json['observaciones'] == null ? undefined : json['observaciones'],
         'comprobanteUrl': json['comprobanteUrl'] == null ? undefined : json['comprobanteUrl'],
@@ -115,6 +124,7 @@ export function CashDebtCreateRequestToJSONTyped(value?: CashDebtCreateRequest |
         'montoCapital': value['montoCapital'],
         'moneda': value['moneda'],
         'tasaInteres': value['tasaInteres'],
+        'tasaInteresMoratorio': value['tasaInteresMoratorio'],
         'fechaVencimiento': value['fechaVencimiento'] == null ? value['fechaVencimiento'] : value['fechaVencimiento'].toISOString(),
         'observaciones': value['observaciones'],
         'comprobanteUrl': value['comprobanteUrl'],

@@ -55,6 +55,18 @@ export interface BankAdjustmentRequest {
      * @memberof BankAdjustmentRequest
      */
     motivo: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof BankAdjustmentRequest
+     */
+    tasaCambio?: number;
+    /**
+     * 
+     * @type {Date}
+     * @memberof BankAdjustmentRequest
+     */
+    fechaOperacion?: Date;
 }
 
 
@@ -96,6 +108,8 @@ export function BankAdjustmentRequestFromJSONTyped(json: any, ignoreDiscriminato
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'descripcion': json['descripcion'],
         'motivo': json['motivo'],
+        'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
+        'fechaOperacion': json['fechaOperacion'] == null ? undefined : (new Date(json['fechaOperacion'])),
     };
 }
 
@@ -116,6 +130,8 @@ export function BankAdjustmentRequestToJSONTyped(value?: BankAdjustmentRequest |
         'moneda': value['moneda'],
         'descripcion': value['descripcion'],
         'motivo': value['motivo'],
+        'tasaCambio': value['tasaCambio'],
+        'fechaOperacion': value['fechaOperacion'] == null ? value['fechaOperacion'] : value['fechaOperacion'].toISOString(),
     };
 }
 

@@ -15,6 +15,218 @@ open class DashboardAPI {
     /**
      * enum for parameter tipoUbicacion
      */
+    public enum TipoUbicacion_mobileGetDashboardDailyAverage: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar promedio diario de ingresos
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardValueResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardDailyAverage(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardDailyAverage? = nil) async throws -> DashboardValueResponse {
+        return try await mobileGetDashboardDailyAverageWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar promedio diario de ingresos
+     - GET /dashboard/daily-average
+     - Promedio de ingresos diarios (30 días).
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardValueResponse> 
+     */
+    open class func mobileGetDashboardDailyAverageWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardDailyAverage? = nil) -> RequestBuilder<DashboardValueResponse> {
+        let localVariablePath = "/dashboard/daily-average"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardValueResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardIncomeExpenses: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar ingresos vs gastos del panel
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardIncomeExpenseResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardIncomeExpenses(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardIncomeExpenses? = nil) async throws -> DashboardIncomeExpenseResponse {
+        return try await mobileGetDashboardIncomeExpensesWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar ingresos vs gastos del panel
+     - GET /dashboard/income-expenses
+     - Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardIncomeExpenseResponse> 
+     */
+    open class func mobileGetDashboardIncomeExpensesWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardIncomeExpenses? = nil) -> RequestBuilder<DashboardIncomeExpenseResponse> {
+        let localVariablePath = "/dashboard/income-expenses"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardIncomeExpenseResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardInventoryValue: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar valor total del inventario
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardValueResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardInventoryValue(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardInventoryValue? = nil) async throws -> DashboardValueResponse {
+        return try await mobileGetDashboardInventoryValueWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar valor total del inventario
+     - GET /dashboard/inventory-value
+     - Valor total del inventario en stock.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardValueResponse> 
+     */
+    open class func mobileGetDashboardInventoryValueWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardInventoryValue? = nil) -> RequestBuilder<DashboardValueResponse> {
+        let localVariablePath = "/dashboard/inventory-value"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardValueResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardLowStock: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar productos con stock bajo
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardLowStockResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardLowStock(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardLowStock? = nil) async throws -> DashboardLowStockResponse {
+        return try await mobileGetDashboardLowStockWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar productos con stock bajo
+     - GET /dashboard/low-stock
+     - Productos con stock bajo o crítico (top 5).
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardLowStockResponse> 
+     */
+    open class func mobileGetDashboardLowStockWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardLowStock? = nil) -> RequestBuilder<DashboardLowStockResponse> {
+        let localVariablePath = "/dashboard/low-stock"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardLowStockResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
     public enum TipoUbicacion_mobileGetDashboardStats: String, CaseIterable {
         case almacen = "almacen"
         case puntoVenta = "punto_venta"
@@ -61,6 +273,218 @@ open class DashboardAPI {
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
 
         let localVariableRequestBuilder: RequestBuilder<GetDashboardStatsResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardStockDistribution: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar distribución de stock
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardStockDistributionResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardStockDistribution(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardStockDistribution? = nil) async throws -> DashboardStockDistributionResponse {
+        return try await mobileGetDashboardStockDistributionWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar distribución de stock
+     - GET /dashboard/stock-distribution
+     - Distribución de stock por categoría.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardStockDistributionResponse> 
+     */
+    open class func mobileGetDashboardStockDistributionWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardStockDistribution? = nil) -> RequestBuilder<DashboardStockDistributionResponse> {
+        let localVariablePath = "/dashboard/stock-distribution"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardStockDistributionResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardTodaySales: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar ventas de hoy
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardValueResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardTodaySales(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTodaySales? = nil) async throws -> DashboardValueResponse {
+        return try await mobileGetDashboardTodaySalesWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar ventas de hoy
+     - GET /dashboard/today-sales
+     - Ingresos por ventas del día actual.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardValueResponse> 
+     */
+    open class func mobileGetDashboardTodaySalesWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTodaySales? = nil) -> RequestBuilder<DashboardValueResponse> {
+        let localVariablePath = "/dashboard/today-sales"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardValueResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardTopProducts: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar productos más vendidos
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardTopProductsResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardTopProducts(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTopProducts? = nil) async throws -> DashboardTopProductsResponse {
+        return try await mobileGetDashboardTopProductsWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar productos más vendidos
+     - GET /dashboard/top-products
+     - Top 10 de productos más vendidos del período.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardTopProductsResponse> 
+     */
+    open class func mobileGetDashboardTopProductsWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTopProducts? = nil) -> RequestBuilder<DashboardTopProductsResponse> {
+        let localVariablePath = "/dashboard/top-products"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardTopProductsResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     * enum for parameter tipoUbicacion
+     */
+    public enum TipoUbicacion_mobileGetDashboardTransfers: String, CaseIterable {
+        case almacen = "almacen"
+        case puntoVenta = "punto_venta"
+    }
+
+    /**
+     Consultar transferencias entre ubicaciones
+     
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: DashboardTransfersResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetDashboardTransfers(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTransfers? = nil) async throws -> DashboardTransfersResponse {
+        return try await mobileGetDashboardTransfersWithRequestBuilder(ubicacionId: ubicacionId, tipoUbicacion: tipoUbicacion).execute().body
+    }
+
+    /**
+     Consultar transferencias entre ubicaciones
+     - GET /dashboard/transfers
+     - Conteo de transferencias entre almacenes y puntos de venta.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
+     - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
+     - returns: RequestBuilder<DashboardTransfersResponse> 
+     */
+    open class func mobileGetDashboardTransfersWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardTransfers? = nil) -> RequestBuilder<DashboardTransfersResponse> {
+        let localVariablePath = "/dashboard/transfers"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "ubicacionId": (wrappedValue: ubicacionId?.encodeToJSON(), isExplode: true),
+            "tipoUbicacion": (wrappedValue: tipoUbicacion?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DashboardTransfersResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }

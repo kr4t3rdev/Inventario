@@ -19,6 +19,8 @@ class BankAdjustmentRequest {
     this.moneda = 'CUP',
     required this.descripcion,
     required this.motivo,
+    this.tasaCambio,
+    this.fechaOperacion,
   });
 
   String cuentaId;
@@ -33,6 +35,22 @@ class BankAdjustmentRequest {
 
   String motivo;
 
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  num? tasaCambio;
+
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  DateTime? fechaOperacion;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is BankAdjustmentRequest &&
     other.cuentaId == cuentaId &&
@@ -40,7 +58,9 @@ class BankAdjustmentRequest {
     other.monto == monto &&
     other.moneda == moneda &&
     other.descripcion == descripcion &&
-    other.motivo == motivo;
+    other.motivo == motivo &&
+    other.tasaCambio == tasaCambio &&
+    other.fechaOperacion == fechaOperacion;
 
   @override
   int get hashCode =>
@@ -50,10 +70,12 @@ class BankAdjustmentRequest {
     (monto.hashCode) +
     (moneda.hashCode) +
     (descripcion.hashCode) +
-    (motivo.hashCode);
+    (motivo.hashCode) +
+    (tasaCambio == null ? 0 : tasaCambio!.hashCode) +
+    (fechaOperacion == null ? 0 : fechaOperacion!.hashCode);
 
   @override
-  String toString() => 'BankAdjustmentRequest[cuentaId=$cuentaId, tipo=$tipo, monto=$monto, moneda=$moneda, descripcion=$descripcion, motivo=$motivo]';
+  String toString() => 'BankAdjustmentRequest[cuentaId=$cuentaId, tipo=$tipo, monto=$monto, moneda=$moneda, descripcion=$descripcion, motivo=$motivo, tasaCambio=$tasaCambio, fechaOperacion=$fechaOperacion]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -63,6 +85,16 @@ class BankAdjustmentRequest {
       json[r'moneda'] = this.moneda;
       json[r'descripcion'] = this.descripcion;
       json[r'motivo'] = this.motivo;
+    if (this.tasaCambio != null) {
+      json[r'tasaCambio'] = this.tasaCambio;
+    } else {
+      json[r'tasaCambio'] = null;
+    }
+    if (this.fechaOperacion != null) {
+      json[r'fechaOperacion'] = this.fechaOperacion!.toUtc().toIso8601String();
+    } else {
+      json[r'fechaOperacion'] = null;
+    }
     return json;
   }
 
@@ -91,6 +123,8 @@ class BankAdjustmentRequest {
         moneda: mapValueOfType<String>(json, r'moneda') ?? 'CUP',
         descripcion: mapValueOfType<String>(json, r'descripcion')!,
         motivo: mapValueOfType<String>(json, r'motivo')!,
+        tasaCambio: num.parse('${json[r'tasaCambio']}'),
+        fechaOperacion: mapDateTime(json, r'fechaOperacion', r''),
       );
     }
     return null;

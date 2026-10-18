@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param descripcion 
  * @param motivo 
  * @param moneda 
+ * @param tasaCambio 
+ * @param fechaOperacion 
  */
 
 
@@ -48,7 +50,13 @@ data class BankAdjustmentRequest (
     val motivo: kotlin.String,
 
     @get:JsonProperty("moneda")
-    val moneda: kotlin.String? = "CUP"
+    val moneda: kotlin.String? = "CUP",
+
+    @get:JsonProperty("tasaCambio")
+    val tasaCambio: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("fechaOperacion")
+    val fechaOperacion: java.time.OffsetDateTime? = null
 
 ) {
 

@@ -36,6 +36,11 @@ void main() {
       // TODO
     });
 
+    // num tasaInteresMoratorio
+    test('to test the property `tasaInteresMoratorio`', () async {
+      // TODO
+    });
+
     // num tasaCambioAlCrear
     test('to test the property `tasaCambioAlCrear`', () async {
       // TODO

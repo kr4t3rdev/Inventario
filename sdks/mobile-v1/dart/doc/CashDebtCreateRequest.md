@@ -11,7 +11,8 @@ Name | Type | Description | Notes
 **proveedorId** | **String** |  | 
 **montoCapital** | **num** |  | 
 **moneda** | **String** |  | [optional] 
-**tasaInteres** | **num** |  | [optional] 
+**tasaInteres** | **num** |  | 
+**tasaInteresMoratorio** | **num** |  | 
 **fechaVencimiento** | [**DateTime**](DateTime.md) |  | [optional] 
 **observaciones** | **String** |  | [optional] 
 **comprobanteUrl** | **String** |  | [optional] 

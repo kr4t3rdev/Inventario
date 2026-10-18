@@ -14,9 +14,24 @@ const prismaMock = vi.hoisted(() => ({
 
 const createAnticipoMock = vi.hoisted(() => vi.fn())
 
+const mockAuthUser = {
+  userId: 'user-1',
+  name: 'Test User',
+  email: 'test@example.com',
+  role: 'admin' as const,
+  isActive: true,
+  tenantId: 'tenant-1',
+  tenantRole: 'manager' as const,
+}
+
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: any) => handler,
-  withAuthPost: (handler: any) => handler,
+  // El wrapper real expone (request, context) y resuelve el usuario por dentro;
+  // el handler recibe (request, context, user). Se replica esa aridad para que
+  // el mock no exponga la firma interna de 3 argumentos.
+  withAuthGet: (handler: any) => (request: NextRequest, context: any) =>
+    handler(request, context, mockAuthUser),
+  withAuthPost: (handler: any) => (request: NextRequest, context: any) =>
+    handler(request, context, mockAuthUser),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -68,7 +83,7 @@ describe('API /anticipos', () => {
       }),
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(201)
@@ -94,7 +109,7 @@ describe('API /anticipos', () => {
       }),
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(201)

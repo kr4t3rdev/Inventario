@@ -89,7 +89,7 @@ describe('auth refresh route', () => {
       headers: { cookie: 'refreshToken=valid' },
     });
 
-    const response = await POST(request);
+    const response = await POST();
     expect(response.status).toBe(403);
   });
 
@@ -109,7 +109,7 @@ describe('auth refresh route', () => {
       headers: { cookie: 'refreshToken=valid' },
     });
 
-    const response = await POST(request);
+    const response = await POST();
     expect(response.status).toBe(403);
     expect(prisma.user.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u2' },
@@ -134,7 +134,7 @@ describe('auth refresh route', () => {
       headers: { cookie: 'refreshToken=valid' },
     });
 
-    const response = await POST(request);
+    const response = await POST();
     expect(response.status).toBe(401);
   });
 
@@ -173,7 +173,7 @@ describe('auth refresh route', () => {
       headers: { cookie: 'refreshToken=valid', 'user-agent': 'vitest' },
     });
 
-    const response = await POST(request);
+    const response = await POST();
     const data = await response.json();
 
     expect(response.status).toBe(200);

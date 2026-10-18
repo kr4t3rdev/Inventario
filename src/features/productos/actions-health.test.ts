@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/prisma', () => ({
@@ -88,7 +89,7 @@ describe('getMastersHealthAction', () => {
     const result = await getMastersHealthAction()
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('INTERNAL_ERROR')
+    expect(expectActionFailure(result).error?.code).toBe('INTERNAL_ERROR')
     expect(prisma.producto.count).not.toHaveBeenCalled()
   })
 

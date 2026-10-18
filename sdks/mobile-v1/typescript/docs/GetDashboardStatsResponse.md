@@ -7,10 +7,24 @@ Respuesta de GET /dashboard/stats.
 
 Name | Type
 ------------ | -------------
-`total` | number
-`pendiente` | number
-`pagado` | number
-`vencido` | number
+`totalProductos` | number
+`totalAlmacenes` | number
+`totalPuntosVenta` | number
+`totalVentas` | number
+`totalMermas` | number
+`totalTransferencias` | number
+`totalIngresos` | number
+`totalGastosMermas` | number
+`totalGastos` | number
+`totalBeneficio` | number
+`valorTotalInventario` | number
+`datosPorMes` | [Array&lt;DashboardDatosPorMes&gt;](DashboardDatosPorMes.md)
+`datosPorSemana` | [Array&lt;DashboardDatosPorSemana&gt;](DashboardDatosPorSemana.md)
+`ventasDiarias` | [DashboardVentasDiarias](DashboardVentasDiarias.md)
+`productosMasVendidos` | [Array&lt;DashboardProductoMasVendido&gt;](DashboardProductoMasVendido.md)
+`productosStockBajo` | [Array&lt;DashboardProductoStockBajo&gt;](DashboardProductoStockBajo.md)
+`distribucionStock` | [Array&lt;DashboardDistribucionStockItem&gt;](DashboardDistribucionStockItem.md)
+`transferenciasStats` | [DashboardTransferenciasStats](DashboardTransferenciasStats.md)
 
 ## Example
 
@@ -19,10 +33,24 @@ import type { GetDashboardStatsResponse } from '@tcp/mobile-v1-sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "total": null,
-  "pendiente": null,
-  "pagado": null,
-  "vencido": null,
+  "totalProductos": null,
+  "totalAlmacenes": null,
+  "totalPuntosVenta": null,
+  "totalVentas": null,
+  "totalMermas": null,
+  "totalTransferencias": null,
+  "totalIngresos": null,
+  "totalGastosMermas": null,
+  "totalGastos": null,
+  "totalBeneficio": null,
+  "valorTotalInventario": null,
+  "datosPorMes": null,
+  "datosPorSemana": null,
+  "ventasDiarias": null,
+  "productosMasVendidos": null,
+  "productosStockBajo": null,
+  "distribucionStock": null,
+  "transferenciasStats": null,
 } satisfies GetDashboardStatsResponse
 
 console.log(example)

@@ -25,25 +25,25 @@ class PaginationTest : ShouldSpec() {
         // uncomment below to create an instance of Pagination
         //val modelInstance = Pagination()
 
-        // to test the property `page`
+        // to test the property `page` - Página actual
         should("test page") {
             // uncomment below to test the property
             //modelInstance.page shouldBe ("TODO")
         }
 
-        // to test the property `limit`
+        // to test the property `limit` - Por página
         should("test limit") {
             // uncomment below to test the property
             //modelInstance.limit shouldBe ("TODO")
         }
 
-        // to test the property `total`
+        // to test the property `total` - Total
         should("test total") {
             // uncomment below to test the property
             //modelInstance.total shouldBe ("TODO")
         }
 
-        // to test the property `totalPages`
+        // to test the property `totalPages` - Total páginas
         should("test totalPages") {
             // uncomment below to test the property
             //modelInstance.totalPages shouldBe ("TODO")

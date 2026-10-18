@@ -19,28 +19,32 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
+ * Paginación.
  *
- * @param page 
- * @param limit 
- * @param total 
- * @param totalPages 
+ * @param page Página actual
+ * @param limit Por página
+ * @param total Total
+ * @param totalPages Total páginas
  */
 
 
 data class Pagination (
 
+    /* Página actual */
     @get:JsonProperty("page")
-    val page: kotlin.Int? = null,
+    val page: kotlin.Int,
 
+    /* Por página */
     @get:JsonProperty("limit")
-    val limit: kotlin.Int? = null,
+    val limit: kotlin.Int,
 
+    /* Total */
     @get:JsonProperty("total")
-    val total: kotlin.Int? = null,
+    val total: kotlin.Int,
 
+    /* Total páginas */
     @get:JsonProperty("totalPages")
-    val totalPages: kotlin.Int? = null
+    val totalPages: kotlin.Int
 
 ) {
 

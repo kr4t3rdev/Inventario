@@ -67,7 +67,7 @@ describe('financial snapshot v3 service', () => {
 
   it('rejects incomplete canonical evidence before persistence', async () => {
     const { captureFinancialSnapshotV3 } = await import('./financial-snapshot-v3-service');
-    const incomplete = { ...completeInput(), coverage: undefined };
+    const incomplete = { ...completeInput(), coverage: undefined } as any;
 
     await expect(captureFinancialSnapshotV3(incomplete)).rejects.toMatchObject({
       code: 'INVALID_SNAPSHOT_PAYLOAD',

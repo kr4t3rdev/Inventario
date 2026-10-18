@@ -215,10 +215,51 @@ function assertNoNestedMismatch(
       if (typeof entry === 'string' && entry !== tenantId) {
         throw new TenantMismatchError(model, operation, tenantId, entry);
       }
+      if (isRecord(entry)) {
+        const keys = Object.keys(entry);
+        if (
+          keys.length !== 1 ||
+          keys[0] !== 'set' ||
+          typeof entry.set !== 'string'
+        ) {
+          throw new TenantMismatchError(model, operation, tenantId, '[invalid tenantId update]');
+        }
+        if (entry.set !== tenantId) {
+          throw new TenantMismatchError(model, operation, tenantId, entry.set);
+        }
+      }
       continue;
     }
     assertNoNestedMismatch(entry, model, operation, tenantId);
   }
+}
+
+/**
+ * @description Valida si una creación enlaza explícitamente su relación tenant.
+ * @param {unknown} row - Datos de la fila principal.
+ * @param {string} model - Modelo Prisma.
+ * @param {string} operation - Operación Prisma.
+ * @param {string} tenantId - Tenant del contexto.
+ * @returns {boolean} true cuando la relación tenant ya fija el tenant correcto.
+ */
+function hasScopedTenantRelation(
+  row: Record<string, unknown>,
+  model: string,
+  operation: string,
+  tenantId: string,
+): boolean {
+  if (row.tenant === undefined) return false;
+  if (!isRecord(row.tenant) || !isRecord(row.tenant.connect)) {
+    throw new TenantContextRequiredError(model, `${operation} con relación tenant`);
+  }
+  const connectedTenantId = row.tenant.connect.tenantId;
+  if (typeof connectedTenantId !== 'string') {
+    throw new TenantContextRequiredError(model, `${operation} con relación tenant`);
+  }
+  if (connectedTenantId !== tenantId) {
+    throw new TenantMismatchError(model, operation, tenantId, connectedTenantId);
+  }
+  return true;
 }
 
 /**
@@ -240,6 +281,10 @@ function scopeCreateRow(
     throw new TenantMismatchError(model, operation, tenantId, row.tenantId);
   }
   assertNoNestedMismatch(row, model, operation, tenantId);
+  if (hasScopedTenantRelation(row, model, operation, tenantId)) {
+    const { tenantId: _tenantId, ...data } = row;
+    return data;
+  }
   if (row.tenantId === undefined) return { ...row, tenantId };
   return row;
 }
@@ -263,7 +308,8 @@ export function applyTenantScope<TArgs>(
   if (scope !== 'scoped') return args;
   if (!isRecord(args)) return args;
 
-  if (READ_MANY_OPS.has(operation) || MANY_WRITE_OPS.has(operation)) {
+  const scopedManyWrite = MANY_WRITE_OPS.has(operation) && operation === 'deleteMany';
+  if (READ_MANY_OPS.has(operation) || scopedManyWrite) {
     return { ...args, where: injectWhereTenant(args.where, tenantId) };
   }
   if (UNIQUE_OPS.has(operation)) {
@@ -311,7 +357,10 @@ function dataMentionsForeignTenant(data: unknown, tenantId: string): boolean {
   if (Array.isArray(data)) return data.some((row) => dataMentionsForeignTenant(row, tenantId));
   if (!isRecord(data)) return false;
   return Object.entries(data).some(([key, entry]) => {
-    if (key === 'tenantId') return typeof entry === 'string' && entry !== tenantId;
+    if (key === 'tenantId') {
+      if (typeof entry === 'string') return entry !== tenantId;
+      return isRecord(entry) && typeof entry.set === 'string' && entry.set !== tenantId;
+    }
     return dataMentionsForeignTenant(entry, tenantId);
   });
 }

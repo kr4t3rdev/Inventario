@@ -46,6 +46,16 @@ void main() {
       // TODO
     });
 
+    // num tasaCambio
+    test('to test the property `tasaCambio`', () async {
+      // TODO
+    });
+
+    // DateTime fechaOperacion
+    test('to test the property `fechaOperacion`', () async {
+      // TODO
+    });
+
 
   });
 

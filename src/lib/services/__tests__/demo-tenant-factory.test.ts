@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/prisma', () => {
-  const tx = {
+
+const { tx } = vi.hoisted(() => ({
+  tx: {
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -15,8 +16,10 @@ vi.mock('@/lib/prisma', () => {
     tenantLicense: {
       create: vi.fn(),
     },
-  };
+  },
+}));
 
+vi.mock('@/lib/prisma', () => {
   return {
     prisma: {
       plan: {
@@ -24,13 +27,13 @@ vi.mock('@/lib/prisma', () => {
       },
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
     },
-    __tx: tx,
+    tx: tx,
   };
 });
 
 vi.mock('@/lib/db/platform-prisma', async () => {
   const mocked = await import('@/lib/prisma');
-  return { prismaPlatform: mocked.prisma, default: mocked.prisma, __tx: mocked.__tx };
+  return { prismaPlatform: mocked.prisma, default: mocked.prisma };
 });
 
 vi.mock('bcryptjs', () => ({
@@ -52,7 +55,7 @@ vi.mock('../demo-seed', () => ({ seedDemoTenantData: seedMock }));
 vi.mock('@/lib/metrics', () => metricsMock);
 
 import bcrypt from 'bcryptjs';
-import { prisma, __tx } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { createDemoTenantForPlan } from '../demo-tenant-factory';
 
@@ -74,13 +77,13 @@ describe('createDemoTenantForPlan', () => {
       features: { productos: true, clientes: true },
     } as never);
 
-    vi.mocked(__tx.user.findUnique).mockResolvedValue(null as never);
-    vi.mocked(__tx.user.create).mockResolvedValue({ userId: 'user-demo-1' } as never);
-    vi.mocked(__tx.tenant.create).mockResolvedValue({ tenantId: 'tenant-demo-1' } as never);
-    vi.mocked(__tx.tenantMembership.create).mockResolvedValue({
+    vi.mocked(tx.user.findUnique).mockResolvedValue(null as never);
+    vi.mocked(tx.user.create).mockResolvedValue({ userId: 'user-demo-1' } as never);
+    vi.mocked(tx.tenant.create).mockResolvedValue({ tenantId: 'tenant-demo-1' } as never);
+    vi.mocked(tx.tenantMembership.create).mockResolvedValue({
       membershipId: 'membership-demo-1',
     } as never);
-    vi.mocked(__tx.tenantLicense.create).mockResolvedValue({
+    vi.mocked(tx.tenantLicense.create).mockResolvedValue({
       tenantLicenseId: 'license-demo-1',
     } as never);
     provisionMock.mockResolvedValue({ result: 'CREATED', functionalCurrencyCode: 'CUP' });
@@ -104,7 +107,7 @@ describe('createDemoTenantForPlan', () => {
       }),
     );
 
-    expect(__tx.tenantLicense.create).toHaveBeenCalledWith({
+    expect(tx.tenantLicense.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         planId: 'plan-pro',
         isDemo: true,
@@ -127,7 +130,7 @@ describe('createDemoTenantForPlan', () => {
       demoName: 'Demo Express',
     });
 
-    expect(__tx.tenantLicense.create).toHaveBeenCalledWith({
+    expect(tx.tenantLicense.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         expiracion: new Date('2026-06-29T10:00:00.000Z'),
       }),
@@ -137,7 +140,7 @@ describe('createDemoTenantForPlan', () => {
   it('provisiona CUP literal y seed dentro de la misma unidad transaccional', async () => {
     await createDemoTenantForPlan({ planId: 'plan-pro', createdBy: 'admin-a' });
 
-    expect(provisionMock).toHaveBeenCalledWith(__tx, expect.objectContaining({
+    expect(provisionMock).toHaveBeenCalledWith(tx, expect.objectContaining({
       tenantId: 'tenant-demo-1',
       functionalCurrencyCode: 'CUP',
       origin: 'DEMO',
@@ -146,7 +149,7 @@ describe('createDemoTenantForPlan', () => {
     expect(seedMock).toHaveBeenCalledWith({
       tenantId: 'tenant-demo-1',
       planName: 'Profesional',
-      client: __tx,
+      client: tx,
     });
   });
 
@@ -160,7 +163,7 @@ describe('createDemoTenantForPlan', () => {
 
     await expect(createDemoTenantForPlan({ planId: 'plan-pro' }))
       .rejects.toMatchObject({ code: 'ACCOUNTING_POLICY_REQUIRED' });
-    expect(__tx.tenantLicense.create).not.toHaveBeenCalled();
+    expect(tx.tenantLicense.create).not.toHaveBeenCalled();
     expect(seedMock).not.toHaveBeenCalled();
   });
 
@@ -197,7 +200,7 @@ describe('createDemoTenantForPlan', () => {
   });
 
   it('throws EMAIL_CONFLICT when generated credentials already exist', async () => {
-    vi.mocked(__tx.user.findUnique).mockResolvedValue({ userId: 'existing-user' } as never);
+    vi.mocked(tx.user.findUnique).mockResolvedValue({ userId: 'existing-user' } as never);
 
     await expect(
       createDemoTenantForPlan({ planId: 'plan-pro' }),

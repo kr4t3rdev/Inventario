@@ -16,21 +16,25 @@ void main() {
   // final instance = Pagination();
 
   group('test Pagination', () {
+    // Página actual
     // int page
     test('to test the property `page`', () async {
       // TODO
     });
 
+    // Por página
     // int limit
     test('to test the property `limit`', () async {
       // TODO
     });
 
+    // Total
     // int total
     test('to test the property `total`', () async {
       // TODO
     });
 
+    // Total páginas
     // int totalPages
     test('to test the property `totalPages`', () async {
       // TODO

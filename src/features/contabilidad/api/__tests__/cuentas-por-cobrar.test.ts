@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCuentasPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
@@ -32,7 +33,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.cuentaPorCobrar.findMany).not.toHaveBeenCalled()
   })
 
@@ -84,10 +85,10 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(true)
-    expect(result.data?.cuentas).toHaveLength(1)
-    expect(result.data?.cuentas[0].totalPagadoFactura).toBe(300)  // 2*100 + 100
-    expect(result.data?.cuentas[0].saldoFactura).toBe(700)        // 1000 - 300
-    expect(result.data?.cuentas[0].totalFactura).toBe(1000)
+    expect(expectActionSuccess(result).data?.cuentas).toHaveLength(1)
+    expect(expectActionSuccess(result).data?.cuentas[0].totalPagadoFactura).toBe(300)  // 2*100 + 100
+    expect(expectActionSuccess(result).data?.cuentas[0].saldoFactura).toBe(700)        // 1000 - 300
+    expect(expectActionSuccess(result).data?.cuentas[0].totalFactura).toBe(1000)
   })
 
   it('calcula saldo usando montoDeuda cuando no existe factura relacionada', async () => {
@@ -127,10 +128,10 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     const result = await getCuentasPorCobrarAction({})
 
     expect(result.success).toBe(true)
-    expect(result.data?.cuentas).toHaveLength(1)
-    expect(result.data?.cuentas[0].totalFactura).toBe(800)
-    expect(result.data?.cuentas[0].totalPagadoFactura).toBe(200)
-    expect(result.data?.cuentas[0].saldoFactura).toBe(600)
+    expect(expectActionSuccess(result).data?.cuentas).toHaveLength(1)
+    expect(expectActionSuccess(result).data?.cuentas[0].totalFactura).toBe(800)
+    expect(expectActionSuccess(result).data?.cuentas[0].totalPagadoFactura).toBe(200)
+    expect(expectActionSuccess(result).data?.cuentas[0].saldoFactura).toBe(600)
   })
 
   it('filtra por tenantId usando requireTenant', async () => {

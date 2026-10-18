@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user', () => ({
   getCurrentUser: vi.fn(),
@@ -51,9 +52,9 @@ describe('getKardexAction', () => {
     const response = await getKardexAction({ productoId: 'producto-1', page: 1, limit: 50 });
 
     expect(response.success).toBe(true);
-    expect(response.data?.saldoInicial).toBe(0);
-    expect(response.data?.total).toBe(1);
-    expect(response.data?.items).toEqual([
+    expect(expectActionSuccess(response).data?.saldoInicial).toBe(0);
+    expect(expectActionSuccess(response).data?.total).toBe(1);
+    expect(expectActionSuccess(response).data?.items).toEqual([
       expect.objectContaining({ id: 'move-1', saldo: 10 }),
     ]);
     expect(prisma.stockMoveLine.findMany).toHaveBeenCalledWith({
@@ -87,7 +88,7 @@ describe('getKardexAction', () => {
     const response = await getKardexAction({ productoId: 'producto-1' });
 
     expect(response.success).toBe(false);
-    expect(response.error?.message).toBe('Error interno del servidor');
+    expect(expectActionFailure(response).error?.message).toBe('Error interno del servidor');
     expect(prisma.stockMoveLine.findMany).not.toHaveBeenCalled();
   });
 });

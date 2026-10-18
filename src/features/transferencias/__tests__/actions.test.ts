@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de transferencias.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -73,7 +74,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 function mockCurrentTransfer(overrides: Record<string, unknown> = {}) {
@@ -108,7 +109,7 @@ describe("Transferencias Server Actions", () => {
 			const result = await getTransferenciasAction({ page: 1, limit: 10 });
 
 			expect(result.success).toBe(true);
-			expect(result.data!.pagination.total).toBe(0);
+			expect(expectActionSuccess(result).data!.pagination.total).toBe(0);
 			expect(prisma.transferencia.count).toHaveBeenCalledWith({
 				where: { tenantId: "tenant-test", deletedAt: null },
 			});
@@ -130,7 +131,7 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue(null);
 			const result = await getTransferenciaByIdAction("tr-noexiste");
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 	});
 
@@ -143,18 +144,18 @@ describe("Transferencias Server Actions", () => {
 				stock: 100,
 				precioCosto: 1000,
 				tenantId: "tenant-test",
-			});
+			} as any);
 			vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
 				cantidadDisponible: 100,
 			} as any);
 			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
-			});
+			} as any);
 			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
-			});
+			} as any);
 			mockTx.transferencia.count.mockResolvedValue(0);
 			mockTx.transferencia.create.mockResolvedValue({
 				transferenciaId: "tr-1",
@@ -223,18 +224,18 @@ describe("Transferencias Server Actions", () => {
 				stock: 2,
 				precioCosto: 1000,
 				tenantId: "tenant-test",
-			});
+			} as any);
 			vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
 				cantidadDisponible: 2,
 			} as any);
 			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
-			});
+			} as any);
 			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
-			});
+			} as any);
 
 			const result = await createTransferenciaAction({
 				productos: [{ productoId: "prod-1", cantidad: 5 }],
@@ -245,7 +246,7 @@ describe("Transferencias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("STOCK_INSUFICIENTE");
+			expect(expectActionFailure(result).error!.code).toBe("STOCK_INSUFICIENTE");
 		});
 
 		it("(RETIRE LEGACY) valida origen almacén con StockUbicacion y no con producto.stock", async () => {
@@ -264,11 +265,11 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
-			});
+			} as any);
 			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
-			});
+			} as any);
 			mockTx.transferencia.count.mockResolvedValue(0);
 			mockTx.transferencia.create.mockResolvedValue({
 				transferenciaId: "tr-1",
@@ -379,7 +380,7 @@ describe("Transferencias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("CONFLICT");
+			expect(expectActionFailure(result).error?.code).toBe("CONFLICT");
 		const { upsertStockUbicacion } = await import(
 				"@/lib/services/stock-ubicacion-service"
 			);
@@ -544,7 +545,7 @@ describe("Transferencias Server Actions", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.message).toBe("Sin cambios");
+		expect(expectActionSuccess(result).data?.message).toBe("Sin cambios");
 	});
 
 	it("cambio de destino sin cambio de cantidad sincroniza StockUbicacion", async () => {
@@ -759,7 +760,7 @@ describe("Transferencias Server Actions", () => {
 			const result = await deleteTransferenciaAction("tr-1");
 
 			expect(result.success).toBe(true);
-			expect(result.data?.message).toBe("Transferencia ya cancelada");
+			expect(expectActionSuccess(result).data?.message).toBe("Transferencia ya cancelada");
 			expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
 			const { upsertStockUbicacion } = await import(
 				"@/lib/services/stock-ubicacion-service"
@@ -848,7 +849,7 @@ describe("Transferencias Server Actions", () => {
 			const result = await deleteTransferenciaAction("tr-1");
 
 			expect(result.success).toBe(true);
-			expect(result.data?.message).toBe("Transferencia ya cancelada");
+			expect(expectActionSuccess(result).data?.message).toBe("Transferencia ya cancelada");
 			const { upsertStockUbicacion } = await import(
 				"@/lib/services/stock-ubicacion-service"
 			);
@@ -879,7 +880,7 @@ describe("Transferencias Server Actions", () => {
 			const result = await deleteTransferenciaAction("tr-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("CONFLICT");
+			expect(expectActionFailure(result).error?.code).toBe("CONFLICT");
 		});
 
 		it("no cancela si el destino ya consumió todo el stock transferido", async () => {
@@ -912,7 +913,7 @@ describe("Transferencias Server Actions", () => {
 			const result = await deleteTransferenciaAction("tr-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("STOCK_INSUFICIENTE");
+			expect(expectActionFailure(result).error?.code).toBe("STOCK_INSUFICIENTE");
 			expect(mockTx.transferencia.updateMany).toHaveBeenCalledTimes(1);
 		});
 		it("cancela transferencia exitosamente", async () => {
@@ -931,7 +932,7 @@ describe("Transferencias Server Actions", () => {
 				destino: null,
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
-			});
+			} as any);
 			mockCurrentTransfer({ estado: "COMPLETADA", destinoId: null });
 
 			const result = await deleteTransferenciaAction("tr-1");
@@ -955,7 +956,7 @@ describe("Transferencias Server Actions", () => {
 				destino: { nombre: "Almacén 2" } as any,
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
-			});
+			} as any);
 			mockCurrentTransfer({ estado: "PENDIENTE" });
 
 			const result = await deleteTransferenciaAction("tr-1");
@@ -987,7 +988,7 @@ describe("Transferencias Server Actions", () => {
 				destino: { nombre: "Almacén 2" } as any,
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
-			});
+			} as any);
 			mockCurrentTransfer({ estado: "COMPLETADA" });
 
 			const result = await deleteTransferenciaAction("tr-1");
@@ -1025,7 +1026,7 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(null);
 			const result = await getTransferenciasAction();
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
 });
@@ -1184,14 +1185,14 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 		userId: "user-dep",
 		name: "Dependiente",
 		email: "dep@test.com",
-		role: "user",
+		role: "regularUser",
 		isActive: true,
 		tenantId: "tenant-test",
 		tenantRole: "dependiente",
 	};
 	const manager: AuthenticatedUser = {
 		...mockUser,
-		role: "user",
+		role: "regularUser",
 		tenantRole: "manager",
 	};
 
@@ -1235,7 +1236,7 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 		const result = await aprobarTransferenciaAction({ transferenciaId: "tr-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("FORBIDDEN");
+		expect(expectActionFailure(result).error?.code).toBe("FORBIDDEN");
 		// El gate corre antes de cualquier consulta de datos.
 		expect(prisma.transferencia.findFirst).not.toHaveBeenCalled();
 	});
@@ -1264,7 +1265,7 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("FORBIDDEN");
+		expect(expectActionFailure(result).error?.code).toBe("FORBIDDEN");
 	});
 
 	it("recepción parcial mueve solo lo recibido y lo registra en el documento", async () => {
@@ -1355,7 +1356,7 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 	});
 });
 

@@ -82,14 +82,14 @@ describe('mobile v1 generated SDKs', () => {
   });
 
   it.each(Object.entries(SDK_SOURCE_EXTENSIONS))(
-    'generates all 110 stable operation names in the %s SDK',
+    'generates every documented operation name in the %s SDK',
     async (sdk, extensions) => {
       const expectedOperationIds = await operationIds();
       const files = (await listFiles(path.join(SDK_ROOT, sdk)))
         .filter((file) => extensions.includes(path.extname(file)));
       const source = (await Promise.all(files.map((file) => readFile(file, 'utf8')))).join('\n');
 
-      expect(expectedOperationIds).toHaveLength(110);
+      expect(new Set(expectedOperationIds).size).toBe(expectedOperationIds.length);
       expect(files.length).toBeGreaterThan(0);
       expect(expectedOperationIds.filter((operationId) => source.includes(operationId)))
         .toEqual(expectedOperationIds);

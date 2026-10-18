@@ -11,6 +11,7 @@
  * 6. Error genérico: error desconocido → INTERNAL_ERROR
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 import { ZodError, z } from 'zod';
 import { Prisma } from '@/generated/prisma';
 
@@ -31,7 +32,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test-1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 /** Crea un ZodError con field errors específicos para testing */
@@ -145,13 +146,13 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
-      expect(result.error!.message).toBeDefined();
-      expect(result.error!.details).toBeDefined();
+      expect(expectActionFailure(result).error).toBeDefined();
+      expect(expectActionFailure(result).error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.message).toBeDefined();
+      expect(expectActionFailure(result).error!.details).toBeDefined();
       // Debe contener los field errors de Zod
-      expect(result.error!.details).toHaveProperty('nombre');
-      expect(result.error!.details).toHaveProperty('precio');
+      expect(expectActionFailure(result).error!.details).toHaveProperty('nombre');
+      expect(expectActionFailure(result).error!.details).toHaveProperty('precio');
     });
 
     it('NO deja propagar el ZodError como excepción', async () => {
@@ -179,8 +180,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('P2002');
-      expect(result.error!.message).toContain('Ya existe');
+      expect(expectActionFailure(result).error!.code).toBe('P2002');
+      expect(expectActionFailure(result).error!.message).toContain('Ya existe');
     });
 
     it('retorna mensaje amigable para error P2025 (record not found)', async () => {
@@ -193,8 +194,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('P2025');
-      expect(result.error!.message).toContain('no fue encontrado');
+      expect(expectActionFailure(result).error!.code).toBe('P2025');
+      expect(expectActionFailure(result).error!.message).toContain('no fue encontrado');
     });
 
     it('retorna mensaje genérico para códigos desconocidos', async () => {
@@ -207,8 +208,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('P9999');
-      expect(result.error!.message).toBeDefined();
+      expect(expectActionFailure(result).error!.code).toBe('P9999');
+      expect(expectActionFailure(result).error!.message).toBeDefined();
     });
   });
 
@@ -225,8 +226,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('PRICE_MISMATCH');
-      expect(result.error!.message).toBe('El precio no coincide con el vigente');
+      expect(expectActionFailure(result).error!.code).toBe('PRICE_MISMATCH');
+      expect(expectActionFailure(result).error!.message).toBe('El precio no coincide con el vigente');
     });
 
     it('sigue mapeando errores Prisma reales con código P a mensaje amigable', async () => {
@@ -239,8 +240,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('P2002');
-      expect(result.error!.message).toContain('Ya existe');
+      expect(expectActionFailure(result).error!.code).toBe('P2002');
+      expect(expectActionFailure(result).error!.message).toContain('Ya existe');
     });
   });
 
@@ -254,15 +255,15 @@ describe('withAction()', () => {
       const wrapped = withAction(async () => {
         throw new Prisma.PrismaClientValidationError(
           'Invalid value for field "precio": expected number, got string',
-          '5.0.0'
+          '5.0.0' as never
         );
       });
 
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('PRISMA_VALIDATION_ERROR');
-      expect(result.error!.message).toContain('validación');
+      expect(expectActionFailure(result).error!.code).toBe('PRISMA_VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.message).toContain('validación');
     });
   });
 
@@ -279,8 +280,8 @@ describe('withAction()', () => {
       const result = await wrapped(undefined);
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('INTERNAL_ERROR');
-      expect(result.error!.message).toBeDefined();
+      expect(expectActionFailure(result).error!.code).toBe('INTERNAL_ERROR');
+      expect(expectActionFailure(result).error!.message).toBeDefined();
     });
 
     it('NO expone el mensaje del error original al cliente', async () => {
@@ -292,8 +293,8 @@ describe('withAction()', () => {
 
       const result = await wrapped(undefined);
 
-      expect(result.error!.message).not.toContain('SECRETO');
-      expect(result.error!.message).not.toContain('12345');
+      expect(expectActionFailure(result).error!.message).not.toContain('SECRETO');
+      expect(expectActionFailure(result).error!.message).not.toContain('12345');
     });
   });
 

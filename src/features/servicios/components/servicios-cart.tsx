@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { resumirCarritoPorMoneda, monedasOrdenadas } from "@/features/servicios/lib/carrito-resumen";
 import { createVentaServicioAction } from "@/features/venta-servicios/actions";
+import { resolveServiceSaleRequestKey } from "@/features/venta-servicios/request-idempotency";
 import { createCompraServicioAction } from "@/features/compras-servicios/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { useVendors } from "@/features/vendors/hooks/use-vendors";
@@ -70,6 +71,7 @@ export default function ServiciosCart({
 	const [formaPago, setFormaPago] = useState<"PAGO_COMPLETO" | "PAGO_PARCIAL">(
 		"PAGO_COMPLETO",
 	);
+	const pendingVentaRequest = useRef<{ fingerprint: string; key: string } | null>(null);
 
 	// El carrito puede mezclar monedas: los totales se calculan agrupados por
 	// moneda y nunca se suman importes cruzados.
@@ -127,9 +129,9 @@ export default function ServiciosCart({
 		setIsProcessing(true);
 		try {
 			if (mode === "VENTA") {
-				const result = await createVentaServicioAction({
+				const ventaPayload = {
 					clienteId: selectedClienteId,
-					condicionPago: 'CONTADO',
+					condicionPago: 'CONTADO' as const,
 					observaciones: observaciones || undefined,
 					lineas: cart.map((item) => ({
 						tipoLinea: 'SERVICIO' as const,
@@ -137,10 +139,20 @@ export default function ServiciosCart({
 						cantidad: item.cantidad,
 						costo: Math.round(item.costo),
 					})),
+				};
+				const request = resolveServiceSaleRequestKey(
+					pendingVentaRequest.current,
+					JSON.stringify(ventaPayload),
+				);
+				pendingVentaRequest.current = request;
+				const result = await createVentaServicioAction({
+					...ventaPayload,
+					idempotencyKey: request.key,
 				});
 				if (!result.success) {
 					throw new Error(result.error?.message ?? "Error desconocido");
 				}
+				pendingVentaRequest.current = null;
 			} else {
 				// Compra: cada línea del carrito se vuelve un registro CompraServicio.
 				await Promise.all(

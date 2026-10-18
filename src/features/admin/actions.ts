@@ -833,8 +833,7 @@ export const deleteSessionAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		await prisma.userSession.delete({
-			// @ts-expect-error sessionId is not in the Prisma type but the schema has it
-			where: { sessionId },
+			where: { id: sessionId },
 		});
 		revalidatePath("/admin");
 		return { success: true };

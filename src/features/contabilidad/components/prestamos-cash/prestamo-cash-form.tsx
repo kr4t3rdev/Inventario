@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
@@ -11,11 +11,9 @@ import { CurrencyInput } from "@/components/ui/currency-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { createPrestamoCashAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
 import { toast } from "sonner"
-import { calcularMontoTotalACobrar } from "@/lib/utils/prestamo-cash"
 
 interface TasasActualesData {
   monedaPrincipal?: { codigo?: string }
@@ -26,7 +24,8 @@ const prestamoSchema = z.object({
   clienteId: z.string().min(1, "Seleccione un cliente"),
   montoCapital: z.coerce.number().positive("El monto debe ser mayor que cero"),
   moneda: z.string().min(1, "Seleccione la moneda"),
-  tasaInteres: z.coerce.number().min(0).optional(),
+  tasaInteres: z.number().min(0, "Indique una tasa, incluso si es 0"),
+  tasaInteresMoratorio: z.number().min(0, "Indique una tasa, incluso si es 0"),
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
@@ -44,29 +43,17 @@ type PrestamoFormValues = z.infer<typeof prestamoSchema>
 function CuotasEstimadas({ control }: { control: any }) {
   const montoCapital = useWatch({ control, name: 'montoCapital' })
   const tasaInteres = useWatch({ control, name: 'tasaInteres' })
-  const fechaVencimiento = useWatch({ control, name: 'fechaVencimiento' })
+  const tasaMoratoria = useWatch({ control, name: 'tasaInteresMoratorio' })
   const moneda = useWatch({ control, name: 'moneda' })
 
   const monto = Number(montoCapital) || 0
-  const tasa = Number(tasaInteres) || 0
+  const tasa = Number(tasaInteres)
+  const mora = Number(tasaMoratoria)
 
   if (monto <= 0) return null
 
-  const totalConInteres = calcularMontoTotalACobrar(monto, tasa)
-  const interes = totalConInteres - monto
-
-  let dias = 0
-  if (fechaVencimiento) {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const vencimiento = new Date(fechaVencimiento)
-    dias = Math.max(1, Math.ceil((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)))
-  }
-
   const fmt = (n: number) =>
     n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
-  const cuotaDiaria = dias > 0 ? totalConInteres / dias : null
 
   return (
     <div className="rounded-lg border bg-muted/40 p-4 space-y-3 text-sm">
@@ -77,37 +64,14 @@ function CuotasEstimadas({ control }: { control: any }) {
 
       <div className="space-y-1">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Capital</span>
+          <span className="text-muted-foreground">Capital inicial</span>
           <span className="font-medium">{fmt(monto)} {moneda}</span>
         </div>
-        {tasa > 0 && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Interés ({tasa}%)</span>
-            <span className="font-medium text-amber-500">+{fmt(interes)} {moneda}</span>
-          </div>
-        )}
-        <div className="flex justify-between font-semibold border-t pt-2">
-          <span>Saldo a pagar</span>
-          <span className="text-primary">{fmt(totalConInteres)} {moneda}</span>
-        </div>
+        <p className="border-t pt-2 text-xs text-muted-foreground">
+          Tasas anuales: ordinaria {Number.isFinite(tasa) ? tasa : '—'}%, moratoria {Number.isFinite(mora) ? mora : '—'}%.
+          El interés se calcula sobre el principal pendiente en cada pago.
+        </p>
       </div>
-
-      {cuotaDiaria !== null && (
-        <div className="space-y-2 border-t pt-3">
-          <p className="text-xs text-muted-foreground">Cuota fija estimada ({dias} días)</p>
-          <div className="flex gap-2 flex-wrap">
-            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-200 dark:text-blue-400 dark:border-blue-800">
-              Diaria &middot; {fmt(cuotaDiaria)} {moneda}
-            </Badge>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800">
-              Semanal &middot; {fmt(cuotaDiaria * 7)} {moneda}
-            </Badge>
-            <Badge variant="outline" className="bg-violet-500/10 text-violet-700 border-violet-200 dark:text-violet-400 dark:border-violet-800">
-              Mensual &middot; {fmt(cuotaDiaria * 30)} {moneda}
-            </Badge>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -135,6 +99,8 @@ export function PrestamoCashForm({
   onSuccess,
 }: PrestamoCashFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const requestInFlight = useRef(false)
+  const pendingCreateRequest = useRef<{ payload: string; key: string } | null>(null)
 
   const monedaPrincipal = tasasData?.monedaPrincipal?.codigo ?? "CUP"
   const tasas = tasasData?.tasas ?? []
@@ -146,7 +112,8 @@ export function PrestamoCashForm({
       moneda: "CUP",
       clienteId: "",
       cuentaBancariaId: "",
-      tasaInteres: 0,
+      tasaInteres: undefined,
+      tasaInteresMoratorio: undefined,
       fechaVencimiento: "",
       observaciones: "",
     },
@@ -170,17 +137,26 @@ export function PrestamoCashForm({
   }, [tasaActual, form])
 
   const onSubmit = async (data: PrestamoFormValues) => {
+    if (requestInFlight.current) return
+    requestInFlight.current = true
     setIsLoading(true)
+    const payload = JSON.stringify(data)
+    const idempotencyKey = pendingCreateRequest.current?.payload === payload
+      ? pendingCreateRequest.current.key
+      : crypto.randomUUID()
+    pendingCreateRequest.current = { payload, key: idempotencyKey }
     try {
       const result = await createPrestamoCashAction({
         clienteId: data.clienteId,
         montoCapital: data.montoCapital,
         moneda: data.moneda,
         tasaInteres: data.tasaInteres,
+        tasaInteresMoratorio: data.tasaInteresMoratorio,
         tasaCambioAlCrear: data.tasaCambioAlCrear,
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         cuentaBancariaId: data.cuentaBancariaId,
+        idempotencyKey,
       })
 
       if (!result.success) {
@@ -189,17 +165,21 @@ export function PrestamoCashForm({
       }
 
       toast.success("Préstamo en efectivo creado exitosamente.")
+      pendingCreateRequest.current = null
       form.reset()
       onOpenChange(false)
       onSuccess?.()
     } catch (error) {
       toast.error("No se pudo crear el préstamo")
     } finally {
+      requestInFlight.current = false
       setIsLoading(false)
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (nextOpen?: boolean) => {
+    if (nextOpen === true || requestInFlight.current) return
+    pendingCreateRequest.current = null
     form.reset()
     onOpenChange(false)
   }
@@ -275,7 +255,7 @@ export function PrestamoCashForm({
                   <FormControl>
                     <CurrencyInput
                       value={field.value ?? ''}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -312,11 +292,28 @@ export function PrestamoCashForm({
               name="tasaInteres"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tasa de Interés % (Opcional)</FormLabel>
+                  <FormLabel>Tasa anual ordinaria (%)</FormLabel>
                   <FormControl>
                     <CurrencyInput
                       value={field.value ?? ''}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tasaInteresMoratorio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tasa anual moratoria (%)</FormLabel>
+                  <FormControl>
+                    <CurrencyInput
+                      value={field.value ?? ''}
+                      onChange={(value) => field.onChange(value === '' ? undefined : Number(value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -380,7 +377,7 @@ export function PrestamoCashForm({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={() => handleClose()} disabled={isLoading}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

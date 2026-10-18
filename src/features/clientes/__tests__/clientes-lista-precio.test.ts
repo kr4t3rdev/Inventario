@@ -4,6 +4,7 @@
  * @returns {void} Aserciones vitest
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -23,12 +24,12 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 const userConPlan: AuthenticatedUser = {
   userId: 'user-2', name: 'Plan', email: 'plan@test.com',
-  role: 'user', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
+  role: 'regularUser', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
   planFeatures: { clientes: true },
 };
 
@@ -61,7 +62,7 @@ describe('CU-08 listaPrecioId real en clientes (RED)', () => {
     const result = await createClienteAction({ nombre: 'Cliente X', listaPrecioId: 'lp-otro' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     expect(prisma.cliente.create).not.toHaveBeenCalled();
   });
 
@@ -71,7 +72,7 @@ describe('CU-08 listaPrecioId real en clientes (RED)', () => {
     const result = await createClienteAction({ nombre: 'Cliente Y', listaPrecioId: 'lp-1' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
   });
 
   it('update persiste listaPrecioId', async () => {

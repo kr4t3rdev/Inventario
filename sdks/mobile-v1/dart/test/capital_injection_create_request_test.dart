@@ -16,8 +16,8 @@ void main() {
   // final instance = CapitalInjectionCreateRequest();
 
   group('test CapitalInjectionCreateRequest', () {
-    // num monto
-    test('to test the property `monto`', () async {
+    // num montoRecibido
+    test('to test the property `montoRecibido`', () async {
       // TODO
     });
 
@@ -26,8 +26,13 @@ void main() {
       // TODO
     });
 
-    // String tipo (default value: 'APORTE')
+    // String tipo
     test('to test the property `tipo`', () async {
+      // TODO
+    });
+
+    // String cuentaId
+    test('to test the property `cuentaId`', () async {
       // TODO
     });
 
@@ -36,8 +41,33 @@ void main() {
       // TODO
     });
 
-    // String cuentaBancariaId
-    test('to test the property `cuentaBancariaId`', () async {
+    // String socio
+    test('to test the property `socio`', () async {
+      // TODO
+    });
+
+    // String entidadPrestamista
+    test('to test the property `entidadPrestamista`', () async {
+      // TODO
+    });
+
+    // num tasaInteres
+    test('to test the property `tasaInteres`', () async {
+      // TODO
+    });
+
+    // int plazoMeses
+    test('to test the property `plazoMeses`', () async {
+      // TODO
+    });
+
+    // DateTime fechaInicioPago
+    test('to test the property `fechaInicioPago`', () async {
+      // TODO
+    });
+
+    // DateTime fechaOperacion
+    test('to test the property `fechaOperacion`', () async {
       // TODO
     });
 

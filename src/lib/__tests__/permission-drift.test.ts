@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { getPermissionByKey } from '@/lib/auth/permission-registry';
 import {
   getMobilePermissionKey,
+  isMobileRouteExempt,
   getRoutePermissionKey,
   MOBILE_ACTION_KEYS,
   MOBILE_GROUP_KEYS,
@@ -109,6 +110,13 @@ function withAuthMethods(src: string): string[] {
   return [...found];
 }
 
+function exportedHttpMethods(src: string): string[] {
+  const found = new Set<string>();
+  const re = /export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)\b|export\s+const\s+(GET|POST|PUT|PATCH|DELETE)\s*=/g;
+  for (const m of src.matchAll(re)) found.add(m[1] ?? m[2]);
+  return [...found];
+}
+
 describe('PG-07 drift de permisos', () => {
   it('no hay claves referenciadas que falten en el registry', () => {
     const { keys, unresolved } = referencedKeys();
@@ -144,26 +152,28 @@ describe('PG-07 drift de permisos', () => {
 
   it('cada ruta del API mobile tiene clave mapeada o exención explícita', () => {
     const mobileRoot = join(APP_ROOT, 'api', 'mobile');
-    const EXEMPT_GROUPS = new Set(['auth', 'plans']);
     const offenders: string[] = [];
 
     for (const file of collectFiles(mobileRoot)) {
       if (!file.endsWith('route.ts')) continue;
       const webPath = toWebPath(file);
-      const key = getMobilePermissionKey(webPath);
-      if (key !== null) {
+      const methods = exportedHttpMethods(readFileSync(file, 'utf8'));
+      if (methods.length === 0) offenders.push(`${webPath} (sin método HTTP exportado)`);
+      for (const method of methods) {
+        const key = getMobilePermissionKey(webPath, method);
+        if (key === null) {
+          if (!isMobileRouteExempt(webPath, method)) offenders.push(`${method} ${webPath} (exención no explícita)`);
+          continue;
+        }
+        if (!key || key === '__mobile_method_not_allowed__') {
+          offenders.push(`${method} ${webPath}`);
+          continue;
+        }
         expect(
           getPermissionByKey(key),
-          `ruta mobile ${webPath} usa clave sin registro: ${key}`,
+          `${method} ${webPath} usa clave sin registro: ${key}`,
         ).toBeDefined();
-        continue;
       }
-      // Exentas: auth/* (público o sesión), plans/* (catálogo), admin/* (plataforma,
-      // salvo admin/memberships que sí está mapeado a config.usuarios.gestionar).
-      const segments = webPath.replace(/^\/api\/mobile\/(v1\/)?/, '').split('/');
-      const [group, sub] = segments;
-      const exempt = EXEMPT_GROUPS.has(group) || (group === 'admin' && sub !== 'memberships');
-      if (!exempt) offenders.push(webPath);
     }
 
     expect(offenders, `rutas mobile sin permiso ni exención: ${offenders.join(', ')}`).toEqual([]);

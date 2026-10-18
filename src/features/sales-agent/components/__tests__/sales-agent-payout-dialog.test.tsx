@@ -8,6 +8,30 @@ vi.mock('@/features/sales-agent/actions', () => ({
   confirmSalesAgentPayoutAction: vi.fn(),
 }));
 
+/**
+ * @description Primer argumento de la n-esima llamada de un mock tipado.
+ *
+ * `mock.calls` se tipa como `unknown[][]`, de modo que llamar directamente a
+ * `calls[n][0].propiedad` falla con TS2532. El helper acota esa lectura y
+ * devuelve el tipo del valor realmente registrado (el payload), evitando el
+ * envoltorio ActionResponse. Las aserciones previas de `toHaveBeenCalledTimes`
+ * garantizan la llamada.
+ *
+ * @param {Mock} mock - Mock tipado con `vi.mocked`.
+ * @param {number} index - Indice de la llamada.
+ * @returns {Arg} Primer argumento de esa llamada.
+ */
+function mockArgAt<Mock extends (...args: never[]) => unknown, Arg = Parameters<Mock>[0]>(
+  mock: Mock,
+  index: number,
+): NonNullable<Arg> {
+  const call = (mock as unknown as { mock: { calls: unknown[][] } }).mock.calls[index];
+  if (!call) throw new Error(`El mock no registro la llamada ${index}`);
+  const first = call[0];
+  if (first === undefined) throw new Error(`La llamada ${index} no tiene argumentos`);
+  return first as NonNullable<Arg>;
+}
+
 describe('SalesAgentPayoutDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,14 +82,14 @@ describe('SalesAgentPayoutDialog', () => {
 
     expect(confirmSalesAgentPayoutAction).toHaveBeenCalledTimes(1);
     expect(submit).toBeDisabled();
-    const firstKey = vi.mocked(confirmSalesAgentPayoutAction).mock.calls[0][0].idempotencyKey;
+    const firstKey = mockArgAt(vi.mocked(confirmSalesAgentPayoutAction), 0).idempotencyKey;
 
     rejectFirstRequest?.(new Error('response lost'));
     await waitFor(() => expect(submit).toBeEnabled());
     fireEvent.click(submit);
 
     await waitFor(() => expect(confirmSalesAgentPayoutAction).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(confirmSalesAgentPayoutAction).mock.calls[1][0].idempotencyKey)
+    expect(mockArgAt(vi.mocked(confirmSalesAgentPayoutAction), 1).idempotencyKey)
       .toBe(firstKey);
   });
 });

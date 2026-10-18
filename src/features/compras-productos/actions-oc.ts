@@ -384,7 +384,7 @@ export const registrarRecepcionAction = withAction(
       const updated = await tx.ordenCompra.findFirst({
         where: { id: orden.id, tenantId },
       });
-      return { recepcion, orden: updated, estado };
+      return { recepcion, orden: updated, estado, yaRegistrada: false };
     });
     } catch (error: unknown) {
       // Concurrencia extrema: otro request con la misma clave ganó el UNIQUE.

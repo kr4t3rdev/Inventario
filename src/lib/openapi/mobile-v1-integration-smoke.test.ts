@@ -160,7 +160,24 @@ describe('mobile v1 generated TypeScript SDK integration smoke', () => {
     const pdf = Buffer.from('%PDF-1.7\nsmoke\n', 'utf8');
     const mock = await startMockServer((request) => {
       if (request.path === '/api/mobile/v1/dashboard/stats?ubicacionId=store-1&tipoUbicacion=punto_venta') {
-        return { body: { total: 3, pagado: 125.5 } };
+        return { body: {
+          totalProductos: 10, totalAlmacenes: 2, totalPuntosVenta: 1,
+          totalVentas: 5, totalMermas: 0, totalTransferencias: 1,
+          totalIngresos: 1500, totalGastosMermas: 0, totalGastos: 200,
+          totalBeneficio: 1300, valorTotalInventario: 5000,
+          datosPorMes: [], datosPorSemana: [],
+          ventasDiarias: {
+            ventasHoy: 2, ingresosHoy: 300, ventasAyer: 1, ingresosAyer: 100,
+            promedioVentasDiarias: 1.5, promedioIngresosDiarios: 200,
+            diasConVentas: 4, totalDias: 5, totalIngresosPeriodo: 800,
+            totalCantidadPeriodo: 6,
+          },
+          productosMasVendidos: [], productosStockBajo: [], distribucionStock: [],
+          transferenciasStats: {
+            almacenAAlmacen: 1, almacenAPuntoVenta: 0,
+            puntoVentaAAlmacen: 0, puntoVentaAPuntoVenta: 0,
+          },
+        } };
       }
       if (request.path === '/api/mobile/v1/products') return { body: { items: [{ id: 'p-1', nombre: 'Café' }] } };
       if (request.path.includes('/products/stock')) return { body: { items: [{ id: 'p-1', nombre: 'Café', stock: 8 }] } };
@@ -209,7 +226,7 @@ describe('mobile v1 generated TypeScript SDK integration smoke', () => {
       responseError = error as ResponseError;
     }
 
-    expect(stats.total).toBe(3);
+    expect(stats.totalIngresos).toBe(1500);
     expect(catalog.items[0]?.nombre).toBe('Café');
     expect(stock.items[0]?.stock).toBe(8);
     expect(receipt.type).toBe('application/pdf');

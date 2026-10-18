@@ -2,7 +2,8 @@ node_modules
 .next
 .git
 mobile
-sdks
+src/generated
+openspec
 .graphify-out
 graphify-out
 .pi-lens

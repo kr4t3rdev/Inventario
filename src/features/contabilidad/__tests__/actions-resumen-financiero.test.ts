@@ -16,7 +16,7 @@ const user: AuthenticatedUser = {
   userId: 'user-a',
   name: 'Tenant A',
   email: 'tenant-a@example.com',
-  role: 'user',
+  role: 'regularUser',
   isActive: true,
   tenantId: 'tenant-a',
   tenantRole: 'manager',

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/features/mi-empresa/services/mi-empresa-service', () => ({
@@ -39,7 +40,7 @@ describe('mi-empresa actions', () => {
     const result = await getMiEmpresaAction();
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
     expect(vi.mocked(getMiEmpresaByTenant)).not.toHaveBeenCalled();
   });
 
@@ -49,7 +50,7 @@ describe('mi-empresa actions', () => {
     const result = await updateMiEmpresaAction({ nombre: 'Mi Empresa' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
     expect(vi.mocked(upsertMiEmpresa)).not.toHaveBeenCalled();
   });
 });

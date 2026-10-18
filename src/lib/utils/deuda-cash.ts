@@ -22,11 +22,11 @@ export function calcularTotalDeudaConInteres(montoCapital: number, tasaInteres?:
 export function calcularSaldoPendienteDeuda(montoDeuda: number, montoPagado: number): number {
   const deuda = Number(montoDeuda) || 0
   const pagado = Number(montoPagado) || 0
-  return Math.max(0, Number((deuda - pagado).toFixed(2)))
+  return Math.max(0, Number((deuda - pagado).toFixed(4)))
 }
 
 /**
- * @description Normaliza el estado de una deuda cash con base en saldo y tolerancia de centavos.
+ * @description Normaliza el estado de una deuda cash según saldo pendiente exacto.
  * @param {string} estadoActual - Estado persistido.
  * @param {{ montoDeuda: number; montoPagado: number; estado?: string }} cuentaPorPagar - Cuenta asociada.
  * @returns {string} Estado normalizado.
@@ -37,8 +37,6 @@ export function normalizarEstadoDeudaCash(
 ): string {
   const saldo = calcularSaldoPendienteDeuda(cuentaPorPagar.montoDeuda, cuentaPorPagar.montoPagado)
 
-  if (saldo <= 0.01) return 'PAGADO'
   if (estadoActual === 'CANCELADO') return 'CANCELADO'
-  if (cuentaPorPagar.estado === 'PAGADA') return 'PAGADO'
-  return estadoActual === 'PAGADO' ? 'PAGADO' : 'ACTIVO'
+  return saldo === 0 ? 'PAGADO' : 'ACTIVO'
 }

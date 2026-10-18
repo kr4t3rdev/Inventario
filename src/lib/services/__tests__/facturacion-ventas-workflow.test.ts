@@ -65,6 +65,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-test',
       tipoVencimiento: 'fecha',
       fechaVencimiento: '2026-03-01T00:00:00.000Z'
     })
@@ -99,6 +100,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-test',
       tipoVencimiento: 'plazo'
     })
 
@@ -127,6 +129,7 @@ describe('facturacion-ventas-workflow', () => {
         clienteId: 'cliente-1',
         montoTotal: 1000,
         usuarioId: 'user-1',
+      tenantId: 'tenant-test',
         tipoVencimiento: 'fecha'
       })
     ).rejects.toThrow('La fecha de vencimiento es obligatoria para tipo fecha')
@@ -158,6 +161,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-1',
       montoTotal: 1000,
       usuarioId: 'user-1',
+      tenantId: 'tenant-test',
       tipoVencimiento: 'contra_pago'
     })
 
@@ -203,6 +207,7 @@ describe('facturacion-ventas-workflow', () => {
       ventaId: 'venta-directa-1',
       montoTotal: 500,
       usuarioId: 'cajero-1',
+      tenantId: 'tenant-test',
       observaciones: 'Venta rápida'
     })
 
@@ -259,6 +264,7 @@ describe('facturacion-ventas-workflow', () => {
       clienteId: 'cliente-2',
       montoTotal: 500,
       usuarioId: 'user-2',
+      tenantId: 'tenant-test',
       tipoVencimiento: 'contra_pago',
       cuentaBancariaId: 'cuenta-explicita'
     })

@@ -248,6 +248,7 @@ describe('resolverTratamientoFinanciero', () => {
 				preferencia: 'REEMBOLSO_EFECTIVO',
 				hayTurnoAbierto: false,
 				puedeReembolsar: true,
+				hayCliente: true,
 			}),
 			'REEMBOLSO_SIN_TURNO');
 	});

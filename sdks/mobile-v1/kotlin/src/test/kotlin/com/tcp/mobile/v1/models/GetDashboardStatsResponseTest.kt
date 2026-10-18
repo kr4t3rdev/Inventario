@@ -19,34 +19,125 @@ import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.models.GetDashboardStatsResponse
+import com.tcp.mobile.v1.models.DashboardDatosPorMes
+import com.tcp.mobile.v1.models.DashboardDatosPorSemana
+import com.tcp.mobile.v1.models.DashboardDistribucionStockItem
+import com.tcp.mobile.v1.models.DashboardProductoMasVendido
+import com.tcp.mobile.v1.models.DashboardProductoStockBajo
+import com.tcp.mobile.v1.models.DashboardTransferenciasStats
+import com.tcp.mobile.v1.models.DashboardVentasDiarias
 
 class GetDashboardStatsResponseTest : ShouldSpec() {
     init {
         // uncomment below to create an instance of GetDashboardStatsResponse
         //val modelInstance = GetDashboardStatsResponse()
 
-        // to test the property `total`
-        should("test total") {
+        // to test the property `totalProductos`
+        should("test totalProductos") {
             // uncomment below to test the property
-            //modelInstance.total shouldBe ("TODO")
+            //modelInstance.totalProductos shouldBe ("TODO")
         }
 
-        // to test the property `pendiente`
-        should("test pendiente") {
+        // to test the property `totalAlmacenes`
+        should("test totalAlmacenes") {
             // uncomment below to test the property
-            //modelInstance.pendiente shouldBe ("TODO")
+            //modelInstance.totalAlmacenes shouldBe ("TODO")
         }
 
-        // to test the property `pagado`
-        should("test pagado") {
+        // to test the property `totalPuntosVenta`
+        should("test totalPuntosVenta") {
             // uncomment below to test the property
-            //modelInstance.pagado shouldBe ("TODO")
+            //modelInstance.totalPuntosVenta shouldBe ("TODO")
         }
 
-        // to test the property `vencido`
-        should("test vencido") {
+        // to test the property `totalVentas`
+        should("test totalVentas") {
             // uncomment below to test the property
-            //modelInstance.vencido shouldBe ("TODO")
+            //modelInstance.totalVentas shouldBe ("TODO")
+        }
+
+        // to test the property `totalMermas`
+        should("test totalMermas") {
+            // uncomment below to test the property
+            //modelInstance.totalMermas shouldBe ("TODO")
+        }
+
+        // to test the property `totalTransferencias`
+        should("test totalTransferencias") {
+            // uncomment below to test the property
+            //modelInstance.totalTransferencias shouldBe ("TODO")
+        }
+
+        // to test the property `totalIngresos`
+        should("test totalIngresos") {
+            // uncomment below to test the property
+            //modelInstance.totalIngresos shouldBe ("TODO")
+        }
+
+        // to test the property `totalGastosMermas`
+        should("test totalGastosMermas") {
+            // uncomment below to test the property
+            //modelInstance.totalGastosMermas shouldBe ("TODO")
+        }
+
+        // to test the property `totalGastos`
+        should("test totalGastos") {
+            // uncomment below to test the property
+            //modelInstance.totalGastos shouldBe ("TODO")
+        }
+
+        // to test the property `totalBeneficio`
+        should("test totalBeneficio") {
+            // uncomment below to test the property
+            //modelInstance.totalBeneficio shouldBe ("TODO")
+        }
+
+        // to test the property `valorTotalInventario`
+        should("test valorTotalInventario") {
+            // uncomment below to test the property
+            //modelInstance.valorTotalInventario shouldBe ("TODO")
+        }
+
+        // to test the property `datosPorMes`
+        should("test datosPorMes") {
+            // uncomment below to test the property
+            //modelInstance.datosPorMes shouldBe ("TODO")
+        }
+
+        // to test the property `datosPorSemana`
+        should("test datosPorSemana") {
+            // uncomment below to test the property
+            //modelInstance.datosPorSemana shouldBe ("TODO")
+        }
+
+        // to test the property `ventasDiarias`
+        should("test ventasDiarias") {
+            // uncomment below to test the property
+            //modelInstance.ventasDiarias shouldBe ("TODO")
+        }
+
+        // to test the property `productosMasVendidos`
+        should("test productosMasVendidos") {
+            // uncomment below to test the property
+            //modelInstance.productosMasVendidos shouldBe ("TODO")
+        }
+
+        // to test the property `productosStockBajo`
+        should("test productosStockBajo") {
+            // uncomment below to test the property
+            //modelInstance.productosStockBajo shouldBe ("TODO")
+        }
+
+        // to test the property `distribucionStock`
+        should("test distribucionStock") {
+            // uncomment below to test the property
+            //modelInstance.distribucionStock shouldBe ("TODO")
+        }
+
+        // to test the property `transferenciasStats`
+        should("test transferenciasStats") {
+            // uncomment below to test the property
+            //modelInstance.transferenciasStats shouldBe ("TODO")
         }
 
     }

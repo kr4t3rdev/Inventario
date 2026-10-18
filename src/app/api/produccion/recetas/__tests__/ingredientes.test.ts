@@ -91,7 +91,8 @@ function buildRecetaBase({
       nombre: 'Producto Final',
       precioCosto: precioCostoProductoFinal,
     },
-  }
+    // Fila minima a proposito: los tests solo asertan sobre estos campos.
+  } as any
 }
 
 describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes', () => {
@@ -123,11 +124,11 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
       {
-      id: productoId,
-      nombre: 'Harina',
-      precioCosto: 50,
-      unidad: null,
-      },
+        id: productoId,
+        nombre: 'Harina',
+        precioCosto: 50,
+        unidad: null,
+      } as any,
     ])
 
     // Mock calculateCostoUnitarioReceta to return 75 ((100 + 50) / 2)
@@ -167,7 +168,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       ],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as any)
 
     const request = createIngredientesRequest(recetaId, [
       {
@@ -249,13 +250,13 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
         nombre: 'Harina',
         precioCosto: 100,
         unidad: { simbolo: 'kg' },
-      },
+      } as any,
       {
         id: 'prod-2',
         nombre: 'Azúcar',
         precioCosto: 150,
         unidad: { simbolo: 'kg' },
-      },
+      } as any,
     ])
 
     // Mock calculateCostoUnitarioReceta to return 112.5 ((200 + 100 + 150) / 4)
@@ -311,7 +312,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       ],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as any)
 
     const request = createIngredientesRequest(recetaId, [
       {
@@ -372,7 +373,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       RecetaIngrediente: [],
     }
 
-    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada as any)
 
     const request = createIngredientesRequest(recetaId, [])
 
@@ -404,7 +405,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
         nombre: 'Harina',
         precioCosto: 20,
         unidad: { simbolo: 'kg' },
-      },
+      } as any,
     ])
     vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(20)
     vi.mocked(prisma.receta.update).mockResolvedValueOnce({
@@ -439,7 +440,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
           },
         },
       ],
-    })
+    } as any)
 
     const request = createIngredientesRequest(recetaId, [
       {
@@ -493,7 +494,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
         nombre: 'Harina',
         precioCosto: 20,
         unidad: { simbolo: 'kg' },
-      },
+      } as any,
     ])
 
     const request = createIngredientesRequest(recetaId, [

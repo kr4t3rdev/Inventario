@@ -7,13 +7,11 @@ Respuesta de POST /accounting/bank-adjustments.
 
 Name | Type
 ------------ | -------------
-`ajusteId` | string
-`cuentaId` | string
-`tipo` | string
-`monto` | number
-`moneda` | string
-`descripcion` | string
-`motivo` | string
+`ajuste` | [AjusteBancario](AjusteBancario.md)
+`saldoAnterior` | number
+`saldoNuevo` | number
+`advertenciaSaldoNegativo` | boolean
+`message` | string
 
 ## Example
 
@@ -22,13 +20,11 @@ import type { PostAccountingBankAdjustmentsResponse } from '@tcp/mobile-v1-sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "ajusteId": null,
-  "cuentaId": null,
-  "tipo": null,
-  "monto": null,
-  "moneda": null,
-  "descripcion": null,
-  "motivo": null,
+  "ajuste": null,
+  "saldoAnterior": null,
+  "saldoNuevo": null,
+  "advertenciaSaldoNegativo": null,
+  "message": null,
 } satisfies PostAccountingBankAdjustmentsResponse
 
 console.log(example)

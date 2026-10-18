@@ -4,6 +4,7 @@
  * @returns {void} Aserciones vitest sobre las acciones del feature roles.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -200,7 +201,7 @@ describe('updateTenantRoleAction (PG-04 RED)', () => {
     const result = await updateTenantRoleAction({ roleId: 'role-1', nombre: 'X' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('INTERNAL_ERROR');
+    expect(expectActionFailure(result).error?.code).toBe('INTERNAL_ERROR');
     expect(vi.mocked(prisma.$transaction)).toHaveBeenCalled();
   });
 

@@ -1,0 +1,11 @@
+
+# GetFacturasListResponse
+
+## Properties
+| Name | Type | Description | Notes |
+| ------------ | ------------- | ------------- | ------------- |
+| **items** | [**kotlin.collections.List&lt;Factura&gt;**](Factura.md) |  |  |
+| **pagination** | [**Pagination**](Pagination.md) |  |  [optional] |
+
+
+

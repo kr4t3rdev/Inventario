@@ -3,6 +3,7 @@
  * auth, gates de feature/permiso y paso de datos al servicio.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -49,7 +50,7 @@ describe('actions de devoluciones (DNC-T4)', () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r = await getDevolucionContextoAction('v-1');
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('AUTH_REQUIRED');
+		expect(expectActionFailure(r).error?.code).toBe('AUTH_REQUIRED');
 	});
 
 	it('contexto exige feature ventas-pos', async () => {
@@ -59,7 +60,7 @@ describe('actions de devoluciones (DNC-T4)', () => {
 		} as never);
 		const r = await getDevolucionContextoAction('v-1');
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(expectActionFailure(r).error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 
 	it('contexto devuelve disponibilidad por ítem y saldo CxC', async () => {

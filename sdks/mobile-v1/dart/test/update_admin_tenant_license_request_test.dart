@@ -1,0 +1,67 @@
+//
+// AUTO-GENERATED FILE, DO NOT MODIFY!
+//
+// @dart=2.18
+
+// ignore_for_file: unused_element, unused_import
+// ignore_for_file: always_put_required_named_parameters_first
+// ignore_for_file: constant_identifier_names
+// ignore_for_file: lines_longer_than_80_chars
+
+import 'package:tcp_mobile_v1_sdk/api.dart';
+import 'package:test/test.dart';
+
+// tests for UpdateAdminTenantLicenseRequest
+void main() {
+  // final instance = UpdateAdminTenantLicenseRequest();
+
+  group('test UpdateAdminTenantLicenseRequest', () {
+    // String tenantLicenseId
+    test('to test the property `tenantLicenseId`', () async {
+      // TODO
+    });
+
+    // String planId
+    test('to test the property `planId`', () async {
+      // TODO
+    });
+
+    // DateTime expiracion
+    test('to test the property `expiracion`', () async {
+      // TODO
+    });
+
+    // bool activa
+    test('to test the property `activa`', () async {
+      // TODO
+    });
+
+    // bool isAdminTest
+    test('to test the property `isAdminTest`', () async {
+      // TODO
+    });
+
+    // int maxUsuarios
+    test('to test the property `maxUsuarios`', () async {
+      // TODO
+    });
+
+    // int maxAlmacenes
+    test('to test the property `maxAlmacenes`', () async {
+      // TODO
+    });
+
+    // int maxProductos
+    test('to test the property `maxProductos`', () async {
+      // TODO
+    });
+
+    // int maxClientes
+    test('to test the property `maxClientes`', () async {
+      // TODO
+    });
+
+
+  });
+
+}

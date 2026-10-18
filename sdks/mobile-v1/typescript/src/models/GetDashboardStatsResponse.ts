@@ -13,6 +13,56 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DashboardDatosPorSemana } from './DashboardDatosPorSemana';
+import {
+    DashboardDatosPorSemanaFromJSON,
+    DashboardDatosPorSemanaFromJSONTyped,
+    DashboardDatosPorSemanaToJSON,
+    DashboardDatosPorSemanaToJSONTyped,
+} from './DashboardDatosPorSemana';
+import type { DashboardDistribucionStockItem } from './DashboardDistribucionStockItem';
+import {
+    DashboardDistribucionStockItemFromJSON,
+    DashboardDistribucionStockItemFromJSONTyped,
+    DashboardDistribucionStockItemToJSON,
+    DashboardDistribucionStockItemToJSONTyped,
+} from './DashboardDistribucionStockItem';
+import type { DashboardTransferenciasStats } from './DashboardTransferenciasStats';
+import {
+    DashboardTransferenciasStatsFromJSON,
+    DashboardTransferenciasStatsFromJSONTyped,
+    DashboardTransferenciasStatsToJSON,
+    DashboardTransferenciasStatsToJSONTyped,
+} from './DashboardTransferenciasStats';
+import type { DashboardVentasDiarias } from './DashboardVentasDiarias';
+import {
+    DashboardVentasDiariasFromJSON,
+    DashboardVentasDiariasFromJSONTyped,
+    DashboardVentasDiariasToJSON,
+    DashboardVentasDiariasToJSONTyped,
+} from './DashboardVentasDiarias';
+import type { DashboardProductoStockBajo } from './DashboardProductoStockBajo';
+import {
+    DashboardProductoStockBajoFromJSON,
+    DashboardProductoStockBajoFromJSONTyped,
+    DashboardProductoStockBajoToJSON,
+    DashboardProductoStockBajoToJSONTyped,
+} from './DashboardProductoStockBajo';
+import type { DashboardProductoMasVendido } from './DashboardProductoMasVendido';
+import {
+    DashboardProductoMasVendidoFromJSON,
+    DashboardProductoMasVendidoFromJSONTyped,
+    DashboardProductoMasVendidoToJSON,
+    DashboardProductoMasVendidoToJSONTyped,
+} from './DashboardProductoMasVendido';
+import type { DashboardDatosPorMes } from './DashboardDatosPorMes';
+import {
+    DashboardDatosPorMesFromJSON,
+    DashboardDatosPorMesFromJSONTyped,
+    DashboardDatosPorMesToJSON,
+    DashboardDatosPorMesToJSONTyped,
+} from './DashboardDatosPorMes';
+
 /**
  * Respuesta de GET /dashboard/stats.
  * @export
@@ -24,25 +74,109 @@ export interface GetDashboardStatsResponse {
      * @type {number}
      * @memberof GetDashboardStatsResponse
      */
-    total?: number;
+    totalProductos?: number;
     /**
      * 
      * @type {number}
      * @memberof GetDashboardStatsResponse
      */
-    pendiente?: number;
+    totalAlmacenes?: number;
     /**
      * 
      * @type {number}
      * @memberof GetDashboardStatsResponse
      */
-    pagado?: number;
+    totalPuntosVenta?: number;
     /**
      * 
      * @type {number}
      * @memberof GetDashboardStatsResponse
      */
-    vencido?: number;
+    totalVentas?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalMermas?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalTransferencias?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalIngresos?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalGastosMermas?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalGastos?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    totalBeneficio?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GetDashboardStatsResponse
+     */
+    valorTotalInventario?: number;
+    /**
+     * 
+     * @type {Array<DashboardDatosPorMes>}
+     * @memberof GetDashboardStatsResponse
+     */
+    datosPorMes?: Array<DashboardDatosPorMes>;
+    /**
+     * 
+     * @type {Array<DashboardDatosPorSemana>}
+     * @memberof GetDashboardStatsResponse
+     */
+    datosPorSemana?: Array<DashboardDatosPorSemana>;
+    /**
+     * 
+     * @type {DashboardVentasDiarias}
+     * @memberof GetDashboardStatsResponse
+     */
+    ventasDiarias?: DashboardVentasDiarias;
+    /**
+     * 
+     * @type {Array<DashboardProductoMasVendido>}
+     * @memberof GetDashboardStatsResponse
+     */
+    productosMasVendidos?: Array<DashboardProductoMasVendido>;
+    /**
+     * 
+     * @type {Array<DashboardProductoStockBajo>}
+     * @memberof GetDashboardStatsResponse
+     */
+    productosStockBajo?: Array<DashboardProductoStockBajo>;
+    /**
+     * 
+     * @type {Array<DashboardDistribucionStockItem>}
+     * @memberof GetDashboardStatsResponse
+     */
+    distribucionStock?: Array<DashboardDistribucionStockItem>;
+    /**
+     * 
+     * @type {DashboardTransferenciasStats}
+     * @memberof GetDashboardStatsResponse
+     */
+    transferenciasStats?: DashboardTransferenciasStats;
 }
 
 /**
@@ -62,10 +196,24 @@ export function GetDashboardStatsResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'total': json['total'] == null ? undefined : json['total'],
-        'pendiente': json['pendiente'] == null ? undefined : json['pendiente'],
-        'pagado': json['pagado'] == null ? undefined : json['pagado'],
-        'vencido': json['vencido'] == null ? undefined : json['vencido'],
+        'totalProductos': json['totalProductos'] == null ? undefined : json['totalProductos'],
+        'totalAlmacenes': json['totalAlmacenes'] == null ? undefined : json['totalAlmacenes'],
+        'totalPuntosVenta': json['totalPuntosVenta'] == null ? undefined : json['totalPuntosVenta'],
+        'totalVentas': json['totalVentas'] == null ? undefined : json['totalVentas'],
+        'totalMermas': json['totalMermas'] == null ? undefined : json['totalMermas'],
+        'totalTransferencias': json['totalTransferencias'] == null ? undefined : json['totalTransferencias'],
+        'totalIngresos': json['totalIngresos'] == null ? undefined : json['totalIngresos'],
+        'totalGastosMermas': json['totalGastosMermas'] == null ? undefined : json['totalGastosMermas'],
+        'totalGastos': json['totalGastos'] == null ? undefined : json['totalGastos'],
+        'totalBeneficio': json['totalBeneficio'] == null ? undefined : json['totalBeneficio'],
+        'valorTotalInventario': json['valorTotalInventario'] == null ? undefined : json['valorTotalInventario'],
+        'datosPorMes': json['datosPorMes'] == null ? undefined : ((json['datosPorMes'] as Array<any>).map(DashboardDatosPorMesFromJSON)),
+        'datosPorSemana': json['datosPorSemana'] == null ? undefined : ((json['datosPorSemana'] as Array<any>).map(DashboardDatosPorSemanaFromJSON)),
+        'ventasDiarias': json['ventasDiarias'] == null ? undefined : DashboardVentasDiariasFromJSON(json['ventasDiarias']),
+        'productosMasVendidos': json['productosMasVendidos'] == null ? undefined : ((json['productosMasVendidos'] as Array<any>).map(DashboardProductoMasVendidoFromJSON)),
+        'productosStockBajo': json['productosStockBajo'] == null ? undefined : ((json['productosStockBajo'] as Array<any>).map(DashboardProductoStockBajoFromJSON)),
+        'distribucionStock': json['distribucionStock'] == null ? undefined : ((json['distribucionStock'] as Array<any>).map(DashboardDistribucionStockItemFromJSON)),
+        'transferenciasStats': json['transferenciasStats'] == null ? undefined : DashboardTransferenciasStatsFromJSON(json['transferenciasStats']),
     };
 }
 
@@ -80,10 +228,24 @@ export function GetDashboardStatsResponseToJSONTyped(value?: GetDashboardStatsRe
 
     return {
         
-        'total': value['total'],
-        'pendiente': value['pendiente'],
-        'pagado': value['pagado'],
-        'vencido': value['vencido'],
+        'totalProductos': value['totalProductos'],
+        'totalAlmacenes': value['totalAlmacenes'],
+        'totalPuntosVenta': value['totalPuntosVenta'],
+        'totalVentas': value['totalVentas'],
+        'totalMermas': value['totalMermas'],
+        'totalTransferencias': value['totalTransferencias'],
+        'totalIngresos': value['totalIngresos'],
+        'totalGastosMermas': value['totalGastosMermas'],
+        'totalGastos': value['totalGastos'],
+        'totalBeneficio': value['totalBeneficio'],
+        'valorTotalInventario': value['valorTotalInventario'],
+        'datosPorMes': value['datosPorMes'] == null ? undefined : ((value['datosPorMes'] as Array<any>).map(DashboardDatosPorMesToJSON)),
+        'datosPorSemana': value['datosPorSemana'] == null ? undefined : ((value['datosPorSemana'] as Array<any>).map(DashboardDatosPorSemanaToJSON)),
+        'ventasDiarias': DashboardVentasDiariasToJSON(value['ventasDiarias']),
+        'productosMasVendidos': value['productosMasVendidos'] == null ? undefined : ((value['productosMasVendidos'] as Array<any>).map(DashboardProductoMasVendidoToJSON)),
+        'productosStockBajo': value['productosStockBajo'] == null ? undefined : ((value['productosStockBajo'] as Array<any>).map(DashboardProductoStockBajoToJSON)),
+        'distribucionStock': value['distribucionStock'] == null ? undefined : ((value['distribucionStock'] as Array<any>).map(DashboardDistribucionStockItemToJSON)),
+        'transferenciasStats': DashboardTransferenciasStatsToJSON(value['transferenciasStats']),
     };
 }
 

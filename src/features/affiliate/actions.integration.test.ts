@@ -46,8 +46,8 @@ describeRailwayIntegration('affiliate actions integration', () => {
     const plan = await prisma.plan.findFirstOrThrow({ where: { nombre: 'Profesional' } });
     const [adminDb, referrerDb, referredDb] = await Promise.all([
       createUser({ email: `admin-${suffix}@test.local`, name: 'Admin IT', role: 'admin' }),
-      createUser({ email: `referrer-${suffix}@test.local`, name: 'Referrer IT', role: 'user' }),
-      createUser({ email: `referred-${suffix}@test.local`, name: 'Referred IT', role: 'user' }),
+      createUser({ email: `referrer-${suffix}@test.local`, name: 'Referrer IT', role: 'regularUser' }),
+      createUser({ email: `referred-${suffix}@test.local`, name: 'Referred IT', role: 'regularUser' }),
     ]);
 
     const [referrerTenant, referredTenant] = await Promise.all([
@@ -121,7 +121,7 @@ describeRailwayIntegration('affiliate actions integration', () => {
       userId: referrerDb.userId,
       name: referrerDb.name,
       email: referrerDb.email,
-      role: 'user',
+      role: 'regularUser',
       isActive: true,
       tenantId: referrerTenantId,
       tenantRole: 'manager',
@@ -132,7 +132,7 @@ describeRailwayIntegration('affiliate actions integration', () => {
       userId: referredDb.userId,
       name: referredDb.name,
       email: referredDb.email,
-      role: 'user',
+      role: 'regularUser',
       isActive: true,
       tenantId: referredTenantId,
       tenantRole: 'manager',

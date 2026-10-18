@@ -10,9 +10,23 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth-middleware", () => ({
-	withAuthGet: (handler: any) => handler,
-	withAuthPost: (handler: any) => handler,
+	// El wrapper real expone (request, context) y resuelve el usuario dentro;
+	// el handler recibe (request, context, user).
+	withAuthGet: (handler: any) => (request: any, context: any) =>
+		handler(request, context, mockAuthUser),
+	withAuthPost: (handler: any) => (request: any, context: any) =>
+		handler(request, context, mockAuthUser),
 }));
+
+const mockAuthUser = {
+	userId: "user-1",
+	name: "Test User",
+	email: "test@example.com",
+	role: "admin" as const,
+	isActive: true,
+	tenantId: "tenant-1",
+	tenantRole: "manager" as const,
+};
 
 vi.mock("@/lib/prisma", () => ({
 	prisma: prismaMock,
@@ -58,11 +72,9 @@ describe("API /anticipos/[id]", () => {
 			body: JSON.stringify({ estado: "ANULADO" }),
 		});
 
-		const response = await PUT(
-			request,
-			{ params: Promise.resolve({ id: "ant-1" }) },
-			{ userId: "user-1" },
-		);
+		const response = await PUT(request, {
+			params: Promise.resolve({ id: "ant-1" }),
+		});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
@@ -78,11 +90,9 @@ describe("API /anticipos/[id]", () => {
 			method: "DELETE",
 		});
 
-		const response = await DELETE(
-			request,
-			{ params: Promise.resolve({ id: "ant-1" }) },
-			{ userId: "user-1" },
-		);
+		const response = await DELETE(request, {
+			params: Promise.resolve({ id: "ant-1" }),
+		});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);

@@ -10,7 +10,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: vi.fn((handler) => (request: NextRequest, context: unknown) =>
+  withAuthGet: vi.fn((handler) => (request: NextRequest = {} as NextRequest, context: unknown = {}) =>
     handler(request, context, {
       userId: 'user-1',
       name: 'Test User',

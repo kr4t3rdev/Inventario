@@ -19,7 +19,7 @@ describe('CurrencyConversionService', () => {
 
     const quote = await CurrencyConversionService.quoteConversion(
       { monto: 125, monedaOrigen: 'CUP', monedaDestino: 'CUP' },
-      provider,
+      provider as any,
     )
 
     expect(quote).toMatchObject({
@@ -38,7 +38,7 @@ describe('CurrencyConversionService', () => {
 
     const quote = await CurrencyConversionService.quoteConversion(
       { monto: 100, monedaOrigen: 'USD', monedaDestino: 'CUP' },
-      provider,
+      provider as any,
     )
 
     expect(provider.getLatestRate).toHaveBeenCalledWith('USD', 'CUP')
@@ -61,7 +61,7 @@ describe('CurrencyConversionService', () => {
 
     const quote = await CurrencyConversionService.quoteConversion(
       { monto: 10, monedaOrigen: 'USD', monedaDestino: 'EUR' },
-      provider,
+      provider as any,
     )
 
     expect(provider.getLatestRate).toHaveBeenNthCalledWith(1, 'USD', 'EUR')
@@ -80,7 +80,7 @@ describe('CurrencyConversionService', () => {
     await expect(
       CurrencyConversionService.quoteConversion(
         { monto: 10, monedaOrigen: 'USD', monedaDestino: 'CUP' },
-        provider,
+        provider as any,
       ),
     ).rejects.toBeInstanceOf(ExchangeServiceError)
   })

@@ -12,6 +12,7 @@
  * - P2002 Prisma error fallback (race condition)
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({
@@ -54,7 +55,7 @@ const mockUserA: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: TENANT_A,
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockUnidadRow = {
@@ -113,8 +114,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].nombre).toBe('Kilogramo');
+      expect(expectActionSuccess(result).data).toHaveLength(1);
+      expect(expectActionSuccess(result).data![0].nombre).toBe('Kilogramo');
       // Verifica que filtró por tenantId
       expect(prisma.unidad.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -129,7 +130,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      expect(expectActionSuccess(result).data).toEqual([]);
     });
 
     it('filtra por tenant — no ve unidades de otro tenant', async () => {
@@ -137,8 +138,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       vi.mocked(prisma.unidad.findMany).mockResolvedValue([mockUnidadRow]);
 
       const result = await getUnidadesAction();
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].tenantId).toBe(TENANT_A);
+      expect(expectActionSuccess(result).data).toHaveLength(1);
+      expect(expectActionSuccess(result).data![0].tenantId).toBe(TENANT_A);
     });
 
     it('serializa fechas a ISO strings', async () => {
@@ -147,8 +148,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(true);
-      expect(typeof result.data![0].createdAt).toBe('string');
-      expect(result.data![0].createdAt).toBe(mockUnidadRow.createdAt.toISOString());
+      expect(typeof expectActionSuccess(result).data![0].createdAt).toBe('string');
+      expect(expectActionSuccess(result).data![0].createdAt).toBe(mockUnidadRow.createdAt.toISOString());
     });
   });
 
@@ -163,7 +164,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.nombre).toBe('Kilogramo');
+      expect(expectActionSuccess(result).data!.nombre).toBe('Kilogramo');
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
@@ -172,7 +173,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND si la unidad pertenece a otro tenant', async () => {
@@ -181,7 +182,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadByIdAction('uni-b1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -221,7 +222,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: '', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error!.code).toBe('VALIDATION_ERROR');
     });
 
     it('retorna CONFLICT si el nombre ya existe en el tenant', async () => {
@@ -230,8 +231,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Kilogramo', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('Kilogramo');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('Kilogramo');
     });
 
     it('retorna CONFLICT si el símbolo ya existe en el tenant', async () => {
@@ -242,8 +243,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'NuevaUnidad', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('kg');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('kg');
     });
 
     it('permite mismo nombre en tenant diferente', async () => {
@@ -270,8 +271,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Kilogramo', simbolo: 'k' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('Kilogramo');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('Kilogramo');
     });
 
     it('maneja P2002 con target simbolo como CONFLICT', async () => {
@@ -281,8 +282,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'Nuevo', simbolo: 'kg' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('kg');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('kg');
     });
   });
 
@@ -308,7 +309,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
 
       expect(result.success).toBe(true);
       expect(prisma.unidad.update).toHaveBeenCalled();
-      expect(typeof result.data!.createdAt).toBe('string');
+      expect(typeof expectActionSuccess(result).data!.createdAt).toBe('string');
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
@@ -320,7 +321,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND si pertenece a otro tenant', async () => {
@@ -332,7 +333,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
 
     it('retorna CONFLICT si el nombre conflictúa con otra unidad del tenant', async () => {
@@ -344,8 +345,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('Libra');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('Libra');
     });
 
     it('permite self-update (mismo nombre, mismo id, mismo tenant)', async () => {
@@ -378,8 +379,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
-      expect(result.error!.message).toContain('lb');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).toContain('lb');
     });
 
     it('maneja P2002 en update como CONFLICT', async () => {
@@ -392,7 +393,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
     });
   });
 
@@ -409,7 +410,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ id: 'uni-1', eliminado: true });
+      expect(expectActionSuccess(result).data).toEqual({ id: 'uni-1', eliminado: true });
       expect(prisma.producto.count).toHaveBeenCalledWith({
         where: { unidadId: 'uni-1' },
       });
@@ -424,7 +425,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND si pertenece a otro tenant', async () => {
@@ -433,7 +434,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-b1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
 
     it('retorna IN_USE si hay productos que usan la unidad', async () => {
@@ -443,8 +444,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('IN_USE');
-      expect(result.error!.message).toBe(
+      expect(expectActionFailure(result).error!.code).toBe('IN_USE');
+      expect(expectActionFailure(result).error!.message).toBe(
         'No se puede eliminar: está en uso por 5 producto(s)'
       );
     });
@@ -456,8 +457,8 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('uni-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('IN_USE');
-      expect(result.error!.message).toContain('1 producto');
+      expect(expectActionFailure(result).error!.code).toBe('IN_USE');
+      expect(expectActionFailure(result).error!.message).toContain('1 producto');
     });
   });
 
@@ -472,7 +473,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await getUnidadesAction();
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
 
     it('createUnidadAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -481,7 +482,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await createUnidadAction({ nombre: 'X', simbolo: 'x' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
 
     it('deleteUnidadAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -490,7 +491,7 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       const result = await deleteUnidadAction('any-id');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

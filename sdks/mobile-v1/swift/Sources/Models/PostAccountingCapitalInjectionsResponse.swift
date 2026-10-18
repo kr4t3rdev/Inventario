@@ -10,44 +10,104 @@ import Foundation
 import AnyCodable
 #endif
 
-/** Respuesta de POST /accounting/capital-injections. */
+/** Respuesta de POST /accounting/capital-injections: fila de InyeccionCapital creada. Los campos Decimal se serializan como texto. */
 public struct PostAccountingCapitalInjectionsResponse: Codable, JSONEncodable, Hashable {
 
-    public var inyeccionId: String?
-    public var monto: Double?
-    public var moneda: String?
-    public var tipo: String?
+    public enum Tipo: String, Codable, CaseIterable {
+        case capitalSocial = "CAPITAL_SOCIAL"
+        case deudaExterna = "DEUDA_EXTERNA"
+    }
+    public var id: String
+    public var tenantId: String?
+    public var tipo: Tipo
+    /** Decimal serializado como texto. */
+    public var montoRecibido: String
+    public var moneda: String
+    public var tasaInteres: String?
+    public var montoInteres: String?
+    public var montoTotalDeuda: String?
+    public var saldoPendiente: String?
+    public var plazoMeses: Int?
+    public var fechaInicioPago: Date?
+    public var socio: String?
+    public var entidadPrestamista: String?
+    public var cuentaId: String
+    public var estado: String?
     public var descripcion: String?
-    public var cuentaBancariaId: String?
+    public var fechaRegistro: Date
+    public var createdAt: Date
+    public var updatedAt: Date
 
-    public init(inyeccionId: String? = nil, monto: Double? = nil, moneda: String? = nil, tipo: String? = nil, descripcion: String? = nil, cuentaBancariaId: String? = nil) {
-        self.inyeccionId = inyeccionId
-        self.monto = monto
-        self.moneda = moneda
+    public init(id: String, tenantId: String? = nil, tipo: Tipo, montoRecibido: String, moneda: String, tasaInteres: String? = nil, montoInteres: String? = nil, montoTotalDeuda: String? = nil, saldoPendiente: String? = nil, plazoMeses: Int? = nil, fechaInicioPago: Date? = nil, socio: String? = nil, entidadPrestamista: String? = nil, cuentaId: String, estado: String? = nil, descripcion: String? = nil, fechaRegistro: Date, createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.tenantId = tenantId
         self.tipo = tipo
+        self.montoRecibido = montoRecibido
+        self.moneda = moneda
+        self.tasaInteres = tasaInteres
+        self.montoInteres = montoInteres
+        self.montoTotalDeuda = montoTotalDeuda
+        self.saldoPendiente = saldoPendiente
+        self.plazoMeses = plazoMeses
+        self.fechaInicioPago = fechaInicioPago
+        self.socio = socio
+        self.entidadPrestamista = entidadPrestamista
+        self.cuentaId = cuentaId
+        self.estado = estado
         self.descripcion = descripcion
-        self.cuentaBancariaId = cuentaBancariaId
+        self.fechaRegistro = fechaRegistro
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case inyeccionId
-        case monto
-        case moneda
+        case id
+        case tenantId
         case tipo
+        case montoRecibido
+        case moneda
+        case tasaInteres
+        case montoInteres
+        case montoTotalDeuda
+        case saldoPendiente
+        case plazoMeses
+        case fechaInicioPago
+        case socio
+        case entidadPrestamista
+        case cuentaId
+        case estado
         case descripcion
-        case cuentaBancariaId
+        case fechaRegistro
+        case createdAt
+        case updatedAt
     }
 
     // Encodable protocol methods
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(inyeccionId, forKey: .inyeccionId)
-        try container.encodeIfPresent(monto, forKey: .monto)
-        try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(tipo, forKey: .tipo)
+        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(tenantId, forKey: .tenantId)
+        try container.encode(tipo, forKey: .tipo)
+        try container.encode(montoRecibido, forKey: .montoRecibido)
+        try container.encode(moneda, forKey: .moneda)
+        try container.encodeIfPresent(tasaInteres, forKey: .tasaInteres)
+        try container.encodeIfPresent(montoInteres, forKey: .montoInteres)
+        try container.encodeIfPresent(montoTotalDeuda, forKey: .montoTotalDeuda)
+        try container.encodeIfPresent(saldoPendiente, forKey: .saldoPendiente)
+        try container.encodeIfPresent(plazoMeses, forKey: .plazoMeses)
+        try container.encodeIfPresent(fechaInicioPago, forKey: .fechaInicioPago)
+        try container.encodeIfPresent(socio, forKey: .socio)
+        try container.encodeIfPresent(entidadPrestamista, forKey: .entidadPrestamista)
+        try container.encode(cuentaId, forKey: .cuentaId)
+        try container.encodeIfPresent(estado, forKey: .estado)
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
-        try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
+        try container.encode(fechaRegistro, forKey: .fechaRegistro)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
     }
 }
 
+
+@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
+extension PostAccountingCapitalInjectionsResponse: Identifiable {}

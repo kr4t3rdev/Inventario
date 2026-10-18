@@ -16,18 +16,76 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  DashboardIncomeExpenseResponse,
+  DashboardLowStockResponse,
+  DashboardStockDistributionResponse,
+  DashboardTopProductsResponse,
+  DashboardTransfersResponse,
+  DashboardValueResponse,
   GetDashboardStatsResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    DashboardIncomeExpenseResponseFromJSON,
+    DashboardIncomeExpenseResponseToJSON,
+    DashboardLowStockResponseFromJSON,
+    DashboardLowStockResponseToJSON,
+    DashboardStockDistributionResponseFromJSON,
+    DashboardStockDistributionResponseToJSON,
+    DashboardTopProductsResponseFromJSON,
+    DashboardTopProductsResponseToJSON,
+    DashboardTransfersResponseFromJSON,
+    DashboardTransfersResponseToJSON,
+    DashboardValueResponseFromJSON,
+    DashboardValueResponseToJSON,
     GetDashboardStatsResponseFromJSON,
     GetDashboardStatsResponseToJSON,
 } from '../models/index';
 
+export interface MobileGetDashboardDailyAverageRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardDailyAverageTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardIncomeExpensesRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardIncomeExpensesTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardInventoryValueRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardInventoryValueTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardLowStockRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardLowStockTipoUbicacionEnum;
+}
+
 export interface MobileGetDashboardStatsRequest {
     ubicacionId?: string;
     tipoUbicacion?: MobileGetDashboardStatsTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardStockDistributionRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardStockDistributionTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardTodaySalesRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardTodaySalesTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardTopProductsRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardTopProductsTipoUbicacionEnum;
+}
+
+export interface MobileGetDashboardTransfersRequest {
+    ubicacionId?: string;
+    tipoUbicacion?: MobileGetDashboardTransfersTipoUbicacionEnum;
 }
 
 /**
@@ -37,6 +95,74 @@ export interface MobileGetDashboardStatsRequest {
  * @interface DashboardApiInterface
  */
 export interface DashboardApiInterface {
+    /**
+     * Promedio de ingresos diarios (30 días).
+     * @summary Consultar promedio diario de ingresos
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardDailyAverageRaw(requestParameters: MobileGetDashboardDailyAverageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>>;
+
+    /**
+     * Promedio de ingresos diarios (30 días).
+     * Consultar promedio diario de ingresos
+     */
+    mobileGetDashboardDailyAverage(requestParameters: MobileGetDashboardDailyAverageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse>;
+
+    /**
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * @summary Consultar ingresos vs gastos del panel
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardIncomeExpensesRaw(requestParameters: MobileGetDashboardIncomeExpensesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardIncomeExpenseResponse>>;
+
+    /**
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * Consultar ingresos vs gastos del panel
+     */
+    mobileGetDashboardIncomeExpenses(requestParameters: MobileGetDashboardIncomeExpensesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardIncomeExpenseResponse>;
+
+    /**
+     * Valor total del inventario en stock.
+     * @summary Consultar valor total del inventario
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardInventoryValueRaw(requestParameters: MobileGetDashboardInventoryValueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>>;
+
+    /**
+     * Valor total del inventario en stock.
+     * Consultar valor total del inventario
+     */
+    mobileGetDashboardInventoryValue(requestParameters: MobileGetDashboardInventoryValueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse>;
+
+    /**
+     * Productos con stock bajo o crítico (top 5).
+     * @summary Consultar productos con stock bajo
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardLowStockRaw(requestParameters: MobileGetDashboardLowStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardLowStockResponse>>;
+
+    /**
+     * Productos con stock bajo o crítico (top 5).
+     * Consultar productos con stock bajo
+     */
+    mobileGetDashboardLowStock(requestParameters: MobileGetDashboardLowStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardLowStockResponse>;
+
     /**
      * Resume ventas, ingresos y alertas de inventario para una ubicación operativa. Permite precisar la consulta mediante ubicación, tipo de ubicación.
      * @summary Consultar indicadores del panel principal
@@ -54,12 +180,268 @@ export interface DashboardApiInterface {
      */
     mobileGetDashboardStats(requestParameters: MobileGetDashboardStatsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetDashboardStatsResponse>;
 
+    /**
+     * Distribución de stock por categoría.
+     * @summary Consultar distribución de stock
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardStockDistributionRaw(requestParameters: MobileGetDashboardStockDistributionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardStockDistributionResponse>>;
+
+    /**
+     * Distribución de stock por categoría.
+     * Consultar distribución de stock
+     */
+    mobileGetDashboardStockDistribution(requestParameters: MobileGetDashboardStockDistributionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardStockDistributionResponse>;
+
+    /**
+     * Ingresos por ventas del día actual.
+     * @summary Consultar ventas de hoy
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardTodaySalesRaw(requestParameters: MobileGetDashboardTodaySalesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>>;
+
+    /**
+     * Ingresos por ventas del día actual.
+     * Consultar ventas de hoy
+     */
+    mobileGetDashboardTodaySales(requestParameters: MobileGetDashboardTodaySalesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse>;
+
+    /**
+     * Top 10 de productos más vendidos del período.
+     * @summary Consultar productos más vendidos
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardTopProductsRaw(requestParameters: MobileGetDashboardTopProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardTopProductsResponse>>;
+
+    /**
+     * Top 10 de productos más vendidos del período.
+     * Consultar productos más vendidos
+     */
+    mobileGetDashboardTopProducts(requestParameters: MobileGetDashboardTopProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardTopProductsResponse>;
+
+    /**
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * @summary Consultar transferencias entre ubicaciones
+     * @param {string} [ubicacionId] Valor de ubicacionId aceptado por el handler.
+     * @param {'almacen' | 'punto_venta'} [tipoUbicacion] Valor de tipoUbicacion aceptado por el handler.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DashboardApiInterface
+     */
+    mobileGetDashboardTransfersRaw(requestParameters: MobileGetDashboardTransfersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardTransfersResponse>>;
+
+    /**
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * Consultar transferencias entre ubicaciones
+     */
+    mobileGetDashboardTransfers(requestParameters: MobileGetDashboardTransfersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardTransfersResponse>;
+
 }
 
 /**
  * 
  */
 export class DashboardApi extends runtime.BaseAPI implements DashboardApiInterface {
+
+    /**
+     * Promedio de ingresos diarios (30 días).
+     * Consultar promedio diario de ingresos
+     */
+    async mobileGetDashboardDailyAverageRaw(requestParameters: MobileGetDashboardDailyAverageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/daily-average`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardValueResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Promedio de ingresos diarios (30 días).
+     * Consultar promedio diario de ingresos
+     */
+    async mobileGetDashboardDailyAverage(requestParameters: MobileGetDashboardDailyAverageRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse> {
+        const response = await this.mobileGetDashboardDailyAverageRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * Consultar ingresos vs gastos del panel
+     */
+    async mobileGetDashboardIncomeExpensesRaw(requestParameters: MobileGetDashboardIncomeExpensesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardIncomeExpenseResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/income-expenses`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardIncomeExpenseResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Ingresos y gastos totales más la serie mensual para la gráfica del panel.
+     * Consultar ingresos vs gastos del panel
+     */
+    async mobileGetDashboardIncomeExpenses(requestParameters: MobileGetDashboardIncomeExpensesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardIncomeExpenseResponse> {
+        const response = await this.mobileGetDashboardIncomeExpensesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Valor total del inventario en stock.
+     * Consultar valor total del inventario
+     */
+    async mobileGetDashboardInventoryValueRaw(requestParameters: MobileGetDashboardInventoryValueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/inventory-value`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardValueResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Valor total del inventario en stock.
+     * Consultar valor total del inventario
+     */
+    async mobileGetDashboardInventoryValue(requestParameters: MobileGetDashboardInventoryValueRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse> {
+        const response = await this.mobileGetDashboardInventoryValueRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Productos con stock bajo o crítico (top 5).
+     * Consultar productos con stock bajo
+     */
+    async mobileGetDashboardLowStockRaw(requestParameters: MobileGetDashboardLowStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardLowStockResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/low-stock`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardLowStockResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Productos con stock bajo o crítico (top 5).
+     * Consultar productos con stock bajo
+     */
+    async mobileGetDashboardLowStock(requestParameters: MobileGetDashboardLowStockRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardLowStockResponse> {
+        const response = await this.mobileGetDashboardLowStockRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Resume ventas, ingresos y alertas de inventario para una ubicación operativa. Permite precisar la consulta mediante ubicación, tipo de ubicación.
@@ -108,8 +490,228 @@ export class DashboardApi extends runtime.BaseAPI implements DashboardApiInterfa
         return await response.value();
     }
 
+    /**
+     * Distribución de stock por categoría.
+     * Consultar distribución de stock
+     */
+    async mobileGetDashboardStockDistributionRaw(requestParameters: MobileGetDashboardStockDistributionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardStockDistributionResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/stock-distribution`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardStockDistributionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Distribución de stock por categoría.
+     * Consultar distribución de stock
+     */
+    async mobileGetDashboardStockDistribution(requestParameters: MobileGetDashboardStockDistributionRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardStockDistributionResponse> {
+        const response = await this.mobileGetDashboardStockDistributionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Ingresos por ventas del día actual.
+     * Consultar ventas de hoy
+     */
+    async mobileGetDashboardTodaySalesRaw(requestParameters: MobileGetDashboardTodaySalesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardValueResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/today-sales`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardValueResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Ingresos por ventas del día actual.
+     * Consultar ventas de hoy
+     */
+    async mobileGetDashboardTodaySales(requestParameters: MobileGetDashboardTodaySalesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardValueResponse> {
+        const response = await this.mobileGetDashboardTodaySalesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Top 10 de productos más vendidos del período.
+     * Consultar productos más vendidos
+     */
+    async mobileGetDashboardTopProductsRaw(requestParameters: MobileGetDashboardTopProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardTopProductsResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/top-products`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardTopProductsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Top 10 de productos más vendidos del período.
+     * Consultar productos más vendidos
+     */
+    async mobileGetDashboardTopProducts(requestParameters: MobileGetDashboardTopProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardTopProductsResponse> {
+        const response = await this.mobileGetDashboardTopProductsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * Consultar transferencias entre ubicaciones
+     */
+    async mobileGetDashboardTransfersRaw(requestParameters: MobileGetDashboardTransfersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardTransfersResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['ubicacionId'] != null) {
+            queryParameters['ubicacionId'] = requestParameters['ubicacionId'];
+        }
+
+        if (requestParameters['tipoUbicacion'] != null) {
+            queryParameters['tipoUbicacion'] = requestParameters['tipoUbicacion'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/dashboard/transfers`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DashboardTransfersResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Conteo de transferencias entre almacenes y puntos de venta.
+     * Consultar transferencias entre ubicaciones
+     */
+    async mobileGetDashboardTransfers(requestParameters: MobileGetDashboardTransfersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardTransfersResponse> {
+        const response = await this.mobileGetDashboardTransfersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
 }
 
+/**
+ * @export
+ */
+export const MobileGetDashboardDailyAverageTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardDailyAverageTipoUbicacionEnum = typeof MobileGetDashboardDailyAverageTipoUbicacionEnum[keyof typeof MobileGetDashboardDailyAverageTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardIncomeExpensesTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardIncomeExpensesTipoUbicacionEnum = typeof MobileGetDashboardIncomeExpensesTipoUbicacionEnum[keyof typeof MobileGetDashboardIncomeExpensesTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardInventoryValueTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardInventoryValueTipoUbicacionEnum = typeof MobileGetDashboardInventoryValueTipoUbicacionEnum[keyof typeof MobileGetDashboardInventoryValueTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardLowStockTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardLowStockTipoUbicacionEnum = typeof MobileGetDashboardLowStockTipoUbicacionEnum[keyof typeof MobileGetDashboardLowStockTipoUbicacionEnum];
 /**
  * @export
  */
@@ -118,3 +720,35 @@ export const MobileGetDashboardStatsTipoUbicacionEnum = {
     PuntoVenta: 'punto_venta'
 } as const;
 export type MobileGetDashboardStatsTipoUbicacionEnum = typeof MobileGetDashboardStatsTipoUbicacionEnum[keyof typeof MobileGetDashboardStatsTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardStockDistributionTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardStockDistributionTipoUbicacionEnum = typeof MobileGetDashboardStockDistributionTipoUbicacionEnum[keyof typeof MobileGetDashboardStockDistributionTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardTodaySalesTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardTodaySalesTipoUbicacionEnum = typeof MobileGetDashboardTodaySalesTipoUbicacionEnum[keyof typeof MobileGetDashboardTodaySalesTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardTopProductsTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardTopProductsTipoUbicacionEnum = typeof MobileGetDashboardTopProductsTipoUbicacionEnum[keyof typeof MobileGetDashboardTopProductsTipoUbicacionEnum];
+/**
+ * @export
+ */
+export const MobileGetDashboardTransfersTipoUbicacionEnum = {
+    Almacen: 'almacen',
+    PuntoVenta: 'punto_venta'
+} as const;
+export type MobileGetDashboardTransfersTipoUbicacionEnum = typeof MobileGetDashboardTransfersTipoUbicacionEnum[keyof typeof MobileGetDashboardTransfersTipoUbicacionEnum];

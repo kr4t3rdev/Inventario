@@ -6,10 +6,10 @@ vi.mock("@/lib/auth-middleware", () => {
 	return {
 		withAuthGet:
 			(handler: any) =>
-			(...args: any[]) =>
-				handler(args[0], undefined, mockUser),
+			(request: NextRequest, context: any = {}) =>
+				handler(request, context, mockUser),
 		withAuthPost:
-			(handler: any) => async (request: NextRequest, context: any) =>
+			(handler: any) => async (request: NextRequest, context: any = {}) =>
 				handler(request, context, mockUser),
 	};
 });
@@ -59,7 +59,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		expect(response.status).toBe(200);
 	});
 
@@ -85,7 +85,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
@@ -104,7 +104,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash?estado=ACTIVO",
 		);
-		await GET(request);
+		await GET(request, {});
 
 		expect(prisma.prestamoCash.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -122,7 +122,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);

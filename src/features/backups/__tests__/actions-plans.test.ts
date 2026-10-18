@@ -39,10 +39,12 @@ describe('backup plan actions', () => {
       enabled: false,
       retention: 30,
     } as never)
-    vi.mocked(prisma.backupPlan.update).mockImplementation(async ({ data }) => ({
-      backupPlanId: 'plan-1',
-      ...data,
-    }) as never)
+    vi.mocked(prisma.backupPlan.update).mockImplementation(
+      (async ({ data }: any) => ({
+        backupPlanId: 'plan-1',
+        ...data,
+      })) as never,
+    )
   })
 
   afterEach(() => {

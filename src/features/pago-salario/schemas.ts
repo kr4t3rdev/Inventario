@@ -22,5 +22,5 @@ export const pagoSalarioUpdateSchema = z.object({
   observaciones: z.string().optional().nullable(),
 });
 
-export type PagoSalarioInput = z.infer<typeof pagoSalarioSchema>;
-export type PagoSalarioUpdateInput = z.infer<typeof pagoSalarioUpdateSchema>;
+export type PagoSalarioInput = z.input<typeof pagoSalarioSchema>;
+export type PagoSalarioUpdateInput = z.input<typeof pagoSalarioUpdateSchema>;

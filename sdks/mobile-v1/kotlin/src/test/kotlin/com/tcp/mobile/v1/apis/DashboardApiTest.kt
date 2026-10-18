@@ -20,6 +20,12 @@ import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.apis.DashboardApi
 import com.tcp.mobile.v1.models.ApiError
+import com.tcp.mobile.v1.models.DashboardIncomeExpenseResponse
+import com.tcp.mobile.v1.models.DashboardLowStockResponse
+import com.tcp.mobile.v1.models.DashboardStockDistributionResponse
+import com.tcp.mobile.v1.models.DashboardTopProductsResponse
+import com.tcp.mobile.v1.models.DashboardTransfersResponse
+import com.tcp.mobile.v1.models.DashboardValueResponse
 import com.tcp.mobile.v1.models.GetDashboardStatsResponse
 
 class DashboardApiTest : ShouldSpec() {
@@ -27,12 +33,84 @@ class DashboardApiTest : ShouldSpec() {
         // uncomment below to create an instance of DashboardApi
         //val apiInstance = DashboardApi()
 
+        // to test mobileGetDashboardDailyAverage
+        should("test mobileGetDashboardDailyAverage") {
+            // uncomment below to test mobileGetDashboardDailyAverage
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardValueResponse = apiInstance.mobileGetDashboardDailyAverage(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardIncomeExpenses
+        should("test mobileGetDashboardIncomeExpenses") {
+            // uncomment below to test mobileGetDashboardIncomeExpenses
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardIncomeExpenseResponse = apiInstance.mobileGetDashboardIncomeExpenses(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardInventoryValue
+        should("test mobileGetDashboardInventoryValue") {
+            // uncomment below to test mobileGetDashboardInventoryValue
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardValueResponse = apiInstance.mobileGetDashboardInventoryValue(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardLowStock
+        should("test mobileGetDashboardLowStock") {
+            // uncomment below to test mobileGetDashboardLowStock
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardLowStockResponse = apiInstance.mobileGetDashboardLowStock(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
         // to test mobileGetDashboardStats
         should("test mobileGetDashboardStats") {
             // uncomment below to test mobileGetDashboardStats
             //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
             //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
             //val result : GetDashboardStatsResponse = apiInstance.mobileGetDashboardStats(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardStockDistribution
+        should("test mobileGetDashboardStockDistribution") {
+            // uncomment below to test mobileGetDashboardStockDistribution
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardStockDistributionResponse = apiInstance.mobileGetDashboardStockDistribution(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardTodaySales
+        should("test mobileGetDashboardTodaySales") {
+            // uncomment below to test mobileGetDashboardTodaySales
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardValueResponse = apiInstance.mobileGetDashboardTodaySales(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardTopProducts
+        should("test mobileGetDashboardTopProducts") {
+            // uncomment below to test mobileGetDashboardTopProducts
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardTopProductsResponse = apiInstance.mobileGetDashboardTopProducts(ubicacionId, tipoUbicacion)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetDashboardTransfers
+        should("test mobileGetDashboardTransfers") {
+            // uncomment below to test mobileGetDashboardTransfers
+            //val ubicacionId : kotlin.String = ubicacionId_example // kotlin.String | Valor de ubicacionId aceptado por el handler.
+            //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
+            //val result : DashboardTransfersResponse = apiInstance.mobileGetDashboardTransfers(ubicacionId, tipoUbicacion)
             //result shouldBe ("TODO")
         }
 

@@ -37,7 +37,7 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
   it('redirige al dashboard de contabilidad cuando el plan no incluye cuentas por pagar', async () => {
     useAuthMock.mockReturnValue({
       user: {
-        role: 'user',
+        role: 'regularUser',
         planName: 'Básico',
         planFeatures: { contabilidad: true, 'cuentas-pagar': false },
       },
@@ -54,7 +54,7 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
     const { getCuentasPorPagarAction } = await import('@/features/contabilidad');
     useAuthMock.mockReturnValue({
       user: {
-        role: 'user',
+        role: 'regularUser',
         planName: 'Profesional',
         planFeatures: { contabilidad: true, 'cuentas-pagar': true },
       },
@@ -79,7 +79,7 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
     const { getCuentasPorPagarAction } = await import('@/features/contabilidad');
     useAuthMock.mockReturnValue({
       user: {
-        role: 'user',
+        role: 'regularUser',
         planName: 'Profesional',
         planFeatures: { contabilidad: true, 'cuentas-pagar': true },
       },
@@ -87,7 +87,8 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
 
     vi.mocked(getCuentasPorPagarAction)
       .mockResolvedValueOnce({ success: false, error: { message: 'fallo' } })
-      .mockResolvedValueOnce({ success: true, data: { cuentas: [], pagination: { totalPages: 1 } } });
+      .mockResolvedValueOnce({ success: true, data: { cuentas: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
+  metricas: { totalCuentas: 0, totalFacturado: 0, totalPagado: 0, totalSaldo: 0, cuentasPendientes: 0, cuentasPagadas: 0 } } });
 
     render(<CuentasPorPagarPage />);
 

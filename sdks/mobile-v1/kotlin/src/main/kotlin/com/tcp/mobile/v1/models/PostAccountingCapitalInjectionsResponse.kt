@@ -19,39 +19,101 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * Respuesta de POST /accounting/capital-injections.
+ * Respuesta de POST /accounting/capital-injections: fila de InyeccionCapital creada. Los campos Decimal se serializan como texto.
  *
- * @param inyeccionId 
- * @param monto 
- * @param moneda 
+ * @param id 
  * @param tipo 
+ * @param montoRecibido Decimal serializado como texto.
+ * @param moneda 
+ * @param cuentaId 
+ * @param fechaRegistro 
+ * @param createdAt 
+ * @param updatedAt 
+ * @param tenantId 
+ * @param tasaInteres 
+ * @param montoInteres 
+ * @param montoTotalDeuda 
+ * @param saldoPendiente 
+ * @param plazoMeses 
+ * @param fechaInicioPago 
+ * @param socio 
+ * @param entidadPrestamista 
+ * @param estado 
  * @param descripcion 
- * @param cuentaBancariaId 
  */
 
 
 data class PostAccountingCapitalInjectionsResponse (
 
-    @get:JsonProperty("inyeccionId")
-    val inyeccionId: kotlin.String? = null,
-
-    @get:JsonProperty("monto")
-    val monto: java.math.BigDecimal? = null,
-
-    @get:JsonProperty("moneda")
-    val moneda: kotlin.String? = null,
+    @get:JsonProperty("id")
+    val id: kotlin.String,
 
     @get:JsonProperty("tipo")
-    val tipo: kotlin.String? = null,
+    val tipo: PostAccountingCapitalInjectionsResponse.Tipo,
+
+    /* Decimal serializado como texto. */
+    @get:JsonProperty("montoRecibido")
+    val montoRecibido: kotlin.String,
+
+    @get:JsonProperty("moneda")
+    val moneda: kotlin.String,
+
+    @get:JsonProperty("cuentaId")
+    val cuentaId: kotlin.String,
+
+    @get:JsonProperty("fechaRegistro")
+    val fechaRegistro: java.time.OffsetDateTime,
+
+    @get:JsonProperty("createdAt")
+    val createdAt: java.time.OffsetDateTime,
+
+    @get:JsonProperty("updatedAt")
+    val updatedAt: java.time.OffsetDateTime,
+
+    @get:JsonProperty("tenantId")
+    val tenantId: kotlin.String? = null,
+
+    @get:JsonProperty("tasaInteres")
+    val tasaInteres: kotlin.String? = null,
+
+    @get:JsonProperty("montoInteres")
+    val montoInteres: kotlin.String? = null,
+
+    @get:JsonProperty("montoTotalDeuda")
+    val montoTotalDeuda: kotlin.String? = null,
+
+    @get:JsonProperty("saldoPendiente")
+    val saldoPendiente: kotlin.String? = null,
+
+    @get:JsonProperty("plazoMeses")
+    val plazoMeses: kotlin.Int? = null,
+
+    @get:JsonProperty("fechaInicioPago")
+    val fechaInicioPago: java.time.OffsetDateTime? = null,
+
+    @get:JsonProperty("socio")
+    val socio: kotlin.String? = null,
+
+    @get:JsonProperty("entidadPrestamista")
+    val entidadPrestamista: kotlin.String? = null,
+
+    @get:JsonProperty("estado")
+    val estado: kotlin.String? = null,
 
     @get:JsonProperty("descripcion")
-    val descripcion: kotlin.String? = null,
-
-    @get:JsonProperty("cuentaBancariaId")
-    val cuentaBancariaId: kotlin.String? = null
+    val descripcion: kotlin.String? = null
 
 ) {
 
+    /**
+     * 
+     *
+     * Values: CAPITAL_SOCIAL,DEUDA_EXTERNA
+     */
+    enum class Tipo(val value: kotlin.String) {
+        @JsonProperty(value = "CAPITAL_SOCIAL") CAPITAL_SOCIAL("CAPITAL_SOCIAL"),
+        @JsonProperty(value = "DEUDA_EXTERNA") DEUDA_EXTERNA("DEUDA_EXTERNA");
+    }
 
 }
 

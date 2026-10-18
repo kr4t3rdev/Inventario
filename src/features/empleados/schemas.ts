@@ -25,5 +25,5 @@ export const empleadoUpdateSchema = z.object({
   diasVacacionesAnuales: z.number().int().optional(),
 });
 
-export type EmpleadoInput = z.infer<typeof empleadoSchema>;
+export type EmpleadoInput = z.input<typeof empleadoSchema>;
 export type EmpleadoUpdateInput = z.infer<typeof empleadoUpdateSchema>;

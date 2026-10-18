@@ -13,6 +13,123 @@ import AnyCodable
 open class AdminAPI {
 
     /**
+     Activar una licencia
+     
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: PostAdminLicensesActivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileActivateAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) async throws -> PostAdminLicensesActivateResponse {
+        return try await mobileActivateAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: adminLicenciaIdRequest).execute().body
+    }
+
+    /**
+     Activar una licencia
+     - POST /admin/licenses/activate
+     - Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminLicensesActivateResponse> 
+     */
+    open class func mobileActivateAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: AdminLicenciaIdRequest) -> RequestBuilder<PostAdminLicensesActivateResponse> {
+        let localVariablePath = "/admin/licenses/activate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminLicenciaIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminLicensesActivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Activar una empresa
+     
+     - parameter adminTenantIdRequest: (body)  
+     - returns: PostAdminTenantsActivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileActivateAdminTenant(adminTenantIdRequest: AdminTenantIdRequest) async throws -> PostAdminTenantsActivateResponse {
+        return try await mobileActivateAdminTenantWithRequestBuilder(adminTenantIdRequest: adminTenantIdRequest).execute().body
+    }
+
+    /**
+     Activar una empresa
+     - POST /admin/tenants/activate
+     - Activa una empresa reactivando todas sus membresías, restituyendo el acceso de sus miembros. No modifica las licencias.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminTenantIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsActivateResponse> 
+     */
+    open class func mobileActivateAdminTenantWithRequestBuilder(adminTenantIdRequest: AdminTenantIdRequest) -> RequestBuilder<PostAdminTenantsActivateResponse> {
+        let localVariablePath = "/admin/tenants/activate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminTenantIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsActivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Activar un usuario
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersActivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileActivateAdminUser(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersActivateResponse {
+        return try await mobileActivateAdminUserWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Activar un usuario
+     - POST /admin/users/activate
+     - Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersActivateResponse> 
+     */
+    open class func mobileActivateAdminUserWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersActivateResponse> {
+        let localVariablePath = "/admin/users/activate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersActivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
      Aprobar solicitud de membresía
      
      - parameter approveAdminMembershipRequest: (body)  
@@ -49,6 +166,441 @@ open class AdminAPI {
         let localVariableRequestBuilder: RequestBuilder<PostAdminMembershipsApproveResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Asignar una licencia a una empresa
+     
+     - parameter assignAdminTenantLicenseRequest: (body)  
+     - returns: PostAdminTenantsLicenseAssignResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileAssignAdminTenantLicense(assignAdminTenantLicenseRequest: AssignAdminTenantLicenseRequest) async throws -> PostAdminTenantsLicenseAssignResponse {
+        return try await mobileAssignAdminTenantLicenseWithRequestBuilder(assignAdminTenantLicenseRequest: assignAdminTenantLicenseRequest).execute().body
+    }
+
+    /**
+     Asignar una licencia a una empresa
+     - POST /admin/tenants/license/assign
+     - Crea una licencia nueva para la empresa con el plan indicado, desactivando las licencias vigentes anteriores para evitar ambigüedad. Calcula inicio y vencimiento desde la duración del plan.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter assignAdminTenantLicenseRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsLicenseAssignResponse> 
+     */
+    open class func mobileAssignAdminTenantLicenseWithRequestBuilder(assignAdminTenantLicenseRequest: AssignAdminTenantLicenseRequest) -> RequestBuilder<PostAdminTenantsLicenseAssignResponse> {
+        let localVariablePath = "/admin/tenants/license/assign"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: assignAdminTenantLicenseRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsLicenseAssignResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Asignar o cambiar la empresa de un usuario
+     
+     - parameter assignAdminUserTenantRequest: (body)  
+     - returns: PostAdminUsersAssignTenantResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileAssignAdminUserTenant(assignAdminUserTenantRequest: AssignAdminUserTenantRequest) async throws -> PostAdminUsersAssignTenantResponse {
+        return try await mobileAssignAdminUserTenantWithRequestBuilder(assignAdminUserTenantRequest: assignAdminUserTenantRequest).execute().body
+    }
+
+    /**
+     Asignar o cambiar la empresa de un usuario
+     - POST /admin/users/assign-tenant
+     - Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter assignAdminUserTenantRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersAssignTenantResponse> 
+     */
+    open class func mobileAssignAdminUserTenantWithRequestBuilder(assignAdminUserTenantRequest: AssignAdminUserTenantRequest) -> RequestBuilder<PostAdminUsersAssignTenantResponse> {
+        let localVariablePath = "/admin/users/assign-tenant"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: assignAdminUserTenantRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersAssignTenantResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Cambiar el rol de un usuario dentro de una empresa
+     
+     - parameter changeAdminUserTenantRoleRequest: (body)  
+     - returns: PatchAdminUsersChangeTenantRoleResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileChangeAdminUserTenantRole(changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest) async throws -> PatchAdminUsersChangeTenantRoleResponse {
+        return try await mobileChangeAdminUserTenantRoleWithRequestBuilder(changeAdminUserTenantRoleRequest: changeAdminUserTenantRoleRequest).execute().body
+    }
+
+    /**
+     Cambiar el rol de un usuario dentro de una empresa
+     - PATCH /admin/users/change-tenant-role
+     - Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter changeAdminUserTenantRoleRequest: (body)  
+     - returns: RequestBuilder<PatchAdminUsersChangeTenantRoleResponse> 
+     */
+    open class func mobileChangeAdminUserTenantRoleWithRequestBuilder(changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest) -> RequestBuilder<PatchAdminUsersChangeTenantRoleResponse> {
+        let localVariablePath = "/admin/users/change-tenant-role"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: changeAdminUserTenantRoleRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PatchAdminUsersChangeTenantRoleResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PATCH", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Desactivar una licencia
+     
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: PostAdminLicensesDeactivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeactivateAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) async throws -> PostAdminLicensesDeactivateResponse {
+        return try await mobileDeactivateAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: adminLicenciaIdRequest).execute().body
+    }
+
+    /**
+     Desactivar una licencia
+     - POST /admin/licenses/deactivate
+     - Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminLicensesDeactivateResponse> 
+     */
+    open class func mobileDeactivateAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: AdminLicenciaIdRequest) -> RequestBuilder<PostAdminLicensesDeactivateResponse> {
+        let localVariablePath = "/admin/licenses/deactivate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminLicenciaIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminLicensesDeactivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Desactivar una empresa
+     
+     - parameter adminTenantIdRequest: (body)  
+     - returns: PostAdminTenantsDeactivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeactivateAdminTenant(adminTenantIdRequest: AdminTenantIdRequest) async throws -> PostAdminTenantsDeactivateResponse {
+        return try await mobileDeactivateAdminTenantWithRequestBuilder(adminTenantIdRequest: adminTenantIdRequest).execute().body
+    }
+
+    /**
+     Desactivar una empresa
+     - POST /admin/tenants/deactivate
+     - Desactiva una empresa bloqueando el acceso de todos sus miembros al desactivar sus membresías. No modifica las licencias.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminTenantIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsDeactivateResponse> 
+     */
+    open class func mobileDeactivateAdminTenantWithRequestBuilder(adminTenantIdRequest: AdminTenantIdRequest) -> RequestBuilder<PostAdminTenantsDeactivateResponse> {
+        let localVariablePath = "/admin/tenants/deactivate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminTenantIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsDeactivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Desactivar la licencia de una empresa
+     
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: PostAdminTenantsLicenseDeactivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeactivateAdminTenantLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) async throws -> PostAdminTenantsLicenseDeactivateResponse {
+        return try await mobileDeactivateAdminTenantLicenseWithRequestBuilder(adminLicenciaIdRequest: adminLicenciaIdRequest).execute().body
+    }
+
+    /**
+     Desactivar la licencia de una empresa
+     - POST /admin/tenants/license/deactivate
+     - Desactiva una licencia específica de una empresa, suspendiendo el acceso asociado hasta que se reactive o renueve.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsLicenseDeactivateResponse> 
+     */
+    open class func mobileDeactivateAdminTenantLicenseWithRequestBuilder(adminLicenciaIdRequest: AdminLicenciaIdRequest) -> RequestBuilder<PostAdminTenantsLicenseDeactivateResponse> {
+        let localVariablePath = "/admin/tenants/license/deactivate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminLicenciaIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsLicenseDeactivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Desactivar un usuario
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersDeactivateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeactivateAdminUser(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersDeactivateResponse {
+        return try await mobileDeactivateAdminUserWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Desactivar un usuario
+     - POST /admin/users/deactivate
+     - Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersDeactivateResponse> 
+     */
+    open class func mobileDeactivateAdminUserWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersDeactivateResponse> {
+        let localVariablePath = "/admin/users/deactivate"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersDeactivateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Eliminar una licencia
+     
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: PostAdminLicensesDeleteResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeleteAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) async throws -> PostAdminLicensesDeleteResponse {
+        return try await mobileDeleteAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: adminLicenciaIdRequest).execute().body
+    }
+
+    /**
+     Eliminar una licencia
+     - POST /admin/licenses/delete
+     - Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminLicenciaIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminLicensesDeleteResponse> 
+     */
+    open class func mobileDeleteAdminLicenseWithRequestBuilder(adminLicenciaIdRequest: AdminLicenciaIdRequest) -> RequestBuilder<PostAdminLicensesDeleteResponse> {
+        let localVariablePath = "/admin/licenses/delete"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminLicenciaIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminLicensesDeleteResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Eliminar una empresa
+     
+     - parameter adminTenantIdRequest: (body)  
+     - returns: PostAdminTenantsDeleteResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeleteAdminTenant(adminTenantIdRequest: AdminTenantIdRequest) async throws -> PostAdminTenantsDeleteResponse {
+        return try await mobileDeleteAdminTenantWithRequestBuilder(adminTenantIdRequest: adminTenantIdRequest).execute().body
+    }
+
+    /**
+     Eliminar una empresa
+     - POST /admin/tenants/delete
+     - Elimina permanentemente una empresa y todos sus datos asociados. Es una operación irreversible.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminTenantIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsDeleteResponse> 
+     */
+    open class func mobileDeleteAdminTenantWithRequestBuilder(adminTenantIdRequest: AdminTenantIdRequest) -> RequestBuilder<PostAdminTenantsDeleteResponse> {
+        let localVariablePath = "/admin/tenants/delete"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminTenantIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsDeleteResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Eliminar un usuario
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersDeleteResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileDeleteAdminUser(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersDeleteResponse {
+        return try await mobileDeleteAdminUserWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Eliminar un usuario
+     - POST /admin/users/delete
+     - Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersDeleteResponse> 
+     */
+    open class func mobileDeleteAdminUserWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersDeleteResponse> {
+        let localVariablePath = "/admin/users/delete"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersDeleteResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Obtener el registro de actividad de los usuarios
+     
+     - parameter userId: (query) Identificador del usuario a filtrar. (optional)
+     - parameter limit: (query) Cantidad máxima de entradas a devolver. (optional)
+     - returns: GetAdminActivityLogsResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminActivityLogs(userId: String? = nil, limit: Int? = nil) async throws -> GetAdminActivityLogsResponse {
+        return try await mobileGetAdminActivityLogsWithRequestBuilder(userId: userId, limit: limit).execute().body
+    }
+
+    /**
+     Obtener el registro de actividad de los usuarios
+     - GET /admin/activity-logs
+     - Devuelve las entradas del registro de actividad ordenadas por fecha descendente, con filtro opcional por usuario. Paridad con la pestaña de actividad del admin web.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter userId: (query) Identificador del usuario a filtrar. (optional)
+     - parameter limit: (query) Cantidad máxima de entradas a devolver. (optional)
+     - returns: RequestBuilder<GetAdminActivityLogsResponse> 
+     */
+    open class func mobileGetAdminActivityLogsWithRequestBuilder(userId: String? = nil, limit: Int? = nil) -> RequestBuilder<GetAdminActivityLogsResponse> {
+        let localVariablePath = "/admin/activity-logs"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "userId": (wrappedValue: userId?.encodeToJSON(), isExplode: true),
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminActivityLogsResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }
 
     /**
@@ -259,6 +811,169 @@ open class AdminAPI {
     }
 
     /**
+     Listar las sesiones registradas
+     
+     - returns: GetAdminSessionsResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminSessions() async throws -> GetAdminSessionsResponse {
+        return try await mobileGetAdminSessionsWithRequestBuilder().execute().body
+    }
+
+    /**
+     Listar las sesiones registradas
+     - GET /admin/sessions
+     - Lista las sesiones registradas en la plataforma ordenadas por fecha descendente, con los datos del usuario. Paridad con la pestaña de sesiones del admin web.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<GetAdminSessionsResponse> 
+     */
+    open class func mobileGetAdminSessionsWithRequestBuilder() -> RequestBuilder<GetAdminSessionsResponse> {
+        let localVariablePath = "/admin/sessions"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminSessionsResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Obtener el detalle de una empresa
+     
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: GetAdminTenantDetailResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminTenantDetail(tenantId: String) async throws -> GetAdminTenantDetailResponse {
+        return try await mobileGetAdminTenantDetailWithRequestBuilder(tenantId: tenantId).execute().body
+    }
+
+    /**
+     Obtener el detalle de una empresa
+     - GET /admin/tenants/detail
+     - Devuelve la ficha completa de una empresa sin descargar la lista entera: datos fiscales, licencia vigente, miembros activos y conteos de usuarios, productos, almacenes y clientes.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: RequestBuilder<GetAdminTenantDetailResponse> 
+     */
+    open class func mobileGetAdminTenantDetailWithRequestBuilder(tenantId: String) -> RequestBuilder<GetAdminTenantDetailResponse> {
+        let localVariablePath = "/admin/tenants/detail"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "tenantId": (wrappedValue: tenantId.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminTenantDetailResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Ver las licencias de una empresa
+     
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: GetAdminTenantLicenseResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminTenantLicense(tenantId: String) async throws -> GetAdminTenantLicenseResponse {
+        return try await mobileGetAdminTenantLicenseWithRequestBuilder(tenantId: tenantId).execute().body
+    }
+
+    /**
+     Ver las licencias de una empresa
+     - GET /admin/tenants/license
+     - Devuelve el historial de licencias de una empresa ordenado por creación junto con la licencia vigente, si existe.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: RequestBuilder<GetAdminTenantLicenseResponse> 
+     */
+    open class func mobileGetAdminTenantLicenseWithRequestBuilder(tenantId: String) -> RequestBuilder<GetAdminTenantLicenseResponse> {
+        let localVariablePath = "/admin/tenants/license"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "tenantId": (wrappedValue: tenantId.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminTenantLicenseResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Listar los usuarios de una empresa
+     
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: GetAdminTenantUsersResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminTenantUsers(tenantId: String) async throws -> GetAdminTenantUsersResponse {
+        return try await mobileGetAdminTenantUsersWithRequestBuilder(tenantId: tenantId).execute().body
+    }
+
+    /**
+     Listar los usuarios de una empresa
+     - GET /admin/tenants/users
+     - Lista los usuarios pertenecientes a una empresa con su rol operativo y el estado de su membresía, sin descargar el listado global.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter tenantId: (query) Identificador de la empresa. 
+     - returns: RequestBuilder<GetAdminTenantUsersResponse> 
+     */
+    open class func mobileGetAdminTenantUsersWithRequestBuilder(tenantId: String) -> RequestBuilder<GetAdminTenantUsersResponse> {
+        let localVariablePath = "/admin/tenants/users"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "tenantId": (wrappedValue: tenantId.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminTenantUsersResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
      Listar empresas de la plataforma
      
      - returns: [AdminTenantItem]
@@ -291,6 +1006,93 @@ open class AdminAPI {
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
 
         let localVariableRequestBuilder: RequestBuilder<[AdminTenantItem]>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Obtener el detalle de un usuario
+     
+     - parameter userId: (query) Identificador del usuario a consultar. 
+     - returns: GetAdminUserDetailResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminUserDetail(userId: String) async throws -> GetAdminUserDetailResponse {
+        return try await mobileGetAdminUserDetailWithRequestBuilder(userId: userId).execute().body
+    }
+
+    /**
+     Obtener el detalle de un usuario
+     - GET /admin/users/detail
+     - Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter userId: (query) Identificador del usuario a consultar. 
+     - returns: RequestBuilder<GetAdminUserDetailResponse> 
+     */
+    open class func mobileGetAdminUserDetailWithRequestBuilder(userId: String) -> RequestBuilder<GetAdminUserDetailResponse> {
+        let localVariablePath = "/admin/users/detail"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "userId": (wrappedValue: userId.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminUserDetailResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Obtener el historial de sesiones de un usuario
+     
+     - parameter userId: (query) Identificador del usuario. 
+     - parameter limit: (query) Cantidad máxima de entradas a devolver. (optional)
+     - returns: GetAdminUserLoginHistoryResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetAdminUserLoginHistory(userId: String, limit: Int? = nil) async throws -> GetAdminUserLoginHistoryResponse {
+        return try await mobileGetAdminUserLoginHistoryWithRequestBuilder(userId: userId, limit: limit).execute().body
+    }
+
+    /**
+     Obtener el historial de sesiones de un usuario
+     - GET /admin/users/login-history
+     - Devuelve el historial de inicios de sesión de un usuario ordenado por fecha descendente. Paridad con el diálogo de historial del admin web.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter userId: (query) Identificador del usuario. 
+     - parameter limit: (query) Cantidad máxima de entradas a devolver. (optional)
+     - returns: RequestBuilder<GetAdminUserLoginHistoryResponse> 
+     */
+    open class func mobileGetAdminUserLoginHistoryWithRequestBuilder(userId: String, limit: Int? = nil) -> RequestBuilder<GetAdminUserLoginHistoryResponse> {
+        let localVariablePath = "/admin/users/login-history"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "userId": (wrappedValue: userId.encodeToJSON(), isExplode: true),
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetAdminUserLoginHistoryResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }
@@ -419,6 +1221,240 @@ open class AdminAPI {
     }
 
     /**
+     Quitar un usuario de una empresa
+     
+     - parameter adminRemoveTenantUserRequest: (body)  
+     - returns: PostAdminTenantsRemoveUserResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileRemoveAdminTenantUser(adminRemoveTenantUserRequest: AdminRemoveTenantUserRequest) async throws -> PostAdminTenantsRemoveUserResponse {
+        return try await mobileRemoveAdminTenantUserWithRequestBuilder(adminRemoveTenantUserRequest: adminRemoveTenantUserRequest).execute().body
+    }
+
+    /**
+     Quitar un usuario de una empresa
+     - POST /admin/tenants/remove-user
+     - Quita un usuario de una empresa desactivando su membresía, sin eliminar su cuenta de la plataforma. Es reversible reasignándolo.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminRemoveTenantUserRequest: (body)  
+     - returns: RequestBuilder<PostAdminTenantsRemoveUserResponse> 
+     */
+    open class func mobileRemoveAdminTenantUserWithRequestBuilder(adminRemoveTenantUserRequest: AdminRemoveTenantUserRequest) -> RequestBuilder<PostAdminTenantsRemoveUserResponse> {
+        let localVariablePath = "/admin/tenants/remove-user"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminRemoveTenantUserRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminTenantsRemoveUserResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Renovar una licencia
+     
+     - parameter renewAdminLicenseRequest: (body)  
+     - returns: PostAdminLicensesRenewResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileRenewAdminLicense(renewAdminLicenseRequest: RenewAdminLicenseRequest) async throws -> PostAdminLicensesRenewResponse {
+        return try await mobileRenewAdminLicenseWithRequestBuilder(renewAdminLicenseRequest: renewAdminLicenseRequest).execute().body
+    }
+
+    /**
+     Renovar una licencia
+     - POST /admin/licenses/renew
+     - Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter renewAdminLicenseRequest: (body)  
+     - returns: RequestBuilder<PostAdminLicensesRenewResponse> 
+     */
+    open class func mobileRenewAdminLicenseWithRequestBuilder(renewAdminLicenseRequest: RenewAdminLicenseRequest) -> RequestBuilder<PostAdminLicensesRenewResponse> {
+        let localVariablePath = "/admin/licenses/renew"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: renewAdminLicenseRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminLicensesRenewResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Reenviar el email de verificación
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersResendVerificationResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileResendAdminUserVerification(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersResendVerificationResponse {
+        return try await mobileResendAdminUserVerificationWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Reenviar el email de verificación
+     - POST /admin/users/resend-verification
+     - Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersResendVerificationResponse> 
+     */
+    open class func mobileResendAdminUserVerificationWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersResendVerificationResponse> {
+        let localVariablePath = "/admin/users/resend-verification"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersResendVerificationResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Enviar enlace de restablecimiento de contraseña
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersResetPasswordResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileResetAdminUserPassword(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersResetPasswordResponse {
+        return try await mobileResetAdminUserPasswordWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Enviar enlace de restablecimiento de contraseña
+     - POST /admin/users/reset-password
+     - Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersResetPasswordResponse> 
+     */
+    open class func mobileResetAdminUserPasswordWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersResetPasswordResponse> {
+        let localVariablePath = "/admin/users/reset-password"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersResetPasswordResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Revocar una sesión específica
+     
+     - parameter adminRevokeSessionRequest: (body)  
+     - returns: PostAdminSessionsRevokeResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileRevokeAdminSession(adminRevokeSessionRequest: AdminRevokeSessionRequest) async throws -> PostAdminSessionsRevokeResponse {
+        return try await mobileRevokeAdminSessionWithRequestBuilder(adminRevokeSessionRequest: adminRevokeSessionRequest).execute().body
+    }
+
+    /**
+     Revocar una sesión específica
+     - POST /admin/sessions/revoke
+     - Revoca una sesión puntual de un usuario, cerrando su acceso en ese dispositivo. A diferencia de la acción web equivalente, elimina por el identificador real de la sesión.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminRevokeSessionRequest: (body)  
+     - returns: RequestBuilder<PostAdminSessionsRevokeResponse> 
+     */
+    open class func mobileRevokeAdminSessionWithRequestBuilder(adminRevokeSessionRequest: AdminRevokeSessionRequest) -> RequestBuilder<PostAdminSessionsRevokeResponse> {
+        let localVariablePath = "/admin/sessions/revoke"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminRevokeSessionRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminSessionsRevokeResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Revocar las sesiones activas de un usuario
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersRevokeSessionsResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileRevokeAdminUserSessions(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersRevokeSessionsResponse {
+        return try await mobileRevokeAdminUserSessionsWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Revocar las sesiones activas de un usuario
+     - POST /admin/users/revoke-sessions
+     - Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersRevokeSessionsResponse> 
+     */
+    open class func mobileRevokeAdminUserSessionsWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersRevokeSessionsResponse> {
+        let localVariablePath = "/admin/users/revoke-sessions"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersRevokeSessionsResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
      Desbloquear usuario
      
      - parameter unlockAdminUserRequest: (body)  
@@ -453,6 +1489,162 @@ open class AdminAPI {
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
 
         let localVariableRequestBuilder: RequestBuilder<PostAdminUsersLockResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Editar los datos de una empresa
+     
+     - parameter updateAdminTenantRequest: (body)  
+     - returns: PatchAdminTenantsUpdateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileUpdateAdminTenant(updateAdminTenantRequest: UpdateAdminTenantRequest) async throws -> PatchAdminTenantsUpdateResponse {
+        return try await mobileUpdateAdminTenantWithRequestBuilder(updateAdminTenantRequest: updateAdminTenantRequest).execute().body
+    }
+
+    /**
+     Editar los datos de una empresa
+     - PATCH /admin/tenants/update
+     - Actualiza el nombre, los datos fiscales y la configuración de una empresa. Valida que el identificador público no esté en uso por otra empresa.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter updateAdminTenantRequest: (body)  
+     - returns: RequestBuilder<PatchAdminTenantsUpdateResponse> 
+     */
+    open class func mobileUpdateAdminTenantWithRequestBuilder(updateAdminTenantRequest: UpdateAdminTenantRequest) -> RequestBuilder<PatchAdminTenantsUpdateResponse> {
+        let localVariablePath = "/admin/tenants/update"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updateAdminTenantRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PatchAdminTenantsUpdateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PATCH", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Actualizar la licencia de una empresa
+     
+     - parameter updateAdminTenantLicenseRequest: (body)  
+     - returns: PatchAdminTenantsLicenseUpdateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileUpdateAdminTenantLicense(updateAdminTenantLicenseRequest: UpdateAdminTenantLicenseRequest) async throws -> PatchAdminTenantsLicenseUpdateResponse {
+        return try await mobileUpdateAdminTenantLicenseWithRequestBuilder(updateAdminTenantLicenseRequest: updateAdminTenantLicenseRequest).execute().body
+    }
+
+    /**
+     Actualizar la licencia de una empresa
+     - PATCH /admin/tenants/license/update
+     - Cambia el plan, los límites o el vencimiento de una licencia. Al cambiar de plan se sincronizan límites y precios del plan, salvo los límites indicados explícitamente.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter updateAdminTenantLicenseRequest: (body)  
+     - returns: RequestBuilder<PatchAdminTenantsLicenseUpdateResponse> 
+     */
+    open class func mobileUpdateAdminTenantLicenseWithRequestBuilder(updateAdminTenantLicenseRequest: UpdateAdminTenantLicenseRequest) -> RequestBuilder<PatchAdminTenantsLicenseUpdateResponse> {
+        let localVariablePath = "/admin/tenants/license/update"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updateAdminTenantLicenseRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PatchAdminTenantsLicenseUpdateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PATCH", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Editar nombre, email o rol de un usuario
+     
+     - parameter updateAdminUserRequest: (body)  
+     - returns: PatchAdminUsersUpdateResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileUpdateAdminUser(updateAdminUserRequest: UpdateAdminUserRequest) async throws -> PatchAdminUsersUpdateResponse {
+        return try await mobileUpdateAdminUserWithRequestBuilder(updateAdminUserRequest: updateAdminUserRequest).execute().body
+    }
+
+    /**
+     Editar nombre, email o rol de un usuario
+     - PATCH /admin/users/update
+     - Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter updateAdminUserRequest: (body)  
+     - returns: RequestBuilder<PatchAdminUsersUpdateResponse> 
+     */
+    open class func mobileUpdateAdminUserWithRequestBuilder(updateAdminUserRequest: UpdateAdminUserRequest) -> RequestBuilder<PatchAdminUsersUpdateResponse> {
+        let localVariablePath = "/admin/users/update"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updateAdminUserRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PatchAdminUsersUpdateResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PATCH", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Marcar el email como verificado
+     
+     - parameter adminUserIdRequest: (body)  
+     - returns: PostAdminUsersVerifyEmailResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileVerifyAdminUserEmail(adminUserIdRequest: AdminUserIdRequest) async throws -> PostAdminUsersVerifyEmailResponse {
+        return try await mobileVerifyAdminUserEmailWithRequestBuilder(adminUserIdRequest: adminUserIdRequest).execute().body
+    }
+
+    /**
+     Marcar el email como verificado
+     - POST /admin/users/verify-email
+     - Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter adminUserIdRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersVerifyEmailResponse> 
+     */
+    open class func mobileVerifyAdminUserEmailWithRequestBuilder(adminUserIdRequest: AdminUserIdRequest) -> RequestBuilder<PostAdminUsersVerifyEmailResponse> {
+        let localVariablePath = "/admin/users/verify-email"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: adminUserIdRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersVerifyEmailResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }

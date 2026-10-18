@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: vi.fn((handler) => (request: NextRequest, context: unknown) =>
+  withAuthGet: vi.fn((handler: any) => (request?: NextRequest, context?: unknown) =>
     handler(request, context, {
       userId: 'user-1',
       name: 'Test User',
@@ -14,7 +14,7 @@ vi.mock('@/lib/auth-middleware', () => ({
       planFeatures: { 'mi-empresa-ean13': true },
     }),
   ),
-  withAuthPost: vi.fn((handler) => (request: NextRequest, context: unknown) =>
+  withAuthPost: vi.fn((handler: any) => (request?: NextRequest, context?: unknown) =>
     handler(request, context, {
       userId: 'user-1',
       name: 'Test User',
@@ -52,7 +52,7 @@ describe('/api/mi-empresa', () => {
       cuentaBancariaId: 'cuenta-1',
     } as never);
 
-    const response = await GET(new NextRequest('http://localhost/api/mi-empresa'));
+    const response = await GET(new NextRequest('http://localhost/api/mi-empresa'), {});
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -72,6 +72,7 @@ describe('/api/mi-empresa', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ nombre: 'Mi Empresa', usaCodigoEan13: false }),
       }),
+      {},
     );
     const data = await response.json();
 
@@ -97,6 +98,7 @@ describe('/api/mi-empresa', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ usaCodigoEan13: true }),
       }),
+      {},
     );
     const data = await response.json();
 

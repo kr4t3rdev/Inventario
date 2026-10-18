@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { anularCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
@@ -64,7 +65,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.cuentaPorCobrar.findFirst).not.toHaveBeenCalled()
   })
 
@@ -74,7 +75,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('NOT_FOUND')
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'cxc-1', tenantId: 'tenant-1' } }),
     )
@@ -90,9 +91,9 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1', motivo: 'Venta anulada' })
 
     expect(result.success).toBe(true)
-    expect(result.data?.estado).toBe('ANULADA')
-    expect(result.data?.montoDeuda).toBe(1000)
-    expect(result.data?.montoPagado).toBe(250)
+    expect(expectActionSuccess(result).data?.estado).toBe('ANULADA')
+    expect(expectActionSuccess(result).data?.montoDeuda).toBe(1000)
+    expect(expectActionSuccess(result).data?.montoPagado).toBe(250)
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
       where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
       data: { estado: 'ANULADA' },
@@ -112,7 +113,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(true)
-    expect(result.data?.estado).toBe('ANULADA')
+    expect(expectActionSuccess(result).data?.estado).toBe('ANULADA')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
     expect(auditLogMock.log).not.toHaveBeenCalled()
   })
@@ -126,7 +127,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
     expect(result.success).toBe(true)
-    expect(result.data?.estado).toBe('ANULADA')
+    expect(expectActionSuccess(result).data?.estado).toBe('ANULADA')
     expect(auditLogMock.log).not.toHaveBeenCalled()
   })
 })

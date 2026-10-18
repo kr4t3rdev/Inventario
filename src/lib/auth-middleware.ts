@@ -370,7 +370,13 @@ export async function authenticateUser(
     // mapeado. Rutas exentas (auth/admin plataforma) devuelven null.
     if (!validatePermissions && authenticatedUser.tenantId) {
       const mobilePath = new URL(request.url).pathname
-      const mobileKey = getMobilePermissionKey(mobilePath)
+      const mobileKey = getMobilePermissionKey(mobilePath, request.method)
+      if (mobileKey === '__mobile_method_not_allowed__') {
+        return NextResponse.json(
+          { error: 'Método no permitido', message: 'Este recurso mobile solo admite lectura' },
+          { status: 405 },
+        )
+      }
       if (
         mobileKey &&
         user.role !== 'admin' &&

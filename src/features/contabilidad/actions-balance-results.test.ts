@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 vi.mock('@/lib/server-actions/get-current-user');
 
@@ -14,14 +15,14 @@ vi.mock(
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { getBalanceResultsAction } from './actions-balance-results';
 
-const user = {
+const user: AuthenticatedUser = {
   userId: 'user-1',
   name: 'Contabilidad',
   email: 'accounting@example.com',
-  role: 'user' as const,
+  role: 'regularUser',
   isActive: true,
   tenantId: 'tenant-1',
-  tenantRole: 'economico' as const,
+  tenantRole: 'economico',
   planFeatures: { contabilidad: true },
 };
 
@@ -38,7 +39,7 @@ describe('getBalanceResultsAction', () => {
 
   it('requires the accounting feature and delegates the normalized input', async () => {
     const result = await getBalanceResultsAction({
-      year: '2026',
+      year: 2026,
       cutoffAt: '2026-08-21T15:30:00.000Z',
       moneda: 'cup',
     });
@@ -57,7 +58,10 @@ describe('getBalanceResultsAction', () => {
 
   it('returns a validation error for an invalid period or cutoff', async () => {
     const result = await getBalanceResultsAction({
-      year: 'not-a-year',
+      // Entrada invalida a proposito: el schema coacciona year a numero y
+      // debe rechazarla. Se declara como el input del schema para preservar
+      // exactamente esa comprobacion.
+      year: 'not-a-year' as unknown as number,
       cutoffAt: 'not-a-date',
     });
 

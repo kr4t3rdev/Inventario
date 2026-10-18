@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { updateCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
@@ -32,7 +33,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED')
   })
 
   it('retorna NOT_FOUND cuando la cuenta no pertenece al tenant', async () => {
@@ -51,7 +52,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('NOT_FOUND')
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
 
@@ -124,8 +125,8 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
         }),
       })
     )
-    expect(result.data?.montoPagado).toBe(450)
-    expect(result.data?.estado).toBe('PARCIAL')
+    expect(expectActionSuccess(result).data?.montoPagado).toBe(450)
+    expect(expectActionSuccess(result).data?.estado).toBe('PARCIAL')
   })
 
   it('valida entrada con Zod — rechaza id vacío', async () => {
@@ -142,7 +143,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: '', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR')
   })
 
   it('does not reactivate an annulled receivable through the generic update action', async () => {
@@ -165,7 +166,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PARCIAL' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
 
@@ -189,7 +190,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR')
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },

@@ -1,16 +1,23 @@
 
 # CapitalInjectionCreateRequest
 
+Alta de inyección de capital. socio es obligatorio cuando tipo=CAPITAL_SOCIAL; entidadPrestamista cuando tipo=DEUDA_EXTERNA.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`monto` | number
+`montoRecibido` | number
 `moneda` | string
 `tipo` | string
+`cuentaId` | string
 `descripcion` | string
-`cuentaBancariaId` | string
+`socio` | string
+`entidadPrestamista` | string
+`tasaInteres` | number
+`plazoMeses` | number
+`fechaInicioPago` | Date
+`fechaOperacion` | Date
 
 ## Example
 
@@ -19,11 +26,17 @@ import type { CapitalInjectionCreateRequest } from '@tcp/mobile-v1-sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "monto": null,
+  "montoRecibido": null,
   "moneda": null,
   "tipo": null,
+  "cuentaId": null,
   "descripcion": null,
-  "cuentaBancariaId": null,
+  "socio": null,
+  "entidadPrestamista": null,
+  "tasaInteres": null,
+  "plazoMeses": null,
+  "fechaInicioPago": null,
+  "fechaOperacion": null,
 } satisfies CapitalInjectionCreateRequest
 
 console.log(example)

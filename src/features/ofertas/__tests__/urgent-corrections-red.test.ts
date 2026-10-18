@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/auth-middleware', () => ({ authenticateUser: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
@@ -99,6 +100,6 @@ describe('F-02 ofertas, RED de correcciones urgentes', () => {
       items: [{ productoId: 'prod-b', cantidad: 1, precioUnitario: 100, total: 100 }],
     } as never);
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
   });
 });

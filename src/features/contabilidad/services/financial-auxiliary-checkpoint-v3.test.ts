@@ -130,7 +130,7 @@ describe('financial auxiliary checkpoint v3', () => {
       cutoffAt: new Date(payload.cutoffAt),
     });
     expect(checkpoint?.payload.version).toBe(1);
-    expect((checkpoint?.payload as Record<string, unknown>).tenantId).toBeUndefined();
+    expect((checkpoint?.payload as unknown as Record<string, unknown>).tenantId).toBeUndefined();
   });
 
   it('documents the v3 checkpoint schema version as additive and indexed', async () => {

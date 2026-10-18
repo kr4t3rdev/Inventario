@@ -6,7 +6,8 @@ Name | Type | Description | Notes
 **clienteId** | **String** |  | 
 **montoCapital** | **Double** |  | 
 **moneda** | **String** |  | [optional] 
-**tasaInteres** | **Double** |  | [optional] 
+**tasaInteres** | **Double** |  | 
+**tasaInteresMoratorio** | **Double** |  | 
 **tasaCambioAlCrear** | **Double** |  | [optional] 
 **fechaVencimiento** | **Date** |  | [optional] 
 **observaciones** | **String** |  | [optional] 

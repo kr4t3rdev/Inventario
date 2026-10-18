@@ -2,6 +2,7 @@
  * @description Tests de las actions de comisiones (CMV-T3): gates y validaciones.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -45,7 +46,7 @@ describe('actions de comisiones (CMV-T3)', () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r = await updateComisionEmpleadoAction({ empleadoId: 'e-1', comisionPct: 5, metaMensual: 100000 });
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('AUTH_REQUIRED');
+		expect(expectActionFailure(r).error?.code).toBe('AUTH_REQUIRED');
 	});
 
 	it('updateComisionEmpleadoAction exige el permiso sensible', async () => {
@@ -55,7 +56,7 @@ describe('actions de comisiones (CMV-T3)', () => {
 		} as never);
 		const r = await updateComisionEmpleadoAction({ empleadoId: 'e-1', comisionPct: 5, metaMensual: 100000 });
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('FORBIDDEN');
+		expect(expectActionFailure(r).error?.code).toBe('FORBIDDEN');
 	});
 
 	it('updateComisionEmpleadoAction con permiso valida y persiste', async () => {
@@ -78,6 +79,6 @@ describe('actions de comisiones (CMV-T3)', () => {
 		} as never);
 		const r = await getComisionesDelMesAction({ anio: 2026, mes: 9 });
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('FORBIDDEN');
+		expect(expectActionFailure(r).error?.code).toBe('FORBIDDEN');
 	});
 });

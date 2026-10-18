@@ -18,7 +18,9 @@ import { prisma } from '@/lib/prisma';
 describe('AccountingReportsService tenant isolation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (prisma as typeof prisma & { $queryRaw?: unknown }).$queryRaw;
+    // El caso simula la ausencia de $queryRaw en el cliente; el metodo no es
+    // opcional en el tipo real, asi que el borrado se acota.
+    delete (prisma as unknown as { $queryRaw?: unknown }).$queryRaw;
     for (const model of [
       prisma.cuentaBancaria,
       prisma.reconciliacionVenta,
@@ -666,7 +668,7 @@ describe('AccountingReportsService tenant isolation', () => {
         monto: 10,
         moneda: 'CUP',
         montoConvertido: 10,
-      })),
+      })) as any,
     );
 
     const { AccountingReportsService } = await import('../accounting-reports-service');

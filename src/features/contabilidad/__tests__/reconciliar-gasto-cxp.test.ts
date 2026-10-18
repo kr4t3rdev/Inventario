@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconciliacion";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
 	$transaction: vi.fn(),
@@ -119,7 +120,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 				referenciaId: "gc-1",
 			}),
 		);
-		const data = JSON.parse(JSON.stringify(result.data));
+		const data = JSON.parse(JSON.stringify(expectActionSuccess(result).data));
 		expect(data.cuentaPorPagar.estado).toBe("PAGADA");
 		expect(data.cuentaPorPagar.saldoPendiente).toBe(0);
 	});
@@ -163,7 +164,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(true);
-		const data = JSON.parse(JSON.stringify(result.data));
+		const data = JSON.parse(JSON.stringify(expectActionSuccess(result).data));
 		expect(data.cuentaPorPagar.estado).toBe("PARCIAL");
 		expect(data.cuentaPorPagar.saldoPendiente).toBe(50);
 		expect(data.cuentaPorPagar.montoPagado).toBe(50);
@@ -259,7 +260,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("MONTO_EXCEDE_SALDO");
+		expect(expectActionFailure(result).error?.code).toBe("MONTO_EXCEDE_SALDO");
 	});
 
 	it("5. CxP ya pagada → CUENTA_YA_PAGADA", async () => {
@@ -281,7 +282,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("CUENTA_YA_PAGADA");
+		expect(expectActionFailure(result).error?.code).toBe("CUENTA_YA_PAGADA");
 	});
 
 	it("6. Sin cuentaPorPagarId → usa workflow unified", async () => {

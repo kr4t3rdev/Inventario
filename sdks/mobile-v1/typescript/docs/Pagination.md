@@ -1,6 +1,7 @@
 
 # Pagination
 
+Paginación.
 
 ## Properties
 

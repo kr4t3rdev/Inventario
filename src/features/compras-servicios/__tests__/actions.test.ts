@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de compras de servicios.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -115,7 +116,7 @@ describe("ComprasServicios Server Actions", () => {
 			]);
 			const result = await getComprasServiciosAction();
 			expect(result.success).toBe(true);
-			expect(result.data).toHaveLength(1);
+			expect(expectActionSuccess(result).data).toHaveLength(1);
 		});
 	});
 
@@ -134,7 +135,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(null);
 			const result = await getCompraServicioByIdAction("cs-noexiste");
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 	});
 
@@ -181,7 +182,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await createCompraServicioAction(validInput);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("Servicio no encontrado");
+			expect(expectActionFailure(result).error!.message).toContain("Servicio no encontrado");
 		});
 
 		it("rechaza servicio de otro tenant", async () => {
@@ -194,7 +195,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 
 		it("rechaza proveedor de otro tenant", async () => {
@@ -210,7 +211,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("Proveedor no encontrado");
+			expect(expectActionFailure(result).error!.message).toContain("Proveedor no encontrado");
 		});
 		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
@@ -350,7 +351,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrado");
+			expect(expectActionFailure(result).error!.message).toContain("no encontrado");
 		});
 	});
 
@@ -394,7 +395,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await getComprasServiciosAction();
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(expectActionFailure(result).error!.code).toBe("FEATURE_NOT_AVAILABLE");
 		});
 
 		it("createCompraServicioAction requiere rol manager", async () => {
@@ -414,7 +415,7 @@ describe("ComprasServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("FORBIDDEN");
+			expect(expectActionFailure(result).error!.code).toBe("FORBIDDEN");
 		});
 
 		it("deleteCompraServicioAction requiere rol manager", async () => {
@@ -428,7 +429,7 @@ describe("ComprasServicios Server Actions", () => {
 			const result = await deleteCompraServicioAction("cs-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("FORBIDDEN");
+			expect(expectActionFailure(result).error!.code).toBe("FORBIDDEN");
 		});
 	});
 
@@ -437,7 +438,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(null);
 			const result = await getComprasServiciosAction();
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
 });

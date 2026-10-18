@@ -86,7 +86,7 @@ describe('authenticateUser', () => {
       userId: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'user' as const,
       isActive: true,
     }
 
@@ -421,7 +421,7 @@ describe('authenticateUser', () => {
       userId: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'user' as const,
       isActive: true,
     }
     const mockMembership = {
@@ -465,6 +465,58 @@ describe('authenticateUser', () => {
 
       expect(result.user.tenantId).toBe('tenant-1')
       expect(result.user.tenantRole).toBe('manager')
+    })
+
+    it('enforces a mapped mobile GET permission and rejects mutations on GET-only routes', async () => {
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        ...mockMembership,
+        tenantRole: 'manager',
+      } as any)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null)
+
+      const readRequest = new NextRequest(
+        new Request('http://localhost/api/mobile/v1/facturas', {
+          headers: { authorization: `Bearer ${mockToken}` },
+        }),
+      )
+      const readResult = await authenticateUser(readRequest)
+      expect('status' in readResult ? readResult.status : readResult.user.tenantId).toBe('tenant-1')
+
+      const writeRequest = new NextRequest(
+        new Request('http://localhost/api/mobile/v1/facturas', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${mockToken}` },
+        }),
+      )
+      const writeResult = await authenticateUser(writeRequest)
+      expect('status' in writeResult ? writeResult.status : null).toBe(405)
+    })
+
+    it('permite al rol económico consultar contabilidad pero deniega crear un préstamo', async () => {
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        ...mockMembership,
+        tenantRole: 'economico',
+      } as any)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null)
+
+      const readRequest = new NextRequest(
+        new Request('http://localhost/api/mobile/v1/accounting/cash-loans', {
+          headers: { authorization: `Bearer ${mockToken}` },
+        }),
+      )
+      const readResult = await authenticateUser(readRequest)
+      expect('status' in readResult ? readResult.status : readResult.user.tenantRole).toBe(
+        'economico',
+      )
+
+      const writeRequest = new NextRequest(
+        new Request('http://localhost/api/mobile/v1/accounting/cash-loans', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${mockToken}` },
+        }),
+      )
+      const writeResult = await authenticateUser(writeRequest)
+      expect('status' in writeResult ? writeResult.status : null).toBe(403)
     })
 
     it('resolves tenant from x-tenant-id header when provided', async () => {

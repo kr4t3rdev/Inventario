@@ -87,7 +87,7 @@ describe('uploadToCloudinary', () => {
       entityId: 'cli-1',
     })
 
-    const firstCall = fetchMock.mock.calls[0]
+    const firstCall = fetchMock.mock.calls[0]!
     const requestInit = firstCall[1] as RequestInit
     const body = JSON.parse(requestInit.body as string)
     expect(body.uploadKey).toBe('clientes.logo')
@@ -129,8 +129,8 @@ describe('uploadToCloudinary', () => {
       uploadKey: 'clientes.logo',
     })
 
-    const secondCall = fetchMock.mock.calls[1]
-    const formData = secondCall[1].body as FormData
+    const secondCall = fetchMock.mock.calls[1]!
+    const formData = secondCall[1]!.body as FormData
     expect(formData.get('folder')).toBe('tenant-123/clientes/logo')
     expect(formData.get('public_id')).toBe('tenant-123/clientes/logo/cliente-1')
   })

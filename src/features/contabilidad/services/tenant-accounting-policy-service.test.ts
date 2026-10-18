@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Prisma } from '@/generated/prisma';
 
 import { createAccountingPolicyPrismaMock } from './__tests__/fixtures/accounting-policy-evidence';
 
@@ -397,7 +398,7 @@ describe('tenant accounting policy service', () => {
       './tenant-accounting-policy-service'
     );
 
-    await expect(prismaMock.$transaction(async (tx) => {
+    await expect(prismaMock.$transaction(async (tx: Prisma.TransactionClient) => {
       await provisionTenantAccountingPolicyInTransaction(tx, {
         tenantId: 'tenant-a',
         functionalCurrencyCode: 'CUP',

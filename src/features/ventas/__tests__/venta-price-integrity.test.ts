@@ -5,6 +5,7 @@
  * que las acepta dejando rastro en auditoría.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -59,7 +60,7 @@ const cajeroUser: AuthenticatedUser = {
 	userId: "user-cajero",
 	name: "Cajero",
 	email: "cajero@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "dependiente",
@@ -140,8 +141,8 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("PRICE_MISMATCH");
-		expect(result.error?.message).toContain("Producto");
+		expect(expectActionFailure(result).error?.code).toBe("PRICE_MISMATCH");
+		expect(expectActionFailure(result).error?.message).toContain("Producto");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 		expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
 	});
@@ -239,7 +240,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("PRICE_MISMATCH");
+		expect(expectActionFailure(result).error?.code).toBe("PRICE_MISMATCH");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
 
@@ -253,7 +254,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("PRICE_MISMATCH");
+		expect(expectActionFailure(result).error?.code).toBe("PRICE_MISMATCH");
 	});
 
 	it("rechaza si el punto de venta no existe en el tenant", async () => {
@@ -267,7 +268,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
 
@@ -282,7 +283,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("rechaza si el cliente no existe en el tenant (cross-tenant)", async () => {
@@ -298,7 +299,7 @@ describe("integridad de precios en createVentaAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
 });

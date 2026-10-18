@@ -95,16 +95,46 @@ Class | Method | HTTP request | Description
 *AccountingReportsAPI* | [**mobileGetAccountingReportsOverdueInvoices**](docs/AccountingReportsAPI.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas
 *AccountingReportsAPI* | [**mobileGetAccountingReportsSummary**](docs/AccountingReportsAPI.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero
 *AccountingReportsAPI* | [**mobileGetAccountingReportsTransfers**](docs/AccountingReportsAPI.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias
+*AdminAPI* | [**mobileActivateAdminLicense**](docs/AdminAPI.md#mobileactivateadminlicense) | **POST** /admin/licenses/activate | Activar una licencia
+*AdminAPI* | [**mobileActivateAdminTenant**](docs/AdminAPI.md#mobileactivateadmintenant) | **POST** /admin/tenants/activate | Activar una empresa
+*AdminAPI* | [**mobileActivateAdminUser**](docs/AdminAPI.md#mobileactivateadminuser) | **POST** /admin/users/activate | Activar un usuario
 *AdminAPI* | [**mobileApproveAdminMembership**](docs/AdminAPI.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía
+*AdminAPI* | [**mobileAssignAdminTenantLicense**](docs/AdminAPI.md#mobileassignadmintenantlicense) | **POST** /admin/tenants/license/assign | Asignar una licencia a una empresa
+*AdminAPI* | [**mobileAssignAdminUserTenant**](docs/AdminAPI.md#mobileassignadminusertenant) | **POST** /admin/users/assign-tenant | Asignar o cambiar la empresa de un usuario
+*AdminAPI* | [**mobileChangeAdminUserTenantRole**](docs/AdminAPI.md#mobilechangeadminusertenantrole) | **PATCH** /admin/users/change-tenant-role | Cambiar el rol de un usuario dentro de una empresa
+*AdminAPI* | [**mobileDeactivateAdminLicense**](docs/AdminAPI.md#mobiledeactivateadminlicense) | **POST** /admin/licenses/deactivate | Desactivar una licencia
+*AdminAPI* | [**mobileDeactivateAdminTenant**](docs/AdminAPI.md#mobiledeactivateadmintenant) | **POST** /admin/tenants/deactivate | Desactivar una empresa
+*AdminAPI* | [**mobileDeactivateAdminTenantLicense**](docs/AdminAPI.md#mobiledeactivateadmintenantlicense) | **POST** /admin/tenants/license/deactivate | Desactivar la licencia de una empresa
+*AdminAPI* | [**mobileDeactivateAdminUser**](docs/AdminAPI.md#mobiledeactivateadminuser) | **POST** /admin/users/deactivate | Desactivar un usuario
+*AdminAPI* | [**mobileDeleteAdminLicense**](docs/AdminAPI.md#mobiledeleteadminlicense) | **POST** /admin/licenses/delete | Eliminar una licencia
+*AdminAPI* | [**mobileDeleteAdminTenant**](docs/AdminAPI.md#mobiledeleteadmintenant) | **POST** /admin/tenants/delete | Eliminar una empresa
+*AdminAPI* | [**mobileDeleteAdminUser**](docs/AdminAPI.md#mobiledeleteadminuser) | **POST** /admin/users/delete | Eliminar un usuario
+*AdminAPI* | [**mobileGetAdminActivityLogs**](docs/AdminAPI.md#mobilegetadminactivitylogs) | **GET** /admin/activity-logs | Obtener el registro de actividad de los usuarios
 *AdminAPI* | [**mobileGetAdminHealth**](docs/AdminAPI.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
 *AdminAPI* | [**mobileGetAdminLicenseStats**](docs/AdminAPI.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
 *AdminAPI* | [**mobileGetAdminLicenses**](docs/AdminAPI.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
 *AdminAPI* | [**mobileGetAdminPendingMemberships**](docs/AdminAPI.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
+*AdminAPI* | [**mobileGetAdminSessions**](docs/AdminAPI.md#mobilegetadminsessions) | **GET** /admin/sessions | Listar las sesiones registradas
+*AdminAPI* | [**mobileGetAdminTenantDetail**](docs/AdminAPI.md#mobilegetadmintenantdetail) | **GET** /admin/tenants/detail | Obtener el detalle de una empresa
+*AdminAPI* | [**mobileGetAdminTenantLicense**](docs/AdminAPI.md#mobilegetadmintenantlicense) | **GET** /admin/tenants/license | Ver las licencias de una empresa
+*AdminAPI* | [**mobileGetAdminTenantUsers**](docs/AdminAPI.md#mobilegetadmintenantusers) | **GET** /admin/tenants/users | Listar los usuarios de una empresa
 *AdminAPI* | [**mobileGetAdminTenants**](docs/AdminAPI.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
+*AdminAPI* | [**mobileGetAdminUserDetail**](docs/AdminAPI.md#mobilegetadminuserdetail) | **GET** /admin/users/detail | Obtener el detalle de un usuario
+*AdminAPI* | [**mobileGetAdminUserLoginHistory**](docs/AdminAPI.md#mobilegetadminuserloginhistory) | **GET** /admin/users/login-history | Obtener el historial de sesiones de un usuario
 *AdminAPI* | [**mobileGetAdminUsers**](docs/AdminAPI.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
 *AdminAPI* | [**mobileLockAdminUser**](docs/AdminAPI.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas
 *AdminAPI* | [**mobileRejectAdminMembership**](docs/AdminAPI.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía
+*AdminAPI* | [**mobileRemoveAdminTenantUser**](docs/AdminAPI.md#mobileremoveadmintenantuser) | **POST** /admin/tenants/remove-user | Quitar un usuario de una empresa
+*AdminAPI* | [**mobileRenewAdminLicense**](docs/AdminAPI.md#mobilerenewadminlicense) | **POST** /admin/licenses/renew | Renovar una licencia
+*AdminAPI* | [**mobileResendAdminUserVerification**](docs/AdminAPI.md#mobileresendadminuserverification) | **POST** /admin/users/resend-verification | Reenviar el email de verificación
+*AdminAPI* | [**mobileResetAdminUserPassword**](docs/AdminAPI.md#mobileresetadminuserpassword) | **POST** /admin/users/reset-password | Enviar enlace de restablecimiento de contraseña
+*AdminAPI* | [**mobileRevokeAdminSession**](docs/AdminAPI.md#mobilerevokeadminsession) | **POST** /admin/sessions/revoke | Revocar una sesión específica
+*AdminAPI* | [**mobileRevokeAdminUserSessions**](docs/AdminAPI.md#mobilerevokeadminusersessions) | **POST** /admin/users/revoke-sessions | Revocar las sesiones activas de un usuario
 *AdminAPI* | [**mobileUnlockAdminUser**](docs/AdminAPI.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario
+*AdminAPI* | [**mobileUpdateAdminTenant**](docs/AdminAPI.md#mobileupdateadmintenant) | **PATCH** /admin/tenants/update | Editar los datos de una empresa
+*AdminAPI* | [**mobileUpdateAdminTenantLicense**](docs/AdminAPI.md#mobileupdateadmintenantlicense) | **PATCH** /admin/tenants/license/update | Actualizar la licencia de una empresa
+*AdminAPI* | [**mobileUpdateAdminUser**](docs/AdminAPI.md#mobileupdateadminuser) | **PATCH** /admin/users/update | Editar nombre, email o rol de un usuario
+*AdminAPI* | [**mobileVerifyAdminUserEmail**](docs/AdminAPI.md#mobileverifyadminuseremail) | **POST** /admin/users/verify-email | Marcar el email como verificado
 *AuthAPI* | [**mobileGetAuthMe**](docs/AuthAPI.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado
 *AuthAPI* | [**mobileGetAuthTenants**](docs/AuthAPI.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles
 *AuthAPI* | [**mobilePostAuthLogin**](docs/AuthAPI.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
@@ -117,7 +147,31 @@ Class | Method | HTTP request | Description
 *ClientsAPI* | [**mobileGetClientsById**](docs/ClientsAPI.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente
 *ClientsAPI* | [**mobilePostClientsCreate**](docs/ClientsAPI.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente
 *ClientsAPI* | [**mobilePutClientsById**](docs/ClientsAPI.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente
+*ComprasAPI* | [**mobileGetComprasById**](docs/ComprasAPI.md#mobilegetcomprasbyid) | **GET** /compras/{id} | Detalle de compra
+*ComprasAPI* | [**mobileListCompras**](docs/ComprasAPI.md#mobilelistcompras) | **GET** /compras | Listar compras
+*ContratosAPI* | [**mobileGetContratosById**](docs/ContratosAPI.md#mobilegetcontratosbyid) | **GET** /contratos/{id} | Detalle de contrato
+*ContratosAPI* | [**mobileListContratos**](docs/ContratosAPI.md#mobilelistcontratos) | **GET** /contratos | Listar contratos
+*DashboardAPI* | [**mobileGetDashboardDailyAverage**](docs/DashboardAPI.md#mobilegetdashboarddailyaverage) | **GET** /dashboard/daily-average | Consultar promedio diario de ingresos
+*DashboardAPI* | [**mobileGetDashboardIncomeExpenses**](docs/DashboardAPI.md#mobilegetdashboardincomeexpenses) | **GET** /dashboard/income-expenses | Consultar ingresos vs gastos del panel
+*DashboardAPI* | [**mobileGetDashboardInventoryValue**](docs/DashboardAPI.md#mobilegetdashboardinventoryvalue) | **GET** /dashboard/inventory-value | Consultar valor total del inventario
+*DashboardAPI* | [**mobileGetDashboardLowStock**](docs/DashboardAPI.md#mobilegetdashboardlowstock) | **GET** /dashboard/low-stock | Consultar productos con stock bajo
 *DashboardAPI* | [**mobileGetDashboardStats**](docs/DashboardAPI.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal
+*DashboardAPI* | [**mobileGetDashboardStockDistribution**](docs/DashboardAPI.md#mobilegetdashboardstockdistribution) | **GET** /dashboard/stock-distribution | Consultar distribución de stock
+*DashboardAPI* | [**mobileGetDashboardTodaySales**](docs/DashboardAPI.md#mobilegetdashboardtodaysales) | **GET** /dashboard/today-sales | Consultar ventas de hoy
+*DashboardAPI* | [**mobileGetDashboardTopProducts**](docs/DashboardAPI.md#mobilegetdashboardtopproducts) | **GET** /dashboard/top-products | Consultar productos más vendidos
+*DashboardAPI* | [**mobileGetDashboardTransfers**](docs/DashboardAPI.md#mobilegetdashboardtransfers) | **GET** /dashboard/transfers | Consultar transferencias entre ubicaciones
+*EmpleadosAPI* | [**mobileGetEmpleadosById**](docs/EmpleadosAPI.md#mobilegetempleadosbyid) | **GET** /empleados/{id} | Detalle de empleado
+*EmpleadosAPI* | [**mobileListEmpleados**](docs/EmpleadosAPI.md#mobilelistempleados) | **GET** /empleados | Listar empleados
+*FacturasAPI* | [**mobileGetFacturasById**](docs/FacturasAPI.md#mobilegetfacturasbyid) | **GET** /facturas/{id} | Detalle de factura
+*FacturasAPI* | [**mobileListFacturas**](docs/FacturasAPI.md#mobilelistfacturas) | **GET** /facturas | Listar facturas
+*GastosAPI* | [**mobileGetGastosById**](docs/GastosAPI.md#mobilegetgastosbyid) | **GET** /gastos/{id} | Detalle de gasto
+*GastosAPI* | [**mobileListGastos**](docs/GastosAPI.md#mobilelistgastos) | **GET** /gastos | Listar gastos
+*MermasAPI* | [**mobileGetMermasById**](docs/MermasAPI.md#mobilegetmermasbyid) | **GET** /mermas/{id} | Detalle de merma
+*MermasAPI* | [**mobileListMermas**](docs/MermasAPI.md#mobilelistmermas) | **GET** /mermas | Listar mermas
+*OfertasAPI* | [**mobileGetOfertasById**](docs/OfertasAPI.md#mobilegetofertasbyid) | **GET** /ofertas/{id} | Detalle de oferta
+*OfertasAPI* | [**mobileListOfertas**](docs/OfertasAPI.md#mobilelistofertas) | **GET** /ofertas | Listar ofertas
+*ProduccinAPI* | [**mobileGetProduccionById**](docs/ProduccinAPI.md#mobilegetproduccionbyid) | **GET** /produccion/{id} | Detalle de orden de producción
+*ProduccinAPI* | [**mobileListProduccion**](docs/ProduccinAPI.md#mobilelistproduccion) | **GET** /produccion | Listar órdenes de producción
 *ProductsAPI* | [**mobileGetProducts**](docs/ProductsAPI.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsAPI* | [**mobileGetProductsById**](docs/ProductsAPI.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsAPI* | [**mobileGetProductsStock**](docs/ProductsAPI.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
@@ -126,11 +180,21 @@ Class | Method | HTTP request | Description
 *ProvidersAPI* | [**mobileGetProvidersById**](docs/ProvidersAPI.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
 *ProvidersAPI* | [**mobilePostProvidersCreate**](docs/ProvidersAPI.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor
 *ProvidersAPI* | [**mobilePutProvidersById**](docs/ProvidersAPI.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor
+*ReparacionesAPI* | [**mobileGetReparacionesById**](docs/ReparacionesAPI.md#mobilegetreparacionesbyid) | **GET** /reparaciones/{id} | Detalle de orden de reparación
+*ReparacionesAPI* | [**mobileListReparaciones**](docs/ReparacionesAPI.md#mobilelistreparaciones) | **GET** /reparaciones | Listar órdenes de reparación
 *SalesAPI* | [**mobileGetSales**](docs/SalesAPI.md#mobilegetsales) | **GET** /sales | Consultar ventas
 *SalesAPI* | [**mobileGetSalesById**](docs/SalesAPI.md#mobilegetsalesbyid) | **GET** /sales/{id} | Consultar venta
 *SalesAPI* | [**mobilePatchSalesByIdUpdate**](docs/SalesAPI.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta
 *SalesAPI* | [**mobilePostSalesByIdCancel**](docs/SalesAPI.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta
 *SalesAPI* | [**mobilePostSalesCreate**](docs/SalesAPI.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta
+*ServiciosAPI* | [**mobileGetServiciosById**](docs/ServiciosAPI.md#mobilegetserviciosbyid) | **GET** /servicios/{id} | Detalle de servicio
+*ServiciosAPI* | [**mobileListServicios**](docs/ServiciosAPI.md#mobilelistservicios) | **GET** /servicios | Listar servicios
+*TransferenciasAPI* | [**mobileGetTransferenciasById**](docs/TransferenciasAPI.md#mobilegettransferenciasbyid) | **GET** /transferencias/{id} | Detalle de transferencia
+*TransferenciasAPI* | [**mobileListTransferencias**](docs/TransferenciasAPI.md#mobilelisttransferencias) | **GET** /transferencias | Listar transferencias
+*UnitsAPI* | [**mobileCreateUnit**](docs/UnitsAPI.md#mobilecreateunit) | **POST** /units/create | Crear unidad
+*UnitsAPI* | [**mobileDeleteUnit**](docs/UnitsAPI.md#mobiledeleteunit) | **DELETE** /units/{id} | Eliminar unidad
+*UnitsAPI* | [**mobileListUnits**](docs/UnitsAPI.md#mobilelistunits) | **GET** /units | Listar unidades
+*UnitsAPI* | [**mobileUpdateUnit**](docs/UnitsAPI.md#mobileupdateunit) | **PUT** /units/{id} | Actualizar unidad
 *WarehousesAPI* | [**mobileDeleteWarehousesById**](docs/WarehousesAPI.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén
 *WarehousesAPI* | [**mobileGetWarehouses**](docs/WarehousesAPI.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes
 *WarehousesAPI* | [**mobileGetWarehousesById**](docs/WarehousesAPI.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén
@@ -146,6 +210,7 @@ Class | Method | HTTP request | Description
  - [AccountingAdvancesIdPutRequest](docs/AccountingAdvancesIdPutRequest.md)
  - [AccountingAdvancesIdRevertirPostRequest](docs/AccountingAdvancesIdRevertirPostRequest.md)
  - [AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
+ - [AdminActivityLogItem](docs/AdminActivityLogItem.md)
  - [AdminHealthResponse](docs/AdminHealthResponse.md)
  - [AdminHealthResponseLicenses](docs/AdminHealthResponseLicenses.md)
  - [AdminHealthResponseSessions](docs/AdminHealthResponseSessions.md)
@@ -154,22 +219,38 @@ Class | Method | HTTP request | Description
  - [AdminHealthResponseUsersByRoleInner](docs/AdminHealthResponseUsersByRoleInner.md)
  - [AdminHealthResponseUsersComparison](docs/AdminHealthResponseUsersComparison.md)
  - [AdminHealthResponseUsersTrendInner](docs/AdminHealthResponseUsersTrendInner.md)
+ - [AdminLicenciaIdRequest](docs/AdminLicenciaIdRequest.md)
  - [AdminLicenseItem](docs/AdminLicenseItem.md)
  - [AdminLicenseItemCreatedByUser](docs/AdminLicenseItemCreatedByUser.md)
  - [AdminLicenseItemTenant](docs/AdminLicenseItemTenant.md)
  - [AdminLicenseManagerItem](docs/AdminLicenseManagerItem.md)
+ - [AdminLicenseSummary](docs/AdminLicenseSummary.md)
  - [AdminPendingUserItem](docs/AdminPendingUserItem.md)
+ - [AdminRemoveTenantUserRequest](docs/AdminRemoveTenantUserRequest.md)
+ - [AdminRevokeSessionRequest](docs/AdminRevokeSessionRequest.md)
+ - [AdminSessionItem](docs/AdminSessionItem.md)
+ - [AdminSessionItemUser](docs/AdminSessionItemUser.md)
+ - [AdminTenantDetail](docs/AdminTenantDetail.md)
+ - [AdminTenantIdRequest](docs/AdminTenantIdRequest.md)
  - [AdminTenantItem](docs/AdminTenantItem.md)
  - [AdminTenantItemCount](docs/AdminTenantItemCount.md)
  - [AdminTenantLicenseItem](docs/AdminTenantLicenseItem.md)
  - [AdminTenantLicenseItemPlan](docs/AdminTenantLicenseItemPlan.md)
  - [AdminTenantLite](docs/AdminTenantLite.md)
+ - [AdminTenantUserItem](docs/AdminTenantUserItem.md)
+ - [AdminUserDetail](docs/AdminUserDetail.md)
+ - [AdminUserIdRequest](docs/AdminUserIdRequest.md)
  - [AdminUserItem](docs/AdminUserItem.md)
  - [AdminUserItemSalesAgentBalance](docs/AdminUserItemSalesAgentBalance.md)
  - [AdminUserItemSalesAgentProfile](docs/AdminUserItemSalesAgentProfile.md)
  - [AdminUserLite](docs/AdminUserLite.md)
+ - [AdminUserMembership](docs/AdminUserMembership.md)
+ - [AdminUserMembershipTenant](docs/AdminUserMembershipTenant.md)
+ - [AdminUserStatus](docs/AdminUserStatus.md)
+ - [AdminUserSummary](docs/AdminUserSummary.md)
  - [Advance](docs/Advance.md)
  - [AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
+ - [AjusteBancario](docs/AjusteBancario.md)
  - [Almacen](docs/Almacen.md)
  - [AlmacenCreateRequest](docs/AlmacenCreateRequest.md)
  - [AlmacenDeleteResponse](docs/AlmacenDeleteResponse.md)
@@ -177,6 +258,8 @@ Class | Method | HTTP request | Description
  - [AlmacenUpdateRequest](docs/AlmacenUpdateRequest.md)
  - [ApiError](docs/ApiError.md)
  - [ApproveAdminMembershipRequest](docs/ApproveAdminMembershipRequest.md)
+ - [AssignAdminTenantLicenseRequest](docs/AssignAdminTenantLicenseRequest.md)
+ - [AssignAdminUserTenantRequest](docs/AssignAdminUserTenantRequest.md)
  - [AuditLog](docs/AuditLog.md)
  - [AuthSession](docs/AuthSession.md)
  - [AuthenticatedUser](docs/AuthenticatedUser.md)
@@ -197,17 +280,44 @@ Class | Method | HTTP request | Description
  - [CashLoanCreateRequest](docs/CashLoanCreateRequest.md)
  - [CashOperationUpdateRequest](docs/CashOperationUpdateRequest.md)
  - [CashPaymentRequest](docs/CashPaymentRequest.md)
+ - [ChangeAdminUserTenantRoleRequest](docs/ChangeAdminUserTenantRoleRequest.md)
  - [Cliente](docs/Cliente.md)
  - [ClienteCreateRequest](docs/ClienteCreateRequest.md)
  - [ClienteDeleteResponse](docs/ClienteDeleteResponse.md)
  - [ClienteListResponse](docs/ClienteListResponse.md)
  - [ClienteUpdateRequest](docs/ClienteUpdateRequest.md)
+ - [Compra](docs/Compra.md)
+ - [Contrato](docs/Contrato.md)
  - [Currency](docs/Currency.md)
+ - [DashboardDatosPorMes](docs/DashboardDatosPorMes.md)
+ - [DashboardDatosPorSemana](docs/DashboardDatosPorSemana.md)
+ - [DashboardDistribucionStockItem](docs/DashboardDistribucionStockItem.md)
+ - [DashboardIncomeExpensePoint](docs/DashboardIncomeExpensePoint.md)
+ - [DashboardIncomeExpenseResponse](docs/DashboardIncomeExpenseResponse.md)
+ - [DashboardLowStockItem](docs/DashboardLowStockItem.md)
+ - [DashboardLowStockResponse](docs/DashboardLowStockResponse.md)
+ - [DashboardProductoMasVendido](docs/DashboardProductoMasVendido.md)
+ - [DashboardProductoStockBajo](docs/DashboardProductoStockBajo.md)
+ - [DashboardProductoStockBajoCategoria](docs/DashboardProductoStockBajoCategoria.md)
+ - [DashboardProductoStockBajoUnidad](docs/DashboardProductoStockBajoUnidad.md)
+ - [DashboardStockDistributionResponse](docs/DashboardStockDistributionResponse.md)
+ - [DashboardStockSlice](docs/DashboardStockSlice.md)
+ - [DashboardTopProduct](docs/DashboardTopProduct.md)
+ - [DashboardTopProductsResponse](docs/DashboardTopProductsResponse.md)
+ - [DashboardTransferItem](docs/DashboardTransferItem.md)
+ - [DashboardTransferenciasStats](docs/DashboardTransferenciasStats.md)
+ - [DashboardTransfersResponse](docs/DashboardTransfersResponse.md)
+ - [DashboardValueResponse](docs/DashboardValueResponse.md)
+ - [DashboardVentasDiarias](docs/DashboardVentasDiarias.md)
  - [DeleteAccountingAdvancesIdResponse](docs/DeleteAccountingAdvancesIdResponse.md)
  - [DeleteAccountingPaymentTypesIdResponse](docs/DeleteAccountingPaymentTypesIdResponse.md)
+ - [DeleteUnitResponse](docs/DeleteUnitResponse.md)
+ - [Empleado](docs/Empleado.md)
  - [ExchangeRate](docs/ExchangeRate.md)
  - [ExpenseDistributionRequest](docs/ExpenseDistributionRequest.md)
  - [ExpenseReconciliationRequest](docs/ExpenseReconciliationRequest.md)
+ - [Factura](docs/Factura.md)
+ - [Gasto](docs/Gasto.md)
  - [GetAccountingAccountsPayableResponse](docs/GetAccountingAccountsPayableResponse.md)
  - [GetAccountingAccountsReceivableMetricsResponse](docs/GetAccountingAccountsReceivableMetricsResponse.md)
  - [GetAccountingAccountsReceivableResponse](docs/GetAccountingAccountsReceivableResponse.md)
@@ -251,19 +361,60 @@ Class | Method | HTTP request | Description
  - [GetAccountingReportsOverdueInvoicesResponse](docs/GetAccountingReportsOverdueInvoicesResponse.md)
  - [GetAccountingReportsSummaryResponse](docs/GetAccountingReportsSummaryResponse.md)
  - [GetAccountingReportsTransfersResponse](docs/GetAccountingReportsTransfersResponse.md)
+ - [GetAdminActivityLogsResponse](docs/GetAdminActivityLogsResponse.md)
  - [GetAdminLicenseStatsResponse](docs/GetAdminLicenseStatsResponse.md)
  - [GetAdminLicensesResponse](docs/GetAdminLicensesResponse.md)
+ - [GetAdminSessionsResponse](docs/GetAdminSessionsResponse.md)
+ - [GetAdminTenantDetailResponse](docs/GetAdminTenantDetailResponse.md)
+ - [GetAdminTenantLicenseResponse](docs/GetAdminTenantLicenseResponse.md)
+ - [GetAdminTenantUsersResponse](docs/GetAdminTenantUsersResponse.md)
+ - [GetAdminUserDetailResponse](docs/GetAdminUserDetailResponse.md)
+ - [GetAdminUserLoginHistoryResponse](docs/GetAdminUserLoginHistoryResponse.md)
  - [GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
+ - [GetComprasDetailResponse](docs/GetComprasDetailResponse.md)
+ - [GetComprasListResponse](docs/GetComprasListResponse.md)
+ - [GetContratosDetailResponse](docs/GetContratosDetailResponse.md)
+ - [GetContratosListResponse](docs/GetContratosListResponse.md)
  - [GetDashboardStatsResponse](docs/GetDashboardStatsResponse.md)
+ - [GetEmpleadosDetailResponse](docs/GetEmpleadosDetailResponse.md)
+ - [GetEmpleadosListResponse](docs/GetEmpleadosListResponse.md)
+ - [GetFacturasDetailResponse](docs/GetFacturasDetailResponse.md)
+ - [GetFacturasListResponse](docs/GetFacturasListResponse.md)
+ - [GetGastosDetailResponse](docs/GetGastosDetailResponse.md)
+ - [GetGastosListResponse](docs/GetGastosListResponse.md)
+ - [GetMermasDetailResponse](docs/GetMermasDetailResponse.md)
+ - [GetMermasListResponse](docs/GetMermasListResponse.md)
+ - [GetOfertasDetailResponse](docs/GetOfertasDetailResponse.md)
+ - [GetOfertasListResponse](docs/GetOfertasListResponse.md)
+ - [GetProduccionDetailResponse](docs/GetProduccionDetailResponse.md)
+ - [GetProduccionListResponse](docs/GetProduccionListResponse.md)
  - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [GetProductsResponse](docs/GetProductsResponse.md)
  - [GetProductsStockResponse](docs/GetProductsStockResponse.md)
+ - [GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
+ - [GetReparacionesListResponse](docs/GetReparacionesListResponse.md)
  - [GetSalesIdResponse](docs/GetSalesIdResponse.md)
  - [GetSalesResponse](docs/GetSalesResponse.md)
+ - [GetServiciosDetailResponse](docs/GetServiciosDetailResponse.md)
+ - [GetServiciosListResponse](docs/GetServiciosListResponse.md)
+ - [GetTransferenciasDetailResponse](docs/GetTransferenciasDetailResponse.md)
+ - [GetTransferenciasListResponse](docs/GetTransferenciasListResponse.md)
+ - [GetUnitsDetailResponse](docs/GetUnitsDetailResponse.md)
+ - [GetUnitsListResponse](docs/GetUnitsListResponse.md)
  - [JsonValue](docs/JsonValue.md)
  - [LockAdminUserRequest](docs/LockAdminUserRequest.md)
  - [LoginRequest](docs/LoginRequest.md)
+ - [Merma](docs/Merma.md)
+ - [MobileCreateUnitRequest](docs/MobileCreateUnitRequest.md)
+ - [MobileUpdateUnitRequest](docs/MobileUpdateUnitRequest.md)
+ - [Oferta](docs/Oferta.md)
+ - [OrdenProduccion](docs/OrdenProduccion.md)
+ - [OrdenReparacion](docs/OrdenReparacion.md)
  - [Pagination](docs/Pagination.md)
+ - [PatchAdminTenantsLicenseUpdateResponse](docs/PatchAdminTenantsLicenseUpdateResponse.md)
+ - [PatchAdminTenantsUpdateResponse](docs/PatchAdminTenantsUpdateResponse.md)
+ - [PatchAdminUsersChangeTenantRoleResponse](docs/PatchAdminUsersChangeTenantRoleResponse.md)
+ - [PatchAdminUsersUpdateResponse](docs/PatchAdminUsersUpdateResponse.md)
  - [PatchSalesIdUpdateResponse](docs/PatchSalesIdUpdateResponse.md)
  - [PayableAccountSummary](docs/PayableAccountSummary.md)
  - [PayablePaymentSummary](docs/PayablePaymentSummary.md)
@@ -285,10 +436,30 @@ Class | Method | HTTP request | Description
  - [PostAccountingReconciliationExpensesResponse](docs/PostAccountingReconciliationExpensesResponse.md)
  - [PostAccountingReconciliationSalesResponse](docs/PostAccountingReconciliationSalesResponse.md)
  - [PostAccountingReconciliationServicesResponse](docs/PostAccountingReconciliationServicesResponse.md)
+ - [PostAdminLicensesActivateResponse](docs/PostAdminLicensesActivateResponse.md)
+ - [PostAdminLicensesDeactivateResponse](docs/PostAdminLicensesDeactivateResponse.md)
+ - [PostAdminLicensesDeleteResponse](docs/PostAdminLicensesDeleteResponse.md)
+ - [PostAdminLicensesRenewResponse](docs/PostAdminLicensesRenewResponse.md)
  - [PostAdminMembershipsApproveResponse](docs/PostAdminMembershipsApproveResponse.md)
  - [PostAdminMembershipsRejectResponse](docs/PostAdminMembershipsRejectResponse.md)
+ - [PostAdminSessionsRevokeResponse](docs/PostAdminSessionsRevokeResponse.md)
+ - [PostAdminTenantsActivateResponse](docs/PostAdminTenantsActivateResponse.md)
+ - [PostAdminTenantsDeactivateResponse](docs/PostAdminTenantsDeactivateResponse.md)
+ - [PostAdminTenantsDeleteResponse](docs/PostAdminTenantsDeleteResponse.md)
+ - [PostAdminTenantsLicenseAssignResponse](docs/PostAdminTenantsLicenseAssignResponse.md)
+ - [PostAdminTenantsLicenseDeactivateResponse](docs/PostAdminTenantsLicenseDeactivateResponse.md)
+ - [PostAdminTenantsRemoveUserResponse](docs/PostAdminTenantsRemoveUserResponse.md)
+ - [PostAdminUsersActivateResponse](docs/PostAdminUsersActivateResponse.md)
+ - [PostAdminUsersAssignTenantResponse](docs/PostAdminUsersAssignTenantResponse.md)
+ - [PostAdminUsersDeactivateResponse](docs/PostAdminUsersDeactivateResponse.md)
+ - [PostAdminUsersDeleteResponse](docs/PostAdminUsersDeleteResponse.md)
  - [PostAdminUsersLockResponse](docs/PostAdminUsersLockResponse.md)
  - [PostAdminUsersLockResponseUser](docs/PostAdminUsersLockResponseUser.md)
+ - [PostAdminUsersResendVerificationResponse](docs/PostAdminUsersResendVerificationResponse.md)
+ - [PostAdminUsersResetPasswordResponse](docs/PostAdminUsersResetPasswordResponse.md)
+ - [PostAdminUsersRevokeSessionsResponse](docs/PostAdminUsersRevokeSessionsResponse.md)
+ - [PostAdminUsersVerifyEmailResponse](docs/PostAdminUsersVerifyEmailResponse.md)
+ - [PostAdminUsersVerifyEmailResponseUser](docs/PostAdminUsersVerifyEmailResponseUser.md)
  - [PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
  - [PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
  - [Product](docs/Product.md)
@@ -310,6 +481,7 @@ Class | Method | HTTP request | Description
  - [RegisterRequest](docs/RegisterRequest.md)
  - [RegisterResponse](docs/RegisterResponse.md)
  - [RejectAdminMembershipRequest](docs/RejectAdminMembershipRequest.md)
+ - [RenewAdminLicenseRequest](docs/RenewAdminLicenseRequest.md)
  - [ReportFilters](docs/ReportFilters.md)
  - [ReportResult](docs/ReportResult.md)
  - [ReportStatistics](docs/ReportStatistics.md)
@@ -323,6 +495,7 @@ Class | Method | HTTP request | Description
  - [SaleUpdateRequest](docs/SaleUpdateRequest.md)
  - [ServiceDistributionRequest](docs/ServiceDistributionRequest.md)
  - [ServiceReconciliationRequest](docs/ServiceReconciliationRequest.md)
+ - [Servicio](docs/Servicio.md)
  - [SuccessResponse](docs/SuccessResponse.md)
  - [SwitchTenantRequest](docs/SwitchTenantRequest.md)
  - [SwitchTenantResponse](docs/SwitchTenantResponse.md)
@@ -330,7 +503,12 @@ Class | Method | HTTP request | Description
  - [TenantSummary](docs/TenantSummary.md)
  - [Token](docs/Token.md)
  - [TokenPair](docs/TokenPair.md)
+ - [Transferencia](docs/Transferencia.md)
+ - [Unit](docs/Unit.md)
  - [UnlockAdminUserRequest](docs/UnlockAdminUserRequest.md)
+ - [UpdateAdminTenantLicenseRequest](docs/UpdateAdminTenantLicenseRequest.md)
+ - [UpdateAdminTenantRequest](docs/UpdateAdminTenantRequest.md)
+ - [UpdateAdminUserRequest](docs/UpdateAdminUserRequest.md)
 
 
 <a id="documentation-for-authorization"></a>

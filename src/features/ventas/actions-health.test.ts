@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/prisma', () => ({
@@ -43,7 +44,7 @@ describe('getSalesHealthAction', () => {
   it('rechaza roles no admin sin consultar ventas', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, role: 'regularUser' })
     const result = await getSalesHealthAction()
-    expect(result.error?.code).toBe('FORBIDDEN')
+    expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN')
     expect(prisma.venta.count).not.toHaveBeenCalled()
   })
 

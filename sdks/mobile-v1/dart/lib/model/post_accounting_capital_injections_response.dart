@@ -13,104 +13,179 @@ part of openapi.api;
 class PostAccountingCapitalInjectionsResponse {
   /// Returns a new [PostAccountingCapitalInjectionsResponse] instance.
   PostAccountingCapitalInjectionsResponse({
-    this.inyeccionId,
-    this.monto,
-    this.moneda,
-    this.tipo,
+    required this.id,
+    this.tenantId,
+    required this.tipo,
+    required this.montoRecibido,
+    required this.moneda,
+    this.tasaInteres,
+    this.montoInteres,
+    this.montoTotalDeuda,
+    this.saldoPendiente,
+    this.plazoMeses,
+    this.fechaInicioPago,
+    this.socio,
+    this.entidadPrestamista,
+    required this.cuentaId,
+    this.estado,
     this.descripcion,
-    this.cuentaBancariaId,
+    required this.fechaRegistro,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? inyeccionId;
+  String id;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  num? monto;
+  String? tenantId;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? moneda;
+  PostAccountingCapitalInjectionsResponseTipoEnum tipo;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? tipo;
+  /// Decimal serializado como texto.
+  String montoRecibido;
+
+  String moneda;
+
+  String? tasaInteres;
+
+  String? montoInteres;
+
+  String? montoTotalDeuda;
+
+  String? saldoPendiente;
+
+  int? plazoMeses;
+
+  DateTime? fechaInicioPago;
+
+  String? socio;
+
+  String? entidadPrestamista;
+
+  String cuentaId;
+
+  String? estado;
 
   String? descripcion;
 
-  String? cuentaBancariaId;
+  DateTime fechaRegistro;
+
+  DateTime createdAt;
+
+  DateTime updatedAt;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is PostAccountingCapitalInjectionsResponse &&
-    other.inyeccionId == inyeccionId &&
-    other.monto == monto &&
-    other.moneda == moneda &&
+    other.id == id &&
+    other.tenantId == tenantId &&
     other.tipo == tipo &&
+    other.montoRecibido == montoRecibido &&
+    other.moneda == moneda &&
+    other.tasaInteres == tasaInteres &&
+    other.montoInteres == montoInteres &&
+    other.montoTotalDeuda == montoTotalDeuda &&
+    other.saldoPendiente == saldoPendiente &&
+    other.plazoMeses == plazoMeses &&
+    other.fechaInicioPago == fechaInicioPago &&
+    other.socio == socio &&
+    other.entidadPrestamista == entidadPrestamista &&
+    other.cuentaId == cuentaId &&
+    other.estado == estado &&
     other.descripcion == descripcion &&
-    other.cuentaBancariaId == cuentaBancariaId;
+    other.fechaRegistro == fechaRegistro &&
+    other.createdAt == createdAt &&
+    other.updatedAt == updatedAt;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (inyeccionId == null ? 0 : inyeccionId!.hashCode) +
-    (monto == null ? 0 : monto!.hashCode) +
-    (moneda == null ? 0 : moneda!.hashCode) +
-    (tipo == null ? 0 : tipo!.hashCode) +
+    (id.hashCode) +
+    (tenantId == null ? 0 : tenantId!.hashCode) +
+    (tipo.hashCode) +
+    (montoRecibido.hashCode) +
+    (moneda.hashCode) +
+    (tasaInteres == null ? 0 : tasaInteres!.hashCode) +
+    (montoInteres == null ? 0 : montoInteres!.hashCode) +
+    (montoTotalDeuda == null ? 0 : montoTotalDeuda!.hashCode) +
+    (saldoPendiente == null ? 0 : saldoPendiente!.hashCode) +
+    (plazoMeses == null ? 0 : plazoMeses!.hashCode) +
+    (fechaInicioPago == null ? 0 : fechaInicioPago!.hashCode) +
+    (socio == null ? 0 : socio!.hashCode) +
+    (entidadPrestamista == null ? 0 : entidadPrestamista!.hashCode) +
+    (cuentaId.hashCode) +
+    (estado == null ? 0 : estado!.hashCode) +
     (descripcion == null ? 0 : descripcion!.hashCode) +
-    (cuentaBancariaId == null ? 0 : cuentaBancariaId!.hashCode);
+    (fechaRegistro.hashCode) +
+    (createdAt.hashCode) +
+    (updatedAt.hashCode);
 
   @override
-  String toString() => 'PostAccountingCapitalInjectionsResponse[inyeccionId=$inyeccionId, monto=$monto, moneda=$moneda, tipo=$tipo, descripcion=$descripcion, cuentaBancariaId=$cuentaBancariaId]';
+  String toString() => 'PostAccountingCapitalInjectionsResponse[id=$id, tenantId=$tenantId, tipo=$tipo, montoRecibido=$montoRecibido, moneda=$moneda, tasaInteres=$tasaInteres, montoInteres=$montoInteres, montoTotalDeuda=$montoTotalDeuda, saldoPendiente=$saldoPendiente, plazoMeses=$plazoMeses, fechaInicioPago=$fechaInicioPago, socio=$socio, entidadPrestamista=$entidadPrestamista, cuentaId=$cuentaId, estado=$estado, descripcion=$descripcion, fechaRegistro=$fechaRegistro, createdAt=$createdAt, updatedAt=$updatedAt]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.inyeccionId != null) {
-      json[r'inyeccionId'] = this.inyeccionId;
+      json[r'id'] = this.id;
+    if (this.tenantId != null) {
+      json[r'tenantId'] = this.tenantId;
     } else {
-      json[r'inyeccionId'] = null;
+      json[r'tenantId'] = null;
     }
-    if (this.monto != null) {
-      json[r'monto'] = this.monto;
-    } else {
-      json[r'monto'] = null;
-    }
-    if (this.moneda != null) {
-      json[r'moneda'] = this.moneda;
-    } else {
-      json[r'moneda'] = null;
-    }
-    if (this.tipo != null) {
       json[r'tipo'] = this.tipo;
+      json[r'montoRecibido'] = this.montoRecibido;
+      json[r'moneda'] = this.moneda;
+    if (this.tasaInteres != null) {
+      json[r'tasaInteres'] = this.tasaInteres;
     } else {
-      json[r'tipo'] = null;
+      json[r'tasaInteres'] = null;
+    }
+    if (this.montoInteres != null) {
+      json[r'montoInteres'] = this.montoInteres;
+    } else {
+      json[r'montoInteres'] = null;
+    }
+    if (this.montoTotalDeuda != null) {
+      json[r'montoTotalDeuda'] = this.montoTotalDeuda;
+    } else {
+      json[r'montoTotalDeuda'] = null;
+    }
+    if (this.saldoPendiente != null) {
+      json[r'saldoPendiente'] = this.saldoPendiente;
+    } else {
+      json[r'saldoPendiente'] = null;
+    }
+    if (this.plazoMeses != null) {
+      json[r'plazoMeses'] = this.plazoMeses;
+    } else {
+      json[r'plazoMeses'] = null;
+    }
+    if (this.fechaInicioPago != null) {
+      json[r'fechaInicioPago'] = this.fechaInicioPago!.toUtc().toIso8601String();
+    } else {
+      json[r'fechaInicioPago'] = null;
+    }
+    if (this.socio != null) {
+      json[r'socio'] = this.socio;
+    } else {
+      json[r'socio'] = null;
+    }
+    if (this.entidadPrestamista != null) {
+      json[r'entidadPrestamista'] = this.entidadPrestamista;
+    } else {
+      json[r'entidadPrestamista'] = null;
+    }
+      json[r'cuentaId'] = this.cuentaId;
+    if (this.estado != null) {
+      json[r'estado'] = this.estado;
+    } else {
+      json[r'estado'] = null;
     }
     if (this.descripcion != null) {
       json[r'descripcion'] = this.descripcion;
     } else {
       json[r'descripcion'] = null;
     }
-    if (this.cuentaBancariaId != null) {
-      json[r'cuentaBancariaId'] = this.cuentaBancariaId;
-    } else {
-      json[r'cuentaBancariaId'] = null;
-    }
+      json[r'fechaRegistro'] = this.fechaRegistro.toUtc().toIso8601String();
+      json[r'createdAt'] = this.createdAt.toUtc().toIso8601String();
+      json[r'updatedAt'] = this.updatedAt.toUtc().toIso8601String();
     return json;
   }
 
@@ -133,12 +208,25 @@ class PostAccountingCapitalInjectionsResponse {
       }());
 
       return PostAccountingCapitalInjectionsResponse(
-        inyeccionId: mapValueOfType<String>(json, r'inyeccionId'),
-        monto: num.parse('${json[r'monto']}'),
-        moneda: mapValueOfType<String>(json, r'moneda'),
-        tipo: mapValueOfType<String>(json, r'tipo'),
+        id: mapValueOfType<String>(json, r'id')!,
+        tenantId: mapValueOfType<String>(json, r'tenantId'),
+        tipo: PostAccountingCapitalInjectionsResponseTipoEnum.fromJson(json[r'tipo'])!,
+        montoRecibido: mapValueOfType<String>(json, r'montoRecibido')!,
+        moneda: mapValueOfType<String>(json, r'moneda')!,
+        tasaInteres: mapValueOfType<String>(json, r'tasaInteres'),
+        montoInteres: mapValueOfType<String>(json, r'montoInteres'),
+        montoTotalDeuda: mapValueOfType<String>(json, r'montoTotalDeuda'),
+        saldoPendiente: mapValueOfType<String>(json, r'saldoPendiente'),
+        plazoMeses: mapValueOfType<int>(json, r'plazoMeses'),
+        fechaInicioPago: mapDateTime(json, r'fechaInicioPago', r''),
+        socio: mapValueOfType<String>(json, r'socio'),
+        entidadPrestamista: mapValueOfType<String>(json, r'entidadPrestamista'),
+        cuentaId: mapValueOfType<String>(json, r'cuentaId')!,
+        estado: mapValueOfType<String>(json, r'estado'),
         descripcion: mapValueOfType<String>(json, r'descripcion'),
-        cuentaBancariaId: mapValueOfType<String>(json, r'cuentaBancariaId'),
+        fechaRegistro: mapDateTime(json, r'fechaRegistro', r'')!,
+        createdAt: mapDateTime(json, r'createdAt', r'')!,
+        updatedAt: mapDateTime(json, r'updatedAt', r'')!,
       );
     }
     return null;
@@ -186,6 +274,88 @@ class PostAccountingCapitalInjectionsResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'id',
+    'tipo',
+    'montoRecibido',
+    'moneda',
+    'cuentaId',
+    'fechaRegistro',
+    'createdAt',
+    'updatedAt',
   };
 }
+
+
+class PostAccountingCapitalInjectionsResponseTipoEnum {
+  /// Instantiate a new enum with the provided [value].
+  const PostAccountingCapitalInjectionsResponseTipoEnum._(this.value);
+
+  /// The underlying value of this enum member.
+  final String value;
+
+  @override
+  String toString() => value;
+
+  String toJson() => value;
+
+  static const CAPITAL_SOCIAL = PostAccountingCapitalInjectionsResponseTipoEnum._(r'CAPITAL_SOCIAL');
+  static const DEUDA_EXTERNA = PostAccountingCapitalInjectionsResponseTipoEnum._(r'DEUDA_EXTERNA');
+
+  /// List of all possible values in this [enum][PostAccountingCapitalInjectionsResponseTipoEnum].
+  static const values = <PostAccountingCapitalInjectionsResponseTipoEnum>[
+    CAPITAL_SOCIAL,
+    DEUDA_EXTERNA,
+  ];
+
+  static PostAccountingCapitalInjectionsResponseTipoEnum? fromJson(dynamic value) => PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer().decode(value);
+
+  static List<PostAccountingCapitalInjectionsResponseTipoEnum> listFromJson(dynamic json, {bool growable = false,}) {
+    final result = <PostAccountingCapitalInjectionsResponseTipoEnum>[];
+    if (json is List && json.isNotEmpty) {
+      for (final row in json) {
+        final value = PostAccountingCapitalInjectionsResponseTipoEnum.fromJson(row);
+        if (value != null) {
+          result.add(value);
+        }
+      }
+    }
+    return result.toList(growable: growable);
+  }
+}
+
+/// Transformation class that can [encode] an instance of [PostAccountingCapitalInjectionsResponseTipoEnum] to String,
+/// and [decode] dynamic data back to [PostAccountingCapitalInjectionsResponseTipoEnum].
+class PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer {
+  factory PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer() => _instance ??= const PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer._();
+
+  const PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer._();
+
+  String encode(PostAccountingCapitalInjectionsResponseTipoEnum data) => data.value;
+
+  /// Decodes a [dynamic value][data] to a PostAccountingCapitalInjectionsResponseTipoEnum.
+  ///
+  /// If [allowNull] is true and the [dynamic value][data] cannot be decoded successfully,
+  /// then null is returned. However, if [allowNull] is false and the [dynamic value][data]
+  /// cannot be decoded successfully, then an [UnimplementedError] is thrown.
+  ///
+  /// The [allowNull] is very handy when an API changes and a new enum value is added or removed,
+  /// and users are still using an old app with the old code.
+  PostAccountingCapitalInjectionsResponseTipoEnum? decode(dynamic data, {bool allowNull = true}) {
+    if (data != null) {
+      switch (data) {
+        case r'CAPITAL_SOCIAL': return PostAccountingCapitalInjectionsResponseTipoEnum.CAPITAL_SOCIAL;
+        case r'DEUDA_EXTERNA': return PostAccountingCapitalInjectionsResponseTipoEnum.DEUDA_EXTERNA;
+        default:
+          if (!allowNull) {
+            throw ArgumentError('Unknown enum value to decode: $data');
+          }
+      }
+    }
+    return null;
+  }
+
+  /// Singleton [PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer] instance.
+  static PostAccountingCapitalInjectionsResponseTipoEnumTypeTransformer? _instance;
+}
+
 

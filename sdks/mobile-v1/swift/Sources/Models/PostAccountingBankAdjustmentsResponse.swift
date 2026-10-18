@@ -13,49 +13,37 @@ import AnyCodable
 /** Respuesta de POST /accounting/bank-adjustments. */
 public struct PostAccountingBankAdjustmentsResponse: Codable, JSONEncodable, Hashable {
 
-    public enum Tipo: String, Codable, CaseIterable {
-        case ingreso = "ingreso"
-        case egreso = "egreso"
-    }
-    public var ajusteId: String?
-    public var cuentaId: String?
-    public var tipo: Tipo?
-    public var monto: Double?
-    public var moneda: String?
-    public var descripcion: String?
-    public var motivo: String?
+    public var ajuste: AjusteBancario
+    public var saldoAnterior: Double
+    public var saldoNuevo: Double
+    public var advertenciaSaldoNegativo: Bool
+    public var message: String
 
-    public init(ajusteId: String? = nil, cuentaId: String? = nil, tipo: Tipo? = nil, monto: Double? = nil, moneda: String? = nil, descripcion: String? = nil, motivo: String? = nil) {
-        self.ajusteId = ajusteId
-        self.cuentaId = cuentaId
-        self.tipo = tipo
-        self.monto = monto
-        self.moneda = moneda
-        self.descripcion = descripcion
-        self.motivo = motivo
+    public init(ajuste: AjusteBancario, saldoAnterior: Double, saldoNuevo: Double, advertenciaSaldoNegativo: Bool, message: String) {
+        self.ajuste = ajuste
+        self.saldoAnterior = saldoAnterior
+        self.saldoNuevo = saldoNuevo
+        self.advertenciaSaldoNegativo = advertenciaSaldoNegativo
+        self.message = message
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case ajusteId
-        case cuentaId
-        case tipo
-        case monto
-        case moneda
-        case descripcion
-        case motivo
+        case ajuste
+        case saldoAnterior
+        case saldoNuevo
+        case advertenciaSaldoNegativo
+        case message
     }
 
     // Encodable protocol methods
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(ajusteId, forKey: .ajusteId)
-        try container.encodeIfPresent(cuentaId, forKey: .cuentaId)
-        try container.encodeIfPresent(tipo, forKey: .tipo)
-        try container.encodeIfPresent(monto, forKey: .monto)
-        try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(descripcion, forKey: .descripcion)
-        try container.encodeIfPresent(motivo, forKey: .motivo)
+        try container.encode(ajuste, forKey: .ajuste)
+        try container.encode(saldoAnterior, forKey: .saldoAnterior)
+        try container.encode(saldoNuevo, forKey: .saldoNuevo)
+        try container.encode(advertenciaSaldoNegativo, forKey: .advertenciaSaldoNegativo)
+        try container.encode(message, forKey: .message)
     }
 }
 

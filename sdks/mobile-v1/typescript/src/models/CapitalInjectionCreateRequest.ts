@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Alta de inyección de capital. socio es obligatorio cuando tipo=CAPITAL_SOCIAL; entidadPrestamista cuando tipo=DEUDA_EXTERNA.
  * @export
  * @interface CapitalInjectionCreateRequest
  */
@@ -24,7 +24,7 @@ export interface CapitalInjectionCreateRequest {
      * @type {number}
      * @memberof CapitalInjectionCreateRequest
      */
-    monto: number;
+    montoRecibido: number;
     /**
      * 
      * @type {string}
@@ -36,7 +36,13 @@ export interface CapitalInjectionCreateRequest {
      * @type {string}
      * @memberof CapitalInjectionCreateRequest
      */
-    tipo?: string;
+    tipo: CapitalInjectionCreateRequestTipoEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    cuentaId: string;
     /**
      * 
      * @type {string}
@@ -48,14 +54,57 @@ export interface CapitalInjectionCreateRequest {
      * @type {string}
      * @memberof CapitalInjectionCreateRequest
      */
-    cuentaBancariaId?: string;
+    socio?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    entidadPrestamista?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    tasaInteres?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    plazoMeses?: number;
+    /**
+     * 
+     * @type {Date}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    fechaInicioPago?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof CapitalInjectionCreateRequest
+     */
+    fechaOperacion?: Date;
 }
+
+
+/**
+ * @export
+ */
+export const CapitalInjectionCreateRequestTipoEnum = {
+    CapitalSocial: 'CAPITAL_SOCIAL',
+    DeudaExterna: 'DEUDA_EXTERNA'
+} as const;
+export type CapitalInjectionCreateRequestTipoEnum = typeof CapitalInjectionCreateRequestTipoEnum[keyof typeof CapitalInjectionCreateRequestTipoEnum];
+
 
 /**
  * Check if a given object implements the CapitalInjectionCreateRequest interface.
  */
 export function instanceOfCapitalInjectionCreateRequest(value: object): value is CapitalInjectionCreateRequest {
-    if (!('monto' in value) || value['monto'] === undefined) return false;
+    if (!('montoRecibido' in value) || value['montoRecibido'] === undefined) return false;
+    if (!('tipo' in value) || value['tipo'] === undefined) return false;
+    if (!('cuentaId' in value) || value['cuentaId'] === undefined) return false;
     return true;
 }
 
@@ -69,11 +118,17 @@ export function CapitalInjectionCreateRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'monto': json['monto'],
+        'montoRecibido': json['montoRecibido'],
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'tipo': json['tipo'] == null ? undefined : json['tipo'],
+        'tipo': json['tipo'],
+        'cuentaId': json['cuentaId'],
         'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
-        'cuentaBancariaId': json['cuentaBancariaId'] == null ? undefined : json['cuentaBancariaId'],
+        'socio': json['socio'] == null ? undefined : json['socio'],
+        'entidadPrestamista': json['entidadPrestamista'] == null ? undefined : json['entidadPrestamista'],
+        'tasaInteres': json['tasaInteres'] == null ? undefined : json['tasaInteres'],
+        'plazoMeses': json['plazoMeses'] == null ? undefined : json['plazoMeses'],
+        'fechaInicioPago': json['fechaInicioPago'] == null ? undefined : (new Date(json['fechaInicioPago'])),
+        'fechaOperacion': json['fechaOperacion'] == null ? undefined : (new Date(json['fechaOperacion'])),
     };
 }
 
@@ -88,11 +143,17 @@ export function CapitalInjectionCreateRequestToJSONTyped(value?: CapitalInjectio
 
     return {
         
-        'monto': value['monto'],
+        'montoRecibido': value['montoRecibido'],
         'moneda': value['moneda'],
         'tipo': value['tipo'],
+        'cuentaId': value['cuentaId'],
         'descripcion': value['descripcion'],
-        'cuentaBancariaId': value['cuentaBancariaId'],
+        'socio': value['socio'],
+        'entidadPrestamista': value['entidadPrestamista'],
+        'tasaInteres': value['tasaInteres'],
+        'plazoMeses': value['plazoMeses'],
+        'fechaInicioPago': value['fechaInicioPago'] == null ? value['fechaInicioPago'] : value['fechaInicioPago'].toISOString(),
+        'fechaOperacion': value['fechaOperacion'] == null ? value['fechaOperacion'] : value['fechaOperacion'].toISOString(),
     };
 }
 

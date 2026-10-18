@@ -182,25 +182,23 @@ export const updatePlanSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LockUnlockInput = z.infer<typeof lockUnlockSchema>;
-export type CloudinaryAssetsQueryInput = z.infer<typeof cloudinaryAssetsQuerySchema>;
-export type CloudinaryCleanupInput = z.infer<typeof cloudinaryCleanupSchema>;
+export type CloudinaryAssetsQueryInput = z.input<typeof cloudinaryAssetsQuerySchema>;
+export type CloudinaryCleanupInput = z.input<typeof cloudinaryCleanupSchema>;
 export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
-export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;
+export type CreateLicenciaInput = z.input<typeof createLicenciaSchema>;
 export type UpdateLicenciaInput = z.infer<typeof updateLicenciaSchema>;
 export type UpdateLicenseAccountingOverridesInput = z.infer<
   typeof updateLicenseAccountingOverridesSchema
 >;
-export type CreateDemoTenantInput = z.infer<typeof createDemoTenantSchema>;
-export type CleanupExpiredDemoLicenciasInput = z.infer<
-  typeof cleanupExpiredDemoLicenciasSchema
->;
+export type CreateDemoTenantInput = z.input<typeof createDemoTenantSchema>;
+export type CleanupExpiredDemoLicenciasInput = z.input<typeof cleanupExpiredDemoLicenciasSchema>;
 export type ChangePlanInput = z.infer<typeof changePlanSchema>;
-export type RenewLicenciaInput = z.infer<typeof renewLicenciaSchema>;
+export type RenewLicenciaInput = z.input<typeof renewLicenciaSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;
-export type CreatePlanInput = z.infer<typeof createPlanSchema>;
+export type CreatePlanInput = z.input<typeof createPlanSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
 
 // ─── Licencias Query ────────────────────────────────────
@@ -216,7 +214,7 @@ export const getLicenciasQuerySchema = z.object({
 	typeFilter: z.string().default('all'),
 });
 
-export type GetLicenciasQueryInput = z.infer<typeof getLicenciasQuerySchema>;
+export type GetLicenciasQueryInput = z.input<typeof getLicenciasQuerySchema>;
 
 export const licenciasStatsQuerySchema = z.object({
 	search: z.string().default(''),
@@ -225,4 +223,122 @@ export const licenciasStatsQuerySchema = z.object({
 	typeFilter: z.string().default('all'),
 });
 
-export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
+export type LicenciasStatsQueryInput = z.input<typeof licenciasStatsQuerySchema>;
+
+export const adminUserIdSchema = z.object({
+  userId: z.string().min(1),
+});
+
+export const adminUpdateUserSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().min(1).max(120).optional(),
+  email: z.string().email("Ingresa un email válido").optional(),
+  role: z.enum(["admin", "regularUser", "salesAgent"]).optional(),
+});
+
+export const adminAssignTenantSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+  deactivateOthers: z.boolean().optional().default(false),
+});
+
+export const adminChangeTenantRoleSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+});
+
+export type AdminUserIdInput = z.infer<typeof adminUserIdSchema>;
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+export type AdminAssignTenantInput = z.input<typeof adminAssignTenantSchema>;
+export type AdminChangeTenantRoleInput = z.infer<
+  typeof adminChangeTenantRoleSchema
+>;
+
+export const adminLicenciaIdSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+});
+
+export const adminRenewLicenciaSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1).optional(),
+  durationDays: z.number().int().min(1).max(3650).optional(),
+});
+
+export type AdminLicenciaIdInput = z.infer<typeof adminLicenciaIdSchema>;
+export type AdminRenewLicenciaInput = z.infer<typeof adminRenewLicenciaSchema>;
+
+export const adminActivityLogsQuerySchema = z.object({
+  userId: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
+export const adminLoginHistoryQuerySchema = z.object({
+  userId: z.string().min(1),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+});
+
+export const adminRevokeSessionSchema = z.object({
+  sessionId: z.string().min(1),
+});
+
+export type AdminActivityLogsQueryInput = z.infer<
+  typeof adminActivityLogsQuerySchema
+>;
+export type AdminLoginHistoryQueryInput = z.infer<
+  typeof adminLoginHistoryQuerySchema
+>;
+export type AdminRevokeSessionInput = z.infer<typeof adminRevokeSessionSchema>;
+
+export const adminTenantIdSchema = z.object({
+  tenantId: z.string().min(1),
+});
+
+export const adminUpdateTenantSchema = z.object({
+  tenantId: z.string().min(1),
+  nombre: z.string().min(1).max(120).optional(),
+  slug: z.string().min(1).max(120).optional(),
+  regimenFiscal: z.string().max(120).nullable().optional(),
+  taxId: z.string().max(60).nullable().optional(),
+  razonSocial: z.string().max(160).nullable().optional(),
+  codigoPostalFiscal: z.string().max(20).nullable().optional(),
+  fiscalActivado: z.boolean().optional(),
+  contabilidadTimezone: z.string().max(80).optional(),
+});
+
+export const adminRemoveTenantUserSchema = z.object({
+  tenantId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export const adminAssignTenantLicenseSchema = z.object({
+  tenantId: z.string().min(1),
+  planId: z.string().min(1),
+  durationDays: z.number().int().min(1).max(3650).optional(),
+  inicio: z.string().datetime().optional(),
+  expiracion: z.string().datetime().optional(),
+  activa: z.boolean().optional().default(true),
+});
+
+export const adminUpdateTenantLicenseSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1).optional(),
+  expiracion: z.string().datetime().optional(),
+  activa: z.boolean().optional(),
+  isAdminTest: z.boolean().optional(),
+  maxUsuarios: z.number().int().min(1).optional(),
+  maxAlmacenes: z.number().int().min(1).optional(),
+  maxProductos: z.number().int().min(1).optional(),
+  maxClientes: z.number().int().min(1).optional(),
+});
+
+export type AdminTenantIdInput = z.infer<typeof adminTenantIdSchema>;
+export type AdminUpdateTenantInput = z.infer<typeof adminUpdateTenantSchema>;
+export type AdminRemoveTenantUserInput = z.infer<
+  typeof adminRemoveTenantUserSchema
+>;
+export type AdminAssignTenantLicenseInput = z.input<typeof adminAssignTenantLicenseSchema>;
+export type AdminUpdateTenantLicenseInput = z.infer<
+  typeof adminUpdateTenantLicenseSchema
+>;

@@ -17,9 +17,9 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (fn: Function) => async (request: NextRequest, params?: unknown) =>
+  withAuthGet: (fn: Function) => async (request: NextRequest = {} as NextRequest, params?: unknown) =>
     fn(request, params, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
-  withAuthPost: (fn: Function) => async (request: NextRequest, params?: unknown) =>
+  withAuthPost: (fn: Function) => async (request: NextRequest = {} as NextRequest, params?: unknown) =>
     fn(request, params, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
 }));
 
@@ -45,7 +45,7 @@ describe('production recipe output guards', () => {
       }),
     });
 
-    const response = await createReceta(request);
+    const response = await createReceta(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -67,7 +67,7 @@ describe('production recipe output guards', () => {
       }),
     });
 
-    const response = await createOrden(request);
+    const response = await createOrden(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(400);

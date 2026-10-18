@@ -81,6 +81,8 @@ model Vendor {
 model InyeccionCapital {
   id                 String         @id @default(cuid())
   tenantId           String?
+  idempotencyKey     String?
+  payloadFingerprint String?
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
@@ -103,6 +105,7 @@ model InyeccionCapital {
 
   @@index([cuentaId, createdAt])
   @@index([tenantId])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model PagoDeuda {
@@ -202,6 +205,7 @@ model Tenant {
   cuentasPorPagar                CuentaPorPagar[]
   defectacionesCatalogo          DefectacionCatalogo[]
   deudasCash                     DeudaCash[]
+  cashPaymentInterestAllocations CashPaymentInterestAllocation[]
   empleados                      Empleado[]
   equiposReparacion              EquipoReparacion[]
   gastosCompra                   GastoCompra[]
@@ -268,6 +272,14 @@ model Tenant {
   conteosInventario              ConteoInventario[]
   turnosPos                      TurnoPuntoVenta[]
   tiposPago                      TipoPago[]
+  cuentasContables               CuentaContable[]
+  diariosContables               Diario[]
+  asientos                       Asiento[]
+  cuentasRoles                   CuentaRolTenant[]
+  replayPreflights ReplayPreflight[]
+  replayApprovals  ReplayApproval[]
+  replayRuns       ReplayRun[]
+  shadowPosteos                  ShadowPosteoOutbox[]
 
   @@index([slug])
   @@map("tenants")
@@ -286,6 +298,10 @@ model TenantMembership {
   tenant       Tenant      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
   customRole   TenantRole? @relation(fields: [customRoleId], references: [roleId], onDelete: Restrict)
+  replayPreflightsRequested ReplayPreflight[] @relation("ReplayPreflightRequester")
+  replayApprovalsRequested  ReplayApproval[]  @relation("ReplayApprovalRequester")
+  replayApprovalsApproved   ReplayApproval[]  @relation("ReplayApprovalApprover")
+  replayRunsStarted         ReplayRun[]       @relation("ReplayRunActor")
 
   @@unique([tenantId, userId])
   @@index([userId])
@@ -1596,6 +1612,7 @@ model VentaServicios {
   ventaId          String?
   // B-06: CONTADO no genera deuda; CREDITO crea su cuenta por cobrar.
   condicionPago    String                   @default("CONTADO")
+  idempotencyKey  String?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
   reconciliaciones ReconciliacionServicio[]
@@ -1607,6 +1624,7 @@ model VentaServicios {
 
   @@index([tenantId])
   @@index([ventaId])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model CompraServicio {
@@ -1926,6 +1944,8 @@ model ReconciliacionVenta {
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
+  montoCuenta                 Decimal?       @db.Decimal(20, 4)
+  monedaCuenta                String?
   moneda                      String         @default("CUP")
   tasaCambio                  Decimal?
   montoConvertido             Decimal?
@@ -1944,6 +1964,8 @@ model ReconciliacionVenta {
   updatedAt                   DateTime       @updatedAt
   idTransferencia             String?
   verificacionTransferenciaId String?
+  idempotencyKey              String?
+  idempotencyPayloadHash      String?
   deudaCashId                 String?
   prestamoCashId              String?
   tipoReconciliacion          String?
@@ -1951,6 +1973,7 @@ model ReconciliacionVenta {
   deudaCash                   DeudaCash?     @relation(fields: [deudaCashId], references: [id])
   prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id])
   tenant                      Tenant         @relation(fields: [tenantId], references: [tenantId])
+  cashInterestAllocation     CashPaymentInterestAllocation?
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
 
@@ -1958,6 +1981,8 @@ model ReconciliacionVenta {
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, reconciliacionId])
 }
 
 model ReconciliacionServicio {
@@ -2043,6 +2068,8 @@ model ReconciliacionGasto {
 model AjusteBancario {
   ajusteId        String         @id @default(cuid())
   tenantId        String
+  idempotencyKey  String?
+  payloadFingerprint String?
   cuentaId        String
   tipo            String
   monto           Decimal
@@ -2061,6 +2088,7 @@ model AjusteBancario {
   @@index([tenantId])
   @@index([tenantId, fechaOperacion])
   @@index([tenantId, cuentaId, fechaOperacion])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model TransferenciaBancaria {
@@ -2448,6 +2476,19 @@ model CuentaPorCobrar {
   clienteId        String
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
+  montoOriginal    Decimal?              @db.Decimal(20, 4)
+  montoDeudaFuncional Decimal?           @db.Decimal(20, 4)
+  montoPagadoFuncional Decimal?           @db.Decimal(20, 4)
+  monedaOriginal   String?
+  monedaFuncional  String?
+  tasaCambio       Decimal?              @db.Decimal(20, 10)
+  rateEffectiveAt  DateTime?
+  fxProvenanceKind String?
+  fxProvenanceSource String?
+  fxCatalogRateId  String?
+  fxEvidenceJson   Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion Int?
   idTransferencia  String?
   estado           EstadoCuentaPorCobrar @default(PENDIENTE)
   fechaVencimiento DateTime?
@@ -2473,6 +2514,18 @@ model CuentaPorPagar {
   proveedorNombre  String?
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
+  montoDeudaFuncional Decimal?           @db.Decimal(20, 4)
+  montoPagadoFuncional Decimal?           @db.Decimal(20, 4)
+  monedaOriginal   String?
+  monedaFuncional  String?
+  tasaCambio       Decimal?              @db.Decimal(20, 10)
+  rateEffectiveAt  DateTime?
+  fxProvenanceKind String?
+  fxProvenanceSource String?
+  fxCatalogRateId  String?
+  fxEvidenceJson   Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion Int?
   saldoPendiente   Decimal
   moneda           String                @default("CUP")
   fechaEmision     DateTime              @default(now())
@@ -2519,6 +2572,15 @@ model DeudaCash {
   comprobanteUrl   String?
   cuentaBancariaId String?
   estado           String                @default("ACTIVO")
+  ordinaryAnnualRate             Decimal? @db.Decimal(20, 10)
+  moratoryAnnualRate              Decimal? @db.Decimal(20, 10)
+  cashInterestPolicyVersion      Int?
+  cashInterestGrantDate          DateTime? @db.Date
+  cashInterestMaturityDate       DateTime? @db.Date
+  cashInterestAccruedThroughDate DateTime? @db.Date
+  cashInterestPrincipalRemaining Decimal? @db.Decimal(20, 4)
+  cashInterestOrdinaryCarry      Decimal? @db.Decimal(38, 18)
+  cashInterestMoratoryCarry      Decimal? @db.Decimal(38, 18)
   cuentaPorPagar   CuentaPorPagar        @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
@@ -2548,6 +2610,15 @@ model PrestamoCash {
   tasaCambioAlCrear Decimal?
   cuentaBancariaId  String?
   estado            String                @default("ACTIVO")
+  ordinaryAnnualRate             Decimal? @db.Decimal(20, 10)
+  moratoryAnnualRate              Decimal? @db.Decimal(20, 10)
+  cashInterestPolicyVersion      Int?
+  cashInterestGrantDate          DateTime? @db.Date
+  cashInterestMaturityDate       DateTime? @db.Date
+  cashInterestAccruedThroughDate DateTime? @db.Date
+  cashInterestPrincipalRemaining Decimal? @db.Decimal(20, 4)
+  cashInterestOrdinaryCarry      Decimal? @db.Decimal(38, 18)
+  cashInterestMoratoryCarry      Decimal? @db.Decimal(38, 18)
   cliente           Cliente               @relation(fields: [clienteId], references: [clienteId])
   cuentaPorCobrar   CuentaPorCobrar       @relation(fields: [cuentaPorCobrarId], references: [id])
   tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
@@ -3113,11 +3184,307 @@ model PeriodoContable {
   tenant             Tenant             @relation(fields: [tenantId], references: [tenantId])
   snapshots          SaldoSnapshot[]
   snapshotPeriodos   SnapshotPeriodo[]
+  asientos           Asiento[]
+  replayPreflights    ReplayPreflight[]
 
   @@unique([tenantId, codigo])
+  @@unique([tenantId, periodoId])
   @@index([tenantId, estado])
   @@index([tenantId, periodoPadreId])
   @@map("periodos_contables")
+}
+
+/// Catálogo de cuentas tenant-scoped usado por el mayor formal.
+model CuentaContable {
+  cuentaContableId String             @id @default(cuid())
+  tenantId         String
+  codigo           String
+  nombre           String
+  tipo             TipoCuentaContable
+  naturaleza       NaturalezaCuenta
+  padreId          String?
+  nivel            Int                @default(1)
+  aceptaMovimiento Boolean            @default(true)
+  activa           Boolean            @default(true)
+  esDeSistema      Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  padre            CuentaContable?    @relation("PlanJerarquia", fields: [tenantId, padreId], references: [tenantId, cuentaContableId], onDelete: Restrict, map: "cuentas_contables_padreId_fkey")
+  hijos            CuentaContable[]   @relation("PlanJerarquia")
+  tenant           Tenant             @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  lineas           AsientoLinea[]
+  roles            CuentaRolTenant[]
+
+  @@unique([tenantId, codigo])
+  @@unique([tenantId, cuentaContableId])
+  @@index([tenantId, tipo, activa])
+  @@index([tenantId, padreId])
+  @@map("cuentas_contables")
+}
+
+/// Diarios tenant-scoped, con consecutivo independiente por período.
+model Diario {
+  diarioId  String     @id @default(cuid())
+  tenantId  String
+  tipo      TipoDiario
+  codigo    String
+  nombre    String
+  activo    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  asientos  Asiento[]
+  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, codigo])
+  @@unique([tenantId, diarioId])
+  @@index([tenantId, tipo])
+  @@map("diarios_contables")
+}
+
+/// Asiento append-only del mayor; reversos son eventos contables distintos.
+model CashPaymentInterestAllocation {
+  id                              String             @id @default(cuid())
+  tenantId                        String
+  reconciliacionId                String
+  asientoId                       String?
+  obligationType                  String
+  policyVersion                   Int
+  grantDate                       DateTime           @db.Date
+  maturityDate                    DateTime?          @db.Date
+  paymentDate                     DateTime           @db.Date
+  accrualCheckpointDate           DateTime           @db.Date
+  ordinaryElapsedDays             Int
+  moratoryElapsedDays             Int
+  ordinaryAnnualRate              Decimal            @db.Decimal(20, 10)
+  moratoryAnnualRate              Decimal            @db.Decimal(20, 10)
+  principalBefore                 Decimal            @db.Decimal(20, 4)
+  overduePrincipalBefore          Decimal            @db.Decimal(20, 4)
+  ordinaryCarryBefore             Decimal            @db.Decimal(38, 18)
+  moratoryCarryBefore             Decimal            @db.Decimal(38, 18)
+  ordinaryAccruedThisPeriod       Decimal            @db.Decimal(38, 18)
+  moratoryAccruedThisPeriod       Decimal            @db.Decimal(38, 18)
+  paymentAmount                   Decimal            @db.Decimal(20, 4)
+  moratoryAllocated               Decimal            @db.Decimal(20, 4)
+  ordinaryAllocated               Decimal            @db.Decimal(20, 4)
+  principalAllocated              Decimal            @db.Decimal(20, 4)
+  principalAfter                  Decimal            @db.Decimal(20, 4)
+  ordinaryCarryAfter              Decimal            @db.Decimal(38, 18)
+  moratoryCarryAfter              Decimal            @db.Decimal(38, 18)
+  functionalAmount                Decimal            @db.Decimal(20, 4)
+  moratoryFunctional              Decimal            @db.Decimal(20, 4)
+  ordinaryFunctional              Decimal            @db.Decimal(20, 4)
+  principalFunctional             Decimal            @db.Decimal(20, 4)
+  functionalCurrency              String
+  fxEvidenceFingerprint            String?
+  eventFingerprint                String
+  createdAt                       DateTime           @default(now())
+  tenant                          Tenant             @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  reconciliation                 ReconciliacionVenta @relation(fields: [tenantId, reconciliacionId], references: [tenantId, reconciliacionId], onDelete: Restrict)
+  asiento                         Asiento?            @relation(fields: [tenantId, asientoId], references: [tenantId, asientoId], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reconciliacionId])
+  @@unique([tenantId, asientoId])
+  @@index([tenantId, paymentDate])
+  @@map("cash_payment_interest_allocations")
+}
+
+model Asiento {
+  asientoId      String          @id @default(cuid())
+  tenantId       String
+  diarioId       String
+  periodoId      String
+  numero         Int
+  fecha          DateTime
+  descripcion    String
+  estado         EstadoAsiento   @default(CONTABILIZADO)
+  origenTipo     String
+  origenId       String
+  hash           String
+  hashAnterior   String?
+  hashVersion    String?
+  tenantSequence BigInt?
+  revertidoPorId String?
+  replayRunId    String?
+  observaciones  String?
+  createdBy      String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  diario         Diario          @relation(fields: [tenantId, diarioId], references: [tenantId, diarioId], onDelete: Restrict, map: "asientos_tenant_diario_fkey")
+  periodo        PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict, map: "asientos_tenant_periodo_fkey")
+  tenant         Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  lineas         AsientoLinea[]
+  cashPaymentInterestAllocation CashPaymentInterestAllocation?
+  replayRun      ReplayRun?      @relation(fields: [tenantId, replayRunId], references: [tenantId, replayRunId], onDelete: Restrict)
+
+  @@unique([tenantId, origenTipo, origenId])
+  @@unique([tenantId, asientoId])
+  @@unique([diarioId, periodoId, numero])
+  @@unique([tenantId, tenantSequence])
+  @@index([tenantId, fecha])
+  @@index([tenantId, periodoId])
+  @@index([tenantId, hash])
+  @@index([tenantId, replayRunId])
+  @@map("asientos")
+}
+
+model AsientoLinea {
+  lineaId              String          @id @default(cuid())
+  tenantId             String
+  asientoId            String
+  orden                Int
+  cuentaId             String
+  debe                 Decimal         @default(0) @db.Decimal(20, 4)
+  haber                Decimal         @default(0) @db.Decimal(20, 4)
+  monedaOriginal       String
+  montoOriginal        Decimal         @db.Decimal(20, 4)
+  tasaCambio           Decimal?        @db.Decimal(20, 10)
+  fxEvidenceFingerprint String?
+  referencia           String?
+  asiento              Asiento         @relation(fields: [tenantId, asientoId], references: [tenantId, asientoId], onDelete: Cascade, map: "asiento_lineas_tenant_asiento_fkey")
+  cuenta               CuentaContable  @relation(fields: [tenantId, cuentaId], references: [tenantId, cuentaContableId], onDelete: Restrict, map: "asiento_lineas_tenant_cuenta_fkey")
+
+  @@index([asientoId, orden])
+  @@index([tenantId, asientoId, orden])
+  @@index([cuentaId])
+  @@index([tenantId, cuentaId])
+  @@map("asiento_lineas")
+}
+
+model PlantillaAsiento {
+  plantillaId String              @id @default(cuid())
+  evento      TipoEventoContable
+  orden       Int
+  lado        LadoAsiento
+  rolCuenta   RolCuenta
+  montoRegla  ReglaMontoEvento
+  condicion   String?
+  version     Int                 @default(1)
+  activa      Boolean             @default(true)
+
+  @@unique([evento, orden, version])
+  @@map("plantillas_asiento")
+}
+
+model CuentaRolTenant {
+  cuentaRolId String         @id @default(cuid())
+  tenantId    String
+  rol         RolCuenta
+  cuentaId    String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  cuenta      CuentaContable @relation(fields: [tenantId, cuentaId], references: [tenantId, cuentaContableId], onDelete: Restrict, map: "cuentas_roles_tenant_tenant_cuenta_fkey")
+  tenant      Tenant         @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, rol])
+  @@map("cuentas_roles_tenant")
+}
+
+/// Snapshot versionado y expirable de un preflight de replay por tenant/período.
+model ReplayPreflight {
+  replayPreflightId String   @id @default(cuid())
+  tenantId          String
+  periodoId         String
+  requestedByUserId String
+  generatedAt       DateTime @default(now())
+  expiresAt         DateTime
+  digestVersion     Int
+  digest            String
+  snapshot          Json
+  status            String   @default("READY")
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  periodo           PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  requester         TenantMembership @relation("ReplayPreflightRequester", fields: [tenantId, requestedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  approval          ReplayApproval?
+  runs              ReplayRun[]
+
+  @@unique([tenantId, replayPreflightId], map: "contab_replay_preflight_id_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId], map: "contab_replay_preflight_requester_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], map: "contab_replay_preflight_digest_key")
+  @@index([tenantId, periodoId, generatedAt])
+  @@index([tenantId, expiresAt, status])
+  @@map("contabilidad_replay_preflights")
+}
+
+/// Aprobación inmutable ligada a un único preflight/digest y un aprobador tenant.
+model ReplayApproval {
+  replayApprovalId  String   @id @default(cuid())
+  tenantId          String
+  replayPreflightId String
+  requestedByUserId String
+  approvedByUserId  String
+  digestVersion     Int
+  digest            String
+  status            String   @default("APPROVED")
+  approvedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  preflight         ReplayPreflight @relation(fields: [tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], references: [tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], onDelete: Restrict)
+  requester         TenantMembership @relation("ReplayApprovalRequester", fields: [tenantId, requestedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  approver          TenantMembership @relation("ReplayApprovalApprover", fields: [tenantId, approvedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  runs              ReplayRun[]
+
+  @@unique([tenantId, replayApprovalId])
+  @@unique([tenantId, replayPreflightId], map: "contab_replay_approval_preflight_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId], map: "contab_replay_approval_actor_key")
+  @@unique([tenantId, replayPreflightId, replayApprovalId], map: "contab_replay_approval_binding_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], map: "contab_replay_approval_preflight_digest_key")
+  @@unique([tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], map: "contab_replay_approval_digest_binding_key")
+  @@index([tenantId, approvedByUserId, approvedAt])
+  @@map("contabilidad_replay_approvals")
+}
+
+/// Resultado durable de cada intento de replay; asientos publicados guardan su ID.
+model ReplayRun {
+  replayRunId       String   @id @default(cuid())
+  tenantId          String
+  replayPreflightId String
+  replayApprovalId  String
+  startedByUserId   String
+  digestVersion     Int
+  digest            String
+  status            String   @default("RUNNING")
+  sourceCount       Int      @default(0)
+  postedCount       Int      @default(0)
+  omittedCount      Int      @default(0)
+  ambiguousCount    Int      @default(0)
+  noFxCount         Int      @default(0)
+  noCostCount       Int      @default(0)
+  outOfPeriodCount  Int      @default(0)
+  diagnostic        Json?
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  preflight         ReplayPreflight @relation(fields: [tenantId, replayPreflightId], references: [tenantId, replayPreflightId], onDelete: Restrict)
+  approval          ReplayApproval @relation(fields: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], references: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], onDelete: Restrict)
+  actor             TenantMembership @relation("ReplayRunActor", fields: [tenantId, startedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  asientos          Asiento[]
+
+  @@unique([tenantId, replayRunId])
+  @@index([tenantId, replayPreflightId, startedAt])
+  @@index([tenantId, status, startedAt])
+  @@map("contabilidad_replay_runs")
+}
+
+
+model ShadowPosteoOutbox {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tipoEvento  String
+  origenTipo  String
+  origenId    String
+  estado      String
+  causa       String?
+  duracionMs  Int
+  createdAt   DateTime @default(now())
+  entregadoAt DateTime?
+  tenant      Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, tipoEvento, origenTipo, origenId])
+  @@index([entregadoAt, createdAt])
+  @@index([tenantId, tipoEvento, estado])
+  @@map("shadow_posteo_outbox")
 }
 
 model SnapshotPeriodo {
@@ -3486,6 +3853,117 @@ enum CategoriaPeriodo {
   ORDINARIO
   EXTRAORDINARIO
   RECTIFICATIVO
+}
+
+enum TipoCuentaContable {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  COSTO
+  GASTO
+}
+
+enum NaturalezaCuenta {
+  DEUDORA
+  ACREEDORA
+}
+
+enum TipoDiario {
+  VENTAS
+  COMPRAS
+  CAJA
+  BANCOS
+  NOMINA
+  AJUSTES
+  APERTURA_CIERRE
+}
+
+enum EstadoAsiento {
+  CONTABILIZADO
+  ANULADO
+}
+
+enum LadoAsiento {
+  DEBE
+  HABER
+}
+
+enum ReglaMontoEvento {
+  TOTAL
+  MONTO_PAGADO
+  COSTO_FIFO
+  INTERESES
+  INTERESES_MORATORIOS
+  TOTAL_MENOS_INTERESES
+  DIFERENCIA_FX
+  TOTAL_MENOS_DIFERENCIA
+  TOTAL_MAS_DIFERENCIA
+}
+
+enum RolCuenta {
+  CAJA_PRINCIPAL
+  BANCOS
+  INVENTARIOS
+  CXC_CLIENTES
+  ANTICIPOS_CLIENTES
+  PRESTAMOS_OTORGADOS
+  CXP_PROVEEDORES
+  ANTICIPOS_PROVEEDORES
+  DEUDAS_RECIBIDAS
+  CAPITAL_SOCIAL
+  RESULTADOS_ACUMULADOS
+  RESULTADO_PERIODO
+  VENTAS_PRODUCTOS
+  VENTAS_SERVICIOS
+  OTROS_INGRESOS
+  INTERESES_GANADOS
+  INTERESES_MORATORIOS_GANADOS
+  DIFERENCIA_CAMBIARIA_INGRESO
+  COSTO_VENTAS
+  GASTOS_OPERATIVOS
+  GASTOS_NOMINA
+  GASTOS_FINANCIEROS
+  GASTOS_MORATORIOS
+  MERMAS
+  DIFERENCIA_CAMBIARIA_GASTO
+}
+
+enum TipoEventoContable {
+  VENTA_SERVICIO_CREDITO
+  VENTA_CONTADO
+  VENTA_CREDITO
+  COBRO_CXC
+  COSTO_VENTA_DEVENGADO
+  DEVOLUCION_VENTA
+  VENTA_SERVICIO
+  COBRO_SERVICIO
+  COMPRA_CONTADO
+  COMPRA_CREDITO
+  PAGO_CXP
+  GASTO_CONTADO
+  GASTO_CREDITO
+  PAGO_GASTO_CREDITO
+  PAGO_NOMINA
+  ANTICIPO_CLIENTE_RECIBIDO
+  ANTICIPO_CLIENTE_APLICADO
+  ANTICIPO_PROVEEDOR_ENTREGADO
+  ANTICIPO_PROVEEDOR_APLICADO
+  PRESTAMO_OTORGADO
+  COBRO_PRESTAMO
+  DEUDA_RECIBIDA
+  PAGO_DEUDA
+  AJUSTE_BANCARIO_CARGO
+  AJUSTE_BANCARIO_ABONO
+  TRANSFERENCIA_BANCARIA
+  INYECCION_CAPITAL
+  PAGO_DEUDA_CAPITAL
+  MERMA_INVENTARIO
+  PRODUCCION_SALIDA
+  GASTO_CON_ANTICIPO_PROVEEDOR
+  DIFERENCIA_CAMBIARIA
+  APERTURA_PERIODO
+  CIERRE_PERIODO
 }
 
 enum BackupType {

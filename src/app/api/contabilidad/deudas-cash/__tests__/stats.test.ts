@@ -28,7 +28,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request)
+    const response = await GET(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(404)
@@ -55,7 +55,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request)
+    const response = await GET(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(200)
@@ -75,7 +75,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request)
+    const response = await GET(request, {})
     const body = await response.json()
 
     expect(response.status).toBe(200)
@@ -95,7 +95,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    await GET(request)
+    await GET(request, {})
 
     // Verifica que los counts aplican deletedAt: null
     expect(prisma.deudaCash.count).toHaveBeenCalledWith(

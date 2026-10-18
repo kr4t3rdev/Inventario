@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { verificarMargenBajoAction } from '../actions-alertas'
 
+// La sesion se resuelve dentro del withAction real; solo se fija el usuario.
+vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: {
@@ -13,26 +17,29 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-}))
 
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireFeature: vi.fn(),
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Usuario Ficha',
+  email: 'ficha@test.com',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+  role: 'admin',
+}
 
 describe('verificarMargenBajoAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('crea notificación para producto con margen < 10%', async () => {
@@ -42,7 +49,7 @@ describe('verificarMargenBajoAction', () => {
     vi.mocked(prisma.notification.findFirst).mockResolvedValue(null)
     vi.mocked(prisma.notification.createMany).mockResolvedValue({ count: 1 } as any)
 
-    const data = await verificarMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await verificarMargenBajoAction({})).data
 
     expect(data.notificacionesCreadas).toBeGreaterThan(0)
   })
@@ -53,7 +60,7 @@ describe('verificarMargenBajoAction', () => {
     ] as any)
     vi.mocked(prisma.notification.findFirst).mockResolvedValue({ id: 'notif-1' } as any)
 
-    const data = await verificarMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await verificarMargenBajoAction({})).data
 
     expect(data.notificacionesCreadas).toBe(0)
   })
@@ -63,7 +70,7 @@ describe('verificarMargenBajoAction', () => {
       { id: 'prod-1', nombre: 'Producto A', precioVenta: 100, precioCosto: 60 },
     ] as any)
 
-    const data = await verificarMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await verificarMargenBajoAction({})).data
 
     expect(data.notificacionesCreadas).toBe(0)
     expect(data.productosMargenBajo).toBe(0)
@@ -77,7 +84,7 @@ describe('verificarMargenBajoAction', () => {
     vi.mocked(prisma.notification.findFirst).mockResolvedValue(null)
     vi.mocked(prisma.notification.createMany).mockResolvedValue({ count: 1 } as any)
 
-    const data = await verificarMargenBajoAction({}, mockUser)
+    const data = expectActionSuccess(await verificarMargenBajoAction({})).data
 
     expect(data.productosMargenBajo).toBe(2)
     expect(data.notificacionesCreadas).toBeGreaterThan(0)

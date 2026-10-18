@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import prisma from '@/lib/prisma'
-import { withAuthPost } from '@/lib/auth-middleware'
-import { AuditLogService } from '@/lib/services/audit-log-service'
-import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
-import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash'
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
+import { ActionError } from '@/lib/server-actions';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { AccountingCashOperationsMutationService, validateCashPaymentAmount } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -14,144 +13,100 @@ const pagoSchema = z.object({
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
-  observaciones: z.string().optional()
-})
+  observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
+});
 
 /**
- * @description Verifica si el módulo de préstamos cash está habilitado
- * @returns {boolean} true si está habilitado
+ * @description Verifica si el módulo de préstamos cash está habilitado.
+ * @returns {boolean} true si está habilitado.
  */
 function prestamosCashEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false'
+  return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false';
 }
 
 /**
- * @description Registra un pago parcial o total sobre un préstamo cash
- * @param {NextRequest} request - Request con body: monto, cuentaId, tipoPagoId, moneda?, tasaCambio?, observaciones?
- * @returns {NextResponse} Reconciliación creada con status 201
+ * @description Registra o reproduce un pago de préstamo cash mediante el writer compartido.
+ * @param {NextRequest} request - Solicitud con el pago y su clave opcional de idempotencia.
+ * @param {unknown} context - Contexto de ruta con el identificador del préstamo.
+ * @param {AuthenticatedUser} user - Usuario autenticado y asociado al tenant.
+ * @returns {Promise<Response>} Reconciliación con el contrato HTTP heredado.
  */
-export const POST = withAuthPost(async (request: NextRequest, context: unknown, user: { userId: string }) => {
+export const POST = withAuthPost(async (
+  request: NextRequest,
+  context: unknown,
+  user: AuthenticatedUser,
+) => {
   try {
     if (!prestamosCashEnabled()) {
-      return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
+      return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 });
+    }
+    requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de préstamos cash');
+
+    const { params } = context as { params: Promise<{ id: string }> };
+    const { id } = await params;
+    const body = pagoSchema.parse(await request.json());
+    const amount = validateCashPaymentAmount(body.monto).toNumber();
+    const idempotencyKey = body.idempotencyKey ??
+      request.headers.get('Idempotency-Key')?.trim() ?? undefined;
+    const input = {
+      id,
+      monto: amount,
+      cuentaId: body.cuentaId,
+      tipoPagoId: body.tipoPagoId,
+      moneda: body.moneda,
+      tasaCambio: body.tasaCambio,
+      observaciones: body.observaciones,
+      idempotencyKey,
+    };
+
+    const replay = await AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+      input,
+      user,
+    });
+    if (replay) {
+      return NextResponse.json({ reconciliacion: replay }, { status: 201 });
     }
 
-    const { params } = context as { params: Promise<{ id: string }> }
-    const { id } = await params
-    const body = pagoSchema.parse(await request.json())
-
-    const prestamo = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null },
-      include: { cuentaPorCobrar: true }
-    })
-
-    if (!prestamo) {
-      return NextResponse.json({ error: 'Préstamo no encontrado' }, { status: 404 })
-    }
-
-    // Validar período contable antes de registrar el pago
-    const fechaOperacion = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date()
+    const tenantId = requireTenant(user);
+    const fechaOperacion = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
-      tenantId: prestamo.tenantId,
+      tenantId,
       tipoOperacion: 'pago_prestamo_cash',
       actor: user.userId,
-    })
+    });
     if (!validacionPeriodo.permitido) {
       return NextResponse.json(
-        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
-        { status: 400 }
-      )
-    }
-
-    if (prestamo.estado === 'PAGADO' || prestamo.estado === 'CANCELADO') {
-      return NextResponse.json({ error: 'El préstamo no admite más pagos' }, { status: 400 })
-    }
-
-    const saldoPendiente = calcularSaldoPendientePrestamo(
-      Number(prestamo.cuentaPorCobrar.montoDeuda),
-      Number(prestamo.cuentaPorCobrar.montoPagado)
-    )
-
-    if (body.monto > saldoPendiente) {
-      return NextResponse.json(
-        { error: `El monto excede el saldo pendiente de ${saldoPendiente}` },
-        { status: 400 }
-      )
-    }
-
-    const resultado = await prisma.$transaction(async (tx) => {
-      const fechaReconciliacion = new Date();
-      const conversion = buildPersistedAccountingAmount(
-        Number(body.monto),
-        body.moneda || String(prestamo.moneda),
-        body.tasaCambio ?? undefined,
-        fechaReconciliacion,
+        {
+          error: validacionPeriodo.error?.message ?? 'Período contable cerrado',
+          code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO',
+        },
+        { status: 400 },
       );
-      const reconciliacion = await tx.reconciliacionVenta.create({
-        data: {
-          tenantId: prestamo.tenantId,
-          cuentaId: body.cuentaId,
-          tipoPagoId: body.tipoPagoId,
-          monto: body.monto,
-          moneda: body.moneda || prestamo.moneda,
-          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
-          ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
-          fechaReconciliacion,
-          ...(conversion.fxEvidence ?? {}),
-          ...(body.observaciones != null && { observaciones: body.observaciones }),
-          reconciliadoPor: user.userId,
-          prestamoCashId: prestamo.id,
-          tipoReconciliacion: 'PRESTAMO_CASH'
-        }
-      })
+    }
 
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: body.cuentaId },
-        data: { saldo: { increment: body.monto } }
-      })
-
-      const nuevoMontoPagado = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
-      const totalDeuda = Number(prestamo.cuentaPorCobrar.montoDeuda)
-      const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado)
-      const nuevoEstadoCuenta = nuevoSaldo <= 0.01 ? 'PAGADA' : 'PARCIAL'
-
-      await tx.cuentaPorCobrar.update({
-        where: { id: prestamo.cuentaPorCobrarId },
-        data: {
-          montoPagado: nuevoMontoPagado,
-          estado: nuevoEstadoCuenta
-        }
-      })
-
-      if (nuevoEstadoCuenta === 'PAGADA') {
-        await tx.prestamoCash.update({
-          where: { id: prestamo.id },
-          data: { estado: 'PAGADO' }
-        })
-      }
-
-      return reconciliacion
-    })
-
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PAGO_PRESTAMO',
-      entidadId: resultado.reconciliacionId,
-      usuarioId: user.userId,
-      detalles: {
-        prestamoId: prestamo.id,
-        monto: body.monto,
-        moneda: body.moneda || prestamo.moneda
-      }
-    })
-
-    return NextResponse.json({ reconciliacion: resultado }, { status: 201 })
+    const reconciliacion = await AccountingCashOperationsMutationService.registerCashLoanPayment({
+      input,
+      user,
+    });
+    return NextResponse.json({ reconciliacion }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 });
     }
-    console.error('Error registrando pago de préstamo:', error)
-    return NextResponse.json({ error: 'Error registrando pago de préstamo' }, { status: 500 })
+    if (error instanceof ActionError) {
+      const status = error.code === 'IDEMPOTENCY_CONFLICT' ? 409
+        : error.code === 'NOT_FOUND' ? 404
+          : error.code === 'DISABLED' ? 404
+            : ['TENANT_REQUIRED', 'FORBIDDEN', 'FEATURE_NOT_AVAILABLE'].includes(error.code) ? 403
+              : ['INVALID_AMOUNT', 'VALIDATION_ERROR', 'FX_EVIDENCE_REQUIRED'].includes(error.code)
+                ? 400
+                : 500;
+      return NextResponse.json({ error: error.message, code: error.code }, { status });
+    }
+    console.error('Error registrando pago de préstamo:', error);
+    return NextResponse.json({ error: 'Error registrando pago de préstamo' }, { status: 500 });
   }
-})
+});

@@ -1,4 +1,5 @@
 import { ActionError } from '@/lib/server-actions';
+import { z } from 'zod';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
@@ -24,6 +25,8 @@ function mapActionErrorStatus(code: string): number {
     case 'VALIDATION_ERROR':
     case 'CUENTA_INACTIVA':
       return 400;
+    case 'IDEMPOTENCY_CONFLICT':
+      return 409;
     default:
       return 400;
   }
@@ -35,10 +38,15 @@ export async function GET(request: Request) {
     return authResult as Response;
   }
 
+  const tenantId = authResult.user.tenantId;
+  if (!tenantId) {
+    return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const result = await AccountingOperationsReadService.getBankAdjustments({
-      tenantId: requireTenant(authResult.user),
+      tenantId,
       cuentaId: searchParams.get('cuentaId') || 'all',
       tipo: searchParams.get('tipo'),
       fechaInicio: searchParams.get('fechaInicio'),
@@ -66,7 +74,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
+    const idempotencyKey = body.idempotencyKey ?? request.headers.get('Idempotency-Key') ?? undefined;
+    const input = idempotencyKey ? { ...body, idempotencyKey } : body;
+    const existingReplay = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+      input,
+      user: authResult.user,
+    });
+    if (existingReplay) return successResponse(existingReplay);
+
+    const fechaOperacion = extraerFechaDeBody(input) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
       tenantId: authResult.user.tenantId ?? '',
@@ -75,6 +91,13 @@ export async function POST(request: Request) {
     });
 
     if (!validacionPeriodo.permitido) {
+      if (idempotencyKey) {
+        const replayAfterGate = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+          input,
+          user: authResult.user,
+        });
+        if (replayAfterGate) return successResponse(replayAfterGate);
+      }
       return errorResponse(
         validacionPeriodo.error?.message ?? 'Período contable cerrado',
         400,
@@ -83,11 +106,14 @@ export async function POST(request: Request) {
     }
 
     const result = await AccountingOperationsMutationService.createBankAdjustment({
-      input: body,
+      input,
       user: authResult.user,
     });
     return successResponse(result);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return errorResponse('Los datos del ajuste bancario no son válidos', 400, 'VALIDATION_ERROR');
+    }
     if (error instanceof ActionError) {
       return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
     }

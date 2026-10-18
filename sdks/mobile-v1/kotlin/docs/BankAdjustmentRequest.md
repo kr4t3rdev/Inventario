@@ -10,6 +10,8 @@
 | **descripcion** | **kotlin.String** |  |  |
 | **motivo** | **kotlin.String** |  |  |
 | **moneda** | **kotlin.String** |  |  [optional] |
+| **tasaCambio** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
+| **fechaOperacion** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  [optional] |
 
 
 <a id="Tipo"></a>

@@ -13,43 +13,23 @@ part of openapi.api;
 class Pagination {
   /// Returns a new [Pagination] instance.
   Pagination({
-    this.page,
-    this.limit,
-    this.total,
-    this.totalPages,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPages,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? page;
+  /// Página actual
+  int page;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? limit;
+  /// Por página
+  int limit;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? total;
+  /// Total
+  int total;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  int? totalPages;
+  /// Total páginas
+  int totalPages;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is Pagination &&
@@ -61,36 +41,20 @@ class Pagination {
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (page == null ? 0 : page!.hashCode) +
-    (limit == null ? 0 : limit!.hashCode) +
-    (total == null ? 0 : total!.hashCode) +
-    (totalPages == null ? 0 : totalPages!.hashCode);
+    (page.hashCode) +
+    (limit.hashCode) +
+    (total.hashCode) +
+    (totalPages.hashCode);
 
   @override
   String toString() => 'Pagination[page=$page, limit=$limit, total=$total, totalPages=$totalPages]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.page != null) {
       json[r'page'] = this.page;
-    } else {
-      json[r'page'] = null;
-    }
-    if (this.limit != null) {
       json[r'limit'] = this.limit;
-    } else {
-      json[r'limit'] = null;
-    }
-    if (this.total != null) {
       json[r'total'] = this.total;
-    } else {
-      json[r'total'] = null;
-    }
-    if (this.totalPages != null) {
       json[r'totalPages'] = this.totalPages;
-    } else {
-      json[r'totalPages'] = null;
-    }
     return json;
   }
 
@@ -113,10 +77,10 @@ class Pagination {
       }());
 
       return Pagination(
-        page: mapValueOfType<int>(json, r'page'),
-        limit: mapValueOfType<int>(json, r'limit'),
-        total: mapValueOfType<int>(json, r'total'),
-        totalPages: mapValueOfType<int>(json, r'totalPages'),
+        page: mapValueOfType<int>(json, r'page')!,
+        limit: mapValueOfType<int>(json, r'limit')!,
+        total: mapValueOfType<int>(json, r'total')!,
+        totalPages: mapValueOfType<int>(json, r'totalPages')!,
       );
     }
     return null;
@@ -164,6 +128,10 @@ class Pagination {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'page',
+    'limit',
+    'total',
+    'totalPages',
   };
 }
 

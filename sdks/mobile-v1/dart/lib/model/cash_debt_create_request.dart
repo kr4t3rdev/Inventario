@@ -16,7 +16,8 @@ class CashDebtCreateRequest {
     required this.proveedorId,
     required this.montoCapital,
     this.moneda,
-    this.tasaInteres,
+    required this.tasaInteres,
+    required this.tasaInteresMoratorio,
     this.fechaVencimiento,
     this.observaciones,
     this.comprobanteUrl,
@@ -35,13 +36,11 @@ class CashDebtCreateRequest {
   ///
   String? moneda;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  num? tasaInteres;
+  /// Minimum value: 0
+  num tasaInteres;
+
+  /// Minimum value: 0
+  num tasaInteresMoratorio;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -75,6 +74,7 @@ class CashDebtCreateRequest {
     other.montoCapital == montoCapital &&
     other.moneda == moneda &&
     other.tasaInteres == tasaInteres &&
+    other.tasaInteresMoratorio == tasaInteresMoratorio &&
     other.fechaVencimiento == fechaVencimiento &&
     other.observaciones == observaciones &&
     other.comprobanteUrl == comprobanteUrl &&
@@ -86,14 +86,15 @@ class CashDebtCreateRequest {
     (proveedorId.hashCode) +
     (montoCapital.hashCode) +
     (moneda == null ? 0 : moneda!.hashCode) +
-    (tasaInteres == null ? 0 : tasaInteres!.hashCode) +
+    (tasaInteres.hashCode) +
+    (tasaInteresMoratorio.hashCode) +
     (fechaVencimiento == null ? 0 : fechaVencimiento!.hashCode) +
     (observaciones == null ? 0 : observaciones!.hashCode) +
     (comprobanteUrl == null ? 0 : comprobanteUrl!.hashCode) +
     (cuentaBancariaId.hashCode);
 
   @override
-  String toString() => 'CashDebtCreateRequest[proveedorId=$proveedorId, montoCapital=$montoCapital, moneda=$moneda, tasaInteres=$tasaInteres, fechaVencimiento=$fechaVencimiento, observaciones=$observaciones, comprobanteUrl=$comprobanteUrl, cuentaBancariaId=$cuentaBancariaId]';
+  String toString() => 'CashDebtCreateRequest[proveedorId=$proveedorId, montoCapital=$montoCapital, moneda=$moneda, tasaInteres=$tasaInteres, tasaInteresMoratorio=$tasaInteresMoratorio, fechaVencimiento=$fechaVencimiento, observaciones=$observaciones, comprobanteUrl=$comprobanteUrl, cuentaBancariaId=$cuentaBancariaId]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -104,11 +105,8 @@ class CashDebtCreateRequest {
     } else {
       json[r'moneda'] = null;
     }
-    if (this.tasaInteres != null) {
       json[r'tasaInteres'] = this.tasaInteres;
-    } else {
-      json[r'tasaInteres'] = null;
-    }
+      json[r'tasaInteresMoratorio'] = this.tasaInteresMoratorio;
     if (this.fechaVencimiento != null) {
       json[r'fechaVencimiento'] = this.fechaVencimiento!.toUtc().toIso8601String();
     } else {
@@ -151,6 +149,7 @@ class CashDebtCreateRequest {
         montoCapital: num.parse('${json[r'montoCapital']}'),
         moneda: mapValueOfType<String>(json, r'moneda'),
         tasaInteres: num.parse('${json[r'tasaInteres']}'),
+        tasaInteresMoratorio: num.parse('${json[r'tasaInteresMoratorio']}'),
         fechaVencimiento: mapDateTime(json, r'fechaVencimiento', r''),
         observaciones: mapValueOfType<String>(json, r'observaciones'),
         comprobanteUrl: mapValueOfType<String>(json, r'comprobanteUrl'),
@@ -204,6 +203,8 @@ class CashDebtCreateRequest {
   static const requiredKeys = <String>{
     'proveedorId',
     'montoCapital',
+    'tasaInteres',
+    'tasaInteresMoratorio',
     'cuentaBancariaId',
   };
 }

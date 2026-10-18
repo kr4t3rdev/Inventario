@@ -1,0 +1,117 @@
+//
+// AUTO-GENERATED FILE, DO NOT MODIFY!
+//
+// @dart=2.18
+
+// ignore_for_file: unused_element, unused_import
+// ignore_for_file: always_put_required_named_parameters_first
+// ignore_for_file: constant_identifier_names
+// ignore_for_file: lines_longer_than_80_chars
+
+part of openapi.api;
+
+class PostAdminUsersAssignTenantResponse {
+  /// Returns a new [PostAdminUsersAssignTenantResponse] instance.
+  PostAdminUsersAssignTenantResponse({
+    required this.membership,
+    required this.message,
+  });
+
+  AdminUserMembership membership;
+
+  String message;
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is PostAdminUsersAssignTenantResponse &&
+    other.membership == membership &&
+    other.message == message;
+
+  @override
+  int get hashCode =>
+    // ignore: unnecessary_parenthesis
+    (membership.hashCode) +
+    (message.hashCode);
+
+  @override
+  String toString() => 'PostAdminUsersAssignTenantResponse[membership=$membership, message=$message]';
+
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{};
+      json[r'membership'] = this.membership;
+      json[r'message'] = this.message;
+    return json;
+  }
+
+  /// Returns a new [PostAdminUsersAssignTenantResponse] instance and imports its values from
+  /// [value] if it's a [Map], null otherwise.
+  // ignore: prefer_constructors_over_static_methods
+  static PostAdminUsersAssignTenantResponse? fromJson(dynamic value) {
+    if (value is Map) {
+      final json = value.cast<String, dynamic>();
+
+      // Ensure that the map contains the required keys.
+      // Note 1: the values aren't checked for validity beyond being non-null.
+      // Note 2: this code is stripped in release mode!
+      assert(() {
+        requiredKeys.forEach((key) {
+          assert(json.containsKey(key), 'Required key "PostAdminUsersAssignTenantResponse[$key]" is missing from JSON.');
+          assert(json[key] != null, 'Required key "PostAdminUsersAssignTenantResponse[$key]" has a null value in JSON.');
+        });
+        return true;
+      }());
+
+      return PostAdminUsersAssignTenantResponse(
+        membership: AdminUserMembership.fromJson(json[r'membership'])!,
+        message: mapValueOfType<String>(json, r'message')!,
+      );
+    }
+    return null;
+  }
+
+  static List<PostAdminUsersAssignTenantResponse> listFromJson(dynamic json, {bool growable = false,}) {
+    final result = <PostAdminUsersAssignTenantResponse>[];
+    if (json is List && json.isNotEmpty) {
+      for (final row in json) {
+        final value = PostAdminUsersAssignTenantResponse.fromJson(row);
+        if (value != null) {
+          result.add(value);
+        }
+      }
+    }
+    return result.toList(growable: growable);
+  }
+
+  static Map<String, PostAdminUsersAssignTenantResponse> mapFromJson(dynamic json) {
+    final map = <String, PostAdminUsersAssignTenantResponse>{};
+    if (json is Map && json.isNotEmpty) {
+      json = json.cast<String, dynamic>(); // ignore: parameter_assignments
+      for (final entry in json.entries) {
+        final value = PostAdminUsersAssignTenantResponse.fromJson(entry.value);
+        if (value != null) {
+          map[entry.key] = value;
+        }
+      }
+    }
+    return map;
+  }
+
+  // maps a json object with a list of PostAdminUsersAssignTenantResponse-objects as value to a dart map
+  static Map<String, List<PostAdminUsersAssignTenantResponse>> mapListFromJson(dynamic json, {bool growable = false,}) {
+    final map = <String, List<PostAdminUsersAssignTenantResponse>>{};
+    if (json is Map && json.isNotEmpty) {
+      // ignore: parameter_assignments
+      json = json.cast<String, dynamic>();
+      for (final entry in json.entries) {
+        map[entry.key] = PostAdminUsersAssignTenantResponse.listFromJson(entry.value, growable: growable,);
+      }
+    }
+    return map;
+  }
+
+  /// The list of required keys that must be present in a JSON.
+  static const requiredKeys = <String>{
+    'membership',
+    'message',
+  };
+}
+

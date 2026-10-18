@@ -25,16 +25,10 @@ class CapitalInjectionCreateRequestTest : ShouldSpec() {
         // uncomment below to create an instance of CapitalInjectionCreateRequest
         //val modelInstance = CapitalInjectionCreateRequest()
 
-        // to test the property `monto`
-        should("test monto") {
+        // to test the property `montoRecibido`
+        should("test montoRecibido") {
             // uncomment below to test the property
-            //modelInstance.monto shouldBe ("TODO")
-        }
-
-        // to test the property `moneda`
-        should("test moneda") {
-            // uncomment below to test the property
-            //modelInstance.moneda shouldBe ("TODO")
+            //modelInstance.montoRecibido shouldBe ("TODO")
         }
 
         // to test the property `tipo`
@@ -43,16 +37,58 @@ class CapitalInjectionCreateRequestTest : ShouldSpec() {
             //modelInstance.tipo shouldBe ("TODO")
         }
 
+        // to test the property `cuentaId`
+        should("test cuentaId") {
+            // uncomment below to test the property
+            //modelInstance.cuentaId shouldBe ("TODO")
+        }
+
+        // to test the property `moneda`
+        should("test moneda") {
+            // uncomment below to test the property
+            //modelInstance.moneda shouldBe ("TODO")
+        }
+
         // to test the property `descripcion`
         should("test descripcion") {
             // uncomment below to test the property
             //modelInstance.descripcion shouldBe ("TODO")
         }
 
-        // to test the property `cuentaBancariaId`
-        should("test cuentaBancariaId") {
+        // to test the property `socio`
+        should("test socio") {
             // uncomment below to test the property
-            //modelInstance.cuentaBancariaId shouldBe ("TODO")
+            //modelInstance.socio shouldBe ("TODO")
+        }
+
+        // to test the property `entidadPrestamista`
+        should("test entidadPrestamista") {
+            // uncomment below to test the property
+            //modelInstance.entidadPrestamista shouldBe ("TODO")
+        }
+
+        // to test the property `tasaInteres`
+        should("test tasaInteres") {
+            // uncomment below to test the property
+            //modelInstance.tasaInteres shouldBe ("TODO")
+        }
+
+        // to test the property `plazoMeses`
+        should("test plazoMeses") {
+            // uncomment below to test the property
+            //modelInstance.plazoMeses shouldBe ("TODO")
+        }
+
+        // to test the property `fechaInicioPago`
+        should("test fechaInicioPago") {
+            // uncomment below to test the property
+            //modelInstance.fechaInicioPago shouldBe ("TODO")
+        }
+
+        // to test the property `fechaOperacion`
+        should("test fechaOperacion") {
+            // uncomment below to test the property
+            //modelInstance.fechaOperacion shouldBe ("TODO")
         }
 
     }

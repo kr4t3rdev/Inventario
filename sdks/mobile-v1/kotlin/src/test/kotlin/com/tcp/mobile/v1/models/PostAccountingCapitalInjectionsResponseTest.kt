@@ -25,22 +25,10 @@ class PostAccountingCapitalInjectionsResponseTest : ShouldSpec() {
         // uncomment below to create an instance of PostAccountingCapitalInjectionsResponse
         //val modelInstance = PostAccountingCapitalInjectionsResponse()
 
-        // to test the property `inyeccionId`
-        should("test inyeccionId") {
+        // to test the property `id`
+        should("test id") {
             // uncomment below to test the property
-            //modelInstance.inyeccionId shouldBe ("TODO")
-        }
-
-        // to test the property `monto`
-        should("test monto") {
-            // uncomment below to test the property
-            //modelInstance.monto shouldBe ("TODO")
-        }
-
-        // to test the property `moneda`
-        should("test moneda") {
-            // uncomment below to test the property
-            //modelInstance.moneda shouldBe ("TODO")
+            //modelInstance.id shouldBe ("TODO")
         }
 
         // to test the property `tipo`
@@ -49,16 +37,106 @@ class PostAccountingCapitalInjectionsResponseTest : ShouldSpec() {
             //modelInstance.tipo shouldBe ("TODO")
         }
 
+        // to test the property `montoRecibido` - Decimal serializado como texto.
+        should("test montoRecibido") {
+            // uncomment below to test the property
+            //modelInstance.montoRecibido shouldBe ("TODO")
+        }
+
+        // to test the property `moneda`
+        should("test moneda") {
+            // uncomment below to test the property
+            //modelInstance.moneda shouldBe ("TODO")
+        }
+
+        // to test the property `cuentaId`
+        should("test cuentaId") {
+            // uncomment below to test the property
+            //modelInstance.cuentaId shouldBe ("TODO")
+        }
+
+        // to test the property `fechaRegistro`
+        should("test fechaRegistro") {
+            // uncomment below to test the property
+            //modelInstance.fechaRegistro shouldBe ("TODO")
+        }
+
+        // to test the property `createdAt`
+        should("test createdAt") {
+            // uncomment below to test the property
+            //modelInstance.createdAt shouldBe ("TODO")
+        }
+
+        // to test the property `updatedAt`
+        should("test updatedAt") {
+            // uncomment below to test the property
+            //modelInstance.updatedAt shouldBe ("TODO")
+        }
+
+        // to test the property `tenantId`
+        should("test tenantId") {
+            // uncomment below to test the property
+            //modelInstance.tenantId shouldBe ("TODO")
+        }
+
+        // to test the property `tasaInteres`
+        should("test tasaInteres") {
+            // uncomment below to test the property
+            //modelInstance.tasaInteres shouldBe ("TODO")
+        }
+
+        // to test the property `montoInteres`
+        should("test montoInteres") {
+            // uncomment below to test the property
+            //modelInstance.montoInteres shouldBe ("TODO")
+        }
+
+        // to test the property `montoTotalDeuda`
+        should("test montoTotalDeuda") {
+            // uncomment below to test the property
+            //modelInstance.montoTotalDeuda shouldBe ("TODO")
+        }
+
+        // to test the property `saldoPendiente`
+        should("test saldoPendiente") {
+            // uncomment below to test the property
+            //modelInstance.saldoPendiente shouldBe ("TODO")
+        }
+
+        // to test the property `plazoMeses`
+        should("test plazoMeses") {
+            // uncomment below to test the property
+            //modelInstance.plazoMeses shouldBe ("TODO")
+        }
+
+        // to test the property `fechaInicioPago`
+        should("test fechaInicioPago") {
+            // uncomment below to test the property
+            //modelInstance.fechaInicioPago shouldBe ("TODO")
+        }
+
+        // to test the property `socio`
+        should("test socio") {
+            // uncomment below to test the property
+            //modelInstance.socio shouldBe ("TODO")
+        }
+
+        // to test the property `entidadPrestamista`
+        should("test entidadPrestamista") {
+            // uncomment below to test the property
+            //modelInstance.entidadPrestamista shouldBe ("TODO")
+        }
+
+        // to test the property `estado`
+        should("test estado") {
+            // uncomment below to test the property
+            //modelInstance.estado shouldBe ("TODO")
+        }
+
         // to test the property `descripcion`
         should("test descripcion") {
             // uncomment below to test the property
             //modelInstance.descripcion shouldBe ("TODO")
-        }
-
-        // to test the property `cuentaBancariaId`
-        should("test cuentaBancariaId") {
-            // uncomment below to test the property
-            //modelInstance.cuentaBancariaId shouldBe ("TODO")
         }
 
     }
