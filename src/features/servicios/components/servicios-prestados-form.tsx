@@ -31,7 +31,7 @@ const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
-  costo: z.coerce.number().int().optional().default(0),
+  // C-3: el costo lo resuelve el servidor desde el catálogo; no se captura aquí.
   formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO, 'CREDITO']),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
@@ -67,7 +67,6 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
       servicioId: '',
       clienteId: '',
       cantidad: 1,
-      costo: 0,
       formaCobro: 'COBRO_DIRECTO',
       fechaVencimiento: '',
       observaciones: '',
@@ -94,7 +93,6 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
-        costo: values.costo ?? 0,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
         condicionPago: values.formaCobro === 'CREDITO' ? 'CREDITO' as const : 'CONTADO' as const,
@@ -321,30 +319,25 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.38 }}
                   >
-                    <FormField
-                      control={form.control}
-                      name='costo'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo unitario (opcional)</FormLabel>
-                          <FormControl>
-                            <div className='relative'>
-                              <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
-                              <Input
-                                min={0}
-                                type='number'
-                                {...field}
-                                className={`${servicioInputClassName} pl-8`}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormDescription className='text-slate-500 dark:text-slate-500'>
-                            Cuánto te costó prestar este servicio (por unidad).
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormItem>
+                      <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo unitario (catálogo)</FormLabel>
+                      <FormControl>
+                        <div className='relative'>
+                          <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
+                          <Input
+                            type='number'
+                            value={servicios.find((s) => s.servicioId === servicioId)?.costo ?? 0}
+                            readOnly
+                            disabled
+                            aria-label='Costo unitario del catálogo'
+                            className={`${servicioInputClassName} pl-8 opacity-80`}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription className='text-slate-500 dark:text-slate-500'>
+                        Costo fijado por el catálogo; no es editable.
+                      </FormDescription>
+                    </FormItem>
                   </motion.div>
 
                   <motion.div

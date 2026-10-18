@@ -7,6 +7,8 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
+import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
+import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -340,32 +342,54 @@ export const VentaLifecycleService = {
         );
       }
 
-      let serie = await tx.serieFacturacion.findFirst({
-        where: { tenantId, esPorDefecto: true },
-      });
-      if (!serie) {
-        serie = await tx.serieFacturacion.findFirst({
-          where: { tenantId },
-          orderBy: { createdAt: 'asc' },
+      // C-2: el pedido no creó deuda, así que el crédito que nace al facturar se
+      // revalida contra el tope del cliente aquí, antes de emitir la factura;
+      // el override (permiso ventas.venta.credito-override) queda auditado en
+      // esta misma transacción. El monto evaluado es EXACTAMENTE la deuda que
+      // el workflow va a crear: con tipoVencimiento fecha/plazo (o fecha de
+      // vencimiento sin tipo) el workflow crea una CxC por el total completo,
+      // sin importar metodoPago/montoCredito; sin workflow, la deuda es el
+      // montoCredito indicado (o el total si el método de pago es CREDITO).
+      const tipoVencimientoEfectivo = parsed.tipoVencimiento
+        ?? (parsed.fechaVencimiento ? 'fecha' : null);
+      const flujoCreaDeudaTotal = tipoVencimientoEfectivo !== null
+        && tipoVencimientoEfectivo !== 'contra_pago';
+      const montoCreditoSolicitado = flujoCreaDeudaTotal
+        ? Math.max(venta.total ?? 0, 0)
+        : (parsed.montoCredito ?? (parsed.metodoPago === 'CREDITO' ? (venta.total ?? 0) : 0));
+      if (montoCreditoSolicitado > 0) {
+        // Lock de crédito del cliente: la evaluación se serializa contra otras
+        // ventas/ediciones de deuda concurrentes del mismo cliente.
+        await lockCreditoCliente(tx, tenantId, clienteId);
+        const res = await exigirLimiteCredito({
+          client: tx,
+          tenantId,
+          clienteId,
+          montoRequerido: montoCreditoSolicitado,
+          user,
         });
+        if (res.overrideUsado) {
+          await AuditLogService.logStrict(
+            {
+              accion: 'EXECUTE',
+              entidad: 'VENTA',
+              entidadId: ventaId,
+              usuarioId: user.userId,
+              detalles: {
+                tipo: 'CREDITO_OVERRIDE',
+                clienteId,
+                limiteCredito: res.limiteCredito,
+                saldoVivo: res.saldoVivo,
+                montoRequerido: res.montoEvaluado,
+              },
+            },
+            tx,
+          );
+        }
       }
-      if (!serie) {
-        serie = await tx.serieFacturacion.create({
-          data: {
-            tenantId,
-            prefijo: 'FV',
-            descripcion: 'Facturas de Venta',
-            consecutivo: 1,
-            esPorDefecto: true,
-          },
-        });
-      }
-      const updatedSerie = await tx.serieFacturacion.update({
-        where: { serieId: serie.serieId },
-        data: { consecutivo: { increment: 1 } },
-      });
-      const numeroConsecutivo = updatedSerie.consecutivo - 1;
-      const numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, '0')}`;
+
+      // C-6/D7: numeración compartida con la facturación de servicios.
+      const { serieId, numeroConsecutivo, numeroFactura } = await resolverSerieYNumero(tx, tenantId);
 
         const claimed = await tx.venta.updateMany({
           where: { ventaId, tenantId, estado: 'ENTREGADA', deletedAt: null },
@@ -393,7 +417,7 @@ export const VentaLifecycleService = {
       const factura = await tx.factura.create({
         data: {
           tenantId,
-          serieId: serie.serieId,
+          serieId,
           numeroConsecutivo,
           numeroFactura,
           tipoDocumento: 'FACTURA',

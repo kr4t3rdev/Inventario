@@ -13,6 +13,7 @@ import { getVentaServiciosAction } from "@/features/venta-servicios/actions"
 import { ServiciosContent } from "@/features/servicios"
 import { getCurrentUser } from "@/lib/server-actions"
 import { hasPlanFeature } from "@/lib/plan-access"
+import { hasPermission } from "@/lib/services/tenant-scope"
 import { redirect } from "next/navigation"
 import type { VentaServicio } from "@/app/models/model"
 
@@ -49,6 +50,7 @@ export default async function ServiciosPage() {
       initialVentaServicios
       }
       tenantRole={tenantRole}
+      puedeFacturar={user ? hasPermission(user, 'ventas.servicios.facturar') : false}
     />
   )
 }

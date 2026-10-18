@@ -390,14 +390,19 @@ export interface VentaServicio {
 		moneda: string;
 	};
 	reconciliaciones?: ReconciliacionServicio[];
+	reconciliado?: boolean | null;
+	condicionPago?: string;
 	cantidad: number;
 	costo: number;
 	total: number;
 	observaciones: string | null;
+	clienteId?: string | null;
 	cliente: {
 		clienteId: string;
 		nombre: string;
-	};
+	} | null;
+	/** C-6: factura emitida para esta venta de servicio. */
+	factura?: { idFactura: string } | null;
 	createdAt: string;
 	updatedAt: string;
 }

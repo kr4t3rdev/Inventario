@@ -31,11 +31,13 @@ vi.mock('@/features/turnos-pos', () => ({
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
+		$executeRaw: vi.fn(),
 		venta: {
 			findUnique: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 			update: vi.fn(),
 		},
+		cliente: { findFirst: vi.fn() },
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
 		serieFacturacion: {
@@ -70,6 +72,7 @@ import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ActionError } from '@/lib/server-actions';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -134,6 +137,8 @@ beforeEach(() => {
 		consecutivo: 9,
 	});
 	mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
+	// Cliente sin tope por defecto: los tests del tope lo sobreescriben (C-2).
+	mockTx.cliente.findFirst.mockResolvedValue({ limiteCredito: null });
 	mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
 	mockTx.producto.findUnique.mockResolvedValue(ventaPedido.items[0].producto);
 	mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
@@ -477,5 +482,158 @@ describe('anularVentaPorEstado', () => {
 		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
 
 		expect(mockTx.oferta.updateMany).not.toHaveBeenCalled();
+	});
+});
+
+describe('revalidación del límite de crédito al facturar (C-2)', () => {
+	// Usuario con permiso de facturar pero SIN override de crédito:
+	// el set explícito de permissions controla el effectivePermissions.
+	const vendedorSinOverride = {
+		userId: 'user-vendedor',
+		name: 'Vendedor',
+		email: 'v@test.com',
+		role: 'regularUser',
+		isActive: true,
+		tenantId: 'tenant-1',
+		tenantRole: 'manager',
+		planFeatures: { 'ventas-pedidos': true, facturacion: true, 'ventas-factura': true },
+		permissions: new Set(['ventas.pedido.gestionar']),
+	} as unknown as AuthenticatedUser;
+
+	const managerConOverride = {
+		...vendedorSinOverride,
+		userId: 'user-manager',
+		permissions: undefined,
+	} as unknown as AuthenticatedUser;
+
+	function clienteConTope(limiteCredito: number | null, saldoVivo: number) {
+		mockTx.cliente.findFirst.mockResolvedValue({ limiteCredito } as never);
+		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([
+			{ cuentaPorCobrarId: 'cxc-1', montoDeuda: saldoVivo, montoPagado: 0, estado: 'PENDIENTE' },
+		] as never);
+	}
+
+	it('rechaza facturar a crédito sobre el tope sin permiso: CREDITO_EXCEDIDO, sin factura', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(1000, 900);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(
+			{ ...ventaPedido, estado: 'ENTREGADA' } as never,
+		);
+
+		await expect(
+			svc.facturarVenta({
+				ventaId: 'venta-1',
+				input: { metodoPago: 'CREDITO', tipoVencimiento: 'fecha', fechaVencimiento: '2026-10-01' },
+				user: vendedorSinOverride,
+			}),
+		).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+		expect(mockTx.venta.updateMany).not.toHaveBeenCalled();
+	});
+
+	it('rechaza también cuando el crédito llega como montoCredito de un desglose MIXTO', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(100, 900);
+
+		await expect(
+			svc.facturarVenta({
+				ventaId: 'venta-1',
+				input: {
+					metodoPago: 'MIXTO',
+					montoEfectivo: 900,
+					montoCredito: 100,
+					tipoVencimiento: 'fecha',
+					fechaVencimiento: '2026-10-01',
+				},
+				user: vendedorSinOverride,
+			}),
+		).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+	});
+
+	it('facturar a crédito con override pasa y audita CREDITO_OVERRIDE', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(1000, 900);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(
+			{ ...ventaPedido, estado: 'ENTREGADA' } as never,
+		);
+
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'CREDITO', tipoVencimiento: 'fecha', fechaVencimiento: '2026-10-01' },
+			user: managerConOverride,
+		});
+
+		expect(mockTx.factura.create).toHaveBeenCalled();
+		expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+			expect.objectContaining({
+				detalles: expect.objectContaining({ tipo: 'CREDITO_OVERRIDE', limiteCredito: 1000 }),
+			}),
+			mockTx,
+		);
+	});
+
+	it('facturar al contado no evalúa el tope', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(0, 0);
+
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+			user: vendedorSinOverride,
+		});
+
+		expect(mockTx.cliente.findFirst).not.toHaveBeenCalled();
+		expect(mockTx.factura.create).toHaveBeenCalled();
+	});
+
+	it('un vencimiento plazo sin metodoPago crea deuda por el total y evalúa el tope (B-2)', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(1000, 900);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(
+			{ ...ventaPedido, estado: 'ENTREGADA' } as never,
+		);
+
+		// El workflow crea una CxC por el total completo aunque no haya
+		// metodoPago/montoCredito; el tope se evalúa sobre esa deuda real.
+		await expect(
+			svc.facturarVenta({
+				ventaId: 'venta-1',
+				input: { tipoVencimiento: 'plazo' },
+				user: vendedorSinOverride,
+			}),
+		).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+	});
+
+	it('CREDITO con montoCredito 0 y vencimiento plazo no evade el tope (B-2)', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(1000, 900);
+
+		await expect(
+			svc.facturarVenta({
+				ventaId: 'venta-1',
+				input: { metodoPago: 'CREDITO', montoCredito: 0, tipoVencimiento: 'plazo' },
+				user: vendedorSinOverride,
+			}),
+		).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+	});
+
+	it('plazo dentro del tope pasa, toma el lock de crédito y emite la factura (B-4)', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		clienteConTope(5000, 900);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(
+			{ ...ventaPedido, estado: 'ENTREGADA' } as never,
+		);
+
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { tipoVencimiento: 'plazo' },
+			user: vendedorSinOverride,
+		});
+
+		expect(mockTx.$executeRaw).toHaveBeenCalled();
+		expect(mockTx.factura.create).toHaveBeenCalled();
 	});
 });

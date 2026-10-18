@@ -95,11 +95,12 @@ export default function ServiciosCart({
 		);
 	};
 
-	// El precio se muestra como lectura desde el catálogo: el servidor
-	// resuelve el precio unitario al procesar la venta y no acepta
-	// importes del cliente.
+	// El precio y el costo se muestran como lectura desde el catálogo: el
+	// servidor resuelve precio y costo al procesar la venta (C-3) y no acepta
+	// importes del cliente. El costo solo es editable en modo COMPRA, donde
+	// define el costoUnitario pactado con el proveedor.
 
-	// Actualizar costo de servicio en carrito
+	// Actualizar costo de servicio en carrito (solo compra)
 	const updateCosto = (cartItemId: string, newCosto: number) => {
 		if (newCosto < 0) return;
 
@@ -137,7 +138,6 @@ export default function ServiciosCart({
 						tipoLinea: 'SERVICIO' as const,
 						servicioId: item.servicioId,
 						cantidad: item.cantidad,
-						costo: Math.round(item.costo),
 					})),
 				};
 				const request = resolveServiceSaleRequestKey(
@@ -258,22 +258,31 @@ export default function ServiciosCart({
 										</span>
 									</div>
 										<div className="col-span-2 flex justify-center">
-											<div className="relative w-24">
-												<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-													$
-												</span>
-												<Input
-													type="number"
-													min={0}
-													step={1}
+											{mode === "COMPRA" ? (
+												<div className="relative w-24">
+													<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+														$
+													</span>
+													<Input
+														type="number"
+														min={0}
+														step={1}
+														aria-label={`Costo de ${item.nombre}`}
+														value={item.costo}
+														onChange={(e) =>
+															updateCosto(item.cartItemId, Number(e.target.value))
+														}
+														className="pl-6 h-8 text-center text-sm"
+													/>
+												</div>
+											) : (
+												<span
 													aria-label={`Costo de ${item.nombre}`}
-													value={item.costo}
-													onChange={(e) =>
-														updateCosto(item.cartItemId, Number(e.target.value))
-													}
-													className="pl-6 h-8 text-center text-sm"
-												/>
-											</div>
+													className="text-center text-sm text-muted-foreground"
+												>
+													{formatCurrency(item.costo, item.moneda)}
+												</span>
+											)}
 										</div>
 										<div className="col-span-2 flex justify-center items-center space-x-1">
 											<Button

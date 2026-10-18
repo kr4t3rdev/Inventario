@@ -145,6 +145,8 @@ export interface Servicios {
 	nombre: string;
 	descripcion: string;
 	precio: number;
+	/** C-3: costo estándar unitario persistido en Prisma (fuente del costo de ventas). */
+	costo?: number | null;
 	precioCosto?: number | null;
 	precioVenta?: number | null;
 	codigoInterno?: string | null;

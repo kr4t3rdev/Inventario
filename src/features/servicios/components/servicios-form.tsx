@@ -24,6 +24,7 @@ interface ServicioFormProps {
     servicioId: string
     nombre: string
     precio: number
+    costo?: number | null
     descripcion: string
     moneda?: string
   }
@@ -44,6 +45,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
       precio: initialData?.precio ?? undefined,
+      costo: initialData?.costo ?? undefined,
       moneda: initialData?.moneda || 'CUP',
     },
   })
@@ -213,6 +215,39 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.45 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name='costo'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo estándar (opcional)</FormLabel>
+                        <FormControl>
+                          <div className='relative'>
+                            <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
+                            <Input
+                              type='number'
+                              min={0}
+                              step={1}
+                              {...field}
+                              placeholder='0'
+                              className={`${servicioInputClassName} pl-8`}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormDescription className='text-slate-500 dark:text-slate-500'>
+                          Costo por unidad que se congela en cada venta del servicio.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
                 >
                   <FormField
                     control={form.control}

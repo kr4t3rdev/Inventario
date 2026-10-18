@@ -78,9 +78,9 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'src/features/contabilidad/services/accounting-reconciliation-service.ts',
-    occurrences: 3,
-    reason: 'Agregados paginados y lock de venta para reconciliación.',
-    tenantGuarantee: 'SQL parametrizado por tenantId; lock contiene tenantId explícito.',
+    occurrences: 4,
+    reason: 'Agregados paginados y locks de venta/documento para reconciliación.',
+    tenantGuarantee: 'SQL parametrizado por tenantId; locks contienen tenantId o ventaServicioId explícitos.',
   },
   {
     file: 'src/features/contabilidad/services/accounting-reports-service.ts',
@@ -189,5 +189,11 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     occurrences: 1,
     reason: 'Lock advisory transaccional para serializar la clave idempotente de venta de servicios.',
     tenantGuarantee: 'SQL tagged parametriza JSON.stringify([tenantId, key]); tenantId proviene del usuario autenticado de la Server Action.',
+  },
+  {
+    file: 'src/features/crm/services/credito-enforcement.ts',
+    occurrences: 1,
+    reason: 'Lock advisory transaccional del crédito del cliente: serializa toda evaluación/edición del tope entre writers concurrentes.',
+    tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["credito", tenantId, clienteId]; ambos valores provienen del usuario autenticado y su tenant.',
   },
 ] as const;

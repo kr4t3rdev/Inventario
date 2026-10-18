@@ -386,6 +386,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		sensitive: true,
 	},
 	{
+		key: 'ventas.servicios.facturar',
+		label: 'Facturar ventas de servicios',
+		description: 'Emitir el documento de factura para ventas de servicios.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+	},
+	{
 		key: 'ventas.venta.registrar',
 		label: 'Registrar ventas',
 		description: 'Crear ventas en nombre del tenant.',
@@ -736,6 +743,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		description: 'Gestionar el listado de clientes.',
 		category: 'operaciones',
 		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'operaciones.clientes.limite-credito',
+		label: 'Editar límite de crédito del cliente',
+		description: 'Actualizar el tope de crédito de un cliente (política financiera sensible).',
+		category: 'operaciones',
+		defaultRoles: ['manager'],
+		sensitive: true,
 	},
 	{
 		key: 'operaciones.referidos.gestionar',

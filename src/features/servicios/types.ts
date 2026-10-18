@@ -18,6 +18,8 @@ export interface ServicioResponse {
   nombre: string;
   descripcion: string;
   precio: number;
+  /** C-3: costo estándar unitario; fuente del costo de las ventas de servicios. */
+  costo: number;
   moneda: string;
   createdAt: string;
   updatedAt: string;

@@ -81,7 +81,7 @@ describe('CU-05 precio de catálogo en venta de servicios (RED)', () => {
       if (Array.isArray(args)) return Promise.all(args);
       return args(mockTx);
     });
-    vi.mocked(prisma.ventaServicios.create).mockResolvedValue({ ventaServicioId: 'vs-1' } as any);
+    mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' } as any);
 
     const result = await createVentaServicioAction({
       lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 3 }],

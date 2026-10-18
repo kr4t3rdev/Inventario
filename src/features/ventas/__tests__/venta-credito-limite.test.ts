@@ -24,23 +24,30 @@ vi.mock('@/features/turnos-pos', () => ({
 	}),
 }));
 
-const { mockTx } = vi.hoisted(() => {
+// Lecturas de crédito compartidas raíz↔tx (mismo fn): la re-validación del
+// tope (B-4) corre por tx dentro de la transacción con el lock del cliente.
+const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
+	const mockClienteFindFirst = vi.fn();
+	const mockCxcFindMany = vi.fn();
 	const mockTx = {
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
 		venta: { create: vi.fn().mockResolvedValue({ ventaId: 'v-1' }) },
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
 		factura: { create: vi.fn() },
+		cliente: { findFirst: mockClienteFindFirst },
+		cuentaPorCobrar: { findMany: mockCxcFindMany },
+		$executeRaw: vi.fn(),
 	};
-	return { mockTx };
+	return { mockTx, mockClienteFindFirst, mockCxcFindMany };
 });
 
 vi.mock('@/lib/prisma', () => ({
 	prisma: {
 		puntoDeVenta: { findFirst: vi.fn() },
-		cliente: { findFirst: vi.fn() },
+		cliente: { findFirst: mockClienteFindFirst },
 		producto: { findMany: vi.fn() },
-		cuentaPorCobrar: { findMany: vi.fn() },
+		cuentaPorCobrar: { findMany: mockCxcFindMany },
 		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
 	},
 }));

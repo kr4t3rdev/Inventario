@@ -173,7 +173,6 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const result = await createVentaServicioAction({
 				servicioId: "s-1",
 				cantidad: 1,
-				costo: 0,
 				condicionPago: "CONTADO",
 			});
 
@@ -202,7 +201,6 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const result = await createVentaServicioAction({
 				servicioId: "s-1",
 				cantidad: 1,
-				costo: 0,
 				condicionPago: "CONTADO",
 			});
 

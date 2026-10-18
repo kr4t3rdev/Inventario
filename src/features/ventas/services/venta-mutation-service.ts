@@ -17,6 +17,7 @@ import {
 	saldoVivoCliente,
 	superaLimiteCredito,
 } from '@/features/crm/services/credito-calculo';
+import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
 
@@ -350,6 +351,23 @@ export const VentaMutationService = {
     const cambioDerivado = esPedido ? null : cobro.cambio;
 
     return prisma.$transaction(async (tx) => {
+      // CRM-T2/B4: re-validación del tope DENTRO de la transacción con el lock
+      // de crédito del cliente — el saldo leído antes de abrir la transacción
+      // pudo quedar obsoleto frente a otro crédito concurrente del mismo
+      // cliente (venta de servicios, facturación, edición de deuda). El
+      // resultado con lock es el que se audita como override.
+      if (usaCredito && parsed.modoPedido !== true && parsed.clienteId && montoCreditoRequerido > 0) {
+        await lockCreditoCliente(tx, tenantId, parsed.clienteId);
+        const resCredito = await exigirLimiteCredito({
+          client: tx,
+          tenantId,
+          clienteId: parsed.clienteId,
+          montoRequerido: montoCreditoRequerido,
+          user,
+        });
+        creditoOverrideUsado = resCredito.overrideUsado;
+      }
+
       let serie: any = null;
       let numeroConsecutivo = 0;
       let numeroFactura = '';

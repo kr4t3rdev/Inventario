@@ -12,10 +12,23 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
-import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
-import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
+import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
+import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
+import { AuditLogService } from '@/lib/services/audit-log-service';
+import {
+  ventaServicioLegacySchema,
+  ventaMixtaSchema,
+  updateVentaServicioSchema,
+  facturarVentaServicioSchema,
+} from './schemas';
+import type {
+  VentaServicioInput,
+  VentaMixtaInput,
+  VentaServicioUpdateInput,
+  FacturarVentaServicioInput,
+} from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { buildPersistedAccountingAmount, lockDocumentoServicio } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { Prisma } from '@/generated/prisma';
 
@@ -109,29 +122,39 @@ async function findIdempotentVentas(
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
   cliente: true,
+  // C-6: la factura emitida viaja al historial para que la UI pueda deshabilitar
+  // el botón "Facturar" de ventas ya facturadas.
+  factura: { select: { idFactura: true, numeroFactura: true } },
 } as const;
+
+/** Datos del override de límite de crédito listos para la auditoría. */
+interface CreditoOverrideInfo {
+  limiteCredito: number | null;
+  saldoVivo: number;
+  montoRequerido: number;
+}
 
 /**
  * @description Valida que todos los servicios referenciados pertenezcan al tenant
- * y devuelve su snapshot de moneda y precio para persistirlo en la venta.
+ * y devuelve su snapshot de moneda, precio y costo para persistirlo en la venta.
  * @param {string} tenantId - Tenant del usuario autenticado.
  * @param {string[]} servicioIds - IDs de servicios a validar.
  * @throws {ActionError} NOT_FOUND si algún servicio no pertenece al tenant.
- * @returns {Promise<Map<string, { moneda: string; precio: number }>>} Moneda y precio por servicioId.
+ * @returns {Promise<Map<string, { moneda: string; precio: number; costo: number }>>} Snapshot por servicioId.
  */
 async function assertServiciosDelTenant(
   tenantId: string,
   servicioIds: string[],
-): Promise<Map<string, { moneda: string; precio: number }>> {
+): Promise<Map<string, { moneda: string; precio: number; costo: number }>> {
   const uniqueIds = [...new Set(servicioIds)];
   const found = await prisma.servicios.findMany({
     where: { tenantId, servicioId: { in: uniqueIds } },
-    select: { servicioId: true, moneda: true, precio: true },
+    select: { servicioId: true, moneda: true, precio: true, costo: true },
   });
   if (found.length !== uniqueIds.length) {
     throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
   }
-  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda, precio: s.precio }]));
+  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda, precio: s.precio, costo: s.costo }]));
 }
 
 /**
@@ -211,7 +234,6 @@ const createVentaServicioHandler = async (
             servicioId: linea.servicioId ?? null,
             productoId: linea.productoId ?? null,
             cantidad: linea.cantidad,
-            costo: linea.costo ?? 0,
             observaciones: linea.observaciones ?? null,
           })),
         })
@@ -239,6 +261,36 @@ const createVentaServicioHandler = async (
       }
 
       await validateServiceSalePeriod(undefined, user);
+
+      // C-2: el tope se evalúa dentro de la transacción con el lock de crédito
+      // del cliente (dos ventas concurrentes no aprueban sobre el mismo
+      // saldo); el override (ventas.venta.credito-override) se audita cuando
+      // las filas ya existen, en esta misma transacción.
+      let creditoOverrideMixto: CreditoOverrideInfo | null = null;
+      if (payload.condicionPago === 'CREDITO') {
+        await lockCreditoCliente(tx, tenantId, payload.clienteId!);
+        const totalVentaMixto = lineasServicio.reduce(
+          (suma, linea) => suma + linea.cantidad * serviciosMonedas.get(linea.servicioId!)!.precio,
+          0,
+        );
+        const res = await exigirLimiteCredito({
+          client: tx,
+          tenantId,
+          clienteId: payload.clienteId!,
+          montoRequerido: totalVentaMixto,
+          user,
+        });
+        if (res.overrideUsado) {
+          creditoOverrideMixto = {
+            limiteCredito: res.limiteCredito,
+            saldoVivo: res.saldoVivo,
+            montoRequerido: res.montoEvaluado,
+          };
+        }
+      }
+
+      // C-4: ventas y CxC se crean en UNA transacción interactiva — un fallo a
+      // mitad deja cero filas de ambas.
       const created = await Promise.all(lineasServicio.map((linea, index) => {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
         const precioUnitario = catalogo.precio;
@@ -247,7 +299,8 @@ const createVentaServicioHandler = async (
             tenantId,
             servicioId: linea.servicioId!,
             cantidad: linea.cantidad,
-            costo: linea.costo ?? 0,
+            // C-3: el costo es el snapshot del catálogo; el payload no lo fija.
+            costo: catalogo.costo,
             total: linea.cantidad * precioUnitario,
             moneda: catalogo.moneda,
             precioUnitario,
@@ -261,8 +314,9 @@ const createVentaServicioHandler = async (
         });
       }));
 
-      // Keep all sale rows and their receivables atomic so replay cannot leave
-      // a partial mixed sale or duplicate credit side effects.
+      // B-06: crédito en modo mixto → una CxC por línea (cada fila es una
+      // venta); la atomicidad impide dejar una venta mixta parcial o duplicar
+      // los efectos del crédito en un replay.
       if (payload.condicionPago === 'CREDITO') {
         for (const venta of created) {
           await tx.cuentaPorCobrar.create({
@@ -277,12 +331,28 @@ const createVentaServicioHandler = async (
             },
           });
         }
+        if (creditoOverrideMixto) {
+          await AuditLogService.logStrict(
+            {
+              accion: 'EXECUTE',
+              entidad: 'VENTA_SERVICIO',
+              entidadId: created[0]?.ventaServicioId ?? '',
+              usuarioId: user.userId,
+              detalles: {
+                tipo: 'CREDITO_OVERRIDE',
+                clienteId: payload.clienteId,
+                ...creditoOverrideMixto,
+              },
+            },
+            tx,
+          );
+        }
       }
       return { created, replayed: false };
     });
     const created = transactionResult.created;
 
-    revalidatePath('/busy/venta-servicios');
+    revalidatePath('/busy/servicios');
     return {
       mode: 'MIXED_LINES' as const,
       lineasProcesadas: created.length,
@@ -315,7 +385,6 @@ const createVentaServicioHandler = async (
         mode: 'LEGACY',
         servicioId: data.servicioId,
         cantidad: data.cantidad,
-        costo: data.costo ?? 0,
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
         anticipos: data.anticipos ?? [],
@@ -339,12 +408,39 @@ const createVentaServicioHandler = async (
 
     await validateServiceSalePeriod(undefined, user);
     const ventaTotal = data.cantidad * precioUnitario;
+
+    // C-2: el tope se evalúa sobre el remanente estimado (total − anticipos)
+    // dentro de la transacción, con el lock de crédito del cliente; el
+    // override se audita en esta misma transacción.
+    let creditoOverrideLegacy: CreditoOverrideInfo | null = null;
+    if (data.condicionPago === 'CREDITO') {
+      await lockCreditoCliente(tx, tenantId, data.clienteId!);
+      const estimadoAnticipos = (data.anticipos ?? []).reduce(
+        (suma, a) => suma + Number(a.montoAplicado || 0),
+        0,
+      );
+      const res = await exigirLimiteCredito({
+        client: tx,
+        tenantId,
+        clienteId: data.clienteId!,
+        montoRequerido: Math.max(ventaTotal - estimadoAnticipos, 0),
+        user,
+      });
+      if (res.overrideUsado) {
+        creditoOverrideLegacy = {
+          limiteCredito: res.limiteCredito,
+          saldoVivo: res.saldoVivo,
+          montoRequerido: res.montoEvaluado,
+        };
+      }
+    }
     const ventaServicio = await tx.ventaServicios.create({
       data: {
         tenantId,
         servicioId: data.servicioId,
         cantidad: data.cantidad,
-        costo: data.costo ?? 0,
+        // C-3: el costo es el snapshot del catálogo; el payload no lo fija.
+        costo: catalogoServicio.costo,
         total: ventaTotal,
         moneda: monedaServicio,
         precioUnitario,
@@ -356,6 +452,23 @@ const createVentaServicioHandler = async (
           : null,
       },
     });
+
+    if (creditoOverrideLegacy) {
+      await AuditLogService.logStrict(
+        {
+          accion: 'EXECUTE',
+          entidad: 'VENTA_SERVICIO',
+          entidadId: ventaServicio.ventaServicioId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'CREDITO_OVERRIDE',
+            clienteId: data.clienteId,
+            ...creditoOverrideLegacy,
+          },
+        },
+        tx,
+      );
+    }
 
     let allocationsResult: any[] = [];
     if (data.anticipos && data.anticipos.length > 0) {
@@ -486,7 +599,7 @@ const createVentaServicioHandler = async (
     return { ventaServicio, allocationsResult, replayed: false };
   });
 
-  if (!resultado.replayed) revalidatePath('/busy/venta-servicios');
+  if (!resultado.replayed) revalidatePath('/busy/servicios');
   return resultado;
 };
 
@@ -495,6 +608,17 @@ export const createVentaServicioAction = withAction<
   Awaited<ReturnType<typeof createVentaServicioHandler>>
 >(createVentaServicioHandler);
 
+/**
+ * @description Actualiza una venta de servicio en una única transacción
+ * interactiva: la venta, su CxC activa y la existencia de factura se leen
+ * dentro de la transacción y todo cambio de deuda o de cliente se valida
+ * contra el tope de crédito con el lock del cliente evaluado (C-2/C-4).
+ * @param {VentaServicioUpdateInput} input - Campos editables de la venta.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Venta actualizada.
+ * @throws {ActionError} NOT_FOUND, HAS_REFERENCES, VENTA_FACTURADA_INMUTABLE,
+ * CXC_PAGADA, CREDITO_EXCEDIDO, CXC_ESTADO_CAMBIO, VALIDATION_ERROR.
+ */
 export const updateVentaServicioAction = withAction(async (input: VentaServicioUpdateInput, user: AuthenticatedUser) => {
   const parsed = updateVentaServicioSchema.parse(input);
   const { ventaServicioId, ...data } = parsed;
@@ -502,33 +626,171 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
   requireFeature(user, 'servicios', 'editar servicios');
   requirePermission(user, 'ventas.servicios.editar', 'editar ventas de servicios');
 
-  const existing = await prisma.ventaServicios.findFirst({
-    where: { ventaServicioId, tenantId },
-    select: { ventaServicioId: true, cantidad: true, total: true, precioUnitario: true },
-  });
-  if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+  if (data.clienteId) {
+    await assertClienteDelTenant(tenantId, data.clienteId);
+  }
 
-  const updateData: Record<string, unknown> = {};
-  if (data.cantidad !== undefined) {
-    updateData.cantidad = data.cantidad;
-    // El total no se acepta del cliente: al cambiar la cantidad se recalcula
-    // con el precio unitario persistido (o derivado del registro legacy).
-    if (data.cantidad !== existing.cantidad) {
+  // C-4: lectura, validación y escritura en UNA transacción — el estado leído
+  // es el que se escribe y las ediciones concurrentes serializan por el lock
+  // de crédito del cliente evaluado.
+  const updated = await prisma.$transaction(async (tx) => {
+    const existing = await tx.ventaServicios.findFirst({
+      where: { ventaServicioId, tenantId },
+      select: {
+        ventaServicioId: true,
+        cantidad: true,
+        total: true,
+        precioUnitario: true,
+        clienteId: true,
+        condicionPago: true,
+      },
+    });
+    if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+
+    // C-4: la CxC activa de la venta acompaña cualquier cambio de deuda o cliente.
+    const cxcActiva = await tx.cuentaPorCobrar.findFirst({
+      where: { ventaServicioId, estado: { not: 'ANULADA' } },
+      select: { id: true, estado: true, montoDeuda: true, clienteId: true },
+    });
+
+    const cambiaCantidad = data.cantidad !== undefined && data.cantidad !== existing.cantidad;
+    let nuevoTotal = existing.total;
+    if (cambiaCantidad) {
+      const reconciliacionesCount = await tx.reconciliacionServicio.count({
+        where: { ventaServicioId },
+      });
+      if (reconciliacionesCount > 0) {
+        throw new ActionError(
+          `No se puede modificar la venta: tiene ${reconciliacionesCount} cobro(s) reconciliado(s) y el total debe mantenerse`,
+          'HAS_REFERENCES',
+        );
+      }
+      // El total no se acepta del cliente: al cambiar la cantidad se recalcula
+      // con el precio unitario persistido (o derivado del registro legacy).
       const precioUnitario = existing.precioUnitario
         ?? (existing.cantidad > 0 ? Math.round(existing.total / existing.cantidad) : 0);
-      updateData.total = precioUnitario * data.cantidad;
+      nuevoTotal = precioUnitario * data.cantidad!;
     }
-  }
-  if (data.costo !== undefined) updateData.costo = data.costo;
-  if (data.observaciones !== undefined) updateData.observaciones = data.observaciones;
-  if (data.clienteId !== undefined) updateData.clienteId = data.clienteId;
+    const cambiaTotal = nuevoTotal !== existing.total;
+    const cambiaCliente = data.clienteId !== undefined && data.clienteId !== existing.clienteId;
 
-  const updated = await prisma.ventaServicios.update({
-    where: { ventaServicioId },
-    data: updateData,
+    // C-6: con factura emitida el documento es inmutable — cambiar cantidad o
+    // cliente dejaría venta, deuda y factura financieramente inconsistentes.
+    if (cambiaCantidad || cambiaCliente) {
+      const facturaEmitida = await tx.factura.findFirst({
+        where: { ventaServicioId },
+        select: { idFactura: true },
+      });
+      if (facturaEmitida) {
+        throw new ActionError(
+          'No se puede modificar una venta con factura emitida; anula primero la factura',
+          'VENTA_FACTURADA_INMUTABLE',
+        );
+      }
+    }
+
+    if (cxcActiva && cambiaTotal && cxcActiva.estado === 'PAGADA') {
+      throw new ActionError(
+        'No se puede modificar la venta: su cuenta por cobrar ya está pagada',
+        'CXC_PAGADA',
+      );
+    }
+    if (cxcActiva && cambiaCliente && data.clienteId === null) {
+      throw new ActionError(
+        'No se puede quitar el cliente de una venta a crédito con cuenta por cobrar activa',
+        'VALIDATION_ERROR',
+      );
+    }
+
+    // C-2: toda deuda nueva o trasladada se valida contra el tope dentro de la
+    // transacción, con el lock de crédito del cliente evaluado:
+    // - mismo cliente y nuevo total: la CxC propia sale del saldo vivo y se
+    //   exige el nuevo total (un decrecimiento pasa solo);
+    // - cambio de cliente: se exige la deuda resultante (nueva si cambia el
+    //   total, la vigente si no) al cliente destino, cuyo saldo no la incluye.
+    let creditoOverrideUpdate: CreditoOverrideInfo | null = null;
+    const evaluaTope = cxcActiva && (cambiaCliente ? Boolean(data.clienteId) : cambiaTotal);
+    if (evaluaTope) {
+      const clienteEvaluar = cambiaCliente ? data.clienteId! : existing.clienteId!;
+      await lockCreditoCliente(tx, tenantId, clienteEvaluar);
+      const montoRequerido = cambiaCliente
+        ? (cambiaTotal ? nuevoTotal : Number(cxcActiva.montoDeuda))
+        : nuevoTotal;
+      const res = await exigirLimiteCredito({
+        client: tx,
+        tenantId,
+        clienteId: clienteEvaluar,
+        montoRequerido,
+        cuentaExcluidaId: cambiaCliente ? undefined : cxcActiva.id,
+        user,
+      });
+      if (res.overrideUsado) {
+        creditoOverrideUpdate = {
+          limiteCredito: res.limiteCredito,
+          saldoVivo: res.saldoVivo,
+          montoRequerido: res.montoEvaluado,
+        };
+      }
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (data.cantidad !== undefined) updateData.cantidad = data.cantidad;
+    if (cambiaTotal) updateData.total = nuevoTotal;
+    // C-3: el costo no se acepta del payload; el snapshot de la venta es histórico.
+    if (data.observaciones !== undefined) updateData.observaciones = data.observaciones;
+    if (data.clienteId !== undefined) updateData.clienteId = data.clienteId;
+
+    const row = await tx.ventaServicios.update({
+      where: { ventaServicioId },
+      data: updateData,
+    });
+
+    if (cxcActiva && cambiaTotal) {
+      // Claim de estado: solo se ajusta la deuda si la CxC sigue editable.
+      const claim = await tx.cuentaPorCobrar.updateMany({
+        where: { id: cxcActiva.id, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+        data: { montoDeuda: nuevoTotal },
+      });
+      if (claim.count !== 1) {
+        throw new ActionError(
+          'La cuenta por cobrar cambió de estado durante la operación; reintenta',
+          'CXC_ESTADO_CAMBIO',
+        );
+      }
+    }
+    if (cxcActiva && cambiaCliente && data.clienteId) {
+      // Claim de estado: la CxC sigue viva (no anulada) al moverla de cliente.
+      const claim = await tx.cuentaPorCobrar.updateMany({
+        where: { id: cxcActiva.id, estado: { not: 'ANULADA' } },
+        data: { clienteId: data.clienteId },
+      });
+      if (claim.count !== 1) {
+        throw new ActionError(
+          'La cuenta por cobrar cambió de estado durante la operación; reintenta',
+          'CXC_ESTADO_CAMBIO',
+        );
+      }
+    }
+    if (creditoOverrideUpdate) {
+      await AuditLogService.logStrict(
+        {
+          accion: 'EXECUTE',
+          entidad: 'VENTA_SERVICIO',
+          entidadId: ventaServicioId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'CREDITO_OVERRIDE',
+            clienteId: data.clienteId,
+            ...creditoOverrideUpdate,
+          },
+        },
+        tx,
+      );
+    }
+    return row;
   });
 
-  revalidatePath('/busy/venta-servicios');
+  revalidatePath('/busy/servicios');
   return updated;
 });
 
@@ -554,7 +816,167 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
     );
   }
 
-  await prisma.ventaServicios.delete({ where: { ventaServicioId: id } });
-  revalidatePath('/busy/venta-servicios');
+  // C-6: con factura emitida la venta es documento fiscal; no se elimina.
+  const facturasCount = await prisma.factura.count({
+    where: { ventaServicioId: id },
+  });
+  if (facturasCount > 0) {
+    throw new ActionError(
+      'No se puede eliminar la venta: tiene una factura emitida; anula primero la factura',
+      'VENTA_CON_FACTURA',
+    );
+  }
+
+  // C-5: una CxC activa protege la venta del borrado — anularla es un acto
+  // explícito y auditable, no un efecto colateral del delete.
+  const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
+    where: { ventaServicioId: id, estado: { not: 'ANULADA' } },
+    select: { id: true },
+  });
+  if (cxcActiva) {
+    throw new ActionError(
+      'No se puede eliminar la venta: tiene una cuenta por cobrar activa; anula primero la cuenta por cobrar',
+      'VENTA_CON_CXC_ACTIVA',
+    );
+  }
+
+  // C-5: con la FK en Restrict, las CxC ANULADA que aún referencien la venta
+  // se eliminan junto a ella en la misma transacción.
+  await prisma.$transaction(async (tx) => {
+    await tx.cuentaPorCobrar.deleteMany({
+      where: { ventaServicioId: id, estado: 'ANULADA' },
+    });
+    await tx.ventaServicios.delete({ where: { ventaServicioId: id } });
+  });
+  revalidatePath('/busy/servicios');
   return { id, eliminado: true };
+});
+
+/**
+ * @description Emite el documento de factura para una venta de servicio (C-6).
+ * Numeración compartida de SerieFacturacion; enlaza la CxC existente sin crear
+ * deuda nueva (el tope de crédito ya fue validado al crear/actualizar la venta).
+ * La venta, su factura previa y su CxC se leen dentro de la transacción bajo el
+ * lock del documento (compartido con el cobro): facturar y cobrar
+ * concurrentes se serializan y ninguno opera sobre un estado obsoleto. Si la
+ * venta ya está cobrada (`reconciliado`), la factura nace PAGADA y la CxC
+ * pendiente se cierra en la misma transacción.
+ * @param {FacturarVentaServicioInput} input - Venta a facturar y vencimiento opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Factura emitida.
+ * @throws {ActionError} NOT_FOUND, FACTURA_REQUIERE_CLIENTE, VENTA_YA_FACTURADA, CXC_ESTADO_CAMBIO.
+ */
+export const facturarVentaServicioAction = withAction(async (input: FacturarVentaServicioInput, user: AuthenticatedUser) => {
+  const parsed = facturarVentaServicioSchema.parse(input);
+  const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'facturar servicios');
+  requireFeature(user, 'facturacion', 'facturar servicios');
+  requireFeature(user, 'ventas-factura', 'facturar servicios');
+  requirePermission(user, 'ventas.servicios.facturar', 'facturar ventas de servicios');
+
+  const fechaVencimiento = parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null;
+  if (fechaVencimiento && Number.isNaN(fechaVencimiento.getTime())) {
+    throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
+  }
+
+  const factura = await prisma.$transaction(async (tx) => {
+    // Lock compartido con el cobro (`cerrarDocumentoServicio`): facturación,
+    // cobro y anulación de la misma venta se serializan.
+    await lockDocumentoServicio(tx, parsed.ventaServicioId);
+
+    const venta = await tx.ventaServicios.findFirst({
+      where: { ventaServicioId: parsed.ventaServicioId, tenantId },
+      select: { ventaServicioId: true, clienteId: true, total: true, reconciliado: true },
+    });
+    if (!venta) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+    if (!venta.clienteId) {
+      throw new ActionError(
+        'La venta no tiene cliente asociado; no se puede facturar',
+        'FACTURA_REQUIERE_CLIENTE',
+      );
+    }
+    // Capturar tras el guard: el narrowing no sobrevive dentro del callback de la tx.
+    const clienteIdFactura = venta.clienteId;
+
+    const facturaPrevista = await tx.factura.findFirst({
+      where: { ventaServicioId: venta.ventaServicioId },
+      select: { idFactura: true },
+    });
+    if (facturaPrevista) {
+      throw new ActionError('La venta ya tiene una factura asociada', 'VENTA_YA_FACTURADA');
+    }
+
+    const { serieId, numeroConsecutivo, numeroFactura } = await resolverSerieYNumero(tx, tenantId);
+    const doc = await tx.factura.create({
+      data: {
+        tenantId,
+        serieId,
+        numeroConsecutivo,
+        numeroFactura,
+        tipoDocumento: 'FACTURA',
+        ventaServicioId: venta.ventaServicioId,
+        clienteId: clienteIdFactura,
+        subtotal: venta.total,
+        descuento: 0,
+        total: venta.total,
+        estado: venta.reconciliado ? 'PAGADA' : 'PENDIENTE',
+        creadoPor: user.userId || 'sistema',
+        fechaVencimiento,
+      },
+    });
+
+    // Claim de estado: solo se toca la CxC viva (PENDIENTE/PARCIAL); una CxC
+    // anulada o pagada concurrentemente no se resurrecta ni se sobre-escribe.
+    const cxc = await tx.cuentaPorCobrar.findFirst({
+      where: { ventaServicioId: venta.ventaServicioId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+      select: { id: true, montoDeuda: true },
+    });
+    if (cxc) {
+      if (venta.reconciliado) {
+        // Cobrada sin documento: el documento nace pagado y la deuda se cierra.
+        const claim = await tx.cuentaPorCobrar.updateMany({
+          where: { id: cxc.id, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+          data: { estado: 'PAGADA', montoPagado: cxc.montoDeuda },
+        });
+        if (claim.count !== 1) {
+          throw new ActionError(
+            'La cuenta por cobrar cambió de estado durante la operación; reintenta',
+            'CXC_ESTADO_CAMBIO',
+          );
+        }
+      } else {
+        // Deuda viva: solo se enlaza el documento, el monto no cambia.
+        const claim = await tx.cuentaPorCobrar.updateMany({
+          where: { id: cxc.id, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+          data: { facturaId: doc.idFactura, numeroFactura, fechaVencimiento },
+        });
+        if (claim.count !== 1) {
+          throw new ActionError(
+            'La cuenta por cobrar cambió de estado durante la operación; reintenta',
+            'CXC_ESTADO_CAMBIO',
+          );
+        }
+      }
+    }
+
+    await AuditLogService.logStrict(
+      {
+        accion: 'EXECUTE',
+        entidad: 'VENTA_SERVICIO',
+        entidadId: venta.ventaServicioId,
+        usuarioId: user.userId,
+        detalles: {
+          tipo: 'VENTA_SERVICIO_FACTURADA',
+          facturaId: doc.idFactura,
+          numeroFactura,
+          estado: doc.estado,
+        },
+      },
+      tx,
+    );
+    return doc;
+  });
+
+  revalidatePath('/busy/servicios');
+  return factura;
 });

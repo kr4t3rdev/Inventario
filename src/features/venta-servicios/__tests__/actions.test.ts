@@ -24,22 +24,50 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 	exchangeRateProvider: { getRateAsOf: vi.fn() },
 }));
 
+// Lecturas compartidas raíz↔tx (mismo fn): las actions leen por tx dentro de
+// la transacción y por raíz fuera; los tests configuran una sola vez. Los
+// writes quedan separados para seguir probando atomicidad. vi.hoisted: la
+// fábrica de vi.mock se ejecuta antes que cualquier const del archivo.
+const {
+	mockVentaFindFirst,
+	mockVentaFindMany,
+	mockCxcFindFirst,
+	mockCxcFindMany,
+	mockClienteFindFirst,
+	mockFacturaFindFirst,
+	mockFacturaCount,
+	mockReconciliacionCount,
+} = vi.hoisted(() => ({
+	mockVentaFindFirst: vi.fn(),
+	mockVentaFindMany: vi.fn(),
+	mockCxcFindFirst: vi.fn(),
+	mockCxcFindMany: vi.fn(),
+	mockClienteFindFirst: vi.fn(),
+	mockFacturaFindFirst: vi.fn(),
+	mockFacturaCount: vi.fn(),
+	mockReconciliacionCount: vi.fn(),
+}));
+
 const mockTx = {
-	ventaServicios: { create: vi.fn(), findMany: vi.fn() },
+	ventaServicios: { create: vi.fn(), findMany: mockVentaFindMany, findFirst: mockVentaFindFirst, update: vi.fn(), delete: vi.fn() },
+	cuentaPorCobrar: { create: vi.fn(), findFirst: mockCxcFindFirst, findMany: mockCxcFindMany, update: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
+	factura: { findFirst: mockFacturaFindFirst, create: vi.fn(), updateMany: vi.fn() },
+	cliente: { findFirst: mockClienteFindFirst },
+	reconciliacionServicio: { create: vi.fn(), count: mockReconciliacionCount },
 	$executeRaw: vi.fn(),
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
-	reconciliacionServicio: { create: vi.fn() },
 	transaccionMoneda: { create: vi.fn() },
 	tenantAccountingPolicy: { findUnique: vi.fn() },
+	auditLog: { create: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
 	prisma: {
 		ventaServicios: {
-			findMany: vi.fn(),
-			findFirst: vi.fn(),
+			findMany: mockVentaFindMany,
+			findFirst: mockVentaFindFirst,
 			create: vi.fn(),
 			update: vi.fn(),
 			delete: vi.fn(),
@@ -49,10 +77,18 @@ vi.mock("@/lib/prisma", () => ({
 			findMany: vi.fn(),
 		},
 		cliente: {
-			findFirst: vi.fn(),
+			findFirst: mockClienteFindFirst,
+		},
+		cuentaPorCobrar: {
+			findFirst: mockCxcFindFirst,
+			findMany: mockCxcFindMany,
+		},
+		factura: {
+			findFirst: mockFacturaFindFirst,
+			count: mockFacturaCount,
 		},
 		reconciliacionServicio: {
-			count: vi.fn(),
+			count: mockReconciliacionCount,
 		},
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
@@ -133,6 +169,7 @@ describe("VentaServicios Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(prisma.factura.count).mockResolvedValue(0);
 	});
 
 	describe("getVentaServiciosAction", () => {
@@ -178,7 +215,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 			});
 
 			expect(result.success).toBe(true);
@@ -195,7 +231,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 2,
-				costo: 0,
 			});
 
 			expect(result.success).toBe(true);
@@ -220,7 +255,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 2,
-				costo: 0,
 			} as any);
 
 			expect(result.success).toBe(true);
@@ -241,7 +275,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				precioUnitario: 2500,
 			} as any);
 
@@ -257,7 +290,7 @@ describe("VentaServicios Server Actions", () => {
 				if (Array.isArray(args)) return Promise.all(args);
 				return args(mockTx);
 			});
-			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
 				condicionPago: "CONTADO" as const,
@@ -288,8 +321,10 @@ describe("VentaServicios Server Actions", () => {
 				precioUnitario: 6000,
 				cantidad: 1,
 				total: 5000,
+				clienteId: null,
+				condicionPago: "CONTADO",
 			});
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
@@ -297,7 +332,7 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ cantidad: 3, total: 18000 }),
 				}),
@@ -308,7 +343,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
@@ -316,7 +351,7 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ cantidad: 3, total: 15000 }),
 				}),
@@ -331,7 +366,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-otro-tenant",
 				cantidad: 1,
-				costo: 0,
 			});
 
 			expect(result.success).toBe(false);
@@ -368,7 +402,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				clienteId: "cliente-otro-tenant",
 			});
 
@@ -450,7 +483,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -498,7 +530,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -545,7 +576,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -581,7 +611,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -624,7 +653,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -660,7 +688,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -693,7 +720,6 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
-				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -710,7 +736,7 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.findMany.mockResolvedValue([]);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
-			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, costo: 0, idempotencyKey: "legacy-key" };
+			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, idempotencyKey: "legacy-key" };
 			const created = await createVentaServicioAction(input);
 			expect(created.success).toBe(true);
 			const storedKey = mockTx.ventaServicios.create.mock.calls[0][0].data.idempotencyKey;
@@ -740,7 +766,7 @@ describe("VentaServicios Server Actions", () => {
 			const input = {
 				condicionPago: "CONTADO" as const,
 				idempotencyKey: "mixed-key",
-				lineas: [{ tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1, costo: 0 }],
+				lineas: [{ tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1 }],
 			};
 			const created = await createVentaServicioAction(input);
 			expect(created.success).toBe(true);
@@ -777,7 +803,7 @@ describe("VentaServicios Server Actions", () => {
 				condicionPago: "CONTADO" as const,
 				idempotencyKey: "many-line-key",
 				lineas: Array.from({ length: 11 }, () => ({
-					tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1, costo: 0,
+					tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1,
 				})),
 			};
 			const created = await createVentaServicioAction(input);
@@ -806,7 +832,7 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.findMany.mockResolvedValue([]);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
-			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, costo: 0, idempotencyKey: "period-replay" };
+			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, idempotencyKey: "period-replay" };
 			const created = await createVentaServicioAction(input);
 			expect(created.success).toBe(true);
 			const storedKey = mockTx.ventaServicios.create.mock.calls[0][0].data.idempotencyKey;
@@ -823,7 +849,7 @@ describe("VentaServicios Server Actions", () => {
 			const newWrite = await createVentaServicioAction({
 				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1", cantidad: 1,
-				costo: 0, idempotencyKey: "new-period-write",
+				idempotencyKey: "new-period-write",
 			});
 			expect(newWrite.success).toBe(false);
 			expect(expectActionFailure(newWrite).error?.code).toBe("PERIODO_CERRADO");
@@ -837,13 +863,13 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
 				cantidad: 2,
 			});
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ total: 10000 }),
 				}),
@@ -858,7 +884,8 @@ describe("VentaServicios Server Actions", () => {
 				mockVentaRow,
 			);
 			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0);
-			vi.mocked(prisma.ventaServicios.delete).mockResolvedValue(mockVentaRow);
+			vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null);
+			mockTx.ventaServicios.delete.mockResolvedValue(mockVentaRow);
 			const result = await deleteVentaServicioAction("vs-1");
 			expect(result.success).toBe(true);
 		});
@@ -925,5 +952,110 @@ describe("VentaServicios Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
+	});
+});
+
+describe("costo server-side de servicios (C-3)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		// El catálogo define el costo estándar: 750 por unidad.
+		vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+			{ servicioId: "sv-1", moneda: "CUP", precio: 5000, costo: 750 },
+		] as never);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: "cli-1" } as never);
+		mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow as never);
+	});
+
+	it("mixto con costo manipulado es rechazado por el schema strict", async () => {
+		const result = await createVentaServicioAction({
+			lineas: [{ tipoLinea: "SERVICIO", servicioId: "sv-1", cantidad: 1, costo: 999999 }],
+		} as never);
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
+	});
+
+	it("legacy persiste el costo del catálogo aunque el payload no lo envíe", async () => {
+		const result = await createVentaServicioAction({
+			servicioId: "sv-1",
+			cantidad: 2,
+		} as never);
+
+		expect(result.success).toBe(true);
+		expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ costo: 750 }),
+			}),
+		);
+	});
+
+	it("update con costo manipulado es rechazado", async () => {
+		vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(mockVentaRow as never);
+		vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow as never);
+
+		const result = await updateVentaServicioAction({
+			ventaServicioId: "vs-1",
+			costo: 5,
+		} as never);
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(prisma.ventaServicios.update).not.toHaveBeenCalled();
+	});
+});
+
+describe("delete con protección de CxC (C-5)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(mockVentaRow as never);
+		vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0 as never);
+		mockTx.ventaServicios.delete.mockResolvedValue(mockVentaRow as never);
+		mockTx.cuentaPorCobrar.deleteMany.mockResolvedValue({ count: 0 } as never);
+	});
+
+	it("con CxC activa rechaza el borrado (VENTA_CON_CXC_ACTIVA) y la venta sobrevive", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue({
+			id: "cxc-1",
+		} as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VENTA_CON_CXC_ACTIVA");
+		expect(prisma.$transaction).not.toHaveBeenCalled();
+		expect(mockTx.ventaServicios.delete).not.toHaveBeenCalled();
+	});
+
+	it("con solo CxC ANULADA borra la CxC anulada y la venta en la misma transacción", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null as never);
+		mockTx.cuentaPorCobrar.deleteMany.mockResolvedValue({ count: 1 } as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(true);
+		expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+		expect(mockTx.cuentaPorCobrar.deleteMany).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1", estado: "ANULADA" },
+		});
+		expect(mockTx.ventaServicios.delete).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1" },
+		});
+	});
+
+	it("sin CxC elimina solo la venta (regresión)", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(true);
+		expect(mockTx.cuentaPorCobrar.deleteMany).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1", estado: "ANULADA" },
+		});
+		expect(mockTx.ventaServicios.delete).toHaveBeenCalled();
 	});
 });

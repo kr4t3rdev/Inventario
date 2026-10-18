@@ -19,6 +19,7 @@ import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import {
 	buildPersistedAccountingAmount,
+	cerrarDocumentoServicio,
 	validateSaleReconciliationInput,
 } from "@/features/contabilidad/services/accounting-reconciliation-service";
 import {
@@ -677,6 +678,9 @@ export const reconciliarServicioAction = withAction(
 					where: { ventaServicioId: input.ventaServicioId },
 					data: { reconciliado: true },
 				});
+
+				// C-6: el cobro cierra el ciclo del documento (Factura y CxC).
+				await cerrarDocumentoServicio(tx, input.ventaServicioId);
 
 				return {
 					reconciliado: true,

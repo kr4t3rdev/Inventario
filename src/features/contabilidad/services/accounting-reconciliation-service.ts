@@ -122,6 +122,69 @@ export function validateSaleReconciliationInput(input: {
 }
 
 /**
+ * @description Toma el advisory lock transaccional del documento de una venta
+ * de servicio. Lo deben tomar, dentro de su transacción, todo writer que
+ * emite la factura de la venta (`facturarVentaServicioAction`) y todo writer
+ * que cierra sus documentos al cobrar (`cerrarDocumentoServicio`): serializa
+ * facturación vs cobro/anulación para que ninguna de las dos opere sobre un
+ * estado obsoleto de la venta, la factura o la CxC.
+ * @param {Pick<Prisma.TransactionClient, '$executeRaw'>} tx - Transacción del writer.
+ * @param {string} ventaServicioId - Venta de servicio documento/cobro.
+ * @returns {Promise<void>} El lock se mantiene hasta el fin de la transacción.
+ */
+export async function lockDocumentoServicio(
+  tx: Pick<Prisma.TransactionClient, '$executeRaw'>,
+  ventaServicioId: string,
+): Promise<void> {
+  const lockIdentity = JSON.stringify(['venta-servicio-doc', ventaServicioId]);
+  await tx.$executeRaw`
+    SELECT pg_advisory_xact_lock(hashtextextended(${lockIdentity}, 0))
+  `;
+}
+
+/**
+ * @description Cierra el ciclo del documento de una venta de servicio cobrada
+ * (C-6): la Factura emitida y la CxC enlazada pasan a PAGADA. Condicional —
+ * si no hay documento ni CxC, no toca nada. Las escrituras son claims
+ * (`updateMany` filtrando por estado): si la factura o la CxC fue anulada
+ * concurrentemente, la transacción no la resurrecta ni la sobre-escribe; si
+ * ya estaba PAGADA, no hay nada que hacer. Debe llamarse dentro de la
+ * transacción del writer de cobro (action web o servicio compartido móvil).
+ * @param {Pick<Prisma.TransactionClient, 'factura' | 'cuentaPorCobrar' | '$executeRaw'>} tx - Transacción del writer.
+ * @param {string} ventaServicioId - Venta de servicio cobrada.
+ */
+export async function cerrarDocumentoServicio(
+  tx: Pick<Prisma.TransactionClient, 'factura' | 'cuentaPorCobrar' | '$executeRaw'>,
+  ventaServicioId: string,
+): Promise<void> {
+  await lockDocumentoServicio(tx, ventaServicioId);
+  const facturaServicio = await tx.factura.findFirst({
+    where: { ventaServicioId, estado: 'PENDIENTE' },
+    select: { idFactura: true },
+  });
+  if (facturaServicio) {
+    // Claim de estado: solo cierra la factura que sigue pendiente; una
+    // anulación o cobro concurrente gana y no se sobre-escribe.
+    await tx.factura.updateMany({
+      where: { idFactura: facturaServicio.idFactura, estado: 'PENDIENTE' },
+      data: { estado: 'PAGADA' },
+    });
+  }
+  const cxcServicio = await tx.cuentaPorCobrar.findFirst({
+    where: { ventaServicioId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+    select: { id: true, montoDeuda: true },
+  });
+  if (cxcServicio) {
+    // Claim de estado: solo cierra la deuda viva; una CxC anulada o pagada
+    // concurrentemente no se resurrecta.
+    await tx.cuentaPorCobrar.updateMany({
+      where: { id: cxcServicio.id, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+      data: { estado: 'PAGADA', montoPagado: cxcServicio.montoDeuda },
+    });
+  }
+}
+
+/**
  * @description Shared service for accounting reconciliation flows used by web and mobile adapters.
  */
 export const AccountingReconciliationService = {
@@ -588,6 +651,9 @@ export const AccountingReconciliationService = {
         where: { ventaServicioId: input.ventaServicioId },
         data: { reconciliado: true },
       });
+
+      // C-6: el cobro cierra el ciclo del documento (Factura y CxC enlazadas).
+      await cerrarDocumentoServicio(tx, input.ventaServicioId);
 
       return { reconciliado: true, distribuciones: input.distribuciones.length };
     });

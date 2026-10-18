@@ -1585,6 +1585,9 @@ model Servicios {
   tenantId        String
   nombre          String
   precio          Int
+  // C-3: costo estándar unitario del servicio (misma unidad que precio);
+  // la venta persiste este snapshot y el payload no puede fijarlo.
+  costo           Int              @default(0)
   descripcion     String
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -1620,6 +1623,8 @@ model VentaServicios {
   servicio         Servicios                @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
   venta            Venta?                   @relation(fields: [ventaId], references: [ventaId], onDelete: SetNull)
   cuentaPorCobrar  CuentaPorCobrar?
+  // C-6: factura emitida para esta venta de servicio.
+  factura          Factura?
   tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
@@ -2379,6 +2384,8 @@ model Factura {
   numeroFactura     String
   tipoDocumento     TipoDocumento    @default(FACTURA)
   ventaId           String?          @unique
+  // C-6: documento de factura para ventas de servicios (1:1, exclusivo con ventaId en la práctica).
+  ventaServicioId   String?          @unique
   clienteId         String
   subtotal          Decimal
   impuestos         Decimal          @default(0)
@@ -2405,6 +2412,8 @@ model Factura {
   serie             SerieFacturacion @relation(fields: [serieId], references: [serieId])
   tenant            Tenant           @relation(fields: [tenantId], references: [tenantId])
   venta             Venta?           @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
+  // C-6: Restrict — la venta de servicio no se elimina con factura emitida.
+  ventaServicio     VentaServicios?  @relation(fields: [ventaServicioId], references: [ventaServicioId], onDelete: Restrict)
   devolucionesNC    DevolucionVenta[]
   fiscalDocument    FiscalDocument?
 
@@ -2500,7 +2509,8 @@ model CuentaPorCobrar {
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   prestamoCash     PrestamoCash?
-  ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId])
+  // C-5: Restrict — ninguna vía de borrado deja CxC de servicio huérfana.
+  ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId], onDelete: Restrict)
 
   @@index([tenantId])
 }
