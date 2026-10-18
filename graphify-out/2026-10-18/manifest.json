@@ -7270,13 +7270,13 @@
     "semantic_hash": "4c1815b8f7a3f85363374973f46e8237"
   },
   "src/features/gastosDE/__tests__/actions.test.ts": {
-    "mtime": 1792304273.616409,
-    "ast_hash": "e68a06d562299129c4c5190ebe1bccad",
+    "mtime": 1792335025.5544455,
+    "ast_hash": "a8e783c56299a6e5ec5ccfbe78199bcc",
     "semantic_hash": ""
   },
   "src/features/gastosDE/actions.ts": {
-    "mtime": 1791389143.1640599,
-    "ast_hash": "909947941ed8cd66e9106492a250e3fd",
+    "mtime": 1792335025.555615,
+    "ast_hash": "d4bc33971ff53c3307b9287ad3cf7763",
     "semantic_hash": ""
   },
   "src/features/gastosDE/components/GastoConceptoForm.tsx": {
@@ -7430,8 +7430,8 @@
     "semantic_hash": ""
   },
   "src/features/mermas/actions.ts": {
-    "mtime": 1791475759.6130106,
-    "ast_hash": "db8ab8eda7e2de83adcb42c608450e51",
+    "mtime": 1792335025.556393,
+    "ast_hash": "d0c86eae3e8adabc52de98073fc5b32a",
     "semantic_hash": ""
   },
   "src/features/mermas/components/editar-merma-content.tsx": {
@@ -7575,8 +7575,8 @@
     "semantic_hash": "95a3fafc45eadfd44685dc489106d9a4"
   },
   "src/features/ofertas/__tests__/actions.test.ts": {
-    "mtime": 1792304273.6209464,
-    "ast_hash": "d2a690961a18710e19d81de41301d3cb",
+    "mtime": 1792335025.557234,
+    "ast_hash": "e4cde25cbbfd3fe641e77745e4f626b6",
     "semantic_hash": ""
   },
   "src/features/ofertas/actions.ts": {
@@ -7625,8 +7625,8 @@
     "semantic_hash": ""
   },
   "src/features/ofertas/services/facturar-oferta-workflow.ts": {
-    "mtime": 1791475759.6171372,
-    "ast_hash": "7ed65e92f173a0cb5f68f2fcb417aadf",
+    "mtime": 1792335025.5595584,
+    "ast_hash": "5d0798785a88921ddf0c57b46d5199cb",
     "semantic_hash": ""
   },
   "src/features/ofertas/types.ts": {
@@ -7920,8 +7920,8 @@
     "semantic_hash": "50f55fe42b6cb36124d0bd124b495a54"
   },
   "src/features/puntos-venta/__tests__/actions.test.ts": {
-    "mtime": 1792304273.6246047,
-    "ast_hash": "7d54e71606dafcef040f74cb05a8fa82",
+    "mtime": 1792335025.5601203,
+    "ast_hash": "5566b6fd1adfce73801b443f6a611da0",
     "semantic_hash": ""
   },
   "src/features/puntos-venta/__tests__/form-values.test.ts": {
@@ -7930,9 +7930,9 @@
     "semantic_hash": "27f8a0656fba1375eb39b937975cf620"
   },
   "src/features/puntos-venta/actions.ts": {
-    "mtime": 1791389143.232028,
-    "ast_hash": "ef50323dfad83f14c8ae352340906ee6",
-    "semantic_hash": "ef50323dfad83f14c8ae352340906ee6"
+    "mtime": 1792335025.5604954,
+    "ast_hash": "43220c0f9dc2c4c1f87b6a2312c67182",
+    "semantic_hash": ""
   },
   "src/features/puntos-venta/components/pv-edit-page-client.tsx": {
     "mtime": 1791389143.2322218,
@@ -8240,13 +8240,13 @@
     "semantic_hash": "259651d94d6e7cbc8259e977e58f44b9"
   },
   "src/features/transferencias/__tests__/actions.test.ts": {
-    "mtime": 1792304273.6293335,
-    "ast_hash": "233ab5a5feb158d5df4d33796afe3288",
+    "mtime": 1792337425.8783293,
+    "ast_hash": "30eca56b30c78861e670899bb782ca48",
     "semantic_hash": ""
   },
   "src/features/transferencias/actions.ts": {
-    "mtime": 1792304273.6298368,
-    "ast_hash": "5b542f947c30d37d7d49bd68614d4caa",
+    "mtime": 1792337400.852811,
+    "ast_hash": "50e7be364459e2170545ad9db1a8c01e",
     "semantic_hash": ""
   },
   "src/features/transferencias/components/__tests__/transferencias-form-filter.test.ts": {
@@ -9395,13 +9395,13 @@
     "semantic_hash": ""
   },
   "src/lib/services/periodo-contable-guard.ts": {
-    "mtime": 1792304273.6598363,
-    "ast_hash": "cb44b7c15647a26deef6c17b2f1d523c",
+    "mtime": 1792335025.564258,
+    "ast_hash": "ac7db39ab25722feb0519547f26db887",
     "semantic_hash": ""
   },
   "src/lib/services/periodo-contable-service.ts": {
-    "mtime": 1792304273.6604369,
-    "ast_hash": "1d6c0c242f94e5a32cae20341b3bfeea",
+    "mtime": 1792335025.5644977,
+    "ast_hash": "ef4760e76cfb7816c9334e2497fb9f61",
     "semantic_hash": ""
   },
   "src/lib/services/periodo-contable-types.ts": {
@@ -13470,8 +13470,8 @@
     "semantic_hash": ""
   },
   "src/features/gastosDE/__tests__/deletion-reversal.test.ts": {
-    "mtime": 1792304273.616633,
-    "ast_hash": "987f4afc138344c51cf492063ed1344b",
+    "mtime": 1792335025.554814,
+    "ast_hash": "d9d4d5413ecf484d91f51a4604e0460c",
     "semantic_hash": ""
   },
   "src/features/gastosDE/reversal.ts": {
@@ -23640,8 +23640,8 @@
     "semantic_hash": ""
   },
   "src/app/api/mobile/__tests__/plans-referrals-expenses.test.ts": {
-    "mtime": 1791389142.7637424,
-    "ast_hash": "cfd4dbd737d1f9250ef3a8f05ded2791",
+    "mtime": 1792335025.5516918,
+    "ast_hash": "a0bf278c46c2c16386f9340fca601305",
     "semantic_hash": ""
   },
   "src/app/api/mobile/expense-concepts/[id]/route.ts": {
@@ -23660,8 +23660,8 @@
     "semantic_hash": ""
   },
   "src/app/api/mobile/expenses/route.ts": {
-    "mtime": 1791389142.7666652,
-    "ast_hash": "7c8f54ef49b41638939121f2df2cdee1",
+    "mtime": 1792335025.5528946,
+    "ast_hash": "f9a4a95d4c56bd4d12b4f3a1d9c865cb",
     "semantic_hash": ""
   },
   "src/app/api/mobile/invoicing/[id]/route.ts": {
@@ -29865,8 +29865,8 @@
     "semantic_hash": ""
   },
   "src/app/api/mobile/__tests__/transfers-mermas-purchases.test.ts": {
-    "mtime": 1791389142.764289,
-    "ast_hash": "c5c7b9804c44eaf9a164f0adeeef291d",
+    "mtime": 1792335025.5522943,
+    "ast_hash": "09c053ee403ac553c0a8e6dbadc85541",
     "semantic_hash": ""
   },
   "src/app/api/mobile/categories/[id]/route.ts": {
@@ -29890,13 +29890,13 @@
     "semantic_hash": ""
   },
   "src/app/api/mobile/mermas/[id]/route.ts": {
-    "mtime": 1791389142.7702262,
-    "ast_hash": "eb796ac6c38a55418388988fafeeee7e",
+    "mtime": 1792335025.5533726,
+    "ast_hash": "252f5c29f76578e5c6e411f17473e541",
     "semantic_hash": ""
   },
   "src/app/api/mobile/mermas/route.ts": {
-    "mtime": 1791389142.770466,
-    "ast_hash": "9dc46fb1f56af0cacda9f5151091c0d1",
+    "mtime": 1792335025.5536163,
+    "ast_hash": "dde0015154ff4037e5eecb80b3e8f7c0",
     "semantic_hash": ""
   },
   "src/app/api/mobile/pos/puntos-venta/route.ts": {
@@ -30955,18 +30955,18 @@
     "semantic_hash": ""
   },
   "src/features/ofertas/__tests__/convertir-oferta-pedido.test.ts": {
-    "mtime": 1791389143.2046323,
-    "ast_hash": "69526a4fff69bcbde81d47719d7c8f96",
+    "mtime": 1792335025.5579262,
+    "ast_hash": "2ebcdc429cc9e31489859fb3f90d5f9f",
     "semantic_hash": ""
   },
   "src/features/ofertas/__tests__/facturar-erronea.test.ts": {
-    "mtime": 1792304273.6212995,
-    "ast_hash": "67dd2045136aa1538afe80d469fac8e9",
+    "mtime": 1792335025.5581627,
+    "ast_hash": "0f3813fedc79b2f1a49bbea3308a35ee",
     "semantic_hash": ""
   },
   "src/features/ofertas/__tests__/facturar-workerflow-mixta.test.ts": {
-    "mtime": 1791475759.6154592,
-    "ast_hash": "c57aed16265030f5604e83e2d191c7a1",
+    "mtime": 1792335025.5588002,
+    "ast_hash": "24b9c1d4806c0fbee4af821f525a18a1",
     "semantic_hash": ""
   },
   "src/features/ofertas/__tests__/urgent-corrections-red.test.ts": {
@@ -30975,8 +30975,8 @@
     "semantic_hash": ""
   },
   "src/features/ofertas/services/convertir-oferta-pedido.ts": {
-    "mtime": 1791389143.2086592,
-    "ast_hash": "786d5d39632e3d42ea52195f2c52cd47",
+    "mtime": 1792335025.5591664,
+    "ast_hash": "6d776ccca594045c15e1b942f44aeb0a",
     "semantic_hash": ""
   },
   "src/features/planes/__tests__/inventario-flags-migration.test.ts": {
@@ -31270,8 +31270,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-lifecycle.test.ts": {
-    "mtime": 1792304273.6387663,
-    "ast_hash": "6ca7031aeb760edb1f9fbd3f16281a30",
+    "mtime": 1792335025.5621502,
+    "ast_hash": "aa91f3d1396add5503546fa6cbfeb2e9",
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-price-integrity.test.ts": {
@@ -31335,8 +31335,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/services/venta-lifecycle-service.ts": {
-    "mtime": 1791475759.6422472,
-    "ast_hash": "19e18761eadd0e6d4ae2edc29591df42",
+    "mtime": 1792335025.5628552,
+    "ast_hash": "d26c0f2b0b4d268ed3a69c4983c30956",
     "semantic_hash": ""
   },
   "src/lib/__integration__/ean13-reset.test.ts": {
@@ -31410,8 +31410,8 @@
     "semantic_hash": ""
   },
   "src/lib/auth/route-permissions.ts": {
-    "mtime": 1792304273.649653,
-    "ast_hash": "0789a1ce6f8aa2ebecbfc49b71b9db50",
+    "mtime": 1792335025.5637188,
+    "ast_hash": "95b85274bf8a63688c96c083aeb25bf4",
     "semantic_hash": ""
   },
   "src/lib/db/__integration__/audit-models-tenant.test.ts": {
@@ -35772,6 +35772,106 @@
   "sdks/mobile-v1/typescript/docs/PuntosVentaApi.md": {
     "mtime": 1792306238.2906182,
     "ast_hash": "90ba4738db1b42af37105707b9b7ca01",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20261018103000_hardening_catalog_on_delete/migration.sql": {
+    "mtime": 1792335025.5495293,
+    "ast_hash": "309f030a43ea5863c21dff6e02ed4062",
+    "semantic_hash": ""
+  },
+  "src/features/gastosDE/__tests__/periodo-cerrado.test.ts": {
+    "mtime": 1792335025.5549471,
+    "ast_hash": "84e4665fb406f12d4b3a9b1a58e1d224",
+    "semantic_hash": ""
+  },
+  "src/features/mermas/__tests__/registrar-merma-service.test.ts": {
+    "mtime": 1792335025.5557404,
+    "ast_hash": "bea3107c3c1916fb522e6f678cbc4b72",
+    "semantic_hash": ""
+  },
+  "src/features/mermas/services/registrar-merma-service.ts": {
+    "mtime": 1792335025.5566072,
+    "ast_hash": "9dd9a50ea428f2fc9ddb2182f8e50069",
+    "semantic_hash": ""
+  },
+  "src/features/ofertas/__tests__/facturar-guarda-venta-vinculada.test.ts": {
+    "mtime": 1792335025.5582688,
+    "ast_hash": "d00c54f2056b40898abeca0ddeae3997",
+    "semantic_hash": ""
+  },
+  "src/features/transferencias/lib/__tests__/stock-pv.test.ts": {
+    "mtime": 1792335025.56155,
+    "ast_hash": "e95f4d87e43793451c5341189f8b1aa0",
+    "semantic_hash": ""
+  },
+  "src/features/transferencias/lib/stock-pv.ts": {
+    "mtime": 1792335025.5617032,
+    "ast_hash": "aa48e6eec2931f1126b24c30970d07b7",
+    "semantic_hash": ""
+  },
+  "src/lib/__tests__/catalog-cascade-contract.test.ts": {
+    "mtime": 1792335025.5630927,
+    "ast_hash": "56debfa85729173b3572ffd8f3281a56",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/design.md": {
+    "mtime": 1792335025.5469258,
+    "ast_hash": "2d919190190cc70648b3879450d94e21",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/proposal.md": {
+    "mtime": 1792335025.5471003,
+    "ast_hash": "db4e59fe3d7a1c4d94f41c8f1f66c1d9",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/specs/catalogo/spec.md": {
+    "mtime": 1792335025.5473657,
+    "ast_hash": "756c8a4f91f941a903920333bdff9b1b",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/specs/gastos-periodos/spec.md": {
+    "mtime": 1792335025.547579,
+    "ast_hash": "d187dfb93c76008fd87617b1d95d2e4b",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/specs/mermas/spec.md": {
+    "mtime": 1792335025.5477483,
+    "ast_hash": "f2e78e59884cb47d059749d0b373b128",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/specs/transferencias/spec.md": {
+    "mtime": 1792335025.5479176,
+    "ast_hash": "221162e437f72cce70882b73f6a4c930",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/specs/ventas-ofertas/spec.md": {
+    "mtime": 1792335025.5480947,
+    "ast_hash": "ab0ec7fd07a86c099c66f749f1120b51",
+    "semantic_hash": ""
+  },
+  "openspec/changes/correcciones-urgentes-2-datos/tasks.md": {
+    "mtime": 1792335025.5482323,
+    "ast_hash": "0d87572935f318cf8f9482157033a567",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-a-reintegracion/design.md": {
+    "mtime": 1792335025.5484788,
+    "ast_hash": "2f7757f21b95d0d221f8a880b36b5135",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-a-reintegracion/proposal.md": {
+    "mtime": 1792335025.5486584,
+    "ast_hash": "5da0b8a82886b570dea9d508ba3092a3",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-a-reintegracion/specs/transferencias/spec.md": {
+    "mtime": 1792335025.548968,
+    "ast_hash": "e6d64fff19e9302f19898cd2cf2c3ab8",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-a-reintegracion/tasks.md": {
+    "mtime": 1792335025.5491567,
+    "ast_hash": "67ea4ae695729260d0ce2409626b3fa1",
     "semantic_hash": ""
   }
 }

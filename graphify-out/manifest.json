@@ -4105,9 +4105,9 @@
     "semantic_hash": ""
   },
   "src/app/busy/servicios/page.tsx": {
-    "mtime": 1791389142.88215,
-    "ast_hash": "45151f180245c4cceac17c8a25ab2a34",
-    "semantic_hash": "45151f180245c4cceac17c8a25ab2a34"
+    "mtime": 1792349605.944427,
+    "ast_hash": "bb35c77aa13503d51d37d12a175d55e1",
+    "semantic_hash": ""
   },
   "src/app/busy/servicios/prestados/page.tsx": {
     "mtime": 1791389142.8823175,
@@ -4260,13 +4260,13 @@
     "semantic_hash": ""
   },
   "src/app/models/contabilidad.ts": {
-    "mtime": 1791475759.5438545,
-    "ast_hash": "614f4cbcaa025257a2436fb4c261a0c4",
+    "mtime": 1792349605.944951,
+    "ast_hash": "192ae05a91fa4a98ef4c730bf7fa1126",
     "semantic_hash": ""
   },
   "src/app/models/economicos.ts": {
-    "mtime": 1791389142.8902383,
-    "ast_hash": "c9f8942dfa2c882c5632a10fff2939cf",
+    "mtime": 1792349605.9452372,
+    "ast_hash": "7b5a1710fcc0fe3b7c8edd92c70a17d8",
     "semantic_hash": ""
   },
   "src/app/models/facturacion.ts": {
@@ -5560,8 +5560,8 @@
     "semantic_hash": ""
   },
   "src/features/clientes/actions.ts": {
-    "mtime": 1791389142.9658434,
-    "ast_hash": "a79376f76d7f4159ce06dee68732b9d9",
+    "mtime": 1792349605.9465091,
+    "ast_hash": "e5c99c7fe507ec9f77de24ff7fd47b89",
     "semantic_hash": ""
   },
   "src/features/clientes/components/cliente-logo-upload.tsx": {
@@ -5590,8 +5590,8 @@
     "semantic_hash": "9adb0d61081761cecdb0d981902c9dad"
   },
   "src/features/clientes/schemas.ts": {
-    "mtime": 1791389142.967965,
-    "ast_hash": "494ec13d963b3eda5bb13004a3557ec6",
+    "mtime": 1792349605.9473572,
+    "ast_hash": "3a8affdaa9dc3c67a5a0ee3ced9171eb",
     "semantic_hash": ""
   },
   "src/features/clientes/types.ts": {
@@ -5710,8 +5710,8 @@
     "semantic_hash": ""
   },
   "src/features/contabilidad/__tests__/integracion-guard.test.ts": {
-    "mtime": 1792304273.5877507,
-    "ast_hash": "bf5f0e32fe395fa07bbed947ae0884fa",
+    "mtime": 1792349605.9477594,
+    "ast_hash": "f13c71b4922538f2abf68f5eb866eb1a",
     "semantic_hash": ""
   },
   "src/features/contabilidad/__tests__/reconciliar-gasto-cxp.test.ts": {
@@ -5770,8 +5770,8 @@
     "semantic_hash": ""
   },
   "src/features/contabilidad/actions-reconciliacion.ts": {
-    "mtime": 1791475759.5755217,
-    "ast_hash": "65660a505d6dcc145865311baa97f35d",
+    "mtime": 1792349605.9485447,
+    "ast_hash": "526506746301a9eae4a911cd4c241860",
     "semantic_hash": ""
   },
   "src/features/contabilidad/actions-tipos-pago.ts": {
@@ -6180,9 +6180,9 @@
     "semantic_hash": "670596894a9fe89b40d0d3d2a2d7f379"
   },
   "src/features/contabilidad/components/reconciliacion/reconciliacion-servicios-form.tsx": {
-    "mtime": 1791475759.5866299,
-    "ast_hash": "c58d54b3ac6afa3d84cb6dd644c7a0d2",
-    "semantic_hash": "c58d54b3ac6afa3d84cb6dd644c7a0d2"
+    "mtime": 1792349605.9490445,
+    "ast_hash": "03cd12cc42f875ad15ef4ca8266b03a8",
+    "semantic_hash": ""
   },
   "src/features/contabilidad/components/reconciliacion/reconciliacion-servicios-page.tsx": {
     "mtime": 1791389143.0498896,
@@ -6380,8 +6380,8 @@
     "semantic_hash": ""
   },
   "src/features/contabilidad/services/accounting-reconciliation-service.ts": {
-    "mtime": 1791475759.5968018,
-    "ast_hash": "629955b85024b64ed74a67db98679857",
+    "mtime": 1792349605.9495273,
+    "ast_hash": "2381f6fe69cc492164946e74ced1944a",
     "semantic_hash": ""
   },
   "src/features/contabilidad/services/accounting-reports-service.ts": {
@@ -8180,13 +8180,13 @@
     "semantic_hash": "98ecf1ee13c61348c6d533fb526a97e1"
   },
   "src/features/servicios/__tests__/actions.test.ts": {
-    "mtime": 1792304273.6281958,
-    "ast_hash": "60317195e37fe084fe866d1cb22b3695",
+    "mtime": 1792349605.950771,
+    "ast_hash": "cc1089b22838f8e81f3a78833e4220b3",
     "semantic_hash": ""
   },
   "src/features/servicios/actions.ts": {
-    "mtime": 1791389143.2658384,
-    "ast_hash": "bbfcf452eb8464898146c693ce57330f",
+    "mtime": 1792349605.9554098,
+    "ast_hash": "25d1a44730e455ebf74922038d5d0e3f",
     "semantic_hash": ""
   },
   "src/features/servicios/components/index.ts": {
@@ -8195,23 +8195,23 @@
     "semantic_hash": "35c99f65962745025674ecd2344876df"
   },
   "src/features/servicios/components/servicios-cart.tsx": {
-    "mtime": 1792304273.6285212,
-    "ast_hash": "8e3fb57dc97d7e8837e90f1551e37ce5",
+    "mtime": 1792349605.966489,
+    "ast_hash": "f1e37802829bb0b98e728d713f6309e1",
     "semantic_hash": ""
   },
   "src/features/servicios/components/servicios-content.tsx": {
-    "mtime": 1791389143.266414,
-    "ast_hash": "96e5e45c842c0fb12843f1a7b352ffbf",
+    "mtime": 1792349605.9672234,
+    "ast_hash": "3d52035fad982cf92ac42340d636fe18",
     "semantic_hash": ""
   },
   "src/features/servicios/components/servicios-form.tsx": {
-    "mtime": 1791389143.266582,
-    "ast_hash": "3b18977c65e33d38beccec9c6f0fc558",
+    "mtime": 1792349605.967574,
+    "ast_hash": "358a9f11cbe024d30741df3f7a93cd46",
     "semantic_hash": ""
   },
   "src/features/servicios/components/servicios-prestados-form.tsx": {
-    "mtime": 1792304273.6289623,
-    "ast_hash": "6467fbb722e4efba7b8aa53191df9723",
+    "mtime": 1792349605.9685168,
+    "ast_hash": "c2f83f6596a1b58bc0c0777c0dc3bcef",
     "semantic_hash": ""
   },
   "src/features/servicios/components/servicios-recibidos-form.tsx": {
@@ -8230,23 +8230,23 @@
     "semantic_hash": "a5eed3e1bc5e9c8db948b7aae1e2beec"
   },
   "src/features/servicios/schemas.ts": {
-    "mtime": 1791389143.268312,
-    "ast_hash": "fe84307921f51163ea5ee1edb5bb8a6a",
-    "semantic_hash": "fe84307921f51163ea5ee1edb5bb8a6a"
+    "mtime": 1792349605.9693441,
+    "ast_hash": "e008c22ab292c4bd67338282dfac2fba",
+    "semantic_hash": ""
   },
   "src/features/servicios/types.ts": {
-    "mtime": 1791389143.268513,
-    "ast_hash": "259651d94d6e7cbc8259e977e58f44b9",
-    "semantic_hash": "259651d94d6e7cbc8259e977e58f44b9"
+    "mtime": 1792349605.9695325,
+    "ast_hash": "5de077e8697cb146968b0561b47275a0",
+    "semantic_hash": ""
   },
   "src/features/transferencias/__tests__/actions.test.ts": {
-    "mtime": 1792335025.5610375,
-    "ast_hash": "78a91fd197a316139b1f0fb99aa817d8",
+    "mtime": 1792337425.8783293,
+    "ast_hash": "30eca56b30c78861e670899bb782ca48",
     "semantic_hash": ""
   },
   "src/features/transferencias/actions.ts": {
-    "mtime": 1792335025.5613387,
-    "ast_hash": "284716233dea4c7ee5d42a5be365bea3",
+    "mtime": 1792337400.852811,
+    "ast_hash": "50e7be364459e2170545ad9db1a8c01e",
     "semantic_hash": ""
   },
   "src/features/transferencias/components/__tests__/transferencias-form-filter.test.ts": {
@@ -8490,13 +8490,13 @@
     "semantic_hash": "1eb81f6f119af126a04981c519eb1cf5"
   },
   "src/features/venta-servicios/__tests__/actions.test.ts": {
-    "mtime": 1792304273.633926,
-    "ast_hash": "97ee9f799167536b5347b6b733c87a62",
+    "mtime": 1792349605.9700434,
+    "ast_hash": "a10b4d30e4c7b21300fd4507daa7160c",
     "semantic_hash": ""
   },
   "src/features/venta-servicios/actions.ts": {
-    "mtime": 1792304273.635033,
-    "ast_hash": "7e9ab986cfb9c2ff10bb132497989faa",
+    "mtime": 1792349605.976857,
+    "ast_hash": "88233bbf4ac1717e6a920f4645caa97a",
     "semantic_hash": ""
   },
   "src/features/venta-servicios/hooks/use-venta-servicios.ts": {
@@ -8510,8 +8510,8 @@
     "semantic_hash": "f458642e0847ba23ab62971bd4bf7582"
   },
   "src/features/venta-servicios/schemas.ts": {
-    "mtime": 1792304273.6361816,
-    "ast_hash": "b7a417563b8f3153cfdb85f4d6f1dbcf",
+    "mtime": 1792349605.9774923,
+    "ast_hash": "df164643771142d2add5dc6880ba6c58",
     "semantic_hash": ""
   },
   "src/features/venta-servicios/types.ts": {
@@ -8610,8 +8610,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/services/venta-mutation-service.ts": {
-    "mtime": 1791475759.643485,
-    "ast_hash": "c9e0e2d5c37a0b0d5a0f87bfddceadfe",
+    "mtime": 1792349605.9806144,
+    "ast_hash": "1f127d6f39238ecbb36ebb16d282320e",
     "semantic_hash": ""
   },
   "src/features/ventas/services/venta-read-service.ts": {
@@ -9335,8 +9335,8 @@
     "semantic_hash": ""
   },
   "src/lib/services/audit-log-service.ts": {
-    "mtime": 1791475759.6654625,
-    "ast_hash": "3d9404029e8858348183cd87d559ff44",
+    "mtime": 1792349605.9837487,
+    "ast_hash": "2dfc4aeef63d1ecd642859ea7ad4200c",
     "semantic_hash": ""
   },
   "src/lib/services/cache-invalidation-service.ts": {
@@ -30430,8 +30430,8 @@
     "semantic_hash": ""
   },
   "src/features/clientes/components/cliente-360.tsx": {
-    "mtime": 1791389142.966807,
-    "ast_hash": "a98f7c932760cc2952feac6ac4b486f9",
+    "mtime": 1792349605.9468234,
+    "ast_hash": "fd540b97f6a807ccbf6a8f0a208168d1",
     "semantic_hash": ""
   },
   "src/features/compras-productos/__tests__/actions-oc.test.ts": {
@@ -31185,13 +31185,13 @@
     "semantic_hash": ""
   },
   "src/features/venta-servicios/__tests__/cxc-credito.test.ts": {
-    "mtime": 1792304273.6341631,
-    "ast_hash": "b213aa4765294632deaacb5b85842bf7",
+    "mtime": 1792349605.973887,
+    "ast_hash": "0d214b155e7f8297b1f9e0e545b753d1",
     "semantic_hash": ""
   },
   "src/features/venta-servicios/__tests__/precio-catalogo.test.ts": {
-    "mtime": 1792304273.634461,
-    "ast_hash": "94ba39812b240e43ea7d23cb8dd86fe1",
+    "mtime": 1792349605.97638,
+    "ast_hash": "df7683819b432b31e44cac2d4300eebb",
     "semantic_hash": ""
   },
   "src/features/venta-servicios/__tests__/request-idempotency.test.ts": {
@@ -31260,8 +31260,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-credito-limite.test.ts": {
-    "mtime": 1792304273.638513,
-    "ast_hash": "59d01f1156e7b8e2727c0cdc2a15181c",
+    "mtime": 1792349605.977965,
+    "ast_hash": "370cad602d621948e14d5899f4e8c10d",
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-estado-types.test.ts": {
@@ -31270,8 +31270,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-lifecycle.test.ts": {
-    "mtime": 1792335025.5621502,
-    "ast_hash": "aa91f3d1396add5503546fa6cbfeb2e9",
+    "mtime": 1792349605.9786818,
+    "ast_hash": "b63d3d5a801381cd315400a2690caaf4",
     "semantic_hash": ""
   },
   "src/features/ventas/__tests__/venta-price-integrity.test.ts": {
@@ -31335,8 +31335,8 @@
     "semantic_hash": ""
   },
   "src/features/ventas/services/venta-lifecycle-service.ts": {
-    "mtime": 1792335025.5628552,
-    "ast_hash": "d26c0f2b0b4d268ed3a69c4983c30956",
+    "mtime": 1792349605.9800663,
+    "ast_hash": "9ec01aba64445440753909f547adbba1",
     "semantic_hash": ""
   },
   "src/lib/__integration__/ean13-reset.test.ts": {
@@ -31375,8 +31375,8 @@
     "semantic_hash": ""
   },
   "src/lib/auth/__tests__/__fixtures__/permission-parity.json": {
-    "mtime": 1792304273.6480644,
-    "ast_hash": "c05446fc737b884bad9a985ca77deb4f",
+    "mtime": 1792349605.981501,
+    "ast_hash": "d1a1d5c706492d82a9853de8cddbd11f",
     "semantic_hash": ""
   },
   "src/lib/auth/__tests__/permission-parity.test.ts": {
@@ -31405,8 +31405,8 @@
     "semantic_hash": ""
   },
   "src/lib/auth/permission-registry.ts": {
-    "mtime": 1792304273.648807,
-    "ast_hash": "5951778d7d807d27b7f7756c07d6a224",
+    "mtime": 1792349605.9821713,
+    "ast_hash": "bb70253fa593bd9b010d57f25d29a004",
     "semantic_hash": ""
   },
   "src/lib/auth/route-permissions.ts": {
@@ -31480,8 +31480,8 @@
     "semantic_hash": ""
   },
   "src/lib/db/raw-sql-allowlist.ts": {
-    "mtime": 1792304273.6532154,
-    "ast_hash": "7fed34404c1738597f3a07d388f038e7",
+    "mtime": 1792349605.9831736,
+    "ast_hash": "c42cb776b45197bd35b7cf24203c2083",
     "semantic_hash": ""
   },
   "src/lib/db/scoped-prisma.ts": {
@@ -35872,6 +35872,96 @@
   "openspec/changes/sesion-a-reintegracion/tasks.md": {
     "mtime": 1792335025.5491567,
     "ast_hash": "67ea4ae695729260d0ce2409626b3fa1",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260927100000_servicios_costo_catalogo/migration.sql": {
+    "mtime": 1792349605.9418836,
+    "ast_hash": "f5399a09b8f3a2da532a65a10083e69c",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260927110000_cxc_servicio_restrict/migration.sql": {
+    "mtime": 1792349605.9420679,
+    "ast_hash": "67bdc05a89cdd0caf1a9f035e73e0022",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260927120000_factura_venta_servicio/migration.sql": {
+    "mtime": 1792349605.942198,
+    "ast_hash": "625025857539b225118c6a3b002ed058",
+    "semantic_hash": ""
+  },
+  "src/features/clientes/__tests__/editar-limite-credito-dialog.test.tsx": {
+    "mtime": 1792349605.9453375,
+    "ast_hash": "0c361e79f8bc43116160531740e6a332",
+    "semantic_hash": ""
+  },
+  "src/features/clientes/__tests__/limite-credito.test.ts": {
+    "mtime": 1792349605.9459147,
+    "ast_hash": "6da7486e6f670f33f5af6920b28ab266",
+    "semantic_hash": ""
+  },
+  "src/features/clientes/components/editar-limite-credito-dialog.tsx": {
+    "mtime": 1792349605.947151,
+    "ast_hash": "a7ec7cfa23731998b3b629a1b0b9f2be",
+    "semantic_hash": ""
+  },
+  "src/features/contabilidad/__tests__/reconcile-service-cierre-factura.test.ts": {
+    "mtime": 1792349605.9480069,
+    "ast_hash": "aa8791cd542a5b95c5213e5884f52899",
+    "semantic_hash": ""
+  },
+  "src/features/crm/__tests__/credito-enforcement.test.ts": {
+    "mtime": 1792349605.9497952,
+    "ast_hash": "227917197303c54e48bc5c554bab76fd",
+    "semantic_hash": ""
+  },
+  "src/features/crm/services/credito-enforcement.ts": {
+    "mtime": 1792349605.9502463,
+    "ast_hash": "839f5a5fd8dc9a970961ba91c5bd8b43",
+    "semantic_hash": ""
+  },
+  "src/features/venta-servicios/__tests__/cxc-restrict-contract.test.ts": {
+    "mtime": 1792349605.9751492,
+    "ast_hash": "b31dcea270ec48a2de109264e9b2929e",
+    "semantic_hash": ""
+  },
+  "src/features/venta-servicios/__tests__/facturar-servicio.test.ts": {
+    "mtime": 1792349605.9755197,
+    "ast_hash": "21ab7c4b15b73bd1de2bfcacbe4fb8d2",
+    "semantic_hash": ""
+  },
+  "src/features/venta-servicios/__tests__/mixto-atomico.test.ts": {
+    "mtime": 1792349605.9759064,
+    "ast_hash": "d794abeef7f433f9ae3fb237bd94df1b",
+    "semantic_hash": ""
+  },
+  "src/features/ventas/__tests__/serie-facturacion-service.test.ts": {
+    "mtime": 1792349605.977622,
+    "ast_hash": "8aa7a41e05f808069a53a14aa547336e",
+    "semantic_hash": ""
+  },
+  "src/features/ventas/services/serie-facturacion-service.ts": {
+    "mtime": 1792349605.97879,
+    "ast_hash": "a65eeb209d0ef2b1b826eb2b373d1245",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-c-credito-servicios/design.md": {
+    "mtime": 1792349605.9404192,
+    "ast_hash": "fa76491c1ad4cd68a11315689803053d",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-c-credito-servicios/proposal.md": {
+    "mtime": 1792349605.9405837,
+    "ast_hash": "7cb3f9c1f0c6d52b092dbc6b9c1e41bb",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-c-credito-servicios/specs/credito-servicios/spec.md": {
+    "mtime": 1792349605.9408147,
+    "ast_hash": "afe8cc986b08c9adc545aec044e1bc58",
+    "semantic_hash": ""
+  },
+  "openspec/changes/sesion-c-credito-servicios/tasks.md": {
+    "mtime": 1792349726.8897784,
+    "ast_hash": "80fda04f2292fb5d7f599945ab7f9ec7",
     "semantic_hash": ""
   }
 }
