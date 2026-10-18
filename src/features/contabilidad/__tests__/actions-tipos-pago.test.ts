@@ -3,12 +3,18 @@
  * Tenant isolation tests — RED phase: deben fallar hasta que se implemente el filtrado.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: { log: vi.fn(async () => undefined) },
 }));
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
+// El mock se declara en vi.hoisted para que el factory de vi.mock pueda
+// referenciarlo: asi el objeto conserva el tipo Mock de cada metodo y se
+// accede a el directamente (mockPrisma.modelo.metodo). Envolver un metodo
+// sobrecargado de Prisma en vi.mocked() devuelve NormalizedProcedure<...> y
+// pierde los setters (mockResolvedValue / mockImplementation).
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
     tipoPago: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -26,7 +32,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { prisma } from '@/lib/prisma';
+vi.mock('@/lib/prisma', () => ({
+  prisma: mockPrisma,
+}));
+
 import {
   getTiposPagoAction,
   getTipoPagoAction,
@@ -121,22 +130,22 @@ describe('getTiposPagoAction — tenant isolation', () => {
   });
 
   it('RED: debe retornar solo tipos de pago del tenant del usuario', async () => {
-    vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([mockTipoPagoA]);
+    mockPrisma.tipoPago.findMany.mockResolvedValue([mockTipoPagoA]);
 
     const result = await getTiposPagoAction();
 
     expect(result.success).toBe(true);
-    expect(result.data?.data).toHaveLength(1);
+    expect(expectActionSuccess(result).data?.data).toHaveLength(1);
 
     // ASSERT: el where DEBE incluir tenantId
-    const callWhere = vi.mocked(prisma.tipoPago.findMany).mock.calls[0][0]?.where;
+    const callWhere = mockPrisma.tipoPago.findMany.mock.calls[0][0]?.where;
     expect(callWhere).toHaveProperty('tenantId');
-    // @ts-expect-error — accedemos a la prop para testear
     expect(callWhere.tenantId).toBe('tenant-a');
   });
 
   it('RED: no debe incluir tipos de pago de otro tenant cuando existen ambos', async () => {
-    vi.mocked(prisma.tipoPago.findMany).mockImplementation(async ({ where }: any = {}) => {
+    mockPrisma.tipoPago.findMany.mockImplementation(async (args: any = {}) => {
+      const { where } = args;
       // Simular filtro por tenantId
       if (where?.tenantId === 'tenant-a') return [mockTipoPagoA];
       if (where?.tenantId === 'tenant-b') return [mockTipoPagoB];
@@ -148,8 +157,8 @@ describe('getTiposPagoAction — tenant isolation', () => {
 
     expect(result.success).toBe(true);
     // Si el filtro no funciona, retorna 2 en vez de 1
-    expect(result.data?.data).toHaveLength(1);
-    expect(result.data?.data[0].tipoId).toBe('tp-a');
+    expect(expectActionSuccess(result).data?.data).toHaveLength(1);
+    expect(expectActionSuccess(result).data?.data[0].tipoId).toBe('tp-a');
   });
 });
 
@@ -160,17 +169,18 @@ describe('getTipoPagoAction — tenant isolation', () => {
   });
 
   it('RED: debe retornar tipo de pago si pertenece al tenant', async () => {
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(mockTipoPagoA);
+    mockPrisma.tipoPago.findFirst.mockResolvedValue(mockTipoPagoA);
 
     const result = await getTipoPagoAction('tp-a');
 
     expect(result.success).toBe(true);
-    expect(result.data?.tipoId).toBe('tp-a');
+    expect(expectActionSuccess(result).data?.tipoId).toBe('tp-a');
   });
 
   it('RED: debe fallar con NOT_FOUND si el tipo pertenece a otro tenant', async () => {
         // Simular filtro correcto por tenantId: cuando busca tp-b + tenant-a, no lo encuentra
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tipoId === 'tp-b' && where?.tenantId === 'tenant-a') return null;
           if (where?.tipoId === 'tp-b') return mockTipoPagoB;
           return mockTipoPagoA;
@@ -180,16 +190,16 @@ describe('getTipoPagoAction — tenant isolation', () => {
     
         // Debe fallar porque tp-b no pertenece al tenant del usuario
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+        expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
       });
 
   it('RED: debe fallar con NOT_FOUND si no existe', async () => {
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null);
+    mockPrisma.tipoPago.findFirst.mockResolvedValue(null);
 
     const result = await getTipoPagoAction('no-existe');
 
           expect(result.success).toBe(false);
-          expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+          expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
         });
     });
 
@@ -200,7 +210,8 @@ describe('getTipoPagoAction — tenant isolation', () => {
     
       it('INTEGRATION: Tenant A no ve los TipoPago de Tenant B', async () => {
         vi.mocked(getCurrentUser).mockResolvedValue(tenantA_user);
-        vi.mocked(prisma.tipoPago.findMany).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findMany.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tenantId === 'tenant-a') return [mockTipoPagoA];
           return [];
         });
@@ -208,12 +219,13 @@ describe('getTipoPagoAction — tenant isolation', () => {
         const result = await getTiposPagoAction();
     
         expect(result.success).toBe(true);
-        expect(result.data?.data).toHaveLength(1);
-        expect(result.data?.data[0].tipoId).toBe('tp-a');
+        expect(expectActionSuccess(result).data?.data).toHaveLength(1);
+        expect(expectActionSuccess(result).data?.data[0].tipoId).toBe('tp-a');
     
         // Cambiar a tenant B
         vi.mocked(getCurrentUser).mockResolvedValue(tenantB_user);
-        vi.mocked(prisma.tipoPago.findMany).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findMany.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tenantId === 'tenant-b') return [mockTipoPagoB];
           return [];
         });
@@ -221,13 +233,14 @@ describe('getTipoPagoAction — tenant isolation', () => {
         const resultB = await getTiposPagoAction();
     
         expect(resultB.success).toBe(true);
-        expect(resultB.data?.data).toHaveLength(1);
-        expect(resultB.data?.data[0].tipoId).toBe('tp-b');
+        expect(expectActionSuccess(resultB).data?.data).toHaveLength(1);
+        expect(expectActionSuccess(resultB).data?.data[0].tipoId).toBe('tp-b');
       });
     
       it('INTEGRATION: Tenant A no puede actualizar TipoPago de Tenant B', async () => {
         vi.mocked(getCurrentUser).mockResolvedValue(tenantA_user);
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tipoId === 'tp-b' && where?.tenantId === 'tenant-a') return null;
           if (where?.tipoId === 'tp-b') return mockTipoPagoB;
           return mockTipoPagoA;
@@ -236,12 +249,13 @@ describe('getTipoPagoAction — tenant isolation', () => {
         const result = await updateTipoPagoAction({ id: 'tp-b', nombre: 'Hackeado' });
     
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+        expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
       });
     
       it('INTEGRATION: Tenant A no puede eliminar TipoPago de Tenant B', async () => {
         vi.mocked(getCurrentUser).mockResolvedValue(tenantA_user);
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tipoId === 'tp-b' && where?.tenantId === 'tenant-a') return null;
           if (where?.tipoId === 'tp-b') return mockTipoPagoB;
           return mockTipoPagoA;
@@ -250,34 +264,35 @@ describe('getTipoPagoAction — tenant isolation', () => {
         const result = await deleteTipoPagoAction('tp-b');
     
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+        expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
       });
     
       it('INTEGRATION: Crear TipoPago con mismo nombre en ambos tenants es válido', async () => {
         vi.mocked(getCurrentUser).mockResolvedValue(tenantA_user);
-        vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null);
-        vi.mocked(prisma.tipoPago.create).mockResolvedValue({ ...mockTipoPagoA, tipoId: 'tp-new', nombre: 'Efectivo' });
+        mockPrisma.tipoPago.findFirst.mockResolvedValue(null);
+        mockPrisma.tipoPago.create.mockResolvedValue({ ...mockTipoPagoA, tipoId: 'tp-new', nombre: 'Efectivo' });
     
         const resultA = await createTipoPagoAction({ nombre: 'Efectivo', requiereCuenta: false });
         expect(resultA.success).toBe(true);
     
         vi.mocked(getCurrentUser).mockResolvedValue(tenantB_user);
         // tenant B tambien puede crear "Efectivo" porque el nombre no está en su tenant
-        vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null);
-        vi.mocked(prisma.tipoPago.create).mockResolvedValue({ ...mockTipoPagoB, tipoId: 'tp-new-2', nombre: 'Efectivo' });
+        mockPrisma.tipoPago.findFirst.mockResolvedValue(null);
+        mockPrisma.tipoPago.create.mockResolvedValue({ ...mockTipoPagoB, tipoId: 'tp-new-2', nombre: 'Efectivo' });
     
         const resultB = await createTipoPagoAction({ nombre: 'Efectivo', requiereCuenta: false });
         expect(resultB.success).toBe(true);
       });
     
       it('INTEGRATION: AvailableAccounts no muestra cuentas de otro tenant', async () => {
-        vi.mocked(prisma.cuentaBancaria.findMany).mockImplementation(async ({ where }: any) => {
+        mockPrisma.cuentaBancaria.findMany.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tenantId === 'tenant-a') return [mockCuentaA_full];
           if (where?.tenantId === 'tenant-b') return [mockCuentaB_full];
           return [];
         });
-        vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([]);
-        vi.mocked(prisma.cuentaBancaria.groupBy).mockResolvedValue([
+        mockPrisma.tipoPago.findMany.mockResolvedValue([]);
+        mockPrisma.cuentaBancaria.groupBy.mockResolvedValue([
           { moneda: 'CUP', _count: { cuentaId: 1 } },
         ]);
     
@@ -301,17 +316,16 @@ describe('createTipoPagoAction — tenant isolation', () => {
     const input = { nombre: 'Nuevo Tipo', requiereCuenta: false };
     const created = { ...mockTipoPagoA, tipoId: 'tp-new', nombre: 'Nuevo Tipo' };
 
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null); // No hay duplicado
-    vi.mocked(prisma.tipoPago.create).mockResolvedValue(created);
+    mockPrisma.tipoPago.findFirst.mockResolvedValue(null); // No hay duplicado
+    mockPrisma.tipoPago.create.mockResolvedValue(created);
 
     const result = await createTipoPagoAction(input);
 
     expect(result.success).toBe(true);
 
     // ASSERT: el create debe incluir tenantId
-    const createData = vi.mocked(prisma.tipoPago.create).mock.calls[0][0]?.data;
+    const createData = mockPrisma.tipoPago.create.mock.calls[0][0]?.data;
     expect(createData).toHaveProperty('tenantId');
-    // @ts-expect-error -- Prisma create input is a checked/unchecked union in this mock.
     expect(createData.tenantId).toBe('tenant-a');
   });
 
@@ -328,15 +342,16 @@ describe('createTipoPagoAction — tenant isolation', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('FORBIDDEN');
-    expect(prisma.tipoPago.create).not.toHaveBeenCalled();
+    expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN');
+    expect(mockPrisma.tipoPago.create).not.toHaveBeenCalled();
   });
 
   it('RED: debe validar nombre duplicado solo dentro del mismo tenant', async () => {
     const input = { nombre: 'Efectivo A', requiereCuenta: false };
 
     // Simular que "Efectivo A" existe en tenant-a → debe fallar
-    vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any = {}) => {
+    mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any = {}) => {
+      const { where } = args;
       if (where?.nombre?.equals === 'Efectivo A' && where?.tenantId === 'tenant-a') {
         return mockTipoPagoA;
       }
@@ -347,7 +362,7 @@ describe('createTipoPagoAction — tenant isolation', () => {
 
     // Debe fallar por nombre duplicado DENTRO del mismo tenant
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('PAYMENT_TYPE_NAME_EXISTS');
+    expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NAME_EXISTS');
   });
 
   it('RED: debe permitir nombre duplicado si el nombre existe en OTRO tenant', async () => {
@@ -355,7 +370,8 @@ describe('createTipoPagoAction — tenant isolation', () => {
     const created = { ...mockTipoPagoA, tipoId: 'tp-new', nombre: 'Efectivo B' };
 
     // Simular que "Efectivo B" existe en tenant-b pero NO en tenant-a
-    vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any = {}) => {
+    mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any = {}) => {
+      const { where } = args;
       if (where?.nombre?.equals === 'Efectivo B' && where?.tenantId === 'tenant-a') {
         return null; // No existe en tenant-a
       }
@@ -364,7 +380,7 @@ describe('createTipoPagoAction — tenant isolation', () => {
       }
       return null;
     });
-    vi.mocked(prisma.tipoPago.create).mockResolvedValue(created);
+    mockPrisma.tipoPago.create.mockResolvedValue(created);
 
     const result = await createTipoPagoAction(input);
 
@@ -382,9 +398,9 @@ describe('createTipoPagoAction — tenant isolation', () => {
     const mockCuentaA = { cuentaId: 'cb-1', tenantId: 'tenant-a', nombreBanco: 'Banco A', isActive: true };
 
     // Simular que la cuenta existe y pertenece al tenant
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuentaA);
-    vi.mocked(prisma.tipoPago.create).mockResolvedValue({ ...mockTipoPagoA, ...input, tipoId: 'tp-new', _count: { reconciliacionesVenta: 0, reconciliacionesServicio: 0, reconciliacionesGasto: 0 } });
+    mockPrisma.tipoPago.findFirst.mockResolvedValue(null);
+    mockPrisma.cuentaBancaria.findFirst.mockResolvedValue(mockCuentaA);
+    mockPrisma.tipoPago.create.mockResolvedValue({ ...mockTipoPagoA, ...input, tipoId: 'tp-new', _count: { reconciliacionesVenta: 0, reconciliacionesServicio: 0, reconciliacionesGasto: 0 } });
 
     const result = await createTipoPagoAction(input);
 
@@ -400,9 +416,10 @@ describe('createTipoPagoAction — tenant isolation', () => {
 
     const mockCuentaB = { cuentaId: 'cb-other', tenantId: 'tenant-b', nombreBanco: 'Banco B', isActive: true };
 
-        vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(null);
+        mockPrisma.tipoPago.findFirst.mockResolvedValue(null);
         // Simular que findFirst respeta filtro de tenantId
-        vi.mocked(prisma.cuentaBancaria.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.cuentaBancaria.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.cuentaId === 'cb-other' && where?.tenantId === 'tenant-a') return null;
           return mockCuentaB;
         });
@@ -411,7 +428,7 @@ describe('createTipoPagoAction — tenant isolation', () => {
 
     // La cuenta existe pero es de tenant-b → debe fallar
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('DEFAULT_ACCOUNT_NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('DEFAULT_ACCOUNT_NOT_FOUND');
   });
 });
 
@@ -425,20 +442,21 @@ describe('updateTipoPagoAction — tenant isolation', () => {
         const input = { id: 'tp-a', nombre: 'Actualizado' };
     
         // findFirst se llama varias veces: existing (OK), duplicado (null)
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.nombre?.equals && where?.tipoId?.not) return null;
           if (where?.tipoId === 'tp-a' && where?.tenantId === 'tenant-a') {
             return { ...mockTipoPagoA, nombre: 'Actualizado' };
           }
           return mockTipoPagoA;
         });
-        vi.mocked(prisma.tipoPago.updateMany).mockResolvedValue({ count: 1 });
+        mockPrisma.tipoPago.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await updateTipoPagoAction(input);
 
     expect(result.success).toBe(true);
-    expect(result.data?.data.nombre).toBe('Actualizado');
-    expect(prisma.tipoPago.updateMany).toHaveBeenCalledWith({
+    expect(expectActionSuccess(result).data?.data.nombre).toBe('Actualizado');
+    expect(mockPrisma.tipoPago.updateMany).toHaveBeenCalledWith({
       where: { tipoId: 'tp-a', tenantId: 'tenant-a' },
       data: { nombre: 'Actualizado' },
     });
@@ -448,7 +466,8 @@ describe('updateTipoPagoAction — tenant isolation', () => {
         const input = { id: 'tp-b', nombre: 'Hackeado' };
     
         // tp-b existe pero es de tenant-b; al buscar con tenantId=tenant-a no debe encontrarlo
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tipoId === 'tp-b' && where?.tenantId === 'tenant-a') return null;
           if (where?.tipoId === 'tp-b') return mockTipoPagoB;
           return mockTipoPagoA;
@@ -458,7 +477,7 @@ describe('updateTipoPagoAction — tenant isolation', () => {
     
         // Debe fallar porque tp-b no pertenece al tenant del usuario
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+        expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
       });
     
   it('RED: debe validar cuentaDefecto contra el tenant en update', async () => {
@@ -470,9 +489,10 @@ describe('updateTipoPagoAction — tenant isolation', () => {
     
         const mockCuentaB = { cuentaId: 'cb-other', tenantId: 'tenant-b', nombreBanco: 'Banco B', isActive: true };
     
-        vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(mockTipoPagoA);
+        mockPrisma.tipoPago.findFirst.mockResolvedValue(mockTipoPagoA);
         // cuenta existe pero es de tenant-b; al buscar con tenantId=tenant-a no la encuentra
-        vi.mocked(prisma.cuentaBancaria.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.cuentaBancaria.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.cuentaId === 'cb-other' && where?.tenantId === 'tenant-a') return null;
           return mockCuentaB;
         });
@@ -481,11 +501,11 @@ describe('updateTipoPagoAction — tenant isolation', () => {
 
     // La cuenta existe pero es de tenant-b → debe fallar
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('DEFAULT_ACCOUNT_NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('DEFAULT_ACCOUNT_NOT_FOUND');
   });
 
   it('rechaza limpiar cuentaDefecto si el tipo todavía requiere cuenta', async () => {
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue({
+    mockPrisma.tipoPago.findFirst.mockResolvedValue({
       ...mockTipoPagoA,
       requiereCuenta: true,
       cuentaDefecto: 'cb-a',
@@ -497,8 +517,8 @@ describe('updateTipoPagoAction — tenant isolation', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('ACCOUNT_REQUIRED_BUT_NOT_PROVIDED');
-    expect(prisma.tipoPago.updateMany).not.toHaveBeenCalled();
+    expect(expectActionFailure(result).error?.code).toBe('ACCOUNT_REQUIRED_BUT_NOT_PROVIDED');
+    expect(mockPrisma.tipoPago.updateMany).not.toHaveBeenCalled();
   });
 });
 
@@ -509,21 +529,22 @@ describe('deleteTipoPagoAction — tenant isolation', () => {
   });
 
   it('RED: debe eliminar si pertenece al tenant', async () => {
-    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue(mockTipoPagoA);
-    vi.mocked(prisma.tipoPago.deleteMany).mockResolvedValue({ count: 1 });
+    mockPrisma.tipoPago.findFirst.mockResolvedValue(mockTipoPagoA);
+    mockPrisma.tipoPago.deleteMany.mockResolvedValue({ count: 1 });
 
     const result = await deleteTipoPagoAction('tp-a');
 
     expect(result.success).toBe(true);
-    expect(result.data?.success).toBe(true);
-    expect(prisma.tipoPago.deleteMany).toHaveBeenCalledWith({
+    expect(expectActionSuccess(result).data?.success).toBe(true);
+    expect(mockPrisma.tipoPago.deleteMany).toHaveBeenCalledWith({
       where: { tipoId: 'tp-a', tenantId: 'tenant-a' },
     });
   });
 
   it('RED: debe fallar con NOT_FOUND si pertenece a otro tenant', async () => {
         // tp-b existe pero es de tenant-b; al buscar con tenantId=tenant-a no debe encontrarlo
-        vi.mocked(prisma.tipoPago.findFirst).mockImplementation(async ({ where }: any) => {
+        mockPrisma.tipoPago.findFirst.mockImplementation(async (args: any) => {
+        const { where } = args;
           if (where?.tipoId === 'tp-b' && where?.tenantId === 'tenant-a') return null;
           if (where?.tipoId === 'tp-b') return mockTipoPagoB;
           return mockTipoPagoA;
@@ -533,6 +554,6 @@ describe('deleteTipoPagoAction — tenant isolation', () => {
     
         // Debe fallar porque tp-b no pertenece al tenant del usuario
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
+        expect(expectActionFailure(result).error?.code).toBe('PAYMENT_TYPE_NOT_FOUND');
       });
 });

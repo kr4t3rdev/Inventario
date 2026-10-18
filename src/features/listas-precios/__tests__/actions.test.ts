@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de listas de precios.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -39,6 +40,7 @@ const mockUser: AuthenticatedUser = {
 
 const mockListaRow = {
   id: 'lp-1',
+  tenantId: 'tenant-test',
   nombre: 'Precio Base',
   descripcion: null,
   esDefault: true,
@@ -52,19 +54,19 @@ describe('ListasPrecios Server Actions', () => {
   describe('getListasPreciosAction', () => {
     it('retorna listas del tenant', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findMany).mockResolvedValue([{ ...mockListaRow, _count: { puntosDeVenta: 0, precios: 0 } }]);
+      vi.mocked(prisma.listaPrecio.findMany).mockResolvedValue([{ ...mockListaRow, _count: { puntosDeVenta: 0, precios: 0 } } as any]);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
+      expect(expectActionSuccess(result).data).toHaveLength(1);
     });
 
     it('rechaza usuarios que no sean manager del tenant', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'user', tenantRole: 'economico' });
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'regularUser', tenantRole: 'economico' });
 
       const result = await getListasPreciosAction();
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN');
       expect(prisma.listaPrecio.findMany).not.toHaveBeenCalled();
     });
   });
@@ -72,7 +74,7 @@ describe('ListasPrecios Server Actions', () => {
   describe('getListaPrecioByIdAction', () => {
     it('retorna lista por ID', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ ...mockListaRow, puntosDeVenta: [] });
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ ...mockListaRow, puntosDeVenta: [] } as any);
       const result = await getListaPrecioByIdAction('lp-1');
       expect(result.success).toBe(true);
     });
@@ -82,7 +84,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null);
       const result = await getListaPrecioByIdAction('lp-noexiste');
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -110,7 +112,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue(null);
       const result = await updateListaPrecioAction({ id: 'lp-noexiste', nombre: 'Test' });
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('no encontrada');
+      expect(expectActionFailure(result).error!.message).toContain('no encontrada');
     });
   });
 
@@ -130,7 +132,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(prisma.puntoDeVenta.count).mockResolvedValue(1);
       const result = await deleteListaPrecioAction('lp-1');
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('LISTA_PRECIO_IN_USE');
+      expect(expectActionFailure(result).error!.code).toBe('LISTA_PRECIO_IN_USE');
     });
   });
 
@@ -139,7 +141,7 @@ describe('ListasPrecios Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 
@@ -147,14 +149,14 @@ describe('ListasPrecios Server Actions', () => {
     it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye listas-precios', async () => {
       const restrictedUser: AuthenticatedUser = {
         ...mockUser,
-        role: 'user',
+        role: 'regularUser',
         tenantRole: 'manager',
         planFeatures: { 'listas-precios': false },
       };
       vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
       const result = await getListasPreciosAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+      expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
     });
   });
 });

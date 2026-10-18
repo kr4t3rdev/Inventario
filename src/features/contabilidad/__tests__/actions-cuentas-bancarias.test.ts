@@ -2,6 +2,7 @@
  * @description Tests para las Server Actions de Cuentas Bancarias.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 const periodGuardState = vi.hoisted(() => ({ blocked: false }));
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -67,11 +68,12 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 't1',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockCuenta = {
   cuentaId: 'c1',
+  tenantId: 't1',
   nombreBanco: 'Banco Test',
   numeroCuenta: '123-456',
   tipoCuenta: 'AHORROS',
@@ -102,8 +104,8 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(true);
-      expect(result.data?.cuentas).toHaveLength(1);
-      expect(result.data!.cuentas[0].nombreBanco).toBe('Banco Test');
+      expect(expectActionSuccess(result).data?.cuentas).toHaveLength(1);
+      expect(expectActionSuccess(result).data!.cuentas[0].nombreBanco).toBe('Banco Test');
       expect(prisma.cuentaBancaria.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { tenantId: 't1' } })
       );
@@ -115,7 +117,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(true);
-      expect(result.data?.cuentas).toEqual([]);
+      expect(expectActionSuccess(result).data?.cuentas).toEqual([]);
     });
 
     it('debe fallar si el usuario no está autenticado', async () => {
@@ -124,7 +126,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentasBancariasAction();
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED');
     });
   });
 
@@ -135,7 +137,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaBancariaByIdAction('c1');
 
       expect(result.success).toBe(true);
-      expect(result.data?.cuentaId).toBe('c1');
+      expect(expectActionSuccess(result).data?.cuentaId).toBe('c1');
     });
 
     it('debe fallar si la cuenta no existe', async () => {
@@ -144,7 +146,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaBancariaByIdAction('inexistente');
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     });
   });
 
@@ -188,7 +190,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await createCuentaBancariaAction({ ...validInput, saldo: 1000 });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -196,7 +198,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await createCuentaBancariaAction({ ...validInput, saldo: -1 });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -211,7 +213,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('PERIODO_CERRADO');
+      expect(expectActionFailure(result).error?.code).toBe('PERIODO_CERRADO');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -323,7 +325,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
     });
 
   });
@@ -336,7 +338,7 @@ describe('Cuentas Bancarias Actions', () => {
       } as never);
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
     });
 
@@ -389,7 +391,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
     });
 
@@ -401,7 +403,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
     });
 
@@ -413,7 +415,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
       expect(prisma.cuentaBancaria.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -463,7 +465,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     });
   });
 
@@ -475,7 +477,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await deleteCuentaBancariaAction('c1');
 
       expect(result.success).toBe(true);
-      expect(result.data?.eliminado).toBe(true);
+      expect(expectActionSuccess(result).data?.eliminado).toBe(true);
       expect(prisma.cuentaBancaria.delete).toHaveBeenCalledWith({
         where: { cuentaId: 'c1' },
       });
@@ -487,7 +489,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await deleteCuentaBancariaAction('inexistente');
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     });
   });
 
@@ -508,9 +510,9 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
-      expect(result.data?.transacciones).toEqual([]);
-      expect(result.data?.resumen.saldoActual).toBe(1000);
-      expect(result.data?.resumen.totalMovimientos).toBe(0);
+      expect(expectActionSuccess(result).data?.transacciones).toEqual([]);
+      expect(expectActionSuccess(result).data?.resumen.saldoActual).toBe(1000);
+      expect(expectActionSuccess(result).data?.resumen.totalMovimientos).toBe(0);
     });
 
     it('debe fallar si la cuenta no existe', async () => {
@@ -519,7 +521,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'inexistente' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
     });
 
     it('el resumen de período completo usa todas las transacciones, no solo la página', async () => {
@@ -542,11 +544,11 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.transacciones).toHaveLength(10);
-      expect(result.data?.resumen.totalIngresos).toBe(1500);
-      expect(result.data?.resumen.totalMovimientos).toBe(15);
-      expect(result.data?.pagination.total).toBe(15);
-      expect(result.data?.pagination.totalPages).toBe(2);
+      expect(expectActionSuccess(result).data?.transacciones).toHaveLength(10);
+      expect(expectActionSuccess(result).data?.resumen.totalIngresos).toBe(1500);
+      expect(expectActionSuccess(result).data?.resumen.totalMovimientos).toBe(15);
+      expect(expectActionSuccess(result).data?.pagination.total).toBe(15);
+      expect(expectActionSuccess(result).data?.pagination.totalPages).toBe(2);
     });
 
     it('no suma monedas heterogéneas sin evidencia hacia la moneda de la cuenta', async () => {
@@ -561,10 +563,10 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
-      expect(result.data?.resumen.totalIngresos).toBe(500);
-      expect(result.data?.resumen.totalEgresos).toBe(200);
-      expect(result.data?.resumen.monedasNoConvertidas).toEqual(['USD']);
-      expect(result.data?.transacciones.find((t) => t.monedaOriginal === 'USD')?.montoConvertido).toBeNull();
+      expect(expectActionSuccess(result).data?.resumen.totalIngresos).toBe(500);
+      expect(expectActionSuccess(result).data?.resumen.totalEgresos).toBe(200);
+      expect(expectActionSuccess(result).data?.resumen.monedasNoConvertidas).toEqual(['USD']);
+      expect(expectActionSuccess(result).data?.transacciones.find((t) => t.monedaOriginal === 'USD')?.montoConvertido).toBeNull();
     });
 
     it('usa montoConvertido cuando existe evidencia FX hacia CUP', async () => {
@@ -575,8 +577,8 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
-      expect(result.data?.resumen.totalIngresos).toBe(2450);
-      expect(result.data?.resumen.monedasNoConvertidas).toEqual([]);
+      expect(expectActionSuccess(result).data?.resumen.totalIngresos).toBe(2450);
+      expect(expectActionSuccess(result).data?.resumen.monedasNoConvertidas).toEqual([]);
     });
 
     it('filtra por tipo de movimiento y mantiene resumen y paginación consistentes', async () => {
@@ -594,11 +596,11 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.transacciones.every((t) => t.tipoMovimiento === 'venta')).toBe(true);
-      expect(result.data?.resumen.totalMovimientos).toBe(2);
-      expect(result.data?.resumen.totalIngresos).toBe(300);
-      expect(result.data?.resumen.totalEgresos).toBe(0);
-      expect(result.data?.pagination.total).toBe(2);
+      expect(expectActionSuccess(result).data?.transacciones.every((t) => t.tipoMovimiento === 'venta')).toBe(true);
+      expect(expectActionSuccess(result).data?.resumen.totalMovimientos).toBe(2);
+      expect(expectActionSuccess(result).data?.resumen.totalIngresos).toBe(300);
+      expect(expectActionSuccess(result).data?.resumen.totalEgresos).toBe(0);
+      expect(expectActionSuccess(result).data?.pagination.total).toBe(2);
     });
 
     it('trata fechaFin como inclusiva hasta el final del día', async () => {
@@ -642,9 +644,9 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
 
       expect(result.success).toBe(true);
-      expect(result.data?.resumen.totalIngresos).toBe(500);
-      expect(result.data?.resumen.totalEgresos).toBe(500);
-      expect(result.data?.resumen.totalMovimientos).toBe(4);
+      expect(expectActionSuccess(result).data?.resumen.totalIngresos).toBe(500);
+      expect(expectActionSuccess(result).data?.resumen.totalEgresos).toBe(500);
+      expect(expectActionSuccess(result).data?.resumen.totalMovimientos).toBe(4);
     });
   });
 });

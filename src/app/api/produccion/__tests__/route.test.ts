@@ -123,7 +123,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.count as Mock).mockResolvedValue(2)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -140,7 +140,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.count as Mock).mockResolvedValue(1)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas?search=Pan')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -160,7 +160,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.receta.findMany as Mock).mockRejectedValue(new Error('DB Error'))
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas')
-      const response = await getRecetas(request)
+      const response = await getRecetas(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -183,7 +183,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({ nombre: 'Nueva Receta', rendimiento: 10, productoId: 'prod-1' }),
       })
-      const response = await createReceta(request)
+      const response = await createReceta(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(201)
@@ -195,7 +195,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({}), // Invalid: missing required fields
       })
-      const response = await createReceta(request)
+      const response = await createReceta(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -560,7 +560,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales')
-      const response = await getVales(request)
+      const response = await getVales(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -574,7 +574,7 @@ describe('Production Module API Routes', () => {
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales?concepto=Materia')
-      const response = await getVales(request)
+      const response = await getVales(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -622,7 +622,7 @@ describe('Production Module API Routes', () => {
           items: [{ productoId: 'prod-1', cantidad: 10 }],
         }),
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(201)
@@ -657,7 +657,7 @@ describe('Production Module API Routes', () => {
           items: [{ productoId: 'prod-1', cantidad: 10 }],
         }),
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -670,7 +670,7 @@ describe('Production Module API Routes', () => {
         method: 'POST',
         body: JSON.stringify({}), // Invalid: missing required fields
       })
-      const response = await createVale(request)
+      const response = await createVale(request, {})
       const data = await response.json()
 
       expect(response.status).toBe(400)

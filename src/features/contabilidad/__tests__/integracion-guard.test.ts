@@ -8,6 +8,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { clearCache } from "@/lib/services/periodo-contable-guard";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
+import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 vi.hoisted(() => {});
 
@@ -22,7 +24,7 @@ const prismaShared = vi.hoisted(() => ({
 	cuentaBancaria: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
 	anticipo: { findFirst: vi.fn(), findUnique: vi.fn() },
 	cierreContable: { findFirst: vi.fn(), create: vi.fn() },
-	inyeccionCapital: { findFirst: vi.fn(), create: vi.fn() },
+	inyeccionCapital: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
 	pagoDeuda: { create: vi.fn() },
 	compraServicio: { create: vi.fn() },
 	ventaServicios: { findFirst: vi.fn(), create: vi.fn() },
@@ -96,11 +98,14 @@ const mockPeriodoAbierto = {
 	updatedAt: new Date(),
 };
 
-const baseUser = {
+const baseUser: AuthenticatedUser = {
 	userId: "user-1",
 	tenantId: "tenant-1",
+	name: "Test User",
 	email: "test@test.com",
 	role: "admin" as const,
+	isActive: true,
+	tenantRole: "manager",
 };
 
 /**
@@ -154,6 +159,9 @@ describe("Integración guard — auto-reconciliaciones", () => {
 	describe("createVentaServicioAction", () => {
 		it("rechaza en período CERRADO o NO_EXISTE (usa fecha actual)", async () => {
 			mockPrisma(mockPeriodoCerrado);
+			prismaShared.servicios.findMany.mockResolvedValue([
+				{ servicioId: "s-1", moneda: "CUP", precio: 100 },
+			]);
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
@@ -165,20 +173,24 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const result = await createVentaServicioAction({
 				servicioId: "s-1",
 				cantidad: 1,
-				total: 100,
-			} as any);
+				costo: 0,
+				condicionPago: "CONTADO",
+			});
 
 			expect(result.success).toBe(false);
 			// Usa () => new Date() como extractor, depende de la fecha actual.
 			// Puede ser PERIODO_NO_EXISTE si no hay período para hoy, o PERIODO_CERRADO
 			// si el mock coincide. Ambos son válidos — el guard bloquea la operación.
 			expect(["PERIODO_CERRADO", "PERIODO_NO_EXISTE"]).toContain(
-				result.error?.code,
+				expectActionFailure(result).error?.code,
 			);
 		});
 
 		it("pasa el guard en período ABIERTO", async () => {
 			mockPrisma(mockPeriodoAbierto);
+			prismaShared.servicios.findMany.mockResolvedValue([
+				{ servicioId: "s-1", moneda: "CUP", precio: 100 },
+			]);
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
@@ -190,8 +202,9 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			const result = await createVentaServicioAction({
 				servicioId: "s-1",
 				cantidad: 1,
-				total: 100,
-			} as any);
+				costo: 0,
+				condicionPago: "CONTADO",
+			});
 
 			// Guard passes; may fail on other Prisma mocks, but code should NOT be PERIODO_CERRADO
 			if (result.success === false) {
@@ -219,7 +232,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			} as any);
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("PERIODO_CERRADO");
+			expect(expectActionFailure(result).error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
 
@@ -240,7 +253,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("PERIODO_CERRADO");
+			expect(expectActionFailure(result).error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
 
@@ -261,7 +274,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("PERIODO_CERRADO");
+			expect(expectActionFailure(result).error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
 
@@ -284,13 +297,14 @@ describe("Integración guard — auto-reconciliaciones", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("PERIODO_CERRADO");
+			expect(expectActionFailure(result).error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
 
 	describe("createInyeccionCapitalAction", () => {
 		it("rechaza con PERIODO_CERRADO en período CERRADO", async () => {
 			mockPrisma(mockPeriodoCerrado);
+			prismaShared.inyeccionCapital.findUnique.mockResolvedValue(null);
 			const { getCurrentUser } = await import(
 				"@/lib/server-actions/get-current-user"
 			);
@@ -305,10 +319,12 @@ describe("Integración guard — auto-reconciliaciones", () => {
 				tipo: "CAPITAL_SOCIAL",
 				cuentaId: "account-1",
 				socio: "Socio fundador",
+				fechaOperacion: new Date("2026-04-15T00:00:00.000Z"),
+				idempotencyKey: "closed-period-capital-test",
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("PERIODO_CERRADO");
+			expect(expectActionFailure(result).error?.code).toBe("PERIODO_CERRADO");
 		});
 	});
 });

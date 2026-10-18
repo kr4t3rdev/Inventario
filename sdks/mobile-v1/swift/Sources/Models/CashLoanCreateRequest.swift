@@ -13,21 +13,25 @@ import AnyCodable
 public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
 
     public static let clienteIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let tasaInteresRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
+    public static let tasaInteresMoratorioRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
     public static let cuentaBancariaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public var clienteId: String
     public var montoCapital: Double
     public var moneda: String?
-    public var tasaInteres: Double?
+    public var tasaInteres: Double
+    public var tasaInteresMoratorio: Double
     public var tasaCambioAlCrear: Double?
     public var fechaVencimiento: Date?
     public var observaciones: String?
     public var cuentaBancariaId: String
 
-    public init(clienteId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double? = nil, tasaCambioAlCrear: Double? = nil, fechaVencimiento: Date? = nil, observaciones: String? = nil, cuentaBancariaId: String) {
+    public init(clienteId: String, montoCapital: Double, moneda: String? = nil, tasaInteres: Double, tasaInteresMoratorio: Double, tasaCambioAlCrear: Double? = nil, fechaVencimiento: Date? = nil, observaciones: String? = nil, cuentaBancariaId: String) {
         self.clienteId = clienteId
         self.montoCapital = montoCapital
         self.moneda = moneda
         self.tasaInteres = tasaInteres
+        self.tasaInteresMoratorio = tasaInteresMoratorio
         self.tasaCambioAlCrear = tasaCambioAlCrear
         self.fechaVencimiento = fechaVencimiento
         self.observaciones = observaciones
@@ -39,6 +43,7 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
         case montoCapital
         case moneda
         case tasaInteres
+        case tasaInteresMoratorio
         case tasaCambioAlCrear
         case fechaVencimiento
         case observaciones
@@ -52,7 +57,8 @@ public struct CashLoanCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encode(clienteId, forKey: .clienteId)
         try container.encode(montoCapital, forKey: .montoCapital)
         try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(tasaInteres, forKey: .tasaInteres)
+        try container.encode(tasaInteres, forKey: .tasaInteres)
+        try container.encode(tasaInteresMoratorio, forKey: .tasaInteresMoratorio)
         try container.encodeIfPresent(tasaCambioAlCrear, forKey: .tasaCambioAlCrear)
         try container.encodeIfPresent(fechaVencimiento, forKey: .fechaVencimiento)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)

@@ -182,25 +182,23 @@ export const updatePlanSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LockUnlockInput = z.infer<typeof lockUnlockSchema>;
-export type CloudinaryAssetsQueryInput = z.infer<typeof cloudinaryAssetsQuerySchema>;
-export type CloudinaryCleanupInput = z.infer<typeof cloudinaryCleanupSchema>;
+export type CloudinaryAssetsQueryInput = z.input<typeof cloudinaryAssetsQuerySchema>;
+export type CloudinaryCleanupInput = z.input<typeof cloudinaryCleanupSchema>;
 export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
-export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;
+export type CreateLicenciaInput = z.input<typeof createLicenciaSchema>;
 export type UpdateLicenciaInput = z.infer<typeof updateLicenciaSchema>;
 export type UpdateLicenseAccountingOverridesInput = z.infer<
   typeof updateLicenseAccountingOverridesSchema
 >;
-export type CreateDemoTenantInput = z.infer<typeof createDemoTenantSchema>;
-export type CleanupExpiredDemoLicenciasInput = z.infer<
-  typeof cleanupExpiredDemoLicenciasSchema
->;
+export type CreateDemoTenantInput = z.input<typeof createDemoTenantSchema>;
+export type CleanupExpiredDemoLicenciasInput = z.input<typeof cleanupExpiredDemoLicenciasSchema>;
 export type ChangePlanInput = z.infer<typeof changePlanSchema>;
-export type RenewLicenciaInput = z.infer<typeof renewLicenciaSchema>;
+export type RenewLicenciaInput = z.input<typeof renewLicenciaSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;
-export type CreatePlanInput = z.infer<typeof createPlanSchema>;
+export type CreatePlanInput = z.input<typeof createPlanSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
 
 // ─── Licencias Query ────────────────────────────────────
@@ -216,7 +214,7 @@ export const getLicenciasQuerySchema = z.object({
 	typeFilter: z.string().default('all'),
 });
 
-export type GetLicenciasQueryInput = z.infer<typeof getLicenciasQuerySchema>;
+export type GetLicenciasQueryInput = z.input<typeof getLicenciasQuerySchema>;
 
 export const licenciasStatsQuerySchema = z.object({
 	search: z.string().default(''),
@@ -225,7 +223,7 @@ export const licenciasStatsQuerySchema = z.object({
 	typeFilter: z.string().default('all'),
 });
 
-export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
+export type LicenciasStatsQueryInput = z.input<typeof licenciasStatsQuerySchema>;
 
 export const adminUserIdSchema = z.object({
   userId: z.string().min(1),
@@ -253,7 +251,7 @@ export const adminChangeTenantRoleSchema = z.object({
 
 export type AdminUserIdInput = z.infer<typeof adminUserIdSchema>;
 export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
-export type AdminAssignTenantInput = z.infer<typeof adminAssignTenantSchema>;
+export type AdminAssignTenantInput = z.input<typeof adminAssignTenantSchema>;
 export type AdminChangeTenantRoleInput = z.infer<
   typeof adminChangeTenantRoleSchema
 >;
@@ -340,9 +338,7 @@ export type AdminUpdateTenantInput = z.infer<typeof adminUpdateTenantSchema>;
 export type AdminRemoveTenantUserInput = z.infer<
   typeof adminRemoveTenantUserSchema
 >;
-export type AdminAssignTenantLicenseInput = z.infer<
-  typeof adminAssignTenantLicenseSchema
->;
+export type AdminAssignTenantLicenseInput = z.input<typeof adminAssignTenantLicenseSchema>;
 export type AdminUpdateTenantLicenseInput = z.infer<
   typeof adminUpdateTenantLicenseSchema
 >;

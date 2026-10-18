@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de ofertas.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -57,7 +58,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('Ofertas Server Actions', () => {
@@ -91,14 +92,14 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
       const result = await getOfertaByIdAction('of-noexiste');
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
   describe('createOfertaAction', () => {
     it('crea oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' } as any);
       vi.mocked(prisma.producto.findFirst).mockResolvedValue({
         id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
       } as any);
@@ -128,7 +129,7 @@ describe('Ofertas Server Actions', () => {
   describe('updateOfertaAction', () => {
     it('actualiza estado exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' });
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as any);
       vi.mocked(prisma.oferta.update).mockResolvedValue({} as any);
 
       const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
@@ -265,12 +266,12 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
         ofertaId: 'of-1', estado: 'FACTURADA', tenantId: 'tenant-test',
-      });
+      } as any);
 
       const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.message).toContain('ya fue facturada');
+      expect(expectActionFailure(result).error!.message).toContain('ya fue facturada');
     });
 
     it('usa contexto FACTURA_OFERTA al aplicar anticipos', async () => {
@@ -308,7 +309,7 @@ describe('Ofertas Server Actions', () => {
   describe('deleteOfertaAction', () => {
     it('elimina oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' });
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as any);
       vi.mocked(prisma.oferta.delete).mockResolvedValue({} as any);
       const result = await deleteOfertaAction('of-1');
       expect(result.success).toBe(true);
@@ -320,7 +321,7 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getOfertasAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthPost: vi.fn((handler) => (request: NextRequest, context: unknown) =>
+  withAuthPost: vi.fn((handler) => (request: NextRequest = {} as NextRequest, context: unknown = {}) =>
     handler(request, context, {
       userId: 'user-1',
       name: 'Test User',
@@ -48,7 +48,7 @@ describe('/api/ventas/punto-venta/ventas', () => {
       }),
     });
 
-    const response = await POST(request);
+    const response = await POST(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -77,7 +77,7 @@ describe('/api/ventas/punto-venta/ventas', () => {
       }),
     });
 
-    const response = await POST(request);
+    const response = await POST(request, {});
     const data = await response.json();
 
     expect(response.status).toBe(400);

@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectActionSuccess } from '@/test/action-response'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { getHistorialCambiosPrecioAction } from '../actions-historial-cambios'
+
+// La sesion se resuelve dentro del withAction real; solo se fija el usuario.
+vi.mock('@/lib/server-actions/get-current-user')
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -7,22 +12,29 @@ vi.mock('@/lib/prisma', () => ({
     productoCostHistory: { findMany: vi.fn(), count: vi.fn() },
   },
 }))
-vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireFeature: vi.fn(),
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'u1',
+  name: 'Usuario Historial',
+  email: 'historial@test.com',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+  role: 'admin',
+}
 
 describe('getHistorialCambiosPrecioAction', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+  })
 
   it('retorna historial paginado de cambios de precio', async () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([
@@ -34,7 +46,9 @@ describe('getHistorialCambiosPrecioAction', () => {
     ] as any)
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(15)
 
-    const data = await getHistorialCambiosPrecioAction({ page: 1, limit: 10 }, mockUser)
+    const data = expectActionSuccess(await getHistorialCambiosPrecioAction(
+      { page: 1, limit: 10 },
+    )).data
 
     expect(data.items).toHaveLength(1)
     expect(data.items[0].precioVenta).toEqual({ old: 100, new: 120 })
@@ -46,7 +60,9 @@ describe('getHistorialCambiosPrecioAction', () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([])
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(0)
 
-    await getHistorialCambiosPrecioAction({ productoId: 'p1', page: 1, limit: 10 }, mockUser)
+    await getHistorialCambiosPrecioAction(
+      { productoId: 'p1', page: 1, limit: 10 },
+    )
 
     expect(prisma.productoCostHistory.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -59,7 +75,9 @@ describe('getHistorialCambiosPrecioAction', () => {
     vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([])
     vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(0)
 
-    await getHistorialCambiosPrecioAction({ page: 1, limit: 10 }, mockUser)
+    await getHistorialCambiosPrecioAction(
+      { page: 1, limit: 10 },
+    )
 
     // Since ProductoCostHistory doesn't have tenantId, we can't filter it directly.
     // The test verifies the action runs without error (multi-tenant is handled

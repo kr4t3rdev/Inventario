@@ -10,6 +10,7 @@ Name | Type
 `montoCapital` | number
 `moneda` | string
 `tasaInteres` | number
+`tasaInteresMoratorio` | number
 `tasaCambioAlCrear` | number
 `fechaVencimiento` | Date
 `observaciones` | string
@@ -26,6 +27,7 @@ const example = {
   "montoCapital": null,
   "moneda": null,
   "tasaInteres": null,
+  "tasaInteresMoratorio": null,
   "tasaCambioAlCrear": null,
   "fechaVencimiento": null,
   "observaciones": null,

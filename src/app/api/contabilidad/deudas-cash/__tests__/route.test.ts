@@ -9,7 +9,7 @@ vi.mock("@/lib/auth-middleware", () => {
 			(...args: any[]) =>
 				handler(args[0], undefined, mockUser),
 		withAuthPost:
-			(handler: any) => async (request: NextRequest, context: any) =>
+			(handler: any) => async (request: NextRequest, context: any = {}) =>
 				handler(request, context, mockUser),
 	};
 });
@@ -47,6 +47,32 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 	AuditLogService: { log: vi.fn() },
 }));
 
+vi.mock(
+	"@/features/contabilidad/services/accounting-cash-operations-mutation-service",
+	async (importOriginal) => {
+		const original = await importOriginal<any>();
+		return {
+			...original,
+			AccountingCashOperationsMutationService: {
+				...original.AccountingCashOperationsMutationService,
+				findCashDebtPaymentReplay: vi.fn(),
+				registerCashDebtPayment: vi.fn(),
+			},
+		};
+	},
+);
+
+vi.mock("@/lib/services/validate-period-write", () => ({
+	validarEscrituraPeriodo: vi.fn().mockResolvedValue({ permitido: true }),
+	extraerFechaDeBody: vi.fn(() => undefined),
+}));
+
+vi.mock("@/lib/services/tenant-scope", () => ({
+	requireTenant: vi.fn(() => "tenant-1"),
+	requireFeature: vi.fn(),
+	requirePermission: vi.fn(),
+}));
+
 describe("API contabilidad/deudas-cash", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -71,7 +97,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
@@ -88,7 +114,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash?proveedorId=v-1",
 		);
-		await GET(request);
+		await GET(request, {});
 
 		expect(prisma.deudaCash.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -104,7 +130,7 @@ describe("API contabilidad/deudas-cash", () => {
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash",
 		);
-		const response = await GET(request);
+		const response = await GET(request, {});
 
 		expect(response.status).toBe(404);
 	});
@@ -211,142 +237,153 @@ describe("API contabilidad/deudas-cash", () => {
 
 describe("API contabilidad/deudas-cash/[id]/pagar", () => {
 	const mockContext = { params: Promise.resolve({ id: "d-1" }) };
+	const payment = {
+		monto: 0.0123,
+		cuentaId: "cuenta-1",
+		tipoPagoId: "tp-1",
+		moneda: "USD",
+		tasaCambio: 300,
+		observaciones: "partial installment",
+	};
+	const reconciliation = { reconciliacionId: "rec-1", monto: 0.0123, montoConvertido: 3.69 };
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.clearAllMocks();
 		vi.stubEnv("NEXT_PUBLIC_ENABLE_DEUDAS_CASH", "true");
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		service.findCashDebtPaymentReplay.mockResolvedValue(null);
+		service.registerCashDebtPayment.mockResolvedValue(reconciliation);
+		const period = await import("@/lib/services/validate-period-write");
+		vi.mocked(period.validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as any);
 	});
 
-	it("POST registra pago parcial con status 201", async () => {
-		const prisma = (await import("@/lib/prisma")).default as any;
-
-		const mockDeuda = {
-			id: "d-1",
-			estado: "ACTIVO",
-			moneda: "CUP",
-			cuentaPorPagarId: "cxp-1",
-			cuentaPorPagar: {
-				montoDeuda: 2000,
-				montoPagado: 0,
-				saldoPendiente: 2000,
-			},
-			cuentaBancariaId: "cb-1",
-		};
-		const mockReconciliacion = { reconciliacionId: "rec-1" };
-
-		prisma.deudaCash.findFirst.mockResolvedValue(mockDeuda);
-		prisma.$transaction.mockImplementation(async (callback: any) => {
-			const tx = {
-				reconciliacionVenta: {
-					create: vi.fn().mockResolvedValue(mockReconciliacion),
-				},
-				cuentaBancaria: { update: vi.fn().mockResolvedValue({}) },
-				cuentaPorPagar: { update: vi.fn() },
-				deudaCash: { update: vi.fn() },
-			};
-			return callback(tx);
+	it("writes the 4dp payment through the shared service and preserves the 201 response shape", async () => {
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		const { POST } = await import("../[id]/pagar/route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
+			method: "POST",
+			body: JSON.stringify({ ...payment, idempotencyKey: "body-key" }),
+			headers: { "Idempotency-Key": "header-key" },
 		});
 
-		const { POST } = await import("../[id]/pagar/route");
-		const request = new NextRequest(
-			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
-			{
-				method: "POST",
-				body: JSON.stringify({
-					monto: 1000,
-					cuentaId: "cuenta-1",
-					tipoPagoId: "tp-1",
-				}),
-			},
-		);
-
 		const response = await POST(request, mockContext);
-		const body = await response.json();
 
 		expect(response.status).toBe(201);
-		expect(body.reconciliacion.reconciliacionId).toBe("rec-1");
+		expect(await response.json()).toEqual({ reconciliacion: reconciliation });
+		expect(service.registerCashDebtPayment).toHaveBeenCalledWith({
+			input: { id: "d-1", ...payment, idempotencyKey: "body-key" },
+			user: expect.objectContaining({ userId: "user-test", tenantId: "tenant-1" }),
+		});
 	});
 
-	it("POST devuelve 404 si deuda no existe", async () => {
-		const prisma = (await import("@/lib/prisma")).default as any;
-		prisma.deudaCash.findFirst.mockResolvedValue(null);
-
+	it("uses the Idempotency-Key header when the request body omits a key", async () => {
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
 		const { POST } = await import("../[id]/pagar/route");
-		const request = new NextRequest(
-			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
-			{
-				method: "POST",
-				body: JSON.stringify({
-					monto: 100,
-					cuentaId: "cuenta-1",
-					tipoPagoId: "tp-1",
-				}),
-			},
-		);
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
+			method: "POST",
+			body: JSON.stringify(payment),
+			headers: { "Idempotency-Key": "header-key" },
+		});
+
+		await POST(request, mockContext);
+
+		expect(service.registerCashDebtPayment).toHaveBeenCalledWith({
+			input: { id: "d-1", ...payment, idempotencyKey: "header-key" },
+			user: expect.any(Object),
+		});
+	});
+
+	it("replays the exact payment before rejecting a closed period", async () => {
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		service.findCashDebtPaymentReplay.mockResolvedValue(reconciliation);
+		const period = await import("@/lib/services/validate-period-write");
+		vi.mocked(period.validarEscrituraPeriodo).mockResolvedValue({
+			permitido: false,
+			error: { code: "PERIODO_CERRADO", message: "closed" },
+		} as any);
+		const { POST } = await import("../[id]/pagar/route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
+			method: "POST",
+			body: JSON.stringify({ ...payment, idempotencyKey: "same-key" }),
+		});
 
 		const response = await POST(request, mockContext);
 
-		expect(response.status).toBe(404);
+		expect(response.status).toBe(201);
+		expect(await response.json()).toEqual({ reconciliacion: reconciliation });
+		expect(period.validarEscrituraPeriodo).not.toHaveBeenCalled();
+		expect(service.registerCashDebtPayment).not.toHaveBeenCalled();
 	});
 
-	it("POST devuelve 400 si deuda ya está pagada", async () => {
-		const prisma = (await import("@/lib/prisma")).default as any;
-		prisma.deudaCash.findFirst.mockResolvedValue({
-			id: "d-1",
-			estado: "PAGADO",
-			cuentaPorPagar: {
-				montoDeuda: 2000,
-				montoPagado: 2000,
-				saldoPendiente: 0,
-			},
-		});
-
+	it("blocks new writes when the accounting period is closed", async () => {
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		const period = await import("@/lib/services/validate-period-write");
+		vi.mocked(period.validarEscrituraPeriodo).mockResolvedValue({
+			permitido: false,
+			error: { code: "PERIODO_CERRADO", message: "closed" },
+		} as any);
 		const { POST } = await import("../[id]/pagar/route");
-		const request = new NextRequest(
-			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
-			{
-				method: "POST",
-				body: JSON.stringify({
-					monto: 100,
-					cuentaId: "cuenta-1",
-					tipoPagoId: "tp-1",
-				}),
-			},
-		);
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
+			method: "POST",
+			body: JSON.stringify({ ...payment, idempotencyKey: "new-key" }),
+		});
 
 		const response = await POST(request, mockContext);
 
 		expect(response.status).toBe(400);
+		expect(service.registerCashDebtPayment).not.toHaveBeenCalled();
 	});
 
-	it("POST devuelve 400 si monto excede saldo", async () => {
-		const prisma = (await import("@/lib/prisma")).default as any;
-		prisma.deudaCash.findFirst.mockResolvedValue({
-			id: "d-1",
-			estado: "ACTIVO",
-			cuentaPorPagar: {
-				montoDeuda: 2000,
-				montoPagado: 1800,
-				saldoPendiente: 200,
-			},
-		});
-
-		const { POST } = await import("../[id]/pagar/route");
-		const request = new NextRequest(
-			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
-			{
-				method: "POST",
-				body: JSON.stringify({
-					monto: 500,
-					cuentaId: "cuenta-1",
-					tipoPagoId: "tp-1",
-				}),
-			},
+	it("returns 409 for changed-payload key reuse and rejects excess precision before lookup", async () => {
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		const { ActionError } = await import("@/lib/server-actions");
+		service.findCashDebtPaymentReplay.mockRejectedValue(
+			new ActionError("key conflict", "IDEMPOTENCY_CONFLICT"),
 		);
+		const { POST } = await import("../[id]/pagar/route");
+		const conflictResponse = await POST(new NextRequest(
+			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
+			{ method: "POST", body: JSON.stringify({ ...payment, idempotencyKey: "same-key" }) },
+		), mockContext);
+		expect(conflictResponse.status).toBe(409);
+
+		service.findCashDebtPaymentReplay.mockClear();
+		const precisionResponse = await POST(new NextRequest(
+			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
+			{ method: "POST", body: JSON.stringify({ ...payment, monto: 0.01234 }) },
+		), mockContext);
+		expect(precisionResponse.status).toBe(400);
+		expect(service.findCashDebtPaymentReplay).not.toHaveBeenCalled();
+		expect(service.registerCashDebtPayment).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		["feature", "FEATURE_NOT_AVAILABLE"],
+		["permission", "FORBIDDEN"],
+	] as const)("denies a payment before replay when the %s gate fails", async (gate, code) => {
+		const { ActionError } = await import("@/lib/server-actions");
+		const guards = await import("@/lib/services/tenant-scope");
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		vi.mocked(gate === "feature" ? guards.requireFeature : guards.requirePermission)
+			.mockImplementation(() => { throw new ActionError("denied", code); });
+		const { POST } = await import("../[id]/pagar/route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
+			method: "POST",
+			body: JSON.stringify({ monto: 0.0123, cuentaId: "cuenta-1", tipoPagoId: "tp-1", idempotencyKey: "denied-key" }),
+		});
 
 		const response = await POST(request, mockContext);
 
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(403);
+		expect(service.findCashDebtPaymentReplay).not.toHaveBeenCalled();
+		expect(service.registerCashDebtPayment).not.toHaveBeenCalled();
 	});
 });

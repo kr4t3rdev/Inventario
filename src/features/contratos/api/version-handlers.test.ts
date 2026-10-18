@@ -58,7 +58,7 @@ function createMockFile(contents: string, name: string, type: string) {
     type,
     size: bytes.byteLength,
     arrayBuffer: async () => bytes.buffer,
-  }
+  } as unknown as File
 }
 
 function createMultipartRequest(url: string, fields: Record<string, string | File>): Request {

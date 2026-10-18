@@ -41,6 +41,7 @@ describe('anticipos-workflow', () => {
         proveedorId: 'vendor-1',
         monto: 0,
         moneda: 'CUP',
+        tenantId: 'tenant-test',
         usuarioId: 'user-1'
       })
     ).rejects.toThrow('El monto del anticipo debe ser mayor que cero')
@@ -67,6 +68,7 @@ describe('anticipos-workflow', () => {
         proveedorId: 'vendor-1',
         monto: 100,
         moneda: 'CUP',
+        tenantId: 'tenant-test',
         vigenciaHasta: invalidVigencia.toISOString(),
         usuarioId: 'user-1'
       })
@@ -98,6 +100,7 @@ describe('anticipos-workflow', () => {
       proveedorId: 'vendor-1',
       monto: 100,
       moneda: 'CUP',
+      tenantId: 'tenant-test',
       vigenciaHasta: validVigencia.toISOString(),
       usuarioId: 'user-1'
     })
@@ -130,7 +133,6 @@ describe('anticipos-workflow', () => {
         idempotencyKey: 'idem-ant-1',
         usuarioId: 'user-1'
       },
-      async () => ({ reconciliacionVentaId: 'rec-1' })
     )
 
     const second = await executeAnticipo(
@@ -144,7 +146,6 @@ describe('anticipos-workflow', () => {
         idempotencyKey: 'idem-ant-1',
         usuarioId: 'user-1'
       },
-      async () => ({ reconciliacionVentaId: 'rec-1' })
     )
 
     expect(first.idempotentReplay).toBe(false)
@@ -174,8 +175,7 @@ describe('anticipos-workflow', () => {
         monedaObjetivo: 'CUP',
         idempotencyKey: 'idem-ant-2',
         usuarioId: 'user-1'
-      },
-      async () => ({ reconciliacionVentaId: 'rec-2' })
+      }
     )
 
     await expect(
@@ -189,8 +189,7 @@ describe('anticipos-workflow', () => {
           monedaObjetivo: 'CUP',
           idempotencyKey: 'idem-ant-2',
           usuarioId: 'user-1'
-        },
-        async () => ({ reconciliacionVentaId: 'rec-2' })
+        }
       )
     ).rejects.toSatisfy((error) => isAnticipoWorkflowError(error) && error.code === 'IDEMPOTENCIA_CONFLICTO')
   })
@@ -217,8 +216,7 @@ describe('anticipos-workflow', () => {
           monedaObjetivo: 'CUP',
           idempotencyKey: 'idem-ant-3',
           usuarioId: 'user-1'
-        },
-        async () => ({ reconciliacionGastoId: 'rec-g-1' })
+        }
       )
     ).rejects.toSatisfy((error) => isAnticipoWorkflowError(error) && error.code === 'CONCURRENCIA')
   })

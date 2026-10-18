@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import {
   bulkApplyPercentageAction,
   bulkApplyTemplateAction,
@@ -8,6 +10,9 @@ import {
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
+
+// La sesion se resuelve dentro del withAction real; solo se fija el usuario.
+vi.mock('@/lib/server-actions/get-current-user')
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -22,24 +27,12 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-  ActionError: class ActionError extends Error {
-    code: string
-    constructor(message: string, code: string) {
-      super(message)
-      this.code = code
-    }
-  },
-}))
-
-const mockRequireFeature = vi.fn()
-
-vi.mock('@/lib/services/tenant-scope', () => ({
+// Mock parcial: solo se fija el tenant activo. La guarda de feature, el
+// permiso y el resto de guardas se ejecutan de verdad contra la fixture
+// (rol admin + plan con subfeature).
+vi.mock('@/lib/services/tenant-scope', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/services/tenant-scope')>()),
   requireTenant: vi.fn(() => 'tenant-1'),
-  requireManagerRole: vi.fn(() => true),
-  requirePermission: vi.fn(() => true),
-  requireFeature: (...args: any[]) => mockRequireFeature(...args),
 }))
 
 vi.mock('@/lib/cost-history-utils', () => ({
@@ -50,45 +43,49 @@ vi.mock('@/lib/cost-history-utils', () => ({
   },
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 import { recordCostChange } from '@/lib/cost-history-utils'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Usuario Bulk',
+  email: 'bulk@test.com',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
   tenantRole: 'manager',
-  role: 'user',
-} as any
+  role: 'admin',
+}
 
 describe('bulkApplyPercentageAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('debe validar que porcentaje sea mayor a -100', async () => {
-    await expect(
-      bulkApplyPercentageAction(
+    const failure = expectActionFailure(
+      await bulkApplyPercentageAction(
         { porcentaje: -101, productoIds: ['prod-1'] },
-        mockUser,
       ),
-    ).rejects.toThrow('porcentaje')
+    )
+    expect(failure.error.message).toContain('porcentaje')
   })
 
   it('debe validar que porcentaje sea menor a 1000', async () => {
-    await expect(
-      bulkApplyPercentageAction(
+    const failure = expectActionFailure(
+      await bulkApplyPercentageAction(
         { porcentaje: 1001, productoIds: ['prod-1'] },
-        mockUser,
       ),
-    ).rejects.toThrow('porcentaje')
+    )
+    expect(failure.error.message).toContain('porcentaje')
   })
 
   it('debe retornar early si no hay productoIds', async () => {
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: [] },
-      mockUser,
-    )
+    )).data
 
     expect(result).toEqual({
       updated: 0,
@@ -112,10 +109,9 @@ describe('bulkApplyPercentageAction', () => {
 
     vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(2)
     expect(result.results).toHaveLength(2)
@@ -137,7 +133,6 @@ describe('bulkApplyPercentageAction', () => {
 
     await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
@@ -161,10 +156,9 @@ describe('bulkApplyPercentageAction', () => {
 
     vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(1)
     expect(result.skipped).toHaveLength(1)
@@ -189,7 +183,6 @@ describe('bulkApplyPercentageAction', () => {
 
     await bulkApplyPercentageAction(
       { porcentaje: 3.33, productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(prisma.producto.updateMany).toHaveBeenCalledWith({
@@ -223,10 +216,9 @@ describe('bulkApplyPercentageAction', () => {
     })
     vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(120)
     expect(prisma.$transaction).toHaveBeenCalledTimes(120)
@@ -248,10 +240,9 @@ describe('bulkApplyPercentageAction', () => {
       .mockResolvedValueOnce({ count: 1 } as any)
       .mockRejectedValueOnce(new Error('DB error'))
 
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(1)
     expect(result.errors).toHaveLength(1)
@@ -286,10 +277,9 @@ describe('bulkApplyPercentageAction', () => {
       .mockRejectedValueOnce(new Error('Audit unavailable'))
       .mockResolvedValueOnce({ id: 'history-1', productoId: 'prod-1' } as any)
 
-    const failedAttempt = await bulkApplyPercentageAction(
+    const failedAttempt = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
-    )
+    )).data
 
     expect(failedAttempt).toEqual(expect.objectContaining({
       updated: 0,
@@ -300,10 +290,9 @@ describe('bulkApplyPercentageAction', () => {
     expect(recordCostChange).toHaveBeenCalledWith(txClient, expect.anything())
     expect(prisma.producto.updateMany).not.toHaveBeenCalled()
 
-    const retry = await bulkApplyPercentageAction(
+    const retry = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
-    )
+    )).data
 
     expect(retry.updated).toBe(1)
     expect(persistedPrice).toBe(1100)
@@ -321,10 +310,9 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    const result = await bulkApplyPercentageAction(
+    const result = expectActionSuccess(await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1'] },
-      mockUser,
-    )
+    )).data
 
     expect(txClient.producto.updateMany).toHaveBeenCalledWith({
       where: { id: 'prod-1', tenantId: 'tenant-1', precioVenta: 1000 },
@@ -342,13 +330,13 @@ describe('bulkApplyPercentageAction', () => {
 describe('bulkApplyTemplateAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('debe retornar early si no hay productoIds', async () => {
-    const result = await bulkApplyTemplateAction(
+    const result = expectActionSuccess(await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: [] },
-      mockUser,
-    )
+    )).data
 
     expect(result).toEqual({
       updated: 0,
@@ -379,7 +367,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
     )
 
     expect(prisma.productoCostSheetTemplate.findFirst).toHaveBeenCalledTimes(1)
@@ -396,7 +383,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(prisma.productoCostSheetTemplate.findFirst).toHaveBeenCalledWith({
@@ -411,12 +397,12 @@ describe('bulkApplyTemplateAction', () => {
   it('debe lanzar error si plantilla no existe', async () => {
     vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue(null)
 
-    await expect(
-      bulkApplyTemplateAction(
+    const failure = expectActionFailure(
+      await bulkApplyTemplateAction(
         { plantillaId: 'template-1', productoIds: ['prod-1'] },
-        mockUser,
       ),
-    ).rejects.toThrow('Plantilla no encontrada')
+    )
+    expect(failure.error.message).toContain('Plantilla no encontrada')
   })
 
   it('debe aplicar precioSugerido a todos los productos', async () => {
@@ -438,10 +424,9 @@ describe('bulkApplyTemplateAction', () => {
 
     vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
-    const result = await bulkApplyTemplateAction(
+    const result = expectActionSuccess(await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(2)
     expect(prisma.producto.updateMany).toHaveBeenCalledWith({
@@ -470,7 +455,6 @@ describe('bulkApplyTemplateAction', () => {
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
     )
 
     expect(recordCostChange).toHaveBeenCalledWith(
@@ -500,10 +484,9 @@ describe('bulkApplyTemplateAction', () => {
 
     vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
-    const result = await bulkApplyTemplateAction(
+    const result = expectActionSuccess(await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
-      mockUser,
-    )
+    )).data
 
     expect(result.updated).toBe(1)
     expect(result.skipped).toHaveLength(1)
@@ -541,10 +524,9 @@ describe('bulkApplyTemplateAction', () => {
     })
     vi.mocked(recordCostChange).mockRejectedValueOnce(new Error('Audit unavailable'))
 
-    const result = await bulkApplyTemplateAction(
+    const result = expectActionSuccess(await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
-    )
+    )).data
 
     expect(result).toEqual(expect.objectContaining({
       updated: 0,
@@ -573,10 +555,9 @@ describe('bulkApplyTemplateAction', () => {
       return fn
     })
 
-    const result = await bulkApplyTemplateAction(
+    const result = expectActionSuccess(await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
-      mockUser,
-    )
+    )).data
 
     expect(recordCostChange).not.toHaveBeenCalled()
     expect(result.updated).toBe(0)
@@ -587,36 +568,37 @@ describe('bulkApplyTemplateAction', () => {
 describe('Feature gate estricto: ficha-costo-bulk', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
   })
 
   it('deniega bulk si falta la subfeature antes de consultar Prisma', async () => {
-    const basicUser = {
+    vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
-    }
+    })
 
-    await expect(
-      bulkApplyPercentageAction(
+    const failure = expectActionFailure(
+      await bulkApplyPercentageAction(
         { porcentaje: 10, productoIds: ['prod-1'] },
-        basicUser,
       ),
-    ).rejects.toThrow('plan actual no incluye')
+    )
+    expect(failure.error.message).toContain('plan actual no incluye')
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
   })
 
   it('prioriza el plan sobre el rol y no consulta Prisma', async () => {
-    const nonManagerBasicUser = {
+    vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       tenantRole: 'economico',
       planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
-    }
+    })
 
-    await expect(
-      bulkApplyPercentageAction(
+    const failure = expectActionFailure(
+      await bulkApplyPercentageAction(
         { porcentaje: 10, productoIds: ['prod-1'] },
-        nonManagerBasicUser,
       ),
-    ).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
+    )
+    expect(failure.error).toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
   })
 })

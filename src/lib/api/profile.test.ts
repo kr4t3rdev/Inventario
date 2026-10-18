@@ -27,7 +27,7 @@ describe('profile fetchers', () => {
 
   describe('getProfile', () => {
     it('should return profile array for authenticated user', async () => {
-      const mockUser = {
+      const mockUser: any = {
         userId: 'user-1',
         name: 'Test User',
         email: 'test@example.com',
@@ -77,7 +77,7 @@ describe('profile fetchers', () => {
 
   describe('updateProfile', () => {
     it('should update and return user profile', async () => {
-      const mockUpdated = {
+      const mockUpdated: any = {
         userId: 'user-1',
         name: 'Updated Name',
         email: 'test@example.com',

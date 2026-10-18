@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de empleados.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -84,7 +85,7 @@ describe('Empleados Server Actions', () => {
 
   it('updateEmpleadoAction actualiza empleado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' });
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
     vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
     const result = await updateEmpleadoAction({ empleadoId: 'emp-1', nombre: 'Juan Carlos' });
     expect(result.success).toBe(true);
@@ -92,7 +93,7 @@ describe('Empleados Server Actions', () => {
 
   it('deleteEmpleadoAction elimina empleado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' });
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
     vi.mocked(prisma.empleado.delete).mockResolvedValue({} as any);
     const result = await deleteEmpleadoAction('emp-1');
     expect(result.success).toBe(true);
@@ -147,20 +148,20 @@ describe('Empleados Server Actions', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null);
     const result = await getEmpleadosAction();
     expect(result.success).toBe(false);
-    expect(result.error!.code).toBe('AUTH_REQUIRED');
+    expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
   });
 
   it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye empleados', async () => {
     const restrictedUser: AuthenticatedUser = {
       ...mockUser,
-      role: 'user',
+      role: 'regularUser',
       tenantRole: 'manager',
       planFeatures: { empleados: false },
     };
     vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
     const result = await getEmpleadosAction();
     expect(result.success).toBe(false);
-    expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
   });
 
   // ─── Tests para Fix A del spec (Task 5) ───────────────────────────
@@ -171,7 +172,7 @@ describe('Empleados Server Actions', () => {
   it('getEmpleadosAction funciona en plan Básico completo', async () => {
     const basicPlanUser: AuthenticatedUser = {
       ...mockUser,
-      role: 'user' as any,
+      role: 'regularUser' as any,
       tenantRole: 'manager',
       planFeatures: {
         empleados: true,
@@ -196,7 +197,7 @@ describe('Empleados Server Actions', () => {
   it('getEmpleadoByIdAction funciona en plan Básico', async () => {
     const basicPlanUser: AuthenticatedUser = {
       ...mockUser,
-      role: 'user' as any,
+      role: 'regularUser' as any,
       tenantRole: 'manager',
       planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
@@ -213,7 +214,7 @@ describe('Empleados Server Actions', () => {
   it('createEmpleadoAction funciona en plan Básico (manager puede crear)', async () => {
     const basicPlanManager: AuthenticatedUser = {
       ...mockUser,
-      role: 'user' as any,
+      role: 'regularUser' as any,
       tenantRole: 'manager',
       planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
@@ -236,7 +237,7 @@ describe('Empleados Server Actions', () => {
   it('createEmpleadoAction rechaza en plan Básico con rol dependiente', async () => {
     const basicPlanDependiente: AuthenticatedUser = {
       ...mockUser,
-      role: 'user' as any,
+      role: 'regularUser' as any,
       tenantRole: 'dependiente',
       planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
@@ -291,7 +292,7 @@ describe('Empleados Server Actions', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
 	expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
 	expect(tx.reconciliacionGasto.deleteMany).not.toHaveBeenCalled();
   });

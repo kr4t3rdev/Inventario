@@ -11,7 +11,8 @@ Name | Type | Description | Notes
 **clienteId** | **String** |  | 
 **montoCapital** | **num** |  | 
 **moneda** | **String** |  | [optional] 
-**tasaInteres** | **num** |  | [optional] 
+**tasaInteres** | **num** |  | 
+**tasaInteresMoratorio** | **num** |  | 
 **tasaCambioAlCrear** | **num** |  | [optional] 
 **fechaVencimiento** | [**DateTime**](DateTime.md) |  | [optional] 
 **observaciones** | **String** |  | [optional] 

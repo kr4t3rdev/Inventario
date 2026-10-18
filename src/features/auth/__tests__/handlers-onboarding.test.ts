@@ -140,6 +140,7 @@ describe('register — copy neutro (PE-01)', () => {
 		vi.mocked(checkRateLimit).mockReturnValueOnce({
 			allowed: false,
 			remaining: 0,
+			resetAt: Date.now(),
 		});
 
 		const res = await register(
@@ -284,7 +285,7 @@ describe('onboarding — cliente platform (PE-02)', () => {
 			userId: 'user-worker',
 			name: 'Ana',
 			email: 'ana@example.com',
-			role: 'user',
+			role: 'regularUser',
 			isActive: false,
 			onboardingType: 'worker',
 			onboardingStatus: 'selecting_tenant',

@@ -12,7 +12,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/audit-log-service", () => ({
-	AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
+	AuditLogService: {
+		log: vi.fn().mockResolvedValue(undefined),
+		logStrict: vi.fn().mockResolvedValue(undefined),
+	},
 }));
 
 	const { mockPrisma } = vi.hoisted(() => ({
@@ -145,11 +148,38 @@ import {
 	generarLabelPeriodo,
 } from "@/lib/services/periodo-contable-types";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
+import type { ActionResponse } from "@/lib/server-actions/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 const TENANT = "tenant-1";
 const ACTOR = "user-1";
+
+/**
+ * @description Verifica el resultado exitoso y devuelve la variante discriminada.
+ * @param {ActionResponse<T>} response - Resultado devuelto por una Server Action.
+ * @returns {Extract<ActionResponse<T>, { success: true }>} Datos de la variante exitosa.
+ */
+function expectActionSuccess<T>(
+	response: ActionResponse<T>,
+): Extract<ActionResponse<T>, { success: true }> {
+	expect(response.success).toBe(true);
+	if (!response.success) throw new Error(response.error.message);
+	return response;
+}
+
+/**
+ * @description Verifica el resultado fallido y devuelve la variante discriminada.
+ * @param {ActionResponse<T>} response - Resultado devuelto por una Server Action.
+ * @returns {Extract<ActionResponse<T>, { success: false }>} Error de la variante fallida.
+ */
+function expectActionFailure<T>(
+	response: ActionResponse<T>,
+): Extract<ActionResponse<T>, { success: false }> {
+	expect(response.success).toBe(false);
+	if (response.success) throw new Error("Expected the action to fail");
+	return response;
+}
 
 const mockUser: AuthenticatedUser = {
 	userId: ACTOR,
@@ -158,7 +188,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: TENANT,
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 function makePeriodo(overrides: Record<string, unknown> = {}) {
@@ -311,8 +341,8 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction();
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodos).toEqual([]);
-		expect(result.data?.pagination.total).toBe(0);
+		expect(expectActionSuccess(result).data?.periodos).toEqual([]);
+		expect(expectActionSuccess(result).data?.pagination.total).toBe(0);
 	});
 
 	it("retorna períodos del tenant con paginación", async () => {
@@ -336,11 +366,11 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction({ page: 1, limit: 10 });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodos).toHaveLength(2);
-		expect(result.data?.periodos[0]).toHaveProperty("tieneHash");
-		expect(result.data?.periodos[0]).toHaveProperty("ultimaAuditoria");
-		expect(result.data?.periodos[0]).toHaveProperty("blockers");
-		expect(result.data?.pagination).toEqual({
+		expect(expectActionSuccess(result).data?.periodos).toHaveLength(2);
+		expect(expectActionSuccess(result).data?.periodos[0]).toHaveProperty("tieneHash");
+		expect(expectActionSuccess(result).data?.periodos[0]).toHaveProperty("ultimaAuditoria");
+		expect(expectActionSuccess(result).data?.periodos[0]).toHaveProperty("blockers");
+		expect(expectActionSuccess(result).data?.pagination).toEqual({
 			page: 1,
 			limit: 10,
 			total: 2,
@@ -386,7 +416,7 @@ describe("listarPeriodosAction", () => {
 		const result = await listarPeriodosAction();
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("AUTH_REQUIRED");
+		expect(expectActionFailure(result).error?.code).toBe("AUTH_REQUIRED");
 	});
 });
 
@@ -401,8 +431,8 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-1");
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.periodoId).toBe("p-1");
-		expect(result.data?.timeline).toBeDefined();
+		expect(expectActionSuccess(result).data?.periodo.periodoId).toBe("p-1");
+		expect(expectActionSuccess(result).data?.timeline).toBeDefined();
 	});
 
 	it("falla si el período no existe", async () => {
@@ -411,7 +441,7 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-no-existe");
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("falla si el período no pertenece al tenant", async () => {
@@ -421,7 +451,7 @@ describe("obtenerPeriodoAction", () => {
 		const result = await obtenerPeriodoAction("p-1");
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 });
 
@@ -460,9 +490,9 @@ describe("obtenerTimelineAction", () => {
 		const result = await obtenerTimelineAction("p-1");
 
 		expect(result.success).toBe(true);
-		expect(result.data?.timeline).toHaveLength(2);
-		expect(result.data?.timeline[0].evento).toBe(EventoAuditoria.APERTURA);
-		expect(result.data?.timeline[1].evento).toBe(EventoAuditoria.CIERRE);
+		expect(expectActionSuccess(result).data?.timeline).toHaveLength(2);
+		expect(expectActionSuccess(result).data?.timeline[0].evento).toBe(EventoAuditoria.APERTURA);
+		expect(expectActionSuccess(result).data?.timeline[1].evento).toBe(EventoAuditoria.CIERRE);
 	});
 
 	it("falla si el período no existe", async () => {
@@ -471,13 +501,55 @@ describe("obtenerTimelineAction", () => {
 		const result = await obtenerTimelineAction("p-no-existe");
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 });
 
 // ── Tests: abrirPeriodoAction ─────────────────────────────────────────────
 
 describe("abrirPeriodoAction", () => {
+	it("persiste la auditoría de apertura dentro de la transacción", async () => {
+		mockPrisma.periodoContable.count.mockResolvedValue(0);
+		mockPrisma.periodoContable.create.mockResolvedValue(
+			makePeriodo({ tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
+		);
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockAperturaService();
+		const { AuditLogService } = await import("@/lib/services/audit-log-service");
+
+		const result = await abrirPeriodoAction({
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-03-01T00:00:00Z",
+			fechaFin: "2026-03-31T23:59:59Z",
+		});
+
+		expect(result.success).toBe(true);
+		expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+			expect.objectContaining({ accion: "CREATE", entidad: "CIERRE_CONTABLE", usuarioId: ACTOR }),
+			mockPrisma,
+		);
+	});
+
+	it("propaga el fallo de auditoría y no completa la apertura", async () => {
+		mockPrisma.periodoContable.count.mockResolvedValue(0);
+		mockPrisma.periodoContable.create.mockResolvedValue(
+			makePeriodo({ tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
+		);
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockAperturaService();
+		const { AuditLogService } = await import("@/lib/services/audit-log-service");
+		vi.mocked(AuditLogService.logStrict).mockRejectedValueOnce(new Error("audit unavailable"));
+
+		const result = await abrirPeriodoAction({
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-03-01T00:00:00Z",
+			fechaFin: "2026-03-31T23:59:59Z",
+		});
+
+		expect(result.success).toBe(false);
+		expect(revalidatePath).not.toHaveBeenCalled();
+	});
+
 	it("abre un período mensual exitosamente", async () => {
 		mockPrisma.periodoContable.count.mockResolvedValue(0); // sin solapamiento
 		mockPrisma.periodoContable.create.mockResolvedValue(
@@ -498,8 +570,8 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.ABIERTO);
-		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.MENSUAL);
+		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.ABIERTO);
+		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.MENSUAL);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
 	});
 
@@ -523,7 +595,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.DIARIO);
+		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.DIARIO);
 	});
 
 	it("abre un período anual exitosamente", async () => {
@@ -546,7 +618,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.ANUAL);
+		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.ANUAL);
 	});
 
 	it("falla con fechas inválidas (inicio posterior a fin)", async () => {
@@ -557,7 +629,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("FECHAS_INVALIDAS");
+		expect(expectActionFailure(result).error?.code).toBe("FECHAS_INVALIDAS");
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 	});
 
@@ -569,7 +641,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("falla con fecha de fin inválida (Zod)", async () => {
@@ -580,7 +652,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("falla si hay solapamiento de fechas", async () => {
@@ -593,7 +665,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("PERIODO_SOLAPADO");
+		expect(expectActionFailure(result).error?.code).toBe("PERIODO_SOLAPADO");
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 	});
 
@@ -635,7 +707,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.TRIMESTRAL);
+		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.TRIMESTRAL);
 	});
 
 	it("abre un período semestral exitosamente", async () => {
@@ -658,7 +730,7 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.tipo).toBe(TipoPeriodo.SEMESTRAL);
+		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.SEMESTRAL);
 	});
 });
 
@@ -1004,7 +1076,7 @@ describe("abrirPeriodoAction", () => {
 
 		expect(response.success).toBe(false);
 		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
-		expect(response.error?.code).not.toBe("INTERNAL_ERROR");
+		expect(expectActionFailure(response).error?.code).not.toBe("INTERNAL_ERROR");
 	});
 
 	it("recolecta resultado y balance dentro de la captura protegida", async () => {
@@ -1104,7 +1176,7 @@ describe("abrirPeriodoAction", () => {
 		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(response.success).toBe(false);
-		expect(response.error?.code).toBe("CUTOFF_EVIDENCE_UNAVAILABLE");
+		expect(expectActionFailure(response).error?.code).toBe("CUTOFF_EVIDENCE_UNAVAILABLE");
 		expect(checkpointMocks.captureFinancialAuxiliaryCheckpoint).toHaveBeenCalledTimes(1);
 	});
 
@@ -1152,8 +1224,8 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.CERRADO);
-		expect(result.data?.snapshots).toBe(0);
+		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.CERRADO);
+		expect(expectActionSuccess(result).data?.snapshots).toBe(0);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
 	});
 
@@ -1163,7 +1235,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-no-existe" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("falla si el período no pertenece al tenant", async () => {
@@ -1172,7 +1244,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("falla si la transición no es válida", async () => {
@@ -1196,7 +1268,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
+		expect(expectActionFailure(result).error?.code).toBe("TRANSICION_INVALIDA");
 	});
 
 	it("falla si tiene hijos abiertos", async () => {
@@ -1222,7 +1294,7 @@ describe("abrirPeriodoAction", () => {
 		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("HIJOS_ABIERTOS");
+		expect(expectActionFailure(result).error?.code).toBe("HIJOS_ABIERTOS");
 		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
 	});
 });
@@ -1237,7 +1309,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("falla con motivo vacío", async () => {
@@ -1247,7 +1319,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("reabre un período APROBADO exitosamente", async () => {
@@ -1267,8 +1339,8 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.REABIERTO);
-		expect(result.data?.periodo.motivoReapertura).toBe(
+		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.REABIERTO);
+		expect(expectActionSuccess(result).data?.periodo.motivoReapertura).toBe(
 			"Error en conciliación de saldos del mes de marzo",
 		);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
@@ -1283,7 +1355,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("falla si la transición no es válida (período no APROBADO)", async () => {
@@ -1297,7 +1369,7 @@ describe("reabrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
+		expect(expectActionFailure(result).error?.code).toBe("TRANSICION_INVALIDA");
 	});
 });
 
@@ -1319,8 +1391,8 @@ describe("aprobarPeriodoAction", () => {
 		const result = await aprobarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.periodo.estado).toBe(EstadoPeriodo.APROBADO);
-		expect(result.data?.periodo.aprobadoPor).toBe(ACTOR);
+		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.APROBADO);
+		expect(expectActionSuccess(result).data?.periodo.aprobadoPor).toBe(ACTOR);
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
 	});
 
@@ -1330,7 +1402,7 @@ describe("aprobarPeriodoAction", () => {
 		const result = await aprobarPeriodoAction({ periodoId: "p-no-existe" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 	});
 
 	it("falla si la transición no es válida (período APROBADO no se puede aprobar de nuevo)", async () => {
@@ -1343,7 +1415,7 @@ describe("aprobarPeriodoAction", () => {
 		const result = await aprobarPeriodoAction({ periodoId: "p-1" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("TRANSICION_INVALIDA");
+		expect(expectActionFailure(result).error?.code).toBe("TRANSICION_INVALIDA");
 	});
 });
 

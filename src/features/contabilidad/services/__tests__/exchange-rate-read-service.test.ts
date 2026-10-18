@@ -39,7 +39,7 @@ describe('ExchangeRateReadService', () => {
       pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
     })
 
-    const service = new ExchangeRateReadService(provider)
+    const service = new ExchangeRateReadService(provider as any)
     const result = await service.getHistorialTasas({ monedaOrigen: 'USD' })
 
     expect(provider.getRateHistory).toHaveBeenCalledWith({ monedaOrigen: 'USD' })

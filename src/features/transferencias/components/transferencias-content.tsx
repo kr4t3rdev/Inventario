@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { deleteTransferenciaAction, aprobarTransferenciaAction, rechazarTransferenciaAction, completarTransferenciaAction } from "@/features/transferencias/actions"
+import { deleteTransferenciaAction, aprobarTransferenciaAction, rechazarTransferenciaAction, completarTransferenciaAction, despacharTransferenciaAction } from "@/features/transferencias/actions"
 import { TransferenciasTable } from "@/features/transferencias/components/transferencias-table"
 import { ConfirmarRecepcionDialog } from "@/features/transferencias/components/confirmar-recepcion-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -64,6 +64,18 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
         router.refresh()
       } else {
         toast.error(result.error?.message ?? 'Error al aprobar')
+      }
+    })
+  }
+
+  const handleDespachar = (t: Transferencia) => {
+    startTransition(async () => {
+      const result = await despacharTransferenciaAction({ transferenciaId: t.transferenciaId })
+      if (result.success) {
+        toast.success('Transferencia despachada')
+        router.refresh()
+      } else {
+        toast.error(result.error?.message ?? 'Error al despachar')
       }
     })
   }
@@ -188,6 +200,7 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
               error={error}
               onDelete={(id) => setTransferenciaToDelete(id)}
               onAprobar={handleAprobar}
+              onDespachar={handleDespachar}
               onRechazar={(t) => { setTransferenciaARechazar(t); setMotivoRechazo("") }}
               onConfirmarRecepcion={handleConfirmarRecepcion}
             />

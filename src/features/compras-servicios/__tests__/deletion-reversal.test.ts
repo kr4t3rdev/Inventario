@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const tx = vi.hoisted(() => ({
   compraServicio: { findUnique: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
@@ -70,7 +71,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     tx.compraServicio.updateMany.mockResolvedValueOnce({ count: 0 });
     const result = await deleteCompraServicioAction('cs-1');
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('ALREADY_DELETED');
+    expect(expectActionFailure(result).error?.code).toBe('ALREADY_DELETED');
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
   });
 
@@ -80,7 +81,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     const result = await deleteCompraServicioAction('cs-1');
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('CONCURRENT_RECONCILIATION');
+    expect(expectActionFailure(result).error?.code).toBe('CONCURRENT_RECONCILIATION');
     expect(tx.compraServicio.deleteMany).not.toHaveBeenCalled();
   });
 
@@ -94,7 +95,7 @@ describe('deleteCompraServicioAction financial reversal', () => {
     const result = await deleteCompraServicioAction('cs-1');
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('HAS_IMPACT');
+    expect(expectActionFailure(result).error?.code).toBe('HAS_IMPACT');
     expect(tx.cuentaPorPagar.delete).not.toHaveBeenCalled();
     expect(tx.compraServicio.deleteMany).not.toHaveBeenCalled();
   });

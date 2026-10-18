@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Prisma } from '@/generated/prisma';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -90,7 +91,7 @@ const planPro = {
   maxClientes: 1000,
 };
 
-function buildTx(overrides: Record<string, unknown> = {}) {
+function buildTx(overrides: Record<string, unknown> = {}): any {
   return {
     tenantLicense: {
       findUnique: vi.fn().mockResolvedValue(licenseActive),
@@ -105,7 +106,7 @@ function buildTx(overrides: Record<string, unknown> = {}) {
     },
     auditLog: { create: vi.fn().mockResolvedValue({ id: 'audit-1' }) },
     ...overrides,
-  } as never;
+  };
 }
 
 describe('renewLicenciaAction', () => {
@@ -156,7 +157,7 @@ describe('renewLicenciaAction', () => {
     expect(tx.auditLog.create).toHaveBeenCalledOnce();
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
     expect(confirmSalesAgentTenantPayment).not.toHaveBeenCalled();
-    expect(result.data).toEqual(expect.objectContaining({
+    expect(expectActionSuccess(result).data).toEqual(expect.objectContaining({
       tenantLicenseId: 'lic-1',
       newPlanId: 'plan-basic',
     }));
@@ -184,7 +185,7 @@ describe('renewLicenciaAction', () => {
     expect(tx.tenantLicense.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ expiracion: new Date('2026-06-10T00:00:00.000Z') }),
     }));
-    expect(result.data?.newPlanId).toBe('plan-pro');
+    expect(expectActionSuccess(result).data?.newPlanId).toBe('plan-pro');
   });
 
   it('renueva licencia inactiva/expirada tomando base desde now y reactiva', async () => {
@@ -211,7 +212,7 @@ describe('renewLicenciaAction', () => {
     const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('TENANT_NOT_ACTIVE');
+    expect(expectActionFailure(result).error?.code).toBe('TENANT_NOT_ACTIVE');
     expect(tx.tenantLicense.update).not.toHaveBeenCalled();
   });
 
@@ -236,7 +237,7 @@ describe('renewLicenciaAction', () => {
         idempotencyKey: 'renewal:tenant-1:2026-04',
       }),
     }));
-    expect(result.data?.registeredPaymentId).toBe('pay-1');
+    expect(expectActionSuccess(result).data?.registeredPaymentId).toBe('pay-1');
     expect(confirmSalesAgentTenantPayment).not.toHaveBeenCalled();
   });
 
@@ -265,7 +266,7 @@ describe('renewLicenciaAction', () => {
       amountPaidUsd: 40,
       confirmedByAdminId: 'admin-1',
     }));
-    expect(result.data?.commissionCredited).toBe(true);
+    expect(expectActionSuccess(result).data?.commissionCredited).toBe(true);
   });
 
   it('rechaza con PAYMENT_AMOUNT_MISMATCH si el monto pagado difiere del exigible (no referido)', async () => {
@@ -281,7 +282,7 @@ describe('renewLicenciaAction', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('PAYMENT_AMOUNT_MISMATCH');
+    expect(expectActionFailure(result).error?.code).toBe('PAYMENT_AMOUNT_MISMATCH');
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
   });
 
@@ -304,8 +305,8 @@ describe('renewLicenciaAction', () => {
 
     expect(result.success).toBe(true);
     expect(tx.tenantLicensePayment.create).not.toHaveBeenCalled();
-    expect(result.data?.duplicate).toBe(true);
-    expect(result.data?.registeredPaymentId).toBe('pay-existing');
+    expect(expectActionSuccess(result).data?.duplicate).toBe(true);
+    expect(expectActionSuccess(result).data?.registeredPaymentId).toBe('pay-existing');
   });
 
   it('registra pago sin comisión cuando el tenant es referido por afiliado', async () => {
@@ -326,7 +327,7 @@ describe('renewLicenciaAction', () => {
     expect(result.success).toBe(true);
     expect(tx.tenantLicensePayment.create).toHaveBeenCalled();
     expect(confirmSalesAgentTenantPayment).not.toHaveBeenCalled();
-    expect(result.data?.commissionCredited).toBe(false);
+    expect(expectActionSuccess(result).data?.commissionCredited).toBe(false);
   });
 
   it('rechaza con FORBIDDEN si el usuario no es admin', async () => {
@@ -335,6 +336,6 @@ describe('renewLicenciaAction', () => {
     const result = await renewLicenciaAction({ tenantLicenseId: 'lic-1', planId: 'plan-basic' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('FORBIDDEN');
+    expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN');
   });
 });

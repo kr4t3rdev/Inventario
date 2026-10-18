@@ -5,6 +5,18 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/services/periodo-contable-guard", () => ({
+	getGuardConfigExtended: () => ({
+		enabled: process.env.PERIODO_GUARD_ENABLED === "true",
+		mode: process.env.PERIODO_GUARD_ENABLED === "true" ? "enforce" : "disabled",
+		defaultTimezone: "UTC",
+	}),
+	PeriodoGuard: class {
+		async verificarEscritura() {
+			return { permitido: false, error: "Período cerrado", codigo: "PERIODO_CERRADO" };
+		}
+	},
+}));
 vi.mock("@/lib/services/anticipos-workflow", () => ({
 	applyAnticipoAllocations: vi.fn(),
 }));
@@ -13,7 +25,8 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 
 const mockTx = {
-	ventaServicios: { create: vi.fn() },
+	ventaServicios: { create: vi.fn(), findMany: vi.fn() },
+	$executeRaw: vi.fn(),
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
@@ -57,6 +70,33 @@ import {
 	deleteVentaServicioAction,
 } from "@/features/venta-servicios/actions";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import type { ActionResponse } from "@/lib/server-actions/types";
+
+/**
+ * @description Verifica el resultado exitoso y devuelve la variante discriminada.
+ * @param {ActionResponse<T>} response - Respuesta de una Server Action.
+ * @returns {Extract<ActionResponse<T>, { success: true }>} Resultado exitoso.
+ */
+function expectActionSuccess<T>(
+	response: ActionResponse<T>,
+): Extract<ActionResponse<T>, { success: true }> {
+	expect(response.success).toBe(true);
+	if (!response.success) throw new Error(response.error.message);
+	return response;
+}
+
+/**
+ * @description Verifica el resultado fallido y devuelve la variante discriminada.
+ * @param {ActionResponse<T>} response - Respuesta de una Server Action.
+ * @returns {Extract<ActionResponse<T>, { success: false }>} Resultado fallido.
+ */
+function expectActionFailure<T>(
+	response: ActionResponse<T>,
+): Extract<ActionResponse<T>, { success: false }> {
+	expect(response.success).toBe(false);
+	if (response.success) throw new Error("Expected the action to fail");
+	return response;
+}
 
 const mockUser: AuthenticatedUser = {
 	userId: "user-1",
@@ -75,6 +115,11 @@ const mockVentaRow = {
 	cantidad: 1,
 	costo: 0,
 	total: 5000,
+	moneda: "CUP",
+	precioUnitario: 5000,
+	ventaId: null,
+	condicionPago: "CONTADO" as const,
+	idempotencyKey: null,
 	observaciones: null,
 	reconciliado: null,
 	clienteId: null,
@@ -98,7 +143,7 @@ describe("VentaServicios Server Actions", () => {
 			]);
 			const result = await getVentaServiciosAction();
 			expect(result.success).toBe(true);
-			expect(result.data).toHaveLength(1);
+			expect(expectActionSuccess(result).data).toHaveLength(1);
 		});
 	});
 
@@ -117,7 +162,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(null);
 			const result = await getVentaServicioByIdAction("vs-noexiste");
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 	});
 
@@ -130,8 +175,10 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 			});
 
 			expect(result.success).toBe(true);
@@ -145,8 +192,10 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 2,
+				costo: 0,
 			});
 
 			expect(result.success).toBe(true);
@@ -168,8 +217,10 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 2,
+				costo: 0,
 			} as any);
 
 			expect(result.success).toBe(true);
@@ -187,8 +238,10 @@ describe("VentaServicios Server Actions", () => {
 			] as any);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				precioUnitario: 2500,
 			} as any);
 
@@ -207,6 +260,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				lineas: [
 					{
 						tipoLinea: "SERVICIO",
@@ -217,7 +271,7 @@ describe("VentaServicios Server Actions", () => {
 			} as any);
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
 						moneda: "USD",
@@ -274,12 +328,14 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-otro-tenant",
 				cantidad: 1,
+				costo: 0,
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 
 		it("rechaza servicio de otro tenant en modo mixto", async () => {
@@ -287,6 +343,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				lineas: [
 					{
 						tipoLinea: "SERVICIO",
@@ -297,7 +354,7 @@ describe("VentaServicios Server Actions", () => {
 			} as any);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 
 		it("rechaza cliente de otro tenant", async () => {
@@ -308,13 +365,15 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				clienteId: "cliente-otro-tenant",
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
 		});
 
 		it("crea venta mixta exitosamente", async () => {
@@ -330,6 +389,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				lineas: [
 					{
 						tipoLinea: "SERVICIO",
@@ -346,6 +406,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				lineas: [
 					{
 						tipoLinea: "SERVICIO",
@@ -386,8 +447,10 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -432,8 +495,10 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -477,8 +542,10 @@ describe("VentaServicios Server Actions", () => {
 			} as any);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -511,13 +578,15 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 			expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
 		});
 
@@ -552,8 +621,10 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -586,8 +657,10 @@ describe("VentaServicios Server Actions", () => {
 			} as any);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
@@ -617,14 +690,144 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.cuentaBancaria.findFirst.mockResolvedValue(null);
 
 			const result = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
 				servicioId: "sv-1",
 				cantidad: 1,
+				costo: 0,
 				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 			expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
+		});
+
+		it("reproduce una venta legacy con la misma clave y rechaza cantidad distinta", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([]);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, costo: 0, idempotencyKey: "legacy-key" };
+			const created = await createVentaServicioAction(input);
+			expect(created.success).toBe(true);
+			const storedKey = mockTx.ventaServicios.create.mock.calls[0][0].data.idempotencyKey;
+			expect(storedKey).toMatch(/^v2:/);
+
+			mockTx.ventaServicios.findMany.mockResolvedValue([
+				{ ...mockVentaRow, idempotencyKey: storedKey },
+			]);
+			const replay = await createVentaServicioAction(input);
+			expect(replay.success).toBe(true);
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledTimes(1);
+
+			const conflict = await createVentaServicioAction({
+				...input, cantidad: 2 });
+			expect(conflict.success).toBe(false);
+			expect(expectActionFailure(conflict).error?.code).toBe("IDEMPOTENCY_CONFLICT");
+		});
+
+		it("incluye cardinalidad, orden y cantidad de líneas mixtas en la huella", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([]);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const input = {
+				condicionPago: "CONTADO" as const,
+				idempotencyKey: "mixed-key",
+				lineas: [{ tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1, costo: 0 }],
+			};
+			const created = await createVentaServicioAction(input);
+			expect(created.success).toBe(true);
+			const storedKey = mockTx.ventaServicios.create.mock.calls[0][0].data.idempotencyKey;
+
+			mockTx.ventaServicios.findMany.mockResolvedValue([
+				{ ...mockVentaRow, idempotencyKey: storedKey },
+			]);
+			const replay = await createVentaServicioAction(input);
+			expect(replay.success).toBe(true);
+			expect(expectActionSuccess(replay).data).toMatchObject({ mode: "MIXED_LINES", replayed: true });
+
+			const conflict = await createVentaServicioAction({
+				...input,
+				lineas: [{ ...input.lineas[0], cantidad: 2 }],
+			});
+			expect(conflict.success).toBe(false);
+			expect(expectActionFailure(conflict).error?.code).toBe("IDEMPOTENCY_CONFLICT");
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledTimes(1);
+		});
+
+		it("devuelve las líneas mixtas en índice numérico estable con más de diez líneas", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([]);
+			mockTx.ventaServicios.create.mockImplementation(async ({ data }: any) => ({
+				...mockVentaRow,
+				ventaServicioId: `vs-${data.idempotencyKey.split(":").at(-1)}`,
+				idempotencyKey: data.idempotencyKey,
+			}));
+			const input = {
+				condicionPago: "CONTADO" as const,
+				idempotencyKey: "many-line-key",
+				lineas: Array.from({ length: 11 }, () => ({
+					tipoLinea: "SERVICIO" as const, servicioId: "sv-1", cantidad: 1, costo: 0,
+				})),
+			};
+			const created = await createVentaServicioAction(input);
+			expect(created.success).toBe(true);
+			const rows = mockTx.ventaServicios.create.mock.calls.map((call) => ({
+				...mockVentaRow,
+				ventaServicioId: `vs-${call[0].data.idempotencyKey.split(":").at(-1)}`,
+				idempotencyKey: call[0].data.idempotencyKey,
+			}));
+			mockTx.ventaServicios.findMany.mockResolvedValue(
+				[...rows].sort((left, right) =>
+					left.idempotencyKey.localeCompare(right.idempotencyKey)),
+			);
+
+			const replay = await createVentaServicioAction(input);
+			expect(replay.success).toBe(true);
+			expect((expectActionSuccess(replay).data as any).ventasServicios.map((row: any) => row.ventaServicioId))
+				.toEqual(Array.from({ length: 11 }, (_, index) => `vs-${index}`));
+		});
+
+		it("permite replay exacto en período cerrado y bloquea una venta nueva", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([]);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const input = { condicionPago: "CONTADO" as const, servicioId: "sv-1", cantidad: 1, costo: 0, idempotencyKey: "period-replay" };
+			const created = await createVentaServicioAction(input);
+			expect(created.success).toBe(true);
+			const storedKey = mockTx.ventaServicios.create.mock.calls[0][0].data.idempotencyKey;
+			mockTx.ventaServicios.findMany.mockResolvedValue([
+				{ ...mockVentaRow, idempotencyKey: storedKey },
+			]);
+			vi.stubEnv("PERIODO_GUARD_ENABLED", "true");
+
+			const replay = await createVentaServicioAction(input);
+			expect(replay.success).toBe(true);
+			expect(expectActionSuccess(replay).data).toMatchObject({ replayed: true });
+
+			mockTx.ventaServicios.findMany.mockResolvedValue([]);
+			const newWrite = await createVentaServicioAction({
+				condicionPago: "CONTADO" as const,
+				servicioId: "sv-1", cantidad: 1,
+				costo: 0, idempotencyKey: "new-period-write",
+			});
+			expect(newWrite.success).toBe(false);
+			expect(expectActionFailure(newWrite).error?.code).toBe("PERIODO_CERRADO");
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -638,9 +841,13 @@ describe("VentaServicios Server Actions", () => {
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
 				cantidad: 2,
-				total: 10000,
 			});
 			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ total: 10000 }),
+				}),
+			);
 		});
 	});
 
@@ -666,7 +873,7 @@ describe("VentaServicios Server Actions", () => {
 			const result = await deleteVentaServicioAction("vs-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("HAS_REFERENCES");
+			expect(expectActionFailure(result).error!.code).toBe("HAS_REFERENCES");
 			expect(prisma.ventaServicios.delete).not.toHaveBeenCalled();
 		});
 	});
@@ -689,7 +896,7 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("FORBIDDEN");
+			expect(expectActionFailure(result).error!.code).toBe("FORBIDDEN");
 		});
 
 		it("deleteVentaServicioAction requiere rol manager", async () => {
@@ -707,7 +914,7 @@ describe("VentaServicios Server Actions", () => {
 			const result = await deleteVentaServicioAction("vs-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("FORBIDDEN");
+			expect(expectActionFailure(result).error!.code).toBe("FORBIDDEN");
 		});
 	});
 
@@ -716,7 +923,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(null);
 			const result = await getVentaServiciosAction();
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
 });

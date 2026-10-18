@@ -12,11 +12,37 @@ process.env.TENANT_ISOLATION_MODE = 'enforce';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { prismaPlatform } from '@/lib/db/platform-prisma';
+import type { Prisma } from '@/generated/prisma';
 import { withTestTenant } from '@/lib/db/tenant-context';
 import {
   TenantContextRequiredError,
   TenantMismatchError,
 } from '@/lib/db/scoped-prisma';
+
+type OptionalProperty<T, K extends keyof T> = Omit<T, K> & { [P in K]?: T[P] };
+type CategoriaInjectionDelegate = Omit<Prisma.TransactionClient['categoria'], 'create'> & {
+  create: (args: Omit<Prisma.CategoriaCreateArgs, 'data'> & {
+    data: OptionalProperty<Prisma.CategoriaCreateInput, 'tenant'>;
+  }) => Promise<Prisma.CategoriaGetPayload<{}>>;
+};
+
+/**
+ * @description Cliente tipado para los casos donde la extensión inyecta el
+ * tenant; las llamadas mantienen el cliente real y ejercitan el middleware.
+ */
+type TenantInjectionTestClient = Omit<typeof prisma, 'categoria' | 'contrato'> & {
+  categoria: CategoriaInjectionDelegate;
+  contrato: Omit<typeof prisma.contrato, 'create'> & {
+    create: (args: Omit<Prisma.ContratoCreateArgs, 'data'> & {
+      data: OptionalProperty<Prisma.ContratoCreateInput, 'tenant'>;
+    }) => Promise<Prisma.ContratoGetPayload<{ include: { alertas: true } }>>;
+  };
+};
+
+// Keep this narrow assertion at the integration boundary; runtime remains the
+// original extended Prisma client, so tenant injection and mismatch rejection
+// are still covered rather than simulated by fixtures.
+const scopedPrisma = prisma as unknown as TenantInjectionTestClient;
 
 describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
   const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -98,7 +124,7 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
 
   it('create sin tenantId lo inyecta desde el contexto', async () => {
     const created = await withTestTenant(tenantA, async () => {
-      return await prisma.categoria.create({ data: { nombre: `Inyectada ${suffix}` } });
+      return await scopedPrisma.categoria.create({ data: { nombre: `Inyectada ${suffix}` } });
     });
     expect(created.tenantId).toBe(tenantA);
   });
@@ -117,13 +143,14 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
 
   it('nested create (contrato + alertas) queda escopado', async () => {
     const contrato = await withTestTenant(tenantA, async () => {
-      return await prisma.contrato.create({
+      return await scopedPrisma.contrato.create({
         data: {
           numeroContrato: `C-${suffix}`,
           numeroConsecutivo: 1,
           tipo: 'prueba',
           fechaInicio: new Date(),
-          creadoPor: userId,
+          creador: { connect: { userId } },
+          tenant: { connect: { tenantId: tenantA } },
           alertas: {
             create: [{ tipo: 'vencimiento', fechaAlerta: new Date(), mensaje: 'hola' }],
           },
@@ -144,7 +171,8 @@ describe('AS-02 aislamiento tenant end-to-end', { timeout: 30_000 }, () => {
     const seen = await withTestTenant(tenantA, () =>
       prisma.$transaction(async (tx) => {
         const rows = await tx.categoria.findMany({});
-        const created = await tx.categoria.create({ data: { nombre: `Tx ${suffix}` } });
+        const scopedTx = tx as unknown as Pick<TenantInjectionTestClient, 'categoria'>;
+        const created = await scopedTx.categoria.create({ data: { nombre: `Tx ${suffix}` } });
         return { tenants: new Set(rows.map((r) => r.tenantId)), createdTenant: created.tenantId };
       }),
     );

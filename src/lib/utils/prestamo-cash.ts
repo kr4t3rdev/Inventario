@@ -22,11 +22,11 @@ export function calcularMontoTotalACobrar(montoCapital: number, tasaInteres?: nu
 export function calcularSaldoPendientePrestamo(montoDeuda: number, montoPagado: number): number {
   const deuda = Number(montoDeuda) || 0
   const pagado = Number(montoPagado) || 0
-  return Math.max(0, Number((deuda - pagado).toFixed(2)))
+  return Math.max(0, Number((deuda - pagado).toFixed(4)))
 }
 
 /**
- * @description Normaliza el estado de un préstamo considerando el saldo real y una tolerancia de centavos.
+ * @description Normaliza el estado de un préstamo según saldo pendiente exacto.
  * @param {string} estadoActual - Estado persistido del préstamo.
  * @param {{ montoDeuda: number; montoPagado: number; estado?: string }} cuentaPorCobrar - Datos de la cuenta asociada.
  * @returns {string} Estado normalizado.
@@ -37,8 +37,6 @@ export function normalizarEstadoPrestamoCash(
 ): string {
   const saldo = calcularSaldoPendientePrestamo(cuentaPorCobrar.montoDeuda, cuentaPorCobrar.montoPagado)
 
-  if (saldo <= 0.01) return 'PAGADO'
   if (estadoActual === 'CANCELADO') return 'CANCELADO'
-  if (cuentaPorCobrar.estado === 'PAGADA') return 'PAGADO'
-  return estadoActual === 'PAGADO' ? 'PAGADO' : 'ACTIVO'
+  return saldo === 0 ? 'PAGADO' : 'ACTIVO'
 }

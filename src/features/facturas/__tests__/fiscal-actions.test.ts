@@ -3,6 +3,7 @@
  * y tenant, idempotencia del encolado y reintento desde RECHAZADA.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -52,14 +53,14 @@ describe('acciones fiscales (FE-T3)', () => {
 	it('emitirFiscalAction exige feature + tenant activo', async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r0 = await emitirFiscalAction('fac-1');
-		expect(r0.error?.code).toBe('AUTH_REQUIRED');
+		expect(expectActionFailure(r0).error?.code).toBe('AUTH_REQUIRED');
 
 		vi.mocked(getCurrentUser).mockResolvedValue({
 			...manager,
 			planFeatures: {},
 		} as never);
 		const r1 = await emitirFiscalAction('fac-1');
-		expect(r1.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(expectActionFailure(r1).error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 
 	it('getDocumentoFiscalAction devuelve el documento y la bitácora ordenada', async () => {
@@ -89,6 +90,6 @@ describe('acciones fiscales (FE-T3)', () => {
 			fiscalDocument: { estado: 'TIMBRADA' },
 		} as never);
 		const r = await reintentarFiscalAction('fac-1');
-		expect(r.error?.code).toBe('ESTADO_INVALIDO');
+		expect(expectActionFailure(r).error?.code).toBe('ESTADO_INVALIDO');
 	});
 });

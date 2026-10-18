@@ -11,6 +11,7 @@
  * @module features/puntos-venta/__tests__/actions.test
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -46,7 +47,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-pv',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const featureBlockedUser: AuthenticatedUser = {
@@ -66,6 +67,9 @@ const mockPvRow = {
   ubicacion: 'Calle 123',
   tenantId: 'tenant-pv',
   listaPrecioId: null,
+  almacenId: null,
+  cuentaContableId: null,
+  tipoCaja: null,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -81,6 +85,9 @@ const mockPvRowFull = {
   ubicacion: 'Calle 123',
   tenantId: 'tenant-pv',
   listaPrecioId: null,
+  almacenId: null,
+  cuentaContableId: null,
+  tipoCaja: null,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
   listaPrecio: null,
@@ -103,8 +110,8 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].nombre).toBe('Tienda Principal');
+      expect(expectActionSuccess(result).data).toHaveLength(1);
+      expect(expectActionSuccess(result).data[0].nombre).toBe('Tienda Principal');
       expect(prisma.puntoDeVenta.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ tenantId: 'tenant-pv' }),
@@ -118,7 +125,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
+      expect(expectActionSuccess(result).data).toEqual([]);
     });
 
     it('bloquea acceso si el plan no incluye puntos de venta', async () => {
@@ -127,7 +134,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+      expect(expectActionFailure(result).error.code).toBe('FEATURE_NOT_AVAILABLE');
       expect(prisma.puntoDeVenta.findMany).not.toHaveBeenCalled();
     });
   });
@@ -141,7 +148,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.nombre).toBe('Tienda Principal');
+      expect(expectActionSuccess(result).data.nombre).toBe('Tienda Principal');
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
@@ -150,7 +157,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND para punto de venta de otro tenant', async () => {
@@ -159,7 +166,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-otro-tenant');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
   });
 
@@ -226,7 +233,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await createPuntoDeVentaAction({ nombre: '' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(expectActionFailure(result).error.code).toBe('VALIDATION_ERROR');
     });
   });
 
@@ -303,7 +310,7 @@ describe('Puntos de Venta Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND para punto de venta de otro tenant', async () => {
@@ -315,7 +322,7 @@ describe('Puntos de Venta Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
   });
 
@@ -340,7 +347,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-noexiste');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
 
     it('retorna NOT_FOUND para punto de venta de otro tenant', async () => {
@@ -349,7 +356,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-otro-tenant');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
     });
   });
 
@@ -362,7 +369,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntosDeVentaAction();
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error.code).toBe('AUTH_REQUIRED');
     });
 
     it('createPuntoDeVentaAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -371,7 +378,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await createPuntoDeVentaAction({ nombre: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error.code).toBe('AUTH_REQUIRED');
     });
 
     it('updatePuntoDeVentaAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -380,7 +387,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await updatePuntoDeVentaAction({ pvId: 'pv-1', nombre: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error.code).toBe('AUTH_REQUIRED');
     });
 
     it('deletePuntoDeVentaAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -389,7 +396,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await deletePuntoDeVentaAction('pv-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error.code).toBe('AUTH_REQUIRED');
     });
 
     it('getPuntoDeVentaByIdAction retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -398,7 +405,7 @@ describe('Puntos de Venta Server Actions', () => {
       const result = await getPuntoDeVentaByIdAction('pv-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error.code).toBe('AUTH_REQUIRED');
     });
   });
 });

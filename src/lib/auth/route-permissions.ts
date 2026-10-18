@@ -114,9 +114,158 @@ const MOBILE_GROUP_KEYS_MAP: Record<string, string | null> = {
   transferencias: 'inventario.transferencias.gestionar',
   // Exentas:
   auth: null, // login/register/refresh/me/tenants — público o autenticado genérico
+  plans: null, // catálogo público de planes
   admin: null, // salud y administración de plataforma (role admin) — ver memberships abajo
   'admin/memberships': 'config.usuarios.gestionar', // aprobar/rechazar membresías (manager)
 };
+
+const MOBILE_LEGACY_GET_KEYS: Readonly<Record<string, string>> = {
+  compras: 'compras.compras.gestionar',
+  contratos: 'ventas.contratos.gestionar',
+  empleados: 'rrhh.empleados.consultar',
+  facturas: 'ventas.facturas.consultar',
+  gastos: 'financiero.gastos.acceder',
+  ofertas: 'ventas.ofertas.gestionar',
+  produccion: 'produccion.ordenes.consultar',
+  reparaciones: 'produccion.reparaciones.gestionar',
+  servicios: 'operaciones.servicios.acceder',
+  transferencias: 'inventario.transferencias.gestionar',
+};
+
+const MOBILE_METHOD_DENIED = '__mobile_method_not_allowed__';
+const MOBILE_EXEMPT_ROUTE_RULES: readonly { method: string; path: RegExp }[] = [
+  { method: 'POST', path: /^\/api\/mobile\/v1\/auth\/(?:login|logout|refresh|register)$/ },
+  { method: 'GET', path: /^\/api\/mobile\/v1\/auth\/(?:me|tenants)$/ },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/auth\/tenants$/ },
+  { method: 'GET', path: /^\/api\/mobile\/plans$/ },
+  { method: 'GET', path: /^\/api\/mobile\/plans\/[^/]+$/ },
+  { method: 'POST', path: /^\/api\/mobile\/plans$/ },
+  { method: 'PUT', path: /^\/api\/mobile\/plans\/[^/]+$/ },
+  { method: 'DELETE', path: /^\/api\/mobile\/plans\/[^/]+$/ },
+  { method: 'GET', path: /^\/api\/mobile\/v1\/admin\/(?:activity-logs|health|licenses|licenses\/stats|sessions|tenants|tenants\/detail|tenants\/license|tenants\/users|users|users\/detail|users\/login-history)$/ },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/admin\/(?:licenses\/(?:activate|deactivate|delete|renew)|sessions\/revoke|tenants\/(?:activate|deactivate|delete|remove-user)|tenants\/license\/(?:assign|deactivate)|users\/(?:activate|assign-tenant|deactivate|delete|lock|resend-verification|reset-password|revoke-sessions|unlock|verify-email))$/ },
+  { method: 'PATCH', path: /^\/api\/mobile\/v1\/admin\/(?:tenants\/(?:license\/update|update)|users\/(?:change-tenant-role|update))$/ },
+];
+
+/** @description Indica si método y ruta están explícitamente exentos del gate mobile. */
+export function isMobileRouteExempt(path: string, method: string): boolean {
+  const normalizedMethod = method.toUpperCase();
+  return MOBILE_EXEMPT_ROUTE_RULES.some(
+    (rule) => rule.method === normalizedMethod && rule.path.test(path),
+  );
+}
+const MOBILE_ACCOUNTING_GET_PATHS = [
+  '/api/mobile/v1/accounting/accounts-payable',
+  '/api/mobile/v1/accounting/accounts-receivable',
+  '/api/mobile/v1/accounting/accounts-receivable/metrics',
+  '/api/mobile/v1/accounting/advances',
+  '/api/mobile/v1/accounting/advances/available',
+  '/api/mobile/v1/accounting/advances/reports/customers',
+  '/api/mobile/v1/accounting/advances/reports/providers',
+  '/api/mobile/v1/accounting/advances/reports/summary',
+  '/api/mobile/v1/accounting/advances/[id]',
+  '/api/mobile/v1/accounting/bank-accounts',
+  '/api/mobile/v1/accounting/bank-accounts/[id]',
+  '/api/mobile/v1/accounting/bank-accounts/[id]/history',
+  '/api/mobile/v1/accounting/bank-adjustments',
+  '/api/mobile/v1/accounting/bank-transfers',
+  '/api/mobile/v1/accounting/bank-transfers/[id]',
+  '/api/mobile/v1/accounting/bank-transfers/[id]/comprobante',
+  '/api/mobile/v1/accounting/capital-injections',
+  '/api/mobile/v1/accounting/cash-debts',
+  '/api/mobile/v1/accounting/cash-debts/stats',
+  '/api/mobile/v1/accounting/cash-debts/[id]',
+  '/api/mobile/v1/accounting/cash-loans',
+  '/api/mobile/v1/accounting/cash-loans/stats',
+  '/api/mobile/v1/accounting/cash-loans/[id]',
+  '/api/mobile/v1/accounting/cash-loans/[id]/comprobante',
+  '/api/mobile/v1/accounting/cash-loans/[id]/history',
+  '/api/mobile/v1/accounting/exchange/monedas',
+  '/api/mobile/v1/accounting/exchange/tasas',
+  '/api/mobile/v1/accounting/logs',
+  '/api/mobile/v1/accounting/payment-types',
+  '/api/mobile/v1/accounting/payment-types/available-accounts',
+  '/api/mobile/v1/accounting/payment-types/[id]',
+  '/api/mobile/v1/accounting/reconciliation/expenses',
+  '/api/mobile/v1/accounting/reconciliation/expenses/history',
+  '/api/mobile/v1/accounting/reconciliation/expenses-history',
+  '/api/mobile/v1/accounting/reconciliation/sales',
+  '/api/mobile/v1/accounting/reconciliation/sales/history',
+  '/api/mobile/v1/accounting/reconciliation/sales-history',
+  '/api/mobile/v1/accounting/reconciliation/services',
+  '/api/mobile/v1/accounting/reconciliation/services/history',
+  '/api/mobile/v1/accounting/reconciliation/services-history',
+  '/api/mobile/v1/accounting/reconciliation/stats',
+  '/api/mobile/v1/accounting/reports/client-account-analysis',
+  '/api/mobile/v1/accounting/reports/exchange',
+  '/api/mobile/v1/accounting/reports/exchange-impact',
+  '/api/mobile/v1/accounting/reports/movements',
+  '/api/mobile/v1/accounting/reports/overdue-invoices',
+  '/api/mobile/v1/accounting/reports/summary',
+  '/api/mobile/v1/accounting/reports/transfers',
+] as const;
+
+interface MobileRouteRule {
+  method: string;
+  path: RegExp;
+  key: string;
+}
+
+const MOBILE_WRITE_ROUTE_RULES: readonly MobileRouteRule[] = [
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/payment-types$/, key: 'financiero.tipos-pago.crear' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/accounting\/payment-types\/[^/]+$/, key: 'financiero.tipos-pago.editar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/accounting\/payment-types\/[^/]+$/, key: 'financiero.tipos-pago.eliminar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/advances$/, key: 'financiero.avances.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/accounting\/advances\/[^/]+$/, key: 'financiero.avances.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/accounting\/advances\/[^/]+$/, key: 'financiero.avances.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/advances\/[^/]+\/(?:ejecutar|revertir)$/, key: 'financiero.avances.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/capital-injections$/, key: 'financiero.capital-inyecciones.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/capital-injections\/[^/]+\/payments$/, key: 'financiero.capital-inyecciones.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/cash-debts$/, key: 'financiero.deudas-efectivo.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/accounting\/cash-debts\/[^/]+$/, key: 'financiero.deudas-efectivo.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/cash-debts\/[^/]+\/payments$/, key: 'financiero.deudas-efectivo.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/cash-loans$/, key: 'financiero.prestamos-efectivo.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/accounting\/cash-loans\/[^/]+$/, key: 'financiero.prestamos-efectivo.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/cash-loans\/[^/]+\/payments$/, key: 'financiero.prestamos-efectivo.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/bank-adjustments$/, key: 'financiero.bancos.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/bank-transfers(?:\/validate)?$/, key: 'financiero.bancos.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/accounting\/reconciliation\/(?:expenses|sales|services)$/, key: 'financiero.conciliaciones.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?categories$/, key: 'inventario.categorias.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/(?:v1\/)?categories\/[^/]+$/, key: 'inventario.categorias.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?categories\/[^/]+$/, key: 'inventario.categorias.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?units(?:\/create)?$/, key: 'inventario.unidades.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/(?:v1\/)?units\/[^/]+$/, key: 'inventario.unidades.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?units\/[^/]+$/, key: 'inventario.unidades.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/warehouses(?:\/create)?$/, key: 'inventario.almacenes.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/warehouses\/[^/]+$/, key: 'inventario.almacenes.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/warehouses\/[^/]+$/, key: 'inventario.almacenes.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/clients(?:\/create)?$/, key: 'operaciones.clientes.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/clients\/[^/]+$/, key: 'operaciones.clientes.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/clients\/[^/]+$/, key: 'operaciones.clientes.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/providers(?:\/create)?$/, key: 'compras.proveedores.gestionar' },
+  { method: 'PUT', path: /^\/api\/mobile\/v1\/providers\/[^/]+$/, key: 'compras.proveedores.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/providers\/[^/]+$/, key: 'compras.proveedores.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?expense-concepts$/, key: 'financiero.gastos.acceder' },
+  { method: 'PUT', path: /^\/api\/mobile\/(?:v1\/)?expense-concepts\/[^/]+$/, key: 'financiero.gastos.acceder' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?expense-concepts\/[^/]+$/, key: 'financiero.gastos.acceder' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?expenses$/, key: 'financiero.gastos.acceder' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?expenses\/[^/]+$/, key: 'financiero.gastos.aprobar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?mermas$/, key: 'inventario.mermas.registrar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?mermas\/[^/]+$/, key: 'inventario.mermas.eliminar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?purchases$/, key: 'compras.compras.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?services$/, key: 'operaciones.servicios.crear' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?services\/[^/]+$/, key: 'operaciones.servicios.eliminar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?transfers$/, key: 'inventario.transferencias.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?transfers\/[^/]+$/, key: 'inventario.transferencias.aprobar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/v1\/contratos\/[^/]+$/, key: 'ventas.contratos.gestionar' },
+  { method: 'DELETE', path: /^\/api\/mobile\/contracts\/[^/]+$/, key: 'ventas.contratos.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?referrals$/, key: 'operaciones.referidos.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/(?:v1\/)?pos\/turnos(?:\/arqueo|\/cerrar)?$/, key: 'operaciones.pos.gestionar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/sales\/create$/, key: 'ventas.venta.registrar' },
+  { method: 'PATCH', path: /^\/api\/mobile\/v1\/sales\/[^/]+\/update$/, key: 'ventas.venta.editar' },
+  { method: 'POST', path: /^\/api\/mobile\/v1\/sales\/[^/]+\/cancel$/, key: 'ventas.venta.anular' },
+  { method: 'DELETE', path: /^\/api\/mobile\/(?:v1\/)?purchases\/[^/]+$/, key: 'compras.compras.gestionar' },
+];
 
 /** Mapa exportado para el gate de drift anti-regresión (PG-07). */
 export const MOBILE_GROUP_KEYS: Readonly<Record<string, string | null>> = MOBILE_GROUP_KEYS_MAP;
@@ -146,7 +295,7 @@ export const MOBILE_ACTION_KEYS: Readonly<Record<string, Readonly<Record<string,
  * @param {string} path - Pathname de la petición.
  * @returns {string | null} Clave del registry, o null si la ruta está exenta.
  */
-export function getMobilePermissionKey(path: string): string | null {
+export function getMobilePermissionKey(path: string, method?: string): string | null {
   let rest = path;
   if (path.startsWith('/api/mobile/v1/')) rest = path.slice('/api/mobile/v1/'.length);
   else if (path.startsWith('/api/mobile/')) rest = path.slice('/api/mobile/'.length);
@@ -154,18 +303,64 @@ export function getMobilePermissionKey(path: string): string | null {
 
   const segments = rest.split('/');
   const group = segments[0];
+  const httpMethod = method?.toUpperCase();
+  if (isMobileRouteExempt(path, httpMethod ?? '')) return null;
   if (group === 'admin' && segments[1] === 'memberships') {
-    return MOBILE_GROUP_KEYS['admin/memberships'];
+    const methodPathPairs = [
+      ['GET', /^\/api\/mobile\/v1\/admin\/memberships\/pending$/],
+      ['POST', /^\/api\/mobile\/v1\/admin\/memberships\/(?:approve|reject)$/],
+    ] as const;
+    return methodPathPairs.some(([allowedMethod, route]) =>
+      httpMethod === allowedMethod && route.test(path),
+    )
+      ? MOBILE_GROUP_KEYS['admin/memberships']
+      : MOBILE_METHOD_DENIED;
   }
-  // admin/* (health, licenses, tenants, users) → exenta (plataforma)
-  if (group === 'admin') return null;
+
+  if (!httpMethod) return MOBILE_METHOD_DENIED;
+
+  const writeRule = MOBILE_WRITE_ROUTE_RULES.find(
+    (rule) => rule.method === httpMethod && rule.path.test(path),
+  );
+  if (writeRule) return writeRule.key;
+
+  if (group === 'accounting') {
+    const knownReadRoute = MOBILE_ACCOUNTING_GET_PATHS.some((template) => {
+      const pattern = new RegExp(`^${template.replace('[id]', '[^/]+')}$`);
+      return pattern.test(path);
+    });
+    return httpMethod === 'GET' && knownReadRoute
+      ? MOBILE_GROUP_KEYS.accounting
+      : MOBILE_METHOD_DENIED;
+  }
 
   const actionMap = MOBILE_ACTION_KEYS[group];
   if (actionMap) {
-    for (const seg of segments.slice(1)) {
-      if (actionMap[seg]) return actionMap[seg];
+    if (httpMethod === 'GET' && /^\/api\/mobile\/v1\/sales(?:\/[^/]+)?$/.test(path)) {
+      return MOBILE_GROUP_KEYS.sales;
     }
+    return MOBILE_METHOD_DENIED;
   }
 
-  return MOBILE_GROUP_KEYS[group] ?? null;
+  const legacyGetKey = MOBILE_LEGACY_GET_KEYS[group];
+  if (legacyGetKey) {
+    // Match only collection and one-segment detail endpoints that were
+    // verified to export GET. Deeper paths and every other verb fail closed.
+    const exactReadRoute = new RegExp(`^/api/mobile/(?:v1/)?${group}(?:/[^/]+)?$`);
+    return httpMethod === 'GET' && exactReadRoute.test(path) ? legacyGetKey : MOBILE_METHOD_DENIED;
+  }
+
+  const groupKey = MOBILE_GROUP_KEYS[group];
+  if (!groupKey) return MOBILE_METHOD_DENIED;
+  if (
+    group === 'pos' &&
+    httpMethod === 'GET' &&
+    /^\/api\/mobile\/pos\/(?:puntos-venta|turnos\/(?:activo|cuadre|esperados))$/.test(path)
+  ) {
+    return groupKey;
+  }
+  const exactCollectionOrDetail = new RegExp(`^/api/mobile/(?:v1/)?${group}(?:/[^/]+)?$`);
+  return httpMethod === 'GET' && exactCollectionOrDetail.test(path)
+    ? groupKey
+    : MOBILE_METHOD_DENIED;
 }

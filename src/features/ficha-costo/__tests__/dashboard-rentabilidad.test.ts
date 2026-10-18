@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { getDashboardRentabilidadAction } from '../actions-alertas'
 
+// La sesion se resuelve dentro del withAction real; solo se fija el usuario.
+vi.mock('@/lib/server-actions/get-current-user')
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: {
@@ -9,22 +13,24 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/server-actions', () => ({
-  withAction: (fn: any) => fn,
-}))
 
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireFeature: vi.fn(),
 }))
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 
-const mockUser = {
+const mockUser: AuthenticatedUser = {
   userId: 'user-1',
+  name: 'Usuario Ficha',
+  email: 'ficha@test.com',
+  isActive: true,
   tenantId: 'tenant-1',
   planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
-} as any
+  role: 'admin',
+}
 
 const makeProd = (overrides: any = {}) => ({
   id: overrides.id ?? 'p1',
@@ -36,7 +42,10 @@ const makeProd = (overrides: any = {}) => ({
 })
 
 describe('getDashboardRentabilidadAction', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+  })
 
   it('retorna margen promedio por categoría', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([
@@ -45,7 +54,7 @@ describe('getDashboardRentabilidadAction', () => {
       makeProd({ id: 'C', precioVenta: 100, precioCosto: 50, categoria: { id: 'c2', nombre: 'Cat B' } }),
     ] as any)
 
-    const data = await getDashboardRentabilidadAction({}, mockUser)
+    const data = expectActionSuccess(await getDashboardRentabilidadAction({})).data
 
     expect(data.porCategoria).toHaveLength(2)
     const catA = data.porCategoria.find(c => c.nombre === 'Cat A')!
@@ -60,7 +69,7 @@ describe('getDashboardRentabilidadAction', () => {
       ) as any,
     )
 
-    const data = await getDashboardRentabilidadAction({}, mockUser)
+    const data = expectActionSuccess(await getDashboardRentabilidadAction({})).data
 
     expect(data.topProductos).toHaveLength(5)
     expect(data.topProductos[0].margenPorcentaje).toBeGreaterThan(data.topProductos[4].margenPorcentaje)
@@ -73,7 +82,7 @@ describe('getDashboardRentabilidadAction', () => {
       ) as any,
     )
 
-    const data = await getDashboardRentabilidadAction({}, mockUser)
+    const data = expectActionSuccess(await getDashboardRentabilidadAction({})).data
 
     expect(data.bottomProductos).toHaveLength(5)
     expect(data.bottomProductos[0].margenPorcentaje).toBeLessThan(data.bottomProductos[4].margenPorcentaje)
@@ -82,7 +91,7 @@ describe('getDashboardRentabilidadAction', () => {
   it('filtra por tenantId', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    await getDashboardRentabilidadAction({}, mockUser)
+    await getDashboardRentabilidadAction({})
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', precioVenta: { gt: 0 }, precioCosto: { gt: 0 } },
@@ -96,7 +105,9 @@ describe('getDashboardRentabilidadAction', () => {
   it('filtra por tipo de producto', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    await getDashboardRentabilidadAction({ tipo: 'COMPUESTO' }, mockUser)
+    await getDashboardRentabilidadAction(
+      { tipo: 'COMPUESTO' },
+    )
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ esCompuesto: true } as any),
@@ -106,7 +117,7 @@ describe('getDashboardRentabilidadAction', () => {
   it('retorna array vacío si no hay productos', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
 
-    const data = await getDashboardRentabilidadAction({}, mockUser)
+    const data = expectActionSuccess(await getDashboardRentabilidadAction({})).data
 
     expect(data.porCategoria).toHaveLength(0)
     expect(data.topProductos).toHaveLength(0)

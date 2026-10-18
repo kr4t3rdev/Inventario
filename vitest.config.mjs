@@ -30,6 +30,7 @@ export default defineConfig({
       '**/*.spec.tsx',
       '**/*.live.test.ts',
       '**/*.live.test.tsx',
+      'scripts/ops/__tests__/cash-create-idempotency.test.mjs',
     ],
     coverage: {
       provider: 'v8',

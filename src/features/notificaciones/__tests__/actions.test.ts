@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de notificaciones.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/lib/services/tenant-scope', () => ({
@@ -36,7 +37,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('Notificaciones Server Actions', () => {
@@ -51,8 +52,8 @@ describe('Notificaciones Server Actions', () => {
       ]);
       const result = await getNotificacionesAction();
       expect(result.success).toBe(true);
-      expect(result.data!.resumen.total).toBe(2);
-      expect(result.data!.resumen.noLeidas).toBe(1);
+      expect(expectActionSuccess(result).data!.resumen.total).toBe(2);
+      expect(expectActionSuccess(result).data!.resumen.noLeidas).toBe(1);
     });
   });
 
@@ -72,11 +73,11 @@ describe('Notificaciones Server Actions', () => {
     });
 
     it('rechaza si no es admin', async () => {
-      const user = { ...mockUser, role: 'user' as const };
+      const user = { ...mockUser, role: 'regularUser' as const };
       vi.mocked(getCurrentUser).mockResolvedValue(user);
-      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg' });
+      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg' } as any);
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(result).error!.code).toBe('FORBIDDEN');
     });
   });
 
@@ -109,7 +110,7 @@ describe('Notificaciones Server Actions', () => {
       vi.mocked(prisma.notification.findFirst).mockResolvedValue(null);
       const result = await updateNotificacionAction({ id: 'n-404', isRead: true });
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -138,10 +139,10 @@ describe('Notificaciones Server Actions', () => {
     });
 
     it('rechaza si no es admin', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'user' });
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'regularUser' });
       const result = await verificarStockAction();
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(result).error!.code).toBe('FORBIDDEN');
     });
   });
 

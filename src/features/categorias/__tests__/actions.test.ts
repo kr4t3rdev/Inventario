@@ -9,6 +9,7 @@
  * - deleteCategoriaAction: eliminación con dependencias
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 // Mockeamos dependencias ANTES de importar el módulo
 vi.mock("@/lib/server-actions/get-current-user");
@@ -66,14 +67,14 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockTenantUserWithoutCategorias: AuthenticatedUser = {
 	userId: "user-test-2",
 	name: "Tenant User",
 	email: "tenant@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "manager",
@@ -87,7 +88,7 @@ const mockTenantUserWithoutCategoriasEan13: AuthenticatedUser = {
 	userId: "user-test-3",
 	name: "Tenant User No EAN13",
 	email: "tenant-ean@test.com",
-	role: "user",
+	role: "regularUser",
 	isActive: true,
 	tenantId: "tenant-test",
 	tenantRole: "manager",
@@ -99,6 +100,7 @@ const mockTenantUserWithoutCategoriasEan13: AuthenticatedUser = {
 
 const mockCategoriaRow = {
 	catId: "cat-1",
+	tenantId: "tenant-test",
 	nombre: "Electrónica",
 	descripcion: "Productos electrónicos",
 	parentId: null,
@@ -108,6 +110,7 @@ const mockCategoriaRow = {
 	updatedAt: new Date("2025-01-01"),
 	parent: null,
 	subcategorias: [],
+	productosSubcategoria: [],
 };
 
 // ─── Tests ─────────────────────────────────────────────────
@@ -129,8 +132,8 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toHaveLength(1);
-			expect(result.data![0].nombre).toBe("Electrónica");
+			expect(expectActionSuccess(result).data).toHaveLength(1);
+			expect(expectActionSuccess(result).data[0].nombre).toBe("Electrónica");
 			expect(prisma.categoria.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: expect.objectContaining({ tenantId: "tenant-test" }),
@@ -145,7 +148,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toEqual([]);
+			expect(expectActionSuccess(result).data).toEqual([]);
 		});
 
 		it("rechaza acceso cuando el plan no incluye categorías", async () => {
@@ -154,7 +157,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(expectActionFailure(result).error.code).toBe("FEATURE_NOT_AVAILABLE");
 		});
 	});
 
@@ -168,7 +171,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaByIdAction("cat-1");
 
 			expect(result.success).toBe(true);
-			expect(result.data!.nombre).toBe("Electrónica");
+			expect(expectActionSuccess(result).data.nombre).toBe("Electrónica");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: { catId: "cat-1", tenantId: "tenant-test" },
@@ -183,7 +186,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaByIdAction("cat-noexiste");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error.code).toBe("NOT_FOUND");
 		});
 
 		it("retorna NOT_FOUND para categoría de otro tenant", async () => {
@@ -193,7 +196,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaByIdAction("cat-otro-tenant");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error.code).toBe("NOT_FOUND");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: { catId: "cat-otro-tenant", tenantId: "tenant-test" },
@@ -214,7 +217,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaHierarchyAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
+			expect(expectActionSuccess(result).data).toBeDefined();
 			expect(prisma.categoria.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: { tenantId: "tenant-test" },
@@ -245,9 +248,9 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriaHierarchyAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toHaveLength(1);
-			expect(result.data![0].productCount).toBe(3);
-			expect(result.data![0].subcategorias[0].productCount).toBe(2);
+			expect(expectActionSuccess(result).data).toHaveLength(1);
+			expect(expectActionSuccess(result).data[0].productCount).toBe(3);
+			expect(expectActionSuccess(result).data[0].subcategorias[0].productCount).toBe(2);
 		});
 	});
 
@@ -289,7 +292,7 @@ describe("Categorias Server Actions", () => {
 			const result = await createCategoriaAction({ ...validInput, nombre: "" });
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBeDefined();
+			expect(expectActionFailure(result).error.code).toBeDefined();
 		});
 
 		it("crea categoría sin campos CLAS aunque el plan no incluya categorias-ean13", async () => {
@@ -356,7 +359,7 @@ describe("Categorias Server Actions", () => {
 			const result = await updateCategoriaAction(validUpdate);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrada");
+			expect(expectActionFailure(result).error.message).toContain("no encontrada");
 		});
 
 		it("retorna NOT_FOUND para categoría de otro tenant", async () => {
@@ -369,7 +372,7 @@ describe("Categorias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrada");
+			expect(expectActionFailure(result).error.message).toContain("no encontrada");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: { catId: "cat-otro-tenant", tenantId: "tenant-test" },
@@ -385,15 +388,16 @@ describe("Categorias Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.categoria.findFirst)
 				.mockResolvedValueOnce(mockCategoriaRow) // existencia
-				.mockResolvedValueOnce({
-					...mockCategoriaRow,
-					productosSubcategoria: [],
-				}); // productos subcat
+				.mockResolvedValueOnce(mockCategoriaRow); // productos subcat
 			vi.mocked(CategoriaDeletionValidator.validateDeletion).mockResolvedValue({
 				canDelete: true,
 				errors: [],
 				warnings: [],
-				affectedItems: {},
+				affectedItems: {
+					productos: 0,
+					subcategorias: 0,
+					productosSubcategoria: 0,
+				},
 			});
 			vi.mocked(prisma.categoria.delete).mockResolvedValue(mockCategoriaRow);
 
@@ -412,7 +416,7 @@ describe("Categorias Server Actions", () => {
 			const result = await deleteCategoriaAction("cat-noexiste");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrada");
+			expect(expectActionFailure(result).error.message).toContain("no encontrada");
 		});
 
 		it("retorna NOT_FOUND para categoría de otro tenant", async () => {
@@ -422,7 +426,7 @@ describe("Categorias Server Actions", () => {
 			const result = await deleteCategoriaAction("cat-otro-tenant");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrada");
+			expect(expectActionFailure(result).error.message).toContain("no encontrada");
 			expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: { catId: "cat-otro-tenant", tenantId: "tenant-test" },
@@ -486,10 +490,7 @@ describe("Categorias Server Actions", () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.categoria.findFirst)
 				.mockResolvedValueOnce(mockCategoriaRow)
-				.mockResolvedValueOnce({
-					...mockCategoriaRow,
-					productosSubcategoria: [],
-				});
+				.mockResolvedValueOnce(mockCategoriaRow);
 			vi.mocked(CategoriaDeletionValidator.validateDeletion).mockResolvedValue({
 				canDelete: true,
 			});
@@ -512,7 +513,7 @@ describe("Categorias Server Actions", () => {
 			const result = await getCategoriasAction();
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error.code).toBe("AUTH_REQUIRED");
 		});
 
 		it("createCategoriaAction retorna AUTH_REQUIRED si no hay usuario", async () => {
@@ -527,7 +528,7 @@ describe("Categorias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error.code).toBe("AUTH_REQUIRED");
 		});
 	});
 });

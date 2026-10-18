@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   getRoutePermissionKey,
   getMobilePermissionKey,
+  isMobileRouteExempt,
   isRouteMapped,
 } from '@/lib/auth/route-permissions';
+import { getPermissionByKey } from '@/lib/auth/permission-registry';
 
 /**
  * Contrato del mapa ruta→permiso (PG-05 T5).
@@ -77,42 +79,119 @@ describe('route-permissions (PG-05 T5)', () => {
     expect(getPermissionByKey('rrhh.nomina.calcular')).toBeDefined();
     expect(getPermissionByKey('rrhh.vacaciones.solicitar')).toBeDefined();
     expect(getPermissionByKey('rrhh.horarios.gestionar')).toBeDefined();
+    expect(getPermissionByKey('produccion.ordenes.consultar')?.defaultRoles).toEqual([
+      'manager',
+      'economico',
+    ]);
     expect(fn).toBeDefined();
   });
 });
 describe('route-permissions mobile (PG-05 mobile)', () => {
   it('mapea grupos mobile v1 a claves de dominio', () => {
-    expect(getMobilePermissionKey('/api/mobile/v1/accounting/x')).toBe('financiero.contabilidad.acceder');
-    expect(getMobilePermissionKey('/api/mobile/v1/products')).toBe('inventario.productos.consultar');
-    expect(getMobilePermissionKey('/api/mobile/v1/sales')).toBe('ventas.venta.registrar');
-    expect(getMobilePermissionKey('/api/mobile/v1/pos/turnos')).toBe('operaciones.pos.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/cash-loans', 'GET')).toBe('financiero.contabilidad.acceder');
+    expect(getMobilePermissionKey('/api/mobile/v1/products', 'GET')).toBe('inventario.productos.consultar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales', 'GET')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/pos/turnos', 'POST')).toBe('operaciones.pos.gestionar');
+  });
+
+  it('mapea recursos móviles legacy por su permiso de lectura/gestión existente', () => {
+    const routes = [
+      ['/api/mobile/v1/compras', 'compras.compras.gestionar'],
+      ['/api/mobile/v1/contratos/abc', 'ventas.contratos.gestionar'],
+      ['/api/mobile/v1/empleados', 'rrhh.empleados.consultar'],
+      ['/api/mobile/v1/facturas/abc', 'ventas.facturas.consultar'],
+      ['/api/mobile/v1/gastos', 'financiero.gastos.acceder'],
+      ['/api/mobile/v1/ofertas/abc', 'ventas.ofertas.gestionar'],
+      ['/api/mobile/v1/produccion', 'produccion.ordenes.consultar'],
+      ['/api/mobile/v1/reparaciones/abc', 'produccion.reparaciones.gestionar'],
+      ['/api/mobile/v1/servicios', 'operaciones.servicios.acceder'],
+      ['/api/mobile/v1/transferencias/abc', 'inventario.transferencias.gestionar'],
+    ] as const;
+    for (const [path, key] of routes) {
+      expect(getMobilePermissionKey(path, 'GET')).toBe(key);
+      expect(getMobilePermissionKey(path, 'POST')).toBe('__mobile_method_not_allowed__');
+    }
+    expect(getMobilePermissionKey('/api/mobile/v1/compras/abc', 'GET')).toBe(
+      'compras.compras.gestionar',
+    );
+    expect(getMobilePermissionKey('/api/mobile/v1/produccion/orders/abc', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    expect(getMobilePermissionKey('/api/mobile/v1/unknown', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
   });
 
   it('distingue create/update/cancel dentro del grupo sales (PG-05 hallazgo #2)', () => {
-    expect(getMobilePermissionKey('/api/mobile/v1/sales/create')).toBe('ventas.venta.registrar');
-    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/update')).toBe('ventas.venta.editar');
-    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/cancel')).toBe('ventas.venta.anular');
-    // El listado y el detalle siguen bajo la clave de grupo (registrar).
-    expect(getMobilePermissionKey('/api/mobile/v1/sales')).toBe('ventas.venta.registrar');
-    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/create', 'POST')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/update', 'PATCH')).toBe('ventas.venta.editar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/cancel', 'POST')).toBe('ventas.venta.anular');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/update', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    // El listado y el detalle son lecturas, no heredan permisos de mutación.
+    expect(getMobilePermissionKey('/api/mobile/v1/sales', 'GET')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123', 'GET')).toBe('ventas.venta.registrar');
   });
 
   it('mapea grupos mobile legacy (sin v1)', () => {
-    expect(getMobilePermissionKey('/api/mobile/categories')).toBe('inventario.categorias.gestionar');
-    expect(getMobilePermissionKey('/api/mobile/mermas')).toBe('inventario.mermas.registrar');
-    expect(getMobilePermissionKey('/api/mobile/offers')).toBe('ventas.ofertas.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/categories', 'GET')).toBe('inventario.categorias.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/mermas', 'GET')).toBe('inventario.mermas.registrar');
+    expect(getMobilePermissionKey('/api/mobile/offers', 'GET')).toBe('ventas.ofertas.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/categories', 'DELETE')).toBe(
+      '__mobile_method_not_allowed__',
+    );
   });
 
   it('exenta auth y admin (plataforma/público)', () => {
-    expect(getMobilePermissionKey('/api/mobile/v1/auth/login')).toBeNull();
-    expect(getMobilePermissionKey('/api/mobile/v1/auth/me')).toBeNull();
-    expect(getMobilePermissionKey('/api/mobile/v1/admin/licenses')).toBeNull();
-    expect(getMobilePermissionKey('/api/mobile/plans')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/auth/login', 'POST')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/auth/me', 'GET')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/licenses', 'GET')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/plans', 'GET')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/auth/unknown', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    expect(getMobilePermissionKey('/api/mobile/plans', 'DELETE')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    expect(isMobileRouteExempt('/api/mobile/v1/admin/licenses', 'GET')).toBe(true);
+    expect(isMobileRouteExempt('/api/mobile/v1/admin/unlisted', 'GET')).toBe(false);
   });
 
   it('admin/memberships sí exige config.usuarios.gestionar', () => {
-    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/approve')).toBe('config.usuarios.gestionar');
-    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/pending')).toBe('config.usuarios.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/approve', 'POST')).toBe('config.usuarios.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/pending', 'GET')).toBe('config.usuarios.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/approve', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+  });
+
+  it('separa consulta contable de mutaciones monetarias y limita operaciones de riesgo', () => {
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/cash-loans', 'GET')).toBe(
+      'financiero.contabilidad.acceder',
+    );
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/cash-loans', 'POST')).toBe(
+      'financiero.prestamos-efectivo.gestionar',
+    );
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/unknown', 'POST')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/unknown', 'GET')).toBe(
+      '__mobile_method_not_allowed__',
+    );
+    expect(getPermissionByKey('financiero.contabilidad.acceder')?.defaultRoles).toEqual([
+      'manager',
+      'economico',
+    ]);
+    expect(getPermissionByKey('financiero.prestamos-efectivo.gestionar')?.defaultRoles).toEqual([
+      'manager',
+    ]);
+    expect(getPermissionByKey('inventario.mermas.registrar')?.defaultRoles).toContain(
+      'dependiente',
+    );
+    expect(getPermissionByKey('inventario.transferencias.gestionar')?.defaultRoles).toContain(
+      'dependiente',
+    );
   });
 
   it('ruta no mobile devuelve null', () => {

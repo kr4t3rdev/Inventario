@@ -3,6 +3,7 @@
  * auth via withAction y gate del feature de plan ventas-pedidos.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -30,14 +31,14 @@ describe('actions del ciclo de pedidos (PVE-T3)', () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(null);
 		const r = await entregarVentaAction('venta-1');
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('AUTH_REQUIRED');
+		expect(expectActionFailure(r).error?.code).toBe('AUTH_REQUIRED');
 	});
 
 	it('entregarVentaAction exige la feature ventas-pedidos', async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(userSinFlag as never);
 		const r = await entregarVentaAction('venta-1');
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(expectActionFailure(r).error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 
 	it('facturarVentaAction también exige la feature ventas-pedidos', async () => {
@@ -47,6 +48,6 @@ describe('actions del ciclo de pedidos (PVE-T3)', () => {
 			input: { metodoPago: 'EFECTIVO' },
 		});
 		expect(r.success).toBe(false);
-		expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(expectActionFailure(r).error?.code).toBe('FEATURE_NOT_AVAILABLE');
 	});
 });

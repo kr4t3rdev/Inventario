@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/features/sales-agent/services/payment-service', () => ({
@@ -162,8 +163,8 @@ describe('sales-agent actions', () => {
     expect(prisma.notification.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: 'agent-1' } }),
     );
-    expect(result.data).not.toHaveProperty('email');
-    expect(result.data).not.toHaveProperty('tenantId');
+    expect(expectActionSuccess(result).data).not.toHaveProperty('email');
+    expect(expectActionSuccess(result).data).not.toHaveProperty('tenantId');
   });
 
   it('impide que un gestor consulte datos de otro gestor', async () => {
@@ -218,7 +219,7 @@ describe('sales-agent actions', () => {
         }],
       },
     });
-    expect(result.data?.referrals[0].tenant).toEqual(expect.not.objectContaining({
+    expect(expectActionSuccess(result).data?.referrals[0].tenant).toEqual(expect.not.objectContaining({
       direccion: expect.anything(),
       telefono: expect.anything(),
       tenantId: expect.anything(),

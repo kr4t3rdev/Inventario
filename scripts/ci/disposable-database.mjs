@@ -12,7 +12,27 @@ export function assertDisposableDatabase(env) {
   try { url = new URL(env.DATABASE_URL); } catch { fail(); }
   if (!['postgres:', 'postgresql:'].includes(url.protocol)
     || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)
+    || !url.username
     || !/^\/tcp_test_[a-z0-9_]+$/.test(url.pathname)
     || !url.port || url.search || url.hash) fail();
   return env.DATABASE_URL;
+}
+
+/**
+ * @description Confirm the connected database matches the explicitly approved client target.
+ * PostgreSQL may report a container/bridge address from inet_server_addr() even when the
+ * configured client URL is loopback, so only database, role and server port identify the target.
+ * @param {{ databaseName: string, roleName: string, serverPort: number }} identity
+ *   Connected DB identity.
+ * @param {Record<string, string | undefined>} env Explicit process environment.
+ * @returns {void}
+ */
+export function assertDisposableDatabaseIdentity(identity, env) {
+  const target = new URL(assertDisposableDatabase(env));
+  if (!identity || typeof identity !== 'object'
+    || identity.databaseName !== target.pathname.slice(1)
+    || identity.roleName !== decodeURIComponent(target.username)
+    || Number(identity.serverPort) !== Number(target.port)) {
+    throw new Error('Connected database does not match the approved disposable target.');
+  }
 }

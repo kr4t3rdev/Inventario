@@ -69,7 +69,7 @@ describe('plan-pricing', () => {
     it('devuelve true si existe un referido de afiliado', async () => {
       vi.mocked(prisma.affiliateReferral.findUnique).mockResolvedValue({
         referralId: 'ref-1',
-      });
+      } as any);
       vi.mocked(prisma.salesAgentReferral.findUnique).mockResolvedValue(null);
 
       await expect(isTenantReferred('tenant-1')).resolves.toBe(true);
@@ -79,7 +79,7 @@ describe('plan-pricing', () => {
       vi.mocked(prisma.affiliateReferral.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.salesAgentReferral.findUnique).mockResolvedValue({
         salesAgentReferralId: 'sales-ref-1',
-      });
+      } as any);
 
       await expect(isTenantReferred('tenant-1')).resolves.toBe(true);
     });

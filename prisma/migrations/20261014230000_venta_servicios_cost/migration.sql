@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE "VentaServicios"
+  ADD COLUMN "costo" INTEGER NOT NULL DEFAULT 0;
+
+COMMIT;

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -57,6 +57,7 @@ export function PagoPrestamoModal({
   onSuccess,
 }: PagoPrestamoModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const requestIntent = useRef<{ signature: string; key: string } | null>(null)
 
   const saldoPendiente = useMemo(() => {
     if (!prestamo?.cuentaPorCobrar) return Number(prestamo?.montoCapital ?? 0)
@@ -110,6 +111,10 @@ export function PagoPrestamoModal({
 
     setIsLoading(true)
     try {
+      const signature = JSON.stringify({ loanId: prestamo.id, values })
+      if (requestIntent.current?.signature !== signature) {
+        requestIntent.current = { signature, key: crypto.randomUUID() }
+      }
       const result = await registrarPagoPrestamoAction({
         id: prestamo.id,
         monto: values.monto,
@@ -118,6 +123,7 @@ export function PagoPrestamoModal({
         moneda: values.moneda,
         tasaCambio: values.tasaCambio,
         observaciones: values.observaciones || undefined,
+        idempotencyKey: requestIntent.current.key,
       })
 
       if (!result.success) {
@@ -126,6 +132,7 @@ export function PagoPrestamoModal({
       }
 
       toast.success("Pago registrado correctamente")
+      requestIntent.current = null
       onSuccess?.()
       onOpenChange(false)
     } catch (error) {
@@ -156,7 +163,7 @@ export function PagoPrestamoModal({
                 <FormItem>
                   <FormLabel>Monto a pagar</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" max={saldoPendiente} {...field} />
+                    <Input type="number" step="0.0001" min="0" max={saldoPendiente} {...field} />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
                     Saldo pendiente actual: {saldoPendiente.toFixed(2)} {prestamo?.moneda}

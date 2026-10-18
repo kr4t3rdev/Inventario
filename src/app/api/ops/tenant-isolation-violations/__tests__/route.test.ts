@@ -76,9 +76,11 @@ describe('GET /api/ops/tenant-isolation-violations', () => {
   });
 
   it('acepta el alias legado SUPERADMIN mediante normalización de rol', async () => {
+    // El caso verifica el alias legado SUPERADMIN: el valor debe llegar intacto
+    // al codigo bajo prueba, aunque no pertenezca a la union vigente.
     authenticateUserMock.mockResolvedValue({
       user: { userId: 'admin-legacy', role: 'SUPERADMIN', isActive: true },
-    } as Awaited<ReturnType<typeof authenticateUser>>);
+    } as unknown as Awaited<ReturnType<typeof authenticateUser>>);
 
     const response = await GET(new NextRequest('http://localhost/api/ops/tenant-isolation-violations'));
 

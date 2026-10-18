@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/lib/prisma', () => ({ prisma: { venta: { findMany: vi.fn() }, gastoCompra: { findMany: vi.fn() }, empleado: { findMany: vi.fn() }, merma: { findMany: vi.fn() } } }));
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { getReporteFinancieroAction } from '@/features/reportes-financieros/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
+const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'manager' };
 describe('Reportes Actions', () => {
   beforeEach(() => vi.clearAllMocks());
   it('genera reporte', async () => {
@@ -16,6 +17,6 @@ describe('Reportes Actions', () => {
     vi.mocked(prisma.merma.findMany).mockResolvedValue([]);
     const r = await getReporteFinancieroAction({ periodo: '2025-05', tipo: 'mensual' });
     expect(r.success).toBe(true);
-    expect(r.data!.resumen.totalVentas).toBe(0);
+    expect(expectActionSuccess(r).data!.resumen.totalVentas).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import { LazyMotion, m as motion } from 'framer-motion'
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientes } from '@/features/clientes/hooks/use-clientes'
 import { createVentaServicioAction } from '@/features/venta-servicios/actions'
+import { resolveServiceSaleRequestKey } from '@/features/venta-servicios/request-idempotency'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { resolverMonedaServicio } from '@/features/servicios/lib/moneda-servicio'
@@ -56,6 +57,7 @@ interface ServiciosPrestadosFormProps {
 export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosFormProps): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const pendingSaleRequest = useRef<{ fingerprint: string; key: string } | null>(null)
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const servicios = initialServicios ?? []
   const { clientes, isLoading: isLoadingClientes } = useClientes()
@@ -88,21 +90,31 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   async function onSubmit(values: FormValues): Promise<void> {
     setIsLoading(true)
     try {
-      const result = await createVentaServicioAction({
+      const salePayload = {
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
         costo: values.costo ?? 0,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
-        condicionPago: values.formaCobro === 'CREDITO' ? 'CREDITO' : 'CONTADO',
+        condicionPago: values.formaCobro === 'CREDITO' ? 'CREDITO' as const : 'CONTADO' as const,
         fechaVencimiento: values.formaCobro === 'CREDITO' && values.fechaVencimiento ? values.fechaVencimiento : undefined,
+      }
+      const request = resolveServiceSaleRequestKey(
+        pendingSaleRequest.current,
+        JSON.stringify(salePayload),
+      )
+      pendingSaleRequest.current = request
+      const result = await createVentaServicioAction({
+        ...salePayload,
+        idempotencyKey: request.key,
       })
       if (!result.success) {
         throw new Error(result.error?.message ?? 'Error desconocido')
       }
 
       sileo.success({ title: 'Servicio prestado registrado correctamente.' })
+      pendingSaleRequest.current = null
       form.reset()
     } catch (error) {
       console.error('Error al registrar servicio prestado:', error)

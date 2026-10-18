@@ -3,7 +3,8 @@
  * Antes del fix, `deleteVendorAction` borraba directo y la base de datos
  * hacía cascada: productos, compras y gastos del proveedor desaparecían.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
+import { expectActionFailure } from '@/test/action-response';
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -39,7 +40,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const COUNTS = [
@@ -60,7 +61,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    for (const count of COUNTS) vi.mocked(count as never).mockResolvedValue(0 as never);
+    for (const count of COUNTS) (count as Mock).mockResolvedValue(0);
     vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'ven-1' } as never);
     vi.mocked(prisma.vendor.delete).mockResolvedValue({ vendorId: 'ven-1' } as never);
   });
@@ -70,13 +71,12 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
     vi.mocked(prisma.compraDocumento.count).mockResolvedValue(2 as never);
     vi.mocked(prisma.deudaCash.count).mockResolvedValue(1 as never);
 
-    const result = await deleteVendorAction('ven-1');
+    const failure = expectActionFailure(await deleteVendorAction('ven-1'));
 
-    expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('PROVEEDOR_EN_USO');
-    expect(result.error?.message).toContain('3');
-    expect(result.error?.message).toContain('2');
-    expect(result.error?.message).toContain('1');
+    expect(failure.error.code).toBe('PROVEEDOR_EN_USO');
+    expect(failure.error.message).toContain('3');
+    expect(failure.error.message).toContain('2');
+    expect(failure.error.message).toContain('1');
     expect(prisma.vendor.delete).not.toHaveBeenCalled();
   });
 
@@ -84,7 +84,7 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
     await deleteVendorAction('ven-1');
 
     for (const count of COUNTS) {
-      const where = vi.mocked(count as never).mock.calls[0][0] as {
+      const where = (count as Mock).mock.calls[0][0] as {
         where: Record<string, unknown>;
       };
       expect(where.where.tenantId).toBe('tenant-test');
@@ -101,10 +101,9 @@ describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {
   it('devuelve NOT_FOUND si el proveedor no existe en el tenant', async () => {
     vi.mocked(prisma.vendor.findFirst).mockResolvedValue(null as never);
 
-    const result = await deleteVendorAction('ven-x');
+    const failure = expectActionFailure(await deleteVendorAction('ven-x'));
 
-    expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('NOT_FOUND');
+    expect(failure.error.code).toBe('NOT_FOUND');
     expect(prisma.vendor.delete).not.toHaveBeenCalled();
   });
 });

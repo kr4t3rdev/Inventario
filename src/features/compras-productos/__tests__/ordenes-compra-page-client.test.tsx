@@ -17,6 +17,30 @@ import {
 } from '@/features/compras-productos/actions-oc';
 import { OrdenesCompraPageClient } from '@/features/compras-productos/components/ordenes-compra-page-client';
 
+/**
+ * @description Primer argumento de la n-esima llamada de un mock tipado.
+ *
+ * `mock.calls` se tipa como `unknown[][]`, de modo que llamar directamente a
+ * `calls[n][0].propiedad` falla con TS2532. El helper acota esa lectura y
+ * devuelve el tipo del valor realmente registrado (el payload), evitando el
+ * envoltorio ActionResponse. Las aserciones previas de `toHaveBeenCalledTimes`
+ * garantizan la llamada.
+ *
+ * @param {Mock} mock - Mock tipado con `vi.mocked`.
+ * @param {number} index - Indice de la llamada.
+ * @returns {Arg} Primer argumento de esa llamada.
+ */
+function mockArgAt<Mock extends (...args: never[]) => unknown, Arg = Parameters<Mock>[0]>(
+  mock: Mock,
+  index: number,
+): NonNullable<Arg> {
+  const call = (mock as unknown as { mock: { calls: unknown[][] } }).mock.calls[index];
+  if (!call) throw new Error(`El mock no registro la llamada ${index}`);
+  const first = call[0];
+  if (first === undefined) throw new Error(`La llamada ${index} no tiene argumentos`);
+  return first as NonNullable<Arg>;
+}
+
 const props = {
   vendors: [{ vendorId: 'ven-1', nombre: 'Proveedor 1' }],
   products: [{ id: 'prod-1', nombre: 'Producto 1' }],
@@ -47,7 +71,7 @@ describe('OrdenesCompraPageClient', () => {
     vi.mocked(cancelarOrdenCompraAction).mockResolvedValue({ success: true, data: {} } as any);
     render(<OrdenesCompraPageClient {...props} orders={[{
       id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },
-      items: [{ id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0 }],
+      items: [{ id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0, precioUnitario: 20 }],
       createdAt: new Date().toISOString(), total: 200,
     }]} />);
 
@@ -100,8 +124,8 @@ describe('OrdenesCompraPageClient', () => {
     render(<OrdenesCompraPageClient {...props} orders={[{
       id: 'oc-1', estado: 'PARCIAL', proveedor: { nombre: 'Proveedor 1' },
       items: [
-        { id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 10 },
-        { id: 'item-2', producto: { nombre: 'Producto 2' }, cantidadPedida: 5, cantidadRecibida: 1 },
+        { id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 10, precioUnitario: 20 },
+        { id: 'item-2', producto: { nombre: 'Producto 2' }, cantidadPedida: 5, cantidadRecibida: 1, precioUnitario: 20 },
       ],
       createdAt: new Date().toISOString(), total: 200,
     }]} />);
@@ -127,7 +151,7 @@ describe('OrdenesCompraPageClient', () => {
     render(<OrdenesCompraPageClient {...props} orders={[{
       id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },
       items: [
-        { id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0 },
+        { id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0, precioUnitario: 20 },
       ],
       createdAt: new Date().toISOString(), total: 200,
     }]} />);
@@ -136,17 +160,17 @@ describe('OrdenesCompraPageClient', () => {
     fireEvent.change(screen.getByLabelText(/cantidad a recibir/i), { target: { value: '4' } });
     fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
     await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(1));
-    const firstKey = vi.mocked(registrarRecepcionAction).mock.calls[0][0].claveIdempotencia;
+    const firstKey = mockArgAt(vi.mocked(registrarRecepcionAction), 0).claveIdempotencia;
 
     fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
     await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(registrarRecepcionAction).mock.calls[1][0].claveIdempotencia).toBe(firstKey);
+    expect(mockArgAt(vi.mocked(registrarRecepcionAction), 1).claveIdempotencia).toBe(firstKey);
   });
 
   it('oculta crear y cancelar sin permiso de órdenes y recibir sin permiso de recepciones', () => {
     render(<OrdenesCompraPageClient {...props} canManageOrders={false} canReceive={false} orders={[{
       id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },
-      items: [{ id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0 }],
+      items: [{ id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0, precioUnitario: 20 }],
       createdAt: new Date().toISOString(), total: 200,
     }]} />);
 

@@ -10,6 +10,10 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
+import {
+  isCashCreateIdempotencyUniqueConflict,
+  runCashCreateWithReplay,
+} from '@/lib/services/cash-create-idempotency'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service'
@@ -21,11 +25,13 @@ const createSchema = z.object({
   clienteId: z.string().min(1, 'El clienteId es requerido'),
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
-  tasaInteres: z.coerce.number().min(0).optional(),
+  tasaInteres: z.coerce.number().min(0),
+  tasaInteresMoratorio: z.coerce.number().min(0),
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const updateSchema = z.object({
@@ -35,12 +41,14 @@ const updateSchema = z.object({
 }).strict()
 
 const pagoSchema = z.object({
+  id: z.string().min(1),
   monto: z.coerce.number().positive('El monto debe ser positivo'),
   cuentaId: z.string().min(1, 'La cuenta bancaria es requerida'),
   tipoPagoId: z.string().min(1, 'El tipo de pago es requerido'),
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
   observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const PRESTAMO_INCLUDE = {
@@ -80,20 +88,40 @@ export const getPrestamoCashHistorialAction = withAction(async (id: string, user
   return AccountingCashOperationsService.getCashLoanHistory({ tenantId, id })
 })
 
-export const createPrestamoCashAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el desembolso
-  () => new Date(),
-  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-    requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
-    const body = createSchema.parse(input)
-    const prestamo = await AccountingCashOperationsMutationService.createCashLoan({
+export const createPrestamoCashAction = withAction(async (
+  input: z.infer<typeof createSchema>,
+  user: AuthenticatedUser
+) => {
+  requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
+  requireTenant(user);
+  const body = createSchema.parse(input)
+  const operationDate = new Date()
+  const prestamo = await runCashCreateWithReplay({
+    findReplay: () => AccountingCashOperationsMutationService.findCashLoanCreateReplay({
       input: body,
       user,
-    })
-    revalidatePath('/busy/contabilidad/prestamos-cash')
-    return prestamo
-  }
-));
+    }),
+    validatePeriod: () => withPeriodValidation(
+      () => operationDate,
+      async () => undefined,
+    )(undefined, user),
+    write: () => AccountingCashOperationsMutationService.createCashLoan({
+      input: body,
+      user,
+      operationDate,
+    }),
+    canRecover: (error) => {
+      if (error instanceof ActionError && [
+        'PERIODO_CERRADO',
+        'PERIODO_APROBADO',
+        'PERIODO_EN_CIERRE',
+      ].includes(error.code ?? '')) return true
+      return isCashCreateIdempotencyUniqueConflict(error)
+    },
+  })
+  revalidatePath('/busy/contabilidad/prestamos-cash')
+  return prestamo
+})
 
 export const updatePrestamoCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
@@ -110,26 +138,33 @@ export const updatePrestamoCashAction = withAction(async (
   return prestamo
 })
 
-export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
-  // Usa fecha actual para el pago
-  () => new Date(),
-  async (
-    input: { id: string } & z.infer<typeof pagoSchema>,
-    user: AuthenticatedUser
-  ) => {
-    requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
-    const {
-    // @ts-expect-error Zod infers the intersection without preserving the external id field in destructuring.
-    id, ...body
-    } = pagoSchema.parse(input)
-    const resultado = await AccountingCashOperationsMutationService.registerCashLoanPayment({
-      input: { id, ...body },
+export const registrarPagoPrestamoAction = withAction(async (
+  input: { id: string } & z.infer<typeof pagoSchema>,
+  user: AuthenticatedUser
+) => {
+  requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
+  const { id, ...body } = pagoSchema.parse(input);
+  const paymentInput = { id, ...body };
+  const resultado = await runCashCreateWithReplay({
+    findReplay: () => AccountingCashOperationsMutationService.findCashLoanPaymentReplay({
+      input: paymentInput,
       user,
-    })
-    revalidatePath('/busy/contabilidad/prestamos-cash')
-    return { reconciliacion: resultado }
-  }
-));
+    }),
+    validatePeriod: () => withPeriodValidation(
+      () => new Date(),
+      async () => undefined,
+    )(paymentInput, user),
+    write: () => AccountingCashOperationsMutationService.registerCashLoanPayment({
+      input: paymentInput,
+      user,
+    }),
+    canRecover: (error) =>
+      isCashCreateIdempotencyUniqueConflict(error) ||
+      (error instanceof ActionError && error.code.startsWith('PERIODO_')),
+  });
+  revalidatePath('/busy/contabilidad/prestamos-cash');
+  return { reconciliacion: resultado };
+});
 
 export const getPrestamosCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'prestamos-cash', 'ver estadísticas de préstamos cash');

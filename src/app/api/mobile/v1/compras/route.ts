@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     ]);
 
     const items = compras.map((c) => ({
-      compraId: c.id,
+      compraId: c.compraDocumentoId,
       numeroFactura: c.numeroFactura,
       proveedorId: c.proveedorId,
       proveedorNombre: c.proveedor?.nombre ?? null,
@@ -60,8 +60,8 @@ export async function GET(request: Request) {
       estado: c.estado,
       tipoOperacion: c.tipoOperacion ?? null,
       formaPago: c.formaPago ?? null,
-      subtotal: Number(c.subtotal),
-      impuestos: Number(c.impuestos ?? 0),
+      subtotal: c.items.reduce((sum, item) => sum + Number(item.totalLinea), 0),
+      impuestos: 0,
       total: Number(c.total),
       createdAt: c.createdAt.toISOString(),
     }));

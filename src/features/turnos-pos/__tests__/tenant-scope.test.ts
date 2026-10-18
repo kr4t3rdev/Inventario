@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const mockPrisma = vi.hoisted(() => ({
   puntoDeVenta: { findFirst: vi.fn() },
@@ -14,7 +15,7 @@ const mockPrisma = vi.hoisted(() => ({
 const mockUser = vi.hoisted(
   (): AuthenticatedUser => ({
     userId: 'user-1', tenantId: 'tenant-A',
-    role: 'ADMIN', email: 'admin@test.com', name: 'Admin',
+    role: 'admin', email: 'admin@test.com', name: 'Admin', isActive: true,
   }),
 );
 
@@ -42,7 +43,7 @@ describe('getOrCreateTurnoActivo – aislamiento tenant', () => {
     const result = await getOrCreateTurnoActivo({ puntoDeVentaId: 'pv-B' });
 
     expect(result.success).toBe(false);
-    expect(result.error!.code).toBe('NOT_FOUND');
+    expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
   });
 
   it('incluye tenantId al buscar turno activo', async () => {

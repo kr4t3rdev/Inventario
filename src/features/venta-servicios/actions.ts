@@ -6,6 +6,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { createHash } from 'node:crypto';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
@@ -16,6 +17,94 @@ import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } fr
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { Prisma } from '@/generated/prisma';
+
+type IdempotencyTx = Prisma.TransactionClient;
+type IdempotencyRow = {
+  ventaServicioId: string;
+  idempotencyKey: string | null;
+  [key: string]: unknown;
+};
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalize(nested)]),
+    );
+  }
+  return value;
+}
+
+function payloadFingerprint(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+}
+
+function persistedIdempotencyPrefix(key: string): string {
+  const base = `v2:${Buffer.from(key, 'utf16le').toString('base64url')}:`;
+  const padding = 'x'.repeat(Math.max(0, 141 - base.length - 1));
+  return `${base}${padding}:`;
+}
+
+function persistedIdempotencyKey(key: string, hash: string, index?: number): string {
+  return `${persistedIdempotencyPrefix(key)}${hash}${index === undefined ? '' : `:${index}`}`;
+}
+
+function belongsToIdempotencyKey(storedKey: string | null, key: string): boolean {
+  if (!storedKey) return false;
+  const prefix = persistedIdempotencyPrefix(key);
+  if (!storedKey.startsWith(prefix)) return false;
+  return /^[0-9a-f]{64}(?::\d+)?$/i.test(storedKey.slice(prefix.length));
+}
+
+function fingerprintFromStoredKey(storedKey: string | null, key: string): string | null {
+  if (!belongsToIdempotencyKey(storedKey, key)) return null;
+  return storedKey!.slice(persistedIdempotencyPrefix(key).length).split(':')[0];
+}
+
+function lineIndexFromStoredKey(storedKey: string | null, key: string): number {
+  const suffix = storedKey?.slice(persistedIdempotencyPrefix(key).length) ?? '';
+  const index = suffix.split(':')[1];
+  return index === undefined ? 0 : Number(index);
+}
+
+function idempotencyConflict(): never {
+  throw new ActionError(
+    'La clave de idempotencia ya fue usada con datos diferentes',
+    'IDEMPOTENCY_CONFLICT',
+  );
+}
+
+const validateServiceSalePeriod = withPeriodValidation<void>(
+  () => new Date(),
+  async () => undefined,
+);
+
+async function lockIdempotencyKey(
+  tx: IdempotencyTx,
+  tenantId: string,
+  key: string,
+): Promise<void> {
+  const lockIdentity = JSON.stringify([tenantId, key]);
+  await tx.$executeRaw`
+    SELECT pg_advisory_xact_lock(hashtextextended(${lockIdentity}, 0))
+  `;
+}
+
+async function findIdempotentVentas(
+  tx: IdempotencyTx,
+  tenantId: string,
+  key: string,
+): Promise<IdempotencyRow[]> {
+  const prefix = persistedIdempotencyPrefix(key);
+  const rows = await tx.ventaServicios.findMany({
+    where: { tenantId, idempotencyKey: { startsWith: prefix } },
+    orderBy: { idempotencyKey: 'asc' },
+  });
+  return rows.filter((row) => belongsToIdempotencyKey(row.idempotencyKey, key));
+}
 
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -81,9 +170,10 @@ export const getVentaServicioByIdAction = withAction(async (id: string, user: Au
   return venta;
 });
 
-export const createVentaServicioAction = withAction(withPeriodValidation(
-  () => new Date(),
-  async (input: VentaServicioInput | VentaMixtaInput, user: AuthenticatedUser) => {
+const createVentaServicioHandler = async (
+  input: VentaServicioInput | VentaMixtaInput,
+  user: AuthenticatedUser,
+) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'crear servicios');
 
@@ -108,12 +198,51 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
 
     const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
+    const idempotencyKey = payload.idempotencyKey?.trim() || null;
+    const fingerprint = idempotencyKey
+      ? payloadFingerprint({
+          mode: 'MIXED_LINES',
+          clienteId: payload.clienteId ?? null,
+          observaciones: payload.observaciones ?? null,
+          condicionPago: payload.condicionPago,
+          fechaVencimiento: fechaVencimiento?.toISOString() ?? null,
+          lineas: payload.lineas.map((linea) => ({
+            tipoLinea: linea.tipoLinea,
+            servicioId: linea.servicioId ?? null,
+            productoId: linea.productoId ?? null,
+            cantidad: linea.cantidad,
+            costo: linea.costo ?? 0,
+            observaciones: linea.observaciones ?? null,
+          })),
+        })
+      : null;
 
-    const created = await prisma.$transaction(
-      lineasServicio.map((linea) => {
+    const transactionResult = await prisma.$transaction(async (tx) => {
+      if (idempotencyKey && fingerprint) {
+        await lockIdempotencyKey(tx, tenantId, idempotencyKey);
+        const existing = await findIdempotentVentas(tx, tenantId, idempotencyKey);
+        if (existing.length > 0) {
+          const storedHashes = existing.map((row) =>
+            fingerprintFromStoredKey(row.idempotencyKey, idempotencyKey));
+          const indexedRows = existing
+            .map((row) => ({ row, index: lineIndexFromStoredKey(row.idempotencyKey, idempotencyKey) }))
+            .sort((left, right) => left.index - right.index);
+          const storedIndexes = indexedRows.map(({ index }) => index);
+          const expectedIndexes = lineasServicio.map((_, index) => index);
+          if (storedHashes.some((hash) => hash !== fingerprint) ||
+            storedIndexes.length !== expectedIndexes.length ||
+            storedIndexes.some((index, position) => index !== expectedIndexes[position])) {
+            idempotencyConflict();
+          }
+          return { created: indexedRows.map(({ row }) => row), replayed: true };
+        }
+      }
+
+      await validateServiceSalePeriod(undefined, user);
+      const created = await Promise.all(lineasServicio.map((linea, index) => {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
         const precioUnitario = catalogo.precio;
-        return prisma.ventaServicios.create({
+        return tx.ventaServicios.create({
           data: {
             tenantId,
             servicioId: linea.servicioId!,
@@ -125,27 +254,33 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,
             condicionPago: payload.condicionPago,
+            idempotencyKey: idempotencyKey && fingerprint
+              ? persistedIdempotencyKey(idempotencyKey, fingerprint, index)
+              : null,
           },
         });
-      })
-    );
+      }));
 
-    // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
-    if (payload.condicionPago === 'CREDITO') {
-      await prisma.$transaction((created as Array<{ ventaServicioId: string; total: number }>).map((venta) =>
-        prisma.cuentaPorCobrar.create({
-          data: {
-            tenantId,
-            ventaServicioId: venta.ventaServicioId,
-            clienteId: payload.clienteId!,
-            montoDeuda: venta.total,
-            estado: 'PENDIENTE',
-            tipoCuenta: 'VENTA_SERVICIO',
-            fechaVencimiento,
-          },
-        }),
-      ));
-    }
+      // Keep all sale rows and their receivables atomic so replay cannot leave
+      // a partial mixed sale or duplicate credit side effects.
+      if (payload.condicionPago === 'CREDITO') {
+        for (const venta of created) {
+          await tx.cuentaPorCobrar.create({
+            data: {
+              tenantId,
+              ventaServicioId: venta.ventaServicioId,
+              clienteId: payload.clienteId!,
+              montoDeuda: venta.total,
+              estado: 'PENDIENTE',
+              tipoCuenta: 'VENTA_SERVICIO',
+              fechaVencimiento,
+            },
+          });
+        }
+      }
+      return { created, replayed: false };
+    });
+    const created = transactionResult.created;
 
     revalidatePath('/busy/venta-servicios');
     return {
@@ -153,6 +288,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       lineasProcesadas: created.length,
       lineasProductoPendientes: lineasProducto.length,
       ventasServicios: created,
+      replayed: transactionResult.replayed,
     };
   }
 
@@ -173,7 +309,35 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
   }
 
+  const idempotencyKey = data.idempotencyKey?.trim() || null;
+  const fingerprint = idempotencyKey
+    ? payloadFingerprint({
+        mode: 'LEGACY',
+        servicioId: data.servicioId,
+        cantidad: data.cantidad,
+        costo: data.costo ?? 0,
+        observaciones: data.observaciones ?? null,
+        clienteId: data.clienteId ?? null,
+        anticipos: data.anticipos ?? [],
+        condicionPago: data.condicionPago,
+        fechaVencimiento: fechaVencimiento?.toISOString() ?? null,
+      })
+    : null;
+
   const resultado = await prisma.$transaction(async (tx) => {
+    if (idempotencyKey && fingerprint) {
+      await lockIdempotencyKey(tx, tenantId, idempotencyKey);
+      const existing = await findIdempotentVentas(tx, tenantId, idempotencyKey);
+      if (existing.length > 0) {
+        if (existing.length !== 1 ||
+          fingerprintFromStoredKey(existing[0].idempotencyKey, idempotencyKey) !== fingerprint) {
+          idempotencyConflict();
+        }
+        return { ventaServicio: existing[0], allocationsResult: [], replayed: true };
+      }
+    }
+
+    await validateServiceSalePeriod(undefined, user);
     const ventaTotal = data.cantidad * precioUnitario;
     const ventaServicio = await tx.ventaServicios.create({
       data: {
@@ -187,6 +351,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
         condicionPago: data.condicionPago,
+        idempotencyKey: idempotencyKey && fingerprint
+          ? persistedIdempotencyKey(idempotencyKey, fingerprint)
+          : null,
       },
     });
 
@@ -316,12 +483,17 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       }
     }
 
-    return { ventaServicio, allocationsResult };
+    return { ventaServicio, allocationsResult, replayed: false };
   });
 
-  revalidatePath('/busy/venta-servicios');
+  if (!resultado.replayed) revalidatePath('/busy/venta-servicios');
   return resultado;
-}));
+};
+
+export const createVentaServicioAction = withAction<
+  VentaServicioInput | VentaMixtaInput,
+  Awaited<ReturnType<typeof createVentaServicioHandler>>
+>(createVentaServicioHandler);
 
 export const updateVentaServicioAction = withAction(async (input: VentaServicioUpdateInput, user: AuthenticatedUser) => {
   const parsed = updateVentaServicioSchema.parse(input);

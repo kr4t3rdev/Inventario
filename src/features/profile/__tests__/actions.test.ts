@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de perfil.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('@/lib/prisma', () => ({
@@ -25,10 +26,10 @@ const mockUser: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: 'tenant-test',
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
-const mockProfileRow = {
+const mockProfileRow: any = {
   userId: 'user-1',
   name: 'Test User',
   email: 'test@test.com',
@@ -52,7 +53,7 @@ describe('Profile Server Actions', () => {
       const result = await getProfileAction();
 
       expect(result.success).toBe(true);
-      expect(result.data!.name).toBe('Test User');
+      expect(expectActionSuccess(result).data!.name).toBe('Test User');
     });
 
     it('retorna NOT_FOUND si no hay perfil', async () => {
@@ -62,7 +63,7 @@ describe('Profile Server Actions', () => {
       const result = await getProfileAction();
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
     });
   });
 
@@ -74,7 +75,7 @@ describe('Profile Server Actions', () => {
       const result = await updateProfileAction({ name: 'Nuevo Nombre' });
 
       expect(result.success).toBe(true);
-      expect(result.data!.name).toBe('Nuevo Nombre');
+      expect(expectActionSuccess(result).data!.name).toBe('Nuevo Nombre');
     });
 
     it('retorna AUTH_REQUIRED si no hay usuario', async () => {
@@ -83,7 +84,7 @@ describe('Profile Server Actions', () => {
       const result = await updateProfileAction({ name: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe('AUTH_REQUIRED');
+      expect(expectActionFailure(result).error!.code).toBe('AUTH_REQUIRED');
     });
   });
 });

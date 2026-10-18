@@ -42,9 +42,39 @@ describe('disposable database guard', () => {
       { ALLOW_DISPOSABLE_TEST_DB: '' }, { NODE_ENV: 'production' },
       { DATABASE_URL: 'postgresql://test:test@remote.example/tcp_test_run1' },
       { DATABASE_URL_TEST: '' }, { DIRECT_URL: 'postgresql://remote/prod' },
+      { DATABASE_URL: url.replace('test:test@', ':test@') },
       { DATABASE_URL: url + '?host=remote.example' },
       { DATABASE_URL: url.replace('tcp_test_run1', 'production') },
     ]) expect(() => assertDisposableDatabase({ ...safe, ...extra })).toThrow();
+  });
+
+  it('validates database identity without confusing a server-side NAT address for the client URL host', async () => {
+    const { assertDisposableDatabaseIdentity } = await import('../disposable-database.mjs');
+    const url = 'postgresql://test:test@127.0.0.1:5432/tcp_test_ci';
+    const safe = {
+      ALLOW_DISPOSABLE_TEST_DB: '1',
+      DATABASE_URL: url,
+      DATABASE_URL_TEST: url,
+      DIRECT_URL: url,
+    };
+    const identity = {
+      databaseName: 'tcp_test_ci',
+      roleName: 'test',
+      serverPort: 5432,
+      serverAddress: '172.18.0.2',
+    };
+
+    expect(() => assertDisposableDatabaseIdentity(identity, safe)).not.toThrow();
+    expect(() => assertDisposableDatabaseIdentity({ ...identity, databaseName: 'production' }, safe))
+      .toThrow();
+    expect(() => assertDisposableDatabaseIdentity({ ...identity, roleName: 'admin' }, safe))
+      .toThrow();
+    expect(() => assertDisposableDatabaseIdentity({ ...identity, serverPort: 5433 }, safe))
+      .toThrow();
+    expect(() => assertDisposableDatabaseIdentity(identity, {
+      ...safe,
+      DATABASE_URL: url.replace('127.0.0.1', 'db.example.com'),
+    })).toThrow();
   });
 });
 

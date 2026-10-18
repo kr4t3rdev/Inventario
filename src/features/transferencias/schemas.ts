@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 
-export const TRANSFERENCIA_ESTADOS = ['PENDIENTE', 'APROBADA', 'EN_TRANSITO', 'COMPLETADA', 'RECHAZADA', 'CANCELADA'] as const;
+export const TRANSFERENCIA_ESTADOS = ['PENDIENTE', 'APROBADA', 'EN_TRANSITO', 'PARCIAL', 'COMPLETADA', 'RECHAZADA', 'CANCELADA'] as const;
 export type TransferenciaEstado = (typeof TRANSFERENCIA_ESTADOS)[number];
 
 export const transferenciaItemSchema = z.object({
@@ -18,8 +18,11 @@ export const createTransferenciaSchema = z.object({
   tipoDestino: z.enum(['almacen', 'punto_venta']),
   destinoId: z.string().min(1),
   descripcion: z.string().optional().nullable(),
-  /** Estado inicial. Por defecto COMPLETADA para mantener compatibilidad. */
-  estado: z.enum(TRANSFERENCIA_ESTADOS).optional().default('COMPLETADA'),
+  /**
+   * Estado inicial. Solo los dos estados coherentes al crear: COMPLETADA por
+   * defecto (compatibilidad); EN_TRANSITO/PARCIAL se alcanzan con el workflow.
+   */
+  estado: z.enum(['PENDIENTE', 'COMPLETADA']).optional().default('COMPLETADA'),
 });
 
 export const updateTransferenciaSchema = z.object({
@@ -30,8 +33,8 @@ export const updateTransferenciaSchema = z.object({
   origenId: z.string().min(1),
   tipoDestino: z.enum(['almacen', 'punto_venta']),
   destinoId: z.string().min(1),
-  /** Estado al que cambiar la transferencia. Permite transiciones manuales. */
-  estado: z.enum(TRANSFERENCIA_ESTADOS).optional(),
+  // Sin `estado`: el workflow (aprobar/despachar/completar/rechazar) es la
+  // única vía de cambio de estado; el input anterior era un campo muerto.
 });
 
 export const aprobarTransferenciaSchema = z.object({
@@ -40,7 +43,7 @@ export const aprobarTransferenciaSchema = z.object({
 
 export const completarTransferenciaSchema = z.object({
   transferenciaId: z.string().min(1),
-  /** Unidades recibidas al confirmar; omitir = recepción total (B-01). */
+  /** Unidades recibidas en esta recepción; omitir = recibir todo el pendiente (B-02). */
   cantidadRecibida: z.coerce.number().int().min(1).optional(),
 });
 
@@ -49,7 +52,7 @@ export const rechazarTransferenciaSchema = z.object({
   motivo: z.string().min(1, 'El motivo de rechazo es requerido'),
 });
 
-export type CreateTransferenciaInput = z.infer<typeof createTransferenciaSchema>;
+export type CreateTransferenciaInput = z.input<typeof createTransferenciaSchema>;
 export type UpdateTransferenciaInput = z.infer<typeof updateTransferenciaSchema>;
 export type AprobarTransferenciaInput = z.infer<typeof aprobarTransferenciaSchema>;
 export type CompletarTransferenciaInput = z.infer<typeof completarTransferenciaSchema>;

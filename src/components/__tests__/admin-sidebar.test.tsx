@@ -10,28 +10,36 @@ const mockUseIsMounted = vi.fn();
 const mockUseSidebar = vi.fn();
 
 vi.mock('framer-motion', () => {
-  const React = require('react');
-
   const stripMotionProps = <T extends Record<string, unknown>>(props: T) => {
     const { animate, exit, initial, transition, variants, whileHover, ...domProps } = props;
     return domProps;
   };
 
   const MotionDiv = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ children, ...props }, ref) => (
-      <div ref={ref} {...stripMotionProps(props)}>
-        {children}
-      </div>
-    ),
+    function MockMotionDiv(
+      { children, ...props }: React.HTMLAttributes<HTMLDivElement>,
+      ref: React.ForwardedRef<HTMLDivElement>,
+    ) {
+      return (
+        <div ref={ref} {...stripMotionProps(props)}>
+          {children}
+        </div>
+      );
+    },
   );
   MotionDiv.displayName = 'MockMotionDiv';
 
   const MotionSpan = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>(
-    ({ children, ...props }, ref) => (
-      <span ref={ref} {...stripMotionProps(props)}>
-        {children}
-      </span>
-    ),
+    function MockMotionSpan(
+      { children, ...props }: React.HTMLAttributes<HTMLSpanElement>,
+      ref: React.ForwardedRef<HTMLSpanElement>,
+    ) {
+      return (
+        <span ref={ref} {...stripMotionProps(props)}>
+          {children}
+        </span>
+      );
+    },
   );
   MotionSpan.displayName = 'MockMotionSpan';
 

@@ -22,6 +22,7 @@ import { AccountingConfigReadService } from '@/features/contabilidad/services/ac
 
 const mockTipoPagoA = {
   tipoId: 'tp-a',
+  tenantId: 'tenant-a',
   nombre: 'Efectivo',
   descripcion: null,
   requiereCuenta: false,
@@ -41,6 +42,7 @@ const mockCuentaA = {
   moneda: 'CUP',
   isActive: true,
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 };
 
 const mockCuentaB = {
@@ -53,6 +55,7 @@ const mockCuentaB = {
   moneda: 'USD',
   isActive: true,
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 };
 
 describe('AccountingConfigReadService.getPaymentTypes — tenant isolation', () => {
@@ -100,7 +103,7 @@ describe('AccountingConfigReadService.getAvailableAccounts — tenant isolation'
     vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA);
     vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([]);
     vi.mocked(prisma.cuentaBancaria.groupBy).mockResolvedValue([
-      { moneda: 'CUP', _count: { cuentaId: 1 } },
+      { moneda: 'CUP', _count: { cuentaId: 1 } } as any,
     ]);
 
     const result = await AccountingConfigReadService.getAvailableAccounts('tenant-a');
@@ -138,7 +141,7 @@ describe('AccountingConfigReadService.getAvailableAccounts — tenant isolation'
     vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuentaA);
     vi.mocked(prisma.tipoPago.findMany).mockResolvedValue([]);
     vi.mocked(prisma.cuentaBancaria.groupBy).mockResolvedValue([
-      { moneda: 'CUP', _count: { cuentaId: 1 } },
+      { moneda: 'CUP', _count: { cuentaId: 1 } } as any,
     ]);
 
     await AccountingConfigReadService.getAvailableAccounts('tenant-a');

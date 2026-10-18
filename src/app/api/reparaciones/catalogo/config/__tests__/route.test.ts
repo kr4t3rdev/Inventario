@@ -13,9 +13,25 @@ const mockPrisma = {
 }
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: unknown) => handler,
-  withAuth: (handler: unknown) => handler,
+  // El wrapper real expone (request, context); el handler interno recibe
+  // ademas el usuario resuelto.
+  withAuthGet: (handler: unknown) => (request: any, context: any) =>
+    (handler as Function)(request, context, mockAuthUser),
+  withAuth:
+    (handler: unknown) =>
+    (request: any, _context?: any, user: any = mockAuthUser) =>
+      (handler as Function)(request, {}, user),
 }))
+
+const mockAuthUser = {
+  userId: 'user-1',
+  name: 'Test User',
+  email: 'test@example.com',
+  role: 'admin',
+  isActive: true,
+  tenantId: 'tenant-1',
+  tenantRole: 'manager',
+}
 
 vi.mock('@/lib/prisma', () => ({
   default: mockPrisma,
@@ -43,7 +59,7 @@ describe('PUT /api/reparaciones/catalogo/config', () => {
       }),
     }) as NextRequest
 
-    const response = await PUT(request, {} as never, { role: 'admin' } as never)
+    const response = await PUT(request, {})
     expect(response.status).toBe(400)
   })
 
@@ -56,7 +72,11 @@ describe('PUT /api/reparaciones/catalogo/config', () => {
       }),
     }) as NextRequest
 
-    const response = await PUT(request, {} as never, { role: 'user' } as never)
+    // El wrapper publico expone (request, context); este caso necesita ademas
+    // inyectar un usuario NO admin, que es el 3er parametro del handler interno.
+    const response = await (PUT as (...a: any[]) => Promise<Response>)(
+      request, {}, { ...mockAuthUser, role: 'regularUser' },
+    )
     expect(response.status).toBe(403)
   })
 
@@ -69,7 +89,7 @@ describe('PUT /api/reparaciones/catalogo/config', () => {
       }),
     }) as NextRequest
 
-    const response = await PUT(request, {} as never, { role: 'admin' } as never)
+    const response = await PUT(request, {})
     const payload = await response.json()
 
     expect(response.status).toBe(200)

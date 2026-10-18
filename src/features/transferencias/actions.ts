@@ -105,6 +105,7 @@ const TRANSFERENCIA_LIST_SELECT = {
 	numeroTransferencia: true,
 	productoId: true,
 	cantidad: true,
+	cantidadRecibida: true,
 	costoUnitario: true,
 	costoTotal: true,
 	estado: true,
@@ -161,6 +162,7 @@ export const getTransferenciasAction = withAction(
 				productoNombre: t.producto.nombre,
 				productoCodigoInterno: t.producto.codigoInterno,
 				cantidad: t.cantidad,
+				cantidadRecibida: t.cantidadRecibida,
 				costoUnitario: t.costoUnitario,
 				costoTotal: t.costoTotal,
 				tipoTransferencia,
@@ -194,11 +196,6 @@ export const getTransferenciaByIdAction = withAction(
 
 export const createTransferenciaAction = withAction(
 	async (input: CreateTransferenciaInput, user: AuthenticatedUser) => {
-		console.log(
-			"=== createTransferenciaAction :: input ===",
-			JSON.parse(JSON.stringify(input)),
-		);
-
 		const parsed = createTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
 		const {
@@ -210,17 +207,7 @@ export const createTransferenciaAction = withAction(
 			descripcion,
 		} = parsed;
 
-		console.log("=== createTransferenciaAction :: parsed ===", {
-			tenantId,
-			tipoOrigen,
-			origenId,
-			tipoDestino,
-			destinoId,
-			productosCount: productos.length,
-		});
-
 		if (tipoOrigen === tipoDestino && origenId === destinoId) {
-			console.error("=== createTransferenciaAction :: origen === destino ===");
 			throw new ActionError(
 				"El origen y destino no pueden ser iguales",
 				"VALIDATION_ERROR",
@@ -230,11 +217,6 @@ export const createTransferenciaAction = withAction(
 		// Validar productos
 		const productosValidados: any[] = [];
 		for (const item of productos) {
-			console.log(
-				"=== createTransferenciaAction :: validando producto ===",
-				item,
-			);
-
 			const producto = await prisma.producto.findUnique({
 				where: { id: item.productoId },
 				select: {
@@ -246,14 +228,6 @@ export const createTransferenciaAction = withAction(
 				},
 			});
 			if (!producto || producto.tenantId !== tenantId) {
-				console.error(
-					"=== createTransferenciaAction :: producto no encontrado ===",
-					{
-						productoId: item.productoId,
-						encontrado: !!producto,
-						tenantMatch: producto?.tenantId === tenantId,
-					},
-				);
 				throw new ActionError(
 					`Producto con ID ${item.productoId} no encontrado`,
 					"NOT_FOUND",
@@ -265,11 +239,6 @@ export const createTransferenciaAction = withAction(
 					item.productoId,
 					origenId,
 				);
-				console.log("=== createTransferenciaAction :: stock punto_venta ===", {
-					producto: producto.nombre,
-					solicitado: item.cantidad,
-					disponible: stockDisponible,
-				});
 				if (stockDisponible < item.cantidad)
 					throw new ActionError(
 						`Stock insuficiente para ${producto.nombre} en el punto de venta`,
@@ -293,14 +262,6 @@ export const createTransferenciaAction = withAction(
 					);
 				}
 				if (stockAlmacen.cantidadDisponible < item.cantidad) {
-					console.error(
-						"=== createTransferenciaAction :: stock insuficiente ===",
-						{
-							producto: producto.nombre,
-							solicitado: item.cantidad,
-							disponible: stockAlmacen.cantidadDisponible,
-						},
-					);
 					throw new ActionError(
 						`Stock insuficiente para ${producto.nombre}. Disponible: ${stockAlmacen.cantidadDisponible}`,
 						"STOCK_INSUFICIENTE",
@@ -311,10 +272,6 @@ export const createTransferenciaAction = withAction(
 		}
 
 		// Validar origen/destino (siempre con aislamiento por tenant)
-		console.log("=== createTransferenciaAction :: validando origen ===", {
-			tipoOrigen,
-			origenId,
-		});
 		const origenValido =
 			tipoOrigen === "almacen"
 				? await prisma.almacen.findFirst({
@@ -324,17 +281,9 @@ export const createTransferenciaAction = withAction(
 						where: { pvId: origenId, tenantId },
 					});
 		if (!origenValido) {
-			console.error(
-				"=== createTransferenciaAction :: origen no encontrado ===",
-				{ tipoOrigen, origenId },
-			);
 			throw new ActionError("Origen no encontrado", "NOT_FOUND");
 		}
 
-		console.log("=== createTransferenciaAction :: validando destino ===", {
-			tipoDestino,
-			destinoId,
-		});
 		const destinoValido =
 			tipoDestino === "almacen"
 				? await prisma.almacen.findFirst({
@@ -344,18 +293,8 @@ export const createTransferenciaAction = withAction(
 						where: { pvId: destinoId, tenantId },
 					});
 		if (!destinoValido) {
-			console.error(
-				"=== createTransferenciaAction :: destino no encontrado ===",
-				{ tipoDestino, destinoId },
-			);
 			throw new ActionError("Destino no encontrado", "NOT_FOUND");
 		}
-
-		// Crear en transacción
-		console.log("=== createTransferenciaAction :: iniciando transacción ===", {
-			productosCount: productosValidados.length,
-			numeroTransferencia: "",
-		});
 
 		// Crear en transacción con reintento ante colisión de numeración (P2002)
 		// sobre el correlativo por tenant.
@@ -367,89 +306,75 @@ export const createTransferenciaAction = withAction(
 					const transferenciasCreadas = [];
 					const numeroTransferencia = await generarNumeroTransferencia(tx, tenantId);
 
-			console.log("=== createTransferenciaAction :: numero generado ===", {
-				numeroTransferencia,
-			});
+					for (const [
+						idx,
+						{ producto, cantidad },
+					] of productosValidados.entries()) {
+						const costoTotal = cantidad * producto.precioCosto;
+						const data: any = {
+							tenantId,
+							productoId: producto.id,
+							cantidad,
+							costoUnitario: producto.precioCosto,
+							costoTotal,
+							descripcion: descripcion || `Transferencia - ${producto.nombre}`,
+							estado: parsed.estado ?? "COMPLETADA",
+							creadoPorId: user.userId,
+							numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, "0")}`,
+						};
+						if (tipoOrigen === "almacen") data.origenId = origenId;
+						else data.puntoDeVentaOrigenId = origenId;
+						if (tipoDestino === "almacen") data.destinoId = destinoId;
+						else data.puntoDeVentaDestinoId = destinoId;
 
-			for (const [
-				idx,
-				{ producto, cantidad },
-			] of productosValidados.entries()) {
-				const costoTotal = cantidad * producto.precioCosto;
-				const data: any = {
-					tenantId,
-					productoId: producto.id,
-					cantidad,
-					costoUnitario: producto.precioCosto,
-					costoTotal,
-					descripcion: descripcion || `Transferencia - ${producto.nombre}`,
-					estado: parsed.estado ?? "COMPLETADA",
-					creadoPorId: user.userId,
-					numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, "0")}`,
-				};
-				if (tipoOrigen === "almacen") data.origenId = origenId;
-				else data.puntoDeVentaOrigenId = origenId;
-				if (tipoDestino === "almacen") data.destinoId = destinoId;
-				else data.puntoDeVentaDestinoId = destinoId;
+						const transferencia = await tx.transferencia.create({ data });
 
-				console.log(
-					`=== createTransferenciaAction :: create[${idx}] data ===`,
-					JSON.parse(JSON.stringify(data)),
-				);
+						const estadoFinal = parsed.estado ?? "COMPLETADA";
 
-				const transferencia = await tx.transferencia.create({ data });
+						if (estadoFinal === "COMPLETADA") {
+							await upsertStockUbicacion(tx, {
+								productoId: producto.id,
+								tipoUbicacion: tipoOrigen,
+								ubicacionId: origenId,
+								modo: "increment",
+								delta: -cantidad,
+							});
+							await upsertStockUbicacion(tx, {
+								productoId: producto.id,
+								tipoUbicacion: tipoDestino,
+								ubicacionId: destinoId,
+								modo: "increment",
+								delta: cantidad,
+							});
+							await registrarMovimiento(tx, {
+								tenantId,
+								productoId: producto.id,
+								tipoOrigen: "TRANSFERENCIA",
+								origenId: transferencia.transferenciaId,
+								tipoUbicacion: tipoOrigen,
+								ubicacionId: origenId,
+								cantidad: -cantidad,
+								costoUnitario: producto.precioCosto,
+								secuencia: `SALIDA-${idx}`,
+								creadoPorId: user.userId,
+							});
+							await registrarMovimiento(tx, {
+								tenantId,
+								productoId: producto.id,
+								tipoOrigen: "TRANSFERENCIA",
+								origenId: transferencia.transferenciaId,
+								tipoUbicacion: tipoDestino,
+								ubicacionId: destinoId,
+								cantidad,
+								costoUnitario: producto.precioCosto,
+								secuencia: `ENTRADA-${idx}`,
+								creadoPorId: user.userId,
+							});
+						}
 
-				const estadoFinal = parsed.estado ?? "COMPLETADA";
-				console.log(`=== createTransferenciaAction :: stockDelta[${idx}] ===`, {
-					stockDelta:
-						(tipoOrigen === "almacen" ? -cantidad : 0) +
-						(tipoDestino === "almacen" ? cantidad : 0),
-				});
-
-				if (estadoFinal === "COMPLETADA") {
-					await upsertStockUbicacion(tx, {
-						productoId: producto.id,
-						tipoUbicacion: tipoOrigen,
-						ubicacionId: origenId,
-						modo: "increment",
-						delta: -cantidad,
-					});
-					await upsertStockUbicacion(tx, {
-						productoId: producto.id,
-						tipoUbicacion: tipoDestino,
-						ubicacionId: destinoId,
-						modo: "increment",
-						delta: cantidad,
-					});
-					await registrarMovimiento(tx, {
-						tenantId,
-						productoId: producto.id,
-						tipoOrigen: "TRANSFERENCIA",
-						origenId: transferencia.transferenciaId,
-						tipoUbicacion: tipoOrigen,
-						ubicacionId: origenId,
-						cantidad: -cantidad,
-						costoUnitario: producto.precioCosto,
-						secuencia: `SALIDA-${idx}`,
-						creadoPorId: user.userId,
-					});
-					await registrarMovimiento(tx, {
-						tenantId,
-						productoId: producto.id,
-						tipoOrigen: "TRANSFERENCIA",
-						origenId: transferencia.transferenciaId,
-						tipoUbicacion: tipoDestino,
-						ubicacionId: destinoId,
-						cantidad,
-						costoUnitario: producto.precioCosto,
-						secuencia: `ENTRADA-${idx}`,
-						creadoPorId: user.userId,
-					});
-				}
-
-					transferenciasCreadas.push(transferencia);
-				}
-				return transferenciasCreadas;
+						transferenciasCreadas.push(transferencia);
+					}
+					return transferenciasCreadas;
 				});
 				break;
 			} catch (error: unknown) {
@@ -457,30 +382,18 @@ export const createTransferenciaAction = withAction(
 					(typeof (error as { code?: string })?.code === "string" &&
 						(error as { code?: string }).code === "P2002");
 				if (!esColision || intento === MAX_INTENTOS - 1) throw error;
-				console.warn(`createTransferenciaAction: colisión de numeración, reintento ${intento + 2}`);
+				console.warn("createTransferenciaAction: colisión de numeración de transferencia, reintentando");
 			}
 		}
 		if (!result) {
 			throw new ActionError("No fue posible generar la numeración de la transferencia", "INTERNAL");
 		}
 
-		console.log("=== createTransferenciaAction :: transacción OK ===", {
-			creadas: result.length,
-			ids: result.map((t: any) => t.transferenciaId),
-		});
-
 		for (const t of result) {
 			try {
-				console.log(
-					"=== createTransferenciaAction :: notificando ===",
-					t.transferenciaId,
-				);
 				await notificarTransferencia(t.transferenciaId);
 			} catch (e) {
-				console.error(
-					"=== createTransferenciaAction :: notificación falló ===",
-					e,
-				);
+				console.error("createTransferenciaAction: falló la notificación de la transferencia", e);
 			}
 		}
 
@@ -522,6 +435,14 @@ export const updateTransferenciaAction = withAction(
 		});
 		if (!existing)
 			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+		// B-2: con mercancía en camino o recepción iniciada, el documento ya no
+		// admite edición (las cantidades recibidas quedarían incoherentes).
+		if (["EN_TRANSITO", "PARCIAL"].includes(existing.estado!)) {
+			throw new ActionError(
+				"No se puede editar una transferencia en tránsito o con recepción parcial",
+				"VALIDATION_ERROR",
+			);
+		}
 
 		const oldProductoId = existing.productoId!;
 		const oldTipoOrigen = existing.origenId ? "almacen" : "punto_venta";
@@ -716,6 +637,7 @@ export const deleteTransferenciaAction = withAction(
 					estado: true,
 					productoId: true,
 					cantidad: true,
+					cantidadRecibida: true,
 					origenId: true,
 					destinoId: true,
 					puntoDeVentaOrigenId: true,
@@ -753,9 +675,14 @@ export const deleteTransferenciaAction = withAction(
 				);
 			}
 
-			// Solo revertir stock si la transferencia estaba COMPLETADA
-			// (PENDIENTE/APROBADA nunca movieron stock)
-			if (current.estado === "COMPLETADA") {
+			// Revertir stock si la transferencia movió unidades: COMPLETADA movió
+			// el total y PARCIAL movió lo recibido hasta el momento (B-2).
+			// (PENDIENTE/APROBADA/EN_TRANSITO nunca movieron stock)
+			if (current.estado === "COMPLETADA" || current.estado === "PARCIAL") {
+				const cantidadMovida =
+					current.estado === "PARCIAL"
+						? (current.cantidadRecibida ?? 0)
+						: current.cantidad;
 				const tipoOrigen = current.origenId
 					? ("almacen" as const)
 					: ("punto_venta" as const);
@@ -773,7 +700,7 @@ export const deleteTransferenciaAction = withAction(
 					tipoUbicacion: tipoOrigen,
 					ubicacionId: origenUbicacionId,
 					modo: "increment",
-					delta: current.cantidad,
+					delta: cantidadMovida,
 				});
 				await upsertStockUbicacion(tx, {
 					tenantId,
@@ -781,7 +708,7 @@ export const deleteTransferenciaAction = withAction(
 					tipoUbicacion: tipoDestino,
 					ubicacionId: destinoUbicacionId,
 					modo: "increment",
-					delta: -current.cantidad,
+					delta: -cantidadMovida,
 				});
 
 				// Kardex: compensación de las líneas originales con su costo histórico.
@@ -848,13 +775,80 @@ export const aprobarTransferenciaAction = withAction(
 );
 
 /**
- * @description Completa una transferencia APROBADA o EN_TRANSITO, moviendo el stock definitivamente.
- * Transición: {APROBADA, EN_TRANSITO} → COMPLETADA. El stock se descuenta del origen y se suma al destino.
+ * @description Despacha una transferencia APROBADA hacia su destino.
+ * Transición: APROBADA → EN_TRANSITO. No mueve stock — la recepción (completar) lo hace.
+ */
+export const despacharTransferenciaAction = withAction(
+	async (input: AprobarTransferenciaInput, user: AuthenticatedUser) => {
+		const parsed = aprobarTransferenciaSchema.parse(input);
+		const tenantId = requireTenant(user);
+		// B-1: despachar es operativo (gestión); aprobar/rechazar siguen siendo de jefatura.
+		requirePermission(user, "inventario.transferencias.gestionar", "despachar transferencias");
+
+		const transferencia = await prisma.transferencia.findFirst({
+			where: {
+				transferenciaId: parsed.transferenciaId,
+				tenantId,
+				deletedAt: null,
+			},
+			select: { transferenciaId: true, estado: true },
+		});
+		if (!transferencia)
+			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+		if (transferencia.estado !== "APROBADA") {
+			throw new ActionError(
+				`La transferencia está en estado ${transferencia.estado}, solo se pueden despachar transferencias aprobadas`,
+				"VALIDATION_ERROR",
+			);
+		}
+
+		await prisma.$transaction(async (tx: any) => {
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: parsed.transferenciaId,
+					tenantId,
+					deletedAt: null,
+					estado: "APROBADA",
+				},
+				data: { estado: "EN_TRANSITO" },
+			});
+			if (claim.count !== 1) {
+				const current = await tx.transferencia.findUnique({
+					where: { transferenciaId: parsed.transferenciaId },
+					select: { tenantId: true, deletedAt: true, estado: true },
+				});
+				if (!current || current.tenantId !== tenantId)
+					throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+				if (current.estado === "EN_TRANSITO")
+					throw new ActionError("La transferencia ya está en tránsito", "CONFLICT");
+				throw new ActionError(
+					`La transferencia está en estado ${current.estado}, solo se pueden despachar transferencias aprobadas`,
+					"CONFLICT",
+				);
+			}
+		});
+
+		revalidatePath("/busy/transferencias");
+		return { success: true, message: "Transferencia despachada" };
+	},
+);
+
+/**
+ * @description Confirma la recepción de una transferencia, moviendo el stock.
+ * Transiciones: {APROBADA, EN_TRANSITO, PARCIAL} → COMPLETADA | PARCIAL.
+ * El input `cantidadRecibida` son las unidades recibidas en esta recepción y
+ * se acumula sobre lo ya recibido: si el acumulado queda por debajo de lo
+ * enviado, la transferencia persiste en PARCIAL y admite recepciones
+ * adicionales hasta completarse. Cada recepción mueve solo su delta de stock
+ * y registra SALIDA-n/ENTRADA-n con n creciente por recepción.
  */
 export const completarTransferenciaAction = withAction(
 	async (input: CompletarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = completarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-2: la recepción mueve stock — exige el permiso operativo de gestión
+		// (simétrico con aprobar/rechazar, que exigen el de jefatura).
+		requirePermission(user, "inventario.transferencias.gestionar", "completar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {
@@ -866,9 +860,9 @@ export const completarTransferenciaAction = withAction(
 		});
 		if (!transferencia)
 			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
-		if (!["APROBADA", "EN_TRANSITO"].includes(transferencia.estado)) {
+		if (!["APROBADA", "EN_TRANSITO", "PARCIAL"].includes(transferencia.estado)) {
 			throw new ActionError(
-				`La transferencia está en estado ${transferencia.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+				`La transferencia está en estado ${transferencia.estado}, solo se pueden completar transferencias aprobadas, en tránsito o parciales`,
 				"VALIDATION_ERROR",
 			);
 		}
@@ -882,30 +876,43 @@ export const completarTransferenciaAction = withAction(
 			puntoDeVentaDestinoId,
 		} = transferencia;
 
-		// B-01: recepción parcial — se mueve solo lo confirmado recibido.
-		const cantidadRecibida = parsed.cantidadRecibida ?? cantidad;
-		if (cantidadRecibida > cantidad) {
+		// B-2: recepción acumulativa — se recibe lo que llega en esta entrega.
+		const previaRecibida = transferencia.cantidadRecibida ?? 0;
+		const pendiente = cantidad - previaRecibida;
+		const recibidasAhora = parsed.cantidadRecibida ?? pendiente;
+		if (recibidasAhora < 1) {
 			throw new ActionError(
-				`La cantidad recibida (${cantidadRecibida}) no puede superar la enviada (${cantidad})`,
+				"La cantidad recibida debe ser mayor a cero",
 				"VALIDATION_ERROR",
 			);
 		}
-		const esParcial = cantidadRecibida < cantidad;
+		if (recibidasAhora > pendiente) {
+			throw new ActionError(
+				`La cantidad recibida (${recibidasAhora}) supera el pendiente (${pendiente}) de las ${cantidad} enviadas`,
+				"VALIDATION_ERROR",
+			);
+		}
+		const acumulado = previaRecibida + recibidasAhora;
+		const esParcial = acumulado < cantidad;
+		const nuevoEstado = esParcial ? "PARCIAL" : "COMPLETADA";
 
 		const result = await prisma.$transaction(async (tx: any) => {
+			// Claim condicional: además del estado, exige el valor previo de
+			// cantidadRecibida para serializar recepciones concurrentes.
 			const claim = await tx.transferencia.updateMany({
 				where: {
 					transferenciaId: parsed.transferenciaId,
 					tenantId,
 					deletedAt: null,
-					estado: { in: ["APROBADA", "EN_TRANSITO"] },
+					estado: { in: ["APROBADA", "EN_TRANSITO", "PARCIAL"] },
+					cantidadRecibida: previaRecibida === 0 ? null : previaRecibida,
 				},
 				data: {
-					estado: "COMPLETADA",
-					cantidadRecibida,
+					estado: nuevoEstado,
+					cantidadRecibida: acumulado,
 					...(esParcial
 						? {
-								descripcion: `Recepción parcial: ${cantidadRecibida} de ${cantidad} unidades recibidas`,
+								descripcion: `Recepción parcial: ${acumulado} de ${cantidad} unidades recibidas`,
 							}
 						: {}),
 				},
@@ -922,12 +929,12 @@ export const completarTransferenciaAction = withAction(
 				if (current.estado === "COMPLETADA")
 					return { alreadyCompleted: true as const };
 				throw new ActionError(
-					`La transferencia está en estado ${current.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+					`La transferencia está en estado ${current.estado}, solo se pueden completar transferencias aprobadas, en tránsito o parciales`,
 					"CONFLICT",
 				);
 			}
 
-			// Sincronizar StockUbicacion
+			// Sincronizar StockUbicacion con el delta de esta recepción
 			const origenEsAlmacen = !!origenId;
 			const destinoEsAlmacen = !!destinoId;
 			const tipoOrigen = origenEsAlmacen
@@ -944,15 +951,27 @@ export const completarTransferenciaAction = withAction(
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
 				modo: "increment",
-				delta: -cantidadRecibida,
+				delta: -recibidasAhora,
 			});
 			await upsertStockUbicacion(tx, {
 				productoId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
 				modo: "increment",
-				delta: cantidadRecibida,
+				delta: recibidasAhora,
 			});
+
+			// Kardex: secuencia por recepción (la clave de evento es idempotente,
+			// así que cada entrega nueva necesita un n distinto).
+			const movimientosPrevios = await getMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+			});
+			const nRecepcion = movimientosPrevios.filter((m) =>
+				m.secuencia.startsWith("ENTRADA"),
+			).length;
+
 			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
 			await registrarMovimiento(tx, {
 				tenantId,
@@ -961,9 +980,9 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
-				cantidad: -cantidadRecibida,
+				cantidad: -recibidasAhora,
 				costoUnitario,
-				secuencia: "SALIDA-0",
+				secuencia: `SALIDA-${nRecepcion}`,
 				creadoPorId: user.userId,
 			});
 			await registrarMovimiento(tx, {
@@ -973,9 +992,9 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
-				cantidad: cantidadRecibida,
+				cantidad: recibidasAhora,
 				costoUnitario,
-				secuencia: "ENTRADA-0",
+				secuencia: `ENTRADA-${nRecepcion}`,
 				creadoPorId: user.userId,
 			});
 			return { alreadyCompleted: false as const };
@@ -984,7 +1003,10 @@ export const completarTransferenciaAction = withAction(
 		revalidatePath("/busy/transferencias");
 		if (result.alreadyCompleted)
 			return { success: true, message: "Transferencia ya completada" };
-		return { success: true, message: "Transferencia completada" };
+		return {
+			success: true,
+			message: esParcial ? "Recepción parcial registrada" : "Transferencia completada",
+		};
 	},
 );
 

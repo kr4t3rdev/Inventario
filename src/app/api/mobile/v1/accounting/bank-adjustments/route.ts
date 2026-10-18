@@ -25,6 +25,8 @@ function mapActionErrorStatus(code: string): number {
     case 'VALIDATION_ERROR':
     case 'CUENTA_INACTIVA':
       return 400;
+    case 'IDEMPOTENCY_CONFLICT':
+      return 409;
     default:
       return 400;
   }
@@ -72,7 +74,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
+    const idempotencyKey = body.idempotencyKey ?? request.headers.get('Idempotency-Key') ?? undefined;
+    const input = idempotencyKey ? { ...body, idempotencyKey } : body;
+    const existingReplay = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+      input,
+      user: authResult.user,
+    });
+    if (existingReplay) return successResponse(existingReplay);
+
+    const fechaOperacion = extraerFechaDeBody(input) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
       tenantId: authResult.user.tenantId ?? '',
@@ -81,6 +91,13 @@ export async function POST(request: Request) {
     });
 
     if (!validacionPeriodo.permitido) {
+      if (idempotencyKey) {
+        const replayAfterGate = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+          input,
+          user: authResult.user,
+        });
+        if (replayAfterGate) return successResponse(replayAfterGate);
+      }
       return errorResponse(
         validacionPeriodo.error?.message ?? 'Período contable cerrado',
         400,
@@ -89,7 +106,7 @@ export async function POST(request: Request) {
     }
 
     const result = await AccountingOperationsMutationService.createBankAdjustment({
-      input: body,
+      input,
       user: authResult.user,
     });
     return successResponse(result);

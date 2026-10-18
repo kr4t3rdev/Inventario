@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   venta: {
@@ -40,7 +41,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED')
     expect(prismaMock.venta.findFirst).not.toHaveBeenCalled()
   })
 
@@ -65,7 +66,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('NOT_FOUND')
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND')
     expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
   })
 
@@ -98,7 +99,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('DUPLICATE')
+    expect(expectActionFailure(result).error?.code).toBe('DUPLICATE')
     expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
   })
 
@@ -161,11 +162,11 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     expect(result.success).toBe(true)
-    expect(result.data?.id).toBe('cxc-new')
-    expect(result.data?.montoDeuda).toBe(1000)
-    expect(result.data?.estado).toBe('PENDIENTE')
-    expect(result.data?.totalFactura).toBe(1000)
-    expect(result.data?.saldoFactura).toBe(1000)
+    expect(expectActionSuccess(result).data?.id).toBe('cxc-new')
+    expect(expectActionSuccess(result).data?.montoDeuda).toBe(1000)
+    expect(expectActionSuccess(result).data?.estado).toBe('PENDIENTE')
+    expect(expectActionSuccess(result).data?.totalFactura).toBe(1000)
+    expect(expectActionSuccess(result).data?.saldoFactura).toBe(1000)
 
     // Verificar tenant isolation en findFirst de venta
     expect(prismaMock.venta.findFirst).toHaveBeenCalledWith(

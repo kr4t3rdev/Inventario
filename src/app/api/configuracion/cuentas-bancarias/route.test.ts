@@ -10,7 +10,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: vi.fn((handler) => (request: NextRequest) =>
+  withAuthGet: vi.fn((handler) => (request: NextRequest = {} as NextRequest) =>
     handler(request, {}, {
       userId: 'user-1',
       name: 'Test User',
@@ -43,7 +43,7 @@ describe('/api/configuracion/cuentas-bancarias', () => {
       },
     ] as never);
 
-    const response = await GET(new NextRequest('http://localhost/api/configuracion/cuentas-bancarias'));
+    const response = await GET(new NextRequest('http://localhost/api/configuracion/cuentas-bancarias'), {});
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -59,7 +59,7 @@ describe('/api/configuracion/cuentas-bancarias', () => {
   it('returns 500 when fetching cuentas fails', async () => {
     vi.mocked(prisma.cuentaBancaria.findMany).mockRejectedValue(new Error('db down'));
 
-    const response = await GET(new NextRequest('http://localhost/api/configuracion/cuentas-bancarias'));
+    const response = await GET(new NextRequest('http://localhost/api/configuracion/cuentas-bancarias'), {});
     const data = await response.json();
 
     expect(response.status).toBe(500);

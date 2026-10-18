@@ -36,6 +36,11 @@ void main() {
       // TODO
     });
 
+    // num tasaInteresMoratorio
+    test('to test the property `tasaInteresMoratorio`', () async {
+      // TODO
+    });
+
     // DateTime fechaVencimiento
     test('to test the property `fechaVencimiento`', () async {
       // TODO

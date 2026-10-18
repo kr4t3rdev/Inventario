@@ -4,7 +4,10 @@ import { NextRequest } from 'next/server';
 
 const captureMock = vi.hoisted(() => vi.fn());
 const authMock = vi.hoisted(() => ({
-  withAuthPost: (handler: Function) => handler,
+  // La firma publica del wrapper es (request, context). El handler interno
+  // recibe ademas el usuario; en el test viaja en el contexto.
+  withAuthPost: (handler: Function) => (request: any, user: any = {}) =>
+    handler(request, {}, user),
 }));
 
 vi.mock('@/lib/auth-middleware', () => authMock);
@@ -31,7 +34,6 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
         body: JSON.stringify({}),
         headers: { 'content-type': 'application/json' },
       }),
-      undefined,
       {
         userId: 'manager-1',
         name: 'Manager',
@@ -69,7 +71,7 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
       headers: { 'content-type': 'application/json' },
     });
 
-    const response = await POST(request, undefined, {
+    const response = await POST(request, {
       userId: 'user-1',
       name: 'User',
       email: 'user@example.com',
@@ -91,7 +93,6 @@ describe('POST /api/contabilidad/balance-financiero/conversiones', () => {
         body: '{',
         headers: { 'content-type': 'application/json' },
       }),
-      undefined,
       {
         userId: 'manager-1',
         name: 'Manager',

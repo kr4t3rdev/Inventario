@@ -29,6 +29,7 @@
  */
 
 import { PeriodoContableService } from './periodo-contable-service'
+import type { PeriodoReadClient } from './periodo-contable-service'
 import { getGuardConfig } from './periodo-contable-types'
 import type { PeriodoErrorCode } from './periodo-contable-types'
 
@@ -58,7 +59,8 @@ export interface ValidacionEscrituraResult {
  * En modo 'enforce': retorna {permitido: false} si el período no está abierto
  */
 export async function validarEscrituraPeriodo(
-  params: ValidacionEscrituraParams
+  params: ValidacionEscrituraParams,
+  client?: PeriodoReadClient,
 ): Promise<ValidacionEscrituraResult> {
   const config = getGuardConfig()
 
@@ -70,7 +72,8 @@ export async function validarEscrituraPeriodo(
     const result = await PeriodoContableService.validarEscritura(
       params.fecha,
       params.tenantId,
-      params.tipoOperacion as any
+      params.tipoOperacion as any,
+      client,
     )
 
     if (result.error) {

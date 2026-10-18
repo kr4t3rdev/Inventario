@@ -3,7 +3,13 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { canAccessFichaCosto, canAccessFichaCostoBulk } from '../lib/access'
 
-const tenant = (value?: boolean) => ({
+interface AccessUserFixture {
+  role: string
+  tenantId: string | null
+  planFeatures: Record<string, boolean>
+}
+
+const tenant = (value?: boolean): AccessUserFixture => ({
   role: 'regularUser',
   tenantId: 'tenant-1',
   planFeatures: value === undefined ? {} : { 'ficha-costo': value },

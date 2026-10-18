@@ -4,6 +4,7 @@
  * un servicio a crédito era invisible para la cartera de cobros.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -72,7 +73,7 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
     } as never);
 
     expect(result.success).toBe(false);
-    expect(result.error?.code).toBe('VALIDATION_ERROR');
+    expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
     expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
   });
 

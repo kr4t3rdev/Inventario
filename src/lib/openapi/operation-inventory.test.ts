@@ -64,7 +64,7 @@ describe('mobile v1 operation inventory', () => {
     const capital = inventory.rows.find((row) =>
       row.operation === 'POST /accounting/capital-injections');
     expect(capital?.requestSchemaName).toBe('CapitalInjectionCreateRequest');
-    // En checkouts sin mobile/ (CI/Vercel) los consumidores se reportan vacíos.
+    // In CI/Vercel checkouts without mobile/, consumer inventory is intentionally empty.
     if (existsSync('mobile/src')) {
       expect(capital?.mobileConsumerFiles).toContain('capital-api.ts');
     } else {

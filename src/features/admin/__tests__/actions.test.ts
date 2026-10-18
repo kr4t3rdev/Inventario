@@ -2,6 +2,7 @@
  * @description Tests unitarios para Server Actions de admin.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
 import { Prisma } from '@/generated/prisma';
 
 vi.mock('@/lib/server-actions/get-current-user');
@@ -112,17 +113,17 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const adminUser: AuthenticatedUser = {
   userId: 'user-admin', name: 'Admin', email: 'admin@test.com',
-  role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'manager',
 };
 
 const nonAdmin: AuthenticatedUser = {
   userId: 'user-reg', name: 'User', email: 'user@test.com',
-  role: 'user', isActive: true, tenantId: 't1', tenantRole: 'user',
+  role: 'regularUser', isActive: true, tenantId: 't1', tenantRole: 'dependiente',
 };
 
 const managerUser: AuthenticatedUser = {
   userId: 'user-manager', name: 'Manager', email: 'manager@test.com',
-  role: 'user', isActive: true, tenantId: 'tenant-A', tenantRole: 'manager',
+  role: 'regularUser', isActive: true, tenantId: 'tenant-A', tenantRole: 'manager',
 };
 
 function daysAgo(n: number): Date {
@@ -141,7 +142,7 @@ describe('Admin Server Actions', () => {
     vi.mocked(provisionTenantAccountingPolicyInTransaction).mockResolvedValue({
       result: 'CREATED',
       functionalCurrencyCode: 'CUP',
-    });
+    } as any);
   });
 
   describe('getGlobalUsersAction', () => {
@@ -149,7 +150,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
       const r = await getGlobalUsersAction({ tenantId: 'tenant-B' });
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.findMany).not.toHaveBeenCalled();
     });
 
@@ -187,11 +188,11 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await getGlobalUsersAction();
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
     });
 
     it('admin global refresh selects and maps the complete sales-agent DTO', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, tenantId: null });
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, tenantId: undefined });
       vi.mocked(prisma.user.findMany).mockResolvedValue([{
         userId: 'agent-1',
         name: 'Ana',
@@ -248,7 +249,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await getUsersAction();
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -307,7 +308,7 @@ describe('Admin Server Actions', () => {
           newPlanId: 'plan-pro',
         },
       });
-      expect(prisma.tenantLicense.update.mock.invocationCallOrder[0]).toBeLessThan(
+      expect((prisma.tenantLicense.update as any).mock.invocationCallOrder[0]).toBeLessThan(
         auditSpy.mock.invocationCallOrder[0],
       );
     });
@@ -321,7 +322,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(result).error.code).toBe('FORBIDDEN');
       expect(prisma.tenantLicense.findUnique).not.toHaveBeenCalled();
     });
 
@@ -336,7 +337,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('NOT_FOUND');
       expect(prisma.tenantLicense.update).not.toHaveBeenCalled();
     });
 
@@ -353,7 +354,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('PLAN_NOT_FOUND');
+      expect(expectActionFailure(result).error.code).toBe('PLAN_NOT_FOUND');
       expect(prisma.tenantLicense.update).not.toHaveBeenCalled();
     });
   });
@@ -375,7 +376,7 @@ describe('Admin Server Actions', () => {
         role: 'regularUser',
         salesAgentBalance: null,
         _count: { salesAgentReferrals: 0, salesAgentCommissions: 0, salesAgentPayouts: 0 },
-      });
+      } as any);
       const r = await deleteUserAction('u1');
       expect(r.success).toBe(true);
       expect(prisma.user.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
@@ -388,11 +389,11 @@ describe('Admin Server Actions', () => {
         role: 'salesAgent',
         salesAgentBalance: { salesAgentBalanceId: 'bal-1' },
         _count: { salesAgentReferrals: 1, salesAgentCommissions: 1, salesAgentPayouts: 0 },
-      });
+      } as any);
       const r = await deleteUserAction('u1');
       expect(r.success).toBe(false);
       if (r.success === false) {
-        expect(r.error.code).toBe('SALES_AGENT_WITH_RECORDS');
+        expect(expectActionFailure(r).error.code).toBe('SALES_AGENT_WITH_RECORDS');
       }
       expect(prisma.user.deleteMany).not.toHaveBeenCalled();
     });
@@ -401,7 +402,7 @@ describe('Admin Server Actions', () => {
   describe('lockUserAction', () => {
     it('bloquea usuario', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ userId: 'u1' });
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ userId: 'u1' } as any);
       vi.mocked(prisma.user.update).mockResolvedValue({} as any);
       const r = await lockUserAction({ userId: 'u1' });
       expect(r.success).toBe(true);
@@ -411,7 +412,7 @@ describe('Admin Server Actions', () => {
   describe('unlockUserAction', () => {
     it('desbloquea usuario', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ userId: 'u1' });
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ userId: 'u1' } as any);
       vi.mocked(prisma.user.update).mockResolvedValue({} as any);
       const r = await unlockUserAction({ userId: 'u1' });
       expect(r.success).toBe(true);
@@ -530,7 +531,7 @@ describe('Admin Server Actions', () => {
         take: 10000,
       });
       if (r.success && r.data) {
-        expect(r.data.usersComparison).toEqual({
+        expect(expectActionSuccess(r).data.usersComparison).toEqual({
           current7DaysUsers: 1,
           previous7DaysUsers: 1,
         });
@@ -603,7 +604,7 @@ describe('Admin Server Actions', () => {
         take: 10000,
       });
       if (r.success && r.data) {
-        expect(r.data.revenueComparison).toEqual({
+        expect(expectActionSuccess(r).data.revenueComparison).toEqual({
           current7DaysRevenue: 1500,
           previous7DaysRevenue: 800,
         });
@@ -685,7 +686,7 @@ describe('Admin Server Actions', () => {
         { assetId: 'a1', publicId: 'tenant-1/productos/a1', status: 'replaced', updatedAt: new Date(), createdAt: new Date() },
       ] as any);
 
-      const r = await cleanupCloudinaryAssetsAction({ mode: 'stale', dryRun: true, olderThanDays: 0, limit: 10 });
+      const r = await cleanupCloudinaryAssetsAction({ mode: 'stale', dryRun: true, olderThanDays: 0, limit: 10 } as any);
       expect(r.success).toBe(true);
       expect(destroyCloudinaryAsset).not.toHaveBeenCalled();
       expect(prisma.auditLog.create).toHaveBeenCalled();
@@ -706,7 +707,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(destroyCloudinaryAsset).mockResolvedValue({ result: 'ok' });
       vi.mocked(prisma.cloudinaryAsset.update).mockResolvedValue({} as any);
 
-      const r = await cleanupCloudinaryAssetsAction({ mode: 'selected', assetIds: ['a1'], dryRun: false, limit: 10 });
+      const r = await cleanupCloudinaryAssetsAction({ mode: 'selected', assetIds: ['a1'], dryRun: false, limit: 10 } as any);
       expect(r.success).toBe(true);
       expect(destroyCloudinaryAsset).toHaveBeenCalledWith({
         publicId: 'tenant-1/productos/a1',
@@ -729,7 +730,7 @@ describe('Admin Server Actions', () => {
         ownerId: 'product-9',
         slot: 'photo',
         limit: 25,
-      });
+      } as any);
 
       expect(r.success).toBe(true);
       expect(prisma.cloudinaryAsset.findMany).toHaveBeenCalledWith(
@@ -758,7 +759,7 @@ describe('Admin Server Actions', () => {
         maxProductos: 100,
         maxPuntosVenta: 1,
         features: {},
-      });
+      } as any);
       expect(r.success).toBe(true);
     });
   });
@@ -821,7 +822,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('ACCOUNTING_POLICY_REQUIRED');
+      expect(expectActionFailure(r).error.code).toBe('ACCOUNTING_POLICY_REQUIRED');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -849,7 +850,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await approveGlobalUserAction({ userId: 'user-company' });
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
     });
 
     it('salesAgent -> aprueba de forma idempotente sin crear tenant', async () => {
@@ -948,7 +949,7 @@ describe('Admin Server Actions', () => {
       const result = await approveGlobalUserAction({ userId: 'user-agent' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('INVALID_ONBOARDING_STATUS');
+      expect(expectActionFailure(result).error.code).toBe('INVALID_ONBOARDING_STATUS');
       expect(prisma.salesAgentProfile.updateMany).not.toHaveBeenCalled();
     });
 
@@ -1001,7 +1002,7 @@ describe('Admin Server Actions', () => {
       const result = await approveGlobalUserAction({ userId: 'user-agent' });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('INVALID_ONBOARDING_STATUS');
+      expect(expectActionFailure(result).error.code).toBe('INVALID_ONBOARDING_STATUS');
     });
 
     it('salesAgent -> reintenta P2002 con un código nuevo', async () => {
@@ -1104,11 +1105,9 @@ describe('Admin Server Actions', () => {
 
     it('non-admin rechazado', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
-      const r = await createDemoTenantAction({
-        planId: 'plan-pro',
-      });
+      const r = await createDemoTenantAction({ planId: 'plan-pro' } as any);
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -1162,7 +1161,7 @@ describe('Admin Server Actions', () => {
           }),
         }),
       );
-      expect(r.data?.[0]).toEqual(
+      expect(expectActionSuccess(r).data?.[0]).toEqual(
         expect.objectContaining({
           createdBy: 'user-admin',
           createdByUser: {
@@ -1277,7 +1276,7 @@ describe('Admin Server Actions', () => {
       ] as any);
       vi.mocked(prisma.tenantLicense.updateMany).mockResolvedValue({ count: 2 } as any);
 
-      const r = await cleanupExpiredDemoLicenciasAction({});
+      const r = await cleanupExpiredDemoLicenciasAction({} as any);
 
       expect(r.success).toBe(true);
       expect(prisma.tenantLicense.findMany).toHaveBeenCalledWith(
@@ -1302,7 +1301,7 @@ describe('Admin Server Actions', () => {
         },
         data: { activa: false },
       });
-      expect(r.data).toEqual(
+      expect(expectActionSuccess(r).data).toEqual(
         expect.objectContaining({
           dryRun: false,
           count: 2,
@@ -1549,7 +1548,7 @@ describe('Admin Server Actions', () => {
         },
       ] as any[];
 
-      vi.mocked(prisma.tenantLicense.findMany).mockImplementation(async (args: any) => {
+      vi.mocked(prisma.tenantLicense.findMany).mockImplementation((async (args: any) => {
         expect(args.where).toEqual(
           expect.objectContaining({
             isDemo: false,
@@ -1558,7 +1557,7 @@ describe('Admin Server Actions', () => {
         );
 
         return licenses.filter((license) => license.isAdminTest === false) as any;
-      });
+      }) as any);
 
       const r = await getAdminSubscriptionRevenueAction({
         startDate: '2026-06-01T00:00:00.000Z',
@@ -1566,20 +1565,20 @@ describe('Admin Server Actions', () => {
       });
 
       expect(r.success).toBe(true);
-      expect(r.data).toEqual(
+      expect(expectActionSuccess(r).data).toEqual(
         expect.objectContaining({
           mrr: 60,
           arr: 720,
         }),
       );
-      expect(r.data?.revenueByPlan).toEqual([
+      expect(expectActionSuccess(r).data.revenueByPlan).toEqual([
         expect.objectContaining({
           planId: 'plan-pro',
           tenants: 1,
           mrr: 60,
         }),
       ]);
-      expect(r.data).toEqual(
+      expect(expectActionSuccess(r).data).toEqual(
         expect.objectContaining({
           activeLicenses: 1,
         }),
@@ -1616,7 +1615,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await getPendingMembershipsAction();
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -1664,7 +1663,7 @@ describe('Admin Server Actions', () => {
       } as any);
       const r = await approveMembershipAction({ membershipId: 'mem-1', tenantRole: 'dependiente' });
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.update).not.toHaveBeenCalled();
     });
 
@@ -1676,7 +1675,7 @@ describe('Admin Server Actions', () => {
       } as any);
       const r = await approveMembershipAction({ membershipId: 'mem-1', tenantRole: 'dependiente' });
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(r).error.code).toBe('CONFLICT');
     });
 
     it('rol inválido: validación falla', async () => {
@@ -1722,7 +1721,7 @@ describe('Admin Server Actions', () => {
       } as any);
       const r = await rejectMembershipAction({ membershipId: 'mem-1' });
       expect(r.success).toBe(false);
-      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.delete).not.toHaveBeenCalled();
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
     });
@@ -1796,7 +1795,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(r.success).toBe(false);
-      if (!r.success) expect(r.error!.code).toBe('LAST_MANAGER');
+      if (!r.success) expect(expectActionFailure(r).error.code).toBe('LAST_MANAGER');
       expect(prisma.tenantMembership.update).not.toHaveBeenCalled();
     });
 
@@ -1839,7 +1838,7 @@ describe('Admin Server Actions', () => {
       });
 
       expect(r.success).toBe(false);
-      if (!r.success) expect(r.error.code).toBe('FORBIDDEN');
+      if (!r.success) expect(expectActionFailure(r).error.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.create).not.toHaveBeenCalled();
     });
 

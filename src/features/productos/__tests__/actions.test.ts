@@ -3,6 +3,7 @@
  * Sigue TDD: RED → GREEN → REFACTOR.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 // Mockeamos dependencias ANTES de importar el módulo
 vi.mock("@/lib/server-actions/get-current-user");
@@ -85,7 +86,10 @@ vi.mock("@/lib/prisma", () => {
 			},
 			$transaction: vi
 				.fn()
-				.mockImplementation(async (callback: (tx: typeof tx) => unknown) =>
+				// El callback recibe el mismo cliente simulado; un nombre distinto
+				// para el parametro evita la auto-referencia `typeof tx` dentro de
+				// su propia anotacion (TS2502).
+				.mockImplementation(async (callback: (client: typeof tx) => unknown) =>
 					callback(tx),
 				),
 		},
@@ -139,6 +143,8 @@ const mockUser: AuthenticatedUser = {
 	tenantRole: "manager",
 };
 
+// Fila minima a proposito: los tests solo asertan sobre estos campos. Se acota
+// aqui una sola vez (convencion del archivo) en vez de en cada mock.
 const mockProducto = {
 	id: "prod-1",
 	nombre: "Producto Test",
@@ -160,7 +166,7 @@ const mockProducto = {
 	esCompuesto: false,
 	createdAt: new Date("2025-01-01"),
 	updatedAt: new Date("2025-01-01"),
-};
+} as any;
 
 // ─── Tests ─────────────────────────────────────────────────
 
@@ -184,8 +190,8 @@ describe("Productos Server Actions", () => {
 			const result = await getProductosAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toHaveLength(1);
-			expect(result.data![0].nombre).toBe("Producto Test");
+			expect(expectActionSuccess(result).data).toHaveLength(1);
+			expect(expectActionSuccess(result).data![0].nombre).toBe("Producto Test");
 			expect(prisma.producto.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: expect.objectContaining({ tenantId: "tenant-test" }),
@@ -201,7 +207,7 @@ describe("Productos Server Actions", () => {
 			const result = await getProductosAction();
 
 			expect(result.success).toBe(true);
-			expect(result.data).toEqual([]);
+			expect(expectActionSuccess(result).data).toEqual([]);
 		});
 	});
 
@@ -249,7 +255,7 @@ describe("Productos Server Actions", () => {
 			const result = await createProductoAction({ ...validInput, nombre: "" });
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBeDefined();
+			expect(expectActionFailure(result).error!.code).toBeDefined();
 		});
 
 		it("retorna error de validación si el precio es negativo", async () => {
@@ -261,7 +267,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBeDefined();
+			expect(expectActionFailure(result).error!.code).toBeDefined();
 		});
 
 		it("rechaza precios asociados a listas de otro tenant", async () => {
@@ -274,7 +280,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("INVALID_PRICE_LIST");
+			expect(expectActionFailure(result).error?.code).toBe("INVALID_PRICE_LIST");
 			expect(prisma.producto.create).not.toHaveBeenCalled();
 			expect(prisma.listaPrecio.count).toHaveBeenCalledWith({
 				where: { id: { in: ["lista-externa"] }, tenantId: "tenant-test" },
@@ -339,7 +345,7 @@ describe("Productos Server Actions", () => {
 			const result = await updateProductoAction(validUpdate);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrado");
+			expect(expectActionFailure(result).error!.message).toContain("no encontrado");
 		});
 
 		it("rechaza actualizar un producto de otro tenant", async () => {
@@ -352,7 +358,7 @@ describe("Productos Server Actions", () => {
 			const result = await updateProductoAction(validUpdate);
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 			expect(prisma.producto.update).not.toHaveBeenCalled();
 		});
 	});
@@ -380,7 +386,7 @@ describe("Productos Server Actions", () => {
 			const result = await deleteProductoAction("prod-noexiste");
 
 			expect(result.success).toBe(false);
-			expect(result.error!.message).toContain("no encontrado");
+			expect(expectActionFailure(result).error!.message).toContain("no encontrado");
 		});
 
 		it("rechaza eliminar un producto de otro tenant", async () => {
@@ -393,7 +399,7 @@ describe("Productos Server Actions", () => {
 			const result = await deleteProductoAction("prod-1");
 
 			expect(result.success).toBe(false);
-			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
 			expect(prisma.producto.delete).not.toHaveBeenCalled();
 		});
 	});
@@ -407,7 +413,7 @@ describe("Productos Server Actions", () => {
 			const result = await getProductosAction();
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
 
@@ -539,7 +545,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 		});
 
 		it("retorna VALIDATION_ERROR si cantidad es 0", async () => {
@@ -549,7 +555,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 		});
 
 		it("retorna VALIDATION_ERROR con tipoRestock inválido", async () => {
@@ -560,7 +566,7 @@ describe("Productos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 		});
 
 		// ── 3.6: Producto no existe → NOT_FOUND ──
@@ -571,8 +577,8 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("NOT_FOUND");
-			expect(result.error!.message).toContain("no encontrado");
+			expect(expectActionFailure(result).error!.code).toBe("NOT_FOUND");
+			expect(expectActionFailure(result).error!.message).toContain("no encontrado");
 		});
 
 		// ── 3.2: Restock simple (solo cantidad) ──
@@ -613,9 +619,9 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
-			expect(result.data!.producto.stock).toBe(55);
-			expect(result.data!.gastoCompra.cantidad).toBe(5);
+			expect(expectActionSuccess(result).data).toBeDefined();
+			expect(expectActionSuccess(result).data!.producto.stock).toBe(55);
+			expect(expectActionSuccess(result).data!.gastoCompra.cantidad).toBe(5);
 			expect(mockTx.producto.update).toHaveBeenCalledWith({
 				where: { id: "prod-1" },
 				data: { stock: 55 },
@@ -856,6 +862,7 @@ describe("Productos Server Actions", () => {
 						precioCosto: 120,
 						precioVenta: 180,
 						stock: 5,
+						stockMinimo: 10,
 						fotos: [],
 						categoriaId: "cat-1",
 						unidadId: "unidad-1",
@@ -867,8 +874,14 @@ describe("Productos Server Actions", () => {
 					linking: {
 						originalProductId: "prod-1",
 						newProductId: "temp-id",
-						sharedAttributes: {},
-						linkingType: "price_variant",
+						sharedAttributes: {
+							nombre: "Producto Test",
+							categoriaId: "cat-1",
+							vendorId: "vendor-1",
+							almacenId: "almacen-1",
+							puntoDeVentaId: null,
+						},
+						linkingType: "price_variant" as const,
 						createdAt: new Date().toISOString(),
 					},
 				},
@@ -929,7 +942,7 @@ describe("Productos Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			// El producto retornado debe ser la nueva instancia
-			expect(result.data!.producto.id).toBe("prod-new-1");
+			expect(expectActionSuccess(result).data!.producto.id).toBe("prod-new-1");
 			// Debe haber creado la nueva instancia
 			expect(mockTx.producto.create).toHaveBeenCalled();
 			// NO debe haber actualizado el original
@@ -944,7 +957,7 @@ describe("Productos Server Actions", () => {
 			const result = await restockProductoAction(validRestockInput);
 
 			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe("AUTH_REQUIRED");
+			expect(expectActionFailure(result).error!.code).toBe("AUTH_REQUIRED");
 		});
 	});
 });

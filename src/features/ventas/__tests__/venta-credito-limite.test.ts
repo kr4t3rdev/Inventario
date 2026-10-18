@@ -88,7 +88,7 @@ function prepararEntorno(opts: { limiteCredito: number | null; saldoCxc: number 
 	mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
 	vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue(
 		opts.saldoCxc > 0
-			? [{ id: 'cxc-1', montoDeuda: opts.saldoCxc, montoPagado: 0, estado: 'PENDIENTE' }]
+			? [{ id: 'cxc-1', montoDeuda: opts.saldoCxc, montoPagado: 0, estado: 'PENDIENTE' } as any]
 			: [],
 	);
 }

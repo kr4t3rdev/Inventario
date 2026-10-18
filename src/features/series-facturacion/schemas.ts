@@ -12,5 +12,5 @@ export const serieUpdateSchema = z.object({
   activa: z.boolean().optional(),
   esPorDefecto: z.boolean().optional(),
 });
-export type SerieInput = z.infer<typeof serieSchema>;
+export type SerieInput = z.input<typeof serieSchema>;
 export type SerieUpdateInput = z.infer<typeof serieUpdateSchema>;

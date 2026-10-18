@@ -85,6 +85,21 @@ function createMockUser(overrides: Record<string, unknown> = {}) {
 
 // ─── Tests requestPasswordResetAction ───────────────────
 
+/**
+ * @description Estrecha el resultado de estas actions a su variante de fallo.
+ *
+ * No usan el envoltorio ActionResponse, sino una union local
+ * `{ success: true } | { success: false; error }`, por lo que los helpers
+ * compartidos no aplican.
+ *
+ * @param {{ success: boolean; error?: { message: string; code?: string } }} result - Resultado.
+ * @returns {{ success: false; error: { message: string; code?: string } }} Variante de fallo.
+ */
+function expectFailure(result: { success: boolean; error?: { message: string; code?: string } }) {
+  if (result.success) throw new Error('Se esperaba un fallo');
+  return result as { success: false; error: { message: string; code?: string } };
+}
+
 describe("requestPasswordResetAction", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -127,7 +142,7 @@ describe("requestPasswordResetAction", () => {
 		const result = await requestPasswordResetAction({ email: "no-es-un-email" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectFailure(result).error.code).toBe("VALIDATION_ERROR");
 	});
 
 	it("no envía email si el servicio de URL no está disponible", async () => {
@@ -138,7 +153,7 @@ describe("requestPasswordResetAction", () => {
 		const result = await requestPasswordResetAction({ email: "test@example.com" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("SERVICE_UNAVAILABLE");
+		expect(expectFailure(result).error.code).toBe("SERVICE_UNAVAILABLE");
 		expect(sendPasswordResetEmail).not.toHaveBeenCalled();
 	});
 });
@@ -186,7 +201,7 @@ describe("resetPasswordAction", () => {
 		const result = await resetPasswordAction({ token: validToken, password: "nueva123" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("INVALID_TOKEN");
+		expect(expectFailure(result).error.code).toBe("INVALID_TOKEN");
 		expect(prisma.user.update).not.toHaveBeenCalled();
 	});
 
@@ -194,6 +209,6 @@ describe("resetPasswordAction", () => {
 		const result = await resetPasswordAction({ token: validToken, password: "123" });
 
 		expect(result.success).toBe(false);
-		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(expectFailure(result).error.code).toBe("VALIDATION_ERROR");
 	});
 });

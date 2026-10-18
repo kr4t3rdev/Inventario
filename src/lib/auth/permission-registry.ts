@@ -549,6 +549,54 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		category: 'financiero',
 		defaultRoles: ['manager', 'economico'],
 	},
+	{
+		key: 'financiero.avances.gestionar',
+		label: 'Gestionar anticipos contables',
+		description: 'Crear, editar, ejecutar y revertir anticipos del tenant.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
+		key: 'financiero.capital-inyecciones.gestionar',
+		label: 'Gestionar inyecciones de capital',
+		description: 'Registrar inyecciones de capital y sus pagos.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
+		key: 'financiero.deudas-efectivo.gestionar',
+		label: 'Gestionar deudas de efectivo',
+		description: 'Crear, editar y registrar pagos de deudas de efectivo.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
+		key: 'financiero.prestamos-efectivo.gestionar',
+		label: 'Gestionar préstamos de efectivo',
+		description: 'Crear, editar y registrar pagos de préstamos de efectivo.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
+		key: 'financiero.bancos.gestionar',
+		label: 'Gestionar operaciones bancarias',
+		description: 'Registrar ajustes y transferencias entre cuentas bancarias.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
+		key: 'financiero.conciliaciones.gestionar',
+		label: 'Gestionar conciliaciones contables',
+		description: 'Registrar conciliaciones de ventas, servicios y gastos.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
 
 	// ── config ──
 	{
@@ -599,6 +647,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 	},
 
 	// ── produccion ──
+	{
+		key: 'produccion.ordenes.consultar',
+		label: 'Consultar órdenes de producción',
+		description: 'Consultar órdenes de producción del tenant desde la app móvil.',
+		category: 'produccion',
+		defaultRoles: ['manager', 'economico'],
+	},
 	{
 		key: 'produccion.reparaciones.gestionar',
 		label: 'Gestionar reparaciones',

@@ -38,7 +38,7 @@ export async function GET(
 
     return successResponse({
       compra: {
-        compraId: compra.id,
+        compraId: compra.compraDocumentoId,
         numeroFactura: compra.numeroFactura,
         proveedorId: compra.proveedorId,
         proveedorNombre: compra.proveedor?.nombre ?? null,
@@ -46,18 +46,18 @@ export async function GET(
         estado: compra.estado,
         tipoOperacion: compra.tipoOperacion ?? null,
         formaPago: compra.formaPago ?? null,
-        subtotal: Number(compra.subtotal),
-        impuestos: Number(compra.impuestos ?? 0),
-        descuento: Number(compra.descuento ?? 0),
+        subtotal: compra.items.reduce((sum, item) => sum + Number(item.totalLinea), 0),
+        impuestos: 0,
+        descuento: 0,
         total: Number(compra.total),
-        observaciones: compra.observaciones ?? null,
+        observaciones: compra.descripcion ?? null,
         items: compra.items.map((item) => ({
-          itemId: item.id,
+          itemId: item.compraDocumentoItemId,
           productoId: item.productoId,
           productoNombre: item.producto?.nombre ?? null,
           cantidad: Number(item.cantidad),
           precioUnitario: Number(item.precioUnitario),
-          subtotal: Number(item.subtotal),
+          subtotal: Number(item.totalLinea),
         })),
         createdAt: compra.createdAt.toISOString(),
       },

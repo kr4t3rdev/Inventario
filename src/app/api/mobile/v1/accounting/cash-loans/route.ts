@@ -1,11 +1,35 @@
+import { z, ZodError } from 'zod';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
-import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import {
+  isCashCreateIdempotencyUniqueConflict,
+  runCashCreateWithReplay,
+} from '@/lib/services/cash-create-idempotency';
 
 export const dynamic = 'force-dynamic';
+
+const requiredAnnualRateSchema = z.preprocess(
+  (value) => value === null || typeof value === 'boolean' ||
+    (typeof value === 'string' && value.trim() === '') ? undefined : value,
+  z.coerce.number().finite().min(0),
+);
+
+const createSchema = z.object({
+  clienteId: z.string().min(1),
+  montoCapital: z.coerce.number().positive(),
+  moneda: z.string().optional().default('CUP'),
+  tasaInteres: requiredAnnualRateSchema,
+  tasaInteresMoratorio: requiredAnnualRateSchema,
+  tasaCambioAlCrear: z.coerce.number().positive().optional(),
+  fechaVencimiento: z.string().optional(),
+  observaciones: z.string().optional(),
+  cuentaBancariaId: z.string().min(1),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
+});
 
 function parsePositiveInt(value: string | null, fallback: number): number {
   const parsed = Number.parseInt(value || '', 10);
@@ -21,6 +45,8 @@ function mapActionErrorStatus(code: string): number {
       return 403;
     case 'DISABLED':
       return 404;
+    case 'IDEMPOTENCY_CONFLICT':
+      return 409;
     default:
       return 400;
   }
@@ -56,32 +82,63 @@ export async function POST(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
-    const body = await request.json();
-    const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
-    const validacionPeriodo = await validarEscrituraPeriodo({
-      fecha: fechaOperacion,
-      tenantId: authResult.user.tenantId ?? '',
-      tipoOperacion: 'prestamo_cash',
-      actor: authResult.user.userId,
-    });
-
-    if (!validacionPeriodo.permitido) {
-      return errorResponse(
-        validacionPeriodo.error?.message ?? 'Período contable cerrado',
-        400,
-        validacionPeriodo.error?.code ?? 'PERIODO_CERRADO',
-      );
+    const body = createSchema.parse(await request.json());
+    const headerKey = request.headers.get('Idempotency-Key');
+    const rawKey = body.idempotencyKey !== undefined ? body.idempotencyKey : headerKey;
+    if (rawKey !== null && rawKey !== undefined && typeof rawKey !== 'string') {
+      return errorResponse('La clave de idempotencia no es válida', 400, 'VALIDATION_ERROR');
     }
-
-    const result = await AccountingCashOperationsMutationService.createCashLoan({
-      input: body,
-      user: authResult.user,
+    const idempotencyKey = typeof rawKey === 'string' ? rawKey.trim() : undefined;
+    if ((headerKey !== null || body.idempotencyKey !== undefined) &&
+      (!idempotencyKey || idempotencyKey.length > 64)) {
+      return errorResponse('La clave de idempotencia no es válida', 400, 'VALIDATION_ERROR');
+    }
+    const input = {
+      ...body,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    };
+    const operationDate = new Date();
+    const result = await runCashCreateWithReplay({
+      findReplay: () => AccountingCashOperationsMutationService.findCashLoanCreateReplay({
+        input,
+        user: authResult.user,
+      }),
+      validatePeriod: async () => {
+        const validation = await validarEscrituraPeriodo({
+          fecha: operationDate,
+          tenantId: authResult.user.tenantId ?? '',
+          tipoOperacion: 'prestamo_cash',
+          actor: authResult.user.userId,
+        });
+        if (!validation.permitido) {
+          throw new ActionError(
+            validation.error?.message ?? 'Período contable cerrado',
+            validation.error?.code ?? 'PERIODO_CERRADO',
+          );
+        }
+      },
+      write: () => AccountingCashOperationsMutationService.createCashLoan({
+        input,
+        user: authResult.user,
+        operationDate,
+      }),
+      canRecover: (error) => {
+        if (error instanceof ActionError && [
+          'PERIODO_CERRADO',
+          'PERIODO_APROBADO',
+          'PERIODO_EN_CIERRE',
+        ].includes(error.code ?? '')) return true;
+        return isCashCreateIdempotencyUniqueConflict(error);
+      },
     });
 
     return successResponse(result);
   } catch (error) {
     if (error instanceof ActionError) {
       return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
+    }
+    if (error instanceof ZodError || error instanceof SyntaxError) {
+      return errorResponse('Los datos del préstamo no son válidos', 400, 'VALIDATION_ERROR');
     }
     console.error('Error en mobile cash loans create route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');

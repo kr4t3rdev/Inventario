@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/server-actions/get-current-user');
@@ -84,7 +85,7 @@ const tenantUser: AuthenticatedUser = {
   userId: 'user-1',
   name: 'Tenant User',
   email: 'tenant@test.com',
-  role: 'user',
+  role: 'regularUser',
   isActive: true,
   tenantId: 'tenant-self',
   tenantRole: 'manager',
@@ -139,7 +140,7 @@ describe('affiliate actions', () => {
     } as never);
     const selfReferral = await registerReferralFromCodeAction({ referralCode: 'REF-SELF' });
     expect(selfReferral.success).toBe(false);
-    expect(selfReferral.error?.code).toBe('SELF_REFERRAL_NOT_ALLOWED');
+    expect(expectActionFailure(selfReferral).error?.code).toBe('SELF_REFERRAL_NOT_ALLOWED');
   });
 
   it('blocks affiliate attribution when a sales-agent attribution exists', async () => {

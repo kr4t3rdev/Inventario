@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCuentaPorPagarAction } from '@/features/contabilidad/actions-cuentas'
+import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorPagar: {
@@ -52,8 +53,8 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('DUPLICATE')
-    expect(result.error?.message).toBe('Ya existe una cuenta por pagar con ese número de factura')
+    expect(expectActionFailure(result).error?.code).toBe('DUPLICATE')
+    expect(expectActionFailure(result).error?.message).toBe('Ya existe una cuenta por pagar con ese número de factura')
   })
 
   it('permite crear cuando existe factura con mismo numero pero diferente proveedor', async () => {
@@ -167,6 +168,6 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(expectActionFailure(result).error?.code).toBe('AUTH_REQUIRED')
   })
 })

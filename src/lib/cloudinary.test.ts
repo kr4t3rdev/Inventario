@@ -35,6 +35,7 @@ describe('generateUploadSignature', () => {
   it('generates signature with valid params', () => {
     const result = generateUploadSignature({
       uploadKey: 'productos.photo',
+      provider: 'cloudinary',
       folder: 'tenant123/productos',
       resourceType: 'image',
       maxBytes: 2 * 1024 * 1024,
@@ -61,6 +62,7 @@ describe('generateUploadSignature', () => {
     expect(() =>
       generateUploadSignature({
         uploadKey: 'productos.photo',
+      provider: 'cloudinary',
         folder: 'folder',
         resourceType: 'image',
         maxBytes: 1,
@@ -74,6 +76,7 @@ describe('generateUploadSignature', () => {
     expect(() =>
       generateUploadSignature({
         uploadKey: 'productos.photo',
+      provider: 'cloudinary',
         folder: '',
         resourceType: 'image',
         maxBytes: 1,
@@ -87,6 +90,7 @@ describe('generateUploadSignature', () => {
     expect(() =>
       generateUploadSignature({
         uploadKey: 'productos.photo',
+      provider: 'cloudinary',
         folder: '   ',
         resourceType: 'image',
         maxBytes: 1,
@@ -99,6 +103,7 @@ describe('generateUploadSignature', () => {
   it('includes publicId when provided', () => {
     const result = generateUploadSignature({
       uploadKey: 'productos.photo',
+      provider: 'cloudinary',
       folder: 'folder',
       resourceType: 'image',
       maxBytes: 1,
@@ -111,6 +116,7 @@ describe('generateUploadSignature', () => {
   it('uses image as default resourceType', () => {
     const result = generateUploadSignature({
       uploadKey: 'productos.photo',
+      provider: 'cloudinary',
       folder: 'folder',
       resourceType: 'image',
       maxBytes: 1,

@@ -215,11 +215,36 @@ async function mobileConsumers(mobileSrcDirectory, operationIds) {
 }
 
 /**
+ * @typedef {object} InventoryRow
+ * @property {string} operation - "METHOD /path".
+ * @property {boolean} documented - Si la operacion esta en el contrato.
+ * @property {string} operationId - operationId documentado ('' si falta).
+ * @property {string} tag - Primer tag documentado.
+ * @property {string} requestSchemaName - Nombre del schema de request.
+ * @property {string[]} responseStatuses - Estados de respuesta documentados.
+ * @property {string} security - 'bearer' | 'public' | 'none'.
+ * @property {string[]} routeServices - Servicios importados por la ruta.
+ * @property {boolean} usesRequireTenant - Si la ruta exige tenant.
+ * @property {boolean} usesRequireFeature - Si la ruta exige feature.
+ * @property {string[]} mobileConsumerFiles - Archivos del cliente movil que la consumen.
+ */
+
+/**
+ * @typedef {object} InventorySummary
+ * @property {number} realOperations - Operaciones detectadas en las rutas.
+ * @property {number} documentedOperations - Operaciones documentadas.
+ * @property {string[]} missing - Detectadas y no documentadas.
+ * @property {string[]} obsolete - Documentadas y no detectadas.
+ * @property {string[]} duplicateOperationIds - operationId repetidos.
+ * @property {string[]} anomalies - Anomalias estructurales de las rutas.
+ */
+
+/**
  * @description Builds the full operation inventory matrix.
  * @param {any} contract - Parsed OpenAPI document.
  * @param {{ operations: string[], anomalies: string[] }} discovered - Real route operations.
  * @param {{ mobileSrcDirectory?: string }} options - Optional consumer scan directory.
- * @returns {Promise<{ rows: object[], summary: object }>} Inventory rows and structural deltas.
+ * @returns {Promise<{ rows: InventoryRow[], summary: InventorySummary }>} Inventory rows and structural deltas.
  */
 export async function buildInventory(contract, discovered, options = {}) {
   const documented = new Set(documentedOperations(contract));

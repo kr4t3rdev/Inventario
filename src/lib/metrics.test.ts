@@ -15,6 +15,20 @@ import {
   metricsRegistry,
 } from './metrics';
 
+/**
+ * @description Lee las etiquetas declaradas de una metrica de prom-client.
+ *
+ * La libreria expone `labelNames` en la instancia (es una propiedad propia en
+ * runtime) pero su definicion de tipos de la version 15 no la declara, asi que
+ * el acceso necesita acotarse.
+ *
+ * @param {unknown} metric - Metrica registrada.
+ * @returns {string[]} Nombres de etiqueta declarados.
+ */
+function labelNamesOf(metric: unknown): string[] {
+  return (metric as { labelNames?: string[] }).labelNames ?? [];
+}
+
 describe('accounting policy metrics', () => {
   beforeEach(() => {
     accountingPolicyPreflightCounter.reset();
@@ -93,11 +107,11 @@ describe('accounting policy metrics', () => {
   });
 
   it('no define etiquetas de tenant, actor ni moneda en ninguna métrica nueva', () => {
-    expect(accountingPolicyPreflightCounter.labelNames.sort()).toEqual(['classification']);
-    expect(accountingPolicyProvisioningCounter.labelNames.sort()).toEqual(['origin', 'result']);
-    expect(accountingPolicyRolloutEntriesCounter.labelNames).toEqual(['result']);
+    expect(labelNamesOf(accountingPolicyPreflightCounter).sort()).toEqual(['classification']);
+    expect(labelNamesOf(accountingPolicyProvisioningCounter).sort()).toEqual(['origin', 'result']);
+    expect(labelNamesOf(accountingPolicyRolloutEntriesCounter)).toEqual(['result']);
     expect(
-      operationalTenantsWithoutAccountingPolicyGauge.labelNames,
+      labelNamesOf(operationalTenantsWithoutAccountingPolicyGauge),
     ).toEqual([]);
   });
 
