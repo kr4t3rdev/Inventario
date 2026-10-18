@@ -22,7 +22,7 @@ import {
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
-import { getPrecioEfectivo } from '@/lib/types/pricing';
+import { resolvePrecioVenta } from '@/features/ventas/services/precio-venta-resolver';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -55,6 +55,14 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
+  // Lista default del tenant: fallback intermedio de la cadena de precios
+  // compartida con ventas (LP-1.2/LP-1.3).
+  const listaDefault = await prisma.listaPrecio.findFirst({
+    where: { tenantId, esDefault: true },
+    select: { id: true },
+  });
+  const defaultListaId = listaDefault?.id ?? null;
+
   const resolvedItems = await Promise.all(parsed.items.map(async (item) => {
     if (item.productoId) {
       const producto = await prisma.producto.findFirst({
@@ -62,7 +70,15 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
         include: { precios: true },
       });
       if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
-      const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
+      // Misma cadena que valida la venta: cliente > PV (n/a en ofertas) >
+      // default del tenant > base. El precioUnitario del payload nunca manda.
+      const { precio: precioUnitario } = resolvePrecioVenta({
+        precioBase: producto.precioVenta,
+        precios: producto.precios,
+        pvListaId: null,
+        clienteListaId: cliente.listaPrecioId ?? null,
+        defaultListaId,
+      });
       return { ...item, precioUnitario, total: item.cantidad * precioUnitario };
     }
 
