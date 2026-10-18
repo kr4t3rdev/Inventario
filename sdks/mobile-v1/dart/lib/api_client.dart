@@ -334,6 +334,8 @@ class ApiClient {
           return CashOperationUpdateRequest.fromJson(value);
         case 'CashPaymentRequest':
           return CashPaymentRequest.fromJson(value);
+        case 'Categoria':
+          return Categoria.fromJson(value);
         case 'ChangeAdminUserTenantRoleRequest':
           return ChangeAdminUserTenantRoleRequest.fromJson(value);
         case 'Cliente':
@@ -516,6 +518,10 @@ class ApiClient {
           return GetAdminUserLoginHistoryResponse.fromJson(value);
         case 'GetAdminUsersResponse':
           return GetAdminUsersResponse.fromJson(value);
+        case 'GetCategoriasDetailResponse':
+          return GetCategoriasDetailResponse.fromJson(value);
+        case 'GetCategoriasListResponse':
+          return GetCategoriasListResponse.fromJson(value);
         case 'GetComprasDetailResponse':
           return GetComprasDetailResponse.fromJson(value);
         case 'GetComprasListResponse':
@@ -538,6 +544,10 @@ class ApiClient {
           return GetGastosDetailResponse.fromJson(value);
         case 'GetGastosListResponse':
           return GetGastosListResponse.fromJson(value);
+        case 'GetListasPreciosDetailResponse':
+          return GetListasPreciosDetailResponse.fromJson(value);
+        case 'GetListasPreciosListResponse':
+          return GetListasPreciosListResponse.fromJson(value);
         case 'GetMermasDetailResponse':
           return GetMermasDetailResponse.fromJson(value);
         case 'GetMermasListResponse':
@@ -556,6 +566,10 @@ class ApiClient {
           return GetProductsResponse.fromJson(value);
         case 'GetProductsStockResponse':
           return GetProductsStockResponse.fromJson(value);
+        case 'GetPuntosVentaDetailResponse':
+          return GetPuntosVentaDetailResponse.fromJson(value);
+        case 'GetPuntosVentaListResponse':
+          return GetPuntosVentaListResponse.fromJson(value);
         case 'GetReparacionesDetailResponse':
           return GetReparacionesDetailResponse.fromJson(value);
         case 'GetReparacionesListResponse':
@@ -578,6 +592,10 @@ class ApiClient {
           return GetUnitsListResponse.fromJson(value);
         case 'JsonValue':
           return JsonValue.fromJson(value);
+        case 'ListaPrecio':
+          return ListaPrecio.fromJson(value);
+        case 'ListaPrecioDetail':
+          return ListaPrecioDetail.fromJson(value);
         case 'LockAdminUserRequest':
           return LockAdminUserRequest.fromJson(value);
         case 'LoginRequest':
@@ -698,6 +716,8 @@ class ApiClient {
           return PostSalesCreateResponse.fromJson(value);
         case 'PostSalesIdCancelResponse':
           return PostSalesIdCancelResponse.fromJson(value);
+        case 'PrecioListaItem':
+          return PrecioListaItem.fromJson(value);
         case 'Product':
           return Product.fromJson(value);
         case 'Proveedor':
@@ -710,6 +730,8 @@ class ApiClient {
           return ProveedorListResponse.fromJson(value);
         case 'ProveedorUpdateRequest':
           return ProveedorUpdateRequest.fromJson(value);
+        case 'PuntoVenta':
+          return PuntoVenta.fromJson(value);
         case 'PutAccountingAdvancesIdResponse':
           return PutAccountingAdvancesIdResponse.fromJson(value);
         case 'PutAccountingCashDebtsIdResponse':

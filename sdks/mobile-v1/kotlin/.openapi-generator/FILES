@@ -87,6 +87,8 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Categoria.md
+docs/CategoriasApi.md
 docs/ChangeAdminUserTenantRoleRequest.md
 docs/Cliente.md
 docs/ClienteCreateRequest.md
@@ -185,6 +187,8 @@ docs/GetAdminTenantUsersResponse.md
 docs/GetAdminUserDetailResponse.md
 docs/GetAdminUserLoginHistoryResponse.md
 docs/GetAdminUsersResponse.md
+docs/GetCategoriasDetailResponse.md
+docs/GetCategoriasListResponse.md
 docs/GetComprasDetailResponse.md
 docs/GetComprasListResponse.md
 docs/GetContratosDetailResponse.md
@@ -196,6 +200,8 @@ docs/GetFacturasDetailResponse.md
 docs/GetFacturasListResponse.md
 docs/GetGastosDetailResponse.md
 docs/GetGastosListResponse.md
+docs/GetListasPreciosDetailResponse.md
+docs/GetListasPreciosListResponse.md
 docs/GetMermasDetailResponse.md
 docs/GetMermasListResponse.md
 docs/GetOfertasDetailResponse.md
@@ -205,6 +211,8 @@ docs/GetProduccionListResponse.md
 docs/GetProductsIdResponse.md
 docs/GetProductsResponse.md
 docs/GetProductsStockResponse.md
+docs/GetPuntosVentaDetailResponse.md
+docs/GetPuntosVentaListResponse.md
 docs/GetReparacionesDetailResponse.md
 docs/GetReparacionesListResponse.md
 docs/GetSalesIdResponse.md
@@ -216,6 +224,9 @@ docs/GetTransferenciasListResponse.md
 docs/GetUnitsDetailResponse.md
 docs/GetUnitsListResponse.md
 docs/JsonValue.md
+docs/ListaPrecio.md
+docs/ListaPrecioDetail.md
+docs/ListasPreciosApi.md
 docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Merma.md
@@ -278,6 +289,7 @@ docs/PostAdminUsersVerifyEmailResponse.md
 docs/PostAdminUsersVerifyEmailResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
+docs/PrecioListaItem.md
 docs/ProduccinApi.md
 docs/Product.md
 docs/ProductsApi.md
@@ -287,6 +299,8 @@ docs/ProveedorDeleteResponse.md
 docs/ProveedorListResponse.md
 docs/ProveedorUpdateRequest.md
 docs/ProvidersApi.md
+docs/PuntoVenta.md
+docs/PuntosVentaApi.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md
@@ -349,6 +363,7 @@ src/main/kotlin/com/tcp/mobile/v1/apis/AccountingReconciliationApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AccountingReportsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AdminApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AuthApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/CategoriasApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ClientsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ComprasApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ContratosApi.kt
@@ -356,11 +371,13 @@ src/main/kotlin/com/tcp/mobile/v1/apis/DashboardApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/EmpleadosApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/FacturasApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/GastosApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/ListasPreciosApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/MermasApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/OfertasApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProduccinApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProductsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProvidersApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/PuntosVentaApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ReparacionesApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/SalesApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ServiciosApi.kt
@@ -452,6 +469,7 @@ src/main/kotlin/com/tcp/mobile/v1/models/CashLoan.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashLoanCreateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashOperationUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashPaymentRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/Categoria.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ChangeAdminUserTenantRoleRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Cliente.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ClienteCreateRequest.kt
@@ -543,6 +561,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/GetAdminTenantUsersResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetAdminUserDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetAdminUserLoginHistoryResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetAdminUsersResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetCategoriasDetailResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetCategoriasListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetComprasDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetComprasListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetContratosDetailResponse.kt
@@ -554,6 +574,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/GetFacturasDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetFacturasListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetGastosDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetGastosListResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetListasPreciosDetailResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetListasPreciosListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetMermasDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetMermasListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetOfertasDetailResponse.kt
@@ -563,6 +585,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/GetProduccionListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetProductsIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetProductsResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetProductsStockResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetPuntosVentaDetailResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/GetPuntosVentaListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetReparacionesDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetReparacionesListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetSalesIdResponse.kt
@@ -574,6 +598,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/GetTransferenciasListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetUnitsDetailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetUnitsListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/JsonValue.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ListaPrecio.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ListaPrecioDetail.kt
 src/main/kotlin/com/tcp/mobile/v1/models/LockAdminUserRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/LoginRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Merma.kt
@@ -634,12 +660,14 @@ src/main/kotlin/com/tcp/mobile/v1/models/PostAdminUsersVerifyEmailResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostAdminUsersVerifyEmailResponseUser.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PrecioListaItem.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Product.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Proveedor.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ProveedorCreateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ProveedorDeleteResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ProveedorListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ProveedorUpdateRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PuntoVenta.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingAdvancesIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingCashDebtsIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingCashLoansIdResponse.kt
@@ -691,6 +719,7 @@ src/test/kotlin/com/tcp/mobile/v1/apis/AccountingReconciliationApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingReportsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AdminApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AuthApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/CategoriasApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ClientsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ComprasApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ContratosApiTest.kt
@@ -698,11 +727,13 @@ src/test/kotlin/com/tcp/mobile/v1/apis/DashboardApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/EmpleadosApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/FacturasApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/GastosApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/ListasPreciosApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/MermasApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/OfertasApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProduccinApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProductsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProvidersApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/PuntosVentaApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ReparacionesApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/SalesApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ServiciosApiTest.kt
@@ -785,6 +816,7 @@ src/test/kotlin/com/tcp/mobile/v1/models/CashLoanCreateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashLoanTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashOperationUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashPaymentRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/CategoriaTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ChangeAdminUserTenantRoleRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ClienteCreateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ClienteDeleteResponseTest.kt
@@ -876,6 +908,8 @@ src/test/kotlin/com/tcp/mobile/v1/models/GetAdminTenantUsersResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetAdminUserDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetAdminUserLoginHistoryResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetAdminUsersResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetCategoriasDetailResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetCategoriasListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetComprasDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetComprasListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetContratosDetailResponseTest.kt
@@ -887,6 +921,8 @@ src/test/kotlin/com/tcp/mobile/v1/models/GetFacturasDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetFacturasListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetGastosDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetGastosListResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetListasPreciosDetailResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetListasPreciosListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetMermasDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetMermasListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetOfertasDetailResponseTest.kt
@@ -896,6 +932,8 @@ src/test/kotlin/com/tcp/mobile/v1/models/GetProduccionListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetProductsIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetProductsResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetProductsStockResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetPuntosVentaDetailResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/GetPuntosVentaListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetReparacionesDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetReparacionesListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetSalesIdResponseTest.kt
@@ -907,6 +945,8 @@ src/test/kotlin/com/tcp/mobile/v1/models/GetTransferenciasListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetUnitsDetailResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetUnitsListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/JsonValueTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ListaPrecioDetailTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ListaPrecioTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/LockAdminUserRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/LoginRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/MermaTest.kt
@@ -967,12 +1007,14 @@ src/test/kotlin/com/tcp/mobile/v1/models/PostAdminUsersVerifyEmailResponseTest.k
 src/test/kotlin/com/tcp/mobile/v1/models/PostAdminUsersVerifyEmailResponseUserTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PrecioListaItemTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProductTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProveedorCreateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProveedorDeleteResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProveedorListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProveedorTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProveedorUpdateRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PuntoVentaTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingAdvancesIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingCashDebtsIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingCashLoansIdResponseTest.kt

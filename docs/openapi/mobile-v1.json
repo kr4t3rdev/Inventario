@@ -14382,7 +14382,7 @@
           "Categorias"
         ],
         "summary": "Listar categorías",
-        "description": "Categorías del tenant.",
+        "description": "Devuelve las categorías del tenant autenticado.",
         "operationId": "mobileListCategorias",
         "security": [
           {

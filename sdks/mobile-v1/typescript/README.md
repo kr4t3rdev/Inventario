@@ -170,6 +170,8 @@ All URIs are relative to */api/mobile/v1*
 *AuthApi* | [**mobilePostAuthRefresh**](docs/AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
 *AuthApi* | [**mobilePostAuthRegister**](docs/AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 *AuthApi* | [**mobilePostAuthTenants**](docs/AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
+*CategoriasApi* | [**mobileGetCategoriaById**](docs/CategoriasApi.md#mobilegetcategoriabyid) | **GET** /categorias/{id} | Detalle de categoría
+*CategoriasApi* | [**mobileListCategorias**](docs/CategoriasApi.md#mobilelistcategorias) | **GET** /categorias | Listar categorías
 *ClientsApi* | [**mobileDeleteClientsById**](docs/ClientsApi.md#mobiledeleteclientsbyid) | **DELETE** /clients/{id} | Eliminar cliente
 *ClientsApi* | [**mobileGetClients**](docs/ClientsApi.md#mobilegetclients) | **GET** /clients | Listar clientes
 *ClientsApi* | [**mobileGetClientsById**](docs/ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente
@@ -194,6 +196,8 @@ All URIs are relative to */api/mobile/v1*
 *FacturasApi* | [**mobileListFacturas**](docs/FacturasApi.md#mobilelistfacturas) | **GET** /facturas | Listar facturas
 *GastosApi* | [**mobileGetGastosById**](docs/GastosApi.md#mobilegetgastosbyid) | **GET** /gastos/{id} | Detalle de gasto
 *GastosApi* | [**mobileListGastos**](docs/GastosApi.md#mobilelistgastos) | **GET** /gastos | Listar gastos
+*ListasPreciosApi* | [**mobileGetListaPrecioById**](docs/ListasPreciosApi.md#mobilegetlistapreciobyid) | **GET** /listas-precios/{id} | Detalle de lista de precios
+*ListasPreciosApi* | [**mobileListListasPrecios**](docs/ListasPreciosApi.md#mobilelistlistasprecios) | **GET** /listas-precios | Listar listas de precios
 *MermasApi* | [**mobileGetMermasById**](docs/MermasApi.md#mobilegetmermasbyid) | **GET** /mermas/{id} | Detalle de merma
 *MermasApi* | [**mobileListMermas**](docs/MermasApi.md#mobilelistmermas) | **GET** /mermas | Listar mermas
 *OfertasApi* | [**mobileGetOfertasById**](docs/OfertasApi.md#mobilegetofertasbyid) | **GET** /ofertas/{id} | Detalle de oferta
@@ -208,6 +212,8 @@ All URIs are relative to */api/mobile/v1*
 *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
 *ProvidersApi* | [**mobilePostProvidersCreate**](docs/ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor
 *ProvidersApi* | [**mobilePutProvidersById**](docs/ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor
+*PuntosVentaApi* | [**mobileGetPuntoVentaById**](docs/PuntosVentaApi.md#mobilegetpuntoventabyid) | **GET** /puntos-venta/{id} | Detalle de punto de venta
+*PuntosVentaApi* | [**mobileListPuntosVenta**](docs/PuntosVentaApi.md#mobilelistpuntosventa) | **GET** /puntos-venta | Listar puntos de venta
 *ReparacionesApi* | [**mobileGetReparacionesById**](docs/ReparacionesApi.md#mobilegetreparacionesbyid) | **GET** /reparaciones/{id} | Detalle de orden de reparación
 *ReparacionesApi* | [**mobileListReparaciones**](docs/ReparacionesApi.md#mobilelistreparaciones) | **GET** /reparaciones | Listar órdenes de reparación
 *SalesApi* | [**mobileGetSales**](docs/SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas
@@ -308,6 +314,7 @@ All URIs are relative to */api/mobile/v1*
 - [CashLoanCreateRequest](docs/CashLoanCreateRequest.md)
 - [CashOperationUpdateRequest](docs/CashOperationUpdateRequest.md)
 - [CashPaymentRequest](docs/CashPaymentRequest.md)
+- [Categoria](docs/Categoria.md)
 - [ChangeAdminUserTenantRoleRequest](docs/ChangeAdminUserTenantRoleRequest.md)
 - [Cliente](docs/Cliente.md)
 - [ClienteCreateRequest](docs/ClienteCreateRequest.md)
@@ -399,6 +406,8 @@ All URIs are relative to */api/mobile/v1*
 - [GetAdminUserDetailResponse](docs/GetAdminUserDetailResponse.md)
 - [GetAdminUserLoginHistoryResponse](docs/GetAdminUserLoginHistoryResponse.md)
 - [GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
+- [GetCategoriasDetailResponse](docs/GetCategoriasDetailResponse.md)
+- [GetCategoriasListResponse](docs/GetCategoriasListResponse.md)
 - [GetComprasDetailResponse](docs/GetComprasDetailResponse.md)
 - [GetComprasListResponse](docs/GetComprasListResponse.md)
 - [GetContratosDetailResponse](docs/GetContratosDetailResponse.md)
@@ -410,6 +419,8 @@ All URIs are relative to */api/mobile/v1*
 - [GetFacturasListResponse](docs/GetFacturasListResponse.md)
 - [GetGastosDetailResponse](docs/GetGastosDetailResponse.md)
 - [GetGastosListResponse](docs/GetGastosListResponse.md)
+- [GetListasPreciosDetailResponse](docs/GetListasPreciosDetailResponse.md)
+- [GetListasPreciosListResponse](docs/GetListasPreciosListResponse.md)
 - [GetMermasDetailResponse](docs/GetMermasDetailResponse.md)
 - [GetMermasListResponse](docs/GetMermasListResponse.md)
 - [GetOfertasDetailResponse](docs/GetOfertasDetailResponse.md)
@@ -419,6 +430,8 @@ All URIs are relative to */api/mobile/v1*
 - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
 - [GetProductsResponse](docs/GetProductsResponse.md)
 - [GetProductsStockResponse](docs/GetProductsStockResponse.md)
+- [GetPuntosVentaDetailResponse](docs/GetPuntosVentaDetailResponse.md)
+- [GetPuntosVentaListResponse](docs/GetPuntosVentaListResponse.md)
 - [GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
 - [GetReparacionesListResponse](docs/GetReparacionesListResponse.md)
 - [GetSalesIdResponse](docs/GetSalesIdResponse.md)
@@ -430,6 +443,8 @@ All URIs are relative to */api/mobile/v1*
 - [GetUnitsDetailResponse](docs/GetUnitsDetailResponse.md)
 - [GetUnitsListResponse](docs/GetUnitsListResponse.md)
 - [JsonValue](docs/JsonValue.md)
+- [ListaPrecio](docs/ListaPrecio.md)
+- [ListaPrecioDetail](docs/ListaPrecioDetail.md)
 - [LockAdminUserRequest](docs/LockAdminUserRequest.md)
 - [LoginRequest](docs/LoginRequest.md)
 - [Merma](docs/Merma.md)
@@ -490,12 +505,14 @@ All URIs are relative to */api/mobile/v1*
 - [PostAdminUsersVerifyEmailResponseUser](docs/PostAdminUsersVerifyEmailResponseUser.md)
 - [PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
 - [PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
+- [PrecioListaItem](docs/PrecioListaItem.md)
 - [Product](docs/Product.md)
 - [Proveedor](docs/Proveedor.md)
 - [ProveedorCreateRequest](docs/ProveedorCreateRequest.md)
 - [ProveedorDeleteResponse](docs/ProveedorDeleteResponse.md)
 - [ProveedorListResponse](docs/ProveedorListResponse.md)
 - [ProveedorUpdateRequest](docs/ProveedorUpdateRequest.md)
+- [PuntoVenta](docs/PuntoVenta.md)
 - [PutAccountingAdvancesIdResponse](docs/PutAccountingAdvancesIdResponse.md)
 - [PutAccountingCashDebtsIdResponse](docs/PutAccountingCashDebtsIdResponse.md)
 - [PutAccountingCashLoansIdResponse](docs/PutAccountingCashLoansIdResponse.md)

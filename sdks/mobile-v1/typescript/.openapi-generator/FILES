@@ -88,6 +88,8 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Categoria.md
+docs/CategoriasApi.md
 docs/ChangeAdminUserTenantRoleRequest.md
 docs/Cliente.md
 docs/ClienteCreateRequest.md
@@ -186,6 +188,8 @@ docs/GetAdminTenantUsersResponse.md
 docs/GetAdminUserDetailResponse.md
 docs/GetAdminUserLoginHistoryResponse.md
 docs/GetAdminUsersResponse.md
+docs/GetCategoriasDetailResponse.md
+docs/GetCategoriasListResponse.md
 docs/GetComprasDetailResponse.md
 docs/GetComprasListResponse.md
 docs/GetContratosDetailResponse.md
@@ -197,6 +201,8 @@ docs/GetFacturasDetailResponse.md
 docs/GetFacturasListResponse.md
 docs/GetGastosDetailResponse.md
 docs/GetGastosListResponse.md
+docs/GetListasPreciosDetailResponse.md
+docs/GetListasPreciosListResponse.md
 docs/GetMermasDetailResponse.md
 docs/GetMermasListResponse.md
 docs/GetOfertasDetailResponse.md
@@ -206,6 +212,8 @@ docs/GetProduccionListResponse.md
 docs/GetProductsIdResponse.md
 docs/GetProductsResponse.md
 docs/GetProductsStockResponse.md
+docs/GetPuntosVentaDetailResponse.md
+docs/GetPuntosVentaListResponse.md
 docs/GetReparacionesDetailResponse.md
 docs/GetReparacionesListResponse.md
 docs/GetSalesIdResponse.md
@@ -217,6 +225,9 @@ docs/GetTransferenciasListResponse.md
 docs/GetUnitsDetailResponse.md
 docs/GetUnitsListResponse.md
 docs/JsonValue.md
+docs/ListaPrecio.md
+docs/ListaPrecioDetail.md
+docs/ListasPreciosApi.md
 docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Merma.md
@@ -279,6 +290,7 @@ docs/PostAdminUsersVerifyEmailResponse.md
 docs/PostAdminUsersVerifyEmailResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
+docs/PrecioListaItem.md
 docs/ProduccinApi.md
 docs/Product.md
 docs/ProductsApi.md
@@ -288,6 +300,8 @@ docs/ProveedorDeleteResponse.md
 docs/ProveedorListResponse.md
 docs/ProveedorUpdateRequest.md
 docs/ProvidersApi.md
+docs/PuntoVenta.md
+docs/PuntosVentaApi.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md
@@ -346,6 +360,7 @@ src/apis/AccountingReconciliationApi.ts
 src/apis/AccountingReportsApi.ts
 src/apis/AdminApi.ts
 src/apis/AuthApi.ts
+src/apis/CategoriasApi.ts
 src/apis/ClientsApi.ts
 src/apis/ComprasApi.ts
 src/apis/ContratosApi.ts
@@ -353,11 +368,13 @@ src/apis/DashboardApi.ts
 src/apis/EmpleadosApi.ts
 src/apis/FacturasApi.ts
 src/apis/GastosApi.ts
+src/apis/ListasPreciosApi.ts
 src/apis/MermasApi.ts
 src/apis/OfertasApi.ts
 src/apis/ProduccinApi.ts
 src/apis/ProductsApi.ts
 src/apis/ProvidersApi.ts
+src/apis/PuntosVentaApi.ts
 src/apis/ReparacionesApi.ts
 src/apis/SalesApi.ts
 src/apis/ServiciosApi.ts
@@ -442,6 +459,7 @@ src/models/CashLoan.ts
 src/models/CashLoanCreateRequest.ts
 src/models/CashOperationUpdateRequest.ts
 src/models/CashPaymentRequest.ts
+src/models/Categoria.ts
 src/models/ChangeAdminUserTenantRoleRequest.ts
 src/models/Cliente.ts
 src/models/ClienteCreateRequest.ts
@@ -533,6 +551,8 @@ src/models/GetAdminTenantUsersResponse.ts
 src/models/GetAdminUserDetailResponse.ts
 src/models/GetAdminUserLoginHistoryResponse.ts
 src/models/GetAdminUsersResponse.ts
+src/models/GetCategoriasDetailResponse.ts
+src/models/GetCategoriasListResponse.ts
 src/models/GetComprasDetailResponse.ts
 src/models/GetComprasListResponse.ts
 src/models/GetContratosDetailResponse.ts
@@ -544,6 +564,8 @@ src/models/GetFacturasDetailResponse.ts
 src/models/GetFacturasListResponse.ts
 src/models/GetGastosDetailResponse.ts
 src/models/GetGastosListResponse.ts
+src/models/GetListasPreciosDetailResponse.ts
+src/models/GetListasPreciosListResponse.ts
 src/models/GetMermasDetailResponse.ts
 src/models/GetMermasListResponse.ts
 src/models/GetOfertasDetailResponse.ts
@@ -553,6 +575,8 @@ src/models/GetProduccionListResponse.ts
 src/models/GetProductsIdResponse.ts
 src/models/GetProductsResponse.ts
 src/models/GetProductsStockResponse.ts
+src/models/GetPuntosVentaDetailResponse.ts
+src/models/GetPuntosVentaListResponse.ts
 src/models/GetReparacionesDetailResponse.ts
 src/models/GetReparacionesListResponse.ts
 src/models/GetSalesIdResponse.ts
@@ -564,6 +588,8 @@ src/models/GetTransferenciasListResponse.ts
 src/models/GetUnitsDetailResponse.ts
 src/models/GetUnitsListResponse.ts
 src/models/JsonValue.ts
+src/models/ListaPrecio.ts
+src/models/ListaPrecioDetail.ts
 src/models/LockAdminUserRequest.ts
 src/models/LoginRequest.ts
 src/models/Merma.ts
@@ -624,12 +650,14 @@ src/models/PostAdminUsersVerifyEmailResponse.ts
 src/models/PostAdminUsersVerifyEmailResponseUser.ts
 src/models/PostSalesCreateResponse.ts
 src/models/PostSalesIdCancelResponse.ts
+src/models/PrecioListaItem.ts
 src/models/Product.ts
 src/models/Proveedor.ts
 src/models/ProveedorCreateRequest.ts
 src/models/ProveedorDeleteResponse.ts
 src/models/ProveedorListResponse.ts
 src/models/ProveedorUpdateRequest.ts
+src/models/PuntoVenta.ts
 src/models/PutAccountingAdvancesIdResponse.ts
 src/models/PutAccountingCashDebtsIdResponse.ts
 src/models/PutAccountingCashLoansIdResponse.ts

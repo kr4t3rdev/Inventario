@@ -161,6 +161,8 @@ All URIs are relative to */api/mobile/v1*
 | *AuthApi* | [**mobilePostAuthRefresh**](docs/AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión |
 | *AuthApi* | [**mobilePostAuthRegister**](docs/AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil |
 | *AuthApi* | [**mobilePostAuthTenants**](docs/AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo |
+| *CategoriasApi* | [**mobileGetCategoriaById**](docs/CategoriasApi.md#mobilegetcategoriabyid) | **GET** /categorias/{id} | Detalle de categoría |
+| *CategoriasApi* | [**mobileListCategorias**](docs/CategoriasApi.md#mobilelistcategorias) | **GET** /categorias | Listar categorías |
 | *ClientsApi* | [**mobileDeleteClientsById**](docs/ClientsApi.md#mobiledeleteclientsbyid) | **DELETE** /clients/{id} | Eliminar cliente |
 | *ClientsApi* | [**mobileGetClients**](docs/ClientsApi.md#mobilegetclients) | **GET** /clients | Listar clientes |
 | *ClientsApi* | [**mobileGetClientsById**](docs/ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente |
@@ -185,6 +187,8 @@ All URIs are relative to */api/mobile/v1*
 | *FacturasApi* | [**mobileListFacturas**](docs/FacturasApi.md#mobilelistfacturas) | **GET** /facturas | Listar facturas |
 | *GastosApi* | [**mobileGetGastosById**](docs/GastosApi.md#mobilegetgastosbyid) | **GET** /gastos/{id} | Detalle de gasto |
 | *GastosApi* | [**mobileListGastos**](docs/GastosApi.md#mobilelistgastos) | **GET** /gastos | Listar gastos |
+| *ListasPreciosApi* | [**mobileGetListaPrecioById**](docs/ListasPreciosApi.md#mobilegetlistapreciobyid) | **GET** /listas-precios/{id} | Detalle de lista de precios |
+| *ListasPreciosApi* | [**mobileListListasPrecios**](docs/ListasPreciosApi.md#mobilelistlistasprecios) | **GET** /listas-precios | Listar listas de precios |
 | *MermasApi* | [**mobileGetMermasById**](docs/MermasApi.md#mobilegetmermasbyid) | **GET** /mermas/{id} | Detalle de merma |
 | *MermasApi* | [**mobileListMermas**](docs/MermasApi.md#mobilelistmermas) | **GET** /mermas | Listar mermas |
 | *OfertasApi* | [**mobileGetOfertasById**](docs/OfertasApi.md#mobilegetofertasbyid) | **GET** /ofertas/{id} | Detalle de oferta |
@@ -199,6 +203,8 @@ All URIs are relative to */api/mobile/v1*
 | *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor |
 | *ProvidersApi* | [**mobilePostProvidersCreate**](docs/ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor |
 | *ProvidersApi* | [**mobilePutProvidersById**](docs/ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor |
+| *PuntosVentaApi* | [**mobileGetPuntoVentaById**](docs/PuntosVentaApi.md#mobilegetpuntoventabyid) | **GET** /puntos-venta/{id} | Detalle de punto de venta |
+| *PuntosVentaApi* | [**mobileListPuntosVenta**](docs/PuntosVentaApi.md#mobilelistpuntosventa) | **GET** /puntos-venta | Listar puntos de venta |
 | *ReparacionesApi* | [**mobileGetReparacionesById**](docs/ReparacionesApi.md#mobilegetreparacionesbyid) | **GET** /reparaciones/{id} | Detalle de orden de reparación |
 | *ReparacionesApi* | [**mobileListReparaciones**](docs/ReparacionesApi.md#mobilelistreparaciones) | **GET** /reparaciones | Listar órdenes de reparación |
 | *SalesApi* | [**mobileGetSales**](docs/SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas |
@@ -300,6 +306,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.CashLoanCreateRequest](docs/CashLoanCreateRequest.md)
  - [com.tcp.mobile.v1.models.CashOperationUpdateRequest](docs/CashOperationUpdateRequest.md)
  - [com.tcp.mobile.v1.models.CashPaymentRequest](docs/CashPaymentRequest.md)
+ - [com.tcp.mobile.v1.models.Categoria](docs/Categoria.md)
  - [com.tcp.mobile.v1.models.ChangeAdminUserTenantRoleRequest](docs/ChangeAdminUserTenantRoleRequest.md)
  - [com.tcp.mobile.v1.models.Cliente](docs/Cliente.md)
  - [com.tcp.mobile.v1.models.ClienteCreateRequest](docs/ClienteCreateRequest.md)
@@ -391,6 +398,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetAdminUserDetailResponse](docs/GetAdminUserDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetAdminUserLoginHistoryResponse](docs/GetAdminUserLoginHistoryResponse.md)
  - [com.tcp.mobile.v1.models.GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
+ - [com.tcp.mobile.v1.models.GetCategoriasDetailResponse](docs/GetCategoriasDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetCategoriasListResponse](docs/GetCategoriasListResponse.md)
  - [com.tcp.mobile.v1.models.GetComprasDetailResponse](docs/GetComprasDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetComprasListResponse](docs/GetComprasListResponse.md)
  - [com.tcp.mobile.v1.models.GetContratosDetailResponse](docs/GetContratosDetailResponse.md)
@@ -402,6 +411,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetFacturasListResponse](docs/GetFacturasListResponse.md)
  - [com.tcp.mobile.v1.models.GetGastosDetailResponse](docs/GetGastosDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetGastosListResponse](docs/GetGastosListResponse.md)
+ - [com.tcp.mobile.v1.models.GetListasPreciosDetailResponse](docs/GetListasPreciosDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetListasPreciosListResponse](docs/GetListasPreciosListResponse.md)
  - [com.tcp.mobile.v1.models.GetMermasDetailResponse](docs/GetMermasDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetMermasListResponse](docs/GetMermasListResponse.md)
  - [com.tcp.mobile.v1.models.GetOfertasDetailResponse](docs/GetOfertasDetailResponse.md)
@@ -411,6 +422,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsResponse](docs/GetProductsResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsStockResponse](docs/GetProductsStockResponse.md)
+ - [com.tcp.mobile.v1.models.GetPuntosVentaDetailResponse](docs/GetPuntosVentaDetailResponse.md)
+ - [com.tcp.mobile.v1.models.GetPuntosVentaListResponse](docs/GetPuntosVentaListResponse.md)
  - [com.tcp.mobile.v1.models.GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetReparacionesListResponse](docs/GetReparacionesListResponse.md)
  - [com.tcp.mobile.v1.models.GetSalesIdResponse](docs/GetSalesIdResponse.md)
@@ -422,6 +435,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetUnitsDetailResponse](docs/GetUnitsDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetUnitsListResponse](docs/GetUnitsListResponse.md)
  - [com.tcp.mobile.v1.models.JsonValue](docs/JsonValue.md)
+ - [com.tcp.mobile.v1.models.ListaPrecio](docs/ListaPrecio.md)
+ - [com.tcp.mobile.v1.models.ListaPrecioDetail](docs/ListaPrecioDetail.md)
  - [com.tcp.mobile.v1.models.LockAdminUserRequest](docs/LockAdminUserRequest.md)
  - [com.tcp.mobile.v1.models.LoginRequest](docs/LoginRequest.md)
  - [com.tcp.mobile.v1.models.Merma](docs/Merma.md)
@@ -482,12 +497,14 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.PostAdminUsersVerifyEmailResponseUser](docs/PostAdminUsersVerifyEmailResponseUser.md)
  - [com.tcp.mobile.v1.models.PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
  - [com.tcp.mobile.v1.models.PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
+ - [com.tcp.mobile.v1.models.PrecioListaItem](docs/PrecioListaItem.md)
  - [com.tcp.mobile.v1.models.Product](docs/Product.md)
  - [com.tcp.mobile.v1.models.Proveedor](docs/Proveedor.md)
  - [com.tcp.mobile.v1.models.ProveedorCreateRequest](docs/ProveedorCreateRequest.md)
  - [com.tcp.mobile.v1.models.ProveedorDeleteResponse](docs/ProveedorDeleteResponse.md)
  - [com.tcp.mobile.v1.models.ProveedorListResponse](docs/ProveedorListResponse.md)
  - [com.tcp.mobile.v1.models.ProveedorUpdateRequest](docs/ProveedorUpdateRequest.md)
+ - [com.tcp.mobile.v1.models.PuntoVenta](docs/PuntoVenta.md)
  - [com.tcp.mobile.v1.models.PutAccountingAdvancesIdResponse](docs/PutAccountingAdvancesIdResponse.md)
  - [com.tcp.mobile.v1.models.PutAccountingCashDebtsIdResponse](docs/PutAccountingCashDebtsIdResponse.md)
  - [com.tcp.mobile.v1.models.PutAccountingCashLoansIdResponse](docs/PutAccountingCashLoansIdResponse.md)

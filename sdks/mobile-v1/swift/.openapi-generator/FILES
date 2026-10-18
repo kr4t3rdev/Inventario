@@ -16,6 +16,7 @@ Sources/APIs/AccountingReconciliationAPI.swift
 Sources/APIs/AccountingReportsAPI.swift
 Sources/APIs/AdminAPI.swift
 Sources/APIs/AuthAPI.swift
+Sources/APIs/CategoriasAPI.swift
 Sources/APIs/ClientsAPI.swift
 Sources/APIs/ComprasAPI.swift
 Sources/APIs/ContratosAPI.swift
@@ -23,11 +24,13 @@ Sources/APIs/DashboardAPI.swift
 Sources/APIs/EmpleadosAPI.swift
 Sources/APIs/FacturasAPI.swift
 Sources/APIs/GastosAPI.swift
+Sources/APIs/ListasPreciosAPI.swift
 Sources/APIs/MermasAPI.swift
 Sources/APIs/OfertasAPI.swift
 Sources/APIs/ProduccinAPI.swift
 Sources/APIs/ProductsAPI.swift
 Sources/APIs/ProvidersAPI.swift
+Sources/APIs/PuntosVentaAPI.swift
 Sources/APIs/ReparacionesAPI.swift
 Sources/APIs/SalesAPI.swift
 Sources/APIs/ServiciosAPI.swift
@@ -116,6 +119,7 @@ Sources/Models/CashLoan.swift
 Sources/Models/CashLoanCreateRequest.swift
 Sources/Models/CashOperationUpdateRequest.swift
 Sources/Models/CashPaymentRequest.swift
+Sources/Models/Categoria.swift
 Sources/Models/ChangeAdminUserTenantRoleRequest.swift
 Sources/Models/Cliente.swift
 Sources/Models/ClienteCreateRequest.swift
@@ -207,6 +211,8 @@ Sources/Models/GetAdminTenantUsersResponse.swift
 Sources/Models/GetAdminUserDetailResponse.swift
 Sources/Models/GetAdminUserLoginHistoryResponse.swift
 Sources/Models/GetAdminUsersResponse.swift
+Sources/Models/GetCategoriasDetailResponse.swift
+Sources/Models/GetCategoriasListResponse.swift
 Sources/Models/GetComprasDetailResponse.swift
 Sources/Models/GetComprasListResponse.swift
 Sources/Models/GetContratosDetailResponse.swift
@@ -218,6 +224,8 @@ Sources/Models/GetFacturasDetailResponse.swift
 Sources/Models/GetFacturasListResponse.swift
 Sources/Models/GetGastosDetailResponse.swift
 Sources/Models/GetGastosListResponse.swift
+Sources/Models/GetListasPreciosDetailResponse.swift
+Sources/Models/GetListasPreciosListResponse.swift
 Sources/Models/GetMermasDetailResponse.swift
 Sources/Models/GetMermasListResponse.swift
 Sources/Models/GetOfertasDetailResponse.swift
@@ -227,6 +235,8 @@ Sources/Models/GetProduccionListResponse.swift
 Sources/Models/GetProductsIdResponse.swift
 Sources/Models/GetProductsResponse.swift
 Sources/Models/GetProductsStockResponse.swift
+Sources/Models/GetPuntosVentaDetailResponse.swift
+Sources/Models/GetPuntosVentaListResponse.swift
 Sources/Models/GetReparacionesDetailResponse.swift
 Sources/Models/GetReparacionesListResponse.swift
 Sources/Models/GetSalesIdResponse.swift
@@ -238,6 +248,8 @@ Sources/Models/GetTransferenciasListResponse.swift
 Sources/Models/GetUnitsDetailResponse.swift
 Sources/Models/GetUnitsListResponse.swift
 Sources/Models/JsonValue.swift
+Sources/Models/ListaPrecio.swift
+Sources/Models/ListaPrecioDetail.swift
 Sources/Models/LockAdminUserRequest.swift
 Sources/Models/LoginRequest.swift
 Sources/Models/Merma.swift
@@ -298,12 +310,14 @@ Sources/Models/PostAdminUsersVerifyEmailResponse.swift
 Sources/Models/PostAdminUsersVerifyEmailResponseUser.swift
 Sources/Models/PostSalesCreateResponse.swift
 Sources/Models/PostSalesIdCancelResponse.swift
+Sources/Models/PrecioListaItem.swift
 Sources/Models/Product.swift
 Sources/Models/Proveedor.swift
 Sources/Models/ProveedorCreateRequest.swift
 Sources/Models/ProveedorDeleteResponse.swift
 Sources/Models/ProveedorListResponse.swift
 Sources/Models/ProveedorUpdateRequest.swift
+Sources/Models/PuntoVenta.swift
 Sources/Models/PutAccountingAdvancesIdResponse.swift
 Sources/Models/PutAccountingCashDebtsIdResponse.swift
 Sources/Models/PutAccountingCashLoansIdResponse.swift
@@ -436,6 +450,8 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Categoria.md
+docs/CategoriasAPI.md
 docs/ChangeAdminUserTenantRoleRequest.md
 docs/Cliente.md
 docs/ClienteCreateRequest.md
@@ -534,6 +550,8 @@ docs/GetAdminTenantUsersResponse.md
 docs/GetAdminUserDetailResponse.md
 docs/GetAdminUserLoginHistoryResponse.md
 docs/GetAdminUsersResponse.md
+docs/GetCategoriasDetailResponse.md
+docs/GetCategoriasListResponse.md
 docs/GetComprasDetailResponse.md
 docs/GetComprasListResponse.md
 docs/GetContratosDetailResponse.md
@@ -545,6 +563,8 @@ docs/GetFacturasDetailResponse.md
 docs/GetFacturasListResponse.md
 docs/GetGastosDetailResponse.md
 docs/GetGastosListResponse.md
+docs/GetListasPreciosDetailResponse.md
+docs/GetListasPreciosListResponse.md
 docs/GetMermasDetailResponse.md
 docs/GetMermasListResponse.md
 docs/GetOfertasDetailResponse.md
@@ -554,6 +574,8 @@ docs/GetProduccionListResponse.md
 docs/GetProductsIdResponse.md
 docs/GetProductsResponse.md
 docs/GetProductsStockResponse.md
+docs/GetPuntosVentaDetailResponse.md
+docs/GetPuntosVentaListResponse.md
 docs/GetReparacionesDetailResponse.md
 docs/GetReparacionesListResponse.md
 docs/GetSalesIdResponse.md
@@ -565,6 +587,9 @@ docs/GetTransferenciasListResponse.md
 docs/GetUnitsDetailResponse.md
 docs/GetUnitsListResponse.md
 docs/JsonValue.md
+docs/ListaPrecio.md
+docs/ListaPrecioDetail.md
+docs/ListasPreciosAPI.md
 docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Merma.md
@@ -627,6 +652,7 @@ docs/PostAdminUsersVerifyEmailResponse.md
 docs/PostAdminUsersVerifyEmailResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
+docs/PrecioListaItem.md
 docs/ProduccinAPI.md
 docs/Product.md
 docs/ProductsAPI.md
@@ -636,6 +662,8 @@ docs/ProveedorDeleteResponse.md
 docs/ProveedorListResponse.md
 docs/ProveedorUpdateRequest.md
 docs/ProvidersAPI.md
+docs/PuntoVenta.md
+docs/PuntosVentaAPI.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md

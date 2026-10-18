@@ -1,12 +1,12 @@
 # Inventario de operaciones mobile v1 (OpenAPI)
 
-Generado: 2026-10-12T05:22:00.777Z. Fuente: `docs/openapi/mobile-v1.json` + rutas en `src/app/api/mobile/v1`.
+Generado: 2026-10-18T06:50:46.965Z. Fuente: `docs/openapi/mobile-v1.json` + rutas en `src/app/api/mobile/v1`.
 Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm run openapi:inventory`.
 
 ## Resumen
 
-- Operaciones reales: 174
-- Operaciones documentadas: 174
+- Operaciones reales: 180
+- Operaciones documentadas: 180
 - Sin documentar: 0
 - Documentadas sin implementación: 0
 - operationId duplicados: 0
@@ -34,12 +34,12 @@ Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm 
 | GET /accounting/bank-accounts | mobileGetAccountingBankAccounts | (sin body) | 200, 401, 403, 500 | bearer | — | sí | BankAccountReadService | accounting-api.ts |
 | GET /accounting/bank-accounts/{id} | mobileGetAccountingBankAccountsById | (sin body) | 200, 401, 403, 500 | bearer | — | sí | BankAccountReadService | accounting-api.ts |
 | GET /accounting/bank-accounts/{id}/history | mobileGetAccountingBankAccountsByIdNestedHistory | (sin body) | 200, 401, 403, 404, 500 | bearer | — | sí | BankAccountReadService | accounting-api.ts |
-| GET /accounting/bank-adjustments | mobileGetAccountingBankAdjustments | (sin body) | 200, 401, 500 | bearer | sí | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
+| GET /accounting/bank-adjustments | mobileGetAccountingBankAdjustments | (sin body) | 200, 401, 500 | bearer | — | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
 | GET /accounting/bank-transfers | mobileGetAccountingBankTransfers | (sin body) | 200, 401, 500 | bearer | — | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
 | GET /accounting/bank-transfers/{id} | mobileGetAccountingBankTransfersById | (sin body) | 200, 401, 500 | bearer | — | — | AccountingOperationsReadService | accounting-api.ts |
 | GET /accounting/bank-transfers/{id}/comprobante | mobileGetAccountingBankTransfersByIdComprobante | (sin body) | 200, 401, 404, 500 | bearer | — | — | AccountingOperationsReadService | accounting-api.ts |
 | GET /accounting/capital-injections | mobileGetAccountingCapitalInjections | (sin body) | 200, 401, 403, 500 | bearer | — | sí | AccountingOperationsMutationService, AccountingOperationsReadService | capital-api.ts |
-| GET /accounting/cash-debts | mobileGetAccountingCashDebts | (sin body) | 200, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
+| GET /accounting/cash-debts | mobileGetAccountingCashDebts | (sin body) | 200, 401, 500 | bearer | sí | sí | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
 | GET /accounting/cash-debts/stats | mobileGetAccountingCashDebtsStats | (sin body) | 200, 401, 500 | bearer | — | — | AccountingCashOperationsService | cash-financing-api.ts |
 | GET /accounting/cash-debts/{id} | mobileGetAccountingCashDebtsById | (sin body) | 200, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
 | GET /accounting/cash-loans | mobileGetAccountingCashLoans | (sin body) | 200, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
@@ -85,6 +85,8 @@ Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm 
 | GET /admin/users/login-history | mobileGetAdminUserLoginHistory | (sin body) | 200, 400, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /auth/me | mobileGetAuthMe | (sin body) | 200, 401, 500 | bearer | — | — | AuthService | — |
 | GET /auth/tenants | mobileGetAuthTenants | (sin body) | 200, 401, 500 | bearer | — | — | AuthService | — |
+| GET /categorias | mobileListCategorias | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
+| GET /categorias/{id} | mobileGetCategoriaById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /clients | mobileGetClients | (sin body) | 200, 401, 403, 500 | bearer | — | — | — | clients-api.ts |
 | GET /clients/{id} | mobileGetClientsById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | clients-api.ts |
 | GET /compras | mobileListCompras | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
@@ -106,6 +108,8 @@ Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm 
 | GET /facturas/{id} | mobileGetFacturasById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /gastos | mobileListGastos | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /gastos/{id} | mobileGetGastosById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
+| GET /listas-precios | mobileListListasPrecios | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
+| GET /listas-precios/{id} | mobileGetListaPrecioById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /mermas | mobileListMermas | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /mermas/{id} | mobileGetMermasById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /ofertas | mobileListOfertas | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
@@ -117,6 +121,8 @@ Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm 
 | GET /products/{id} | mobileGetProductsById | (sin body) | 200, 401, 403, 500 | bearer | — | — | ProductoService | products-api.ts |
 | GET /providers | mobileGetProviders | (sin body) | 200, 401, 403, 500 | bearer | — | — | — | providers-api.ts |
 | GET /providers/{id} | mobileGetProvidersById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | providers-api.ts |
+| GET /puntos-venta | mobileListPuntosVenta | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
+| GET /puntos-venta/{id} | mobileGetPuntoVentaById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /reparaciones | mobileListReparaciones | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /reparaciones/{id} | mobileGetReparacionesById | (sin body) | 200, 401, 403, 404, 500 | bearer | — | — | — | — |
 | GET /sales | mobileGetSales | (sin body) | 200, 401, 403, 500 | bearer | — | — | VentaReadService | sales-api.ts |
@@ -136,15 +142,15 @@ Artefacto de la Fase 0 del plan de reconciliación OpenAPI. Regenerar con `pnpm 
 | POST /accounting/advances | mobilePostAccountingAdvances | AccountingAdvancesPostRequest | 200, 201, 400, 401, 500 | bearer | sí | — | — | accounting-advances-api.ts |
 | POST /accounting/advances/{id}/ejecutar | mobilePostAccountingAdvancesByIdEjecutar | AccountingAdvancesIdEjecutarPostRequest | 200, 400, 401, 404, 409, 500 | bearer | — | — | — | accounting-advances-api.ts |
 | POST /accounting/advances/{id}/revertir | mobilePostAccountingAdvancesByIdRevertir | AccountingAdvancesIdRevertirPostRequest | 200, 400, 401, 404, 500 | bearer | — | — | — | accounting-advances-api.ts |
-| POST /accounting/bank-adjustments | mobilePostAccountingBankAdjustments | BankAdjustmentRequest | 200, 400, 401, 500 | bearer | sí | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
+| POST /accounting/bank-adjustments | mobilePostAccountingBankAdjustments | BankAdjustmentRequest | 200, 400, 401, 500 | bearer | — | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
 | POST /accounting/bank-transfers | mobilePostAccountingBankTransfers | BankTransferCreateRequest | 200, 400, 401, 500 | bearer | — | — | AccountingOperationsMutationService, AccountingOperationsReadService | accounting-api.ts |
 | POST /accounting/bank-transfers/validate | mobilePostAccountingBankTransfersValidate | BankTransferValidationRequest | 200, 401, 500 | bearer | — | — | AccountingOperationsMutationService | accounting-api.ts |
 | POST /accounting/capital-injections | mobilePostAccountingCapitalInjections | CapitalInjectionCreateRequest | 200, 400, 401, 500 | bearer | — | sí | AccountingOperationsMutationService, AccountingOperationsReadService | capital-api.ts |
 | POST /accounting/capital-injections/{id}/payments | mobilePostAccountingCapitalInjectionsByIdPayments | CapitalPaymentRequest | 200, 400, 401, 500 | bearer | — | sí | AccountingOperationsMutationService | capital-api.ts |
-| POST /accounting/cash-debts | mobilePostAccountingCashDebts | CashDebtCreateRequest | 200, 400, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
-| POST /accounting/cash-debts/{id}/payments | mobilePostAccountingCashDebtsByIdPayments | CashPaymentRequest | 200, 400, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService | cash-financing-api.ts |
+| POST /accounting/cash-debts | mobilePostAccountingCashDebts | CashDebtCreateRequest | 200, 400, 401, 500 | bearer | sí | sí | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
+| POST /accounting/cash-debts/{id}/payments | mobilePostAccountingCashDebtsByIdPayments | CashPaymentRequest | 200, 400, 401, 500 | bearer | — | sí | AccountingCashOperationsMutationService | cash-financing-api.ts |
 | POST /accounting/cash-loans | mobilePostAccountingCashLoans | CashLoanCreateRequest | 200, 400, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService, AccountingCashOperationsService | cash-financing-api.ts |
-| POST /accounting/cash-loans/{id}/payments | mobilePostAccountingCashLoansByIdPayments | CashPaymentRequest | 200, 400, 401, 500 | bearer | — | — | AccountingCashOperationsMutationService | cash-financing-api.ts |
+| POST /accounting/cash-loans/{id}/payments | mobilePostAccountingCashLoansByIdPayments | CashPaymentRequest | 200, 400, 401, 500 | bearer | — | sí | AccountingCashOperationsMutationService | cash-financing-api.ts |
 | POST /accounting/reconciliation/expenses | mobilePostAccountingReconciliationExpenses | ExpenseReconciliationRequest | 200, 400, 401, 500 | bearer | — | — | AccountingReconciliationService | reconciliation-api.ts |
 | POST /accounting/reconciliation/sales | mobilePostAccountingReconciliationSales | SaleReconciliationRequest | 200, 400, 401, 500 | bearer | — | — | AccountingReconciliationService | reconciliation-api.ts |
 | POST /accounting/reconciliation/services | mobilePostAccountingReconciliationServices | ServiceReconciliationRequest | 200, 400, 401, 500 | bearer | — | sí | AccountingReconciliationService | reconciliation-api.ts |
