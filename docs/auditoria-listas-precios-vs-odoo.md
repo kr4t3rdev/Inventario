@@ -2,7 +2,7 @@
 
 **Fecha**: 2026-09-12 · **Última revisión de estado**: 2026-10-18
 **Origen**: análisis comparativo hecho en otra sesión, verificado línea por línea contra el código.
-**Estado general**: LP-0 ✅ implementado · LP-1 🟡 parcial (1 de 4 puntos) · LP-2 a LP-6 ❌ pendientes. Las referencias verificadas en esta revisión se actualizaron; el resto de números de línea pueden haberse desplazado con el schema.
+**Estado general**: LP-0 ✅ y LP-1 ✅ implementados · LP-2 a LP-6 ❌ pendientes. Las referencias verificadas en esta revisión se actualizaron; el resto de números de línea pueden haberse desplazado con el schema.
 
 ---
 
@@ -11,7 +11,7 @@
 | # | Claim del análisis | Veredicto | Evidencia |
 |---|---|---|---|
 | 1 | Listas múltiples + por punto de venta, con fallback a precio base | ✅ Correcto | `PuntoDeVenta.listaPrecioId`; resolución LISTA→BASE en `src/lib/api/productos-ubicacion.ts:127-144` |
-| 2 | Lista por cliente: el POS la prioriza pero `listaPrecioId` no existe en `Cliente` — bug latente, código roto a nivel schema | ❌ **Desactualizado** | El bug se corrigió en CU-08: commit `6dd6552f` + migración `20260906000002_cliente_lista_precio`. `Cliente.listaPrecioId` existe en `prisma/schema.prisma:139` con relación `SetNull`. **Nota 2026-10-18**: el flujo POS ya funciona (H2 resuelto con LP-1, punto 1); el fondo que queda es H3 y unificar el resolver (LP-1, puntos 2 y 3) |
+| 2 | Lista por cliente: el POS la prioriza pero `listaPrecioId` no existe en `Cliente` — bug latente, código roto a nivel schema | ❌ **Desactualizado** | El bug se corrigió en CU-08: commit `6dd6552f` + migración `20260906000002_cliente_lista_precio`. `Cliente.listaPrecioId` existe en `prisma/schema.prisma:139` con relación `SetNull`. **Nota 2026-10-18**: H2 resuelto y LP-1 completo (esDefault como fallback + resolver unificado); no queda fondo abierto de este claim |
 | 3 | Reglas por cantidad/volumen: no existen, precio único por (lista, producto) | ✅ Correcto | `PrecioProducto` = `@@unique([listaPrecioId, productoId])` + `precio Int`, sin `cantidadMinima` (`schema.prisma:2842-2853`) |
 | 4 | Fórmulas: solo sugerencia margen sobre costo, manual y por lote | ✅ Correcto, con matiz | `src/features/ficha-costo/actions-sugerencias.ts`: `precioCosto × (1 + margenObjetivo)` con default 30%. **Matiz**: aplica sobre `Producto.precioVenta` (precio base), **no** sobre precios de listas |
 | 5 | Vigencias (fecha inicio/fin): no existen | ✅ Correcto | Ni `ListaPrecio` ni `PrecioProducto` tienen campos de fecha de vigencia |
@@ -26,8 +26,9 @@
 - **H1 — El servidor confía en el precio del cliente (seguridad).** `ventaItemSchema.precioUnitario` se acepta del payload con solo `int().min(0)` (`src/features/ventas/schemas.ts:11`) y `venta-mutation-service.ts:126` lo persiste tal cual. No hay re-resolución server-side contra la lista del PV ni del cliente: un cliente HTTP manipulado puede vender a cualquier precio ≥ 0. Odoo resuelve precios en servidor. **Esto es más urgente que cualquier feature de paridad.**
   - ✅ **RESUELTO (2026-09-12, LP-0)**: `VentaMutationService` re-resuelve con `resolvePrecioVenta` (`src/features/ventas/services/precio-venta-resolver.ts`); la desviación se rechaza con `PRICE_MISMATCH` salvo permiso `ventas.precio.override`, auditado con `AuditLogService` dentro de la transacción. Tests: `src/features/ventas/__tests__/venta-price-integrity.test.ts` y `precio-venta-resolver.test.ts`. Detalle operativo: `content/docs/modules/ventas/integridad-precios.md`.
 - **H2 — La lista del cliente nunca llega al POS web.** `pv-interface.tsx` llama `getPrecioEfectivo(producto, clienteListaPrecioId)`, pero los productos vienen de `GET /api/ventas/punto-venta/[id]/productos` (`ProductoConStock`), que **no incluye el array `precios`**. La rama cliente de `getPrecioEfectivo` (`src/lib/types/pricing.ts:22-27`) es código muerto en el POS; la lista del cliente solo aplica en Ofertas (`src/features/ofertas/actions.ts:58-64`, que sí hace `include: { precios: true }`). O sea: CU-08 arregló el schema; el flujo POS sigue roto.
-  - ✅ **RESUELTO (LP-1, punto 1)**: `pv-client.ts` solicita `GET /api/ventas/punto-venta/[id]/productos?clienteId=`, `getProductosPorUbicacion` (`src/lib/api/productos-ubicacion.ts`) incluye el array `precios` (listas del PV + del cliente) y la UI del POS vuelve a usar la rama cliente de `getPrecioEfectivo`. Queda pendiente dentro de LP-1: reemplazar `getPrecioEfectivo` por el resolver unificado (punto 3).
-- **H3 — `esDefault` no participa en la resolución.** La lista marcada como default solo sirve para administración (unicidad); si un PV no tiene lista asignada se usa el precio base, nunca la lista default. **Sigue abierto (2026-10-18)**; es el punto 2 de LP-1.
+  - ✅ **RESUELTO (LP-1, punto 1)**: `pv-client.ts` solicita `GET /api/ventas/punto-venta/[id]/productos?clienteId=`, `getProductosPorUbicacion` (`src/lib/api/productos-ubicacion.ts`) incluye el array `precios` (listas del PV + del cliente) y la UI del POS vuelve a usar la rama cliente de `getPrecioEfectivo`. El punto 3 también quedó resuelto (2026-10-18): `getPrecioEfectivo` es ahora un adaptador puro que delega en `resolvePrecioVenta`.
+- **H3 — `esDefault` no participa en la resolución.** La lista marcada como default solo sirve para administración (unicidad); si un PV no tiene lista asignada se usa el precio base, nunca la lista default.
+  - ✅ **RESUELTO (2026-10-18, LP-1.2)**: `esDefault` es fallback intermedio de la cadena cliente > PV > default > base en `resolvePrecioVenta` (`precio-venta-resolver.ts`), aplicado por `venta-mutation-service`, expuesto en el payload del POS (`listaPrecioDefaultId` + entradas de la default en `precios`) y usado también por Ofertas. En almacén no participa (sin contexto de venta).
 - **H4 — Todos los precios son `Int`.** `Producto.precioVenta`, `PrecioProducto.precio`, `VentaItem.precioUnitario` son enteros. Cualquier fórmula (%, escalones) tendrá que decidir política de redondeo; no hay soporte de decimales. **Sigue abierto (2026-10-18)**; decidir la política de redondeo es condición previa de LP-2/LP-3/LP-4.
 
 ---
@@ -51,15 +52,15 @@ Ordenado por valor/riesgo. LP-0 es precondición de seguridad; LP-1/LP-2 complet
 
 ### LP-1 — Completar lista por cliente en el POS (P1, terminar lo medio construido)
 
-> 🟡 **PARCIAL (verificado 2026-10-18): punto 1 hecho; puntos 2, 3 y 4 pendientes.**
+> ✅ **IMPLEMENTADO COMPLETO (2026-10-18)**: los 4 puntos hechos. Commits `f1be2cbf` (esDefault), `5be46fe4` (resolver unificado) y `633e2c4e` (E2E + fixtures). La cadena vive solo en `resolvePrecioVenta`; el POS la hereda vía un adaptador puro, Ofertas y `VentaMutationService` llaman al resolver directo, y el E2E `e2e/pos-lista-precio-cliente.spec.ts` valida el ciclo completo en el navegador.
 
 **Problema**: H2 (+ H3 como opción de diseño).
 
 **Solución**:
 1. ✅ **Hecho** (junto a LP-0): incluir `precios` (lista, precio) de las listas relevantes en `getProductosPorUbicacion`: la del PV + la del cliente si el POS envía `clienteId` (agregar query param opcional) — o incluir todas las listas del tenant si el volumen lo permite (productos × listas puede crecer; mejor filtrado por cliente). Implementado en `src/lib/api/productos-ubicacion.ts` + `GET /api/ventas/punto-venta/[puntoDeVentaId]/productos?clienteId=`; el POS lo solicita vía `src/features/ventas/lib/pv-client.ts`.
-2. ❌ **Pendiente**: decidir el rol de `esDefault`: o se usa como fallback intermedio (cliente > PV > default > base) o se elimina el campo para no mentir. Recomendado: usarlo como fallback — es lo que un usuario espera del label "default".
-3. ❌ **Pendiente**: unificar la cadena en un solo `resolvePrecioVenta({ producto, pvListaId, clienteListaId, defaultListaId })` usado por POS, Ofertas y VentaMutationService. Hoy solo `venta-mutation-service.ts` usa el resolver; el POS sigue resolviendo con `getPrecioEfectivo` (`src/lib/types/pricing.ts`) — doble implementación de la misma regla, con riesgo de divergencia entre lo que muestra el carrito y lo que valida el servidor.
-4. ❌ **Pendiente**: E2E de venta en POS con cliente con lista asignada cobrando precio de lista de cliente (verificado 2026-10-18: no existe).
+2. ✅ **Hecho (2026-10-18)**: decidir el rol de `esDefault`: se usa como fallback intermedio (cliente > PV > default > base), la opción recomendada — es lo que un usuario espera del label "default". Implementado en `resolvePrecioVenta` + `venta-mutation-service` + payload del POS (`listaPrecioDefaultId`).
+3. ✅ **Hecho (2026-10-18)**: la cadena está unificada en un solo `resolvePrecioVenta({ precioBase, precios, pvListaId, clienteListaId, defaultListaId })` usado por POS, Ofertas y VentaMutationService. `getPrecioEfectivo` (`src/lib/types/pricing.ts`) quedó como adaptador puro de wiring (el POS hereda la cadena completa sin tocar sus call sites) y `createOfertaAction` llama directo al resolver con la default del tenant; la rama muerta de `precioVentaResuelto` en `nuevo-pedido-dialog` se eliminó.
+4. ✅ **Hecho (2026-10-18)**: E2E `e2e/pos-lista-precio-cliente.spec.ts` — venta en POS con cliente con lista asignada cobra 150 (su lista) sobre 165 (default del tenant) y 180 (base); fixtures sembradas por `scripts/seed-e2e-user.ts` (`seedPrecioListaCatalog`). Corre con `pnpm run test:e2e`: global setup crea el tenant/usuario desechable local, el spec inicia sesión con esas credenciales y usa el `baseURL` local de Playwright.
 
 ### LP-2 — Vigencias en reglas de precio (P1)
 
@@ -110,11 +111,11 @@ Motor de impuestos real es un proyecto propio (tasas, incluido/excluido, posici�
 
 ```
 LP-0 (integridad server-side) ✅
-  └─ LP-1 (lista cliente en POS + resolver unificado + esDefault) 🟡 solo punto 1
+  └─ LP-1 (lista cliente en POS + resolver unificado + esDefault) ✅ completo (2026-10-18)
        ├─ LP-2 (vigencias) ❌
        └─ LP-3 (escalones) ❌
             └─ LP-4 (moneda) ❌ ── LP-5 (descuento línea) ❌
 LP-6 (impuestos) ❌: track aparte con facturación fiscal
 ```
 
-Cada LP es un change openspec propio con TDD (tests primero), code-review y commit por fase, siguiendo el protocolo del proyecto. Aplica a lo pendiente: LP-1 (puntos 2-4) y LP-2 en adelante.
+Cada LP es un change openspec propio con TDD (tests primero), code-review y commit por fase, siguiendo el protocolo del proyecto. Aplica a lo pendiente: LP-2 en adelante.

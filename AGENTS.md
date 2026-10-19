@@ -50,12 +50,13 @@ Stack tecnológico:
 - Helper `getCategoryLabels(usaEan13)` en `src/features/categorias/lib/category-labels.ts`
 - Validación CLAS: `CategoriaValidator` en `src/lib/categoria-validation.ts`
 
-## Motor de precios (LP-0, implementado 2026-09-12)
+## Motor de precios (LP-0 + LP-1, implementados 2026-09-12 / 2026-10-18)
 
 - El servidor re-resuelve precios en toda creación de venta; el `precioUnitario` del payload debe coincidir o la venta se rechaza con `PRICE_MISMATCH`.
-- Cadena de prioridad: lista del cliente > lista del punto de venta > `Producto.precioVenta`. Resolver puro en `src/features/ventas/services/precio-venta-resolver.ts`.
+- Cadena de prioridad: lista del cliente > lista del punto de venta > lista default del tenant (`esDefault`, LP-1.2) > `Producto.precioVenta`. Resolver puro en `src/features/ventas/services/precio-venta-resolver.ts`, única implementación: server (ventas, ofertas) y POS (adaptador `getPrecioEfectivo` en `src/lib/types/pricing.ts`).
 - Desviaciones solo con permiso `ventas.precio.override` (default manager, `sensitive`), auditadas en `AuditLog` dentro de la transacción.
-- El payload del POS incluye `precios` por producto (listas PV+cliente) via `GET /api/ventas/punto-venta/[id]/productos?clienteId=`; endpoint fail-closed: sin tenant en contexto → 403.
+- El payload del POS incluye `precios` por producto (listas PV+cliente+default) y `listaPrecioDefaultId` via `GET /api/ventas/punto-venta/[id]/productos?clienteId=`; endpoint fail-closed: sin tenant en contexto → 403. En almacén la default no participa.
+- E2E del ciclo completo (cliente 150 > default 165 > base 180): `e2e/pos-lista-precio-cliente.spec.ts` con fixtures en `scripts/seed-e2e-user.ts`.
 - Doc completa: `content/docs/modules/ventas/integridad-precios.md`. Plan de extensión (vigencias, escalones, moneda): `docs/auditoria-listas-precios-vs-odoo.md`.
 
 

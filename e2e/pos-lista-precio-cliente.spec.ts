@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import path from 'path';
 
 /**
  * E2E LP-1.4: una venta en POS con un cliente con lista asignada cobra el
@@ -15,31 +14,43 @@ import path from 'path';
  * - Producto 'E2E Aceite Volumen 1L' con precio base 180.
  * - Licencia E2E con facturacion + ventas-factura (flujo POS con cliente).
  *
- * Requiere sesión preparada por e2e/prep-auth.spec.ts (e2e/.auth/state.json).
- * En entornos sin estas fixtures cada test se omite con aviso.
+ * Usa el usuario y contraseña sembrados por e2e/global-setup.ts y el baseURL
+ * local de playwright.config.ts; no depende de una sesión estática ni del sitio
+ * desplegado.
  */
-
-const STORAGE = path.join(process.cwd(), 'e2e', '.auth', 'state.json');
-const BASE = process.env.E2E_BASE_URL || 'https://kr4t3rdev.xyz';
-
-test.use({ storageState: STORAGE });
 
 test.describe('POS — lista de precios del cliente (LP-1.4)', () => {
 	test.setTimeout(180_000);
 
 	test('cobra la lista del cliente (150) sobre la default (165) y el base (180)', async ({ page }) => {
-		await page.goto(`${BASE}/busy/sales/new`);
+		const email = process.env.E2E_USER_EMAIL;
+		const password = process.env.E2E_USER_PASSWORD;
+		if (!email || !password) {
+			throw new Error('globalSetup debe proporcionar las credenciales E2E sembradas.');
+		}
 
-		// Seleccionar el PV fixture; sin seed se omite con aviso.
+		// Autenticar contra la misma instancia local donde globalSetup sembró el tenant.
+		await page.goto('/login');
+		const loginStatus = await page.evaluate(async (credentials) => {
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(credentials),
+			});
+			return response.status;
+		}, { email, password });
+		expect(loginStatus).toBe(200);
+
+		await page.goto('/busy/sales/new');
+
+		// La fixture se siembra obligatoriamente en globalSetup; su ausencia es fallo.
 		const pvTrigger = page
 			.getByRole('combobox')
 			.filter({ hasText: 'Seleccionar punto de venta' });
 		await expect(pvTrigger).toBeVisible({ timeout: 20_000 });
 		await pvTrigger.click();
 		const opcionPv = page.getByRole('option', { name: 'E2E Punto de Venta' });
-		if (!(await opcionPv.isVisible().catch(() => false))) {
-			test.skip(true, 'Entorno sin fixtures de listas de precios (seed e2e local requerido)');
-		}
+		await expect(opcionPv).toBeVisible();
 		await opcionPv.click();
 
 		// Buscar el producto fixture y usar la vista de lista ($X.XX legible).
@@ -58,9 +69,7 @@ test.describe('POS — lista de precios del cliente (LP-1.4)', () => {
 			.getByRole('button', { name: 'Agregar E2E Aceite Volumen 1L al carrito' })
 			.click();
 		const botonFactura = page.getByRole('button', { name: 'Crear venta y factura' });
-		if (!(await botonFactura.isVisible().catch(() => false))) {
-			test.skip(true, 'El plan del usuario e2e no tiene facturación (flujo con cliente)');
-		}
+		await expect(botonFactura).toBeVisible();
 		await botonFactura.click();
 		await expect(page.getByText('Elige un cliente')).toBeVisible({ timeout: 10_000 });
 
