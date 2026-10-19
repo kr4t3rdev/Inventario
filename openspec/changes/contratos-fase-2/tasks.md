@@ -71,7 +71,7 @@ Rama: `feat/contratos-fase-2` (worktree dedicado `../TCP-sesion-d-contratos`, ba
 - [x] `pnpm exec tsc --noEmit` sin errores nuevos.
 - [x] `pnpm run lint` limpio en archivos tocados.
 - [x] Code review (typescript-reviewer) y correcciones.
-- [x] Dejar la rama lista para merge a `main` — **sin ejecutar el merge** (espera aviso del usuario).
+- [x] Dejar la rama lista para merge a `main` — **sin ejecutar el merge** (espera aviso del usuario). Autorizado el 2026-10-19: fast-forward `e010668f → e35a23da` vía `feat/sesion-d-integracion`.
 
 ## Integración con main + correcciones del review (2026-10-19, rama feat/sesion-d-integracion)
 
