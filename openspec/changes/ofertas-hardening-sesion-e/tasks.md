@@ -81,7 +81,7 @@ Reglas de ejecución (aplican a todas las fases):
   Compiler en `useReactTable`, ajeno al cambio).
 - [x] Spec delta revisado contra la implementación final
   (`specs/ofertas/spec.md` — los 6 requirements cubiertos por tests).
-- [ ] Merge a `main` — **espera aviso explícito del usuario**.
+- [x] Merge a `main` — autorizado el 2026-10-19: fast-forward `19bfb880 → 8ac9004b` vía `feat/sesion-e-integracion`.
 
 ## Integración con main + correcciones del review (2026-10-19, rama feat/sesion-e-integracion)
 
