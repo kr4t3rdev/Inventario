@@ -37,6 +37,11 @@ export async function run(): Promise<E2EFixtureOwnership> {
         unidadKgId: `${fixtureId}-unidad-kilogramo`,
         productoAceiteId: `${fixtureId}-producto-aceite`,
         productoArrozId: `${fixtureId}-producto-arroz`,
+        // LP-1.4: fixtures de listas de precios para el E2E del POS.
+        listaClienteId: `${fixtureId}-lista-cliente`,
+        listaDefaultId: `${fixtureId}-lista-default`,
+        clienteListaId: `${fixtureId}-cliente-lista`,
+        pvListaId: `${fixtureId}-pv-lista`,
       }
 
       /**
@@ -188,6 +193,9 @@ export async function run(): Promise<E2EFixtureOwnership> {
               servicios: true,
               'venta-servicios': true,
               'compras-servicios': true,
+              // LP-1.4: el flujo POS con cliente exige facturación.
+              facturacion: true,
+              'ventas-factura': true,
             },
           },
           create: {
@@ -205,6 +213,9 @@ export async function run(): Promise<E2EFixtureOwnership> {
               servicios: true,
               'venta-servicios': true,
               'compras-servicios': true,
+              // LP-1.4: el flujo POS con cliente exige facturación.
+              facturacion: true,
+              'ventas-factura': true,
             },
             listPriceUsd: 0,
             finalPriceUsd: 0,
@@ -258,6 +269,110 @@ export async function run(): Promise<E2EFixtureOwnership> {
             clienteId: `${fixtureId}-cliente-1`,
             tenantId: E2E_TENANT_ID,
             nombre: 'Cliente Demo',
+          },
+        })
+      }
+
+      /**
+       * @description Garantiza las fixtures de listas de precios para el E2E del
+       * POS (LP-1.4): lista default del tenant (fallback H3/LP-1.2), lista del
+       * cliente, cliente con lista asignada, punto de venta sin lista propia
+       * y stock del producto fixture en ese PV. Precios: base 180, default 165,
+       * cliente 150.
+       * @returns {Promise<void>} Catálogo de precios del tenant E2E.
+       */
+      async function seedPrecioListaCatalog(): Promise<void> {
+        await prisma.listaPrecio.upsert({
+          where: { id: E2E_FIXTURES.listaDefaultId },
+          update: { nombre: 'E2E Lista Default' },
+          create: {
+            id: E2E_FIXTURES.listaDefaultId,
+            tenantId: E2E_TENANT_ID,
+            nombre: 'E2E Lista Default',
+            esDefault: true,
+          },
+        })
+
+        await prisma.listaPrecio.upsert({
+          where: { id: E2E_FIXTURES.listaClienteId },
+          update: { nombre: 'E2E Lista Cliente' },
+          create: {
+            id: E2E_FIXTURES.listaClienteId,
+            tenantId: E2E_TENANT_ID,
+            nombre: 'E2E Lista Cliente',
+            esDefault: false,
+          },
+        })
+
+        await prisma.cliente.upsert({
+          where: { clienteId: E2E_FIXTURES.clienteListaId },
+          update: {},
+          create: {
+            clienteId: E2E_FIXTURES.clienteListaId,
+            tenantId: E2E_TENANT_ID,
+            nombre: 'E2E Cliente Lista',
+            listaPrecioId: E2E_FIXTURES.listaClienteId,
+          },
+        })
+
+        await prisma.precioProducto.upsert({
+          where: {
+            listaPrecioId_productoId: {
+              listaPrecioId: E2E_FIXTURES.listaDefaultId,
+              productoId: E2E_FIXTURES.productoAceiteId,
+            },
+          },
+          update: { precio: 165 },
+          create: {
+            listaPrecioId: E2E_FIXTURES.listaDefaultId,
+            productoId: E2E_FIXTURES.productoAceiteId,
+            precio: 165,
+          },
+        })
+
+        await prisma.precioProducto.upsert({
+          where: {
+            listaPrecioId_productoId: {
+              listaPrecioId: E2E_FIXTURES.listaClienteId,
+              productoId: E2E_FIXTURES.productoAceiteId,
+            },
+          },
+          update: { precio: 150 },
+          create: {
+            listaPrecioId: E2E_FIXTURES.listaClienteId,
+            productoId: E2E_FIXTURES.productoAceiteId,
+            precio: 150,
+          },
+        })
+
+        await prisma.puntoDeVenta.upsert({
+          where: { pvId: E2E_FIXTURES.pvListaId },
+          update: { nombre: 'E2E Punto de Venta' },
+          create: {
+            pvId: E2E_FIXTURES.pvListaId,
+            tenantId: E2E_TENANT_ID,
+            nombre: 'E2E Punto de Venta',
+            almacenId: E2E_FIXTURES.almacenId,
+          },
+        })
+
+        await prisma.stockUbicacion.upsert({
+          where: {
+            productoId_tipoUbicacion_ubicacionId: {
+              productoId: E2E_FIXTURES.productoAceiteId,
+              tipoUbicacion: 'punto_venta',
+              ubicacionId: E2E_FIXTURES.pvListaId,
+            },
+          },
+          update: { cantidad: 50, cantidadReservada: 0, cantidadDisponible: 50 },
+          create: {
+            tenantId: E2E_TENANT_ID,
+            productoId: E2E_FIXTURES.productoAceiteId,
+            tipoUbicacion: 'punto_venta',
+            ubicacionId: E2E_FIXTURES.pvListaId,
+            cantidad: 50,
+            cantidadReservada: 0,
+            cantidadDisponible: 50,
           },
         })
       }
@@ -319,6 +434,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
         await seedProductionCatalog()
         await seedLicenseE2E()
         await seedServiciosCatalog()
+        await seedPrecioListaCatalog()
 
         return { tenantId: E2E_TENANT_ID, userId: user.userId, email: E2E_USER.email };
       }

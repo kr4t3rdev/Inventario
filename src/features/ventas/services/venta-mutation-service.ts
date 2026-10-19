@@ -209,9 +209,9 @@ export const VentaMutationService = {
       }
     }
 
-    // ── Resolución server-side de precios (LP-0): el precioUnitario del
-    // payload nunca se persiste tal cual; se valida contra la cadena
-    // cliente > PV > base antes de abrir la transacción.
+    // ── Resolución server-side de precios (LP-0 + LP-1.2): el precioUnitario
+    // del payload nunca se persiste tal cual; se valida contra la cadena
+    // cliente > PV > default del tenant > base antes de abrir la transacción.
     const puntoVenta = await prisma.puntoDeVenta.findFirst({
       where: { pvId: parsed.puntoDeVentaId, tenantId },
       select: { pvId: true, listaPrecioId: true },
@@ -219,6 +219,13 @@ export const VentaMutationService = {
     if (!puntoVenta) {
       throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
     }
+
+    // Lista marcada como default del tenant: fallback intermedio (H3/LP-1.2).
+    const listaDefault = await prisma.listaPrecio.findFirst({
+      where: { tenantId, esDefault: true },
+      select: { id: true },
+    });
+    const defaultListaId = listaDefault?.id ?? null;
 
     let clienteListaId: string | null = null;
     let clienteLimiteCredito: number | null = null;
@@ -261,6 +268,7 @@ export const VentaMutationService = {
         precios: producto.precios,
         pvListaId: puntoVenta.listaPrecioId,
         clienteListaId,
+        defaultListaId,
       });
       if (precio !== item.precioUnitario) {
         if (!puedeOverridePrecio) {

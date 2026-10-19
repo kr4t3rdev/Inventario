@@ -63,6 +63,8 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
+  // La cadena completa (cliente > default del tenant > base) vive en
+  // resolverItemsOferta, compartida con ventas (LP-1.2/LP-1.3).
   const resolvedItems = await resolverItemsOferta(tenantId, parsed.items, cliente.listaPrecioId);
 
   const totales = calcularTotalesOferta(

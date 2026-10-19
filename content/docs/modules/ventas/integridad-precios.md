@@ -2,7 +2,7 @@
 
 > El servidor — no el cliente — decide qué precio vale al vender. El `precioUnitario` que llega en el payload se trata como una *declaración* que debe coincidir con el precio vigente; si no coincide y el usuario no tiene permiso de excepción, la venta se rechaza sin efectos.
 
-**Estado**: implementado y desplegado (2026-09-12, commits T1–T5 + cierre; change archivado en `openspec/changes/archive/2026-09-12-ventas-precio-server-lp0/`).
+**Estado**: implementado y desplegado (2026-09-12, commits T1–T5 + cierre; change archivado en `openspec/changes/archive/2026-09-12-ventas-precio-server-lp0/`). Cadena extendida con la lista default del tenant y resolver unificado en POS/Ofertas (LP-1.2/LP-1.3, 2026-10-18).
 
 ## Por qué existe
 
@@ -13,25 +13,27 @@ Antes de LP-0, `VentaMutationService.create` persistía el `precioUnitario` exac
 Toda asignación de precio sigue esta prioridad:
 
 ```
-1. Lista del cliente   (Cliente.listaPrecioId → PrecioProducto)
-2. Lista del POS       (PuntoDeVenta.listaPrecioId → PrecioProducto)
-3. Precio base         (Producto.precioVenta)
+1. Lista del cliente        (Cliente.listaPrecioId → PrecioProducto)
+2. Lista del POS            (PuntoDeVenta.listaPrecioId → PrecioProducto)
+3. Lista default del tenant (ListaPrecio.esDefault → PrecioProducto; LP-1.2)
+4. Precio base              (Producto.precioVenta)
 ```
 
 La lógica vive en una función pura, sin I/O ni redondeos (todos los precios son `Int`):
 
-- `src/features/ventas/services/precio-venta-resolver.ts` → `resolvePrecioVenta({ precioBase, precios, pvListaId, clienteListaId })` devuelve `{ precio, fuente: 'CLIENTE' | 'PV' | 'BASE' }`.
+- `src/features/ventas/services/precio-venta-resolver.ts` → `resolvePrecioVenta({ precioBase, precios, pvListaId, clienteListaId, defaultListaId })` devuelve `{ precio, fuente: 'CLIENTE' | 'PV' | 'DEFAULT' | 'BASE' }`.
 
-En el navegador, el POS replica la misma cadena con `getPrecioEfectivo` (`src/lib/types/pricing.ts`), alimentado por el array `precios` del payload.
+En el navegador, el POS replica la misma cadena con `getPrecioEfectivo` (`src/lib/types/pricing.ts`), que desde LP-1.3 es un adaptador puro que delega en `resolvePrecioVenta`, alimentado por el array `precios` y los ids de lista del payload. Ofertas (`createOfertaAction`) llama directo al resolver con la default del tenant.
 
 ## Enforcement en la creación de venta
 
 `VentaMutationService.create` (punto único de web POS, API legacy y mobile) hace, **antes de abrir la transacción**:
 
 1. Carga el punto de venta con `tenantId` explícito → `NOT_FOUND` si no existe en el tenant.
-2. Si hay `clienteId`, carga el cliente con `tenantId` explícito → `NOT_FOUND` si no existe (un cliente ajeno no filtra su lista).
-3. Carga en una sola query los productos con sus `precios` → `NOT_FOUND` si alguno falta.
-4. Resuelve cada ítem y compara con el `precioUnitario` enviado:
+2. Carga la lista marcada `esDefault` del tenant con `tenantId` explícito → fallback intermedio de la cadena (LP-1.2).
+3. Si hay `clienteId`, carga el cliente con `tenantId` explícito → `NOT_FOUND` si no existe (un cliente ajeno no filtra su lista).
+4. Carga en una sola query los productos con sus `precios` → `NOT_FOUND` si alguno falta.
+5. Resuelve cada ítem y compara con el `precioUnitario` enviado:
    - **Coincide** → flujo normal, sin ruido.
    - **Difiere y el usuario tiene `ventas.precio.override`** → se persiste el precio enviado y, dentro de la transacción, `AuditLogService.logStrict` registra `tipo: 'PRICE_OVERRIDE'` con `precioEsperado`, `precioAplicado` y `fuente` por ítem (si la auditoría falla, la venta hace rollback).
    - **Difiere sin permiso** → `ActionError('PRICE_MISMATCH')`, HTTP 400, antes de tocar stock o crear la venta.
@@ -47,8 +49,8 @@ El precio persistido en `VentaItem` y los totales derivan solo de esta resoluci�
 ## Flujo del POS (coherencia UI ↔ servidor)
 
 1. Al seleccionar PV (y al cambiar de cliente) el POS llama `GET /api/ventas/punto-venta/[id]/productos?clienteId=…`.
-2. La respuesta incluye por producto `precios: [{ listaPrecioId, precio }]` con las entradas de la lista del PV y la del cliente.
-3. `getPrecioEfectivo` aplica la cadena cliente > PV > base y el carrito se recalcula mostrando toast por cada ítem cuyo precio cambió.
+2. La respuesta incluye por producto `precios: [{ listaPrecioId, precio }]` con las entradas de la lista del PV, la del cliente y la lista default del tenant, además de `listaPrecioDefaultId` (solo en puntos de venta; en almacén la default no participa).
+3. `getPrecioEfectivo` — adaptador del resolver compartido (LP-1.3) — aplica la cadena cliente > PV > default > base y el carrito se recalcula mostrando toast por cada ítem cuyo precio cambió.
 4. Mientras `isFetchingProductos` está activo los botones de cobro se deshabilitan, para evitar cobrar en la ventana entre el cambio de cliente y el refetch.
 
 Contrato de lectura del endpoint: sin `tenantId` en el contexto responde 403 (fail-closed); PV, almacén, productos y cliente se filtran siempre por tenant. En almacenes nunca se devuelven precios de listas.
@@ -67,7 +69,7 @@ Contrato de lectura del endpoint: sin `tenantId` en el contexto responde 403 (fa
 ## Limitaciones conocidas (intencionales, con plan)
 
 - **TOCTOU**: la resolución ocurre antes de la transacción; si una lista cambia en esa ventana de milisegundos, la auditoría registra el precio esperado de ese instante. Trade-off aceptado para no alargar la transacción.
-- `esDefault` de `ListaPrecio` aún no participa en la cadena de resolución (un PV sin lista usa el precio base, no la lista default). Planificado en **LP-1**.
+- `esDefault` de `ListaPrecio` **ya participa** en la cadena desde LP-1.2 (2026-10-18): la lista default es fallback intermedio en el POS, Ofertas y la validación server-side; el E2E `e2e/pos-lista-precio-cliente.spec.ts` valida el ciclo completo.
 - Reglas por cantidad, vigencias, monedas por lista y descuento por línea: planificadas en LP-2 a LP-5 (ver `docs/auditoria-listas-precios-vs-odoo.md`).
 
 ## Referencias

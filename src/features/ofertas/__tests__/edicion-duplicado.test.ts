@@ -27,6 +27,7 @@ vi.mock('@/lib/prisma', () => ({
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     cliente: { findFirst: vi.fn() },
+    listaPrecio: { findFirst: vi.fn() },
     producto: { findFirst: vi.fn() },
     servicios: { findFirst: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockTx)),

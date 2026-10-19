@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import type { PrecioFuente } from "@/lib/types/pricing";
+import { resolvePrecioVenta } from "@/features/ventas/services/precio-venta-resolver";
 import { getAuthenticatedContext } from "@/lib/api/client";
 import { ServerActionError } from "@/lib/api/errors";
 import { getStockPorUbicacionBatch } from "@/lib/services/stock-ubicacion-queries";
@@ -14,9 +15,15 @@ export interface ProductoConStock {
 	precioFuente: "LISTA" | "BASE";
 	listaPrecioIdAplicada: string | null;
 	/**
+	 * Lista marcada `esDefault` del tenant (solo en puntos de venta). Permite
+	 * que la UI resuelva la misma cadena cliente > PV > default > base que
+	 * valida el servidor (LP-1.2/LP-1.3).
+	 */
+	listaPrecioDefaultId: string | null;
+	/**
 	 * Precios por lista relevantes al contexto (lista del PV + lista del
-	 * cliente cuando se pasa clienteId). Permite que el cliente aplique la
-	 * prioridad cliente > PV vía getPrecioEfectivo.
+	 * cliente cuando se pasa clienteId + lista default del tenant). Permite
+	 * que la UI aplique la cadena del resolver compartido.
 	 */
 	precios: Array<{ listaPrecioId: string; precio: number }>;
 	stock: number;
@@ -50,7 +57,8 @@ export interface ProductoConStock {
  *
  * @param ubicacionId - ID del punto de venta o almacén
  * @param clienteId - Opcional; en puntos de venta incluye también los precios
- *   de la lista del cliente para que la UI pueda aplicarlos (LP-0).
+ *   de la lista del cliente y de la lista default del tenant para que la UI
+ *   pueda aplicar la cadena completa cliente > PV > default > base (LP-0/LP-1.2).
  * @returns Lista de productos con stock > 0 en la ubicación
  * @throws {ServerActionError} si la ubicación no existe o hay error de base de datos
  */
@@ -120,13 +128,23 @@ export async function getProductosPorUbicacion(
 	});
 
 	// Precios por lista de precios (solo para punto de venta)
-	const preciosPorListaMap = new Map<string, number>();
-	// Entradas completas por lista relevante (PV + cliente) para el payload.
+	// Entradas completas por lista relevante (PV + cliente + default) para el payload.
 	const preciosPorProductoMap = new Map<
 		string,
 		Array<{ listaPrecioId: string; precio: number }>
 	>();
 	let clienteListaId: string | null = null;
+	// Lista marcada como default del tenant: fallback intermedio (H3/LP-1.2).
+	// Solo participa en el contexto de punto de venta, donde se venden.
+	let listaDefaultId: string | null = null;
+
+	if (isPuntoVenta) {
+		const listaDefault = await prisma.listaPrecio.findFirst({
+			where: { tenantId, esDefault: true },
+			select: { id: true },
+		});
+		listaDefaultId = listaDefault?.id ?? null;
+	}
 
 	if (isPuntoVenta && clienteId) {
 		const cliente = await prisma.cliente.findFirst({
@@ -136,7 +154,7 @@ export async function getProductosPorUbicacion(
 		clienteListaId = cliente?.listaPrecioId ?? null;
 	}
 
-	const listasRelevantes = [listaPrecioId, clienteListaId].filter(
+	const listasRelevantes = [listaPrecioId, clienteListaId, listaDefaultId].filter(
 		(id): id is string => id !== null,
 	);
 
@@ -150,9 +168,6 @@ export async function getProductosPorUbicacion(
 		});
 
 		for (const pl of preciosPorLista) {
-			if (pl.listaPrecioId === listaPrecioId) {
-				preciosPorListaMap.set(pl.productoId, Number(pl.precio));
-			}
 			const entradas = preciosPorProductoMap.get(pl.productoId) ?? [];
 			entradas.push({ listaPrecioId: pl.listaPrecioId, precio: Number(pl.precio) });
 			preciosPorProductoMap.set(pl.productoId, entradas);
@@ -174,10 +189,17 @@ export async function getProductosPorUbicacion(
 
 		const stockEnUbicacion = stockReg !== undefined ? stockReg.cantidad : 0;
 
-		const precioLista = preciosPorListaMap.get(producto.id);
-		const precioVentaResuelto = precioLista ?? Number(producto.precioVenta);
-		const precioFuente: PrecioFuente =
-			precioLista !== undefined ? "LISTA" : "BASE";
+		// Misma cadena server-side que valida la venta: PV > default > base
+		// (la lista del cliente la aplica la UI con el resolver compartido).
+		const { precio, fuente } = resolvePrecioVenta({
+			precioBase: Number(producto.precioVenta),
+			precios: preciosPorProductoMap.get(producto.id) ?? [],
+			pvListaId: listaPrecioId,
+			clienteListaId: null,
+			defaultListaId: listaDefaultId,
+		});
+		const precioVentaResuelto = precio;
+		const precioFuente: PrecioFuente = fuente === "BASE" ? "BASE" : "LISTA";
 
 		return {
 			...producto,
@@ -185,6 +207,7 @@ export async function getProductosPorUbicacion(
 			precioVentaResuelto,
 			precioFuente,
 			listaPrecioIdAplicada: listaPrecioId,
+			listaPrecioDefaultId: listaDefaultId,
 			precios: preciosPorProductoMap.get(producto.id) ?? [],
 		};
 	});

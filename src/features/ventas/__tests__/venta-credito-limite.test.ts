@@ -46,6 +46,7 @@ vi.mock('@/lib/prisma', () => ({
 	prisma: {
 		puntoDeVenta: { findFirst: vi.fn() },
 		cliente: { findFirst: mockClienteFindFirst },
+		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
 		cuentaPorCobrar: { findMany: mockCxcFindMany },
 		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),

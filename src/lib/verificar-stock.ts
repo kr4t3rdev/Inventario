@@ -91,11 +91,26 @@ export async function verificarStockBajo(
 
 		if (dryRun) return result;
 
-		// ── Obtener usuarios activos ──
-		const usuarios = (await prisma.user.findMany({
-			where: { isActive: true },
-			select: { userId: true, tenantId: true } as any,
-		})) as unknown as Array<{ userId: string; tenantId: string }>;
+		// ── Destinatarios: membresía activa del tenant de cada producto ──
+		// El modelo User no tiene escalar tenantId; la pertenencia se resuelve
+		// por TenantMembership (membresía y usuario activos), igual que en
+		// notificaciones-utils. Cache por tenant para corridas globales: cada
+		// producto notifica únicamente a los miembros de SU tenant.
+		const miembrosPorTenant = new Map<string, Array<{ userId: string }>>();
+		const miembrosDe = async (
+			tenantDelProducto: string,
+		): Promise<Array<{ userId: string }>> => {
+			let miembros = miembrosPorTenant.get(tenantDelProducto);
+			if (!miembros) {
+				const membresias = await prisma.tenantMembership.findMany({
+					where: { tenantId: tenantDelProducto, isActive: true, user: { isActive: true } },
+					select: { userId: true },
+				});
+				miembros = membresias;
+				miembrosPorTenant.set(tenantDelProducto, miembros);
+			}
+			return miembros;
+		};
 
 		const now = new Date();
 		const hace24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -116,10 +131,8 @@ export async function verificarStockBajo(
 
 				const almacenNombre = producto.almacen?.nombre ?? "N/A";
 
-				// Crear notificaciones para todos los usuarios del mismo tenant
-				const usuariosDelTenant = tenantId
-					? usuarios
-					: usuarios.filter((u) => u.tenantId === producto.tenantId);
+				// Notificar a los miembros activos del tenant del producto
+				const usuariosDelTenant = await miembrosDe(producto.tenantId);
 
 				if (usuariosDelTenant.length === 0) continue;
 
@@ -158,9 +171,7 @@ export async function verificarStockBajo(
 
 				if (notifExistente) continue;
 
-				const usuariosDelTenant = tenantId
-					? usuarios
-					: usuarios.filter((u) => u.tenantId === producto.tenantId);
+				const usuariosDelTenant = await miembrosDe(producto.tenantId);
 
 				if (usuariosDelTenant.length === 0) continue;
 

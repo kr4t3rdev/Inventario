@@ -1,12 +1,13 @@
 /**
  * @description Re-resuelve los ítems de una oferta a precio vigente en servidor:
- * cada producto/servicio se valida scoped por tenant y se toma su precio de
- * catálogo (lista del cliente sobre precio base). Lo que envíe el cliente en
- * precioUnitario/total nunca es autoridad (E-3/E-4).
+ * cada producto/servicio se valida scoped por tenant y se resuelve con la misma
+ * cadena que valida la venta (LP-1.3): lista del cliente > lista default del
+ * tenant > precio base. Lo que envíe el cliente en precioUnitario/total nunca
+ * es autoridad (E-3/E-4).
  */
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
-import { getPrecioEfectivo } from '@/lib/types/pricing';
+import { resolvePrecioVenta } from '@/features/ventas/services/precio-venta-resolver';
 
 export interface ItemEntradaOferta {
   productoId?: string;
@@ -33,6 +34,14 @@ export async function resolverItemsOferta(
   items: ItemEntradaOferta[],
   listaPrecioId: string | null,
 ): Promise<ItemResueltoOferta[]> {
+  // Lista marcada como default del tenant: fallback intermedio de la cadena
+  // compartida con ventas (LP-1.2/LP-1.3). Un solo lookup para todo el lote.
+  const listaDefault = await prisma.listaPrecio.findFirst({
+    where: { tenantId, esDefault: true },
+    select: { id: true },
+  });
+  const defaultListaId = listaDefault?.id ?? null;
+
   return Promise.all(items.map(async (item) => {
     if (item.productoId) {
       const producto = await prisma.producto.findFirst({
@@ -40,11 +49,20 @@ export async function resolverItemsOferta(
         include: { precios: true },
       });
       if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+      // Misma cadena que valida la venta: cliente > PV (n/a en ofertas) >
+      // default del tenant > base.
+      const { precio: precioUnitario } = resolvePrecioVenta({
+        precioBase: producto.precioVenta,
+        precios: producto.precios,
+        pvListaId: null,
+        clienteListaId: listaPrecioId,
+        defaultListaId,
+      });
       return {
         productoId: item.productoId,
         servicioId: null,
         cantidad: item.cantidad,
-        precioUnitario: getPrecioEfectivo(producto, listaPrecioId),
+        precioUnitario,
       };
     }
 

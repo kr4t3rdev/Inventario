@@ -35,6 +35,7 @@ vi.mock('@/lib/prisma', () => ({
       delete: vi.fn(),
     },
     cliente: { findFirst: vi.fn() },
+    listaPrecio: { findFirst: vi.fn() },
     producto: { findFirst: vi.fn() },
     turnoPuntoVenta: { findFirst: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -147,6 +148,76 @@ describe('Ofertas Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(prisma.oferta.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('resuelve el precio con la cadena cliente > default del tenant (LP-1.3)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      // Cliente sin lista; el tenant tiene una default con entrada 120.
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+        clienteId: 'cli-1', nombre: 'Test', listaPrecioId: null,
+      } as any);
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: 'lp-default' } as any);
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000,
+        precios: [{ listaPrecioId: 'lp-default', precio: 120 }],
+      } as any);
+      vi.mocked(prisma.oferta.create).mockResolvedValue({ ofertaId: 'of-1' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 1000, total: 2000 }],
+      });
+
+      expect(result.success).toBe(true);
+      // El server re-resuelve: la default del tenant (120) manda sobre el
+      // precio base (1000) y sobre el precioUnitario que mandó el cliente.
+      expect(prisma.oferta.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            items: {
+              create: [expect.objectContaining({ precioUnitario: 120, total: 240 })],
+            },
+          }),
+        }),
+      );
+      // El lookup de la default va scoped al tenant.
+      expect(prisma.listaPrecio.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 'tenant-test', esDefault: true }),
+        }),
+      );
+    });
+
+    it('la lista del cliente gana sobre la default del tenant en ofertas', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+        clienteId: 'cli-1', nombre: 'Test', listaPrecioId: 'lp-cliente',
+      } as any);
+      vi.mocked(prisma.listaPrecio.findFirst).mockResolvedValue({ id: 'lp-default' } as any);
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000,
+        precios: [
+          { listaPrecioId: 'lp-default', precio: 120 },
+          { listaPrecioId: 'lp-cliente', precio: 100 },
+        ],
+      } as any);
+      vi.mocked(prisma.oferta.create).mockResolvedValue({ ofertaId: 'of-2' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', cantidad: 1, precioUnitario: 1000, total: 1000 }],
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.oferta.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            items: {
+              create: [expect.objectContaining({ precioUnitario: 100, total: 100 })],
+            },
+          }),
+        }),
+      );
     });
 
     it('E-3 rechaza impuestos que superan el subtotal resuelto (TAX_INVALID)', async () => {

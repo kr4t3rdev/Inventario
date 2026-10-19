@@ -13,23 +13,29 @@ interface NotificationData {
 
 export async function crearNotificacion(data: NotificationData) {
   try {
+    // `tenantId` y `userId` son parámetros de enrutado, no campos del modelo
+    // Notification: se separan para no enviarlos al create.
+    const { userId, tenantId, ...camposNotificacion } = data
+
     // Si no se especifica userId, enviar a todos los usuarios activos del tenant
-    if (!data.userId) {
-      if (!data.tenantId) {
+    if (!userId) {
+      if (!tenantId) {
         throw new Error("tenantId is required when creating a broadcast notification")
       }
 
-      const usuarios = await prisma.user.findMany({
-        where: { isActive: true, tenantId: data.tenantId } as any,
+      // El modelo User no tiene escalar tenantId: la pertenencia al tenant
+      // se resuelve por TenantMembership (membresía y usuario activos).
+      const membresias = await prisma.tenantMembership.findMany({
+        where: { tenantId, isActive: true, user: { isActive: true } },
         select: { userId: true },
       })
 
       const notificaciones = await Promise.all(
-        usuarios.map((usuario: { userId: string }) =>
+        membresias.map((membresia: { userId: string }) =>
           prisma.notification.create({
             data: {
-              ...data,
-              userId: usuario.userId,
+              ...camposNotificacion,
+              userId: membresia.userId,
             },
           }),
         ),
@@ -37,10 +43,9 @@ export async function crearNotificacion(data: NotificationData) {
 
       return notificaciones
     } else {
-      const { userId, ...restData } = data
       const notificacion = await prisma.notification.create({
         data: {
-          ...restData,
+          ...camposNotificacion,
           userId,
         },
       })

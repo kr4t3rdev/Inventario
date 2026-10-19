@@ -63,6 +63,7 @@ vi.mock("@/lib/prisma", () => ({
 		ventaItem: { create: vi.fn() },
 		producto: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
 		cliente: { findFirst: vi.fn() },
+		listaPrecio: { findFirst: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
 		puntoDeVenta: { findFirst: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),

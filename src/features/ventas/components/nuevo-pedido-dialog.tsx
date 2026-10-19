@@ -79,9 +79,10 @@ export function NuevoPedidoDialog({ open, onOpenChange }: NuevoPedidoDialogProps
 	}, [open, pvId, clienteId]);
 
 	const cliente = clientes.find((c) => c.clienteId === clienteId);
+	// getPrecioEfectivo delega en el resolver compartido (LP-1.3): con o sin
+	// cliente aplica la misma cadena que valida el servidor al crear la venta.
 	const precioDe = useCallback(
-		(p: ProductoConStock) =>
-			cliente?.listaPrecioId ? getPrecioEfectivo(p, cliente.listaPrecioId) : p.precioVentaResuelto,
+		(p: ProductoConStock) => getPrecioEfectivo(p, cliente?.listaPrecioId ?? null),
 		[cliente],
 	);
 
