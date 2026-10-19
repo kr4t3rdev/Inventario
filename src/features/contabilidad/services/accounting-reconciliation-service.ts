@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -6,6 +7,81 @@ import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+
+interface ServiceCollectionInput {
+  ventaServicioId: string;
+  distribuciones: Array<{
+    cuentaId: string;
+    tipoPagoId: string;
+    monto: number;
+    moneda?: string;
+    tasaCambio?: number;
+    observaciones?: string;
+  }>;
+  fechaReconciliacion?: string;
+}
+
+const serviceCollectionSchema = z.object({
+  ventaServicioId: z.string().trim().min(1),
+  distribuciones: z.array(z.object({
+    cuentaId: z.string().trim().min(1),
+    tipoPagoId: z.string().trim().min(1),
+    monto: z.number().finite().positive(),
+    moneda: z.string().trim().min(1).optional(),
+    tasaCambio: z.number().finite().positive().optional(),
+    observaciones: z.string().optional(),
+  })).min(1),
+  fechaReconciliacion: z.string().refine((value) =>
+    value.trim().length > 0 && Number.isFinite(new Date(value).getTime()),
+  ).optional(),
+});
+
+/**
+ * @description Rechaza datos de cobro inválidos antes de adquirir locks o escribir saldos.
+ * @param {unknown} input - Payload recibido desde web o integraciones.
+ * @returns {void} Continúa solo si identificadores, importes y fecha son válidos.
+ */
+export function validateServiceCollectionInput(input: unknown): asserts input is ServiceCollectionInput {
+  if (!serviceCollectionSchema.safeParse(input).success) {
+    throw new ActionError('Datos de cobro de servicio inválidos', 'INVALID_INPUT');
+  }
+}
+
+/**
+ * @description Valida pertenencia tenant y cobro único bajo el lock del documento.
+ * @param {Prisma.TransactionClient} tx - Transacción con locks contable y de documento adquiridos.
+ * @param {string} tenantId - Tenant autenticado, nunca recibido desde el payload.
+ * @param {ServiceCollectionInput} input - Cobro ya validado estructuralmente.
+ * @returns {Promise<number>} Total persistido de la venta autorizada y pendiente.
+ */
+export async function assertServiceCollectionTargets(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  input: ServiceCollectionInput,
+): Promise<number> {
+  const sale = await tx.ventaServicios.findFirst({
+    where: { ventaServicioId: input.ventaServicioId, tenantId },
+    select: { total: true, reconciliado: true },
+  });
+  if (!sale) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
+  const existing = await tx.reconciliacionServicio.findFirst({
+    where: { ventaServicioId: input.ventaServicioId, tenantId },
+    select: { reconciliacionId: true },
+  });
+  if (sale.reconciliado || existing) {
+    throw new ActionError('El servicio ya está reconciliado', 'ALREADY_RECONCILED');
+  }
+  const accountIds = [...new Set(input.distribuciones.map((item) => item.cuentaId))];
+  const paymentIds = [...new Set(input.distribuciones.map((item) => item.tipoPagoId))];
+  const [accounts, payments] = await Promise.all([
+    tx.cuentaBancaria.count({ where: { tenantId, cuentaId: { in: accountIds } } }),
+    tx.tipoPago.count({ where: { tenantId, tipoId: { in: paymentIds } } }),
+  ]);
+  if (accounts !== accountIds.length || payments !== paymentIds.length) {
+    throw new ActionError('Cuenta bancaria o tipo de pago no encontrado', 'NOT_FOUND');
+  }
+  return Number(sale.total);
+}
 
 /**
  * @description Construye los metadatos de conversión y la evidencia FX que se guardan junto a
@@ -599,22 +675,15 @@ export const AccountingReconciliationService = {
   }) {
     const tenantId = requireTenant(user);
 
-    if (!input.distribuciones?.length) {
-      throw new ActionError('Debe incluir al menos una distribución', 'INVALID_INPUT');
-    }
+    validateServiceCollectionInput(input);
 
     return prisma.$transaction(async (tx) => {
       await acquireAccountingTenantLock(tx, tenantId);
-      const servicio = await tx.ventaServicios.findUnique({
-        where: { ventaServicioId: input.ventaServicioId },
-        select: { total: true },
-      });
-      if (!servicio) {
-        throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
-      }
+      // Orden común: tenant contable → documento → filas de venta y cobro.
+      await lockDocumentoServicio(tx, input.ventaServicioId);
+      const precioServicio = await assertServiceCollectionTargets(tx, tenantId, input);
 
       const montoTotalDistribuido = input.distribuciones.reduce((sum, d) => sum + d.monto, 0);
-      const precioServicio = Number(servicio.total);
 
       if (Math.abs(montoTotalDistribuido - precioServicio) > 0.01) {
         throw new ActionError(
@@ -625,10 +694,16 @@ export const AccountingReconciliationService = {
 
       for (const dist of input.distribuciones) {
         await tx.cuentaBancaria.update({
-          where: { cuentaId: dist.cuentaId },
+          where: { cuentaId: dist.cuentaId, tenantId },
           data: { saldo: { increment: dist.monto } },
         });
 
+        const fechaDistribucion = input.fechaReconciliacion
+          ? new Date(input.fechaReconciliacion)
+          : new Date();
+        const conversion = buildPersistedAccountingAmount(
+          dist.monto, dist.moneda || 'CUP', dist.tasaCambio,
+        );
         await tx.reconciliacionServicio.create({
           data: {
             ventaServicioId: input.ventaServicioId,
@@ -636,10 +711,10 @@ export const AccountingReconciliationService = {
             tipoPagoId: dist.tipoPagoId,
             monto: dist.monto,
             moneda: dist.moneda || 'CUP',
-            ...buildPersistedAccountingAmount(dist.monto, dist.moneda || 'CUP', dist.tasaCambio),
-            fechaReconciliacion: input.fechaReconciliacion
-              ? new Date(input.fechaReconciliacion)
-              : new Date(),
+            montoConvertido: conversion.montoConvertido,
+            tasaCambio: conversion.tasaCambio,
+            ...(conversion.fxEvidence ?? {}),
+            fechaReconciliacion: fechaDistribucion,
             observaciones: dist.observaciones,
             tenantId,
             reconciliadoPor: user.userId,
@@ -648,7 +723,7 @@ export const AccountingReconciliationService = {
       }
 
       await tx.ventaServicios.update({
-        where: { ventaServicioId: input.ventaServicioId },
+        where: { ventaServicioId: input.ventaServicioId, tenantId },
         data: { reconciliado: true },
       });
 

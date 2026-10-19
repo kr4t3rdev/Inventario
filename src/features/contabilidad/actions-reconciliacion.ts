@@ -18,8 +18,11 @@ import { AuditLogService } from "@/lib/services/audit-log-service";
 import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import {
+	assertServiceCollectionTargets,
+	validateServiceCollectionInput,
 	buildPersistedAccountingAmount,
 	cerrarDocumentoServicio,
+	lockDocumentoServicio,
 	validateSaleReconciliationInput,
 } from "@/features/contabilidad/services/accounting-reconciliation-service";
 import {
@@ -571,10 +574,10 @@ export const getHistorialReconciliacionServiciosAction = withAction(
 
 export const reconciliarServicioAction = withAction(
 	withPeriodValidation(
-		(input) =>
-			input.fechaReconciliacion
-				? new Date(input.fechaReconciliacion)
-				: new Date(),
+		(input) => {
+			validateServiceCollectionInput(input);
+			return input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date();
+		},
 		async (
 			input: {
 				ventaServicioId: string;
@@ -593,29 +596,18 @@ export const reconciliarServicioAction = withAction(
 			requireFeature(user, 'servicios', 'reconciliar servicios');
 			const tenantId = requireTenant(user);
 
-			if (!input.distribuciones?.length) {
-				throw new ActionError(
-					"Debe incluir al menos una distribución",
-					"INVALID_INPUT",
-				);
-			}
+			validateServiceCollectionInput(input);
 
 			const result = await prisma.$transaction(async (tx) => {
 				await acquireAccountingTenantLock(tx, tenantId);
-				// Verificar el total del servicio
-				const servicio = await tx.ventaServicios.findUnique({
-					where: { ventaServicioId: input.ventaServicioId },
-					select: { total: true },
-				});
-				if (!servicio) {
-					throw new ActionError("Servicio no encontrado", "NOT_FOUND");
-				}
+				// Orden común: tenant contable → documento → filas de venta y cobro.
+				await lockDocumentoServicio(tx, input.ventaServicioId);
+				const precioServicio = await assertServiceCollectionTargets(tx, tenantId, input);
 
 				const montoTotalDistribuido = input.distribuciones.reduce(
 					(sum, d) => sum + d.monto,
 					0,
 				);
-				const precioServicio = Number(servicio.total);
 
 				if (Math.abs(montoTotalDistribuido - precioServicio) > 0.01) {
 					throw new ActionError(
@@ -628,7 +620,7 @@ export const reconciliarServicioAction = withAction(
 				for (const dist of input.distribuciones) {
 					// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
 					await tx.cuentaBancaria.update({
-						where: { cuentaId: dist.cuentaId },
+						where: { cuentaId: dist.cuentaId, tenantId },
 						data: { saldo: { increment: dist.monto } },
 					});
 
@@ -675,7 +667,7 @@ export const reconciliarServicioAction = withAction(
 
 				// Marcar el servicio como reconciliado
 				await tx.ventaServicios.update({
-					where: { ventaServicioId: input.ventaServicioId },
+					where: { ventaServicioId: input.ventaServicioId, tenantId },
 					data: { reconciliado: true },
 				});
 

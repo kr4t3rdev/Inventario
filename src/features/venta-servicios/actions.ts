@@ -630,10 +630,11 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     await assertClienteDelTenant(tenantId, data.clienteId);
   }
 
-  // C-4: lectura, validación y escritura en UNA transacción — el estado leído
-  // es el que se escribe y las ediciones concurrentes serializan por el lock
-  // de crédito del cliente evaluado.
+  // El documento se bloquea antes de cualquier lectura para serializar edición
+  // y facturación. Si se evalúa crédito, su lock se toma después del documento.
   const updated = await prisma.$transaction(async (tx) => {
+    await lockDocumentoServicio(tx, ventaServicioId);
+
     const existing = await tx.ventaServicios.findFirst({
       where: { ventaServicioId, tenantId },
       select: {

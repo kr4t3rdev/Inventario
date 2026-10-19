@@ -352,6 +352,35 @@ describe('update coherente con la CxC (C-4)', () => {
     mockTx.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 } as never);
   });
 
+  it('espera el lock del documento antes de leer y rechaza la factura emitida mientras esperaba', async () => {
+    let releaseLock!: () => void;
+    const invoiceCommitted = new Promise<void>((resolve) => { releaseLock = resolve; });
+    mockTx.$executeRaw.mockImplementationOnce(async () => {
+      await invoiceCommitted;
+      return 1;
+    });
+
+    const pendingUpdate = updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
+    try {
+      await vi.waitFor(() => expect(mockTx.$executeRaw).toHaveBeenCalled());
+      const documentLock = mockTx.$executeRaw.mock.calls[0] as unknown[];
+      expect(documentLock[1]).toBe(JSON.stringify(['venta-servicio-doc', 'vs-1']));
+      expect(mockVentaFindFirst).not.toHaveBeenCalled();
+      expect(mockCxcFindFirst).not.toHaveBeenCalled();
+      expect(mockFacturaFindFirst).not.toHaveBeenCalled();
+      // La otra transacción emite su factura antes de liberar el mismo lock.
+      mockFacturaFindFirst.mockResolvedValue({ idFactura: 'factura-concurrente' });
+    } finally {
+      releaseLock();
+      await pendingUpdate;
+    }
+
+    const result = await pendingUpdate;
+    expect(expectActionFailure(result).error.code).toBe('VENTA_FACTURADA_INMUTABLE');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+    expect(mockTx.cuentaPorCobrar.updateMany).not.toHaveBeenCalled();
+  });
+
   it('cambio de cantidad ajusta montoDeuda en la misma transacción', async () => {
     const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
 

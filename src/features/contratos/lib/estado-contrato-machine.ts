@@ -5,7 +5,7 @@
  * @module features/contratos/lib/estado-contrato-machine
  */
 import type { EstadoContrato } from '@/generated/prisma';
-import { ActionError } from '@/lib/server-actions';
+import { ActionError } from '@/lib/server-actions/types';
 
 /**
  * Tabla de transiciones válidas (openspec/changes/contratos-fase-2, design §1.1).

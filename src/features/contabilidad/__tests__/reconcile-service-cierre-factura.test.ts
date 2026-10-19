@@ -7,17 +7,24 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+vi.mock('@/lib/server-actions/get-current-user');
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
+}));
+
 vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
   acquireAccountingTenantLock: vi.fn(),
 }));
 
 const mockTx = {
   ventaServicios: {
-    findUnique: vi.fn().mockResolvedValue({ total: 10000 }),
+    findFirst: vi.fn().mockResolvedValue({ total: 10000, reconciliado: false }),
     update: vi.fn().mockResolvedValue({}),
   },
-  cuentaBancaria: { update: vi.fn().mockResolvedValue({}) },
-  reconciliacionServicio: { create: vi.fn().mockResolvedValue({}) },
+  cuentaBancaria: { count: vi.fn().mockResolvedValue(1), update: vi.fn().mockResolvedValue({}) },
+  tipoPago: { count: vi.fn().mockResolvedValue(1) },
+  reconciliacionServicio: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({}) },
   factura: { findFirst: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   $executeRaw: vi.fn(),
@@ -28,6 +35,9 @@ vi.mock('@/lib/prisma', () => {
   return { prisma: prismaMock, default: prismaMock };
 });
 
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
+import { reconciliarServicioAction } from '@/features/contabilidad/actions-reconciliacion';
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import { AccountingReconciliationService } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -42,7 +52,46 @@ const input = {
 };
 
 describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('PERIODO_GUARD_ENABLED', 'false');
+    vi.mocked(getCurrentUser).mockResolvedValue({ ...user, role: 'admin' });
+  });
+
+  it.each(['service', 'action'] as const)(
+    '%s espera el documento después del lock contable y antes de leer o escribir la venta',
+    async (entrypoint) => {
+      let releaseDocument!: () => void;
+      const heldDocument = new Promise<void>((resolve) => { releaseDocument = resolve; });
+      mockTx.$executeRaw.mockImplementationOnce(async () => {
+        await heldDocument;
+        return 1;
+      });
+      mockTx.factura.findFirst.mockResolvedValue(null);
+      mockTx.cuentaPorCobrar.findFirst.mockResolvedValue(null);
+      const pending = entrypoint === 'service'
+        ? AccountingReconciliationService.reconcileService({ input, user })
+        : reconciliarServicioAction(input);
+      try {
+        await vi.waitFor(() => expect(mockTx.$executeRaw).toHaveBeenCalled());
+        expect(acquireAccountingTenantLock).toHaveBeenCalledWith(mockTx, 'tenant-1');
+        expect(vi.mocked(acquireAccountingTenantLock).mock.invocationCallOrder[0])
+          .toBeLessThan(mockTx.$executeRaw.mock.invocationCallOrder[0]);
+        expect((mockTx.$executeRaw.mock.calls[0] as unknown[])[1])
+          .toBe(JSON.stringify(['venta-servicio-doc', 'vs-1']));
+        expect(mockTx.ventaServicios.findFirst).not.toHaveBeenCalled();
+        expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+        expect(mockTx.cuentaBancaria.update).not.toHaveBeenCalled();
+        expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
+      } finally {
+        releaseDocument();
+        await pending;
+      }
+      const result = await pending;
+      expect('success' in result ? result.success : result.reconciliado).toBe(true);
+      expect(mockTx.ventaServicios.update).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('marca PAGADA la Factura y la CxC enlazadas en la misma transacción', async () => {
     mockTx.factura.findFirst.mockResolvedValue({ idFactura: 'fac-1', estado: 'PENDIENTE' });

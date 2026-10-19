@@ -65,6 +65,7 @@ import {
 	rechazarTransferenciaAction,
 	despacharTransferenciaAction,
 } from "@/features/transferencias/actions";
+import { calcularAporteRecibido } from "@/features/transferencias/lib/stock-pv";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 const mockUser: AuthenticatedUser = {
@@ -996,6 +997,7 @@ describe("Transferencias Server Actions", () => {
 					tenantId: "tenant-test",
 					deletedAt: null,
 					estado: "PENDIENTE",
+					cantidadRecibida: null,
 				},
 				data: { estado: "CANCELADA", deletedAt: expect.any(Date) },
 			});
@@ -1700,6 +1702,69 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 			...overrides,
 		} as any);
 	}
+
+
+	it.each([
+		{ cantidad: 6, recibidaAnterior: 10 },
+		{ cantidad: 14, recibidaAnterior: 10 },
+		{ cantidad: 6, recibidaAnterior: null },
+		{ cantidad: 14, recibidaAnterior: null },
+	])("editar COMPLETADA a $cantidad conserva coherencia con recibido $recibidaAnterior", async ({ cantidad, recibidaAnterior }) => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "COMPLETADA", cantidadRecibida: recibidaAnterior });
+
+		const result = await updateTransferenciaAction({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad,
+			tipoOrigen: "almacen",
+			origenId: "alm-1",
+			tipoDestino: "almacen",
+			destinoId: "alm-2",
+		});
+
+		expect(result.success).toBe(true);
+		const persisted = {
+			estado: "COMPLETADA",
+			cantidad: 10,
+			cantidadRecibida: recibidaAnterior,
+			...mockTx.transferencia.update.mock.calls[0][0].data,
+		};
+		expect(persisted.cantidadRecibida).toBe(recibidaAnterior === null ? null : cantidad);
+		expect(calcularAporteRecibido([persisted])).toBe(cantidad);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx, expect.objectContaining({ ubicacionId: "alm-2", delta: cantidad }),
+		);
+	});
+
+	it.each([4, null])("cancelar detecta recepción concurrente desde %s sin revertir stock", async (cantidadRecibida) => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "PARCIAL", cantidadRecibida });
+		const snapshot = {
+			tenantId: "tenant-test", deletedAt: null, estado: "PARCIAL",
+			productoId: "prod-1", cantidad: 10, cantidadRecibida,
+			origenId: "alm-1", destinoId: "alm-2",
+		};
+		mockTx.transferencia.findUnique
+			.mockResolvedValueOnce(snapshot)
+			.mockResolvedValueOnce({ ...snapshot, cantidadRecibida: 6 });
+		// Una recepción se confirma entre lectura y reclamo sin cambiar PARCIAL.
+		mockTx.transferencia.updateMany.mockImplementationOnce(async ({ where }) => ({
+			count: where.cantidadRecibida === 6 || !("cantidadRecibida" in where) ? 1 : 0,
+		}));
+
+		const result = await deleteTransferenciaAction("tr-1");
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("CONFLICT");
+		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: expect.objectContaining({ cantidadRecibida }),
+		}));
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.findMany).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		expect(mockTx.producto.update).not.toHaveBeenCalled();
+	});
 
 	it("completar exige el permiso de gestión", async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(sinPermisoGestion);

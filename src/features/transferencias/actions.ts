@@ -454,6 +454,7 @@ export const updateTransferenciaAction = withAction(
 			select: {
 				productoId: true,
 				cantidad: true,
+				cantidadRecibida: true,
 				costoUnitario: true,
 				origenId: true,
 				destinoId: true,
@@ -496,6 +497,12 @@ export const updateTransferenciaAction = withAction(
 				productoId,
 				cantidad,
 			};
+
+			// La recepción explícita debe seguir la cantidad que se vuelve a mover.
+			// Las creaciones directas legacy conservan null y su fallback al total.
+			if (existing.estado === "COMPLETADA" && existing.cantidadRecibida != null) {
+				updateData.cantidadRecibida = cantidad;
+			}
 
 			if (tipoOrigen === "almacen") {
 				updateData.origenId = origenId;
@@ -685,6 +692,8 @@ export const deleteTransferenciaAction = withAction(
 					tenantId,
 					deletedAt: null,
 					estado: current.estado,
+					// PARCIAL puede recibir más unidades sin cambiar de estado.
+					cantidadRecibida: current.cantidadRecibida ?? null,
 				},
 				data: { estado: "CANCELADA", deletedAt: new Date() },
 			});
@@ -699,7 +708,7 @@ export const deleteTransferenciaAction = withAction(
 					return { claimed: false as const, idempotent: true as const };
 				}
 				throw new ActionError(
-					"La transferencia cambió de estado; vuelve a cargarla e inténtalo de nuevo",
+					"La transferencia cambió; vuelve a cargarla e inténtalo de nuevo",
 					"CONFLICT",
 				);
 			}
