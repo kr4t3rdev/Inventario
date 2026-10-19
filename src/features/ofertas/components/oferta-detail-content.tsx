@@ -274,7 +274,9 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
                     ? 'destructive'
                     : oferta.estado === 'FACTURADA'
                       ? 'outline'
-                      : 'secondary'
+                      : oferta.estado === 'VENCIDA'
+                        ? 'outline'
+                        : 'secondary'
               }
             >
               {oferta.estado}

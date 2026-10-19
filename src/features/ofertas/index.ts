@@ -6,6 +6,7 @@ export {
   updateOfertaAction,
   deleteOfertaAction,
   facturarOfertaAction,
+  duplicarOfertaAction,
 } from './actions'
 
 export { OfertasTable } from './components/ofertas-table'

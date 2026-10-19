@@ -22,7 +22,13 @@ import {
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
-import { getPrecioEfectivo } from '@/lib/types/pricing';
+import { crearOfertaConNumero } from './lib/numero-oferta-generator';
+import { expirarOfertasVencidas } from './services/expiracion-ofertas-service';
+import { transicionPermitida } from './lib/transiciones-estado';
+import { calcularTotalesOferta } from './lib/totales-oferta';
+import { resolverItemsOferta } from './lib/resolver-items-oferta';
+import { lockOferta } from './lib/oferta-lock';
+import type { Prisma } from '@/generated/prisma';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -31,6 +37,7 @@ function serializeOferta(oferta: unknown): Oferta {
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
   const ofertas = await listOfertasForTenant(tenantId);
   return ofertas.map(serializeOferta);
 });
@@ -38,6 +45,7 @@ export const getOfertasAction = withAction(async (_input: void, user: Authentica
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
   const oferta = await getOfertaForTenant(id, tenantId);
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   return serializeOferta(oferta);
@@ -55,59 +63,37 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
-  const resolvedItems = await Promise.all(parsed.items.map(async (item) => {
-    if (item.productoId) {
-      const producto = await prisma.producto.findFirst({
-        where: { id: item.productoId, tenantId },
-        include: { precios: true },
-      });
-      if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
-      const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
-      return { ...item, precioUnitario, total: item.cantidad * precioUnitario };
-    }
+  const resolvedItems = await resolverItemsOferta(tenantId, parsed.items, cliente.listaPrecioId);
 
-    const servicio = await prisma.servicios.findFirst({
-      where: { servicioId: item.servicioId, tenantId },
-    });
-    if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
-    return { ...item, precioUnitario: servicio.precio, total: item.cantidad * servicio.precio };
-  }));
-  const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
-  const impuestos = parsed.impuestos ?? 0;
+  const totales = calcularTotalesOferta(
+    resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+    parsed.impuestos ?? 0,
+  );
+  if (!totales.ok) throw new ActionError(totales.message, totales.code);
 
-  // Generar número de oferta secuencial por tenant
-  const ultimaOferta = await prisma.oferta.findFirst({
-    where: { tenantId },
-    orderBy: { numeroOferta: 'desc' },
-    select: { numeroOferta: true },
-  });
-  const nextNumber = ultimaOferta
-    ? parseInt(ultimaOferta.numeroOferta.replace('OF-', ''), 10) + 1
-    : 1;
-  const numeroOferta = `OF-${String(nextNumber).padStart(6, '0')}`;
-
-  const oferta = await prisma.oferta.create({
-    data: {
+  const oferta = await crearOfertaConNumero({
+    tenantId,
+    buildData: (numeroOferta) => ({
       tenantId,
       numeroOferta,
       clienteId: parsed.clienteId,
       fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
-      estado: 'PENDIENTE',
-      subtotal,
-      impuestos,
-      total: subtotal + impuestos,
+      estado: 'PENDIENTE' as const,
+      subtotal: totales.subtotal,
+      impuestos: totales.impuestos,
+      total: totales.total,
       observaciones: parsed.observaciones || null,
       items: {
-        create: resolvedItems.map((item) => ({
-          productoId: item.productoId || null,
-          servicioId: item.servicioId || null,
-          cantidad: item.cantidad,
-          precioUnitario: item.precioUnitario,
-          total: item.total,
+        create: totales.lineas.map((linea, idx) => ({
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
         })),
       },
-    },
-    include: OFERTA_INCLUDE,
+    }),
+    create: (data) => prisma.oferta.create({ data, include: OFERTA_INCLUDE }),
   });
 
   revalidatePath('/busy/ofertas');
@@ -117,20 +103,133 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
 export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = ofertaUpdateSchema.parse(input);
-  const { ofertaId, ...data } = parsed;
+  const { ofertaId } = parsed;
   const tenantId = requireTenant(user);
 
+  // Toque de módulo (E-2): una PENDIENTE vencida se marca VENCIDA antes de
+  // leerse, por lo que un detalle obsoleto ya no puede aceptarla.
+  await expirarOfertasVencidas(tenantId);
+
   const existing = await prisma.oferta.findFirst({
-  where: { id: ofertaId, tenantId }
+    where: { id: ofertaId, tenantId },
+    include: { cliente: true },
   });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
+  if (parsed.estado !== undefined && parsed.estado !== existing.estado) {
+    if (!transicionPermitida(existing.estado, parsed.estado)) {
+      throw new ActionError(
+        `La oferta en estado ${existing.estado} no puede pasar a ${parsed.estado}.`,
+        'ESTADO_TRANSICION_INVALIDA',
+      );
+    }
+  }
+
+  if (parsed.items !== undefined) {
+    if (existing.estado !== 'PENDIENTE') {
+      throw new ActionError('Solo se pueden editar los ítems de una oferta en estado PENDIENTE', 'ITEMS_NO_EDITABLES');
+    }
+    const resolvedItems = await resolverItemsOferta(tenantId, parsed.items, existing.cliente?.listaPrecioId ?? null);
+    const impuestosDeclarados = parsed.impuestos ?? Number(existing.impuestos ?? 0);
+    const totales = calcularTotalesOferta(
+      resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+      impuestosDeclarados,
+    );
+    if (!totales.ok) throw new ActionError(totales.message, totales.code);
+
+    const oferta = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Serializa con facturar/convertir: nadie puede snapshotear los ítems
+      // mientras se reemplazan, y viceversa.
+      await lockOferta(tx, tenantId, existing.id);
+      const fresh = await tx.oferta.findFirst({ where: { id: ofertaId, tenantId } });
+      if (!fresh) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+      if (fresh.estado !== 'PENDIENTE') {
+        throw new ActionError('Solo se pueden editar los ítems de una oferta en estado PENDIENTE', 'ITEMS_NO_EDITABLES');
+      }
+      const ahora = new Date();
+      if (fresh.fechaVencimiento && fresh.fechaVencimiento < ahora) {
+        // Venció mientras se editaba: se marca VENCIDA en la misma
+        // transacción y la edición se aborta.
+        await tx.oferta.updateMany({
+          where: { id: fresh.id, tenantId, estado: 'PENDIENTE' },
+          data: { estado: 'VENCIDA' },
+        });
+        throw new ActionError('La oferta ya venció y sus ítems ya no son editables', 'OFERTA_VENCIDA');
+      }
+      await tx.ofertaItem.deleteMany({ where: { ofertaId: existing.id } });
+      await tx.ofertaItem.createMany({
+        data: totales.lineas.map((linea, idx) => ({
+          ofertaId: existing.id,
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
+        })),
+      });
+      return tx.oferta.update({
+        where: { id: existing.id },
+        data: {
+          subtotal: totales.subtotal,
+          impuestos: totales.impuestos,
+          total: totales.total,
+          ...(parsed.estado !== undefined && { estado: parsed.estado }),
+          ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
+        },
+        include: OFERTA_INCLUDE,
+      });
+    });
+    revalidatePath('/busy/ofertas');
+    return serializeOferta(oferta);
+  }
+
+  if (parsed.estado !== undefined && parsed.estado !== existing.estado) {
+    // Claim condicional: exige el estado leído y que la oferta no esté
+    // vencida. Si pierde la carrera (cambio concurrente o vencimiento), se
+    // relee para devolver el error accionable correspondiente.
+    const ahora = new Date();
+    const claim = await prisma.oferta.updateMany({
+      where: {
+        id: ofertaId,
+        tenantId,
+        estado: existing.estado,
+        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: ahora } }],
+      },
+      data: {
+        estado: parsed.estado,
+        ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
+      },
+    });
+    if (claim.count !== 1) {
+      const actual = await prisma.oferta.findFirst({
+        where: { id: ofertaId, tenantId },
+        select: { estado: true, fechaVencimiento: true },
+      });
+      if (!actual) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+      if (actual.estado === 'PENDIENTE' && actual.fechaVencimiento && actual.fechaVencimiento < ahora) {
+        await prisma.oferta.updateMany({
+          where: { id: ofertaId, tenantId, estado: 'PENDIENTE' },
+          data: { estado: 'VENCIDA' },
+        });
+        throw new ActionError(`La oferta ya venció y no puede pasar a ${parsed.estado}.`, 'OFERTA_VENCIDA');
+      }
+      throw new ActionError(
+        `La oferta en estado ${actual.estado} no puede pasar a ${parsed.estado}.`,
+        'ESTADO_TRANSICION_INVALIDA',
+      );
+    }
+    const actualizada = await prisma.oferta.findFirst({
+      where: { id: ofertaId, tenantId },
+      include: OFERTA_INCLUDE,
+    });
+    revalidatePath('/busy/ofertas');
+    return serializeOferta(actualizada);
+  }
+
+  // Solo observaciones (sin transición de estado): permitido en cualquier estado.
   const oferta = await prisma.oferta.update({
     where: { id: ofertaId },
-    data: {
-      ...(data.estado !== undefined && { estado: data.estado }),
-      ...(data.observaciones !== undefined && { observaciones: data.observaciones }),
-    },
+    data: { ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }) },
     include: OFERTA_INCLUDE,
   });
 
@@ -143,16 +242,88 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
   const tenantId = requireTenant(user);
   const existing = await prisma.oferta.findFirst({ where: { id: id, tenantId } });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+  if (existing.estado === 'FACTURADA') {
+    throw new ActionError('No se puede eliminar una oferta facturada', 'ESTADO_NO_ELIMINABLE');
+  }
 
   await prisma.oferta.delete({ where: { id: id } });
   revalidatePath('/busy/ofertas');
   return { id, eliminado: true };
 });
 
+/**
+ * @description Duplica una oferta del tenant: número nuevo vía generador con
+ * reintento, estado PENDIENTE, ítems re-resueltos a precio vigente y totales
+ * recalculados en servidor. La fechaVencimiento se conserva solo si sigue
+ * futura; los impuestos declarados se conservan y se revalidan.
+ */
+export const duplicarOfertaAction = withAction(async (ofertaId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
+  const tenantId = requireTenant(user);
+
+  const original = await prisma.oferta.findFirst({
+    where: { id: ofertaId, tenantId },
+    include: { items: true, cliente: true },
+  });
+  if (!original) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+
+  const resolvedItems = await resolverItemsOferta(
+    tenantId,
+    original.items.map((item) => ({
+      productoId: item.productoId ?? undefined,
+      servicioId: item.servicioId ?? undefined,
+      cantidad: item.cantidad,
+    })),
+    original.cliente?.listaPrecioId ?? null,
+  );
+
+  const totales = calcularTotalesOferta(
+    resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+    Number(original.impuestos ?? 0),
+  );
+  if (!totales.ok) {
+    throw new ActionError(`No se pudo duplicar la oferta: ${totales.message}`, totales.code);
+  }
+
+  const fechaVencimiento =
+    original.fechaVencimiento && new Date(original.fechaVencimiento) > new Date()
+      ? new Date(original.fechaVencimiento)
+      : null;
+
+  const duplicada = await crearOfertaConNumero({
+    tenantId,
+    buildData: (numeroOferta) => ({
+      tenantId,
+      numeroOferta,
+      clienteId: original.clienteId,
+      fechaVencimiento,
+      estado: 'PENDIENTE' as const,
+      subtotal: totales.subtotal,
+      impuestos: totales.impuestos,
+      total: totales.total,
+      observaciones: original.observaciones || null,
+      items: {
+        create: totales.lineas.map((linea, idx) => ({
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
+        })),
+      },
+    }),
+    create: (data) => prisma.oferta.create({ data, include: OFERTA_INCLUDE }),
+  });
+
+  revalidatePath('/busy/ofertas');
+  return serializeOferta(duplicada);
+});
+
 export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = facturarOfertaSchema.parse(input);
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
 
   const oferta = await prisma.oferta.findFirst({
     where: { id: parsed.ofertaId, tenantId },
@@ -161,6 +332,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   if (oferta.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   if (oferta.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
+  if (oferta.estado === 'VENCIDA') throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
 
   const turnoResult = await getOrCreateTurnoActivo({
     puntoDeVentaId: parsed.puntoDeVentaId,
@@ -171,29 +343,42 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   }
   const turnoId = turnoResult.data.turnoId;
 
-  const resultado = await prisma.$transaction(async (tx: any) => {
+  const resultado = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Serializa con la edición de ítems y la conversión a pedido: el snapshot
+    // de la venta se toma bajo el mismo lock que usan los demás writers,
+    // sobre una lectura fresca del estado y los ítems.
+    await lockOferta(tx, tenantId, oferta.id);
+    const fresh = await tx.oferta.findFirst({
+      where: { id: oferta.id, tenantId },
+      include: { items: { include: { producto: true, servicio: true } }, cliente: true },
+    });
+    if (!fresh) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+    if (fresh.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
+    if (fresh.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
+    if (fresh.estado === 'VENCIDA') throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
+
     const workflow = await facturarOfertaWorkflow(tx, {
       tenantId,
-      ofertaId: oferta.id,
-      clienteId: oferta.clienteId,
+      ofertaId: fresh.id,
+      clienteId: fresh.clienteId,
       puntoDeVentaId: parsed.puntoDeVentaId,
       turnoId,
-       items: oferta.items.filter((item) => item.productoId).map((item) => ({
+      items: fresh.items.filter((item) => item.productoId).map((item) => ({
         productoId: item.productoId,
         cantidad: item.cantidad,
         precioUnitario: item.precioUnitario,
         total: item.total,
-       })),
-       servicios: oferta.items.filter((item) => item.servicioId).map((item) => ({
-         servicioId: item.servicioId,
-         cantidad: item.cantidad,
-         precioUnitario: item.precioUnitario,
-         total: item.total,
-         moneda: item.servicio?.moneda ?? 'CUP',
-       })),
-      subtotal: oferta.subtotal,
-      impuestos: oferta.impuestos,
-      total: oferta.total,
+      })),
+      servicios: fresh.items.filter((item) => item.servicioId).map((item) => ({
+        servicioId: item.servicioId,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario,
+        total: item.total,
+        moneda: item.servicio?.moneda ?? 'CUP',
+      })),
+      subtotal: fresh.subtotal,
+      impuestos: fresh.impuestos,
+      total: fresh.total,
       empleadoId: parsed.empleadoId || null,
       observaciones: parsed.observaciones || null,
       cargoTransporte: parsed.cargoTransporte || 0,
@@ -207,21 +392,29 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
     // Anticipo
     if (parsed.anticipoCobroId && parsed.idempotencyKey) {
       await applyAnticipoAllocations(tx, [{
-      anticipoId: parsed.anticipoCobroId, montoAplicado: Number(oferta.total)
+        anticipoId: parsed.anticipoCobroId, montoAplicado: Number(fresh.total)
       }], {
         tenantId,
         documentoDestinoId: workflow.facturaId,
         contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,
-        observaciones: `Anticipo aplicado a facturación de oferta ${oferta.id}`,
+        observaciones: `Anticipo aplicado a facturación de oferta ${fresh.id}`,
       });
     }
 
-    // Marcar oferta como facturada
-    await tx.oferta.update({
-      where: { id: oferta.id },
+    // Claim condicional (anti-carrera): solo se marca FACTURADA si el estado
+    // sigue siendo el releído bajo lock; si otro writer lo movió, la venta se
+    // revierte con la transacción.
+    const marcada = await tx.oferta.updateMany({
+      where: { id: fresh.id, tenantId, estado: fresh.estado },
       data: { estado: 'FACTURADA' },
     });
+    if (marcada.count !== 1) {
+      throw new ActionError(
+        'La oferta cambió de estado mientras se facturaba; recarga la página e inténtalo de nuevo.',
+        'VALIDATION_ERROR',
+      );
+    }
 
     return workflow;
   });
@@ -245,6 +438,7 @@ export const convertirOfertaAPedidoAction = withAction(
     requirePermission(user, 'ventas.ofertas.gestionar', 'convertir ofertas');
     requirePermission(user, 'ventas.pedido.gestionar', 'crear pedidos de venta');
     const tenantId = requireTenant(user);
+    await expirarOfertasVencidas(tenantId);
 
     const result = await convertirOfertaAPedido({
       ofertaId: input.ofertaId,

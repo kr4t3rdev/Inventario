@@ -13,7 +13,8 @@ vi.mock('@/lib/services/fifo-allocation', () => ({ allocateFifoForSale: vi.fn() 
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
 
 const mockTx = {
-  oferta: { update: vi.fn() },
+  $executeRaw: vi.fn(),
+  oferta: { findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   venta: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   servicios: { findFirst: vi.fn() },
@@ -30,6 +31,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       delete: vi.fn(),
     },
     cliente: { findFirst: vi.fn() },
@@ -64,6 +66,7 @@ const mockUser: AuthenticatedUser = {
 describe('Ofertas Server Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTx.oferta.updateMany.mockResolvedValue({ count: 1 } as any);
     vi.mocked(getOrCreateTurnoActivo).mockResolvedValue({
       success: true,
       data: { turnoId: 'turno-1' },
@@ -124,13 +127,79 @@ describe('Ofertas Server Actions', () => {
 
       expect(result.success).toBe(false);
     });
+
+    it('E-1 reintenta la creación cuando el número colisiona (P2002)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ numeroOferta: 'OF-000006' } as any);
+      const p2002 = Object.assign(new Error('Unique constraint'), { code: 'P2002' });
+      vi.mocked(prisma.oferta.create)
+        .mockRejectedValueOnce(p2002)
+        .mockResolvedValueOnce({ ofertaId: 'of-1', numeroOferta: 'OF-000007' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', cantidad: 1, precioUnitario: 1000, total: 1000 }],
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.oferta.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('E-3 rechaza impuestos que superan el subtotal resuelto (TAX_INVALID)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 200, impuestos: 500, total: 700,
+        items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 100, total: 200 }],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('TAX_INVALID');
+      expect(prisma.oferta.create).not.toHaveBeenCalled();
+    });
+
+    it('E-3 ignora subtotal/total del payload y persiste montos recalculados', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.oferta.create).mockResolvedValue({ id: 'of-1' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1, impuestos: 40, total: 99999,
+        items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 9999, total: 9999 }],
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.oferta.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subtotal: 200,
+            impuestos: 40,
+            total: 240,
+            items: { create: [expect.objectContaining({ precioUnitario: 100, total: 200 })] },
+          }),
+        }),
+      );
+    });
   });
 
   describe('updateOfertaAction', () => {
     it('actualiza estado exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as any);
-      vi.mocked(prisma.oferta.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ id: 'of-1', estado: 'PENDIENTE' } as any);
+      vi.mocked(prisma.oferta.updateMany).mockResolvedValue({ count: 1 } as any);
 
       const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
       expect(result.success).toBe(true);
@@ -150,6 +219,12 @@ describe('Ofertas Server Actions', () => {
           precioUnitario: 500,
           total: 1000,
         }],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
+      mockTx.oferta.findFirst.mockResolvedValue({
+        id: 'of-1', numeroOferta: 'OF-000001', estado: 'PENDIENTE', clienteId: 'cli-1',
+        tenantId: 'tenant-test', subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 500, total: 1000 }],
         cliente: { clienteId: 'cli-1', nombre: 'Test' },
       } as any);
       mockTx.serieFacturacion.findFirst.mockResolvedValue({
@@ -235,6 +310,15 @@ describe('Ofertas Server Actions', () => {
         ],
         cliente: { clienteId: 'cli-1', nombre: 'Test' },
       } as any);
+      mockTx.oferta.findFirst.mockResolvedValue({
+        id: 'of-mix', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 300, impuestos: 0, total: 300,
+        items: [
+          { productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 100, total: 200 },
+          { productoId: null, servicioId: 'srv-1', cantidad: 1, precioUnitario: 100, total: 100, servicio: { moneda: 'CUP' } },
+        ],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
       mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 1 });
       mockTx.serieFacturacion.update.mockResolvedValue({ consecutivo: 2 });
       mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-mix' });
@@ -262,6 +346,76 @@ describe('Ofertas Server Actions', () => {
       }));
     });
 
+    it('factura con los ítems releídos dentro de la transacción (bajo lock advisory)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      // Lectura externa obsoleta: el usuario cargó el detalle antes de una edición.
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
+        id: 'of-1', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 500, total: 1000 }],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
+      // Lectura fresca dentro de la tx: una edición concurrente ya cambió los ítems.
+      mockTx.oferta.findFirst.mockResolvedValue({
+        id: 'of-1', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 240, impuestos: 0, total: 240,
+        items: [{ productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 120, total: 240 }],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
+      mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 5, esPorDefecto: true });
+      mockTx.serieFacturacion.update.mockResolvedValue({ serieId: 'serie-1', consecutivo: 6 });
+      mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-1' });
+      mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
+      mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'P', tenantId: 'tenant-test' });
+      mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+      vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ tipoVencimiento: 'contra_pago', reconciliacionId: 'rec-1' });
+
+      const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
+
+      expect(result.success).toBe(true);
+      expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
+      expect(mockTx.venta.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            total: 240,
+            items: { create: [expect.objectContaining({ precioUnitario: 120, total: 240 })] },
+          }),
+        }),
+      );
+      expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'of-1', estado: 'PENDIENTE' }),
+          data: { estado: 'FACTURADA' },
+        }),
+      );
+    });
+
+    it('aborta la facturación cuando el claim de FACTURADA pierde la carrera', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const ofertaFacturable = {
+        id: 'of-1', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 500, total: 1000 }],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      };
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue(ofertaFacturable as any);
+      mockTx.oferta.findFirst.mockResolvedValue(ofertaFacturable as any);
+      mockTx.oferta.updateMany.mockResolvedValue({ count: 0 });
+      mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 5, esPorDefecto: true });
+      mockTx.serieFacturacion.update.mockResolvedValue({ serieId: 'serie-1', consecutivo: 6 });
+      mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-1' });
+      mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
+      mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'P', tenantId: 'tenant-test' });
+      mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+      vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ tipoVencimiento: 'contra_pago', reconciliacionId: 'rec-1' });
+
+      const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('VALIDATION_ERROR');
+      expect(result.error!.message).toContain('cambió de estado');
+    });
+
     it('rechaza oferta ya facturada', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
@@ -280,6 +434,11 @@ describe('Ofertas Server Actions', () => {
         id: 'of-1', estado: 'PENDIENTE', clienteId: 'cli-1',
         tenantId: 'tenant-test', subtotal: 1000, impuestos: 0, total: 1000,
         items: [],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
+      mockTx.oferta.findFirst.mockResolvedValue({
+        id: 'of-1', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 1000, impuestos: 0, total: 1000, items: [],
         cliente: { clienteId: 'cli-1', nombre: 'Test' },
       } as any);
       vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ ventaId: 'ven-1' } as any);

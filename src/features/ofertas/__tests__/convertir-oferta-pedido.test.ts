@@ -15,8 +15,9 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
-		venta: { create: vi.fn() },
-		oferta: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+		$executeRaw: vi.fn(),
+		venta: { findFirst: vi.fn(), create: vi.fn() },
+		oferta: { findFirst: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 	};
 	return { mockTx };
 });
@@ -60,6 +61,8 @@ describe('convertirOfertaAPedido (PVE-T4)', () => {
 		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({ pvId: 'pv-1' } as never);
 		mockTx.oferta.updateMany.mockResolvedValue({ count: 1 });
 		vi.mocked(prisma.venta.findFirst).mockResolvedValue(null);
+		mockTx.venta.findFirst.mockResolvedValue(null as never);
+		mockTx.oferta.findFirst.mockResolvedValue(oferta as never);
 		mockTx.venta.create.mockResolvedValue({ ventaId: 'v-99' });
 	});
 
@@ -126,6 +129,21 @@ describe('convertirOfertaAPedido (PVE-T4)', () => {
 		).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
 	});
 
+	it('rechaza ofertas VENCIDAS (E-2)', async () => {
+		vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
+			...oferta,
+			estado: 'VENCIDA',
+		} as never);
+		await expect(
+			convertirOfertaAPedido({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tenantId: 'tenant-1',
+			}),
+		).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+		expect(mockTx.venta.create).not.toHaveBeenCalled();
+	});
+
 	it('rechaza un punto de venta que no pertenece al tenant', async () => {
 		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(null);
 		await expect(
@@ -181,5 +199,47 @@ describe('convertirOfertaAPedido (PVE-T4)', () => {
 			code: 'VALIDATION_ERROR',
 			message: expect.stringContaining('venta vinculada'),
 		});
+	});
+
+	it('relee la oferta bajo lock y usa los ítems frescos para el pedido', async () => {
+		const fresca = {
+			...oferta,
+			subtotal: 240,
+			total: 240,
+			items: [
+				{ productoId: 'p-1', servicioId: null, cantidad: 2, precioUnitario: 120, total: 240 },
+			],
+		};
+		mockTx.oferta.findFirst.mockResolvedValue(fresca as never);
+
+		const r = await convertirOfertaAPedido({
+			ofertaId: 'of-1',
+			puntoDeVentaId: 'pv-1',
+			tenantId: 'tenant-1',
+		});
+
+		expect(r.creado).toBe(true);
+		expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					total: 240,
+					items: { create: [expect.objectContaining({ precioUnitario: 120, total: 240 })] },
+				}),
+			}),
+		);
+	});
+
+	it('descubre la venta vinculada dentro de la tx ante una doble conversión concurrente', async () => {
+		mockTx.venta.findFirst.mockResolvedValue({ ventaId: 'v-previa', estado: 'PEDIDO' } as never);
+
+		const r = await convertirOfertaAPedido({
+			ofertaId: 'of-1',
+			puntoDeVentaId: 'pv-1',
+			tenantId: 'tenant-1',
+		});
+
+		expect(r).toEqual({ ventaId: 'v-previa', creado: false });
+		expect(mockTx.venta.create).not.toHaveBeenCalled();
 	});
 });

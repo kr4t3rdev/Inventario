@@ -19,12 +19,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown, Eye, Printer, Trash2, Receipt } from "lucide-react"
+import { ArrowUpDown, Eye, Printer, Trash2, Receipt, Copy } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
 import { Badge } from "@/components/ui/badge"
-import { deleteOfertaAction } from "@/features/ofertas/actions"
+import { deleteOfertaAction, duplicarOfertaAction } from "@/features/ofertas/actions"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -92,6 +92,21 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
   const [ofertaToDelete, setOfertaToDelete] = useState<Oferta | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const handleDuplicar = async (oferta: Oferta) => {
+    try {
+      const result = await duplicarOfertaAction(oferta.id)
+      if (result.success) {
+        toast.success("Oferta duplicada exitosamente")
+        router.refresh()
+      } else {
+        toast.error(result.error.message || "Error al duplicar la oferta")
+      }
+    } catch (error: any) {
+      console.error("Error duplicando oferta:", error)
+      toast.error(error.message || "Error al duplicar la oferta")
+    }
+  }
+
   const handleDelete = async () => {
     if (!ofertaToDelete) return
 
@@ -149,6 +164,7 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
           case 'ACEPTADA': variant = 'default'; break;
           case 'RECHAZADA': variant = 'destructive'; break;
           case 'FACTURADA': variant = 'outline'; break;
+          case 'VENCIDA': variant = 'outline'; break;
         }
 
         return <Badge variant={variant}>{estado}</Badge>
@@ -207,6 +223,17 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Imprimir
+              </Button>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDuplicar(oferta)}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicar
               </Button>
             </motion.div>
 

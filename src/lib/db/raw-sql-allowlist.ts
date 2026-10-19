@@ -202,4 +202,10 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Lock advisory transaccional del cron de alertas: dos ejecuciones superpuestas no duplican las alertas del mismo día.',
     tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["contratos", "alertas-vencimiento"]; es un lock global del job (sin datos de tenant) tomado por un script de cron con PrismaClient directo.',
   },
+  {
+    file: 'src/features/ofertas/lib/oferta-lock.ts',
+    occurrences: 1,
+    reason: 'Lock advisory transaccional por oferta: serializa la edición de ítems con la facturación y la conversión a pedido para que el snapshot de la venta coincida con el contenido persistido.',
+    tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["oferta", tenantId, ofertaId]; ambos valores provienen del usuario autenticado y su tenant.',
+  },
 ] as const;

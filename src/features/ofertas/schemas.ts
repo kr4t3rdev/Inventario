@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 
-const ofertaItemSchema = z.object({
+export const ofertaItemSchema = z.object({
   productoId: z.string().optional(),
   servicioId: z.string().optional(),
   cantidad: z.number().int().positive(),
@@ -28,6 +28,8 @@ export const ofertaUpdateSchema = z.object({
   ofertaId: z.string().min(1),
   estado: z.enum(['PENDIENTE', 'ACEPTADA', 'RECHAZADA', 'FACTURADA']).optional(),
   observaciones: z.string().optional(),
+  impuestos: z.number().nonnegative().optional(),
+  items: z.array(ofertaItemSchema).min(1, 'Al menos un item requerido').optional(),
 });
 
 export const facturarOfertaSchema = z.object({

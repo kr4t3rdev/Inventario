@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { lockOferta } from '../lib/oferta-lock';
 
 interface ConvertirOfertaAPedidoParams {
   ofertaId: string;
@@ -10,9 +11,45 @@ interface ConvertirOfertaAPedidoParams {
 }
 
 /**
+ * @description Validaciones de estado y composición para convertir una oferta
+ * a pedido. Se aplican sobre la lectura inicial (fail-fast) y de nuevo sobre
+ * la lectura fresca dentro de la transacción (anti-carrera con la edición de
+ * ítems y la facturación).
+ * @param {object} oferta - Oferta leída con sus ítems.
+ * @returns {object[]} Ítems de producto de la oferta.
+ */
+function validarOfertaParaPedido<
+  TItem extends { productoId: string | null },
+>(oferta: { estado: string; items: readonly TItem[] }): TItem[] {
+  if (oferta.estado === 'FACTURADA') {
+    throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
+  }
+  if (oferta.estado === 'RECHAZADA') {
+    throw new ActionError('No se puede convertir una oferta rechazada', 'VALIDATION_ERROR');
+  }
+  if (oferta.estado === 'VENCIDA') {
+    throw new ActionError('No se puede convertir una oferta vencida', 'VALIDATION_ERROR');
+  }
+
+  const itemsProducto = oferta.items.filter((item) => item.productoId);
+  if (itemsProducto.length !== oferta.items.length) {
+    throw new ActionError(
+      'La conversión a pedido solo admite ofertas con productos (sin servicios).',
+      'NOT_SUPPORTED',
+    );
+  }
+  if (itemsProducto.length === 0) {
+    throw new ActionError('La oferta no tiene ítems de producto', 'VALIDATION_ERROR');
+  }
+  return itemsProducto;
+}
+
+/**
  * @description Convierte una oferta (PENDIENTE o ACEPTADA) en un pedido de
  * venta (venta en estado PEDIDO, sin efectos de stock ni factura). Idempotente:
- * si ya existe un pedido vinculado, lo devuelve sin crear otro.
+ * si ya existe un pedido vinculado, lo devuelve sin crear otro. La lectura del
+ * snapshot se hace bajo el advisory lock de la oferta, serializada con la
+ * edición de ítems y la facturación.
  * @param {ConvertirOfertaAPedidoParams} params - Oferta, punto de venta y tenant.
  * @returns {Promise<{ ventaId: string; creado: boolean }>} Pedido resultante.
  */
@@ -27,23 +64,7 @@ export async function convertirOfertaAPedido({
     include: { items: true },
   });
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
-  if (oferta.estado === 'FACTURADA') {
-    throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
-  }
-  if (oferta.estado === 'RECHAZADA') {
-    throw new ActionError('No se puede convertir una oferta rechazada', 'VALIDATION_ERROR');
-  }
-
-  const itemsProducto = oferta.items.filter((item) => item.productoId);
-  if (itemsProducto.length !== oferta.items.length) {
-    throw new ActionError(
-      'La conversión a pedido solo admite ofertas con productos (sin servicios).',
-      'NOT_SUPPORTED',
-    );
-  }
-  if (itemsProducto.length === 0) {
-    throw new ActionError('La oferta no tiene ítems de producto', 'VALIDATION_ERROR');
-  }
+  validarOfertaParaPedido(oferta);
 
   // El punto de venta debe pertenecer al tenant (aislamiento: sin esta guarda,
   // la entrega posterior movería stock de una ubicación ajena).
@@ -53,7 +74,8 @@ export async function convertirOfertaAPedido({
   });
   if (!puntoVenta) throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
 
-  // Idempotencia: si ya existe pedido vinculado, devolverlo sin duplicar.
+  // Idempotencia (fail-fast): si ya existe pedido vinculado, devolverlo sin
+  // duplicar. Se re-verifica dentro de la transacción bajo lock.
   const ventaVinculada = await prisma.venta.findFirst({
     where: { ofertaId: oferta.id, tenantId, deletedAt: null },
     select: { ventaId: true, estado: true },
@@ -69,12 +91,38 @@ export async function convertirOfertaAPedido({
   }
 
   return prisma.$transaction(async (tx) => {
-    const subtotal = itemsProducto.reduce(
+    // Serializa con la edición de ítems y la facturación: el snapshot del
+    // pedido se toma bajo el mismo lock que usan los demás writers.
+    await lockOferta(tx, tenantId, oferta.id);
+    const fresh = await tx.oferta.findFirst({
+      where: { id: ofertaId, tenantId },
+      include: { items: true },
+    });
+    if (!fresh) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+    const itemsFrescos = validarOfertaParaPedido(fresh);
+
+    // Idempotencia bajo lock: una doble conversión concurrente descubre aquí
+    // el pedido de la primera y no crea otro.
+    const vinculadaTx = await tx.venta.findFirst({
+      where: { ofertaId: fresh.id, tenantId, deletedAt: null },
+      select: { ventaId: true, estado: true },
+    });
+    if (vinculadaTx) {
+      if (vinculadaTx.estado !== 'PEDIDO') {
+        throw new ActionError(
+          'La oferta ya tiene una venta procesada vinculada.',
+          'VALIDATION_ERROR',
+        );
+      }
+      return { ventaId: vinculadaTx.ventaId, creado: false };
+    }
+
+    const subtotal = itemsFrescos.reduce(
       (sum, item) => sum + Number(item.total ?? 0),
       0,
     );
-    const descuento = Math.max(Number(oferta.subtotal) - subtotal, 0);
-    const totalCantidad = itemsProducto.reduce(
+    const descuento = Math.max(Number(fresh.subtotal) - subtotal, 0);
+    const totalCantidad = itemsFrescos.reduce(
       (sum, item) => sum + Number(item.cantidad ?? 0),
       0,
     );
@@ -85,16 +133,16 @@ export async function convertirOfertaAPedido({
         data: {
           tenantId,
           puntoDeVentaId,
-          clienteId: oferta.clienteId ?? null,
-          ofertaId: oferta.id,
+          clienteId: fresh.clienteId ?? null,
+          ofertaId: fresh.id,
           estado: 'PEDIDO',
           metodoPago: null,
           descuento,
-          total: Math.max(Number(oferta.total), 0),
+          total: Math.max(Number(fresh.total), 0),
           cantidad: totalCantidad,
           esVentaUnica: true,
           items: {
-            create: itemsProducto.map((item) => ({
+            create: itemsFrescos.map((item) => ({
               productoId: item.productoId as string,
               cantidad: item.cantidad,
               precioUnitario: Number(item.precioUnitario),
@@ -116,7 +164,7 @@ export async function convertirOfertaAPedido({
     }
 
     const updatedOferta = await tx.oferta.updateMany({
-      where: { id: oferta.id, tenantId, estado: { in: ['PENDIENTE', 'ACEPTADA'] } },
+      where: { id: fresh.id, tenantId, estado: { in: ['PENDIENTE', 'ACEPTADA'] } },
       data: { estado: 'ACEPTADA' },
     });
     if (updatedOferta.count !== 1) {
@@ -134,7 +182,7 @@ export async function convertirOfertaAPedido({
         usuarioId: usuarioId ?? 'sistema',
         detalles: {
           tipo: 'OFERTA_CONVERTIDA_PEDIDO',
-          ofertaId: oferta.id,
+          ofertaId: fresh.id,
           ventaId: venta.ventaId,
         },
       },
