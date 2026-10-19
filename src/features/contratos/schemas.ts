@@ -35,9 +35,14 @@ export const contratoUpdateSchema = z.object({
   numeroContratoClienteProveedor: z.string().nullable().optional(),
   clienteId: z.string().nullable().optional(),
   vendorId: z.string().nullable().optional(),
-  estado: estadoContratoEnum.optional(),
-  fechaAprobacion: z.string().datetime().nullable().optional(),
-  aprobadoPor: z.string().nullable().optional(),
+  // CTF-2: estado, fechaAprobacion y aprobadoPor no son escribibles por el
+  // cliente; el ciclo de vida solo cambia por la máquina de estados (CTF-1).
+});
+
+export const cambioEstadoSchema = z.object({
+  contratoId: z.string().min(1),
+  estado: estadoContratoEnum,
+  motivo: z.string().optional(),
 });
 
 export const bulkStatusSchema = z.object({
@@ -51,5 +56,6 @@ export const bulkDeleteSchema = z.object({
 
 export type ContratoInput = z.infer<typeof contratoSchema>;
 export type ContratoUpdateInput = z.infer<typeof contratoUpdateSchema>;
+export type CambioEstadoInput = z.infer<typeof cambioEstadoSchema>;
 export type BulkStatusInput = z.infer<typeof bulkStatusSchema>;
 export type BulkDeleteInput = z.infer<typeof bulkDeleteSchema>;

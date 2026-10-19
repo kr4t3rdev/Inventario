@@ -1,6 +1,4 @@
-import { NextRequest } from 'next/server'
 import { bulkDeleteContratosHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function POST(request: NextRequest) {
-  return bulkDeleteContratosHandler(request)
-}
+export const POST = withAuth((request) => bulkDeleteContratosHandler(request))

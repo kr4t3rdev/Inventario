@@ -196,4 +196,10 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Lock advisory transaccional del crédito del cliente: serializa toda evaluación/edición del tope entre writers concurrentes.',
     tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["credito", tenantId, clienteId]; ambos valores provienen del usuario autenticado y su tenant.',
   },
+  {
+    file: 'scripts/alertas-vencimiento-contratos.ts',
+    occurrences: 1,
+    reason: 'Lock advisory transaccional del cron de alertas: dos ejecuciones superpuestas no duplican las alertas del mismo día.',
+    tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["contratos", "alertas-vencimiento"]; es un lock global del job (sin datos de tenant) tomado por un script de cron con PrismaClient directo.',
+  },
 ] as const;

@@ -9,7 +9,8 @@ export const vendorSchema = z.object({
   direccion: z.string().optional().nullable(),
   telefono: z.string().optional().nullable(),
   contacto: z.string().optional().nullable(),
-  contrato: z.string().optional().nullable(),
+  // CTF-7: contrato (Vendor.contrato) deprecado; los contratos se gestionan por
+  // la relación Contrato.vendorId y el campo legacy ya no es escribible.
   cuentaCUP: z.string().optional().nullable(),
   cuentaUSD: z.string().optional().nullable(),
   logo: z.string().optional().nullable(),
@@ -22,7 +23,7 @@ export const vendorUpdateSchema = z.object({
   direccion: z.string().optional().nullable(),
   telefono: z.string().optional().nullable(),
   contacto: z.string().optional().nullable(),
-  contrato: z.string().optional().nullable(),
+  // CTF-7: contrato (Vendor.contrato) deprecado; no escribible por clientes.
   cuentaCUP: z.string().optional().nullable(),
   cuentaUSD: z.string().optional().nullable(),
   logo: z.string().optional().nullable(),

@@ -6,6 +6,7 @@
     "compras.servicios.editar",
     "compras.servicios.eliminar",
     "config.contabilidad.politica",
+    "config.contratos.configurar",
     "config.empresa.logo",
     "config.fiscal.gestionar",
     "config.tipos-contrato.crear",

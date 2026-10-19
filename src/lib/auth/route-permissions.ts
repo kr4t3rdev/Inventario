@@ -3,10 +3,11 @@
  * Fuente única de verdad para la autorización de transporte web.
  *
  * Reglas:
- * - Una ruta sensible mapeada → se evalúa su clave contra el registry.
- * - Ruta NO mapeada → comportamiento legacy (allowlist) + log `UNMAPPED_ROUTE`
- *   (visible, nunca silencioso). Se retira cuando el listado llegue a cero.
- *   Mobile (src/app/api/mobile/**) se incorpora por decisión en una fase posterior.
+ * - Una ruta mapeada → se evalúa su clave contra el registry (403 si el usuario
+ *   no tiene la clave).
+ * - Ruta NO mapeada → 403 fail-closed + log `[UNMAPPED_ROUTE]` (visible, nunca
+ *   silencioso); ya no existe allowlist de respaldo (PG-05 T6).
+ *   Mobile (src/app/api/mobile/**) se autoriza por su propio mapa de grupos.
  */
 
 interface RoutePermission {
@@ -41,6 +42,14 @@ const ROUTE_PERMISSION_MAP_INTERNAL: RoutePermission[] = [
   { prefix: '/api/produccion/recetas/', key: 'produccion.recetas.gestionar' },
   { prefix: '/api/produccion/vales/', key: 'produccion.vales.gestionar' },
   { prefix: '/api/reparaciones/', key: 'produccion.reparaciones.gestionar' },
+  // ── Contratos (CTF-4): prefijos específicos antes que el genérico ──
+  { prefix: '/api/configuracion/sistema/contratos', method: 'GET', key: 'ventas.contratos.gestionar', label: 'Consultar configuración de contratos' },
+  { prefix: '/api/configuracion/sistema/contratos', method: 'PUT', key: 'config.contratos.configurar', label: 'Configurar contratos del tenant' },
+  { prefix: '/api/tipos-contratos', method: 'GET', key: 'ventas.contratos.gestionar', label: 'Consultar tipos de contrato' },
+  { prefix: '/api/tipos-contratos', method: 'POST', key: 'config.tipos-contrato.crear', label: 'Crear/editar tipos de contrato' },
+  { prefix: '/api/tipos-contratos', method: 'PUT', key: 'config.tipos-contrato.crear', label: 'Crear/editar tipos de contrato' },
+  { prefix: '/api/tipos-contratos', method: 'DELETE', key: 'config.tipos-contrato.eliminar', label: 'Eliminar tipos de contrato' },
+  { prefix: '/api/contratos', key: 'ventas.contratos.gestionar', label: 'Gestionar contratos' },
 ];
 
 /**

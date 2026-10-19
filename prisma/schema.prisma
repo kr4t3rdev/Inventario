@@ -53,6 +53,8 @@ model Vendor {
   contacto         String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  /// @deprecated CTF-7: usar la relación contratos (Contrato.vendorId). Sin
+  /// escritura desde la aplicación; columna se conserva hasta higiene posterior.
   contrato         String?
   cuentaCUP        String?
   cuentaUSD        String?
@@ -200,6 +202,7 @@ model Tenant {
   reglasReabastecimiento         ReglaReabastecimiento[]
   comprasServicio                CompraServicio[]
   contratos                      Contrato[]
+  configuracionContratos         ConfiguracionContratos?
   cuentasBancarias               CuentaBancaria[]
   cuentasPorCobrar               CuentaPorCobrar[]
   cuentasPorPagar                CuentaPorPagar[]
@@ -2802,9 +2805,21 @@ model DefectacionCatalogo {
 
 model ConfiguracionSistema {
   configId                     String   @id @default(cuid())
+  /// @deprecated CTF-5: migrado a ConfiguracionContratos (una fila por tenant).
+  /// La columna global se conserva; la aplicación ya no la escribe ni la lee.
   diasAvisoVencimientoContrato Int      @default(30)
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
+}
+
+/// CTF-5: configuración de contratos por tenant (una fila por tenant).
+model ConfiguracionContratos {
+  configId             String   @id @default(cuid())
+  tenantId             String   @unique
+  diasAvisoVencimiento Int      @default(30)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  tenant               Tenant   @relation(fields: [tenantId], references: [tenantId])
 }
 
 model OrdenProduccion {

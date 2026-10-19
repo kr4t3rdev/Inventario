@@ -25,6 +25,7 @@
     "seed:upload-backfill": "tsx prisma/seed/backfill-upload-features.ts",
     "ops:baseline-prisma-production": "tsx scripts/ops/baseline-prisma-production.ts --dry-run",
     "ops:sync-plan-features-production": "tsx scripts/ops/sync-plan-features-production.ts",
+    "contratos:alertas-vencimiento": "tsx scripts/alertas-vencimiento-contratos.ts",
     "seed:licenses": "tsx prisma/seed/tenant-licenses-seed.ts",
     "report:qa": "tsx prisma/seed/qa-report.ts",
     "testsprite": "npx -y @testsprite/testsprite-mcp",

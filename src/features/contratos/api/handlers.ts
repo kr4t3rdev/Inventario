@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions/types'
+import { puedeTransicionar } from '@/features/contratos/lib/estado-contrato-machine'
+import { registrarFirmaYTransicionar } from '@/features/contratos/lib/firmas-contrato'
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
@@ -46,10 +48,9 @@ const contratoUpdateSchema = z.object({
   numeroContratoClienteProveedor: z.string().nullable().optional(),
   clienteId: z.string().nullable().optional(),
   vendorId: z.string().nullable().optional(),
-  estado: z.enum(['BORRADOR', 'PENDIENTE_APROBACION', 'APROBADO', 'RECHAZADO', 'ACTIVO', 'FINALIZADO', 'ANULADO']).optional(),
-  numeroContrato: z.string().optional(),
-  fechaAprobacion: z.string().datetime().nullable().optional(),
-  aprobadoPor: z.string().nullable().optional(),
+  // CTF-2: estado, numeroContrato, fechaAprobacion y aprobadoPor no son
+  // escribibles por el cliente. El ciclo de vida solo cambia por la máquina de
+  // estados y la numeración la genera el servidor (consecutivo por tenant).
 }).refine(
   (data) => {
     if (data.tipo) {
@@ -76,8 +77,9 @@ const bulkDeleteSchema = z.object({
 const contratoFirmaSchema = z.object({
   firmanteId: z.string().min(1, 'El firmante es requerido'),
   tipoFirma: z.enum(['CLIENTE', 'PROVEEDOR', 'INTERNO']),
-  estado: z.string().optional(),
+  estado: z.enum(['PENDIENTE', 'FIRMADA', 'RECHAZADA']).optional(),
   firmaDigital: z.string().nullable().optional(),
+  // CTF-3: la fechaFirma de una firma FIRMADA la asigna el servidor.
   fechaFirma: z.string().datetime().nullable().optional(),
   comentarios: z.string().nullable().optional(),
 })
@@ -281,15 +283,9 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
       const v = await prisma.vendor.findFirst({ where: { vendorId: validatedBody.vendorId, tenantId } })
       if (!v) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     }
-    if (validatedBody.aprobadoPor !== undefined && validatedBody.aprobadoPor !== null) {
-      const validMiembro = await usuarioEsMiembroDelTenant(validatedBody.aprobadoPor, tenantId)
-      if (!validMiembro) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
-    }
 
     const data: any = {}
-    if (validatedBody.numeroContrato !== undefined) data.numeroContrato = validatedBody.numeroContrato
     if (validatedBody.tipo !== undefined) data.tipo = validatedBody.tipo
-    if (validatedBody.estado !== undefined) data.estado = validatedBody.estado
     if (validatedBody.monto !== undefined) data.monto = validatedBody.monto
     if (validatedBody.moneda !== undefined) data.moneda = validatedBody.moneda
     if (validatedBody.esMultiMoneda !== undefined) data.esMultiMoneda = validatedBody.esMultiMoneda
@@ -298,10 +294,8 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
     if (validatedBody.numeroContratoClienteProveedor !== undefined) data.numeroContratoClienteProveedor = validatedBody.numeroContratoClienteProveedor
     if (validatedBody.fechaInicio !== undefined) data.fechaInicio = new Date(validatedBody.fechaInicio)
     if (validatedBody.fechaFin !== undefined) data.fechaFin = validatedBody.fechaFin ? new Date(validatedBody.fechaFin) : null
-    if (validatedBody.fechaAprobacion !== undefined) data.fechaAprobacion = validatedBody.fechaAprobacion ? new Date(validatedBody.fechaAprobacion) : null
     if (validatedBody.clienteId !== undefined) data.cliente = validatedBody.clienteId ? { connect: { clienteId: validatedBody.clienteId } } : { disconnect: true }
     if (validatedBody.vendorId !== undefined) data.vendor = validatedBody.vendorId ? { connect: { vendorId: validatedBody.vendorId } } : { disconnect: true }
-    if (validatedBody.aprobadoPor !== undefined) data.aprobador = validatedBody.aprobadoPor ? { connect: { userId: validatedBody.aprobadoPor } } : { disconnect: true }
     const contrato = await prisma.contrato.update({
       where: { contratoId: id },
       data,
@@ -361,11 +355,52 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
     const body = await req.json()
     const { ids, estado } = bulkStatusSchema.parse(body)
     if (ids.length === 0) return NextResponse.json({ message: 'No IDs provided' }, { status: 400 })
-    const result = await prisma.contrato.updateMany({
+    const contratos = await prisma.contrato.findMany({
       where: { contratoId: { in: ids }, tenantId },
-      data: { estado },
+      select: { contratoId: true, estado: true },
     })
-    return NextResponse.json({ success: true, count: result.count, message: `${result.count} contratos actualizados a ${estado}` })
+    const actualizados: string[] = []
+    const fallidos: { contratoId: string; motivo: string }[] = []
+    const idsEncontrados = new Set<string>()
+    for (const c of contratos) {
+      idsEncontrados.add(c.contratoId)
+      if (puedeTransicionar(c.estado, estado)) {
+        actualizados.push(c.contratoId)
+      } else {
+        fallidos.push({
+          contratoId: c.contratoId,
+          motivo: `No se puede cambiar un contrato de ${c.estado} a ${estado}`,
+        })
+      }
+    }
+    for (const id of ids) {
+      if (!idsEncontrados.has(id)) {
+        fallidos.push({ contratoId: id, motivo: 'Contrato no encontrado' })
+      }
+    }
+    let confirmados = [...actualizados]
+    if (actualizados.length > 0) {
+      // B-2: claim condicional por estado de origen; una anulación
+      // concurrente gana y queda fuera del updateMany.
+      const estadosOrigen = [...new Set(contratos.filter((c) => actualizados.includes(c.contratoId)).map((c) => c.estado))]
+      await prisma.contrato.updateMany({
+        where: { contratoId: { in: actualizados }, tenantId, estado: { in: estadosOrigen } },
+        data: { estado },
+      })
+      // Reconciliación por id tras el claim.
+      const reclamados = await prisma.contrato.findMany({
+        where: { contratoId: { in: actualizados }, tenantId, estado },
+        select: { contratoId: true },
+      })
+      const setConfirmados = new Set(reclamados.map((c) => c.contratoId))
+      for (const id of actualizados) {
+        if (!setConfirmados.has(id)) {
+          fallidos.push({ contratoId: id, motivo: 'El contrato cambió de estado concurrentemente' })
+        }
+      }
+      confirmados = actualizados.filter((id) => setConfirmados.has(id))
+    }
+    return NextResponse.json({ success: true, actualizados: confirmados, fallidos })
   } catch (error) {
     console.error('Error in bulk status update:', error)
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
@@ -688,18 +723,12 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
     if (!firmanteValido) {
       return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     }
-    const firma = await prisma.contratoFirma.create({
-      data: {
-        contratoId: id,
-        firmanteId: parsed.firmanteId,
-        tipoFirma: parsed.tipoFirma,
-        estado: parsed.estado || 'PENDIENTE',
-        firmaDigital: parsed.firmaDigital,
-        fechaFirma: parsed.fechaFirma ? new Date(parsed.fechaFirma) : null,
-        comentarios: parsed.comentarios,
-      },
-      include: { firmante: { select: { userId: true, name: true, email: true } } },
-    })
+    // CTF-3: el registro de la firma y la activación del contrato (APROBADO →
+    // ACTIVO con firma FIRMADA) ocurren vía la máquina de estados.
+    const { firma } = await registrarFirmaYTransicionar(
+      { contratoId: id, estado: owner.estado },
+      parsed,
+    )
     return NextResponse.json(firma)
   } catch (error) {
     console.error('Error al crear firma:', error)
@@ -840,10 +869,16 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
       },
       include: { aprobador: { select: { userId: true, name: true, email: true } } },
     })
-    if (body.estado === 'APROBADO' && body.fechaAprobacion) {
-      await prisma.contrato.update({
-        where: { contratoId: id },
-        data: { aprobadoPor: body.aprobadorId, fechaAprobacion: new Date(body.fechaAprobacion), estado: 'APROBADO' },
+    // La transición del contrato pasa por la máquina de estados: solo un contrato
+    // en PENDIENTE_APROBACION pasa a APROBADO, y el aprobador y la fecha los
+    // asigna el servidor (aprobadorId ya fue validado como miembro del tenant).
+    // B-2: claim condicional sobre el estado leído — si el contrato fue anulado
+    // concurrentemente, el claim afecta 0 filas y la aprobación queda solo
+    // como registro, sin revivir el estado terminal.
+    if (body.estado === 'APROBADO' && puedeTransicionar(owner.estado, 'APROBADO')) {
+      await prisma.contrato.updateMany({
+        where: { contratoId: id, tenantId, estado: owner.estado },
+        data: { aprobadoPor: body.aprobadorId, fechaAprobacion: new Date(), estado: 'APROBADO' },
       })
     }
     return NextResponse.json(aprobacion)

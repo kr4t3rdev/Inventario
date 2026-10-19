@@ -5,8 +5,16 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Transacción interactiva (B-2): el helper de firmas relee el estado y hace
+// claim condicional dentro de la transacción.
+const mockTx = vi.hoisted(() => ({
+  contrato: { findFirst: vi.fn(), updateMany: vi.fn() },
+  contratoFirma: { create: vi.fn() },
+}));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb(mockTx)),
     contrato: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -155,9 +163,12 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
   });
 
   it('bulk update-status no toca contratos de otro tenant', async () => {
-    vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.contrato.findMany).mockResolvedValue([
+      { contratoId: 'ct-a', estado: 'BORRADOR' },
+    ] as never);
+    vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as never);
     await bulkUpdateContratoStatusHandler(
-      req('http://localhost/api/contratos/bulk/update-status', { method: 'POST', body: JSON.stringify({ ids: ['ct-b'], estado: 'ACTIVO' }) }) as never,
+      req('http://localhost/api/contratos/bulk/update-status', { method: 'POST', body: JSON.stringify({ ids: ['ct-a', 'ct-b'], estado: 'PENDIENTE_APROBACION' }) }) as never,
     );
     expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-A' }) }),
@@ -284,7 +295,8 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
   it('POST firma con firmante del mismo tenant es aceptada', async () => {
     vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A' } as never);
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({ userId: 'user-a' } as never);
-    vi.mocked(prisma.contratoFirma.create).mockResolvedValue({ firmaId: 'f1' } as never);
+    vi.mocked(mockTx.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', estado: 'BORRADOR' } as never);
+    vi.mocked(mockTx.contratoFirma.create).mockResolvedValue({ firmaId: 'f1' } as never);
     const res = (await createContratoFirmaHandler(
       req('http://localhost/api/contratos/ct-a/firmas', {
         method: 'POST',
@@ -362,9 +374,10 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
     expect(prisma.contrato.update).not.toHaveBeenCalled();
   });
 
-  it('PUT contrato con aprobadoPor de otro tenant devuelve 404', async () => {
+  it('PUT contrato ignora aprobadoPor del payload (CTF-2: ciclo de vida no escribible)', async () => {
     vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A', tipo: 'OTRO' } as never);
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    vi.mocked(prisma.contrato.update).mockResolvedValue({ contratoId: 'ct-a' } as never);
     const res = (await updateContratoHandler(
       req('http://localhost/api/contratos/ct-a', {
         method: 'PUT',
@@ -372,7 +385,10 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
       }) as never,
       params('ct-a'),
     )) as Response;
-    expect(res.status).toBe(404);
-    expect(prisma.contrato.update).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
+    expect(prisma.contrato.update).toHaveBeenCalledTimes(1);
+    const call = vi.mocked(prisma.contrato.update).mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(call.data.aprobador).toBeUndefined();
   });
 });

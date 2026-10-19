@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
-import { authenticateUser } from '@/lib/auth-middleware'
+import { authenticateUser, withAuth } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions'
 import { requirePermission } from '@/lib/services/tenant-scope'
 
@@ -23,7 +23,7 @@ const tipoContratoCustomSchema = z.object({
 /**
  * @description GET /api/tipos-contratos - Obtiene todos los tipos de contratos personalizados
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest) => {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -58,12 +58,12 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * @description POST /api/tipos-contratos - Crea un nuevo tipo de contrato personalizado
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest) => {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -130,4 +130,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

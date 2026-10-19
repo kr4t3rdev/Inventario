@@ -39,6 +39,7 @@ import { LazyMotion, m as motion } from "framer-motion"
 const firmaSchema = z.object({
   firmanteId: z.string().min(1, "Seleccione un firmante"),
   tipoFirma: z.enum(["CLIENTE", "PROVEEDOR", "INTERNO"]),
+  estadoFirma: z.enum(["PENDIENTE", "FIRMADA"]),
   comentarios: z.string().optional(),
 })
 
@@ -59,6 +60,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
     defaultValues: {
       firmanteId: "",
       tipoFirma: "INTERNO",
+      estadoFirma: "PENDIENTE",
       comentarios: "",
     },
   })
@@ -74,7 +76,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
         },
         body: JSON.stringify({
           ...data,
-          estado: 'PENDIENTE',
+          estado: data.estadoFirma,
         }),
       })
 
@@ -82,7 +84,11 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
         throw new Error("Error al agregar firma")
       }
 
-      sileo.success({ title: 'Solicitud de firma agregada exitosamente' })
+      if (data.estadoFirma === "FIRMADA") {
+        sileo.success({ title: 'Firma registrada exitosamente. Si el contrato estaba aprobado, quedó activo.' })
+      } else {
+        sileo.success({ title: 'Solicitud de firma agregada exitosamente' })
+      }
       setOpen(false)
       form.reset()
       onSuccess()
@@ -122,11 +128,11 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
 
             </DialogTitle>
             <DialogDescription>
-              Seleccione el usuario que debe firmar este contrato.
+              Seleccione el usuario que debe firmar este contrato. Si registra la firma como firmada sobre un contrato aprobado, este quedará activo.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 mt-4">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className="space-y-4 mt-4">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -185,6 +191,37 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                           <SelectItem value="INTERNO">Interno</SelectItem>
                           <SelectItem value="CLIENTE">Cliente</SelectItem>
                           <SelectItem value="PROVEEDOR">Proveedor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="estadoFirma"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <PenTool className="h-4 w-4 text-muted-foreground" />
+                        Estado de la firma
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                            <SelectValue placeholder="Seleccione el estado" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PENDIENTE">Pendiente de firma</SelectItem>
+                          <SelectItem value="FIRMADA">Firmada</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

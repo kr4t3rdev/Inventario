@@ -1,10 +1,6 @@
-import { NextRequest } from 'next/server'
 import { getContratoFirmasHandler, createContratoFirmaHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return getContratoFirmasHandler(req, context)
-}
+export const GET = withAuth((request, context) => getContratoFirmasHandler(request, context))
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return createContratoFirmaHandler(request, { params })
-}
+export const POST = withAuth((request, context) => createContratoFirmaHandler(request, context))

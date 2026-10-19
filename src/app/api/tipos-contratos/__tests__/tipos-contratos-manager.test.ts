@@ -12,6 +12,9 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
+  // CTF-4: la ruta se envuelve con withAuth; en este test pasa directo para
+  // seguir evaluando la lógica interna contra authenticateUser mockeado.
+  withAuth: (handler: (req: unknown, ctx: unknown) => unknown) => (req: unknown, ctx: unknown) => handler(req, ctx),
 }));
 
 import { authenticateUser } from '@/lib/auth-middleware';

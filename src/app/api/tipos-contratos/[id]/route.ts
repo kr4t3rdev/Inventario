@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { authenticateUser } from '@/lib/auth-middleware'
+import { authenticateUser, withAuth } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions'
 import { requirePermission } from '@/lib/services/tenant-scope'
 
 /**
  * @description DELETE /api/tipos-contratos/[id] - Elimina un tipo de contrato personalizado
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -52,4 +52,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-}
+})

@@ -24,6 +24,24 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from '@/lib/token'
+import { resolverDiasAviso } from '@/features/contratos/lib/dias-aviso'
+import { ESTADOS_BULK } from '@/features/contratos/lib/estado-contrato-machine'
+
+/**
+ * Etiquetas en español neutro para el menú masivo de estados (B-1). El menú se
+ * deriva de ESTADOS_BULK: la máquina de estados sigue validando por id y los
+ * fallidos se reportan en el toast, pero ningún estado queda sin opción válida
+ * (con el menú fijo anterior un BORRADOR no podía avanzar a aprobación).
+ */
+const ETIQUETAS_ESTADO: Record<string, string> = {
+  BORRADOR: 'Borrador',
+  PENDIENTE_APROBACION: 'Pendiente de aprobación',
+  RECHAZADO: 'Rechazado',
+  APROBADO: 'Aprobado',
+  ACTIVO: 'Activo',
+  FINALIZADO: 'Finalizado',
+  ANULADO: 'Anulado',
+}
 
 interface Contrato {
   contratoId: string
@@ -47,8 +65,7 @@ interface Contrato {
 }
 
 interface ConfiguracionSistema {
-  configId: string
-  diasAvisoVencimientoContrato: number
+  diasAvisoVencimiento: number
 }
 
 interface ContratosContentProps {
@@ -216,9 +233,28 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
       })
 
       if (response.ok) {
-        toast.success(`Estado actualizado a ${newStatus}`)
+        const result = await response.json() as { actualizados?: string[]; fallidos?: Array<{ contratoId: string; motivo: string }> }
+        const actualizados = result.actualizados ?? []
+        const fallidos = result.fallidos ?? []
+
+        if (fallidos.length > 0) {
+          const resumenFallidos = fallidos
+            .slice(0, 3)
+            .map(f => `${f.contratoId}: ${f.motivo}`)
+            .join('; ')
+          const resto = fallidos.length > 3 ? ` y ${fallidos.length - 3} más` : ''
+          if (actualizados.length > 0) {
+            toast.warning(`${actualizados.length} contratos actualizados a ${newStatus}. ${fallidos.length} no se pudieron cambiar: ${resumenFallidos}${resto}`)
+          } else {
+            toast.error(`Ningún contrato cambió de estado: ${resumenFallidos}${resto}`)
+          }
+        } else {
+          toast.success(`Estado actualizado a ${newStatus}`)
+        }
         setRowSelection({})
         fetchContratos(pagination.pageIndex + 1, pagination.pageSize)
+      } else {
+        toast.error('Error al actualizar estado')
       }
     } catch (error) {
       console.error('Error bulk update:', error)
@@ -276,7 +312,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
 
   const getVencimientoBadge = (contrato: Contrato) => {
     const diasRestantes = getDiasRestantes(contrato.fechaFin)
-    const diasAviso = configState?.diasAvisoVencimientoContrato || contrato.diasAvisoVencimiento || 30
+    const diasAviso = resolverDiasAviso(contrato, configState)
 
     if (!contrato.fechaFin || diasRestantes === null) {
       return <span className="text-muted-foreground text-xs">Sin fecha</span>
@@ -521,15 +557,11 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuLabel>Cambiar Estado</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleBulkStatus('BORRADOR')}>
-                            Borrador
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatus('ACTIVO')}>
-                            Activo
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatus('FINALIZADO')}>
-                            Finalizado
-                          </DropdownMenuItem>
+                          {ESTADOS_BULK.map((estado) => (
+                            <DropdownMenuItem key={estado} onClick={() => handleBulkStatus(estado)}>
+                              {ETIQUETAS_ESTADO[estado] ?? estado}
+                            </DropdownMenuItem>
+                          ))}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={handleBulkDelete} className="text-destructive">
                             Eliminar Seleccionados

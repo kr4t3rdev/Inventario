@@ -1,10 +1,6 @@
-import { NextRequest } from 'next/server'
 import { getContratoArchivosHandler, createContratoArchivoHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return getContratoArchivosHandler(req, context)
-}
+export const GET = withAuth((request, context) => getContratoArchivosHandler(request, context))
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return createContratoArchivoHandler(request, { params })
-}
+export const POST = withAuth((request, context) => createContratoArchivoHandler(request, context))

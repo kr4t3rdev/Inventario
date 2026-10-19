@@ -6,6 +6,9 @@ import { expectActionFailure, expectActionSuccess } from "@/test/action-response
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn().mockResolvedValue(null) },
+}));
 vi.mock('@/features/contratos/lib/numeroContratoGenerator', () => ({
   generarProximoConsecutivo: vi.fn(),
   formatearNumeroContrato: vi.fn(),
@@ -31,6 +34,7 @@ vi.mock('@/lib/prisma', () => ({
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator';
 import {
   getContratosAction,
@@ -39,6 +43,7 @@ import {
   updateContratoAction,
   deleteContratoAction,
   bulkUpdateContratoStatusAction,
+  cambiarEstadoContratoAction,
 } from '@/features/contratos/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -160,14 +165,206 @@ describe('Contratos Server Actions', () => {
   });
 
   describe('bulkUpdateContratoStatusAction', () => {
-    it('actualiza estado masivamente', async () => {
+    it('aplica solo los contratos con transición válida y reporta los fallidos', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 3 } as any);
+      vi.mocked(prisma.contrato.findMany)
+        .mockResolvedValueOnce([
+          { contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' },
+          { contratoId: 'ct-2', estado: 'PENDIENTE_APROBACION' },
+          { contratoId: 'ct-3', estado: 'FINALIZADO' },
+        ] as any)
+        .mockResolvedValueOnce([
+          { contratoId: 'ct-1', estado: 'APROBADO' },
+          { contratoId: 'ct-2', estado: 'APROBADO' },
+        ] as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 2 } as any);
 
-      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2', 'ct-3'], estado: 'ACTIVO' });
+      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2', 'ct-3'], estado: 'APROBADO' });
 
       expect(result.success).toBe(true);
-      expect(expectActionSuccess(result).data!.count).toBe(3);
+      expect(result.data!.actualizados).toEqual(['ct-1', 'ct-2']);
+      expect(result.data!.fallidos).toEqual([
+        { contratoId: 'ct-3', motivo: 'No se puede cambiar un contrato de FINALIZADO a APROBADO' },
+      ]);
+      expect(prisma.contrato.updateMany).toHaveBeenCalledWith({
+        where: {
+          contratoId: { in: ['ct-1', 'ct-2'] },
+          tenantId: 'tenant-test',
+          estado: { in: ['PENDIENTE_APROBACION'] },
+        },
+        data: { estado: 'APROBADO' },
+      });
+    });
+
+    it('un cambio de estado concurrente queda como fallido tras reconciliar el claim (B-2)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findMany)
+        .mockResolvedValueOnce([
+          { contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' },
+          { contratoId: 'ct-2', estado: 'PENDIENTE_APROBACION' },
+        ] as any)
+        .mockResolvedValueOnce([{ contratoId: 'ct-1', estado: 'APROBADO' }] as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2'], estado: 'APROBADO' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.actualizados).toEqual(['ct-1']);
+      expect(result.data!.fallidos).toEqual([
+        { contratoId: 'ct-2', motivo: 'El contrato cambió de estado concurrentemente' },
+      ]);
+    });
+
+    it('reporta los ids inexistentes como fallidos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findMany)
+        .mockResolvedValueOnce([{ contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' }] as any)
+        .mockResolvedValueOnce([{ contratoId: 'ct-1', estado: 'APROBADO' }] as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-inexistente'], estado: 'APROBADO' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.actualizados).toEqual(['ct-1']);
+      expect(result.data!.fallidos).toEqual([
+        { contratoId: 'ct-inexistente', motivo: 'Contrato no encontrado' },
+      ]);
+    });
+
+    it('no lanza error cuando todos los contratos tienen transición inválida', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findMany).mockResolvedValue([
+        { contratoId: 'ct-1', estado: 'BORRADOR' },
+      ] as any);
+
+      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1'], estado: 'ACTIVO' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.actualizados).toEqual([]);
+      expect(result.data!.fallidos).toHaveLength(1);
+      expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cambiarEstadoContratoAction', () => {
+    it('persiste una transición válida sin tocar el aprobador', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'BORRADOR' } as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ contratoId: 'ct-1', estado: 'BORRADOR' }),
+          data: expect.objectContaining({ estado: 'PENDIENTE_APROBACION', aprobadoPor: null, fechaAprobacion: null }),
+        }),
+      );
+    });
+
+    it('al aprobar asigna aprobador y fecha de aprobación desde el servidor', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'PENDIENTE_APROBACION' } as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'APROBADO' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' }),
+          data: expect.objectContaining({ estado: 'APROBADO', aprobadoPor: 'user-1', fechaAprobacion: expect.any(Date) }),
+        }),
+      );
+    });
+
+    it('rechaza una transición inválida con TRANSICION_INVALIDA sin mutar el contrato', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'BORRADOR' } as any);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('TRANSICION_INVALIDA');
+      expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('retorna NOT_FOUND para un contrato de otro tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(null);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-otro', estado: 'ACTIVO' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('NOT_FOUND');
+    });
+
+    it('audita la transición con entidad CONTRATO', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'BORRADOR' } as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION', motivo: 'Revisión inicial' });
+
+      expect(AuditLogService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accion: 'UPDATE',
+          entidad: 'CONTRATO',
+          entidadId: 'ct-1',
+          usuarioId: 'user-1',
+          detalles: expect.objectContaining({ desde: 'BORRADOR', hacia: 'PENDIENTE_APROBACION', motivo: 'Revisión inicial' }),
+        }),
+      );
+    });
+
+    it('conserva el aprobador al activar o finalizar', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'APROBADO', aprobadoPor: 'user-2' } as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
+
+      expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ estado: 'ACTIVO' }),
+        }),
+      );
+      const call = vi.mocked(prisma.contrato.updateMany).mock.calls[0][0] as any;
+      expect(call.data.aprobadoPor).toBeUndefined();
+      expect(call.data.fechaAprobacion).toBeUndefined();
+    });
+
+    it('no revive un contrato anulado concurrentemente: claim fallido → TRANSICION_INVALIDA (B-2)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, estado: 'PENDIENTE_APROBACION' } as any);
+      // La anulación concurrente gana: el claim condicional afecta 0 filas.
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 0 } as any);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'APROBADO' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('TRANSICION_INVALIDA');
+      expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' }),
+        }),
+      );
+    });
+
+    it('rechaza a un usuario sin el permiso de contratos con FORBIDDEN (RBAC)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...mockUser,
+        role: 'regularUser',
+        planFeatures: { contratos: true },
+        permissions: new Set(['ventas.venta.crear']),
+      } as any);
+
+      const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('FORBIDDEN');
+      expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
     });
   });
 

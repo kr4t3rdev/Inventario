@@ -1,10 +1,6 @@
-import { NextRequest } from 'next/server'
 import { getContratoAlertasHandler, createContratoAlertaHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return getContratoAlertasHandler(req, context)
-}
+export const GET = withAuth((request, context) => getContratoAlertasHandler(request, context))
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return createContratoAlertaHandler(request, { params })
-}
+export const POST = withAuth((request, context) => createContratoAlertaHandler(request, context))
