@@ -54,7 +54,7 @@ Ordenado por valor/riesgo. LP-0 es precondición de seguridad; LP-1/LP-2 complet
 
 > ✅ **IMPLEMENTADO COMPLETO (2026-10-18)**: los 4 puntos hechos. Commits `f1be2cbf` (esDefault), `5be46fe4` (resolver unificado) y `633e2c4e` (E2E + fixtures). La cadena vive solo en `resolvePrecioVenta`; el POS la hereda vía un adaptador puro, Ofertas y `VentaMutationService` llaman al resolver directo, y el E2E `e2e/pos-lista-precio-cliente.spec.ts` valida el ciclo completo en el navegador.
 >
-> **Nota de integración (2026-10-19, `feat/sesion-f-integracion`)**: al fusionar con main (que ya traía la Sesión E), la cadena de default se reubicó dentro de `resolver-items-oferta.ts` (que la heredan crear/editar/duplicar ofertas con sus locks y CAS intactos), porque el `createOfertaAction` de F pre-E resolvía inline. RED→GREEN: el test "la default del tenant manda sobre el precio base" fallaba sin el port (la cadena degradaba a cliente > base) y pasó tras reubicarla; 119/119 en ofertas + precios de ventas.
+> **Nota de integración (2026-10-19, `feat/sesion-f-integracion`)**: al fusionar con main (que ya traía la Sesión E), la cadena de default se reubicó dentro de `resolver-items-oferta.ts` (que la heredan crear/editar/duplicar ofertas con sus locks y CAS intactos), porque el `createOfertaAction` de F pre-E resolvía inline. RED→GREEN: el test "la default del tenant manda sobre el precio base" fallaba sin el port (la cadena degradaba a cliente > base) y pasó tras reubicarla; 119/119 en ofertas + precios de ventas. Autorizado el 2026-10-19: fast-forward `f5ee2f3a → 5e37f30e` a `main`.
 
 **Problema**: H2 (+ H3 como opción de diseño).
 
