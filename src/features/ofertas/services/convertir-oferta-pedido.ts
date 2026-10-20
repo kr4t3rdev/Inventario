@@ -20,14 +20,15 @@ interface ConvertirOfertaAPedidoParams {
  */
 function validarOfertaParaPedido<
   TItem extends { productoId: string | null },
->(oferta: { estado: string; items: readonly TItem[] }): TItem[] {
+>(oferta: { estado: string; fechaVencimiento?: Date | null; items: readonly TItem[] }): TItem[] {
   if (oferta.estado === 'FACTURADA') {
     throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   }
   if (oferta.estado === 'RECHAZADA') {
     throw new ActionError('No se puede convertir una oferta rechazada', 'VALIDATION_ERROR');
   }
-  if (oferta.estado === 'VENCIDA') {
+  if (oferta.estado === 'VENCIDA' || (oferta.estado === 'PENDIENTE'
+    && oferta.fechaVencimiento && oferta.fechaVencimiento < new Date())) {
     throw new ActionError('No se puede convertir una oferta vencida', 'VALIDATION_ERROR');
   }
 

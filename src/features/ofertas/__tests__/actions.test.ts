@@ -64,6 +64,23 @@ const mockUser: AuthenticatedUser = {
   role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
+const mockCliente = {
+  clienteId: 'cli-1',
+  tenantId: 'tenant-test',
+  nombre: 'Test',
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  direccion: null,
+  logoUrl: null,
+  numeroContrato: null,
+  numeroCuentaCUP: null,
+  numeroCuentaUSD: null,
+  telefono: null,
+  listaPrecioId: null,
+  taxIdCliente: null,
+  limiteCredito: null,
+};
+
 describe('Ofertas Server Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -131,7 +148,7 @@ describe('Ofertas Server Actions', () => {
 
     it('E-1 reintenta la creación cuando el número colisiona (P2002)', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockCliente);
       vi.mocked(prisma.producto.findFirst).mockResolvedValue({
         id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
       } as any);
@@ -222,7 +239,7 @@ describe('Ofertas Server Actions', () => {
 
     it('E-3 rechaza impuestos que superan el subtotal resuelto (TAX_INVALID)', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockCliente);
       vi.mocked(prisma.producto.findFirst).mockResolvedValue({
         id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
       } as any);
@@ -234,13 +251,14 @@ describe('Ofertas Server Actions', () => {
       });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('TAX_INVALID');
       expect(prisma.oferta.create).not.toHaveBeenCalled();
     });
 
     it('E-3 ignora subtotal/total del payload y persiste montos recalculados', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue(mockCliente);
       vi.mocked(prisma.producto.findFirst).mockResolvedValue({
         id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
       } as any);
@@ -272,6 +290,7 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ id: 'of-1', estado: 'PENDIENTE' } as any);
       vi.mocked(prisma.oferta.updateMany).mockResolvedValue({ count: 1 } as any);
 
+      mockTx.oferta.findFirst.mockResolvedValue({ id: 'of-1', estado: 'PENDIENTE' });
       const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
       expect(result.success).toBe(true);
     });
@@ -483,7 +502,9 @@ describe('Ofertas Server Actions', () => {
       const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('VALIDATION_ERROR');
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.message).toContain('cambió de estado');
     });
 

@@ -27,17 +27,10 @@ import { verificarStockBajo } from '@/lib/verificar-stock';
 describe('verificar-stock', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Simula la validación real de Prisma: el modelo User no tiene escalar
-    // tenantId (la pertenencia vive en TenantMembership). El código que lo
-    // pida falla en runtime, como en producción.
-    vi.mocked(prisma.user.findMany).mockImplementation((args: any) => {
-      if (args?.select?.tenantId || args?.where?.tenantId) {
-        return Promise.reject(
-          new Error('Unknown argument `tenantId`: el modelo User no tiene ese campo'),
-        );
-      }
-      return Promise.resolve([]);
-    });
+    // No se deben consultar usuarios directamente: la pertenencia vive en TenantMembership.
+    vi.mocked(prisma.user.findMany).mockRejectedValue(
+      new Error('Unexpected User query; tenant membership is the supported lookup.'),
+    );
   });
 
   it('calcula stock bajo y sin stock desde StockUbicacion en dry-run', async () => {
@@ -143,9 +136,9 @@ describe('verificar-stock', () => {
       { productoId: 'prod-1', cantidad: 3 },
       { productoId: 'prod-2', cantidad: 2 },
     ] as any);
-    vi.mocked(prisma.tenantMembership.findMany).mockImplementation((args: any) =>
-      Promise.resolve((args.where.tenantId === 'tenant-1' ? [{ userId: 'u-1' }] : [{ userId: 'u-9' }]) as any),
-    );
+    vi.mocked(prisma.tenantMembership.findMany)
+      .mockResolvedValueOnce([{ userId: 'u-1' }] as never)
+      .mockResolvedValueOnce([{ userId: 'u-9' }] as never);
     vi.mocked(prisma.notification.findFirst).mockResolvedValue(null as any);
     vi.mocked(prisma.notification.createMany).mockResolvedValue({ count: 1 } as any);
 

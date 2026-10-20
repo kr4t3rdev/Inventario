@@ -53,7 +53,7 @@ describe('E-1 numeración de ofertas por tenant con reintento', () => {
 
   it('crea la oferta con el número formateado en el primer intento', async () => {
     vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ numeroOferta: 'OF-000005' } as never);
-    const create = vi.fn().mockResolvedValue({ id: 'of-1', numeroOferta: 'OF-000006' });
+    const create = vi.fn(async (_data: { numeroOferta: string }) => ({ id: 'of-1', numeroOferta: 'OF-000006' }));
     const buildData = vi.fn((numeroOferta: string) => ({ numeroOferta }));
 
     const result = await crearOfertaConNumero({ tenantId: 'tenant-A', buildData, create });
@@ -66,7 +66,7 @@ describe('E-1 numeración de ofertas por tenant con reintento', () => {
 
   it('reintenta ante colisión P2002 y resuelve con otro número', async () => {
     vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ numeroOferta: 'OF-000005' } as never);
-    const create = vi.fn()
+    const create = vi.fn(async (_data: { numeroOferta: string }) => ({ id: 'of-2', numeroOferta: 'OF-000007' }))
       .mockRejectedValueOnce(p2002())
       .mockResolvedValueOnce({ id: 'of-2', numeroOferta: 'OF-000007' });
 

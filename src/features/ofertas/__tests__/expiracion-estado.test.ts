@@ -56,13 +56,15 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('E-2 expiración perezosa (VENCIDA)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    mockTx.oferta.findFirst.mockImplementation((args: unknown) => prisma.oferta.findFirst(args as never));
+    mockTx.oferta.updateMany.mockResolvedValue({ count: 1 });
     vi.mocked(prisma.oferta.updateMany).mockResolvedValue({ count: 0 } as any);
   });
 
@@ -108,7 +110,9 @@ describe('E-2 expiración perezosa (VENCIDA)', () => {
     const result = await facturarOfertaAction({ ofertaId: 'of-v', puntoDeVentaId: 'pv-1' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.message).toContain('vencida');
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('VALIDATION_ERROR');
   });
 });
@@ -129,6 +133,8 @@ describe('E-2 guardas de estado en actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    mockTx.oferta.findFirst.mockImplementation((args: unknown) => prisma.oferta.findFirst(args as never));
+    mockTx.oferta.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it('updateOfertaAction permite PENDIENTE → ACEPTADA', async () => {
@@ -138,7 +144,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
 
     expect(result.success).toBe(true);
-    expect(prisma.oferta.updateMany).toHaveBeenCalledWith(
+    expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ id: 'of-1', estado: 'PENDIENTE' }),
         data: expect.objectContaining({ estado: 'ACEPTADA' }),
@@ -153,6 +159,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'PENDIENTE' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ESTADO_TRANSICION_INVALIDA');
     expect(prisma.oferta.update).not.toHaveBeenCalled();
   });
@@ -163,6 +170,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'PENDIENTE' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ESTADO_TRANSICION_INVALIDA');
     expect(prisma.oferta.update).not.toHaveBeenCalled();
   });
@@ -173,6 +181,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'FACTURADA' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ESTADO_TRANSICION_INVALIDA');
   });
 
@@ -214,6 +223,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('OFERTA_VENCIDA');
     expect(prisma.oferta.update).not.toHaveBeenCalled();
   });
@@ -221,20 +231,15 @@ describe('E-2 guardas de estado en actions', () => {
   it('updateOfertaAction rechaza con ESTADO_TRANSICION_INVALIDA si el estado cambió concurrentemente', async () => {
     // 1ª lectura: PENDIENTE (pasa la matriz); relectura tras el claim fallido:
     // ACEPTADA (cambio concurrente). Sin cola mockOnce: no contamina otros tests.
-    let lecturas = 0;
-    vi.mocked(prisma.oferta.findFirst).mockImplementation(() => {
-      lecturas += 1;
-      return Promise.resolve(
-        (lecturas === 1
-          ? { id: 'of-1', estado: 'PENDIENTE' }
-          : { id: 'of-1', estado: 'ACEPTADA' }) as any,
-      );
-    });
+    vi.mocked(prisma.oferta.findFirst)
+      .mockResolvedValueOnce({ id: 'of-1', estado: 'PENDIENTE' } as never)
+      .mockResolvedValueOnce({ id: 'of-1', estado: 'ACEPTADA' } as never);
     vi.mocked(prisma.oferta.updateMany).mockResolvedValue({ count: 0 } as any);
 
     const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ESTADO_TRANSICION_INVALIDA');
     expect(prisma.oferta.update).not.toHaveBeenCalled();
   });
@@ -245,6 +250,7 @@ describe('E-2 guardas de estado en actions', () => {
     const result = await deleteOfertaAction('of-1');
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ESTADO_NO_ELIMINABLE');
     expect(prisma.oferta.delete).not.toHaveBeenCalled();
   });

@@ -11,8 +11,15 @@ assertDisposableDatabase(process.env);
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/server-actions/get-current-user');
+vi.mock('@/lib/db/base-prisma', async () => {
+  const { PrismaClient } = await import('@/generated/prisma');
+  return { basePrisma: new PrismaClient({
+    datasourceUrl: `${process.env.DATABASE_URL}?connection_limit=3`,
+  }) };
+});
 
 let prisma!: typeof import('@/lib/prisma').prisma;
+let observer!: InstanceType<typeof import('@/generated/prisma').PrismaClient>;
 let createVentaServicioAction!: typeof import('@/features/venta-servicios/actions').createVentaServicioAction;
 let tenantId = '';
 let planId = '';
@@ -49,6 +56,9 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
       import('@/features/venta-servicios/actions'),
     ]);
     prisma = prismaModule.prisma;
+    const { PrismaClient } = await import('@/generated/prisma');
+    // A dedicated observer cannot be starved by the holder and two waiters.
+    observer = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
     createVentaServicioAction = actionModule.createVentaServicioAction;
 
     const identity = await prisma.$queryRaw<Array<{
@@ -114,43 +124,11 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
   });
 
   afterAll(async () => {
-    if (!prisma || !tenantId) return;
-    if (foreignTenantId) {
-      await prisma.reconciliacionServicio.deleteMany({
-        where: { OR: [{ tenantId: foreignTenantId }, { ventaServicioId: foreignSaleId }] },
-      });
-      await prisma.ventaServicios.deleteMany({ where: { tenantId: foreignTenantId } });
-      await prisma.servicios.deleteMany({ where: { tenantId: foreignTenantId } });
-      await prisma.reconciliacionServicio.deleteMany({
-        where: { OR: [{ cuentaId: foreignBankId }, { tipoPagoId: foreignPaymentId }] },
-      });
-      await prisma.cuentaBancaria.deleteMany({ where: { tenantId: foreignTenantId } });
-      await prisma.tipoPago.deleteMany({ where: { tenantId: foreignTenantId } });
-      await prisma.tenant.delete({ where: { tenantId: foreignTenantId } });
-    }
-    if (userId) await prisma.auditLog.deleteMany({ where: { usuarioId: userId } });
-    await prisma.stockMoveLine.deleteMany({ where: { tenantId } });
-    await prisma.transferencia.deleteMany({ where: { tenantId } });
-    await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
-    await prisma.producto.deleteMany({ where: { tenantId } });
-    await prisma.categoria.deleteMany({ where: { tenantId } });
-    await prisma.almacen.deleteMany({ where: { tenantId } });
-    await prisma.reconciliacionServicio.deleteMany({ where: { tenantId } });
-    await prisma.factura.deleteMany({ where: { tenantId } });
-    await prisma.serieFacturacion.deleteMany({ where: { tenantId } });
-    await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
-    await prisma.tipoPago.deleteMany({ where: { tenantId } });
-    await prisma.periodoCache.deleteMany({ where: { tenantId } });
-    await prisma.cuentaPorCobrar.deleteMany({ where: { tenantId } });
-    await prisma.ventaServicios.deleteMany({ where: { tenantId } });
-    if (serviceId) await prisma.servicios.deleteMany({ where: { servicioId: serviceId } });
-    if (periodoId) await prisma.periodoContable.deleteMany({ where: { periodoId } });
-    if (tenantLicenseId) await prisma.tenantLicense.deleteMany({ where: { tenantLicenseId } });
-    await prisma.cliente.deleteMany({ where: { tenantId } });
-    await prisma.tenant.deleteMany({ where: { tenantId } });
-    if (planId) await prisma.plan.deleteMany({ where: { planId } });
-    if (userId) await prisma.user.deleteMany({ where: { userId } });
-    await prisma.$disconnect();
+    // StockMoveLine is append-only evidence. Preserve its referenced fixtures
+    // in this explicitly disposable database; the runner disposes the database.
+    // Never disable immutability triggers or truncate other suites' fixtures.
+    await observer?.$disconnect();
+    await prisma?.$disconnect();
   });
 
   /**
@@ -175,6 +153,7 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
   async function holdDocument(id: string) {
     let release!: () => void;
     let acquired!: () => void;
+    let holderPid = 0;
     const gate = new Promise<void>((resolve) => { release = resolve; });
     const ready = new Promise<void>((resolve) => { acquired = resolve; });
     const { lockDocumentoServicio } = await import(
@@ -182,11 +161,13 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
     );
     const finished = prisma.$transaction(async (tx) => {
       await lockDocumentoServicio(tx, id);
+      const [row] = await tx.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid() AS pid`;
+      holderPid = row.pid;
       acquired();
       await gate;
     }, { timeout: 15_000 });
     await ready;
-    return { release, finished };
+    return { release, finished, get holderPid() { return holderPid; } };
   }
 
   /**
@@ -194,12 +175,16 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
    * @param {number} count - Minimum number of blocked database sessions.
    * @returns {Promise<void>} Resolves only after contention is visible.
    */
-  async function waitForWaiters(count: number): Promise<void> {
+  async function waitForWaiters(count: number, holderPid: number): Promise<void> {
     await vi.waitFor(async () => {
-      const rows = await prisma.$queryRaw<Array<{ count: bigint }>>`
-        SELECT count(*) FROM pg_locks
-        WHERE locktype = 'advisory' AND NOT granted
-          AND database = (SELECT oid FROM pg_database WHERE datname = current_database())
+      const rows = await observer.$queryRaw<Array<{ count: bigint }>>`
+        SELECT count(*) FROM pg_locks AS waiter
+        JOIN pg_locks AS holder ON holder.locktype = waiter.locktype
+          AND holder.database = waiter.database AND holder.classid = waiter.classid
+          AND holder.objid = waiter.objid AND holder.objsubid = waiter.objsubid
+        WHERE waiter.locktype = 'advisory' AND NOT waiter.granted
+          AND holder.granted AND holder.pid = ${holderPid}
+          AND holder.database = (SELECT oid FROM pg_database WHERE datname = current_database())
       `;
       expect(Number(rows[0].count)).toBeGreaterThanOrEqual(count);
     }, { timeout: 3000, interval: 20 });
@@ -218,9 +203,9 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
     let edit!: ReturnType<typeof updateVentaServicioAction>;
     try {
       invoice = facturarVentaServicioAction({ ventaServicioId: id });
-      await waitForWaiters(1);
+      await waitForWaiters(1, held.holderPid);
       edit = updateVentaServicioAction({ ventaServicioId: id, cantidad: 2 });
-      await waitForWaiters(2);
+      await waitForWaiters(2, held.holderPid);
     } finally {
       held.release();
       await held.finished;
@@ -259,7 +244,7 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
       let edit: ReturnType<typeof import('@/features/venta-servicios/actions').updateVentaServicioAction>
         | undefined;
       try {
-        await waitForWaiters(1);
+        await waitForWaiters(1, held.holderPid);
         // A stale row-first collector would already own this row and NOWAIT fails.
         await prisma.$transaction(async (tx) => {
           const rows = await tx.$queryRaw<Array<{ total: number }>>`
@@ -269,7 +254,7 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
         });
         const { updateVentaServicioAction } = await import('@/features/venta-servicios/actions');
         edit = updateVentaServicioAction({ ventaServicioId: id, cantidad: 2 });
-        await waitForWaiters(2);
+        await waitForWaiters(2, held.holderPid);
       } finally {
         held.release();
         await held.finished;
@@ -337,7 +322,7 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
       interception.mockImplementation(realTransaction);
       cancellation = deleteTransferenciaAction(transfer.transferenciaId);
       await vi.waitFor(async () => {
-        const waiting = await prisma.$queryRaw<Array<{ count: bigint }>>`
+        const waiting = await observer.$queryRaw<Array<{ count: bigint }>>`
           SELECT count(*) FROM pg_stat_activity
           WHERE datname = current_database() AND wait_event_type = 'Lock'
             AND query LIKE '%UPDATE%Transferencia%'

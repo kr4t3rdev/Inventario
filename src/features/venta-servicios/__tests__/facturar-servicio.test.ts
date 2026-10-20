@@ -152,6 +152,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
     const result = await facturarVentaServicioAction({ ventaServicioId: 'vs-1' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('VENTA_YA_FACTURADA');
     expect(mockTx.factura.create).not.toHaveBeenCalled();
   });
@@ -165,6 +166,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
     const result = await facturarVentaServicioAction({ ventaServicioId: 'vs-1' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('FACTURA_REQUIERE_CLIENTE');
   });
 
@@ -194,6 +196,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
     const result = await facturarVentaServicioAction({ ventaServicioId: 'vs-1' });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('FORBIDDEN');
   });
 
@@ -217,6 +220,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
     const result = await deleteVentaServicioAction('vs-1');
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('VENTA_CON_FACTURA');
   });
 });

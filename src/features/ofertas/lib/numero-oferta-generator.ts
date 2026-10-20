@@ -41,13 +41,15 @@ export async function generarProximoNumeroOferta(tenantId: string): Promise<numb
  * Cualquier otro error se propaga sin reintentar.
  * @param {object} input - tenantId, buildData que arma el payload con el número,
  * y create re-ejecutable por intento.
- * @returns {Promise<unknown>} Resultado del create exitoso.
+ * @template T - Tipo de los datos que se construyen para cada intento.
+ * @template TResult - Tipo del resultado de la creación exitosa.
+ * @returns {Promise<TResult>} Resultado del create exitoso.
  */
-export async function crearOfertaConNumero<T>(input: {
+export async function crearOfertaConNumero<T, TResult>(input: {
   tenantId: string;
   buildData: (numeroOferta: string) => T;
-  create: (data: T) => Promise<unknown>;
-}): Promise<unknown> {
+  create: (data: T) => Promise<TResult>;
+}): Promise<TResult> {
   let ultimoError: unknown = null;
   for (let intento = 0; intento < MAX_INTENTOS; intento++) {
     const numeroOferta = formatearNumeroOferta(await generarProximoNumeroOferta(input.tenantId));

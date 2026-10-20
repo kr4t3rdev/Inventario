@@ -29,7 +29,7 @@ const userTenantA = {
   name: 'User A',
   email: 'a@test.com',
   isActive: true,
-} as never;
+};
 
 class NextRequestShim {
   nextUrl: URL;
@@ -60,7 +60,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
         diasAvisoVencimiento: 30,
       } as never);
 
-      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never) as Response;
+      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never, {}) as Response;
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -80,7 +80,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
         diasAvisoVencimiento: 15,
       } as never);
 
-      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never) as Response;
+      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never, {}) as Response;
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -92,7 +92,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
         user: { ...userTenantA, tenantId: null },
       } as never);
 
-      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never) as Response;
+      const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never, {}) as Response;
 
       expect(res.status).toBe(403);
       expect(prisma.configuracionContratos.upsert).not.toHaveBeenCalled();
@@ -110,7 +110,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
       const res = await PUT(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos', {
         method: 'PUT',
         body: JSON.stringify({ diasAvisoVencimiento: 15 }),
-      }) as never) as Response;
+      }) as never, {}) as Response;
       const json = await res.json();
 
       expect(res.status).toBe(200);
@@ -128,7 +128,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
       const res = await PUT(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos', {
         method: 'PUT',
         body: JSON.stringify({ diasAvisoVencimiento: 400 }),
-      }) as never) as Response;
+      }) as never, {}) as Response;
 
       expect(res.status).toBe(400);
       expect(prisma.configuracionContratos.upsert).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
       const res = await PUT(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos', {
         method: 'PUT',
         body: JSON.stringify({ diasAvisoVencimiento: 15 }),
-      }) as never) as Response;
+      }) as never, {}) as Response;
 
       expect(res.status).toBe(403);
     });
@@ -156,11 +156,11 @@ describe('CTF-5 configuración de contratos por tenant', () => {
         diasAvisoVencimiento: 15,
       } as never);
 
-      await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never);
+      await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never, {});
       await PUT(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos', {
         method: 'PUT',
         body: JSON.stringify({ diasAvisoVencimiento: 15 }),
-      }) as never);
+      }) as never, {});
 
       expect(prisma.configuracionContratos.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ where: { tenantId: 'tenant-A' } }),

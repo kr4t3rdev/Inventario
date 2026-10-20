@@ -7,9 +7,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    $transaction: vi.fn(),
+vi.mock('@/lib/prisma', () => {
+  const prismaMock = {
     $executeRaw: vi.fn(),
     cliente: {
       findFirst: vi.fn(),
@@ -18,8 +17,10 @@ vi.mock('@/lib/prisma', () => ({
     auditLog: {
       create: vi.fn(),
     },
-  },
-}));
+  };
+  const runTransaction = <T>(callback: (tx: typeof prismaMock) => Promise<T>) => callback(prismaMock);
+  return { prisma: { ...prismaMock, $transaction: vi.fn(runTransaction) } };
+});
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
@@ -49,12 +50,6 @@ const dependienteUser = {
 describe('updateLimiteCreditoClienteAction (C-1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.$transaction).mockImplementation(async (arg: never) => {
-      if (typeof arg === 'function') {
-        return await (arg as (tx: typeof prisma) => Promise<unknown>)(mockTx);
-      }
-      return await Promise.all(arg as unknown as readonly unknown[]);
-    });
   });
 
   it('manager actualiza el límite y audita valorAnterior → valorNuevo en la misma transacción', async () => {
@@ -109,6 +104,7 @@ describe('updateLimiteCreditoClienteAction (C-1)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('FORBIDDEN');
     expect(prisma.cliente.update).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
@@ -130,6 +126,7 @@ describe('updateLimiteCreditoClienteAction (C-1)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('FORBIDDEN');
     expect(prisma.cliente.update).not.toHaveBeenCalled();
   });
@@ -144,6 +141,7 @@ describe('updateLimiteCreditoClienteAction (C-1)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('NOT_FOUND');
     expect(prisma.cliente.update).not.toHaveBeenCalled();
   });
@@ -191,8 +189,10 @@ describe('updateLimiteCreditoClienteAction (C-1)', () => {
     });
 
     expect(negativo.success).toBe(false);
+    if (negativo.success) throw new Error("Expected action failure");
     expect(negativo.error?.code).toBe('VALIDATION_ERROR');
     expect(fraccion.success).toBe(false);
+    if (fraccion.success) throw new Error("Expected action failure");
     expect(fraccion.error?.code).toBe('VALIDATION_ERROR');
     expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
     expect(prisma.cliente.update).not.toHaveBeenCalled();
@@ -207,6 +207,7 @@ describe('updateLimiteCreditoClienteAction (C-1)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('AUTH_REQUIRED');
   });
 });

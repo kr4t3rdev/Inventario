@@ -266,6 +266,7 @@ describe("integridad de precios en createVentaAction", () => {
 			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 1000 }],
 		});
 		expect(conBase.success).toBe(false);
+  if (conBase.success) throw new Error("Expected action failure");
 		expect(conBase.error?.code).toBe("PRICE_MISMATCH");
 
 		// El precio de la lista default sí pasa.
@@ -314,6 +315,7 @@ describe("integridad de precios en createVentaAction", () => {
 			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 850 }],
 		});
 		expect(conDefault.success).toBe(false);
+  if (conDefault.success) throw new Error("Expected action failure");
 		expect(conDefault.error?.code).toBe("PRICE_MISMATCH");
 	});
 

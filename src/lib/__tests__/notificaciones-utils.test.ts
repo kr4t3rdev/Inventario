@@ -30,20 +30,13 @@ import { prisma } from '@/lib/prisma';
 import { crearNotificacion, notificarMerma } from '@/lib/notificaciones-utils';
 
 /**
- * @description Simula la validación de Prisma en runtime: `User` no tiene
- * `tenantId`, por lo que un `where` con ese campo lanza
- * `PrismaClientValidationError`. Así el test reproduce el bug real en
- * lugar de aceptar cualquier argumento.
+ * @description Falla ante cualquier consulta a User, ya que las notificaciones
+ * del tenant deben resolverse mediante TenantMembership.
  */
 function simularValidacionPrismaUser() {
-  vi.mocked(prisma.user.findMany).mockImplementation(async (args?: any) => {
-    if (args?.where && 'tenantId' in args.where) {
-      throw new Error(
-        'PrismaClientValidationError: Unknown argument `tenantId`. Did you mean `tenantMemberships`?',
-      );
-    }
-    return [] as any;
-  });
+  vi.mocked(prisma.user.findMany).mockRejectedValue(
+    new Error('Unexpected User query; tenant membership is the supported lookup.'),
+  );
 }
 
 describe('notificaciones-utils', () => {

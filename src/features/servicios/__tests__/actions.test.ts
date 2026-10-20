@@ -43,6 +43,7 @@ const mockServicioRow = {
   servicioId: "s1",
   nombre: "Test Service",
   descripcion: "Test Description",
+  costo: 0,
   precio: 1000,
   moneda: "CUP",
   tenantId: "t1",
@@ -55,6 +56,7 @@ function serialized(s: typeof mockServicioRow) {
     servicioId: s.servicioId,
     nombre: s.nombre,
     descripcion: s.descripcion,
+    costo: s.costo,
     precio: s.precio,
     moneda: s.moneda,
     createdAt: s.createdAt.toISOString(),
@@ -249,6 +251,7 @@ describe("costo estándar del catálogo (C-3)", () => {
     expect(prisma.servicios.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ costo: 750, tenantId: "t1" }),
     });
+    if (!result.success) throw new Error("Expected action success");
     expect(result.data!.costo).toBe(750);
   });
 
@@ -270,6 +273,7 @@ describe("costo estándar del catálogo (C-3)", () => {
       where: { servicioId: "s1" },
       data: expect.objectContaining({ costo: 900 }),
     });
+    if (!result.success) throw new Error("Expected action success");
     expect(result.data!.costo).toBe(900);
   });
 });

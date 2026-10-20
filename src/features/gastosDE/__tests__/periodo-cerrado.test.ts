@@ -37,6 +37,7 @@ const { mockPrisma, mockTx } = vi.hoisted(() => {
 			deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
 			delete: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	};
 	const mockTx = {
 		$queryRaw: vi.fn(),
@@ -78,7 +79,7 @@ const u: AuthenticatedUser = {
 	role: 'admin',
 	isActive: true,
 	tenantId: 't1',
-	tenantRole: 'admin',
+	tenantRole: 'manager',
 };
 
 const periodoCerrado = {

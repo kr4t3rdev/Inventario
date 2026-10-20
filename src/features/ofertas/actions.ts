@@ -169,8 +169,11 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
           total: linea.total,
         })),
       });
-      return tx.oferta.update({
-        where: { id: existing.id },
+      const claim = await tx.oferta.updateMany({
+        where: {
+          id: existing.id, tenantId, estado: 'PENDIENTE',
+          OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: new Date() } }],
+        },
         data: {
           subtotal: totales.subtotal,
           impuestos: totales.impuestos,
@@ -178,51 +181,50 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
           ...(parsed.estado !== undefined && { estado: parsed.estado }),
           ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
         },
-        include: OFERTA_INCLUDE,
       });
+      // La expiración perezosa usa un claim sin advisory lock. Nunca se debe
+      // restaurar PENDIENTE si ganó entre la lectura y la escritura final.
+      if (claim.count !== 1) {
+        throw new ActionError('La oferta cambió de estado durante la edición', 'ITEMS_NO_EDITABLES');
+      }
+      return tx.oferta.findFirst({ where: { id: existing.id, tenantId }, include: OFERTA_INCLUDE });
     });
     revalidatePath('/busy/ofertas');
     return serializeOferta(oferta);
   }
 
   if (parsed.estado !== undefined && parsed.estado !== existing.estado) {
-    // Claim condicional: exige el estado leído y que la oferta no esté
-    // vencida. Si pierde la carrera (cambio concurrente o vencimiento), se
-    // relee para devolver el error accionable correspondiente.
-    const ahora = new Date();
-    const claim = await prisma.oferta.updateMany({
-      where: {
-        id: ofertaId,
-        tenantId,
-        estado: existing.estado,
-        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: ahora } }],
-      },
-      data: {
-        estado: parsed.estado,
-        ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
-      },
-    });
-    if (claim.count !== 1) {
-      const actual = await prisma.oferta.findFirst({
-        where: { id: ofertaId, tenantId },
-        select: { estado: true, fechaVencimiento: true },
-      });
+    const destino = parsed.estado;
+    const actualizada = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Comparte la barrera con edición, facturación y conversión. La matriz
+      // se valida contra la lectura fresca, nunca contra el estado anterior.
+      await lockOferta(tx, tenantId, ofertaId);
+      const actual = await tx.oferta.findFirst({ where: { id: ofertaId, tenantId } });
       if (!actual) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+      const ahora = new Date();
       if (actual.estado === 'PENDIENTE' && actual.fechaVencimiento && actual.fechaVencimiento < ahora) {
-        await prisma.oferta.updateMany({
-          where: { id: ofertaId, tenantId, estado: 'PENDIENTE' },
-          data: { estado: 'VENCIDA' },
-        });
         throw new ActionError(`La oferta ya venció y no puede pasar a ${parsed.estado}.`, 'OFERTA_VENCIDA');
       }
-      throw new ActionError(
-        `La oferta en estado ${actual.estado} no puede pasar a ${parsed.estado}.`,
-        'ESTADO_TRANSICION_INVALIDA',
-      );
-    }
-    const actualizada = await prisma.oferta.findFirst({
-      where: { id: ofertaId, tenantId },
-      include: OFERTA_INCLUDE,
+      if (!transicionPermitida(actual.estado, destino)) {
+        throw new ActionError(
+          `La oferta en estado ${actual.estado} no puede pasar a ${parsed.estado}.`,
+          'ESTADO_TRANSICION_INVALIDA',
+        );
+      }
+      const claim = await tx.oferta.updateMany({
+        where: {
+          id: ofertaId, tenantId, estado: actual.estado,
+          OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: ahora } }],
+        },
+        data: {
+          estado: parsed.estado,
+          ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
+        },
+      });
+      if (claim.count !== 1) {
+        throw new ActionError('El estado de la oferta cambió concurrentemente.', 'ESTADO_TRANSICION_INVALIDA');
+      }
+      return tx.oferta.findFirst({ where: { id: ofertaId, tenantId }, include: OFERTA_INCLUDE });
     });
     revalidatePath('/busy/ofertas');
     return serializeOferta(actualizada);
@@ -357,7 +359,10 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
     if (!fresh) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
     if (fresh.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
     if (fresh.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
-    if (fresh.estado === 'VENCIDA') throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
+    if (fresh.estado === 'VENCIDA' || (fresh.estado === 'PENDIENTE'
+      && fresh.fechaVencimiento && fresh.fechaVencimiento < new Date())) {
+      throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
+    }
 
     const workflow = await facturarOfertaWorkflow(tx, {
       tenantId,

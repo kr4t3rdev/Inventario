@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
+    "typecheck:tests": "NODE_OPTIONS='--max-old-space-size=6144' tsc -p tsconfig.test.json --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:staging": "vitest run --config vitest.staging.config.mjs",

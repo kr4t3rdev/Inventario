@@ -57,7 +57,9 @@ vi.mock('@/lib/prisma', () => {
     factura: { findFirst: mockFacturaFindFirst, count: vi.fn() },
     reconciliacionServicio: { count: mockReconciliacionCount },
     auditLog: { create: vi.fn() },
-    $transaction: vi.fn((cb: any) => cb(mockTx)),
+    $transaction: vi.fn((operation: ((tx: typeof mockTx) => Promise<unknown>) | readonly Promise<unknown>[]) =>
+      typeof operation === 'function' ? operation(mockTx) : Promise.all(operation),
+    ),
   };
   // audit-log-service hace import default de '@/lib/prisma': exponer ambas formas.
   return { prisma: prismaMock, default: prismaMock };
@@ -209,10 +211,6 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
 
   it('mixto CREDITO sobre el tope sin permiso: CREDITO_EXCEDIDO y cero filas', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(dependiente);
-    vi.mocked(prisma.$transaction).mockImplementation((args: never) => {
-      if (Array.isArray(args)) return Promise.all(args);
-      return (args as (tx: unknown) => Promise<unknown>)(mockTx);
-    });
 
     const result = await createVentaServicioAction({
       lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 2 }],
@@ -221,6 +219,7 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
     } as never);
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(prisma.ventaServicios.create).not.toHaveBeenCalled();
     expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
@@ -228,10 +227,6 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
 
   it('mixto CREDITO sobre el tope con override: pasa y audita CREDITO_OVERRIDE', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(manager);
-    vi.mocked(prisma.$transaction).mockImplementation((args: never) => {
-      if (Array.isArray(args)) return Promise.all(args);
-      return (args as (tx: unknown) => Promise<unknown>)(mockTx);
-    });
     vi.mocked(prisma.ventaServicios.create).mockResolvedValue({
       ventaServicioId: 'vs-1', total: 10000,
     } as never);
@@ -261,6 +256,7 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
     } as never);
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
     expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
@@ -404,6 +400,7 @@ describe('update coherente con la CxC (C-4)', () => {
     const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('HAS_REFERENCES');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -416,6 +413,7 @@ describe('update coherente con la CxC (C-4)', () => {
     const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CXC_PAGADA');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -449,6 +447,7 @@ describe('update coherente con la CxC (C-4)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -459,6 +458,7 @@ describe('update coherente con la CxC (C-4)', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('VALIDATION_ERROR');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -483,6 +483,7 @@ describe('update coherente con la CxC (C-4)', () => {
     // Nuevo total 10000 + saldo 2000 = 12000 > límite 6000 → rechazado; el
     // código pre-fix ni siquiera evaluaba este camino.
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
     expect(mockTx.cuentaPorCobrar.updateMany).not.toHaveBeenCalled();
@@ -509,6 +510,7 @@ describe('update coherente con la CxC (C-4)', () => {
     // El código pre-fix validaba la deuda vieja (5000 ≤ 8000) y dejaba pasar
     // el nuevo total 10000 > 8000. Ahora se exige el nuevo total.
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -519,6 +521,7 @@ describe('update coherente con la CxC (C-4)', () => {
     const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('VENTA_FACTURADA_INMUTABLE');
     expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
@@ -539,6 +542,7 @@ describe('update coherente con la CxC (C-4)', () => {
     const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error?.code).toBe('CXC_ESTADO_CAMBIO');
   });
 });

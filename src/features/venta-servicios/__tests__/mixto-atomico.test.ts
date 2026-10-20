@@ -35,7 +35,7 @@ vi.mock('@/lib/prisma', () => {
     cliente: { findFirst: mockClienteFindFirst },
     cuentaPorCobrar: { findMany: mockCxcFindMany },
     auditLog: { create: vi.fn() },
-    $transaction: vi.fn((cb: unknown) => cb),
+    $transaction: vi.fn((callback: (tx: typeof mockTx) => Promise<unknown>) => callback(mockTx)),
   };
   return { prisma: prismaMock, default: prismaMock };
 });
@@ -63,10 +63,6 @@ describe('atomicidad del modo mixto (C-4)', () => {
       clienteId: 'cli-1', limiteCredito: null,
     } as never);
     vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([] as never);
-    // $transaction interactivo: ejecuta el callback con el tx simulado.
-    vi.mocked(prisma.$transaction).mockImplementation(async (cb: never) =>
-      (cb as (tx: unknown) => Promise<unknown>)(mockTx),
-    );
   });
 
   it('crea ventas y CxC dentro de UNA sola transacción interactiva', async () => {

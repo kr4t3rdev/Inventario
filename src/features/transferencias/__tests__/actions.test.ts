@@ -392,12 +392,9 @@ describe("Transferencias Server Actions", () => {
 		it("una PARCIAL solo descuenta lo recibido, no lo enviado", async () => {
 			// Hacia pv-1 entró una COMPLETADA de 7; de pv-1 salió una PARCIAL
 			// de 10 con solo 4 recibidas → disponible = 7 - 4 = 3 (pedida 3).
-			vi.mocked(prisma.transferencia.findMany).mockImplementation(
-				async (args: any) =>
-					args.where.puntoDeVentaDestinoId
-						? [fila("COMPLETADA", 7, 7)]
-						: [fila("PARCIAL", 10, 4)],
-			);
+			vi.mocked(prisma.transferencia.findMany)
+				.mockResolvedValueOnce([fila("COMPLETADA", 7, 7)] as never)
+				.mockResolvedValueOnce([fila("PARCIAL", 10, 4)] as never);
 
 			const result = await createTransferenciaAction(baseInput);
 
@@ -407,12 +404,9 @@ describe("Transferencias Server Actions", () => {
 		it("una EN_TRANSITO sin recepción no ha movido stock del PV", async () => {
 			// Hacia pv-1 entró una COMPLETADA de 3; salió una EN_TRANSITO de 10
 			// sin recepciones → el stock aún no salió → disponible = 3 (pedida 3).
-			vi.mocked(prisma.transferencia.findMany).mockImplementation(
-				async (args: any) =>
-					args.where.puntoDeVentaDestinoId
-						? [fila("COMPLETADA", 3, 3)]
-						: [fila("EN_TRANSITO", 10, null)],
-			);
+			vi.mocked(prisma.transferencia.findMany)
+				.mockResolvedValueOnce([fila("COMPLETADA", 3, 3)] as never)
+				.mockResolvedValueOnce([fila("EN_TRANSITO", 10, null)] as never);
 
 			const result = await createTransferenciaAction(baseInput);
 
@@ -422,12 +416,9 @@ describe("Transferencias Server Actions", () => {
 		it("una COMPLETADA de creación directa sin cantidadRecibida aporta su cantidad", async () => {
 			// Legado: la creación directa COMPLETADA deja cantidadRecibida en
 			// null pero movió todo el stock → aporta cantidad (13 - 10 = 3, pedida 3).
-			vi.mocked(prisma.transferencia.findMany).mockImplementation(
-				async (args: any) =>
-					args.where.puntoDeVentaDestinoId
-						? [fila("COMPLETADA", 13, null)]
-						: [fila("COMPLETADA", 10, null)],
-			);
+			vi.mocked(prisma.transferencia.findMany)
+				.mockResolvedValueOnce([fila("COMPLETADA", 13, null)] as never)
+				.mockResolvedValueOnce([fila("COMPLETADA", 10, null)] as never);
 
 			const result = await createTransferenciaAction(baseInput);
 
@@ -437,12 +428,9 @@ describe("Transferencias Server Actions", () => {
 		it("rechaza cuando lo recibido acumulado excede el disponible", async () => {
 			// Hacia pv-1 entraron 2; salió una PARCIAL con 4 recibidas de 10
 			// → disponible = 2 - 4 = -2 < 3 pedidas.
-			vi.mocked(prisma.transferencia.findMany).mockImplementation(
-				async (args: any) =>
-					args.where.puntoDeVentaDestinoId
-						? [fila("COMPLETADA", 2, 2)]
-						: [fila("PARCIAL", 10, 4)],
-			);
+			vi.mocked(prisma.transferencia.findMany)
+				.mockResolvedValueOnce([fila("COMPLETADA", 2, 2)] as never)
+				.mockResolvedValueOnce([fila("PARCIAL", 10, 4)] as never);
 
 			const result = await createTransferenciaAction(baseInput);
 
@@ -455,7 +443,7 @@ describe("Transferencias Server Actions", () => {
 		it("exige el permiso inventario.transferencias.gestionar para completar", async () => {
 			const sinPermiso: AuthenticatedUser = {
 				...mockUser,
-				role: "user",
+				role: "regularUser",
 				tenantRole: "manager",
 				permissions: new Set(["inventario.otros"]),
 			};
@@ -473,7 +461,7 @@ describe("Transferencias Server Actions", () => {
 		it("permite completar a un dependiente (rol con permiso gestionar)", async () => {
 			const dependiente: AuthenticatedUser = {
 				...mockUser,
-				role: "user",
+				role: "regularUser",
 				tenantRole: "dependiente",
 			};
 			vi.mocked(getCurrentUser).mockResolvedValue(dependiente);
@@ -1576,12 +1564,12 @@ describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
 
 	const operador: AuthenticatedUser = {
 		...mockUser,
-		role: "user",
+		role: "regularUser",
 		tenantRole: "manager",
 	};
 	const sinPermisoGestion: AuthenticatedUser = {
 		...mockUser,
-		role: "user",
+		role: "regularUser",
 		permissions: new Set<string>(),
 	};
 
@@ -1626,6 +1614,7 @@ describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
 		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("FORBIDDEN");
 		// El gate corre antes de cualquier consulta de datos.
 		expect(prisma.transferencia.findFirst).not.toHaveBeenCalled();
@@ -1644,6 +1633,7 @@ describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
 		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
 	});
@@ -1662,6 +1652,7 @@ describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
 		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("CONFLICT");
 	});
 });
@@ -1675,12 +1666,12 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 
 	const operador: AuthenticatedUser = {
 		...mockUser,
-		role: "user",
+		role: "regularUser",
 		tenantRole: "manager",
 	};
 	const sinPermisoGestion: AuthenticatedUser = {
 		...mockUser,
-		role: "user",
+		role: "regularUser",
 		permissions: new Set<string>(),
 	};
 
@@ -1756,6 +1747,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		const result = await deleteTransferenciaAction("tr-1");
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("CONFLICT");
 		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith(expect.objectContaining({
 			where: expect.objectContaining({ cantidadRecibida }),
@@ -1772,6 +1764,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		const result = await completarTransferenciaAction({ transferenciaId: "tr-1" });
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("FORBIDDEN");
 		expect(prisma.transferencia.findFirst).not.toHaveBeenCalled();
 	});
@@ -1876,6 +1869,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		});
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
@@ -1950,6 +1944,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		});
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(mockTx.transferencia.update).not.toHaveBeenCalled();
 	});
@@ -1981,6 +1976,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		});
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(mockTx.transferencia.update).not.toHaveBeenCalled();
 	});
@@ -2008,6 +2004,7 @@ describe("B-2: recepción parcial real (Sesión B)", () => {
 		const result = await getTransferenciasAction({ page: 1, limit: 10 });
 
 		expect(result.success).toBe(true);
+  if (!result.success) throw new Error("Expected action success");
 		expect(result.data!.transferencias[0].cantidadRecibida).toBe(4);
 	});
 });

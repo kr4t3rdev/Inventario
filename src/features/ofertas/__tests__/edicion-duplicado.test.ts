@@ -41,7 +41,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 const ofertaPendiente = {
@@ -56,6 +56,7 @@ const ofertaPendiente = {
 describe('E-4 edición de ítems', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTx.oferta.updateMany.mockResolvedValue({ count: 1 });
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
   });
 
@@ -77,8 +78,8 @@ describe('E-4 edición de ítems', () => {
     expect(mockTx.ofertaItem.createMany).toHaveBeenCalledWith({
       data: [{ ofertaId: 'of-1', productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 150, total: 300 }],
     });
-    expect(mockTx.oferta.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'of-1' },
+    expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'of-1', tenantId: 'tenant-test', estado: 'PENDIENTE' }),
       data: expect.objectContaining({ subtotal: 300, impuestos: 0, total: 300 }),
     }));
     expect(prisma.oferta.update).not.toHaveBeenCalled();
@@ -93,6 +94,7 @@ describe('E-4 edición de ítems', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ITEMS_NO_EDITABLES');
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -109,6 +111,7 @@ describe('E-4 edición de ítems', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('TAX_INVALID');
     expect(mockTx.ofertaItem.deleteMany).not.toHaveBeenCalled();
   });
@@ -123,6 +126,7 @@ describe('E-4 edición de ítems', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('NOT_FOUND');
   });
 
@@ -140,6 +144,7 @@ describe('E-4 edición de ítems', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('ITEMS_NO_EDITABLES');
     expect(mockTx.ofertaItem.deleteMany).not.toHaveBeenCalled();
     expect(mockTx.ofertaItem.createMany).not.toHaveBeenCalled();
@@ -176,6 +181,7 @@ describe('E-4 edición de ítems', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('OFERTA_VENCIDA');
     expect(mockTx.ofertaItem.deleteMany).not.toHaveBeenCalled();
     expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
@@ -206,15 +212,14 @@ describe('E-4 duplicación de oferta', () => {
   };
 
   const mockLecturaYNumero = (oferta: object | null) => {
-    vi.mocked(prisma.oferta.findFirst).mockImplementation((args: any) => (
-      args?.where?.id
-        ? Promise.resolve(oferta as any)
-        : Promise.resolve({ numeroOferta: 'OF-000003' } as any)
-    ));
+    vi.mocked(prisma.oferta.findFirst)
+      .mockResolvedValueOnce(oferta as never)
+      .mockResolvedValue({ numeroOferta: 'OF-000003' } as never);
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTx.oferta.updateMany.mockResolvedValue({ count: 1 });
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
   });
 
@@ -267,6 +272,7 @@ describe('E-4 duplicación de oferta', () => {
     const result = await duplicarOfertaAction('of-ajena');
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('NOT_FOUND');
     expect(prisma.oferta.create).not.toHaveBeenCalled();
   });
@@ -280,6 +286,7 @@ describe('E-4 duplicación de oferta', () => {
     const result = await duplicarOfertaAction('of-1');
 
     expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected action failure");
     expect(result.error!.code).toBe('TAX_INVALID');
     expect(prisma.oferta.create).not.toHaveBeenCalled();
   });

@@ -98,6 +98,7 @@ const ventaPedido = {
 	total: 1000,
 	descuento: 0,
 	turnoId: 't-0',
+	ofertaId: null as string | null,
 	factura: null as { idFactura: string; tenantId: string } | null,
 	reconciliaciones: [],
 	turno: { estado: 'ABIERTO', arqueos: [] as Array<{ id: string }> },

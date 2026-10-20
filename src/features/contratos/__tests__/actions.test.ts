@@ -137,7 +137,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
       vi.mocked(prisma.contrato.update).mockResolvedValue(mockContrato);
 
-      const result = await updateContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
+      const result = await updateContratoAction({ contratoId: 'ct-1', tipo: 'SERVICIO' });
 
       expect(result.success).toBe(true);
     });
@@ -146,7 +146,7 @@ describe('Contratos Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.contrato.findFirst).mockResolvedValue(null);
 
-      const result = await updateContratoAction({ contratoId: 'ct-noexiste', estado: 'ACTIVO' });
+      const result = await updateContratoAction({ contratoId: 'ct-noexiste', tipo: 'SERVICIO' });
 
       expect(result.success).toBe(false);
     });
@@ -182,7 +182,9 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2', 'ct-3'], estado: 'APROBADO' });
 
       expect(result.success).toBe(true);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.actualizados).toEqual(['ct-1', 'ct-2']);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.fallidos).toEqual([
         { contratoId: 'ct-3', motivo: 'No se puede cambiar un contrato de FINALIZADO a APROBADO' },
       ]);
@@ -209,7 +211,9 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-2'], estado: 'APROBADO' });
 
       expect(result.success).toBe(true);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.actualizados).toEqual(['ct-1']);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.fallidos).toEqual([
         { contratoId: 'ct-2', motivo: 'El contrato cambió de estado concurrentemente' },
       ]);
@@ -225,7 +229,9 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-inexistente'], estado: 'APROBADO' });
 
       expect(result.success).toBe(true);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.actualizados).toEqual(['ct-1']);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.fallidos).toEqual([
         { contratoId: 'ct-inexistente', motivo: 'Contrato no encontrado' },
       ]);
@@ -240,7 +246,9 @@ describe('Contratos Server Actions', () => {
       const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1'], estado: 'ACTIVO' });
 
       expect(result.success).toBe(true);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.actualizados).toEqual([]);
+      if (!result.success) throw new Error("Expected action success");
       expect(result.data!.fallidos).toHaveLength(1);
       expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
     });
@@ -286,6 +294,7 @@ describe('Contratos Server Actions', () => {
       const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('TRANSICION_INVALIDA');
       expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
     });
@@ -297,6 +306,7 @@ describe('Contratos Server Actions', () => {
       const result = await cambiarEstadoContratoAction({ contratoId: 'ct-otro', estado: 'ACTIVO' });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('NOT_FOUND');
     });
 
@@ -344,6 +354,7 @@ describe('Contratos Server Actions', () => {
       const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'APROBADO' });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('TRANSICION_INVALIDA');
       expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -363,6 +374,7 @@ describe('Contratos Server Actions', () => {
       const result = await cambiarEstadoContratoAction({ contratoId: 'ct-1', estado: 'ACTIVO' });
 
       expect(result.success).toBe(false);
+      if (result.success) throw new Error("Expected action failure");
       expect(result.error!.code).toBe('FORBIDDEN');
       expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
     });

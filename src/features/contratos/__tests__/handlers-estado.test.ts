@@ -53,7 +53,7 @@ const userTenantA = {
   name: 'User A',
   email: 'a@test.com',
   isActive: true,
-} as never;
+};
 
 class NextRequestShim {
   nextUrl: URL;
@@ -84,7 +84,7 @@ const contratoPendiente = {
   numeroContrato: 'CV-0001',
   tipo: 'COMPRA_VENTA',
   estado: 'PENDIENTE_APROBACION',
-} as never;
+};
 
 describe('CTF-1 handlers de estado de contratos', () => {
   beforeEach(() => {
@@ -198,7 +198,7 @@ describe('CTF-1 handlers de estado de contratos', () => {
     });
 
     it('aprobación sobre PENDIENTE_APROBACION transiciona a APROBADO con aprobador server-side', async () => {
-      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(contratoPendiente);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(contratoPendiente as never);
 
       const res = await createContratoAprobacionHandler(
         req('http://localhost/api/contratos/ct-1/aprobaciones', {
@@ -240,7 +240,7 @@ describe('CTF-1 handlers de estado de contratos', () => {
     });
 
     it('una anulación concurrente no se revive: el claim condicional afecta 0 filas (B-2)', async () => {
-      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(contratoPendiente);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(contratoPendiente as never);
       vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 0 } as never);
 
       const res = await createContratoAprobacionHandler(

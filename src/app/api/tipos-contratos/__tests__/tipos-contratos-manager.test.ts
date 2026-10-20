@@ -35,7 +35,7 @@ describe('CU-02 tipos custom solo manager', () => {
 
   it('deniega creación a rol dependiente con 403', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: dependiente } as never);
-    const res = (await POST(postReq({ nombre: 'Especial' }))) as Response;
+    const res = (await POST(postReq({ nombre: 'Especial' }), {})) as Response;
     expect(res.status).toBe(403);
     const db = prismaDefault as any;
     expect(db.tipoContratoCustom.create).not.toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe('CU-02 tipos custom solo manager', () => {
     const db = prismaDefault as any;
     db.tipoContratoCustom.findUnique.mockResolvedValue(null);
     db.tipoContratoCustom.create.mockResolvedValue({ tipoCustomId: 'tc-1', nombre: 'Especial' });
-    const res = (await POST(postReq({ nombre: 'Especial' }))) as Response;
+    const res = (await POST(postReq({ nombre: 'Especial' }), {})) as Response;
     expect(res.status).toBe(201);
   });
 });

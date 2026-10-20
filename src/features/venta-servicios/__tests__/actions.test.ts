@@ -974,6 +974,7 @@ describe("costo server-side de servicios (C-3)", () => {
 		} as never);
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
 	});
@@ -1002,6 +1003,7 @@ describe("costo server-side de servicios (C-3)", () => {
 		} as never);
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(prisma.ventaServicios.update).not.toHaveBeenCalled();
 	});
@@ -1026,6 +1028,7 @@ describe("delete con protección de CxC (C-5)", () => {
 		const result = await deleteVentaServicioAction("vs-1");
 
 		expect(result.success).toBe(false);
+  if (result.success) throw new Error("Expected action failure");
 		expect(result.error?.code).toBe("VENTA_CON_CXC_ACTIVA");
 		expect(prisma.$transaction).not.toHaveBeenCalled();
 		expect(mockTx.ventaServicios.delete).not.toHaveBeenCalled();

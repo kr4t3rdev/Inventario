@@ -118,7 +118,7 @@ describe('menú masivo de la UI (B-1)', () => {
     // fijo anterior).
     for (const desde of ESTADOS_BULK) {
       if (ESTADOS_TERMINALES.includes(desde)) continue;
-      const opcionesValidas = ESTADOS_BULK.filter((hacia: string) => puedeTransicionar(desde, hacia));
+      const opcionesValidas = ESTADOS_BULK.filter((hacia) => puedeTransicionar(desde, hacia));
       expect(opcionesValidas.length, `el estado ${desde} quedaría atrapado con el menú derivado`).toBeGreaterThan(0);
     }
   });
