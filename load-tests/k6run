@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#
+# Carga las variables de .env (si existe) y ejecuta k6 con el resto de
+# argumentos. Uso:
+#
+#   ./k6run --out experimental-prometheus-rw smoke.load.js
+#   MAX_VUS=500 ./k6run --out experimental-prometheus-rw pos-rampa.load.js
+#
+set -a
+if [ -f .env ]; then
+  source .env
+fi
+set +a
+exec k6 "$@"
