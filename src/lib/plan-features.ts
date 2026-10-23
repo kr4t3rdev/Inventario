@@ -22,15 +22,20 @@ export function resolveEffectivePlanFeatures(
   const featureOverrides = input.featureOverrides ?? null;
   const legacyLicenseFeatures = input.legacyLicenseFeatures ?? null;
 
-  if (featureOverrides && Object.keys(featureOverrides).length > 0) {
-    return { ...planFeatures, ...featureOverrides };
-  }
-
-  if (legacyLicenseFeatures && Object.keys(legacyLicenseFeatures).length > 0) {
-    return { ...legacyLicenseFeatures };
-  }
-
-  return { ...planFeatures };
+  // Precedencia: overrides explícitos > plan actual > snapshot legacy.
+  // El plan es la fuente de verdad: sus valores siempre aplican (incluidas
+  // las keys que el plan ganó o perdió después de crearse la licencia). El
+  // snapshot legacy solo rellena keys que el plan ya no define, para no
+  // perder features retiradas del plan que la licencia sí tenía. Antes, un
+  // snapshot legacy sin overrides reemplazaba por completo al plan: las keys
+  // nuevas del plan (p. ej. paridad Odoo: ordenes-compra, recepciones,
+  // reabastecimiento) nunca llegaban al tenant y quedaban ausentes del mapa
+  // efectivo, con lo que el sidebar las mostraba y las actions las negaban.
+  return {
+    ...(legacyLicenseFeatures ?? {}),
+    ...planFeatures,
+    ...(featureOverrides ?? {}),
+  };
 }
 
 /**
