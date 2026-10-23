@@ -44,6 +44,7 @@ interface ChartDataPoint {
   periodo: string
   ingresos: number
   gastos: number
+  compras: number
   beneficio: number
 }
 
@@ -65,26 +66,41 @@ const chartConfig = {
     },
   },
   gastos: {
-    label: 'Gastos',
+    label: 'Gastos operativos',
     theme: {
       light: 'var(--chart-danger)',
       dark: 'var(--chart-danger)',
     },
   },
+  compras: {
+    label: 'Compras de inventario (salida de caja)',
+    theme: {
+      light: 'var(--chart-4)',
+      dark: 'var(--chart-4)',
+    },
+  },
 } satisfies ChartConfig
 
-function transformData(data: DatosPorMes[]): ChartDataPoint[] {
+/**
+ * @description Convierte los datos mensuales en puntos del gráfico separando
+ * el criterio devengo del criterio de caja: los gastos operativos restan al
+ * beneficio; las compras de inventario son salida de caja y se reconocen como
+ * costo de ventas cuando se vende el stock, no al comprarlo.
+ * @param {DatosPorMes[]} data - Datos mensuales del dashboard.
+ * @returns {ChartDataPoint[]} Puntos con ingresos, gastos operativos, compras y beneficio devengo.
+ */
+export function transformData(data: DatosPorMes[]): ChartDataPoint[] {
   return data.map((item) => {
     const ingresos = item.ingresosVentas + item.ingresosServicios
     const gastos =
       item.gastosSalarios +
-      item.gastosCompras +
       item.gastosMermas +
       item.gastosDeExplotacion
     return {
       periodo: item.mes,
       ingresos,
       gastos,
+      compras: item.gastosCompras,
       beneficio: ingresos - gastos,
     }
   })
@@ -131,7 +147,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
     <Card className='min-w-0'>
       <CardHeader>
         <CardTitle>Ingresos vs Gastos</CardTitle>
-        <CardDescription>Evolución mensual de ingresos y gastos</CardDescription>
+        <CardDescription>Evolución mensual: gastos operativos (devengo) y compras de inventario (caja)</CardDescription>
       </CardHeader>
       <CardContent className='min-w-0'>
         <ChartContainer
@@ -173,6 +189,21 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
                   stopOpacity={0.05}
                 />
               </linearGradient>
+              <linearGradient
+                id={`fillCompras-${gradientId}`}
+                x1='0' y1='0' x2='0' y2='1'
+              >
+                <stop
+                  offset='5%'
+                  stopColor='var(--color-compras)'
+                  stopOpacity={0.35}
+                />
+                <stop
+                  offset='95%'
+                  stopColor='var(--color-compras)'
+                  stopOpacity={0.05}
+                />
+              </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -205,9 +236,20 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
               fillOpacity={1}
               stroke='var(--color-gastos)'
             />
+            <Area
+              dataKey='compras'
+              type='monotone'
+              fill={`url(#fillCompras-${gradientId})`}
+              fillOpacity={1}
+              stroke='var(--color-compras)'
+            />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
+        <p className='mt-3 text-xs text-muted-foreground'>
+          Las compras de inventario se reconocen como costo de ventas al venderse el
+          stock; por eso no restan del beneficio del período.
+        </p>
       </CardContent>
     </Card>
   )

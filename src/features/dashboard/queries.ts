@@ -341,6 +341,10 @@ export async function getDashboardStatsQuery(
     return sum + item.cantidad * Number(item.producto.precioCosto || 0)
   }, 0)
 
+  // Beneficio con criterio devengo: los gastos de compra de inventario NO
+  // restan aquí. El desembolso por compras se capitaliza en el stock y se
+  // reconoce como costo de ventas (totalCostoVentas) al venderse; sumarlo
+  // también como gasto duplicaría la salida. Venta.total ya es neto.
   const totalBeneficio = totalIngresos - totalCostoVentas - totalGastosMermas - totalGastos
 
   // Productos más vendidos (combinando items + legacy)

@@ -63,7 +63,7 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
             <TrendingUp className="h-3 w-3" />{margen.toFixed(1)}% margen
           </Badge>
         ),
-        description: 'Ingresos totales del período',
+        description: 'Ventas netas y servicios registrados (histórico); margen sobre costo de ventas',
       },
       {
         title: 'Valor Inventario',
