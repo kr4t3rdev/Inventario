@@ -71,6 +71,7 @@ export const saveFiscalConfigAction = withAction(
 				fiscalActivado: parsed.fiscalActivado,
 			},
 		});
+		revalidatePath('/busy/configuracion/mi-empresa');
 		revalidatePath('/busy/configuracion/fiscal');
 		return { ok: true };
 	},
