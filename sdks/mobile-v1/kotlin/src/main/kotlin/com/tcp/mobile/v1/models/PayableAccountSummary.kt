@@ -19,12 +19,12 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param cuentaPorPagarId 
- * @param estado 
- * @param montoPagado 
- * @param saldoPendiente 
+ *
+ * @param cuentaPorPagarId
+ * @param estado
+ * @param montoPagado
+ * @param saldoPendiente
  */
 
 
@@ -46,4 +46,3 @@ data class PayableAccountSummary (
 
 
 }
-

@@ -25,10 +25,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/reports/transfers.
  *
- * @param items 
- * @param estadisticas 
- * @param pagination 
- * @param filtros 
+ * @param items
+ * @param estadisticas
+ * @param pagination
+ * @param filtros
  * @param exportContent Contenido CSV cuando se solicita exportación; nulo en consultas JSON normales.
  */
 
@@ -55,4 +55,3 @@ data class GetAccountingReportsTransfersResponse (
 
 
 }
-

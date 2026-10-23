@@ -61,11 +61,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **proveedorId** | **String**| Identificador del proveedor. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **proveedorId** | **String**| Identificador del proveedor. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -114,7 +114,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -212,11 +212,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **clienteId** | **String**| Identificador del cliente. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **clienteId** | **String**| Identificador del cliente. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -265,7 +265,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -314,7 +314,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -363,7 +363,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -443,7 +443,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingCashFinancingApi();
-final cashDebtCreateRequest = CashDebtCreateRequest(); // CashDebtCreateRequest | 
+final cashDebtCreateRequest = CashDebtCreateRequest(); // CashDebtCreateRequest |
 final estado = true; // bool | Estado usado para filtrar resultados.
 final proveedorId = proveedorId_example; // String | Identificador del proveedor.
 final moneda = moneda_example; // String | Código de moneda.
@@ -462,12 +462,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **cashDebtCreateRequest** | [**CashDebtCreateRequest**](CashDebtCreateRequest.md)|  | 
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **proveedorId** | **String**| Identificador del proveedor. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **cashDebtCreateRequest** | [**CashDebtCreateRequest**](CashDebtCreateRequest.md)|  |
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **proveedorId** | **String**| Identificador del proveedor. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -485,11 +485,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **mobilePostAccountingCashDebtsByIdPayments**
-> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de deudas de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 ```dart
@@ -503,10 +503,11 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingCashFinancingApi();
 final id = id_example; // String | Identificador único del recurso.
-final cashPaymentRequest = CashPaymentRequest(); // CashPaymentRequest | 
+final cashPaymentRequest = CashPaymentRequest(); // CashPaymentRequest |
+final idempotencyKey = idempotencyKey_example; // String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 
 try {
-    final result = api_instance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest);
+    final result = api_instance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey);
     print(result);
 } catch (e) {
     print('Exception when calling AccountingCashFinancingApi->mobilePostAccountingCashDebtsByIdPayments: $e\n');
@@ -517,8 +518,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  |
+ **idempotencyKey** | **String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional]
 
 ### Return type
 
@@ -553,7 +555,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingCashFinancingApi();
-final cashLoanCreateRequest = CashLoanCreateRequest(); // CashLoanCreateRequest | 
+final cashLoanCreateRequest = CashLoanCreateRequest(); // CashLoanCreateRequest |
 final estado = true; // bool | Estado usado para filtrar resultados.
 final clienteId = clienteId_example; // String | Identificador del cliente.
 final moneda = moneda_example; // String | Código de moneda.
@@ -572,12 +574,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **cashLoanCreateRequest** | [**CashLoanCreateRequest**](CashLoanCreateRequest.md)|  | 
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **clienteId** | **String**| Identificador del cliente. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **cashLoanCreateRequest** | [**CashLoanCreateRequest**](CashLoanCreateRequest.md)|  |
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **clienteId** | **String**| Identificador del cliente. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -595,11 +597,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **mobilePostAccountingCashLoansByIdPayments**
-> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de préstamos de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 ```dart
@@ -613,10 +615,11 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingCashFinancingApi();
 final id = id_example; // String | Identificador único del recurso.
-final cashPaymentRequest = CashPaymentRequest(); // CashPaymentRequest | 
+final cashPaymentRequest = CashPaymentRequest(); // CashPaymentRequest |
+final idempotencyKey = idempotencyKey_example; // String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 
 try {
-    final result = api_instance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest);
+    final result = api_instance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey);
     print(result);
 } catch (e) {
     print('Exception when calling AccountingCashFinancingApi->mobilePostAccountingCashLoansByIdPayments: $e\n');
@@ -627,8 +630,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  |
+ **idempotencyKey** | **String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional]
 
 ### Return type
 
@@ -664,7 +668,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingCashFinancingApi();
 final id = id_example; // String | Identificador único del recurso.
-final cashOperationUpdateRequest = CashOperationUpdateRequest(); // CashOperationUpdateRequest | 
+final cashOperationUpdateRequest = CashOperationUpdateRequest(); // CashOperationUpdateRequest |
 
 try {
     final result = api_instance.mobilePutAccountingCashDebtsById(id, cashOperationUpdateRequest);
@@ -678,8 +682,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **cashOperationUpdateRequest** | [**CashOperationUpdateRequest**](CashOperationUpdateRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **cashOperationUpdateRequest** | [**CashOperationUpdateRequest**](CashOperationUpdateRequest.md)|  |
 
 ### Return type
 
@@ -715,7 +719,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingCashFinancingApi();
 final id = id_example; // String | Identificador único del recurso.
-final cashOperationUpdateRequest = CashOperationUpdateRequest(); // CashOperationUpdateRequest | 
+final cashOperationUpdateRequest = CashOperationUpdateRequest(); // CashOperationUpdateRequest |
 
 try {
     final result = api_instance.mobilePutAccountingCashLoansById(id, cashOperationUpdateRequest);
@@ -729,8 +733,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **cashOperationUpdateRequest** | [**CashOperationUpdateRequest**](CashOperationUpdateRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **cashOperationUpdateRequest** | [**CashOperationUpdateRequest**](CashOperationUpdateRequest.md)|  |
 
 ### Return type
 

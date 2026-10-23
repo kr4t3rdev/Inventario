@@ -429,7 +429,7 @@ Registra financiamiento recibido de un proveedor, incrementa la cuenta bancaria 
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingCashFinancingApi()
-val cashDebtCreateRequest : CashDebtCreateRequest =  // CashDebtCreateRequest | 
+val cashDebtCreateRequest : CashDebtCreateRequest =  // CashDebtCreateRequest |
 val estado : kotlin.Boolean = true // kotlin.Boolean | Estado usado para filtrar resultados.
 val proveedorId : kotlin.String = proveedorId_example // kotlin.String | Identificador del proveedor.
 val moneda : kotlin.String = moneda_example // kotlin.String | Código de moneda.
@@ -474,11 +474,11 @@ Configure bearerAuth:
 
 <a id="mobilePostAccountingCashDebtsByIdPayments"></a>
 # **mobilePostAccountingCashDebtsByIdPayments**
-> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de deudas de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 ```kotlin
@@ -488,9 +488,10 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 
 val apiInstance = AccountingCashFinancingApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest | 
+val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest |
+val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 try {
-    val result : PostAccountingCashDebtsIdPaymentsResponse = apiInstance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest)
+    val result : PostAccountingCashDebtsIdPaymentsResponse = apiInstance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey)
     println(result)
 } catch (e: ClientException) {
     println("4xx response calling AccountingCashFinancingApi#mobilePostAccountingCashDebtsByIdPayments")
@@ -503,9 +504,10 @@ try {
 
 ### Parameters
 | **id** | **kotlin.String**| Identificador único del recurso. | |
+| **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | |
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |
-| **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | |
+| **idempotencyKey** | **kotlin.String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional] |
 
 ### Return type
 
@@ -537,7 +539,7 @@ Registra un préstamo a un cliente, descuenta fondos de la cuenta bancaria y cre
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingCashFinancingApi()
-val cashLoanCreateRequest : CashLoanCreateRequest =  // CashLoanCreateRequest | 
+val cashLoanCreateRequest : CashLoanCreateRequest =  // CashLoanCreateRequest |
 val estado : kotlin.Boolean = true // kotlin.Boolean | Estado usado para filtrar resultados.
 val clienteId : kotlin.String = clienteId_example // kotlin.String | Identificador del cliente.
 val moneda : kotlin.String = moneda_example // kotlin.String | Código de moneda.
@@ -582,11 +584,11 @@ Configure bearerAuth:
 
 <a id="mobilePostAccountingCashLoansByIdPayments"></a>
 # **mobilePostAccountingCashLoansByIdPayments**
-> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de préstamos de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 ```kotlin
@@ -596,9 +598,10 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 
 val apiInstance = AccountingCashFinancingApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest | 
+val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest |
+val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 try {
-    val result : PostAccountingCashLoansIdPaymentsResponse = apiInstance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest)
+    val result : PostAccountingCashLoansIdPaymentsResponse = apiInstance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey)
     println(result)
 } catch (e: ClientException) {
     println("4xx response calling AccountingCashFinancingApi#mobilePostAccountingCashLoansByIdPayments")
@@ -611,9 +614,10 @@ try {
 
 ### Parameters
 | **id** | **kotlin.String**| Identificador único del recurso. | |
+| **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | |
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |
-| **cashPaymentRequest** | [**CashPaymentRequest**](CashPaymentRequest.md)|  | |
+| **idempotencyKey** | **kotlin.String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional] |
 
 ### Return type
 
@@ -646,7 +650,7 @@ Actualiza vencimiento, tasa de interés u observaciones de la deuda identificada
 
 val apiInstance = AccountingCashFinancingApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest | 
+val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest |
 try {
     val result : PutAccountingCashDebtsIdResponse = apiInstance.mobilePutAccountingCashDebtsById(id, cashOperationUpdateRequest)
     println(result)
@@ -696,7 +700,7 @@ Actualiza vencimiento, tasa de interés u observaciones del préstamo identifica
 
 val apiInstance = AccountingCashFinancingApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest | 
+val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest |
 try {
     val result : PutAccountingCashLoansIdResponse = apiInstance.mobilePutAccountingCashLoansById(id, cashOperationUpdateRequest)
     println(result)

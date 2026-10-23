@@ -188,4 +188,3 @@ class CapitalInjection {
   static const requiredKeys = <String>{
   };
 }
-

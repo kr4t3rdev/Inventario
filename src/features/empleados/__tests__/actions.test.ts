@@ -78,7 +78,7 @@ describe('Empleados Server Actions', () => {
   it('createEmpleadoAction crea empleado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(prisma.empleado.create).mockResolvedValue({ empleadoId: 'emp-1' } as any);
-    const result = await createEmpleadoAction({ nombre: 'Juan', apellido: 'Pérez', cargo: 'Vendedor', salarioBases: 50000 });
+    const result = await createEmpleadoAction({ nombre: 'Juan', apellido: 'Pérez', cargo: 'Vendedor', salarioBases: 50000, diasVacacionesAnuales: 30, esTiempoCompleto: true });
     expect(result.success).toBe(true);
   });
 

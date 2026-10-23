@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param inyeccionId 
- * @param monto 
- * @param moneda 
- * @param tipo 
- * @param descripcion 
- * @param cuentaBancariaId 
+ *
+ * @param inyeccionId
+ * @param monto
+ * @param moneda
+ * @param tipo
+ * @param descripcion
+ * @param cuentaBancariaId
  */
 
 
@@ -54,4 +54,3 @@ data class CapitalInjection (
 
 
 }
-

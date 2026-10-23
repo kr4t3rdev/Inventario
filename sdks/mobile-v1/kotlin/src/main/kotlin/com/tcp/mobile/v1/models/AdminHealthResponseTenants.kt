@@ -19,9 +19,9 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param total 
+ *
+ * @param total
  */
 
 
@@ -34,4 +34,3 @@ data class AdminHealthResponseTenants (
 
 
 }
-

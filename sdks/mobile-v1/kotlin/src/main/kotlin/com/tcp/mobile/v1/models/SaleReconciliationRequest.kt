@@ -19,15 +19,15 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param ventaId 
- * @param cuentaId 
- * @param tipoPagoId 
- * @param monto 
- * @param moneda 
- * @param fechaReconciliacion 
- * @param observaciones 
+ *
+ * @param ventaId
+ * @param cuentaId
+ * @param tipoPagoId
+ * @param monto
+ * @param moneda
+ * @param fechaReconciliacion
+ * @param observaciones
  */
 
 
@@ -58,4 +58,3 @@ data class SaleReconciliationRequest (
 
 
 }
-

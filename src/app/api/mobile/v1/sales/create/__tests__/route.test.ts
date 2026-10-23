@@ -70,6 +70,47 @@ describe('mobile sales create route', () => {
     });
   });
 
+  it('forwards the header idempotency key and maps payload conflicts to 409', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(VentaMutationService.create).mockRejectedValue(
+      new ActionError('La clave ya se utilizó con otro contenido.', 'IDEMPOTENCY_KEY_REUSED'),
+    );
+    const request = new NextRequest('http://localhost/api/mobile/v1/sales/create', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'idempotency-key': 'mobile-key',
+      },
+      body: JSON.stringify({ puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(409);
+    expect(VentaMutationService.create).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ idempotencyKey: 'mobile-key' }),
+    }));
+  });
+
+  it('does not replace an invalid body key with a valid header key', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    const request = new NextRequest('http://localhost/api/mobile/v1/sales/create', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'idempotency-key': 'header-key',
+      },
+      body: JSON.stringify({ idempotencyKey: ' ', puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    expect(VentaMutationService.create).not.toHaveBeenCalled();
+  });
+
   it('maps stock errors to 400', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
     vi.mocked(VentaMutationService.create).mockRejectedValue(

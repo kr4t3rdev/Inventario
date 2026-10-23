@@ -29,4 +29,3 @@ public struct PostAdminMembershipsRejectResponse: Codable, JSONEncodable, Hashab
         try container.encode(success, forKey: .success)
     }
 }
-

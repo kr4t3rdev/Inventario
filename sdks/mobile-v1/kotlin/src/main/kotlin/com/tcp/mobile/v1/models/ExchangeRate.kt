@@ -19,13 +19,13 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tasaId 
- * @param monedaOrigen 
- * @param monedaDestino 
- * @param tasa 
- * @param fecha 
+ *
+ * @param tasaId
+ * @param monedaOrigen
+ * @param monedaDestino
+ * @param tasa
+ * @param fecha
  */
 
 
@@ -50,4 +50,3 @@ data class ExchangeRate (
 
 
 }
-

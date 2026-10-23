@@ -19,16 +19,16 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param cuentaPorPagarId 
- * @param numeroFactura 
- * @param montoDeuda 
- * @param montoPagado 
- * @param saldoPendiente 
- * @param moneda 
- * @param estado 
- * @param fechaVencimiento 
+ *
+ * @param cuentaPorPagarId
+ * @param numeroFactura
+ * @param montoDeuda
+ * @param montoPagado
+ * @param saldoPendiente
+ * @param moneda
+ * @param estado
+ * @param fechaVencimiento
  */
 
 
@@ -62,4 +62,3 @@ data class AccountPayable (
 
 
 }
-

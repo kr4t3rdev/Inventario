@@ -20,9 +20,9 @@ import com.tcp.mobile.v1.models.TenantSummary
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param items 
+ *
+ * @param items
  */
 
 
@@ -35,4 +35,3 @@ data class TenantListResponse (
 
 
 }
-

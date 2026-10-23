@@ -22,7 +22,7 @@ const prismaShared = vi.hoisted(() => ({
 	cuentaBancaria: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
 	anticipo: { findFirst: vi.fn(), findUnique: vi.fn() },
 	cierreContable: { findFirst: vi.fn(), create: vi.fn() },
-	inyeccionCapital: { findFirst: vi.fn(), create: vi.fn() },
+	inyeccionCapital: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
 	pagoDeuda: { create: vi.fn() },
 	compraServicio: { create: vi.fn() },
 	ventaServicios: { findFirst: vi.fn(), create: vi.fn() },
@@ -310,6 +310,7 @@ describe("Integración guard — auto-reconciliaciones", () => {
 				tipo: "CAPITAL_SOCIAL",
 				cuentaId: "account-1",
 				socio: "Socio fundador",
+				idempotencyKey: "integracion-guard-capital-injection",
 			});
 
 			expect(result.success).toBe(false);

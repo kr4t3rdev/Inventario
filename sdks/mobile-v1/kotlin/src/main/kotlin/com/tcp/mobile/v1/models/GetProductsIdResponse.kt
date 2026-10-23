@@ -21,13 +21,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /products/{id}.
  *
- * @param id 
- * @param nombre 
- * @param codigo 
- * @param precio 
- * @param costo 
- * @param stock 
- * @param isActive 
+ * @param id
+ * @param nombre
+ * @param codigo
+ * @param precio
+ * @param costo
+ * @param stock
+ * @param isActive
  */
 
 
@@ -58,4 +58,3 @@ data class GetProductsIdResponse (
 
 
 }
-

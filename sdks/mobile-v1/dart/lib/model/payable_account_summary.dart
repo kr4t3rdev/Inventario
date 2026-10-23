@@ -166,4 +166,3 @@ class PayableAccountSummary {
   static const requiredKeys = <String>{
   };
 }
-

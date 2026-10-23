@@ -66,4 +66,3 @@ public struct PostSalesCreateResponse: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
     }
 }
-

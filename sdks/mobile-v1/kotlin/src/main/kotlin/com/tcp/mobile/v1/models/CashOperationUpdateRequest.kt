@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param fechaVencimiento 
- * @param tasaInteres 
- * @param observaciones 
+ *
+ * @param fechaVencimiento
+ * @param tasaInteres
+ * @param observaciones
  */
 
 
@@ -42,4 +42,3 @@ data class CashOperationUpdateRequest (
 
 
 }
-

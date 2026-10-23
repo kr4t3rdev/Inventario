@@ -432,3 +432,12 @@ de trigger `BEFORE INSERT` sobre `asientos` devolvió `asiento bloqueado` / SQLS
 Es evidencia del writer/camino específico, no una celda universal para los 31 writers.
 R6 global mantiene pendiente el mapeo 31 callsites→failpoint físico y la evidencia
 correspondiente por writer; no se demostró un bug global ni se cierra R0.5-ACCEPT.
+
+### Preparación para integración — 2026-10-13
+
+La verificación de referencias y conflictos, los límites del paquete contable y el plan de
+pruebas operativas QA diferidas están documentados en
+[preparación de merge y pendientes](preparacion-merge-y-pendientes-2026-10-13.md). Esta
+preparación no cambia celdas de aceptación: evidencia focal/local previa no certifica el HEAD
+actual ni R0.5-ACCEPT. Checks CI de la integración y validación con tenant QA aislado siguen
+pendientes; no declarar merge listo ni activar `shadow`, `enforce` o replay.

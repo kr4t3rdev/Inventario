@@ -185,4 +185,3 @@ class BankAccountTransaction {
     'montoConvertido',
   };
 }
-

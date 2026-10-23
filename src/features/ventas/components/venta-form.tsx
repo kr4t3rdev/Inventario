@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getProductosAction } from "@/features/productos/actions"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
+import { getVentaCreateIntentKey, resetVentaCreateIntent } from "@/features/ventas/lib/venta-create-intent"
 
 const ventaSchema = z.object({
   productoId: z.string({
@@ -46,6 +47,7 @@ interface VentaFormProps {
 export function VentaForm({ initialData }: VentaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const saleIntent = useRef({ key: null as string | null })
 
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
@@ -81,6 +83,7 @@ export function VentaForm({ initialData }: VentaFormProps) {
       } else {
         const producto = productos.find(p => p.id === data.productoId)
         const result = await createVentaAction({
+          idempotencyKey: getVentaCreateIntentKey(saleIntent.current),
           puntoDeVentaId: data.puntoDeVentaId,
           items: [{
             productoId: data.productoId,
@@ -91,6 +94,7 @@ export function VentaForm({ initialData }: VentaFormProps) {
         if (!result.success) {
           throw new Error(result.error?.message || 'Error al crear la venta')
         }
+        resetVentaCreateIntent(saleIntent.current)
         sileo.success({ title: 'La venta ha sido registrada exitosamente' })
       }
       router.refresh()

@@ -21,12 +21,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/capital-injections.
  *
- * @param inyeccionId 
- * @param monto 
- * @param moneda 
- * @param tipo 
- * @param descripcion 
- * @param cuentaBancariaId 
+ * @param inyeccionId
+ * @param monto
+ * @param moneda
+ * @param tipo
+ * @param descripcion
+ * @param cuentaBancariaId
  */
 
 
@@ -54,4 +54,3 @@ data class PostAccountingCapitalInjectionsResponse (
 
 
 }
-

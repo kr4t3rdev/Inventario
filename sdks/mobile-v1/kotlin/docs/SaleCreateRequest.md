@@ -19,6 +19,7 @@
 | **tipoVencimiento** | [**inline**](#TipoVencimiento) |  |  [optional] |
 | **fechaVencimiento** | **kotlin.String** |  |  [optional] |
 | **cuentaBancariaId** | **kotlin.String** |  |  [optional] |
+| **idempotencyKey** | **kotlin.String** | Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. |  [optional] |
 
 
 <a id="TipoVencimiento"></a>

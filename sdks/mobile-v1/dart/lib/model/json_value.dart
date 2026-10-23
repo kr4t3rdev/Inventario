@@ -98,4 +98,3 @@ class JsonValue {
   static const requiredKeys = <String>{
   };
 }
-

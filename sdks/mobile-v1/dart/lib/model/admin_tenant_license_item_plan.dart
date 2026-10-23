@@ -160,4 +160,3 @@ class AdminTenantLicenseItemPlan {
     'nombre',
   };
 }
-

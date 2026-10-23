@@ -115,4 +115,3 @@ class AdminHealthResponseUsers {
     'byRole',
   };
 }
-

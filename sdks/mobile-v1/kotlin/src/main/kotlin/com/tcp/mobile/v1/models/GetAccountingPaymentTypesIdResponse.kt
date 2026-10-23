@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/payment-types/{id}.
  *
- * @param cuentaDefectoInfo 
+ * @param cuentaDefectoInfo
  */
 
 
@@ -35,4 +35,3 @@ data class GetAccountingPaymentTypesIdResponse (
 
 
 }
-

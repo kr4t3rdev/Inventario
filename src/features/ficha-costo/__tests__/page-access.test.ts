@@ -22,7 +22,7 @@ describe('Ficha de Costo server page access', () => {
     }, true],
     ['global admin without tenant', { role: 'admin', tenantId: null, planFeatures: {} }, false],
   ])('resolves base access for %s', (_case, user, expected) => {
-    expect(canAccessFichaCosto(user)).toBe(expected)
+    expect(canAccessFichaCosto(user as never)).toBe(expected)
   })
 
   it('requires base and bulk subfeature for the bulk page', () => {

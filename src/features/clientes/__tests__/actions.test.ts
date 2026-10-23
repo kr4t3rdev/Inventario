@@ -56,7 +56,7 @@ describe('Clientes Server Actions', () => {
   describe('getClientesAction', () => {
     it('retorna lista de clientes del tenant', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.cliente.findMany).mockResolvedValue([mockClienteRow]);
+      vi.mocked(prisma.cliente.findMany).mockResolvedValue([mockClienteRow] as never);
       const result = await getClientesAction();
       expect(result.success).toBe(true);
       if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');

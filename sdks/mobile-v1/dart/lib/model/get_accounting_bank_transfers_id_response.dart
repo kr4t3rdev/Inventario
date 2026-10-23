@@ -224,4 +224,3 @@ class GetAccountingBankTransfersIdResponse {
   static const requiredKeys = <String>{
   };
 }
-

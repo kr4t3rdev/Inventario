@@ -54,7 +54,7 @@ class AuthApiTest : ShouldSpec() {
         // to test mobilePostAuthLogin
         should("test mobilePostAuthLogin") {
             // uncomment below to test mobilePostAuthLogin
-            //val loginRequest : LoginRequest =  // LoginRequest | 
+            //val loginRequest : LoginRequest =  // LoginRequest |
             //val xTenantId : kotlin.String = xTenantId_example // kotlin.String | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible.
             //val result : AuthSession = apiInstance.mobilePostAuthLogin(loginRequest, xTenantId)
             //result shouldBe ("TODO")
@@ -70,7 +70,7 @@ class AuthApiTest : ShouldSpec() {
         // to test mobilePostAuthRefresh
         should("test mobilePostAuthRefresh") {
             // uncomment below to test mobilePostAuthRefresh
-            //val refreshRequest : RefreshRequest =  // RefreshRequest | 
+            //val refreshRequest : RefreshRequest =  // RefreshRequest |
             //val result : TokenPair = apiInstance.mobilePostAuthRefresh(refreshRequest)
             //result shouldBe ("TODO")
         }
@@ -78,7 +78,7 @@ class AuthApiTest : ShouldSpec() {
         // to test mobilePostAuthRegister
         should("test mobilePostAuthRegister") {
             // uncomment below to test mobilePostAuthRegister
-            //val registerRequest : RegisterRequest =  // RegisterRequest | 
+            //val registerRequest : RegisterRequest =  // RegisterRequest |
             //val result : RegisterResponse = apiInstance.mobilePostAuthRegister(registerRequest)
             //result shouldBe ("TODO")
         }
@@ -86,7 +86,7 @@ class AuthApiTest : ShouldSpec() {
         // to test mobilePostAuthTenants
         should("test mobilePostAuthTenants") {
             // uncomment below to test mobilePostAuthTenants
-            //val switchTenantRequest : SwitchTenantRequest =  // SwitchTenantRequest | 
+            //val switchTenantRequest : SwitchTenantRequest =  // SwitchTenantRequest |
             //val result : SwitchTenantResponse = apiInstance.mobilePostAuthTenants(switchTenantRequest)
             //result shouldBe ("TODO")
         }

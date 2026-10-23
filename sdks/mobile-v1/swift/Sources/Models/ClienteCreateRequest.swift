@@ -54,4 +54,3 @@ public struct ClienteCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(numeroContrato, forKey: .numeroContrato)
     }
 }
-

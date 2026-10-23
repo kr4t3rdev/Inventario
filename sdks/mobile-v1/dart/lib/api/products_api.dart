@@ -59,7 +59,7 @@ class ProductsApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetProductsResponse',) as GetProductsResponse;
-    
+
     }
     return null;
   }
@@ -118,7 +118,7 @@ class ProductsApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetProductsIdResponse',) as GetProductsIdResponse;
-    
+
     }
     return null;
   }
@@ -198,7 +198,7 @@ class ProductsApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetProductsStockResponse',) as GetProductsStockResponse;
-    
+
     }
     return null;
   }

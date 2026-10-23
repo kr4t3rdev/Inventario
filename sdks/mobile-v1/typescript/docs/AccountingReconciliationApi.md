@@ -39,7 +39,7 @@ import type { MobileGetAccountingReconciliationExpensesRequest } from '@tcp/mobi
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -124,7 +124,7 @@ import type { MobileGetAccountingReconciliationExpensesHistoryRequest } from '@t
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -218,7 +218,7 @@ import type { MobileGetAccountingReconciliationExpensesNestedHistoryRequest } fr
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -312,7 +312,7 @@ import type { MobileGetAccountingReconciliationSalesRequest } from '@tcp/mobile-
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -397,7 +397,7 @@ import type { MobileGetAccountingReconciliationSalesHistoryRequest } from '@tcp/
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -482,7 +482,7 @@ import type { MobileGetAccountingReconciliationSalesNestedHistoryRequest } from 
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -561,7 +561,7 @@ import type { MobileGetAccountingReconciliationServicesRequest } from '@tcp/mobi
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -643,7 +643,7 @@ import type { MobileGetAccountingReconciliationServicesHistoryRequest } from '@t
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -722,7 +722,7 @@ import type { MobileGetAccountingReconciliationServicesNestedHistoryRequest } fr
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -801,7 +801,7 @@ import type { MobileGetAccountingReconciliationStatsRequest } from '@tcp/mobile-
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -866,7 +866,7 @@ import type { MobilePostAccountingReconciliationExpensesRequest } from '@tcp/mob
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -955,7 +955,7 @@ import type { MobilePostAccountingReconciliationSalesRequest } from '@tcp/mobile
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -1044,7 +1044,7 @@ import type { MobilePostAccountingReconciliationServicesRequest } from '@tcp/mob
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

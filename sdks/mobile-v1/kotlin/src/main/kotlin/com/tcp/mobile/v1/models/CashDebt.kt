@@ -19,16 +19,16 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param id 
- * @param proveedorId 
- * @param montoCapital 
- * @param moneda 
- * @param tasaInteres 
- * @param fechaVencimiento 
- * @param estado 
- * @param cuentaBancariaId 
+ *
+ * @param id
+ * @param proveedorId
+ * @param montoCapital
+ * @param moneda
+ * @param tasaInteres
+ * @param fechaVencimiento
+ * @param estado
+ * @param cuentaBancariaId
  */
 
 
@@ -62,4 +62,3 @@ data class CashDebt (
 
 
 }
-

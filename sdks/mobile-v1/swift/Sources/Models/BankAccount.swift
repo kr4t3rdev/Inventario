@@ -53,4 +53,3 @@ public struct BankAccount: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

@@ -51,7 +51,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -192,9 +192,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **entidad** | **String**| Valor de entidad aceptado por el handler. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
- **offset** | **String**| Valor de offset aceptado por el handler. | [optional] 
+ **entidad** | **String**| Valor de entidad aceptado por el handler. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
+ **offset** | **String**| Valor de offset aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -244,8 +244,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **includeInactive** | **bool**| Valor de includeInactive aceptado por el handler. | [optional] 
- **requiereCuenta** | **String**| Valor de requiereCuenta aceptado por el handler. | [optional] 
+ **includeInactive** | **bool**| Valor de includeInactive aceptado por el handler. | [optional]
+ **requiereCuenta** | **String**| Valor de requiereCuenta aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -295,8 +295,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **moneda** | **String**| Código de moneda. | [optional] 
- **tipoCuenta** | **String**| Valor de tipoCuenta aceptado por el handler. | [optional] 
+ **moneda** | **String**| Código de moneda. | [optional]
+ **tipoCuenta** | **String**| Valor de tipoCuenta aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -345,7 +345,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -381,7 +381,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingConfigurationApi();
 final id = id_example; // String | Identificador único del recurso.
-final paymentTypeUpdateRequest = PaymentTypeUpdateRequest(); // PaymentTypeUpdateRequest | 
+final paymentTypeUpdateRequest = PaymentTypeUpdateRequest(); // PaymentTypeUpdateRequest |
 
 try {
     final result = api_instance.mobilePutAccountingPaymentTypesById(id, paymentTypeUpdateRequest);
@@ -395,8 +395,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **paymentTypeUpdateRequest** | [**PaymentTypeUpdateRequest**](PaymentTypeUpdateRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **paymentTypeUpdateRequest** | [**PaymentTypeUpdateRequest**](PaymentTypeUpdateRequest.md)|  |
 
 ### Return type
 

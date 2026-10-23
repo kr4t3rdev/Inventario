@@ -30,4 +30,3 @@ public struct AlmacenUpdateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(nombre, forKey: .nombre)
     }
 }
-

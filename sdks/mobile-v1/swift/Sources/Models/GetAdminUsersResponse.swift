@@ -34,4 +34,3 @@ public struct GetAdminUsersResponse: Codable, JSONEncodable, Hashable {
         try container.encode(total, forKey: .total)
     }
 }
-

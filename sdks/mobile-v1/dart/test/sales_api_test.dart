@@ -55,9 +55,9 @@ void main() {
 
     // Registrar venta
     //
-    // Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+    // Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
     //
-    //Future<PostSalesCreateResponse> mobilePostSalesCreate(SaleCreateRequest saleCreateRequest) async
+    //Future<PostSalesCreateResponse> mobilePostSalesCreate(SaleCreateRequest saleCreateRequest, { String idempotencyKey }) async
     test('test mobilePostSalesCreate', () async {
       // TODO
     });

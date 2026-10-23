@@ -19,13 +19,13 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param nombre 
- * @param descripcion 
- * @param requiereCuenta 
- * @param cuentaDefecto 
- * @param isActive 
+ *
+ * @param nombre
+ * @param descripcion
+ * @param requiereCuenta
+ * @param cuentaDefecto
+ * @param isActive
  */
 
 
@@ -50,4 +50,3 @@ data class PaymentTypeUpdateRequest (
 
 
 }
-

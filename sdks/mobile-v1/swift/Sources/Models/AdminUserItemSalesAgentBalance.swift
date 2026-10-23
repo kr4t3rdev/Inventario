@@ -33,4 +33,3 @@ public struct AdminUserItemSalesAgentBalance: Codable, JSONEncodable, Hashable {
         try container.encode(paidUsd, forKey: .paidUsd)
     }
 }
-

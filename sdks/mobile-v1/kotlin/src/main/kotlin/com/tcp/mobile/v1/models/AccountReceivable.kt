@@ -19,13 +19,13 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param id 
- * @param montoDeuda 
- * @param montoPagado 
- * @param estado 
- * @param fechaVencimiento 
+ *
+ * @param id
+ * @param montoDeuda
+ * @param montoPagado
+ * @param estado
+ * @param fechaVencimiento
  */
 
 
@@ -50,4 +50,3 @@ data class AccountReceivable (
 
 
 }
-

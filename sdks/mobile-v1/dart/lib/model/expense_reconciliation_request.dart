@@ -483,5 +483,3 @@ class ExpenseReconciliationRequestEstadoEnumTypeTransformer {
   /// Singleton [ExpenseReconciliationRequestEstadoEnumTypeTransformer] instance.
   static ExpenseReconciliationRequestEstadoEnumTypeTransformer? _instance;
 }
-
-

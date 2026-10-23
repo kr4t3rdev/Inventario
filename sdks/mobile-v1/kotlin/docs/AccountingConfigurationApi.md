@@ -368,7 +368,7 @@ Actualiza nombre, descripción, requisito de cuenta, cuenta predeterminada o est
 
 val apiInstance = AccountingConfigurationApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val paymentTypeUpdateRequest : PaymentTypeUpdateRequest =  // PaymentTypeUpdateRequest | 
+val paymentTypeUpdateRequest : PaymentTypeUpdateRequest =  // PaymentTypeUpdateRequest |
 try {
     val result : PutAccountingPaymentTypesIdResponse = apiInstance.mobilePutAccountingPaymentTypesById(id, paymentTypeUpdateRequest)
     println(result)

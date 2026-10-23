@@ -120,7 +120,7 @@ Valida las credenciales y entrega el usuario autenticado junto con los tokens de
 import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AuthApi();
-final loginRequest = LoginRequest(); // LoginRequest | 
+final loginRequest = LoginRequest(); // LoginRequest |
 final xTenantId = xTenantId_example; // String | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible.
 
 try {
@@ -135,8 +135,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **loginRequest** | [**LoginRequest**](LoginRequest.md)|  | 
- **xTenantId** | **String**| Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. | [optional] 
+ **loginRequest** | [**LoginRequest**](LoginRequest.md)|  |
+ **xTenantId** | **String**| Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. | [optional]
 
 ### Return type
 
@@ -210,7 +210,7 @@ Valida el token de renovación y emite un nuevo par de tokens para continuar la 
 import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AuthApi();
-final refreshRequest = RefreshRequest(); // RefreshRequest | 
+final refreshRequest = RefreshRequest(); // RefreshRequest |
 
 try {
     final result = api_instance.mobilePostAuthRefresh(refreshRequest);
@@ -224,7 +224,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **refreshRequest** | [**RefreshRequest**](RefreshRequest.md)|  | 
+ **refreshRequest** | [**RefreshRequest**](RefreshRequest.md)|  |
 
 ### Return type
 
@@ -253,7 +253,7 @@ Crea un usuario inactivo pendiente de verificación de correo y envía el enlace
 import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AuthApi();
-final registerRequest = RegisterRequest(); // RegisterRequest | 
+final registerRequest = RegisterRequest(); // RegisterRequest |
 
 try {
     final result = api_instance.mobilePostAuthRegister(registerRequest);
@@ -267,7 +267,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **registerRequest** | [**RegisterRequest**](RegisterRequest.md)|  | 
+ **registerRequest** | [**RegisterRequest**](RegisterRequest.md)|  |
 
 ### Return type
 
@@ -302,7 +302,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AuthApi();
-final switchTenantRequest = SwitchTenantRequest(); // SwitchTenantRequest | 
+final switchTenantRequest = SwitchTenantRequest(); // SwitchTenantRequest |
 
 try {
     final result = api_instance.mobilePostAuthTenants(switchTenantRequest);
@@ -316,7 +316,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **switchTenantRequest** | [**SwitchTenantRequest**](SwitchTenantRequest.md)|  | 
+ **switchTenantRequest** | [**SwitchTenantRequest**](SwitchTenantRequest.md)|  |
 
 ### Return type
 

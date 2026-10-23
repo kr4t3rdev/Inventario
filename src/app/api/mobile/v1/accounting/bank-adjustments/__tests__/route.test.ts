@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
@@ -14,6 +15,7 @@ vi.mock('@/features/contabilidad/services/accounting-operations-read-service', (
 vi.mock('@/features/contabilidad/services/accounting-operations-mutation-service', () => ({
   AccountingOperationsMutationService: {
     createBankAdjustment: vi.fn(),
+    findBankAdjustmentReplay: vi.fn(),
   },
 }));
 
@@ -25,6 +27,7 @@ vi.mock('@/lib/services/validate-period-write', () => ({
 import { authenticateUser } from '@/lib/auth-middleware';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
+import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 import { GET, POST } from '../route';
 
 const mockUser = {
@@ -183,5 +186,111 @@ describe('mobile accounting bank adjustments route', () => {
       input: expect.objectContaining({ idempotencyKey: 'header-key' }),
       user: mockUser,
     });
+  });
+
+  it('returns an identical replay before the period-write guard', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.findBankAdjustmentReplay)
+      .mockResolvedValue({ ajuste: { ajusteId: 'aj-replayed' } } as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      error: { code: 'PERIODO_CERRADO', message: 'Período contable cerrado' },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'closed-period-retry',
+      },
+      body: JSON.stringify({
+        cuentaId: 'cb-1', tipo: 'egreso', monto: 50, moneda: 'CUP',
+        descripcion: 'Ajuste manual', motivo: 'Diferencia de caja',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.ajuste.ajusteId).toBe('aj-replayed');
+    expect(AccountingOperationsMutationService.findBankAdjustmentReplay).toHaveBeenCalledWith({
+      input: expect.objectContaining({ idempotencyKey: 'closed-period-retry' }),
+      user: mockUser,
+    });
+    expect(validarEscrituraPeriodo).not.toHaveBeenCalled();
+    expect(AccountingOperationsMutationService.createBankAdjustment).not.toHaveBeenCalled();
+  });
+
+  it('preserves the period guard for a new operation', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.findBankAdjustmentReplay).mockResolvedValue(null as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      error: { code: 'PERIODO_CERRADO', message: 'Período contable cerrado' },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        cuentaId: 'cb-1', tipo: 'ingreso', monto: 10, moneda: 'CUP',
+        descripcion: 'Ajuste nuevo', motivo: 'Diferencia de caja',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.code).toBe('PERIODO_CERRADO');
+    expect(AccountingOperationsMutationService.createBankAdjustment).not.toHaveBeenCalled();
+  });
+
+  it('preserves the closed-period response for a malformed request without an idempotency key', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      error: { code: 'PERIODO_CERRADO', message: 'Período contable cerrado' },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
+      body: JSON.stringify({ cuentaId: 'cb-1', tipo: 'ingreso' }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.code).toBe('PERIODO_CERRADO');
+    expect(AccountingOperationsMutationService.findBankAdjustmentReplay).not.toHaveBeenCalled();
+    expect(AccountingOperationsMutationService.createBankAdjustment).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when a keyed adjustment payload fails schema validation', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.findBankAdjustmentReplay)
+      .mockRejectedValueOnce(new ZodError([]));
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-adjustments', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer mobile-access',
+        'content-type': 'application/json',
+        'Idempotency-Key': 'malformed-keyed-request',
+      },
+      body: JSON.stringify({ cuentaId: 'cb-1', tipo: 'ingreso' }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.code).toBe('VALIDATION_ERROR');
+    expect(validarEscrituraPeriodo).not.toHaveBeenCalled();
+    expect(AccountingOperationsMutationService.createBankAdjustment).not.toHaveBeenCalled();
   });
 });

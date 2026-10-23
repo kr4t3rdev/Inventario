@@ -38,4 +38,3 @@ public struct GetAccountingBankAdjustmentsResponse: Codable, JSONEncodable, Hash
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

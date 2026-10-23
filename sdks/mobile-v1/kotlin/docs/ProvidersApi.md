@@ -167,7 +167,7 @@ Crea un proveedor en el tenant activo y devuelve el registro creado.
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = ProvidersApi()
-val proveedorCreateRequest : ProveedorCreateRequest =  // ProveedorCreateRequest | 
+val proveedorCreateRequest : ProveedorCreateRequest =  // ProveedorCreateRequest |
 try {
     val result : Proveedor = apiInstance.mobilePostProvidersCreate(proveedorCreateRequest)
     println(result)
@@ -216,7 +216,7 @@ Actualiza los datos de un proveedor del tenant activo y devuelve el registro act
 
 val apiInstance = ProvidersApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador del proveedor.
-val proveedorUpdateRequest : ProveedorUpdateRequest =  // ProveedorUpdateRequest | 
+val proveedorUpdateRequest : ProveedorUpdateRequest =  // ProveedorUpdateRequest |
 try {
     val result : Proveedor = apiInstance.mobilePutProvidersById(id, proveedorUpdateRequest)
     println(result)

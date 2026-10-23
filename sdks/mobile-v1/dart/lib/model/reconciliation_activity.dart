@@ -230,5 +230,3 @@ class ReconciliationActivityTypeEnumTypeTransformer {
   /// Singleton [ReconciliationActivityTypeEnumTypeTransformer] instance.
   static ReconciliationActivityTypeEnumTypeTransformer? _instance;
 }
-
-

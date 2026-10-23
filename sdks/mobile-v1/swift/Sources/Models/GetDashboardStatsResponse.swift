@@ -42,4 +42,3 @@ public struct GetDashboardStatsResponse: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(vencido, forKey: .vencido)
     }
 }
-

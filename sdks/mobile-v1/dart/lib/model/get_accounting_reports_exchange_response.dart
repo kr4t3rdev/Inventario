@@ -122,4 +122,3 @@ class GetAccountingReportsExchangeResponse {
   static const requiredKeys = <String>{
   };
 }
-

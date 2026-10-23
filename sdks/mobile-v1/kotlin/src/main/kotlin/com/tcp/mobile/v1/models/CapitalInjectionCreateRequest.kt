@@ -19,35 +19,76 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param monto 
- * @param moneda 
- * @param tipo 
- * @param descripcion 
- * @param cuentaBancariaId 
+ *
+ * @param montoRecibido
+ * @param tipo
+ * @param cuentaId
+ * @param moneda
+ * @param descripcion
+ * @param socio
+ * @param entidadPrestamista
+ * @param tasaInteres
+ * @param tasaCambio
+ * @param plazoMeses
+ * @param fechaInicioPago
+ * @param fechaOperacion
+ * @param idempotencyKey Clave opcional de idempotencia (1 a 64 caracteres). Si se proporciona también Idempotency-Key, prevalece esta propiedad.
  */
 
 
 data class CapitalInjectionCreateRequest (
 
-    @get:JsonProperty("monto")
-    val monto: java.math.BigDecimal,
+    @get:JsonProperty("montoRecibido")
+    val montoRecibido: java.math.BigDecimal,
+
+    @get:JsonProperty("tipo")
+    val tipo: CapitalInjectionCreateRequest.Tipo,
+
+    @get:JsonProperty("cuentaId")
+    val cuentaId: kotlin.String,
 
     @get:JsonProperty("moneda")
     val moneda: kotlin.String? = "CUP",
 
-    @get:JsonProperty("tipo")
-    val tipo: kotlin.String? = "APORTE",
-
     @get:JsonProperty("descripcion")
     val descripcion: kotlin.String? = null,
 
-    @get:JsonProperty("cuentaBancariaId")
-    val cuentaBancariaId: kotlin.String? = null
+    @get:JsonProperty("socio")
+    val socio: kotlin.String? = null,
+
+    @get:JsonProperty("entidadPrestamista")
+    val entidadPrestamista: kotlin.String? = null,
+
+    @get:JsonProperty("tasaInteres")
+    val tasaInteres: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("tasaCambio")
+    val tasaCambio: java.math.BigDecimal? = null,
+
+    @get:JsonProperty("plazoMeses")
+    val plazoMeses: kotlin.Int? = null,
+
+    @get:JsonProperty("fechaInicioPago")
+    val fechaInicioPago: java.time.OffsetDateTime? = null,
+
+    @get:JsonProperty("fechaOperacion")
+    val fechaOperacion: java.time.OffsetDateTime? = null,
+
+    /* Clave opcional de idempotencia (1 a 64 caracteres). Si se proporciona también Idempotency-Key, prevalece esta propiedad. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 
+    /**
+     *
+     *
+     * Values: CAPITAL_SOCIAL,DEUDA_EXTERNA
+     */
+    enum class Tipo(val value: kotlin.String) {
+        @JsonProperty(value = "CAPITAL_SOCIAL") CAPITAL_SOCIAL("CAPITAL_SOCIAL"),
+        @JsonProperty(value = "DEUDA_EXTERNA") DEUDA_EXTERNA("DEUDA_EXTERNA");
+    }
 
 }
-

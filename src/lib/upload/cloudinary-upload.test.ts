@@ -129,8 +129,8 @@ describe('uploadToCloudinary', () => {
       uploadKey: 'clientes.logo',
     })
 
-    const secondCall = fetchMock.mock.calls[1]
-    const formData = secondCall[1].body as FormData
+    const secondCall = fetchMock.mock.calls[1]!
+    const formData = secondCall![1]!.body as FormData
     expect(formData.get('folder')).toBe('tenant-123/clientes/logo')
     expect(formData.get('public_id')).toBe('tenant-123/clientes/logo/cliente-1')
   })

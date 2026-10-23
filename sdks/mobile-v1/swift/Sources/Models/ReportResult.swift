@@ -45,4 +45,3 @@ public struct ReportResult: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(filtros, forKey: .filtros)
     }
 }
-

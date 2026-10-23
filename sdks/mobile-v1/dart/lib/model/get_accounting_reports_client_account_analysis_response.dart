@@ -122,4 +122,3 @@ class GetAccountingReportsClientAccountAnalysisResponse {
   static const requiredKeys = <String>{
   };
 }
-

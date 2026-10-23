@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param cuentaId 
- * @param monto 
- * @param porcentaje 
+ *
+ * @param cuentaId
+ * @param monto
+ * @param porcentaje
  */
 
 
@@ -42,4 +42,3 @@ data class ExpenseDistributionRequest (
 
 
 }
-

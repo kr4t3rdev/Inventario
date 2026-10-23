@@ -211,4 +211,3 @@ class Product {
   static const requiredKeys = <String>{
   };
 }
-

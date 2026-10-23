@@ -48,4 +48,3 @@ public struct BankTransferValidationRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
     }
 }
-

@@ -284,5 +284,3 @@ class PostAccountingBankAdjustmentsResponseTipoEnumTypeTransformer {
   /// Singleton [PostAccountingBankAdjustmentsResponseTipoEnumTypeTransformer] instance.
   static PostAccountingBankAdjustmentsResponseTipoEnumTypeTransformer? _instance;
 }
-
-

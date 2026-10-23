@@ -188,4 +188,3 @@ class PaymentType {
   static const requiredKeys = <String>{
   };
 }
-

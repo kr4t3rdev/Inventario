@@ -38,4 +38,3 @@ public struct GetAccountingReconciliationStatsResponse: Codable, JSONEncodable, 
         try container.encode(recentActivity, forKey: .recentActivity)
     }
 }
-

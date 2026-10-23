@@ -80,7 +80,7 @@ describe('pv-client stable transport helpers', () => {
     const result = await createVentaPos({
       puntoDeVentaId: 'pv-1',
       items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 500 }],
-    });
+    }, undefined, 'pos-key');
 
     expect(result.success).toBe(true);
     expect(global.fetch).toHaveBeenCalledWith(
@@ -91,8 +91,32 @@ describe('pv-client stable transport helpers', () => {
         body: JSON.stringify({
           puntoDeVentaId: 'pv-1',
           items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 500 }],
+          idempotencyKey: 'pos-key',
         }),
       }),
     );
+  });
+
+  it('preserves the server conflict message on a 409 receipt replay mismatch', async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        error: 'La clave de idempotencia ya se utilizó con otro contenido.',
+        code: 'IDEMPOTENCY_KEY_REUSED',
+      }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch;
+
+    const result = await createVentaPos({
+      puntoDeVentaId: 'pv-1',
+      items: [{ productoId: 'prod-1', cantidad: 1, precioUnitario: 500 }],
+    }, undefined, 'pending-key');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.message).toBe('La clave de idempotencia ya se utilizó con otro contenido.');
+      expect(result.status).toBe(409);
+    }
   });
 });

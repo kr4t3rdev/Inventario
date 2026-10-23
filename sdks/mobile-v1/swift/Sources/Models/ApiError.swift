@@ -37,4 +37,3 @@ public struct ApiError: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(details, forKey: .details)
     }
 }
-

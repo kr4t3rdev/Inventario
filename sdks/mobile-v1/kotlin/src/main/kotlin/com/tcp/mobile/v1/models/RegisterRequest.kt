@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param name 
- * @param email 
- * @param password 
+ *
+ * @param name
+ * @param email
+ * @param password
  */
 
 
@@ -44,4 +44,3 @@ data class RegisterRequest (
     override fun toString(): String = "RegisterRequest(<redacted>)"
 
 }
-

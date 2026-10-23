@@ -14,7 +14,7 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar deudas de efectivo
-     
+
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
@@ -39,7 +39,7 @@ open class AccountingCashFinancingAPI {
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingCashDebtsResponse> 
+     - returns: RequestBuilder<GetAccountingCashDebtsResponse>
      */
     open class func mobileGetAccountingCashDebtsWithRequestBuilder(estado: Bool? = nil, proveedorId: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingCashDebtsResponse> {
         let localVariablePath = "/accounting/cash-debts"
@@ -68,8 +68,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar deudas de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingCashDebtsIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -84,8 +84,8 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingCashDebtsIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingCashDebtsIdResponse>
      */
     open class func mobileGetAccountingCashDebtsByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingCashDebtsIdResponse> {
         var localVariablePath = "/accounting/cash-debts/{id}"
@@ -110,7 +110,7 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar indicadores de deudas de efectivo
-     
+
      - returns: GetAccountingCashDebtsStatsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -125,7 +125,7 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingCashDebtsStatsResponse> 
+     - returns: RequestBuilder<GetAccountingCashDebtsStatsResponse>
      */
     open class func mobileGetAccountingCashDebtsStatsWithRequestBuilder() -> RequestBuilder<GetAccountingCashDebtsStatsResponse> {
         let localVariablePath = "/accounting/cash-debts/stats"
@@ -147,7 +147,7 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar préstamos de efectivo
-     
+
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
@@ -172,7 +172,7 @@ open class AccountingCashFinancingAPI {
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingCashLoansResponse> 
+     - returns: RequestBuilder<GetAccountingCashLoansResponse>
      */
     open class func mobileGetAccountingCashLoansWithRequestBuilder(estado: Bool? = nil, clienteId: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingCashLoansResponse> {
         let localVariablePath = "/accounting/cash-loans"
@@ -201,8 +201,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar préstamos de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingCashLoansIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -217,8 +217,8 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingCashLoansIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingCashLoansIdResponse>
      */
     open class func mobileGetAccountingCashLoansByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingCashLoansIdResponse> {
         var localVariablePath = "/accounting/cash-loans/{id}"
@@ -243,8 +243,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Descargar comprobante de préstamos de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: URL
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -259,8 +259,8 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<URL> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<URL>
      */
     open class func mobileGetAccountingCashLoansByIdComprobanteWithRequestBuilder(id: String) -> RequestBuilder<URL> {
         var localVariablePath = "/accounting/cash-loans/{id}/comprobante"
@@ -285,8 +285,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar historial de préstamos de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingCashLoansIdHistoryResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -301,8 +301,8 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingCashLoansIdHistoryResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingCashLoansIdHistoryResponse>
      */
     open class func mobileGetAccountingCashLoansByIdNestedHistoryWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingCashLoansIdHistoryResponse> {
         var localVariablePath = "/accounting/cash-loans/{id}/history"
@@ -327,7 +327,7 @@ open class AccountingCashFinancingAPI {
 
     /**
      Consultar indicadores de préstamos de efectivo
-     
+
      - returns: GetAccountingCashLoansStatsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -342,7 +342,7 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingCashLoansStatsResponse> 
+     - returns: RequestBuilder<GetAccountingCashLoansStatsResponse>
      */
     open class func mobileGetAccountingCashLoansStatsWithRequestBuilder() -> RequestBuilder<GetAccountingCashLoansStatsResponse> {
         let localVariablePath = "/accounting/cash-loans/stats"
@@ -364,8 +364,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Registrar deudas de efectivo
-     
-     - parameter cashDebtCreateRequest: (body)  
+
+     - parameter cashDebtCreateRequest: (body)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
@@ -385,13 +385,13 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter cashDebtCreateRequest: (body)  
+     - parameter cashDebtCreateRequest: (body)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingCashDebtsResponse> 
+     - returns: RequestBuilder<PostAccountingCashDebtsResponse>
      */
     open class func mobilePostAccountingCashDebtsWithRequestBuilder(cashDebtCreateRequest: CashDebtCreateRequest, estado: Bool? = nil, proveedorId: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingCashDebtsResponse> {
         let localVariablePath = "/accounting/cash-debts"
@@ -420,28 +420,30 @@ open class AccountingCashFinancingAPI {
 
     /**
      Registrar pago de deudas de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashPaymentRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashPaymentRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      - returns: PostAccountingCashDebtsIdPaymentsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func mobilePostAccountingCashDebtsByIdPayments(id: String, cashPaymentRequest: CashPaymentRequest) async throws -> PostAccountingCashDebtsIdPaymentsResponse {
-        return try await mobilePostAccountingCashDebtsByIdPaymentsWithRequestBuilder(id: id, cashPaymentRequest: cashPaymentRequest).execute().body
+    open class func mobilePostAccountingCashDebtsByIdPayments(id: String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: String? = nil) async throws -> PostAccountingCashDebtsIdPaymentsResponse {
+        return try await mobilePostAccountingCashDebtsByIdPaymentsWithRequestBuilder(id: id, cashPaymentRequest: cashPaymentRequest, idempotencyKey: idempotencyKey).execute().body
     }
 
     /**
      Registrar pago de deudas de efectivo
      - POST /accounting/cash-debts/{id}/payments
-     - Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     - Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashPaymentRequest: (body)  
-     - returns: RequestBuilder<PostAccountingCashDebtsIdPaymentsResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashPaymentRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+     - returns: RequestBuilder<PostAccountingCashDebtsIdPaymentsResponse>
      */
-    open class func mobilePostAccountingCashDebtsByIdPaymentsWithRequestBuilder(id: String, cashPaymentRequest: CashPaymentRequest) -> RequestBuilder<PostAccountingCashDebtsIdPaymentsResponse> {
+    open class func mobilePostAccountingCashDebtsByIdPaymentsWithRequestBuilder(id: String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: String? = nil) -> RequestBuilder<PostAccountingCashDebtsIdPaymentsResponse> {
         var localVariablePath = "/accounting/cash-debts/{id}/payments"
         let idPreEscape = "\(APIHelper.mapValueToPathItem(id))"
         let idPostEscape = idPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
@@ -453,6 +455,7 @@ open class AccountingCashFinancingAPI {
 
         let localVariableNillableHeaders: [String: Any?] = [
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey?.encodeToJSON(),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
@@ -464,8 +467,8 @@ open class AccountingCashFinancingAPI {
 
     /**
      Registrar préstamos de efectivo
-     
-     - parameter cashLoanCreateRequest: (body)  
+
+     - parameter cashLoanCreateRequest: (body)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
@@ -485,13 +488,13 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter cashLoanCreateRequest: (body)  
+     - parameter cashLoanCreateRequest: (body)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingCashLoansResponse> 
+     - returns: RequestBuilder<PostAccountingCashLoansResponse>
      */
     open class func mobilePostAccountingCashLoansWithRequestBuilder(cashLoanCreateRequest: CashLoanCreateRequest, estado: Bool? = nil, clienteId: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingCashLoansResponse> {
         let localVariablePath = "/accounting/cash-loans"
@@ -520,28 +523,30 @@ open class AccountingCashFinancingAPI {
 
     /**
      Registrar pago de préstamos de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashPaymentRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashPaymentRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      - returns: PostAccountingCashLoansIdPaymentsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func mobilePostAccountingCashLoansByIdPayments(id: String, cashPaymentRequest: CashPaymentRequest) async throws -> PostAccountingCashLoansIdPaymentsResponse {
-        return try await mobilePostAccountingCashLoansByIdPaymentsWithRequestBuilder(id: id, cashPaymentRequest: cashPaymentRequest).execute().body
+    open class func mobilePostAccountingCashLoansByIdPayments(id: String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: String? = nil) async throws -> PostAccountingCashLoansIdPaymentsResponse {
+        return try await mobilePostAccountingCashLoansByIdPaymentsWithRequestBuilder(id: id, cashPaymentRequest: cashPaymentRequest, idempotencyKey: idempotencyKey).execute().body
     }
 
     /**
      Registrar pago de préstamos de efectivo
      - POST /accounting/cash-loans/{id}/payments
-     - Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     - Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashPaymentRequest: (body)  
-     - returns: RequestBuilder<PostAccountingCashLoansIdPaymentsResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashPaymentRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+     - returns: RequestBuilder<PostAccountingCashLoansIdPaymentsResponse>
      */
-    open class func mobilePostAccountingCashLoansByIdPaymentsWithRequestBuilder(id: String, cashPaymentRequest: CashPaymentRequest) -> RequestBuilder<PostAccountingCashLoansIdPaymentsResponse> {
+    open class func mobilePostAccountingCashLoansByIdPaymentsWithRequestBuilder(id: String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: String? = nil) -> RequestBuilder<PostAccountingCashLoansIdPaymentsResponse> {
         var localVariablePath = "/accounting/cash-loans/{id}/payments"
         let idPreEscape = "\(APIHelper.mapValueToPathItem(id))"
         let idPostEscape = idPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
@@ -553,6 +558,7 @@ open class AccountingCashFinancingAPI {
 
         let localVariableNillableHeaders: [String: Any?] = [
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey?.encodeToJSON(),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
@@ -564,9 +570,9 @@ open class AccountingCashFinancingAPI {
 
     /**
      Actualizar deudas de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashOperationUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashOperationUpdateRequest: (body)
      - returns: PutAccountingCashDebtsIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -581,9 +587,9 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashOperationUpdateRequest: (body)  
-     - returns: RequestBuilder<PutAccountingCashDebtsIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashOperationUpdateRequest: (body)
+     - returns: RequestBuilder<PutAccountingCashDebtsIdResponse>
      */
     open class func mobilePutAccountingCashDebtsByIdWithRequestBuilder(id: String, cashOperationUpdateRequest: CashOperationUpdateRequest) -> RequestBuilder<PutAccountingCashDebtsIdResponse> {
         var localVariablePath = "/accounting/cash-debts/{id}"
@@ -608,9 +614,9 @@ open class AccountingCashFinancingAPI {
 
     /**
      Actualizar préstamos de efectivo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashOperationUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashOperationUpdateRequest: (body)
      - returns: PutAccountingCashLoansIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -625,9 +631,9 @@ open class AccountingCashFinancingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter cashOperationUpdateRequest: (body)  
-     - returns: RequestBuilder<PutAccountingCashLoansIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter cashOperationUpdateRequest: (body)
+     - returns: RequestBuilder<PutAccountingCashLoansIdResponse>
      */
     open class func mobilePutAccountingCashLoansByIdWithRequestBuilder(id: String, cashOperationUpdateRequest: CashOperationUpdateRequest) -> RequestBuilder<PutAccountingCashLoansIdResponse> {
         var localVariablePath = "/accounting/cash-loans/{id}"

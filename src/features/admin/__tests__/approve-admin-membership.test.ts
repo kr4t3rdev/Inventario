@@ -47,7 +47,7 @@ function buildManager(): AuthenticatedUser {
 		planFeatures: [],
 		planName: 'Básico',
 		permissions: ['config.usuarios.gestionar'],
-	} as AuthenticatedUser;
+	} as unknown as AuthenticatedUser;
 }
 
 /**

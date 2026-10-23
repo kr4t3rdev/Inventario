@@ -113,7 +113,7 @@ describe('Mermas Server Actions', () => {
   describe('getMermasAction', () => {
     it('retorna lista del tenant', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findMany).mockResolvedValue([mockMermaRow]);
+      vi.mocked(prisma.merma.findMany).mockResolvedValue([mockMermaRow] as never);
       const result = await getMermasAction();
       expect(result.success).toBe(true);
       if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');

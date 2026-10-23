@@ -120,7 +120,7 @@ Modifica únicamente el descuento y las observaciones editables de la venta sele
 
 val apiInstance = SalesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val saleUpdateRequest : SaleUpdateRequest =  // SaleUpdateRequest | 
+val saleUpdateRequest : SaleUpdateRequest =  // SaleUpdateRequest |
 try {
     val result : PatchSalesIdUpdateResponse = apiInstance.mobilePatchSalesByIdUpdate(id, saleUpdateRequest)
     println(result)
@@ -170,7 +170,7 @@ Anula la venta seleccionada y revierte los efectos permitidos sobre inventario y
 
 val apiInstance = SalesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val saleCancelRequest : SaleCancelRequest =  // SaleCancelRequest | 
+val saleCancelRequest : SaleCancelRequest =  // SaleCancelRequest |
 try {
     val result : PostSalesIdCancelResponse = apiInstance.mobilePostSalesByIdCancel(id, saleCancelRequest)
     println(result)
@@ -206,11 +206,11 @@ Configure bearerAuth:
 
 <a id="mobilePostSalesCreate"></a>
 # **mobilePostSalesCreate**
-> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest)
+> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest, idempotencyKey)
 
 Registrar venta
 
-Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
 
 ### Example
 ```kotlin
@@ -219,9 +219,10 @@ Crea la venta, sus líneas y los efectos de inventario, turno y facturación que
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = SalesApi()
-val saleCreateRequest : SaleCreateRequest =  // SaleCreateRequest | 
+val saleCreateRequest : SaleCreateRequest =  // SaleCreateRequest |
+val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 try {
-    val result : PostSalesCreateResponse = apiInstance.mobilePostSalesCreate(saleCreateRequest)
+    val result : PostSalesCreateResponse = apiInstance.mobilePostSalesCreate(saleCreateRequest, idempotencyKey)
     println(result)
 } catch (e: ClientException) {
     println("4xx response calling SalesApi#mobilePostSalesCreate")
@@ -233,9 +234,10 @@ try {
 ```
 
 ### Parameters
+| **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md)|  | |
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |
-| **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md)|  | |
+| **idempotencyKey** | **kotlin.String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional] |
 
 ### Return type
 

@@ -54,4 +54,3 @@ public struct GetAccountingBankAccountsIdResponse: Codable, JSONEncodable, Hasha
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

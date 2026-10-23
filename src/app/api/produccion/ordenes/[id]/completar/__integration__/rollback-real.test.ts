@@ -27,6 +27,29 @@ let categoriaId: string;
 let almacenId: string;
 let planId: string;
 
+/**
+ * @description Captura filas completas afectadas por completar una orden.
+ * @param {string} scope - Tenant sintético del escenario.
+ * @returns {Promise<unknown[]>} Estado ordenado de producción, inventario y contabilidad.
+ */
+async function productionSnapshot(scope: string): Promise<unknown[]> {
+  return Promise.all([
+    prisma.ordenProduccion.findMany({ where: { tenantId: scope },
+      orderBy: { ordenProduccionId: 'asc' } }),
+    prisma.ordenProduccionHistorial.findMany({ where: { tenantId: scope },
+      orderBy: { id: 'asc' } }),
+    prisma.producto.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+    prisma.stockUbicacion.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+    prisma.reconciliacionGasto.findMany({ where: { tenantId: scope },
+      orderBy: { reconciliacionId: 'asc' } }),
+    prisma.cuentaBancaria.findMany({ where: { tenantId: scope }, orderBy: { cuentaId: 'asc' } }),
+    prisma.asiento.findMany({ where: { tenantId: scope }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+    prisma.periodoCache.findMany({ where: { tenantId: scope }, orderBy: { cacheKey: 'asc' } }),
+    prisma.shadowPosteoOutbox.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+  ]);
+}
+
 /** @description Verifica rollback físico ante un fallo SQL dentro de postEvento en enforce. */
 describe('completar producción — rollback PostgreSQL real', { timeout: 60_000 }, () => {
   beforeAll(async () => {
@@ -50,7 +73,7 @@ describe('completar producción — rollback PostgreSQL real', { timeout: 60_000
     await prisma.$transaction((tx) => seedPlanContable(tx, tenantId));
     await prisma.moneda.upsert({
       where: { codigo: 'USD' },
-      update: { isActive: true },
+      update: {},
       create: { codigo: 'USD', nombre: 'Dólar', simbolo: '$', esPrincipal: false },
     });
     await prisma.tenantAccountingPolicy.create({
@@ -212,6 +235,31 @@ describe('completar producción — rollback PostgreSQL real', { timeout: 60_000
     expect(asiento.lineas.reduce((sum, line) => sum + Number(line.debe), 0)).toBe(10);
     expect(asiento.lineas.reduce((sum, line) => sum + Number(line.haber), 0)).toBe(10);
     expect(asiento.lineas.every((line) => line.monedaOriginal === 'USD')).toBe(true);
+  });
+
+  it('rechaza la orden existente de otro tenant sin efectos físicos en ninguno', async () => {
+    const foreign = await prisma.tenant.create({ data: {
+      nombre: 'Actor ajeno R6 producción', slug: `r6-production-${crypto.randomUUID()}`,
+    } });
+    try {
+      const before = await productionSnapshot(tenantId);
+      const foreignBefore = await productionSnapshot(foreign.tenantId);
+      const response = await POST(new Request(
+        `http://localhost/api/produccion/ordenes/${ordenId}/completar`, {
+          method: 'POST', body: JSON.stringify({ cuentaId, tipoPagoId }),
+        }) as NextRequest,
+        { params: Promise.resolve({ id: ordenId }) },
+        { userId: 'actor-real', name: prefix, email: `${prefix}@test.invalid`,
+          role: 'regularUser', isActive: true, tenantId: foreign.tenantId,
+          tenantRole: 'manager', planFeatures: { produccion: true },
+          permissions: new Set(['produccion.recetas.gestionar']) },
+      );
+      expect(response.status).toBe(404);
+      expect(await productionSnapshot(tenantId)).toEqual(before);
+      expect(await productionSnapshot(foreign.tenantId)).toEqual(foreignBefore);
+    } finally {
+      await prisma.tenant.delete({ where: { tenantId: foreign.tenantId } });
+    }
   });
 
   it('rechaza el reintento de completar una orden ya completada (idempotencia por estado)', async () => {

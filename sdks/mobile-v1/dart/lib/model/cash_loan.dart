@@ -241,4 +241,3 @@ class CashLoan {
   static const requiredKeys = <String>{
   };
 }
-

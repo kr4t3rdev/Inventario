@@ -118,4 +118,3 @@ class SuccessResponse {
     'message',
   };
 }
-

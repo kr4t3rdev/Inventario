@@ -98,7 +98,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -152,12 +152,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **tipoMovimiento** | **String**| Valor de tipoMovimiento aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **id** | **String**| Identificador único del recurso. |
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **tipoMovimiento** | **String**| Valor de tipoMovimiento aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -211,12 +211,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -267,9 +267,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -318,7 +318,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -367,7 +367,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -402,7 +402,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingBankingApi();
-final bankAdjustmentRequest = BankAdjustmentRequest(); // BankAdjustmentRequest | 
+final bankAdjustmentRequest = BankAdjustmentRequest(); // BankAdjustmentRequest |
 final cuentaId = cuentaId_example; // String | Identificador de la cuenta bancaria.
 final tipo = tipo_example; // String | Tipo de registro solicitado.
 final fechaInicio = 2013-10-20T19:20:30+01:00; // DateTime | Inicio inclusivo del período consultado.
@@ -422,13 +422,13 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankAdjustmentRequest** | [**BankAdjustmentRequest**](BankAdjustmentRequest.md)|  | 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **bankAdjustmentRequest** | [**BankAdjustmentRequest**](BankAdjustmentRequest.md)|  |
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -463,7 +463,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingBankingApi();
-final bankTransferCreateRequest = BankTransferCreateRequest(); // BankTransferCreateRequest | 
+final bankTransferCreateRequest = BankTransferCreateRequest(); // BankTransferCreateRequest |
 final fechaInicio = 2013-10-20T19:20:30+01:00; // DateTime | Inicio inclusivo del período consultado.
 final fechaFin = 2013-10-20T19:20:30+01:00; // DateTime | Fin inclusivo del período consultado.
 final cuentaId = cuentaId_example; // String | Identificador de la cuenta bancaria.
@@ -480,10 +480,10 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankTransferCreateRequest** | [**BankTransferCreateRequest**](BankTransferCreateRequest.md)|  | 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **bankTransferCreateRequest** | [**BankTransferCreateRequest**](BankTransferCreateRequest.md)|  |
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -518,7 +518,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingBankingApi();
-final bankTransferValidationRequest = BankTransferValidationRequest(); // BankTransferValidationRequest | 
+final bankTransferValidationRequest = BankTransferValidationRequest(); // BankTransferValidationRequest |
 
 try {
     final result = api_instance.mobilePostAccountingBankTransfersValidate(bankTransferValidationRequest);
@@ -532,7 +532,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankTransferValidationRequest** | [**BankTransferValidationRequest**](BankTransferValidationRequest.md)|  | 
+ **bankTransferValidationRequest** | [**BankTransferValidationRequest**](BankTransferValidationRequest.md)|  |
 
 ### Return type
 

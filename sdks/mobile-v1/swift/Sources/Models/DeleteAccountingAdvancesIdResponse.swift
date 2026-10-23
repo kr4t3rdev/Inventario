@@ -30,4 +30,3 @@ public struct DeleteAccountingAdvancesIdResponse: Codable, JSONEncodable, Hashab
         try container.encode(message, forKey: .message)
     }
 }
-

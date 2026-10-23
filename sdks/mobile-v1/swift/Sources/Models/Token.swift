@@ -36,4 +36,3 @@ public struct Token: CustomStringConvertible, Codable, JSONEncodable, Hashable {
 
     public var description: String { "Token(<redacted>)" }
 }
-

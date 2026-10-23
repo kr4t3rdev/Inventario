@@ -36,7 +36,7 @@ import type { MobileGetAccountingBankAccountsRequest } from '@tcp/mobile-v1-sdk'
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -102,7 +102,7 @@ import type { MobileGetAccountingBankAccountsByIdRequest } from '@tcp/mobile-v1-
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -176,7 +176,7 @@ import type { MobileGetAccountingBankAccountsByIdNestedHistoryRequest } from '@t
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -266,7 +266,7 @@ import type { MobileGetAccountingBankAdjustmentsRequest } from '@tcp/mobile-v1-s
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -354,7 +354,7 @@ import type { MobileGetAccountingBankTransfersRequest } from '@tcp/mobile-v1-sdk
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -433,7 +433,7 @@ import type { MobileGetAccountingBankTransfersByIdRequest } from '@tcp/mobile-v1
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -506,7 +506,7 @@ import type { MobileGetAccountingBankTransfersByIdComprobanteRequest } from '@tc
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -555,8 +555,8 @@ example().catch(console.error);
 |-------------|-------------|------------------|
 | **200** | Documento PDF |  -  |
 | **401** | No autenticado |  -  |
-| **500** | Error interno |  -  |
 | **404** | Transferencia bancaria no encontrada |  -  |
+| **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
@@ -580,7 +580,7 @@ import type { MobilePostAccountingBankAdjustmentsRequest } from '@tcp/mobile-v1-
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -672,7 +672,7 @@ import type { MobilePostAccountingBankTransfersRequest } from '@tcp/mobile-v1-sd
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -755,7 +755,7 @@ import type { MobilePostAccountingBankTransfersValidateRequest } from '@tcp/mobi
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

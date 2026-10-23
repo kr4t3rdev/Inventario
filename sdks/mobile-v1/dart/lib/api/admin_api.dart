@@ -16,6 +16,118 @@ class AdminApi {
 
   final ApiClient apiClient;
 
+  /// Activar una licencia
+  ///
+  /// Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<Response> mobileActivateAdminLicenseWithHttpInfo(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/licenses/activate';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminLicenciaIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Activar una licencia
+  ///
+  /// Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<PostAdminLicensesActivateResponse?> mobileActivateAdminLicense(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    final response = await mobileActivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminLicensesActivateResponse',) as PostAdminLicensesActivateResponse;
+
+    }
+    return null;
+  }
+
+  /// Activar un usuario
+  ///
+  /// Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileActivateAdminUserWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/activate';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Activar un usuario
+  ///
+  /// Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersActivateResponse?> mobileActivateAdminUser(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileActivateAdminUserWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersActivateResponse',) as PostAdminUsersActivateResponse;
+
+    }
+    return null;
+  }
+
   /// Aprobar solicitud de membresía
   ///
   /// Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
@@ -67,7 +179,343 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminMembershipsApproveResponse',) as PostAdminMembershipsApproveResponse;
-    
+
+    }
+    return null;
+  }
+
+  /// Asignar o cambiar la empresa de un usuario
+  ///
+  /// Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AssignAdminUserTenantRequest] assignAdminUserTenantRequest (required):
+  Future<Response> mobileAssignAdminUserTenantWithHttpInfo(AssignAdminUserTenantRequest assignAdminUserTenantRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/assign-tenant';
+
+    // ignore: prefer_final_locals
+    Object? postBody = assignAdminUserTenantRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Asignar o cambiar la empresa de un usuario
+  ///
+  /// Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+  ///
+  /// Parameters:
+  ///
+  /// * [AssignAdminUserTenantRequest] assignAdminUserTenantRequest (required):
+  Future<PostAdminUsersAssignTenantResponse?> mobileAssignAdminUserTenant(AssignAdminUserTenantRequest assignAdminUserTenantRequest,) async {
+    final response = await mobileAssignAdminUserTenantWithHttpInfo(assignAdminUserTenantRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersAssignTenantResponse',) as PostAdminUsersAssignTenantResponse;
+
+    }
+    return null;
+  }
+
+  /// Cambiar el rol de un usuario dentro de una empresa
+  ///
+  /// Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [ChangeAdminUserTenantRoleRequest] changeAdminUserTenantRoleRequest (required):
+  Future<Response> mobileChangeAdminUserTenantRoleWithHttpInfo(ChangeAdminUserTenantRoleRequest changeAdminUserTenantRoleRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/change-tenant-role';
+
+    // ignore: prefer_final_locals
+    Object? postBody = changeAdminUserTenantRoleRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'PATCH',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Cambiar el rol de un usuario dentro de una empresa
+  ///
+  /// Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+  ///
+  /// Parameters:
+  ///
+  /// * [ChangeAdminUserTenantRoleRequest] changeAdminUserTenantRoleRequest (required):
+  Future<PatchAdminUsersChangeTenantRoleResponse?> mobileChangeAdminUserTenantRole(ChangeAdminUserTenantRoleRequest changeAdminUserTenantRoleRequest,) async {
+    final response = await mobileChangeAdminUserTenantRoleWithHttpInfo(changeAdminUserTenantRoleRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PatchAdminUsersChangeTenantRoleResponse',) as PatchAdminUsersChangeTenantRoleResponse;
+
+    }
+    return null;
+  }
+
+  /// Desactivar una licencia
+  ///
+  /// Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<Response> mobileDeactivateAdminLicenseWithHttpInfo(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/licenses/deactivate';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminLicenciaIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Desactivar una licencia
+  ///
+  /// Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<PostAdminLicensesDeactivateResponse?> mobileDeactivateAdminLicense(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    final response = await mobileDeactivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminLicensesDeactivateResponse',) as PostAdminLicensesDeactivateResponse;
+
+    }
+    return null;
+  }
+
+  /// Desactivar un usuario
+  ///
+  /// Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileDeactivateAdminUserWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/deactivate';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Desactivar un usuario
+  ///
+  /// Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersDeactivateResponse?> mobileDeactivateAdminUser(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileDeactivateAdminUserWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersDeactivateResponse',) as PostAdminUsersDeactivateResponse;
+
+    }
+    return null;
+  }
+
+  /// Eliminar una licencia
+  ///
+  /// Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<Response> mobileDeleteAdminLicenseWithHttpInfo(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/licenses/delete';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminLicenciaIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Eliminar una licencia
+  ///
+  /// Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminLicenciaIdRequest] adminLicenciaIdRequest (required):
+  Future<PostAdminLicensesDeleteResponse?> mobileDeleteAdminLicense(AdminLicenciaIdRequest adminLicenciaIdRequest,) async {
+    final response = await mobileDeleteAdminLicenseWithHttpInfo(adminLicenciaIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminLicensesDeleteResponse',) as PostAdminLicensesDeleteResponse;
+
+    }
+    return null;
+  }
+
+  /// Eliminar un usuario
+  ///
+  /// Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileDeleteAdminUserWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/delete';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Eliminar un usuario
+  ///
+  /// Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersDeleteResponse?> mobileDeleteAdminUser(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileDeleteAdminUserWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersDeleteResponse',) as PostAdminUsersDeleteResponse;
+
     }
     return null;
   }
@@ -115,7 +563,7 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'AdminHealthResponse',) as AdminHealthResponse;
-    
+
     }
     return null;
   }
@@ -204,7 +652,7 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAdminLicenseStatsResponse',) as GetAdminLicenseStatsResponse;
-    
+
     }
     return null;
   }
@@ -329,7 +777,7 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAdminLicensesResponse',) as GetAdminLicensesResponse;
-    
+
     }
     return null;
   }
@@ -436,6 +884,66 @@ class AdminApi {
     return null;
   }
 
+  /// Obtener el detalle de un usuario
+  ///
+  /// Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] userId (required):
+  ///   Identificador del usuario a consultar.
+  Future<Response> mobileGetAdminUserDetailWithHttpInfo(String userId,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/detail';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+      queryParams.addAll(_queryParams('', 'userId', userId));
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Obtener el detalle de un usuario
+  ///
+  /// Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] userId (required):
+  ///   Identificador del usuario a consultar.
+  Future<GetAdminUserDetailResponse?> mobileGetAdminUserDetail(String userId,) async {
+    final response = await mobileGetAdminUserDetailWithHttpInfo(userId,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAdminUserDetailResponse',) as GetAdminUserDetailResponse;
+
+    }
+    return null;
+  }
+
   /// Listar usuarios de la plataforma
   ///
   /// Lista los usuarios globales para el administrador de la plataforma o los integrantes de una empresa para un gestor. Permite acotar la consulta a una empresa mediante el identificador opcional.
@@ -502,7 +1010,7 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAdminUsersResponse',) as GetAdminUsersResponse;
-    
+
     }
     return null;
   }
@@ -558,7 +1066,7 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersLockResponse',) as PostAdminUsersLockResponse;
-    
+
     }
     return null;
   }
@@ -614,7 +1122,231 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminMembershipsRejectResponse',) as PostAdminMembershipsRejectResponse;
-    
+
+    }
+    return null;
+  }
+
+  /// Renovar una licencia
+  ///
+  /// Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [RenewAdminLicenseRequest] renewAdminLicenseRequest (required):
+  Future<Response> mobileRenewAdminLicenseWithHttpInfo(RenewAdminLicenseRequest renewAdminLicenseRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/licenses/renew';
+
+    // ignore: prefer_final_locals
+    Object? postBody = renewAdminLicenseRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Renovar una licencia
+  ///
+  /// Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+  ///
+  /// Parameters:
+  ///
+  /// * [RenewAdminLicenseRequest] renewAdminLicenseRequest (required):
+  Future<PostAdminLicensesRenewResponse?> mobileRenewAdminLicense(RenewAdminLicenseRequest renewAdminLicenseRequest,) async {
+    final response = await mobileRenewAdminLicenseWithHttpInfo(renewAdminLicenseRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminLicensesRenewResponse',) as PostAdminLicensesRenewResponse;
+
+    }
+    return null;
+  }
+
+  /// Reenviar el email de verificación
+  ///
+  /// Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileResendAdminUserVerificationWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/resend-verification';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Reenviar el email de verificación
+  ///
+  /// Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersResendVerificationResponse?> mobileResendAdminUserVerification(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileResendAdminUserVerificationWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersResendVerificationResponse',) as PostAdminUsersResendVerificationResponse;
+
+    }
+    return null;
+  }
+
+  /// Enviar enlace de restablecimiento de contraseña
+  ///
+  /// Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileResetAdminUserPasswordWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/reset-password';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Enviar enlace de restablecimiento de contraseña
+  ///
+  /// Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersResetPasswordResponse?> mobileResetAdminUserPassword(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileResetAdminUserPasswordWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersResetPasswordResponse',) as PostAdminUsersResetPasswordResponse;
+
+    }
+    return null;
+  }
+
+  /// Revocar las sesiones activas de un usuario
+  ///
+  /// Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileRevokeAdminUserSessionsWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/revoke-sessions';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Revocar las sesiones activas de un usuario
+  ///
+  /// Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersRevokeSessionsResponse?> mobileRevokeAdminUserSessions(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileRevokeAdminUserSessionsWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersRevokeSessionsResponse',) as PostAdminUsersRevokeSessionsResponse;
+
     }
     return null;
   }
@@ -670,7 +1402,119 @@ class AdminApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersLockResponse',) as PostAdminUsersLockResponse;
-    
+
+    }
+    return null;
+  }
+
+  /// Editar nombre, email o rol de un usuario
+  ///
+  /// Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [UpdateAdminUserRequest] updateAdminUserRequest (required):
+  Future<Response> mobileUpdateAdminUserWithHttpInfo(UpdateAdminUserRequest updateAdminUserRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/update';
+
+    // ignore: prefer_final_locals
+    Object? postBody = updateAdminUserRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'PATCH',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Editar nombre, email o rol de un usuario
+  ///
+  /// Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+  ///
+  /// Parameters:
+  ///
+  /// * [UpdateAdminUserRequest] updateAdminUserRequest (required):
+  Future<PatchAdminUsersUpdateResponse?> mobileUpdateAdminUser(UpdateAdminUserRequest updateAdminUserRequest,) async {
+    final response = await mobileUpdateAdminUserWithHttpInfo(updateAdminUserRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PatchAdminUsersUpdateResponse',) as PatchAdminUsersUpdateResponse;
+
+    }
+    return null;
+  }
+
+  /// Marcar el email como verificado
+  ///
+  /// Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<Response> mobileVerifyAdminUserEmailWithHttpInfo(AdminUserIdRequest adminUserIdRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/admin/users/verify-email';
+
+    // ignore: prefer_final_locals
+    Object? postBody = adminUserIdRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Marcar el email como verificado
+  ///
+  /// Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+  ///
+  /// Parameters:
+  ///
+  /// * [AdminUserIdRequest] adminUserIdRequest (required):
+  Future<PostAdminUsersVerifyEmailResponse?> mobileVerifyAdminUserEmail(AdminUserIdRequest adminUserIdRequest,) async {
+    final response = await mobileVerifyAdminUserEmailWithHttpInfo(adminUserIdRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAdminUsersVerifyEmailResponse',) as PostAdminUsersVerifyEmailResponse;
+
     }
     return null;
   }

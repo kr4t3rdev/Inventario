@@ -14,7 +14,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar anticipos de clientes
-     
+
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
@@ -35,7 +35,7 @@ open class AccountingReportsAPI {
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
-     - returns: RequestBuilder<GetAccountingAdvancesReportsCustomersResponse> 
+     - returns: RequestBuilder<GetAccountingAdvancesReportsCustomersResponse>
      */
     open class func mobileGetAccountingAdvancesReportsCustomersWithRequestBuilder(clienteId: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil) -> RequestBuilder<GetAccountingAdvancesReportsCustomersResponse> {
         let localVariablePath = "/accounting/advances/reports/customers"
@@ -62,7 +62,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar anticipos a proveedores
-     
+
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
@@ -83,7 +83,7 @@ open class AccountingReportsAPI {
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
-     - returns: RequestBuilder<GetAccountingAdvancesReportsProvidersResponse> 
+     - returns: RequestBuilder<GetAccountingAdvancesReportsProvidersResponse>
      */
     open class func mobileGetAccountingAdvancesReportsProvidersWithRequestBuilder(proveedorId: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil) -> RequestBuilder<GetAccountingAdvancesReportsProvidersResponse> {
         let localVariablePath = "/accounting/advances/reports/providers"
@@ -110,7 +110,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar resumen de anticipos
-     
+
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
@@ -131,7 +131,7 @@ open class AccountingReportsAPI {
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
-     - returns: RequestBuilder<GetAccountingAdvancesReportsSummaryResponse> 
+     - returns: RequestBuilder<GetAccountingAdvancesReportsSummaryResponse>
      */
     open class func mobileGetAccountingAdvancesReportsSummaryWithRequestBuilder(tipo: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil) -> RequestBuilder<GetAccountingAdvancesReportsSummaryResponse> {
         let localVariablePath = "/accounting/advances/reports/summary"
@@ -158,7 +158,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar análisis de cuenta de cliente
-     
+
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - returns: GetAccountingReportsClientAccountAnalysisResponse
      */
@@ -175,7 +175,7 @@ open class AccountingReportsAPI {
        - type: http
        - name: bearerAuth
      - parameter clienteId: (query) Identificador del cliente. (optional)
-     - returns: RequestBuilder<GetAccountingReportsClientAccountAnalysisResponse> 
+     - returns: RequestBuilder<GetAccountingReportsClientAccountAnalysisResponse>
      */
     open class func mobileGetAccountingReportsClientAccountAnalysisWithRequestBuilder(clienteId: String? = nil) -> RequestBuilder<GetAccountingReportsClientAccountAnalysisResponse> {
         let localVariablePath = "/accounting/reports/client-account-analysis"
@@ -200,7 +200,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar reporte de cambio de moneda
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter monedaOrigen: (query) Valor de monedaOrigen aceptado por el handler. (optional)
@@ -225,7 +225,7 @@ open class AccountingReportsAPI {
      - parameter monedaOrigen: (query) Valor de monedaOrigen aceptado por el handler. (optional)
      - parameter monedaDestino: (query) Valor de monedaDestino aceptado por el handler. (optional)
      - parameter export: (query) Valor de export aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingReportsExchangeResponse> 
+     - returns: RequestBuilder<GetAccountingReportsExchangeResponse>
      */
     open class func mobileGetAccountingReportsExchangeWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, monedaOrigen: String? = nil, monedaDestino: String? = nil, export: String? = nil) -> RequestBuilder<GetAccountingReportsExchangeResponse> {
         let localVariablePath = "/accounting/reports/exchange"
@@ -254,7 +254,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar impacto de variaciones cambiarias
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter monedaBase: (query) Valor de monedaBase aceptado por el handler. (optional)
@@ -277,7 +277,7 @@ open class AccountingReportsAPI {
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter monedaBase: (query) Valor de monedaBase aceptado por el handler. (optional)
      - parameter tipoAnalisis: (query) Valor de tipoAnalisis aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingReportsExchangeImpactResponse> 
+     - returns: RequestBuilder<GetAccountingReportsExchangeImpactResponse>
      */
     open class func mobileGetAccountingReportsExchangeImpactWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, monedaBase: String? = nil, tipoAnalisis: String? = nil) -> RequestBuilder<GetAccountingReportsExchangeImpactResponse> {
         let localVariablePath = "/accounting/reports/exchange-impact"
@@ -305,7 +305,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar movimientos contables
-     
+
      - parameter busqueda: (query) Valor de busqueda aceptado por el handler. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
@@ -338,7 +338,7 @@ open class AccountingReportsAPI {
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
      - parameter formato: (query) Valor de formato aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingReportsMovementsResponse> 
+     - returns: RequestBuilder<GetAccountingReportsMovementsResponse>
      */
     open class func mobileGetAccountingReportsMovementsWithRequestBuilder(busqueda: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil, tipoMovimiento: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil, formato: String? = nil) -> RequestBuilder<GetAccountingReportsMovementsResponse> {
         let localVariablePath = "/accounting/reports/movements"
@@ -371,7 +371,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar facturas vencidas
-     
+
      - returns: GetAccountingReportsOverdueInvoicesResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -386,7 +386,7 @@ open class AccountingReportsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingReportsOverdueInvoicesResponse> 
+     - returns: RequestBuilder<GetAccountingReportsOverdueInvoicesResponse>
      */
     open class func mobileGetAccountingReportsOverdueInvoicesWithRequestBuilder() -> RequestBuilder<GetAccountingReportsOverdueInvoicesResponse> {
         let localVariablePath = "/accounting/reports/overdue-invoices"
@@ -408,7 +408,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar resumen financiero
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -433,7 +433,7 @@ open class AccountingReportsAPI {
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter export: (query) Valor de export aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingReportsSummaryResponse> 
+     - returns: RequestBuilder<GetAccountingReportsSummaryResponse>
      */
     open class func mobileGetAccountingReportsSummaryWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil, moneda: String? = nil, export: String? = nil) -> RequestBuilder<GetAccountingReportsSummaryResponse> {
         let localVariablePath = "/accounting/reports/summary"
@@ -462,7 +462,7 @@ open class AccountingReportsAPI {
 
     /**
      Consultar reporte de transferencias
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaOrigenId: (query) Valor de cuentaOrigenId aceptado por el handler. (optional)
@@ -495,7 +495,7 @@ open class AccountingReportsAPI {
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
      - parameter realizadoPor: (query) Valor de realizadoPor aceptado por el handler. (optional)
      - parameter export: (query) Valor de export aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingReportsTransfersResponse> 
+     - returns: RequestBuilder<GetAccountingReportsTransfersResponse>
      */
     open class func mobileGetAccountingReportsTransfersWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaOrigenId: String? = nil, cuentaDestinoId: String? = nil, moneda: String? = nil, page: Int? = nil, limit: Int? = nil, realizadoPor: String? = nil, export: String? = nil) -> RequestBuilder<GetAccountingReportsTransfersResponse> {
         let localVariablePath = "/accounting/reports/transfers"

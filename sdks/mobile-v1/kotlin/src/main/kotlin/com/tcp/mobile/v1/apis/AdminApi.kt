@@ -20,19 +20,40 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import com.tcp.mobile.v1.models.AdminHealthResponse
+import com.tcp.mobile.v1.models.AdminLicenciaIdRequest
 import com.tcp.mobile.v1.models.AdminTenantItem
+import com.tcp.mobile.v1.models.AdminUserIdRequest
 import com.tcp.mobile.v1.models.ApiError
 import com.tcp.mobile.v1.models.ApproveAdminMembershipRequest
+import com.tcp.mobile.v1.models.AssignAdminUserTenantRequest
+import com.tcp.mobile.v1.models.ChangeAdminUserTenantRoleRequest
 import com.tcp.mobile.v1.models.GetAdminLicenseStatsResponse
 import com.tcp.mobile.v1.models.GetAdminLicensesResponse
+import com.tcp.mobile.v1.models.GetAdminUserDetailResponse
 import com.tcp.mobile.v1.models.GetAdminUsersResponse
 import com.tcp.mobile.v1.models.LockAdminUserRequest
+import com.tcp.mobile.v1.models.PatchAdminUsersChangeTenantRoleResponse
+import com.tcp.mobile.v1.models.PatchAdminUsersUpdateResponse
 import com.tcp.mobile.v1.models.PendingMembershipItem
+import com.tcp.mobile.v1.models.PostAdminLicensesActivateResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesDeleteResponse
+import com.tcp.mobile.v1.models.PostAdminLicensesRenewResponse
 import com.tcp.mobile.v1.models.PostAdminMembershipsApproveResponse
 import com.tcp.mobile.v1.models.PostAdminMembershipsRejectResponse
+import com.tcp.mobile.v1.models.PostAdminUsersActivateResponse
+import com.tcp.mobile.v1.models.PostAdminUsersAssignTenantResponse
+import com.tcp.mobile.v1.models.PostAdminUsersDeactivateResponse
+import com.tcp.mobile.v1.models.PostAdminUsersDeleteResponse
 import com.tcp.mobile.v1.models.PostAdminUsersLockResponse
+import com.tcp.mobile.v1.models.PostAdminUsersResendVerificationResponse
+import com.tcp.mobile.v1.models.PostAdminUsersResetPasswordResponse
+import com.tcp.mobile.v1.models.PostAdminUsersRevokeSessionsResponse
+import com.tcp.mobile.v1.models.PostAdminUsersVerifyEmailResponse
 import com.tcp.mobile.v1.models.RejectAdminMembershipRequest
+import com.tcp.mobile.v1.models.RenewAdminLicenseRequest
 import com.tcp.mobile.v1.models.UnlockAdminUserRequest
+import com.tcp.mobile.v1.models.UpdateAdminUserRequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -59,10 +80,158 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     }
 
     /**
+     * POST /admin/licenses/activate
+     * Activar una licencia
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * @param adminLicenciaIdRequest
+     * @return PostAdminLicensesActivateResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileActivateAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) : PostAdminLicensesActivateResponse {
+        val localVarResponse = mobileActivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminLicensesActivateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/licenses/activate
+     * Activar una licencia
+     * Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+     * @param adminLicenciaIdRequest
+     * @return ApiResponse<PostAdminLicensesActivateResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileActivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest: AdminLicenciaIdRequest) : ApiResponse<PostAdminLicensesActivateResponse?> {
+        val localVariableConfig = mobileActivateAdminLicenseRequestConfig(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return request<AdminLicenciaIdRequest, PostAdminLicensesActivateResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileActivateAdminLicense
+     *
+     * @param adminLicenciaIdRequest
+     * @return RequestConfig
+     */
+    fun mobileActivateAdminLicenseRequestConfig(adminLicenciaIdRequest: AdminLicenciaIdRequest) : RequestConfig<AdminLicenciaIdRequest> {
+        val localVariableBody = adminLicenciaIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/licenses/activate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/activate
+     * Activar un usuario
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersActivateResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileActivateAdminUser(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersActivateResponse {
+        val localVarResponse = mobileActivateAdminUserWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersActivateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/activate
+     * Activar un usuario
+     * Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersActivateResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileActivateAdminUserWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersActivateResponse?> {
+        val localVariableConfig = mobileActivateAdminUserRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersActivateResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileActivateAdminUser
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileActivateAdminUserRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/activate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * POST /admin/memberships/approve
      * Aprobar solicitud de membresía
      * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
-     * @param approveAdminMembershipRequest 
+     * @param approveAdminMembershipRequest
      * @return PostAdminMembershipsApproveResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -94,7 +263,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/memberships/approve
      * Aprobar solicitud de membresía
      * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
-     * @param approveAdminMembershipRequest 
+     * @param approveAdminMembershipRequest
      * @return ApiResponse<PostAdminMembershipsApproveResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -112,7 +281,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * To obtain the request config of the operation mobileApproveAdminMembership
      *
-     * @param approveAdminMembershipRequest 
+     * @param approveAdminMembershipRequest
      * @return RequestConfig
      */
     fun mobileApproveAdminMembershipRequestConfig(approveAdminMembershipRequest: ApproveAdminMembershipRequest) : RequestConfig<ApproveAdminMembershipRequest> {
@@ -125,6 +294,450 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/admin/memberships/approve",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/assign-tenant
+     * Asignar o cambiar la empresa de un usuario
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * @param assignAdminUserTenantRequest
+     * @return PostAdminUsersAssignTenantResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileAssignAdminUserTenant(assignAdminUserTenantRequest: AssignAdminUserTenantRequest) : PostAdminUsersAssignTenantResponse {
+        val localVarResponse = mobileAssignAdminUserTenantWithHttpInfo(assignAdminUserTenantRequest = assignAdminUserTenantRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersAssignTenantResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/assign-tenant
+     * Asignar o cambiar la empresa de un usuario
+     * Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+     * @param assignAdminUserTenantRequest
+     * @return ApiResponse<PostAdminUsersAssignTenantResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileAssignAdminUserTenantWithHttpInfo(assignAdminUserTenantRequest: AssignAdminUserTenantRequest) : ApiResponse<PostAdminUsersAssignTenantResponse?> {
+        val localVariableConfig = mobileAssignAdminUserTenantRequestConfig(assignAdminUserTenantRequest = assignAdminUserTenantRequest)
+
+        return request<AssignAdminUserTenantRequest, PostAdminUsersAssignTenantResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileAssignAdminUserTenant
+     *
+     * @param assignAdminUserTenantRequest
+     * @return RequestConfig
+     */
+    fun mobileAssignAdminUserTenantRequestConfig(assignAdminUserTenantRequest: AssignAdminUserTenantRequest) : RequestConfig<AssignAdminUserTenantRequest> {
+        val localVariableBody = assignAdminUserTenantRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/assign-tenant",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * PATCH /admin/users/change-tenant-role
+     * Cambiar el rol de un usuario dentro de una empresa
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * @param changeAdminUserTenantRoleRequest
+     * @return PatchAdminUsersChangeTenantRoleResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileChangeAdminUserTenantRole(changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest) : PatchAdminUsersChangeTenantRoleResponse {
+        val localVarResponse = mobileChangeAdminUserTenantRoleWithHttpInfo(changeAdminUserTenantRoleRequest = changeAdminUserTenantRoleRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PatchAdminUsersChangeTenantRoleResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * PATCH /admin/users/change-tenant-role
+     * Cambiar el rol de un usuario dentro de una empresa
+     * Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+     * @param changeAdminUserTenantRoleRequest
+     * @return ApiResponse<PatchAdminUsersChangeTenantRoleResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileChangeAdminUserTenantRoleWithHttpInfo(changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest) : ApiResponse<PatchAdminUsersChangeTenantRoleResponse?> {
+        val localVariableConfig = mobileChangeAdminUserTenantRoleRequestConfig(changeAdminUserTenantRoleRequest = changeAdminUserTenantRoleRequest)
+
+        return request<ChangeAdminUserTenantRoleRequest, PatchAdminUsersChangeTenantRoleResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileChangeAdminUserTenantRole
+     *
+     * @param changeAdminUserTenantRoleRequest
+     * @return RequestConfig
+     */
+    fun mobileChangeAdminUserTenantRoleRequestConfig(changeAdminUserTenantRoleRequest: ChangeAdminUserTenantRoleRequest) : RequestConfig<ChangeAdminUserTenantRoleRequest> {
+        val localVariableBody = changeAdminUserTenantRoleRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.PATCH,
+            path = "/admin/users/change-tenant-role",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/licenses/deactivate
+     * Desactivar una licencia
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * @param adminLicenciaIdRequest
+     * @return PostAdminLicensesDeactivateResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileDeactivateAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) : PostAdminLicensesDeactivateResponse {
+        val localVarResponse = mobileDeactivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminLicensesDeactivateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/licenses/deactivate
+     * Desactivar una licencia
+     * Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+     * @param adminLicenciaIdRequest
+     * @return ApiResponse<PostAdminLicensesDeactivateResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileDeactivateAdminLicenseWithHttpInfo(adminLicenciaIdRequest: AdminLicenciaIdRequest) : ApiResponse<PostAdminLicensesDeactivateResponse?> {
+        val localVariableConfig = mobileDeactivateAdminLicenseRequestConfig(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return request<AdminLicenciaIdRequest, PostAdminLicensesDeactivateResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileDeactivateAdminLicense
+     *
+     * @param adminLicenciaIdRequest
+     * @return RequestConfig
+     */
+    fun mobileDeactivateAdminLicenseRequestConfig(adminLicenciaIdRequest: AdminLicenciaIdRequest) : RequestConfig<AdminLicenciaIdRequest> {
+        val localVariableBody = adminLicenciaIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/licenses/deactivate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/deactivate
+     * Desactivar un usuario
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersDeactivateResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileDeactivateAdminUser(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersDeactivateResponse {
+        val localVarResponse = mobileDeactivateAdminUserWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersDeactivateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/deactivate
+     * Desactivar un usuario
+     * Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersDeactivateResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileDeactivateAdminUserWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersDeactivateResponse?> {
+        val localVariableConfig = mobileDeactivateAdminUserRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersDeactivateResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileDeactivateAdminUser
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileDeactivateAdminUserRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/deactivate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/licenses/delete
+     * Eliminar una licencia
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * @param adminLicenciaIdRequest
+     * @return PostAdminLicensesDeleteResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileDeleteAdminLicense(adminLicenciaIdRequest: AdminLicenciaIdRequest) : PostAdminLicensesDeleteResponse {
+        val localVarResponse = mobileDeleteAdminLicenseWithHttpInfo(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminLicensesDeleteResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/licenses/delete
+     * Eliminar una licencia
+     * Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+     * @param adminLicenciaIdRequest
+     * @return ApiResponse<PostAdminLicensesDeleteResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileDeleteAdminLicenseWithHttpInfo(adminLicenciaIdRequest: AdminLicenciaIdRequest) : ApiResponse<PostAdminLicensesDeleteResponse?> {
+        val localVariableConfig = mobileDeleteAdminLicenseRequestConfig(adminLicenciaIdRequest = adminLicenciaIdRequest)
+
+        return request<AdminLicenciaIdRequest, PostAdminLicensesDeleteResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileDeleteAdminLicense
+     *
+     * @param adminLicenciaIdRequest
+     * @return RequestConfig
+     */
+    fun mobileDeleteAdminLicenseRequestConfig(adminLicenciaIdRequest: AdminLicenciaIdRequest) : RequestConfig<AdminLicenciaIdRequest> {
+        val localVariableBody = adminLicenciaIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/licenses/delete",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/delete
+     * Eliminar un usuario
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersDeleteResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileDeleteAdminUser(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersDeleteResponse {
+        val localVarResponse = mobileDeleteAdminUserWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersDeleteResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/delete
+     * Eliminar un usuario
+     * Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersDeleteResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileDeleteAdminUserWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersDeleteResponse?> {
+        val localVariableConfig = mobileDeleteAdminUserRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersDeleteResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileDeleteAdminUser
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileDeleteAdminUserRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/delete",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,
@@ -596,6 +1209,82 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     }
 
     /**
+     * GET /admin/users/detail
+     * Obtener el detalle de un usuario
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * @param userId Identificador del usuario a consultar.
+     * @return GetAdminUserDetailResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetAdminUserDetail(userId: kotlin.String) : GetAdminUserDetailResponse {
+        val localVarResponse = mobileGetAdminUserDetailWithHttpInfo(userId = userId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as GetAdminUserDetailResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /admin/users/detail
+     * Obtener el detalle de un usuario
+     * Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+     * @param userId Identificador del usuario a consultar.
+     * @return ApiResponse<GetAdminUserDetailResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetAdminUserDetailWithHttpInfo(userId: kotlin.String) : ApiResponse<GetAdminUserDetailResponse?> {
+        val localVariableConfig = mobileGetAdminUserDetailRequestConfig(userId = userId)
+
+        return request<Unit, GetAdminUserDetailResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetAdminUserDetail
+     *
+     * @param userId Identificador del usuario a consultar.
+     * @return RequestConfig
+     */
+    fun mobileGetAdminUserDetailRequestConfig(userId: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("userId", listOf(userId.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/admin/users/detail",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * GET /admin/users
      * Listar usuarios de la plataforma
      * Lista los usuarios globales para el administrador de la plataforma o los integrantes de una empresa para un gestor. Permite acotar la consulta a una empresa mediante el identificador opcional.
@@ -683,7 +1372,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/users/lock
      * Bloquear usuario por 24 horas
      * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
-     * @param lockAdminUserRequest 
+     * @param lockAdminUserRequest
      * @return PostAdminUsersLockResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -715,7 +1404,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/users/lock
      * Bloquear usuario por 24 horas
      * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
-     * @param lockAdminUserRequest 
+     * @param lockAdminUserRequest
      * @return ApiResponse<PostAdminUsersLockResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -733,7 +1422,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * To obtain the request config of the operation mobileLockAdminUser
      *
-     * @param lockAdminUserRequest 
+     * @param lockAdminUserRequest
      * @return RequestConfig
      */
     fun mobileLockAdminUserRequestConfig(lockAdminUserRequest: LockAdminUserRequest) : RequestConfig<LockAdminUserRequest> {
@@ -757,7 +1446,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/memberships/reject
      * Rechazar solicitud de membresía
      * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
-     * @param rejectAdminMembershipRequest 
+     * @param rejectAdminMembershipRequest
      * @return PostAdminMembershipsRejectResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -789,7 +1478,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/memberships/reject
      * Rechazar solicitud de membresía
      * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
-     * @param rejectAdminMembershipRequest 
+     * @param rejectAdminMembershipRequest
      * @return ApiResponse<PostAdminMembershipsRejectResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -807,7 +1496,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * To obtain the request config of the operation mobileRejectAdminMembership
      *
-     * @param rejectAdminMembershipRequest 
+     * @param rejectAdminMembershipRequest
      * @return RequestConfig
      */
     fun mobileRejectAdminMembershipRequestConfig(rejectAdminMembershipRequest: RejectAdminMembershipRequest) : RequestConfig<RejectAdminMembershipRequest> {
@@ -828,10 +1517,306 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     }
 
     /**
+     * POST /admin/licenses/renew
+     * Renovar una licencia
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * @param renewAdminLicenseRequest
+     * @return PostAdminLicensesRenewResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileRenewAdminLicense(renewAdminLicenseRequest: RenewAdminLicenseRequest) : PostAdminLicensesRenewResponse {
+        val localVarResponse = mobileRenewAdminLicenseWithHttpInfo(renewAdminLicenseRequest = renewAdminLicenseRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminLicensesRenewResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/licenses/renew
+     * Renovar una licencia
+     * Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+     * @param renewAdminLicenseRequest
+     * @return ApiResponse<PostAdminLicensesRenewResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileRenewAdminLicenseWithHttpInfo(renewAdminLicenseRequest: RenewAdminLicenseRequest) : ApiResponse<PostAdminLicensesRenewResponse?> {
+        val localVariableConfig = mobileRenewAdminLicenseRequestConfig(renewAdminLicenseRequest = renewAdminLicenseRequest)
+
+        return request<RenewAdminLicenseRequest, PostAdminLicensesRenewResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileRenewAdminLicense
+     *
+     * @param renewAdminLicenseRequest
+     * @return RequestConfig
+     */
+    fun mobileRenewAdminLicenseRequestConfig(renewAdminLicenseRequest: RenewAdminLicenseRequest) : RequestConfig<RenewAdminLicenseRequest> {
+        val localVariableBody = renewAdminLicenseRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/licenses/renew",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/resend-verification
+     * Reenviar el email de verificación
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersResendVerificationResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileResendAdminUserVerification(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersResendVerificationResponse {
+        val localVarResponse = mobileResendAdminUserVerificationWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersResendVerificationResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/resend-verification
+     * Reenviar el email de verificación
+     * Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersResendVerificationResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileResendAdminUserVerificationWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersResendVerificationResponse?> {
+        val localVariableConfig = mobileResendAdminUserVerificationRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersResendVerificationResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileResendAdminUserVerification
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileResendAdminUserVerificationRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/resend-verification",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/reset-password
+     * Enviar enlace de restablecimiento de contraseña
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersResetPasswordResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileResetAdminUserPassword(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersResetPasswordResponse {
+        val localVarResponse = mobileResetAdminUserPasswordWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersResetPasswordResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/reset-password
+     * Enviar enlace de restablecimiento de contraseña
+     * Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersResetPasswordResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileResetAdminUserPasswordWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersResetPasswordResponse?> {
+        val localVariableConfig = mobileResetAdminUserPasswordRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersResetPasswordResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileResetAdminUserPassword
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileResetAdminUserPasswordRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/reset-password",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/revoke-sessions
+     * Revocar las sesiones activas de un usuario
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersRevokeSessionsResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileRevokeAdminUserSessions(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersRevokeSessionsResponse {
+        val localVarResponse = mobileRevokeAdminUserSessionsWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersRevokeSessionsResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/revoke-sessions
+     * Revocar las sesiones activas de un usuario
+     * Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersRevokeSessionsResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileRevokeAdminUserSessionsWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersRevokeSessionsResponse?> {
+        val localVariableConfig = mobileRevokeAdminUserSessionsRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersRevokeSessionsResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileRevokeAdminUserSessions
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileRevokeAdminUserSessionsRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/revoke-sessions",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * POST /admin/users/unlock
      * Desbloquear usuario
      * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
-     * @param unlockAdminUserRequest 
+     * @param unlockAdminUserRequest
      * @return PostAdminUsersLockResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -863,7 +1848,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * POST /admin/users/unlock
      * Desbloquear usuario
      * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
-     * @param unlockAdminUserRequest 
+     * @param unlockAdminUserRequest
      * @return ApiResponse<PostAdminUsersLockResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -881,7 +1866,7 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * To obtain the request config of the operation mobileUnlockAdminUser
      *
-     * @param unlockAdminUserRequest 
+     * @param unlockAdminUserRequest
      * @return RequestConfig
      */
     fun mobileUnlockAdminUserRequestConfig(unlockAdminUserRequest: UnlockAdminUserRequest) : RequestConfig<UnlockAdminUserRequest> {
@@ -894,6 +1879,154 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/admin/users/unlock",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * PATCH /admin/users/update
+     * Editar nombre, email o rol de un usuario
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * @param updateAdminUserRequest
+     * @return PatchAdminUsersUpdateResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileUpdateAdminUser(updateAdminUserRequest: UpdateAdminUserRequest) : PatchAdminUsersUpdateResponse {
+        val localVarResponse = mobileUpdateAdminUserWithHttpInfo(updateAdminUserRequest = updateAdminUserRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PatchAdminUsersUpdateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * PATCH /admin/users/update
+     * Editar nombre, email o rol de un usuario
+     * Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+     * @param updateAdminUserRequest
+     * @return ApiResponse<PatchAdminUsersUpdateResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileUpdateAdminUserWithHttpInfo(updateAdminUserRequest: UpdateAdminUserRequest) : ApiResponse<PatchAdminUsersUpdateResponse?> {
+        val localVariableConfig = mobileUpdateAdminUserRequestConfig(updateAdminUserRequest = updateAdminUserRequest)
+
+        return request<UpdateAdminUserRequest, PatchAdminUsersUpdateResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileUpdateAdminUser
+     *
+     * @param updateAdminUserRequest
+     * @return RequestConfig
+     */
+    fun mobileUpdateAdminUserRequestConfig(updateAdminUserRequest: UpdateAdminUserRequest) : RequestConfig<UpdateAdminUserRequest> {
+        val localVariableBody = updateAdminUserRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.PATCH,
+            path = "/admin/users/update",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/verify-email
+     * Marcar el email como verificado
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * @param adminUserIdRequest
+     * @return PostAdminUsersVerifyEmailResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileVerifyAdminUserEmail(adminUserIdRequest: AdminUserIdRequest) : PostAdminUsersVerifyEmailResponse {
+        val localVarResponse = mobileVerifyAdminUserEmailWithHttpInfo(adminUserIdRequest = adminUserIdRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersVerifyEmailResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/verify-email
+     * Marcar el email como verificado
+     * Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+     * @param adminUserIdRequest
+     * @return ApiResponse<PostAdminUsersVerifyEmailResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileVerifyAdminUserEmailWithHttpInfo(adminUserIdRequest: AdminUserIdRequest) : ApiResponse<PostAdminUsersVerifyEmailResponse?> {
+        val localVariableConfig = mobileVerifyAdminUserEmailRequestConfig(adminUserIdRequest = adminUserIdRequest)
+
+        return request<AdminUserIdRequest, PostAdminUsersVerifyEmailResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileVerifyAdminUserEmail
+     *
+     * @param adminUserIdRequest
+     * @return RequestConfig
+     */
+    fun mobileVerifyAdminUserEmailRequestConfig(adminUserIdRequest: AdminUserIdRequest) : RequestConfig<AdminUserIdRequest> {
+        val localVariableBody = adminUserIdRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/verify-email",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

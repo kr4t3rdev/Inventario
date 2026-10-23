@@ -214,4 +214,10 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Advisory lock idempotente de creación y lock FOR UPDATE al aplicar anticipos.',
     tenantGuarantee: 'Claves de lock incluyen tenantId; lecturas de Anticipo filtran tenantId antes de mutar.',
   },
+  {
+    file: 'src/features/venta-servicios/actions.ts',
+    occurrences: 1,
+    reason: 'Advisory lock transaccional serializa requests con la misma clave de idempotencia original.',
+    tenantGuarantee: 'El lock usa tenantId resuelto por requireTenant y la clave original como parámetros SQL.',
+  },
 ] as const;

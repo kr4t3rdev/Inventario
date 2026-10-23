@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/accounts-payable.
  *
- * @param items 
- * @param pagination 
- * @param metricas 
+ * @param items
+ * @param pagination
+ * @param metricas
  */
 
 
@@ -45,4 +45,3 @@ data class GetAccountingAccountsPayableResponse (
 
 
 }
-

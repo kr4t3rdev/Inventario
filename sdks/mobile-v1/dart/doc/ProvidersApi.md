@@ -48,7 +48,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del proveedor. | 
+ **id** | **String**| Identificador del proveedor. |
 
 ### Return type
 
@@ -142,7 +142,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del proveedor. | 
+ **id** | **String**| Identificador del proveedor. |
 
 ### Return type
 
@@ -177,7 +177,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = ProvidersApi();
-final proveedorCreateRequest = ProveedorCreateRequest(); // ProveedorCreateRequest | 
+final proveedorCreateRequest = ProveedorCreateRequest(); // ProveedorCreateRequest |
 
 try {
     final result = api_instance.mobilePostProvidersCreate(proveedorCreateRequest);
@@ -191,7 +191,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **proveedorCreateRequest** | [**ProveedorCreateRequest**](ProveedorCreateRequest.md)|  | 
+ **proveedorCreateRequest** | [**ProveedorCreateRequest**](ProveedorCreateRequest.md)|  |
 
 ### Return type
 
@@ -227,7 +227,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = ProvidersApi();
 final id = id_example; // String | Identificador del proveedor.
-final proveedorUpdateRequest = ProveedorUpdateRequest(); // ProveedorUpdateRequest | 
+final proveedorUpdateRequest = ProveedorUpdateRequest(); // ProveedorUpdateRequest |
 
 try {
     final result = api_instance.mobilePutProvidersById(id, proveedorUpdateRequest);
@@ -241,8 +241,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del proveedor. | 
- **proveedorUpdateRequest** | [**ProveedorUpdateRequest**](ProveedorUpdateRequest.md)|  | 
+ **id** | **String**| Identificador del proveedor. |
+ **proveedorUpdateRequest** | [**ProveedorUpdateRequest**](ProveedorUpdateRequest.md)|  |
 
 ### Return type
 

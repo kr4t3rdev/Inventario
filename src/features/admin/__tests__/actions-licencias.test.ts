@@ -57,6 +57,11 @@ describe('Admin license filters actions', () => {
     const r = await getLicenciasPaginatedAction({
       page: 1,
       limit: 25,
+      search: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      planFilter: 'all',
+      statusFilter: 'all',
       typeFilter: 'admin_test',
     });
 
@@ -85,6 +90,9 @@ describe('Admin license filters actions', () => {
       .mockResolvedValueOnce(4 as any);
 
     const r = await getLicenciasStatsAction({
+      search: '',
+      planFilter: 'all',
+      statusFilter: 'all',
       typeFilter: 'all',
     });
 

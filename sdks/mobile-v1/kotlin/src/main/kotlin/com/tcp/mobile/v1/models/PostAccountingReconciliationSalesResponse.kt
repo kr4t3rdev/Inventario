@@ -21,15 +21,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/reconciliation/sales.
  *
- * @param reconciliacionId 
- * @param cuentaId 
- * @param tipoPagoId 
- * @param monto 
- * @param moneda 
- * @param tasaCambio 
- * @param montoConvertido 
- * @param fechaReconciliacion 
- * @param observaciones 
+ * @param reconciliacionId
+ * @param cuentaId
+ * @param tipoPagoId
+ * @param monto
+ * @param moneda
+ * @param tasaCambio
+ * @param montoConvertido
+ * @param fechaReconciliacion
+ * @param observaciones
  */
 
 
@@ -66,4 +66,3 @@ data class PostAccountingReconciliationSalesResponse (
 
 
 }
-

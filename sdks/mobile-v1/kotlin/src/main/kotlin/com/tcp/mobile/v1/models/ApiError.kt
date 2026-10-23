@@ -20,11 +20,11 @@ import com.tcp.mobile.v1.models.JsonValue
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param error 
- * @param code 
- * @param details 
+ *
+ * @param error
+ * @param code
+ * @param details
  */
 
 
@@ -43,4 +43,3 @@ data class ApiError (
 
 
 }
-

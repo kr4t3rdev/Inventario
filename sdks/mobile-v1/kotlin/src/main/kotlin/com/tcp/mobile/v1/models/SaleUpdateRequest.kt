@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param observaciones 
- * @param descuento 
+ *
+ * @param observaciones
+ * @param descuento
  */
 
 
@@ -38,4 +38,3 @@ data class SaleUpdateRequest (
 
 
 }
-

@@ -35,7 +35,32 @@ describe('restockProductoAction — posting enforce y rollback real', { timeout:
 	let cuentaId = '';
 	let actorId = '';
 	let proveedorId = '';
+	let foreignTenantId = '';
+	let foreignProductId = '';
 	const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+
+	/**
+	 * @description Captura filas completas afectadas por el restock y su posteo.
+	 * @returns {Promise<unknown[]>} Snapshot de inventario, compra, banco y contabilidad.
+	 */
+	async function snapshot(): Promise<unknown[]> {
+		return Promise.all([
+			prisma.producto.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.gastoCompra.findMany({ where: { tenantId }, orderBy: { gastoCompraId: 'asc' } }),
+			prisma.compraProducto.findMany({ where: { tenantId },
+				orderBy: { compraProductoId: 'asc' } }),
+			prisma.cuentaBancaria.findMany({ where: { tenantId }, orderBy: { cuentaId: 'asc' } }),
+			prisma.reconciliacionGasto.findMany({ where: { tenantId },
+				orderBy: { reconciliacionId: 'asc' } }),
+			prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' },
+				include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+			prisma.auditLog.findMany({ where: { usuarioId: actorId }, orderBy: { id: 'asc' } }),
+			prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+			prisma.shadowPosteoOutbox.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+		]);
+	}
 
 	async function crearProducto(nombre: string): Promise<string> {
 		const categoria = await prisma.categoria.findFirstOrThrow({ where: { tenantId } });
@@ -111,12 +136,27 @@ describe('restockProductoAction — posting enforce y rollback real', { timeout:
 
 		productoId = await crearProducto('Producto restock');
 		productoRollbackId = await crearProducto('Producto restock rollback');
+		foreignTenantId = (await prisma.tenant.create({
+			data: { nombre: 'Referencia R6 ajena', slug: `restock-foreign-${suffix}` },
+		})).tenantId;
+		foreignProductId = (await prisma.producto.create({ data: {
+			nombre: 'Producto R6 ajeno', tenant: { connect: { tenantId: foreignTenantId } },
+			precioCosto: 10, precioVenta: 15, stock: 100,
+			categoria: { create: { nombre: 'Categoría ajena', tenantId: foreignTenantId } },
+			almacen: { create: { nombre: 'Almacén ajeno', tenantId: foreignTenantId } },
+		} })).id;
 	});
 
 	afterAll(async () => {
 		delete process.env.CONTABILIDAD_FORMAL_MODE;
 		if (originalMode !== undefined) process.env.CONTABILIDAD_FORMAL_MODE = originalMode;
 		if (!tenantId) return;
+		if (foreignTenantId) {
+			await prisma.producto.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.categoria.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.almacen.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.tenant.delete({ where: { tenantId: foreignTenantId } });
+		}
 		const productoIds = (
 			await prisma.producto.findMany({ where: { tenantId }, select: { id: true } })
 		).map((p) => p.id);
@@ -170,17 +210,31 @@ describe('restockProductoAction — posting enforce y rollback real', { timeout:
 	it('rolls back stock and expense when the formal posting fails', async () => {
 		const trigger = `rst_fail_${randomUUID().replaceAll('-', '')}`;
 		const fn = `${trigger}_fn`;
+		const sequence = `${trigger}_seq`;
+		await prisma.$executeRawUnsafe(`CREATE SEQUENCE "${sequence}"`);
 		// El trigger existe solo durante este intento y falla cualquier línea de
 		// asiento insertada mientras esté activo (falla del posteo formal).
 		await prisma.$executeRawUnsafe(
 			`CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger LANGUAGE plpgsql AS $$
-			 BEGIN IF NEW."tenantId" = '${tenantId.replaceAll("'", "''")}'
-			 THEN RAISE EXCEPTION 'injected restock posting failure'; END IF; RETURN NEW; END $$`,
+			 BEGIN IF EXISTS (SELECT 1 FROM "asientos" WHERE "asientoId" = NEW."asientoId"
+			 AND "tenantId" = '${tenantId.replaceAll("'", "''")}')
+			 THEN
+			 IF NOT EXISTS (SELECT 1 FROM "Producto" WHERE "id" = '${productoRollbackId}'
+			 AND "stock" = 5)
+			 OR NOT EXISTS (SELECT 1 FROM "ReconciliacionGasto" WHERE "tenantId" =
+			 '${tenantId}' AND "gastoCompraId" IN (SELECT "gastoCompraId" FROM "GastoCompra"
+			 WHERE "productoId" = '${productoRollbackId}'))
+			 OR NOT EXISTS (SELECT 1 FROM "asientos" WHERE "asientoId" = NEW."asientoId") THEN
+			 RAISE EXCEPTION 'R6_RESTOCK_PROGRESS_NOT_REACHED'; END IF;
+			 PERFORM nextval('"${sequence}"');
+			 RAISE EXCEPTION 'R6_RESTOCK_LINE_FAILPOINT' USING ERRCODE = '22012';
+			 END IF; RETURN NEW; END $$`,
 		);
 		await prisma.$executeRawUnsafe(`
 			CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asiento_lineas"
 			FOR EACH ROW EXECUTE FUNCTION "${fn}"()`);
 
+		const before = await snapshot();
 		try {
 			const respuesta = await restockProductoAction({
 				productoId: productoRollbackId, cantidad: 5, precioCosto: 20,
@@ -188,11 +242,41 @@ describe('restockProductoAction — posting enforce y rollback real', { timeout:
 				moneda: 'CUP', cuentaId,
 			} as never);
 			expect(respuesta.success).toBe(false);
+			expect(await prisma.$queryRawUnsafe(`SELECT is_called FROM "${sequence}"`))
+				.toEqual([{ is_called: true }]);
+			expect(await snapshot()).toEqual(before);
 		} finally {
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asiento_lineas"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`);
+			await prisma.$executeRawUnsafe(`DROP SEQUENCE IF EXISTS "${sequence}"`);
 		}
 	});
+
+	it.each(['permiso', 'tenant'] as const)('rechaza %s inválido sin efectos físicos',
+		async (gate) => {
+			const permissions = currentUser.value.permissions;
+			const before = await snapshot();
+			const foreignBefore = await prisma.producto.findUniqueOrThrow({
+				where: { id: foreignProductId },
+			});
+			try {
+				if (gate === 'permiso') currentUser.value.permissions = new Set();
+				const result = await restockProductoAction({
+					productoId: gate === 'tenant' ? foreignProductId : productoId,
+					cantidad: 1, precioCosto: 10, tipoRestock: 'sumar_stock',
+					moneda: 'CUP', cuentaId,
+				});
+				expect(result.success).toBe(false);
+				if (result.success) expect.unreachable('Se esperaba rechazo del writer');
+				expect(result.error.code).toBe(gate === 'permiso' ? 'FORBIDDEN' : 'NOT_FOUND');
+				expect(await snapshot()).toEqual(before);
+				expect(await prisma.producto.findUniqueOrThrow({
+					where: { id: foreignProductId },
+				})).toEqual(foreignBefore);
+			} finally {
+				currentUser.value.permissions = permissions;
+			}
+		});
 
 	it('rechaza el reintento con el mismo numero de factura (RESTOCK_DUPLICADO)', async () => {
 		const factura = `F-${randomUUID().replaceAll('-', '').slice(0, 12)}`;

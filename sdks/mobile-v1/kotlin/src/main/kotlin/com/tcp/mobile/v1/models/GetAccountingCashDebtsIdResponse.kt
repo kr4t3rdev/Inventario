@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/cash-debts/{id}.
  *
- * @param item 
+ * @param item
  */
 
 
@@ -35,4 +35,3 @@ data class GetAccountingCashDebtsIdResponse (
 
 
 }
-

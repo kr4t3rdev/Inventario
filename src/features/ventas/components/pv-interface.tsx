@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
@@ -51,6 +51,7 @@ import {
 	fetchProductosPuntoVenta,
 	fetchTurnoActivoPuntoVenta,
 } from "@/features/ventas/lib/pv-client";
+import { getVentaCreateIntentKey, resetVentaCreateIntent } from "@/features/ventas/lib/venta-create-intent";
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { useCategorias } from "@/features/categorias/hooks/use-categorias";
@@ -112,6 +113,7 @@ export function VentaInterface() {
 	const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
 	const [cart, setCart] = useState<CartProduct[]>([]);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const saleIntent = useRef({ key: null as string | null });
 	const [isCobroOpen, setIsCobroOpen] = useState(false);
 	const [cobroObjetivo, setCobroObjetivo] = useState<"simple" | "factura">("simple");
 	const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
@@ -457,7 +459,8 @@ export function VentaInterface() {
 
 	// Eliminar producto del carrito
 	const removeFromCart = (cartId: string) => {
-		setCart(cart.filter((item) => item.cartId !== cartId));
+		const nextCart = cart.filter((item) => item.cartId !== cartId);
+		setCart(nextCart);
 	};
 
 	// Procesar venta
@@ -500,7 +503,7 @@ export function VentaInterface() {
 				cargoTransporte: 0,
 				items,
 				...(cobro ?? {}),
-			});
+			}, undefined, getVentaCreateIntentKey(saleIntent.current));
 
 			if (!result.success) {
 				toast(
@@ -512,6 +515,7 @@ export function VentaInterface() {
 
 			toast(`Se ha registrado la venta por $${totalConDescuento}`);
 			setCart([]);
+			resetVentaCreateIntent(saleIntent.current);
 			refreshTurno();
 			setProductosRefreshKey((k) => k + 1);
 			router.refresh();
@@ -568,7 +572,7 @@ export function VentaInterface() {
 					tipoVencimiento === "fecha" ? fechaVencimiento : undefined,
 				cargoTransporte: Math.round(cargoTransporte),
 				...(cobro ?? {}),
-			});
+			}, undefined, getVentaCreateIntentKey(saleIntent.current));
 
 			if (!result.success) {
 				toast(
@@ -582,6 +586,7 @@ export function VentaInterface() {
 
 			toast(`Venta registrada y factura generada por $${cartTotal}`);
 			setCart([]);
+			resetVentaCreateIntent(saleIntent.current);
 			setIsInvoiceDialogOpen(false);
 			setSelectedClienteId("");
 			setSelectedAnticipoCobroId("");

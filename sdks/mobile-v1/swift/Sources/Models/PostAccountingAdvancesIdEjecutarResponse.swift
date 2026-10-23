@@ -30,4 +30,3 @@ public struct PostAccountingAdvancesIdEjecutarResponse: Codable, JSONEncodable, 
         try container.encode(result, forKey: .result)
     }
 }
-

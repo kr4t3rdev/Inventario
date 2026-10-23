@@ -115,4 +115,3 @@ class AdminHealthResponseUsersTrendInner {
     'usuarios',
   };
 }
-

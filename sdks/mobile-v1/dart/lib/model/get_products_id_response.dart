@@ -211,4 +211,3 @@ class GetProductsIdResponse {
   static const requiredKeys = <String>{
   };
 }
-

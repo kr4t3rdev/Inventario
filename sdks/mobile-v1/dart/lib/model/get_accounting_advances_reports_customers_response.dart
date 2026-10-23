@@ -122,4 +122,3 @@ class GetAccountingAdvancesReportsCustomersResponse {
   static const requiredKeys = <String>{
   };
 }
-

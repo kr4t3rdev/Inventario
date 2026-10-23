@@ -49,4 +49,3 @@ public struct AdvanceWorkflowResult: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(estado, forKey: .estado)
     }
 }
-

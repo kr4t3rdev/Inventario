@@ -48,7 +48,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del almacén. | 
+ **id** | **String**| Identificador del almacén. |
 
 ### Return type
 
@@ -142,7 +142,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del almacén. | 
+ **id** | **String**| Identificador del almacén. |
 
 ### Return type
 
@@ -177,7 +177,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = WarehousesApi();
-final almacenCreateRequest = AlmacenCreateRequest(); // AlmacenCreateRequest | 
+final almacenCreateRequest = AlmacenCreateRequest(); // AlmacenCreateRequest |
 
 try {
     final result = api_instance.mobilePostWarehousesCreate(almacenCreateRequest);
@@ -191,7 +191,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **almacenCreateRequest** | [**AlmacenCreateRequest**](AlmacenCreateRequest.md)|  | 
+ **almacenCreateRequest** | [**AlmacenCreateRequest**](AlmacenCreateRequest.md)|  |
 
 ### Return type
 
@@ -227,7 +227,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = WarehousesApi();
 final id = id_example; // String | Identificador del almacén.
-final almacenUpdateRequest = AlmacenUpdateRequest(); // AlmacenUpdateRequest | 
+final almacenUpdateRequest = AlmacenUpdateRequest(); // AlmacenUpdateRequest |
 
 try {
     final result = api_instance.mobilePutWarehousesById(id, almacenUpdateRequest);
@@ -241,8 +241,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del almacén. | 
- **almacenUpdateRequest** | [**AlmacenUpdateRequest**](AlmacenUpdateRequest.md)|  | 
+ **id** | **String**| Identificador del almacén. |
+ **almacenUpdateRequest** | [**AlmacenUpdateRequest**](AlmacenUpdateRequest.md)|  |
 
 ### Return type
 

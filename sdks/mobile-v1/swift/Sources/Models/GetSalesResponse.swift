@@ -30,4 +30,3 @@ public struct GetSalesResponse: Codable, JSONEncodable, Hashable {
         try container.encode(items, forKey: .items)
     }
 }
-

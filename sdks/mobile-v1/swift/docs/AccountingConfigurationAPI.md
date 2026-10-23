@@ -47,7 +47,7 @@ AccountingConfigurationAPI.mobileDeleteAccountingPaymentTypesById(id: id) { (res
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -191,9 +191,9 @@ AccountingConfigurationAPI.mobileGetAccountingLogs(entidad: entidad, limit: limi
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **entidad** | **String** | Valor de entidad aceptado por el handler. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
- **offset** | **String** | Valor de offset aceptado por el handler. | [optional] 
+ **entidad** | **String** | Valor de entidad aceptado por el handler. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
+ **offset** | **String** | Valor de offset aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -244,8 +244,8 @@ AccountingConfigurationAPI.mobileGetAccountingPaymentTypes(includeInactive: incl
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **includeInactive** | **Bool** | Valor de includeInactive aceptado por el handler. | [optional] 
- **requiereCuenta** | **String** | Valor de requiereCuenta aceptado por el handler. | [optional] 
+ **includeInactive** | **Bool** | Valor de includeInactive aceptado por el handler. | [optional]
+ **requiereCuenta** | **String** | Valor de requiereCuenta aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -296,8 +296,8 @@ AccountingConfigurationAPI.mobileGetAccountingPaymentTypesAvailableAccounts(mone
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **moneda** | **String** | Código de moneda. | [optional] 
- **tipoCuenta** | **String** | Valor de tipoCuenta aceptado por el handler. | [optional] 
+ **moneda** | **String** | Código de moneda. | [optional]
+ **tipoCuenta** | **String** | Valor de tipoCuenta aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -347,7 +347,7 @@ AccountingConfigurationAPI.mobileGetAccountingPaymentTypesById(id: id) { (respon
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -379,7 +379,7 @@ Actualiza nombre, descripción, requisito de cuenta, cuenta predeterminada o est
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let paymentTypeUpdateRequest = PaymentTypeUpdateRequest(nombre: "nombre_example", descripcion: "descripcion_example", requiereCuenta: false, cuentaDefecto: "cuentaDefecto_example", isActive: false) // PaymentTypeUpdateRequest | 
+let paymentTypeUpdateRequest = PaymentTypeUpdateRequest(nombre: "nombre_example", descripcion: "descripcion_example", requiereCuenta: false, cuentaDefecto: "cuentaDefecto_example", isActive: false) // PaymentTypeUpdateRequest |
 
 // Actualizar tipos de pago
 AccountingConfigurationAPI.mobilePutAccountingPaymentTypesById(id: id, paymentTypeUpdateRequest: paymentTypeUpdateRequest) { (response, error) in
@@ -398,8 +398,8 @@ AccountingConfigurationAPI.mobilePutAccountingPaymentTypesById(id: id, paymentTy
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **paymentTypeUpdateRequest** | [**PaymentTypeUpdateRequest**](PaymentTypeUpdateRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **paymentTypeUpdateRequest** | [**PaymentTypeUpdateRequest**](PaymentTypeUpdateRequest.md) |  |
 
 ### Return type
 

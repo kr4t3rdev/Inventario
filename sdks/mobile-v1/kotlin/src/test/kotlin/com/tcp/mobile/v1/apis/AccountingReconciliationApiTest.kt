@@ -156,7 +156,7 @@ class AccountingReconciliationApiTest : ShouldSpec() {
         // to test mobilePostAccountingReconciliationExpenses
         should("test mobilePostAccountingReconciliationExpenses") {
             // uncomment below to test mobilePostAccountingReconciliationExpenses
-            //val expenseReconciliationRequest : ExpenseReconciliationRequest =  // ExpenseReconciliationRequest | 
+            //val expenseReconciliationRequest : ExpenseReconciliationRequest =  // ExpenseReconciliationRequest |
             //val tipoGasto : kotlin.String = tipoGasto_example // kotlin.String | Valor de tipoGasto aceptado por el handler.
             //val fechaDesde : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaDesde aceptado por el handler.
             //val fechaHasta : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaHasta aceptado por el handler.
@@ -169,7 +169,7 @@ class AccountingReconciliationApiTest : ShouldSpec() {
         // to test mobilePostAccountingReconciliationSales
         should("test mobilePostAccountingReconciliationSales") {
             // uncomment below to test mobilePostAccountingReconciliationSales
-            //val saleReconciliationRequest : SaleReconciliationRequest =  // SaleReconciliationRequest | 
+            //val saleReconciliationRequest : SaleReconciliationRequest =  // SaleReconciliationRequest |
             //val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
             //val fechaFin : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Fin inclusivo del período consultado.
             //val puntoDeVentaId : kotlin.String = puntoDeVentaId_example // kotlin.String | Valor de puntoDeVentaId aceptado por el handler.
@@ -182,7 +182,7 @@ class AccountingReconciliationApiTest : ShouldSpec() {
         // to test mobilePostAccountingReconciliationServices
         should("test mobilePostAccountingReconciliationServices") {
             // uncomment below to test mobilePostAccountingReconciliationServices
-            //val serviceReconciliationRequest : ServiceReconciliationRequest =  // ServiceReconciliationRequest | 
+            //val serviceReconciliationRequest : ServiceReconciliationRequest =  // ServiceReconciliationRequest |
             //val fechaDesde : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaDesde aceptado por el handler.
             //val fechaHasta : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaHasta aceptado por el handler.
             //val page : kotlin.Int = 56 // kotlin.Int | Página solicitada, comenzando en 1.

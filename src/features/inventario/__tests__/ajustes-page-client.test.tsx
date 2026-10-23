@@ -91,6 +91,8 @@ describe('AjustesPageClient', () => {
             productoId: 'prod-1',
             motivo: 'DANO',
             diferencia: -3,
+            tipoUbicacion: 'ALMACEN',
+            ubicacionId: 'alm-1',
             costoTotal: -360,
             estado: 'APLICADO',
             cantidadTeorica: 10,

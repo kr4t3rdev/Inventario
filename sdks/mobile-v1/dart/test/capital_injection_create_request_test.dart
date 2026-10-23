@@ -16,8 +16,8 @@ void main() {
   // final instance = CapitalInjectionCreateRequest();
 
   group('test CapitalInjectionCreateRequest', () {
-    // num monto
-    test('to test the property `monto`', () async {
+    // num montoRecibido
+    test('to test the property `montoRecibido`', () async {
       // TODO
     });
 
@@ -26,7 +26,7 @@ void main() {
       // TODO
     });
 
-    // String tipo (default value: 'APORTE')
+    // String tipo
     test('to test the property `tipo`', () async {
       // TODO
     });
@@ -36,8 +36,49 @@ void main() {
       // TODO
     });
 
-    // String cuentaBancariaId
-    test('to test the property `cuentaBancariaId`', () async {
+    // String cuentaId
+    test('to test the property `cuentaId`', () async {
+      // TODO
+    });
+
+    // String socio
+    test('to test the property `socio`', () async {
+      // TODO
+    });
+
+    // String entidadPrestamista
+    test('to test the property `entidadPrestamista`', () async {
+      // TODO
+    });
+
+    // num tasaInteres
+    test('to test the property `tasaInteres`', () async {
+      // TODO
+    });
+
+    // num tasaCambio
+    test('to test the property `tasaCambio`', () async {
+      // TODO
+    });
+
+    // int plazoMeses
+    test('to test the property `plazoMeses`', () async {
+      // TODO
+    });
+
+    // DateTime fechaInicioPago
+    test('to test the property `fechaInicioPago`', () async {
+      // TODO
+    });
+
+    // DateTime fechaOperacion
+    test('to test the property `fechaOperacion`', () async {
+      // TODO
+    });
+
+    // Clave opcional de idempotencia (1 a 64 caracteres). Si se proporciona también Idempotency-Key, prevalece esta propiedad.
+    // String idempotencyKey
+    test('to test the property `idempotencyKey`', () async {
       // TODO
     });
 

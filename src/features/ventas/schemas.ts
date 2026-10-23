@@ -13,6 +13,7 @@ export const ventaItemSchema = z.object({
 
 /** Schema para crear una venta */
 export const createVentaSchema = z.object({
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
   puntoDeVentaId: z.string().min(1, 'El punto de venta es requerido'),
   clienteId: z.string().optional().nullable(),
   empleadoId: z.string().optional().nullable(),

@@ -8,21 +8,22 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**puntoDeVentaId** | **String** |  | 
-**clienteId** | **String** |  | [optional] 
-**empleadoId** | **String** |  | [optional] 
+**puntoDeVentaId** | **String** |  |
+**clienteId** | **String** |  | [optional]
+**empleadoId** | **String** |  | [optional]
 **descuento** | **int** |  | [optional] [default to 0]
-**observaciones** | **String** |  | [optional] 
+**observaciones** | **String** |  | [optional]
 **items** | [**List<SaleItemRequest>**](SaleItemRequest.md) |  | [default to const []]
-**turnoId** | **String** |  | [optional] 
-**metodoPago** | **String** |  | [optional] 
-**montoEfectivo** | **num** |  | [optional] 
-**montoTarjeta** | **num** |  | [optional] 
-**montoTransferencia** | **num** |  | [optional] 
-**montoCredito** | **num** |  | [optional] 
-**tipoVencimiento** | **String** |  | [optional] 
-**fechaVencimiento** | **String** |  | [optional] 
-**cuentaBancariaId** | **String** |  | [optional] 
+**turnoId** | **String** |  | [optional]
+**metodoPago** | **String** |  | [optional]
+**montoEfectivo** | **num** |  | [optional]
+**montoTarjeta** | **num** |  | [optional]
+**montoTransferencia** | **num** |  | [optional]
+**montoCredito** | **num** |  | [optional]
+**tipoVencimiento** | **String** |  | [optional]
+**fechaVencimiento** | **String** |  | [optional]
+**cuentaBancariaId** | **String** |  | [optional]
+**idempotencyKey** | **String** | Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

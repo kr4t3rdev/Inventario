@@ -75,7 +75,7 @@ describe('Almacenes Server Actions', () => {
   describe('getAlmacenesAction', () => {
     it('retorna lista de almacenes del tenant', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.almacen.findMany).mockResolvedValue([mockAlmacenRow]);
+      vi.mocked(prisma.almacen.findMany).mockResolvedValue([mockAlmacenRow] as never);
 
       const result = await getAlmacenesAction();
 

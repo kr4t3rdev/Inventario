@@ -284,5 +284,3 @@ class BankAdjustmentTipoEnumTypeTransformer {
   /// Singleton [BankAdjustmentTipoEnumTypeTransformer] instance.
   static BankAdjustmentTipoEnumTypeTransformer? _instance;
 }
-
-

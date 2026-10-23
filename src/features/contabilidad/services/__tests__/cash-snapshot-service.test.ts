@@ -71,4 +71,36 @@ describe('CashSnapshotService.capturar', () => {
       { isolationLevel: 'Serializable' },
     );
   });
+
+  it('reintenta una colisión serializable aislada y vuelve a contar existentes', async () => {
+    mockPrisma.$transaction
+      .mockRejectedValueOnce({ code: 'P2034' })
+      .mockImplementationOnce(async (callback: (tx: Prisma.TransactionClient) => Promise<unknown>) =>
+        callback(makeClient()));
+    mockPrisma.cashSnapshot.createMany.mockResolvedValue({ count: 0 });
+
+    const result = await CashSnapshotService.capturar({ tenantId });
+
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ creados: 0, existentes: 1, omitidos: 0 });
+  });
+
+  it('no reintenta una colisión dentro de una transacción del caller', async () => {
+    mockPrisma.cashSnapshot.createMany.mockRejectedValue({ code: 'P2034' });
+
+    await expect(CashSnapshotService.capturar({ tenantId, client: makeClient() }))
+      .rejects.toMatchObject({ code: 'P2034' });
+
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    expect(mockPrisma.cashSnapshot.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('no reintenta errores no transitorios', async () => {
+    const error = new Error('database unavailable');
+    mockPrisma.$transaction.mockRejectedValue(error);
+
+    await expect(CashSnapshotService.capturar({ tenantId })).rejects.toBe(error);
+
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+  });
 });

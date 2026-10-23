@@ -65,4 +65,3 @@ public struct AccountingAdvancesPostRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(vigenciaHasta, forKey: .vigenciaHasta)
     }
 }
-

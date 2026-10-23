@@ -118,7 +118,7 @@ describe('reintentarFiscalAction exige prueba de no emisión (5.4)', () => {
 			fiscalDocument: { estado: 'RECHAZADA' },
 		} as never);
 
-		const r = await reintentarFiscalAction({ facturaId: 'fac-1' });
+		const r = await reintentarFiscalAction({ facturaId: 'fac-1', pruebaNoEmision: 'test-evidence' });
 
 		expect(r.success).toBe(false);
 		if (!r.success) expect(r.error?.code).toBe('EVIDENCIA_REQUERIDA');

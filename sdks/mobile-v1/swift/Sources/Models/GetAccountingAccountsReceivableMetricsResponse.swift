@@ -42,4 +42,3 @@ public struct GetAccountingAccountsReceivableMetricsResponse: Codable, JSONEncod
         try container.encodeIfPresent(vencido, forKey: .vencido)
     }
 }
-

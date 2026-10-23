@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { seedPlanContable } from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 assertDisposableDatabase(process.env);
 
@@ -25,12 +26,18 @@ let otherAccountId = '';
 let trigger = '';
 let auditTrigger = '';
 
-const manager = (userId = actors.transfer) => ({
+/**
+ * @description Construye el actor controlado de los writers bancarios.
+ * @param {string} userId - Identificador de auditoría del actor.
+ * @returns {AuthenticatedUser} Contexto con gates reales del servicio.
+ */
+const manager = (userId = actors.transfer): AuthenticatedUser => ({
 	userId, tenantId, tenantRole: 'manager',
+	name: prefix, email: `${prefix}@test.invalid`, role: 'regularUser', isActive: true,
 	planFeatures: {
 		'transferencias-bancarias': true, contabilidad: true, 'inyeccion-capital': true,
 	},
-}) as never;
+});
 
 /** @description Captura los efectos persistidos relevantes de los writers contables. */
 async function snapshotWriterState(actorId: string) {
@@ -590,4 +597,50 @@ describe('transferencia bancaria compartida — PostgreSQL aislado', { timeout: 
 		expect(await prisma.transferenciaBancaria.count({ where: { tenantId } })).toBe(transfersBefore);
 		expect(await prisma.asiento.count({ where: { tenantId } })).toBe(asientosBefore);
 	});
+
+	it.each([
+		['ajuste', 'permiso'], ['ajuste', 'tenant'],
+		['capital', 'permiso'], ['capital', 'tenant'],
+		['deuda', 'permiso'], ['deuda', 'tenant'],
+		['pago', 'permiso'], ['pago', 'tenant'],
+	] as const)('%s rechaza %s sin alterar filas propias ni cuenta ajena',
+		async (operation, gate) => {
+			const user = manager();
+			if (gate === 'permiso') user.permissions = new Set<string>();
+			const accountId = gate === 'tenant' ? otherAccountId : sourceId;
+			const before = await snapshotWriterState(user.userId);
+			const foreignBefore = await prisma.cuentaBancaria.findUniqueOrThrow({
+				where: { cuentaId: otherAccountId },
+			});
+			let attempt: Promise<unknown>;
+			if (operation === 'ajuste') {
+				attempt = AccountingOperationsMutationService.createBankAdjustment({
+					input: { cuentaId: accountId, tipo: 'ingreso', monto: 1, moneda: 'CUP',
+						descripcion: 'R6 gate', motivo: 'R6 gate' }, user,
+				});
+			} else if (operation === 'pago') {
+				const debt = await prisma.inyeccionCapital.findFirstOrThrow({
+					where: { tenantId, tipo: 'DEUDA_EXTERNA', estado: 'ACTIVA' },
+				});
+				attempt = AccountingOperationsMutationService.registerCapitalPayment({
+					input: { inyeccionId: debt.id, monto: 1, cuentaBancariaId: accountId,
+						tipoPagoId: 'compat-tipo-no-persistido', moneda: 'CUP' }, user,
+				});
+			} else {
+				attempt = AccountingOperationsMutationService.createCapitalInjection({
+					input: { cuentaId: accountId, montoRecibido: 1, moneda: 'CUP',
+						idempotencyKey: `r6-gate-${crypto.randomUUID()}`,
+						tipo: operation === 'capital' ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
+						socio: 'R6 socio', entidadPrestamista: 'R6 prestamista' }, user,
+				});
+			}
+			await expect(attempt).rejects.toMatchObject({
+				code: gate === 'permiso' ? 'FORBIDDEN'
+					: operation === 'ajuste' ? 'CUENTA_NO_ENCONTRADA' : 'NOT_FOUND',
+			});
+			expect(await snapshotWriterState(user.userId)).toEqual(before);
+			expect(await prisma.cuentaBancaria.findUniqueOrThrow({
+				where: { cuentaId: otherAccountId },
+			})).toEqual(foreignBefore);
+		});
 });

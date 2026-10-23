@@ -60,4 +60,3 @@ public struct BankTransferCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(monedaPrincipal, forKey: .monedaPrincipal)
     }
 }
-

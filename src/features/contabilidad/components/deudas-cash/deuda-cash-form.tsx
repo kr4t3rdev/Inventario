@@ -223,10 +223,13 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
     } catch (error) {
       setUploadingImg(false)
       toast.error("No se pudo registrar la deuda")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (nextOpen?: boolean) => {
+    if (nextOpen === true || isLoading || uploadingImg) return
     form.reset()
     pendingIdempotencyKey.current = null
     clearComprobante()
@@ -442,7 +445,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={() => handleClose()} disabled={isLoading || uploadingImg}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading || uploadingImg}>

@@ -46,11 +46,11 @@ AccountingReceivablesAndPayablesAPI.mobileGetAccountingAccountsPayable(search: s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **search** | **String** | Texto de búsqueda aplicado por el servicio. | [optional] 
- **estado** | **Bool** | Estado usado para filtrar resultados. | [optional] 
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **search** | **String** | Texto de búsqueda aplicado por el servicio. | [optional]
+ **estado** | **Bool** | Estado usado para filtrar resultados. | [optional]
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -104,11 +104,11 @@ AccountingReceivablesAndPayablesAPI.mobileGetAccountingAccountsReceivable(search
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **search** | **String** | Texto de búsqueda aplicado por el servicio. | [optional] 
- **estado** | **Bool** | Estado usado para filtrar resultados. | [optional] 
- **clienteId** | **String** | Identificador del cliente. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **search** | **String** | Texto de búsqueda aplicado por el servicio. | [optional]
+ **estado** | **Bool** | Estado usado para filtrar resultados. | [optional]
+ **clienteId** | **String** | Identificador del cliente. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 

@@ -1044,7 +1044,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/expenses
      * Registrar conciliación de gastos
      * Distribuye el importe de un gasto entre una o varias cuentas y registra su pago contable.
-     * @param expenseReconciliationRequest 
+     * @param expenseReconciliationRequest
      * @param tipoGasto Valor de tipoGasto aceptado por el handler. (optional)
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
@@ -1081,7 +1081,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/expenses
      * Registrar conciliación de gastos
      * Distribuye el importe de un gasto entre una o varias cuentas y registra su pago contable.
-     * @param expenseReconciliationRequest 
+     * @param expenseReconciliationRequest
      * @param tipoGasto Valor de tipoGasto aceptado por el handler. (optional)
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
@@ -1104,7 +1104,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
     /**
      * To obtain the request config of the operation mobilePostAccountingReconciliationExpenses
      *
-     * @param expenseReconciliationRequest 
+     * @param expenseReconciliationRequest
      * @param tipoGasto Valor de tipoGasto aceptado por el handler. (optional)
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
@@ -1150,7 +1150,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/sales
      * Registrar conciliación de ventas
      * Abona una venta en la cuenta y medio de pago indicados, respetando el importe conciliable.
-     * @param saleReconciliationRequest 
+     * @param saleReconciliationRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param puntoDeVentaId Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -1187,7 +1187,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/sales
      * Registrar conciliación de ventas
      * Abona una venta en la cuenta y medio de pago indicados, respetando el importe conciliable.
-     * @param saleReconciliationRequest 
+     * @param saleReconciliationRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param puntoDeVentaId Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -1210,7 +1210,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
     /**
      * To obtain the request config of the operation mobilePostAccountingReconciliationSales
      *
-     * @param saleReconciliationRequest 
+     * @param saleReconciliationRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param puntoDeVentaId Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -1256,7 +1256,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/services
      * Registrar conciliación de servicios
      * Distribuye el total de un servicio entre las cuentas y medios de pago enviados.
-     * @param serviceReconciliationRequest 
+     * @param serviceReconciliationRequest
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
      * @param page Página solicitada, comenzando en 1. (optional)
@@ -1292,7 +1292,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
      * POST /accounting/reconciliation/services
      * Registrar conciliación de servicios
      * Distribuye el total de un servicio entre las cuentas y medios de pago enviados.
-     * @param serviceReconciliationRequest 
+     * @param serviceReconciliationRequest
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
      * @param page Página solicitada, comenzando en 1. (optional)
@@ -1314,7 +1314,7 @@ class AccountingReconciliationApi(basePath: kotlin.String = defaultBasePath, cli
     /**
      * To obtain the request config of the operation mobilePostAccountingReconciliationServices
      *
-     * @param serviceReconciliationRequest 
+     * @param serviceReconciliationRequest
      * @param fechaDesde Valor de fechaDesde aceptado por el handler. (optional)
      * @param fechaHasta Valor de fechaHasta aceptado por el handler. (optional)
      * @param page Página solicitada, comenzando en 1. (optional)

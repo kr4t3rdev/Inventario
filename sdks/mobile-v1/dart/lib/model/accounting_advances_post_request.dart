@@ -226,4 +226,3 @@ class AccountingAdvancesPostRequest {
     'moneda',
   };
 }
-

@@ -200,7 +200,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/login
      * Iniciar sesión móvil
      * Valida las credenciales y entrega el usuario autenticado junto con los tokens de acceso y renovación.
-     * @param loginRequest 
+     * @param loginRequest
      * @param xTenantId Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
      * @return AuthSession
      * @throws IllegalStateException If the request is not correctly configured
@@ -233,7 +233,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/login
      * Iniciar sesión móvil
      * Valida las credenciales y entrega el usuario autenticado junto con los tokens de acceso y renovación.
-     * @param loginRequest 
+     * @param loginRequest
      * @param xTenantId Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
      * @return ApiResponse<AuthSession?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -252,7 +252,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
     /**
      * To obtain the request config of the operation mobilePostAuthLogin
      *
-     * @param loginRequest 
+     * @param loginRequest
      * @param xTenantId Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
      * @return RequestConfig
      */
@@ -348,7 +348,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/refresh
      * Renovar tokens de sesión
      * Valida el token de renovación y emite un nuevo par de tokens para continuar la sesión.
-     * @param refreshRequest 
+     * @param refreshRequest
      * @return TokenPair
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -380,7 +380,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/refresh
      * Renovar tokens de sesión
      * Valida el token de renovación y emite un nuevo par de tokens para continuar la sesión.
-     * @param refreshRequest 
+     * @param refreshRequest
      * @return ApiResponse<TokenPair?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -398,7 +398,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
     /**
      * To obtain the request config of the operation mobilePostAuthRefresh
      *
-     * @param refreshRequest 
+     * @param refreshRequest
      * @return RequestConfig
      */
     fun mobilePostAuthRefreshRequestConfig(refreshRequest: RefreshRequest) : RequestConfig<RefreshRequest> {
@@ -422,7 +422,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/register
      * Registrar cuenta móvil
      * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
-     * @param registerRequest 
+     * @param registerRequest
      * @return RegisterResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -454,7 +454,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/register
      * Registrar cuenta móvil
      * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
-     * @param registerRequest 
+     * @param registerRequest
      * @return ApiResponse<RegisterResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -472,7 +472,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
     /**
      * To obtain the request config of the operation mobilePostAuthRegister
      *
-     * @param registerRequest 
+     * @param registerRequest
      * @return RequestConfig
      */
     fun mobilePostAuthRegisterRequestConfig(registerRequest: RegisterRequest) : RequestConfig<RegisterRequest> {
@@ -496,7 +496,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/tenants
      * Cambiar tenant activo
      * Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía seleccionada.
-     * @param switchTenantRequest 
+     * @param switchTenantRequest
      * @return SwitchTenantResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -528,7 +528,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
      * POST /auth/tenants
      * Cambiar tenant activo
      * Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía seleccionada.
-     * @param switchTenantRequest 
+     * @param switchTenantRequest
      * @return ApiResponse<SwitchTenantResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -546,7 +546,7 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
     /**
      * To obtain the request config of the operation mobilePostAuthTenants
      *
-     * @param switchTenantRequest 
+     * @param switchTenantRequest
      * @return RequestConfig
      */
     fun mobilePostAuthTenantsRequestConfig(switchTenantRequest: SwitchTenantRequest) : RequestConfig<SwitchTenantRequest> {

@@ -21,16 +21,16 @@ import com.tcp.mobile.v1.models.AdminTenantLite
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param membershipId 
- * @param tenantId 
- * @param userId 
- * @param isActive 
- * @param tenantRole 
- * @param createdAt 
- * @param user 
- * @param tenant 
+ *
+ * @param membershipId
+ * @param tenantId
+ * @param userId
+ * @param isActive
+ * @param tenantRole
+ * @param createdAt
+ * @param user
+ * @param tenant
  */
 
 
@@ -64,4 +64,3 @@ data class PendingMembershipItem (
 
 
 }
-

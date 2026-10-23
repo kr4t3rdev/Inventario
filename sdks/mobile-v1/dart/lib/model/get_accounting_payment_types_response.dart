@@ -106,4 +106,3 @@ class GetAccountingPaymentTypesResponse {
     'items',
   };
 }
-

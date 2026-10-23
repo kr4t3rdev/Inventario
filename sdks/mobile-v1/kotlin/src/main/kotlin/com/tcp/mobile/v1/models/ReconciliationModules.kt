@@ -20,11 +20,11 @@ import com.tcp.mobile.v1.models.ReconciliationModuleStats
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param ventas 
- * @param servicios 
- * @param gastos 
+ *
+ * @param ventas
+ * @param servicios
+ * @param gastos
  */
 
 
@@ -43,4 +43,3 @@ data class ReconciliationModules (
 
 
 }
-

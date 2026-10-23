@@ -33,4 +33,3 @@ public struct PostAdminMembershipsApproveResponse: Codable, JSONEncodable, Hasha
         try container.encode(empleadoCreado, forKey: .empleadoCreado)
     }
 }
-

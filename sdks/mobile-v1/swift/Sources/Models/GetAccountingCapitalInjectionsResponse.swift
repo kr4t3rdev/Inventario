@@ -30,4 +30,3 @@ public struct GetAccountingCapitalInjectionsResponse: Codable, JSONEncodable, Ha
         try container.encode(items, forKey: .items)
     }
 }
-

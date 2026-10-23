@@ -20,14 +20,14 @@ import com.tcp.mobile.v1.models.JsonValue
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param totalRegistros 
- * @param totalTransacciones 
- * @param totalTransferencias 
- * @param transferenciasConConversion 
- * @param montoTotal 
- * @param montoPromedio 
+ *
+ * @param totalRegistros
+ * @param totalTransacciones
+ * @param totalTransferencias
+ * @param transferenciasConConversion
+ * @param montoTotal
+ * @param montoPromedio
  * @param montoTotalPorMoneda Objeto JSON con claves dinámicas y valores serializables.
  * @param porMoneda Objeto JSON con claves dinámicas y valores serializables.
  * @param porTipoDePago Objeto JSON con claves dinámicas y valores serializables.
@@ -70,4 +70,3 @@ data class ReportStatistics (
 
 
 }
-

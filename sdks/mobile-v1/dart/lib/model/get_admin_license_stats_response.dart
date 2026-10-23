@@ -152,4 +152,3 @@ class GetAdminLicenseStatsResponse {
     'adminTest',
   };
 }
-

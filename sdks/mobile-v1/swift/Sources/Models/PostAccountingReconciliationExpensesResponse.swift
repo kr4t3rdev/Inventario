@@ -42,4 +42,3 @@ public struct PostAccountingReconciliationExpensesResponse: Codable, JSONEncodab
         try container.encode(distribucionMultiCuenta, forKey: .distribucionMultiCuenta)
     }
 }
-

@@ -3,8 +3,8 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**current7DaysUsers** | **Int** |  | 
-**previous7DaysUsers** | **Int** |  | 
+**current7DaysUsers** | **Int** |  |
+**previous7DaysUsers** | **Int** |  |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

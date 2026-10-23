@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param userId 
- * @param lockedUntil 
- * @param loginAttempts 
+ *
+ * @param userId
+ * @param lockedUntil
+ * @param loginAttempts
  */
 
 
@@ -42,4 +42,3 @@ data class PostAdminUsersLockResponseUser (
 
 
 }
-

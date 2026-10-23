@@ -56,11 +56,11 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationExpenses(tipoGasto:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional] 
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional]
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -117,14 +117,14 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationExpensesHistory(tip
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **periodo** | **String** | Valor de periodo aceptado por el handler. | [optional] 
- **reconciliadoPor** | **String** | Valor de reconciliadoPor aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **periodo** | **String** | Valor de periodo aceptado por el handler. | [optional]
+ **reconciliadoPor** | **String** | Valor de reconciliadoPor aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -181,14 +181,14 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationExpensesNestedHisto
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **periodo** | **String** | Valor de periodo aceptado por el handler. | [optional] 
- **reconciliadoPor** | **String** | Valor de reconciliadoPor aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **periodo** | **String** | Valor de periodo aceptado por el handler. | [optional]
+ **reconciliadoPor** | **String** | Valor de reconciliadoPor aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -242,11 +242,11 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationSales(fechaInicio: 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **puntoDeVentaId** | **String** | Valor de puntoDeVentaId aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **puntoDeVentaId** | **String** | Valor de puntoDeVentaId aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -300,11 +300,11 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationSalesHistory(fechaD
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -356,9 +356,9 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationSalesNestedHistory(
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -411,10 +411,10 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationServices(fechaDesde
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -466,9 +466,9 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationServicesHistory(fec
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -520,9 +520,9 @@ AccountingReconciliationAPI.mobileGetAccountingReconciliationServicesNestedHisto
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -599,7 +599,7 @@ Distribuye el importe de un gasto entre una o varias cuentas y registra su pago 
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let expenseReconciliationRequest = ExpenseReconciliationRequest(tipoGasto: "tipoGasto_example", pgId: "pgId_example", gastosDEId: "gastosDEId_example", gastoCompraId: "gastoCompraId_example", referenciaId: "referenciaId_example", cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", tasaCambio: 123, descripcion: "descripcion_example", periodo: "periodo_example", observaciones: "observaciones_example", estado: "estado_example", cuentaPorPagarId: "cuentaPorPagarId_example", numeroTransaccion: "numeroTransaccion_example", distribucion: [ExpenseDistributionRequest(cuentaId: "cuentaId_example", monto: 123, porcentaje: 123)]) // ExpenseReconciliationRequest | 
+let expenseReconciliationRequest = ExpenseReconciliationRequest(tipoGasto: "tipoGasto_example", pgId: "pgId_example", gastosDEId: "gastosDEId_example", gastoCompraId: "gastoCompraId_example", referenciaId: "referenciaId_example", cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", tasaCambio: 123, descripcion: "descripcion_example", periodo: "periodo_example", observaciones: "observaciones_example", estado: "estado_example", cuentaPorPagarId: "cuentaPorPagarId_example", numeroTransaccion: "numeroTransaccion_example", distribucion: [ExpenseDistributionRequest(cuentaId: "cuentaId_example", monto: 123, porcentaje: 123)]) // ExpenseReconciliationRequest |
 let tipoGasto = "tipoGasto_example" // String | Valor de tipoGasto aceptado por el handler. (optional)
 let fechaDesde = Date() // Date | Valor de fechaDesde aceptado por el handler. (optional)
 let fechaHasta = Date() // Date | Valor de fechaHasta aceptado por el handler. (optional)
@@ -623,12 +623,12 @@ AccountingReconciliationAPI.mobilePostAccountingReconciliationExpenses(expenseRe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **expenseReconciliationRequest** | [**ExpenseReconciliationRequest**](ExpenseReconciliationRequest.md) |  | 
- **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional] 
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **expenseReconciliationRequest** | [**ExpenseReconciliationRequest**](ExpenseReconciliationRequest.md) |  |
+ **tipoGasto** | **String** | Valor de tipoGasto aceptado por el handler. | [optional]
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -659,7 +659,7 @@ Abona una venta en la cuenta y medio de pago indicados, respetando el importe co
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let saleReconciliationRequest = SaleReconciliationRequest(ventaId: "ventaId_example", cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", fechaReconciliacion: Date(), observaciones: "observaciones_example") // SaleReconciliationRequest | 
+let saleReconciliationRequest = SaleReconciliationRequest(ventaId: "ventaId_example", cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", fechaReconciliacion: Date(), observaciones: "observaciones_example") // SaleReconciliationRequest |
 let fechaInicio = Date() // Date | Inicio inclusivo del período consultado. (optional)
 let fechaFin = Date() // Date | Fin inclusivo del período consultado. (optional)
 let puntoDeVentaId = "puntoDeVentaId_example" // String | Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -683,12 +683,12 @@ AccountingReconciliationAPI.mobilePostAccountingReconciliationSales(saleReconcil
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **saleReconciliationRequest** | [**SaleReconciliationRequest**](SaleReconciliationRequest.md) |  | 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **puntoDeVentaId** | **String** | Valor de puntoDeVentaId aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **saleReconciliationRequest** | [**SaleReconciliationRequest**](SaleReconciliationRequest.md) |  |
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **puntoDeVentaId** | **String** | Valor de puntoDeVentaId aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -719,7 +719,7 @@ Distribuye el total de un servicio entre las cuentas y medios de pago enviados.
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let serviceReconciliationRequest = ServiceReconciliationRequest(ventaServicioId: "ventaServicioId_example", distribuciones: [ServiceDistributionRequest(cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", observaciones: "observaciones_example")], fechaReconciliacion: Date()) // ServiceReconciliationRequest | 
+let serviceReconciliationRequest = ServiceReconciliationRequest(ventaServicioId: "ventaServicioId_example", distribuciones: [ServiceDistributionRequest(cuentaId: "cuentaId_example", tipoPagoId: "tipoPagoId_example", monto: 123, moneda: "moneda_example", observaciones: "observaciones_example")], fechaReconciliacion: Date(), idempotencyKey: "idempotencyKey_example") // ServiceReconciliationRequest |
 let fechaDesde = Date() // Date | Valor de fechaDesde aceptado por el handler. (optional)
 let fechaHasta = Date() // Date | Valor de fechaHasta aceptado por el handler. (optional)
 let page = 987 // Int | Página solicitada, comenzando en 1. (optional)
@@ -742,11 +742,11 @@ AccountingReconciliationAPI.mobilePostAccountingReconciliationServices(serviceRe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **serviceReconciliationRequest** | [**ServiceReconciliationRequest**](ServiceReconciliationRequest.md) |  | 
- **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **serviceReconciliationRequest** | [**ServiceReconciliationRequest**](ServiceReconciliationRequest.md) |  |
+ **fechaDesde** | **Date** | Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **Date** | Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 

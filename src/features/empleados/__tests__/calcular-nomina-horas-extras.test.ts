@@ -57,9 +57,7 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([]);
     vi.mocked(prisma.empleado.findMany).mockResolvedValue([empleado] as never);
-    vi.mocked(prisma.pagosalario.create).mockImplementation(
-      async (args: never) => ({ pgId: 'pg-1', ...(args as { data: object }).data }) as never,
-    );
+    vi.mocked(prisma.pagosalario.create).mockImplementation((async (args: never) => ({ pgId: 'pg-1', ...(args as { data: object }).data })) as never);
   });
 
   it('excluye las horas extras del devengado y las paga aparte a 1.5×', async () => {

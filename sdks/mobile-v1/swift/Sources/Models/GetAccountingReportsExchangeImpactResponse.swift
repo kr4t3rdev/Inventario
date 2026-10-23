@@ -34,4 +34,3 @@ public struct GetAccountingReportsExchangeImpactResponse: Codable, JSONEncodable
         try container.encodeIfPresent(pagination, forKey: .pagination)
     }
 }
-

@@ -258,7 +258,7 @@ describe('AccountingOperationsMutationService', () => {
     await AccountingOperationsMutationService.createCapitalInjection({
       input: {
         montoRecibido: 500, moneda: 'USD', tipo: 'CAPITAL_SOCIAL',
-        cuentaId: 'account-1', socio: 'Socio',
+        cuentaId: 'account-1', socio: 'Socio', idempotencyKey: 'capital-usd-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -318,6 +318,7 @@ describe('AccountingOperationsMutationService', () => {
         cuentaId: 'account-1',
         socio: 'Socio fundador',
         descripcion: 'Aporte inicial adicional',
+        idempotencyKey: 'capital-create-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -366,6 +367,7 @@ describe('AccountingOperationsMutationService', () => {
         entidadPrestamista: 'Financiera externa',
         tasaInteres: 10,
         plazoMeses: 12,
+        idempotencyKey: 'capital-debt-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -397,6 +399,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'foreign-account',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-missing-account-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -422,6 +425,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-inactive-account-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
@@ -440,6 +444,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-currency-mismatch-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
@@ -459,6 +464,7 @@ describe('AccountingOperationsMutationService', () => {
         tipo: 'CAPITAL_SOCIAL',
         cuentaId: 'account-1',
         socio: 'Socio fundador',
+        idempotencyKey: 'capital-audit-rollback-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toThrow('audit failed');
@@ -474,7 +480,7 @@ describe('AccountingOperationsMutationService', () => {
     await expect(AccountingOperationsMutationService.createCapitalInjection({
       input: {
         montoRecibido: 250, moneda: 'CUP', tipo: 'CAPITAL_SOCIAL', cuentaId: 'account-1',
-        socio: 'Socio fundador',
+        socio: 'Socio fundador', idempotencyKey: 'capital-permission-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toThrow('FORBIDDEN');
@@ -484,23 +490,335 @@ describe('AccountingOperationsMutationService', () => {
 
   it('rechaza una clave de capital reutilizada con interés distinto', async () => {
     const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const originalInput = {
+      montoRecibido: 100,
+      moneda: 'CUP',
+      tipo: 'DEUDA_EXTERNA' as const,
+      cuentaId: 'account-1',
+      entidadPrestamista: 'Entidad',
+      tasaInteres: 5,
+      plazoMeses: 12,
+      idempotencyKey: 'capital-key',
+      descripcion: 'Préstamo',
+    };
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: originalInput,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
     capitalFindUnique.mockResolvedValueOnce({
-      id: 'capital-existing', montoRecibido: new Prisma.Decimal('100.00'), moneda: 'CUP',
-      tipo: 'DEUDA_EXTERNA', cuentaId: 'account-1', descripcion: 'Préstamo', socio: null,
-      entidadPrestamista: 'Entidad', tasaInteres: new Prisma.Decimal('5'), tasaCambio: new Prisma.Decimal('1'),
-      plazoMeses: 12, fechaInicioPago: null, fechaRegistro: new Date('2026-01-01T00:00:00.000Z'),
+      ...capitalCreate.mock.calls[0][0].data,
+      id: 'capital-existing',
+    });
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: { ...originalInput, tasaInteres: 6 },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    // La detección se hace dentro de la transacción, bajo el lock del tenant.
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
+  });
+
+  it('reproduce exactamente la inyección existente sin repetir sus efectos', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      montoRecibido: 250,
+      moneda: ' cup ',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      descripcion: '  Aporte inicial  ',
+      idempotencyKey: 'capital-replay-key',
+    };
+
+    capitalCreate.mockImplementationOnce(async ({ data }) => ({ id: 'capital-1', ...data }));
+
+    const created = await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    const persisted = {
+      ...capitalCreate.mock.calls[0][0].data,
+      id: 'capital-1',
+    };
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    const replayed = await AccountingOperationsMutationService.createCapitalInjection({
+      input: { ...input, moneda: 'CUP', descripcion: 'Aporte inicial' },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(replayed).toEqual(persisted);
+    expect(created).toEqual(persisted);
+    expect(persisted).toHaveProperty('payloadFingerprint', expect.any(String));
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(postEventoMock).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
+  });
+
+  it('replays legacy injections when every persisted request field matches', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const fechaOperacion = new Date('2026-04-12T00:00:00.000Z');
+    const input = {
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      descripcion: 'Aporte inicial',
+      fechaOperacion,
+      tasaCambio: 1,
+      idempotencyKey: 'legacy-capital-key',
+    };
+    const persisted = {
+      id: 'legacy-capital',
+      payloadFingerprint: null,
+      tipo: input.tipo,
+      montoRecibido: new Prisma.Decimal(input.montoRecibido),
+      moneda: input.moneda,
+      cuentaId: input.cuentaId,
+      socio: input.socio,
+      entidadPrestamista: null,
+      tasaInteres: null,
+      montoInteres: null,
+      montoTotalDeuda: null,
+      plazoMeses: null,
+      fechaInicioPago: null,
+      descripcion: input.descripcion,
+      tasaCambio: new Prisma.Decimal(1),
+      fechaRegistro: fechaOperacion,
+    };
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    const preflightReplay = await AccountingOperationsMutationService.findCapitalInjectionReplay({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    expect(preflightReplay).toEqual(persisted);
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    const replayed = await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(replayed).toEqual(persisted);
+    expect(capitalCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(postEventoMock).not.toHaveBeenCalled();
+    expect(auditLogCreate).not.toHaveBeenCalled();
+  });
+
+  it('conflicts on legacy debt when persisted interest differs', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const fechaOperacion = new Date('2026-04-12T00:00:00.000Z');
+    capitalFindUnique.mockResolvedValueOnce({
+      id: 'legacy-debt',
+      payloadFingerprint: null,
+      tipo: 'DEUDA_EXTERNA',
+      montoRecibido: new Prisma.Decimal(100),
+      moneda: 'CUP',
+      cuentaId: 'account-1',
+      entidadPrestamista: 'Entidad',
+      tasaInteres: new Prisma.Decimal(5),
+      montoInteres: new Prisma.Decimal(5),
+      montoTotalDeuda: new Prisma.Decimal(105),
+      plazoMeses: 12,
+      fechaInicioPago: null,
+      fechaRegistro: fechaOperacion,
+    });
+
+    await expect(AccountingOperationsMutationService.findCapitalInjectionReplay({
+      input: {
+        montoRecibido: 100,
+        moneda: 'CUP',
+        tipo: 'DEUDA_EXTERNA',
+        cuentaId: 'account-1',
+        entidadPrestamista: 'Entidad',
+        tasaInteres: 6,
+        plazoMeses: 12,
+        fechaOperacion,
+        idempotencyKey: 'legacy-debt-key',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+  });
+
+  it.each([
+    ['amount', { montoRecibido: 251 }],
+    ['account', { cuentaId: 'other-account' }],
+    ['exchange rate', { tasaCambio: 24 }],
+    ['operation date', { fechaOperacion: new Date('2026-04-13T00:00:00.000Z') }],
+  ])('conflicts on legacy injections when persisted %s differs', async (_field, changes) => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const fechaOperacion = new Date('2026-04-12T00:00:00.000Z');
+    const input = {
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      descripcion: 'Aporte inicial',
+      fechaOperacion,
+      tasaCambio: 1,
+      idempotencyKey: 'legacy-capital-key',
+    };
+    const persisted = {
+      id: 'legacy-capital',
+      payloadFingerprint: null,
+      tipo: input.tipo,
+      montoRecibido: new Prisma.Decimal(250),
+      moneda: input.moneda,
+      cuentaId: input.cuentaId,
+      socio: input.socio,
+      entidadPrestamista: null,
+      tasaInteres: null,
+      montoInteres: null,
+      montoTotalDeuda: null,
+      saldoPendiente: null,
+      plazoMeses: null,
+      fechaInicioPago: null,
+      descripcion: input.descripcion,
+      fechaRegistro: fechaOperacion,
+      tasaCambio: new Prisma.Decimal(1),
+    };
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: { ...input, ...changes },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(capitalCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(auditLogCreate).not.toHaveBeenCalled();
+  });
+
+  it('fails closed for a legacy injection when operation date intent cannot be proven', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    capitalFindUnique.mockResolvedValueOnce({
+      id: 'legacy-capital',
+      payloadFingerprint: null,
+      tipo: 'CAPITAL_SOCIAL',
+      montoRecibido: new Prisma.Decimal(250),
+      moneda: 'CUP',
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      tasaCambio: new Prisma.Decimal(1),
+      fechaRegistro: new Date('2026-04-12T00:00:00.000Z'),
     });
 
     await expect(AccountingOperationsMutationService.createCapitalInjection({
       input: {
-        montoRecibido: 100, moneda: 'CUP', tipo: 'DEUDA_EXTERNA', cuentaId: 'account-1',
-        entidadPrestamista: 'Entidad', tasaInteres: 6, plazoMeses: 12, idempotencyKey: 'capital-key',
-        descripcion: 'Préstamo',
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+        idempotencyKey: 'legacy-capital-key',
+        tasaCambio: 1,
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
-    // La detección se hace dentro de la transacción, bajo el lock del tenant.
-    expect(transaction).toHaveBeenCalledOnce();
+    expect(capitalCreate).not.toHaveBeenCalled();
+  });
+
+  it('recupera solo la colisión P2002 de tenant y clave y devuelve su registro', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const input = {
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+      idempotencyKey: 'capital-unique-race-key',
+    };
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    const persisted = { ...capitalCreate.mock.calls[0][0].data, id: 'capital-race' };
+    transaction.mockRejectedValueOnce({
+      code: 'P2002',
+      meta: { target: ['tenantId', 'idempotencyKey'] },
+    });
+    capitalFindUnique.mockResolvedValueOnce(persisted);
+
+    const retried = await AccountingOperationsMutationService.createCapitalInjection({
+      input,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(retried).toEqual(persisted);
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
+  });
+
+  it('no convierte otros P2002 en reintentos de idempotencia', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    transaction.mockRejectedValueOnce({ code: 'P2002', meta: { target: ['id'] } });
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+        idempotencyKey: 'capital-unrelated-p2002-key',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'P2002' });
+
+    expect(capitalFindUnique).not.toHaveBeenCalled();
+    expect(capitalCreate).not.toHaveBeenCalled();
+  });
+
+  it('requiere una clave de idempotencia para cada nueva inyección', async () => {
+    const { createCapitalInjectionSchema } = await import('../accounting-operations-mutation-service');
+
+    expect(createCapitalInjectionSchema.safeParse({
+      montoRecibido: 250,
+      moneda: 'CUP',
+      tipo: 'CAPITAL_SOCIAL',
+      cuentaId: 'account-1',
+      socio: 'Socio fundador',
+    }).success).toBe(false);
+  });
+
+  it('conflicts when a retry omits an originally supplied debt repayment date', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const key = 'capital-date-key';
+    const date = new Date('2026-04-12T00:00:00.000Z');
+    const originalInput = {
+      montoRecibido: 100,
+      moneda: 'CUP',
+      tipo: 'DEUDA_EXTERNA' as const,
+      cuentaId: 'account-1',
+      entidadPrestamista: 'Entidad',
+      fechaInicioPago: date,
+      idempotencyKey: key,
+    };
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: originalInput,
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+    capitalFindUnique.mockResolvedValueOnce({
+      ...capitalCreate.mock.calls[0][0].data,
+      id: 'capital-2',
+    });
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: { ...originalInput, fechaInicioPago: undefined },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(capitalCreate).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledOnce();
+    expect(auditLogCreate).toHaveBeenCalledOnce();
   });
 
   it('rechaza un ajuste con la misma clave y fecha de operación distinta', async () => {
@@ -520,6 +838,54 @@ describe('AccountingOperationsMutationService', () => {
     })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
     // La detección se hace dentro de la transacción, bajo el lock del tenant.
     expect(transaction).toHaveBeenCalledOnce();
+  });
+
+  it('resuelve un replay exacto bajo el lock del writer y valida tenant/permisos', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const existing = {
+      ajusteId: 'adjustment-existing', tipo: 'ingreso', monto: new Prisma.Decimal('10'), moneda: 'CUP',
+      cuentaId: 'account-1', tasaCambio: new Prisma.Decimal('1'), descripcion: 'Ajuste', motivo: 'Corrección',
+      fechaOperacion: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    adjustmentFindUnique.mockResolvedValueOnce(existing);
+
+    const replay = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+      input: {
+        cuentaId: 'account-1', tipo: 'ingreso', monto: 10, moneda: 'cup', descripcion: 'Ajuste',
+        motivo: 'Corrección', idempotencyKey: 'adjust-key',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(replay).toMatchObject({ ajuste: existing, saldoAnterior: 990, saldoNuevo: 1000 });
+    expect(adjustmentFindUnique).toHaveBeenCalledWith({
+      where: { tenantId_idempotencyKey: { tenantId: 'tenant-1', idempotencyKey: 'adjust-key' } },
+    });
+    expect(requireFeature).toHaveBeenCalledWith(expect.anything(), 'contabilidad', expect.any(String));
+    expect(requirePermission).toHaveBeenCalledWith(
+      expect.anything(), 'financiero.contabilidad.acceder', expect.any(String),
+    );
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(acquireAccountingTenantLock).toHaveBeenCalledWith(expect.anything(), 'tenant-1');
+  });
+
+  it('rechaza replay bancario con payload distinto antes de leer el período', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    adjustmentFindUnique.mockResolvedValueOnce({
+      ajusteId: 'adjustment-existing', tipo: 'ingreso', monto: new Prisma.Decimal('10'), moneda: 'CUP',
+      cuentaId: 'account-1', tasaCambio: new Prisma.Decimal('1'), descripcion: 'Ajuste', motivo: 'Corrección',
+      fechaOperacion: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    await expect(AccountingOperationsMutationService.findBankAdjustmentReplay({
+      input: {
+        cuentaId: 'account-1', tipo: 'ingreso', monto: 11, moneda: 'CUP', descripcion: 'Ajuste',
+        motivo: 'Corrección', idempotencyKey: 'adjust-key',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(acquireAccountingTenantLock).toHaveBeenCalledWith(expect.anything(), 'tenant-1');
   });
 
   it('deniega pago de deuda de capital sin permiso antes de abrir transacción', async () => {
@@ -548,6 +914,7 @@ describe('AccountingOperationsMutationService', () => {
         cuentaId: 'account-1',
         socio: 'Socio fundador',
         fechaOperacion: new Date(fechaOperacion),
+        idempotencyKey: 'capital-effective-date-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });
@@ -634,7 +1001,7 @@ describe('AccountingOperationsMutationService', () => {
     await AccountingOperationsMutationService.createCapitalInjection({
       input: {
         montoRecibido: 100, moneda: 'USD', tasaCambio: 24, tipo: 'CAPITAL_SOCIAL',
-        cuentaId: 'account-1', socio: 'Socio', fechaOperacion,
+        cuentaId: 'account-1', socio: 'Socio', fechaOperacion, idempotencyKey: 'capital-fx-key',
       },
       user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
     });

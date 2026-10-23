@@ -55,9 +55,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteId** | **String**| Identificador del cliente. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
+ **clienteId** | **String**| Identificador del cliente. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -108,9 +108,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **proveedorId** | **String**| Identificador del proveedor. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
+ **proveedorId** | **String**| Identificador del proveedor. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -161,9 +161,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -212,7 +212,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteId** | **String**| Identificador del cliente. | [optional] 
+ **clienteId** | **String**| Identificador del cliente. | [optional]
 
 ### Return type
 
@@ -265,11 +265,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **monedaOrigen** | **String**| Valor de monedaOrigen aceptado por el handler. | [optional] 
- **monedaDestino** | **String**| Valor de monedaDestino aceptado por el handler. | [optional] 
- **export_** | **String**| Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **monedaOrigen** | **String**| Valor de monedaOrigen aceptado por el handler. | [optional]
+ **monedaDestino** | **String**| Valor de monedaDestino aceptado por el handler. | [optional]
+ **export_** | **String**| Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -321,10 +321,10 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **monedaBase** | **String**| Valor de monedaBase aceptado por el handler. | [optional] 
- **tipoAnalisis** | **String**| Valor de tipoAnalisis aceptado por el handler. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **monedaBase** | **String**| Valor de monedaBase aceptado por el handler. | [optional]
+ **tipoAnalisis** | **String**| Valor de tipoAnalisis aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -381,15 +381,15 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **busqueda** | **String**| Valor de busqueda aceptado por el handler. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **tipoMovimiento** | **String**| Valor de tipoMovimiento aceptado por el handler. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
- **formato** | **String**| Valor de formato aceptado por el handler. | [optional] 
+ **busqueda** | **String**| Valor de busqueda aceptado por el handler. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **tipoMovimiento** | **String**| Valor de tipoMovimiento aceptado por el handler. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
+ **formato** | **String**| Valor de formato aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -487,11 +487,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **export_** | **String**| Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **export_** | **String**| Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -548,15 +548,15 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaOrigenId** | **String**| Valor de cuentaOrigenId aceptado por el handler. | [optional] 
- **cuentaDestinoId** | **String**| Valor de cuentaDestinoId aceptado por el handler. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
- **realizadoPor** | **String**| Valor de realizadoPor aceptado por el handler. | [optional] 
- **export_** | **String**| Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaOrigenId** | **String**| Valor de cuentaOrigenId aceptado por el handler. | [optional]
+ **cuentaDestinoId** | **String**| Valor de cuentaDestinoId aceptado por el handler. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
+ **realizadoPor** | **String**| Valor de realizadoPor aceptado por el handler. | [optional]
+ **export_** | **String**| Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 

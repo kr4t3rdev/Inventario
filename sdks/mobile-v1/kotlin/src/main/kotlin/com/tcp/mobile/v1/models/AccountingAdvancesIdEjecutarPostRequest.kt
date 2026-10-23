@@ -19,15 +19,15 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param contexto 
- * @param documentoDestinoId 
- * @param montoObjetivo 
- * @param monedaObjetivo 
- * @param idempotencyKey 
- * @param tasaAplicada 
- * @param observaciones 
+ *
+ * @param contexto
+ * @param documentoDestinoId
+ * @param montoObjetivo
+ * @param monedaObjetivo
+ * @param idempotencyKey
+ * @param tasaAplicada
+ * @param observaciones
  */
 
 
@@ -58,4 +58,3 @@ data class AccountingAdvancesIdEjecutarPostRequest (
 
 
 }
-

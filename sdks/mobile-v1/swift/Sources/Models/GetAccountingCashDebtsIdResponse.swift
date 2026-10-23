@@ -30,4 +30,3 @@ public struct GetAccountingCashDebtsIdResponse: Codable, JSONEncodable, Hashable
         try container.encode(item, forKey: .item)
     }
 }
-

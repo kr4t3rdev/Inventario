@@ -9,6 +9,7 @@ import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-eviden
 import { deletePagoSalarioAction } from '@/features/pago-salario/actions';
 import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
+import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
 
 assertDisposableDatabase(process.env);
 
@@ -50,6 +51,7 @@ const user = () => ({
 	},
 	permissions: new Set([
 		'ventas.venta.registrar', 'ventas.venta.anular', 'rrhh.salarios.eliminar',
+		'ventas.precio.override',
 	]),
 }) as never;
 
@@ -241,11 +243,14 @@ describe('cash sale formal shadow — real PostgreSQL writer', { timeout: 90_000
 		try {
 			await removeTrigger();
 		} finally {
-			// StockMoveLine is append-only and references this fixture's product and actor.
-			// Preserve the uniquely scoped tenant graph instead of bypassing its DB guard.
-			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
-			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
-			await prisma?.$disconnect();
+			try {
+				await prisma?.auditLog.deleteMany({ where: { usuarioId: actorId, entidad: 'VENTA' } });
+			} finally {
+				// Preserve the append-only tenant graph while cleaning this fixture's audit rows.
+				if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+				else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+				await prisma?.$disconnect();
+			}
 		}
 	});
 
@@ -512,6 +517,87 @@ describe('cash sale formal shadow — real PostgreSQL writer', { timeout: 90_000
 		expect(debe.eq(new Prisma.Decimal('7200'))).toBe(true);
 		expect(haber.eq(new Prisma.Decimal('7200'))).toBe(true);
 		expect(asiento.lineas.every((linea) => linea.monedaOriginal === 'CUP')).toBe(true);
+	});
+
+	// El rollback tras el INSERT de asiento COGS se cubre aparte abajo; este audit ocurre antes del FIFO.
+	it('el AuditLog físico bloquea la venta antes del FIFO y del posteo COGS', async () => {
+		const previous = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		const input = {
+			puntoDeVentaId: pvId, turnoId, clienteId: customerId,
+			metodoPago: 'EFECTIVO', montoEfectivo: 1001,
+			items: [{ productoId: productId, cantidad: 1, precioUnitario: 1001 }],
+		} as never;
+		try {
+			await crearCompraFifoCUP();
+			const happy = await VentaMutationService.create({ input, user: user() as never });
+			const happyAudit = await prisma.auditLog.findFirstOrThrow({ where: {
+				usuarioId: actorId, entidad: 'VENTA', entidadId: happy.ventaId, accion: 'EXECUTE',
+			} });
+			expect(happyAudit.detalles).toMatchObject({ tipo: 'PRICE_OVERRIDE' });
+			const happyCogs = await prisma.asiento.findFirstOrThrow({
+				where: { tenantId, origenTipo: 'venta_costo', origenId: happy.ventaId },
+				include: { lineas: true },
+			});
+			expect(happyCogs.lineas.reduce((sum, line) => sum.add(line.debe), new Prisma.Decimal(0))
+				.eq(new Prisma.Decimal(300))).toBe(true);
+
+			await crearCompraFifoCUP();
+			const before = {
+				sales: await prisma.venta.count({ where: { tenantId } }),
+				items: await prisma.ventaItem.count({ where: { venta: { tenantId } } }),
+				product: await prisma.producto.findUniqueOrThrow({ where: { id: productId } }),
+				stock: await prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+				allocations: await prisma.purchaseAllocation.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+				kardex: await prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+				account: await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } }),
+				reconciliations: await prisma.reconciliacionVenta.findMany({ where: { tenantId }, orderBy: { reconciliacionId: 'asc' } }),
+				entries: await prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' }, include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+				audit: await prisma.auditLog.findMany({ where: { usuarioId: actorId, entidad: 'VENTA' }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }),
+				cache: await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+			};
+			const suffix = crypto.randomUUID().replaceAll('-', '');
+			const trigger = `cash_sale_audit_${suffix}`;
+			const fn = `${trigger}_fn`;
+			await prisma.$executeRawUnsafe(`CREATE FUNCTION "${fn}"() RETURNS trigger
+				LANGUAGE plpgsql AS $$ BEGIN
+				IF NEW."usuarioId" = '${actorId}' AND NEW."entidad" = 'VENTA' AND NEW."accion" = 'EXECUTE' THEN
+					IF NOT EXISTS (SELECT 1 FROM "Venta" WHERE "ventaId" = NEW."entidadId") THEN
+						RAISE EXCEPTION 'sale row missing before AuditLog' USING ERRCODE = 'P0001';
+					END IF;
+					IF EXISTS (SELECT 1 FROM "venta_items" item
+						JOIN "purchase_allocations" allocation ON allocation."ventaItemId" = item."id"
+						WHERE item."ventaId" = NEW."entidadId") THEN
+						RAISE EXCEPTION 'FIFO allocation unexpectedly preceded AuditLog' USING ERRCODE = 'P0001';
+					END IF;
+					RAISE EXCEPTION 'physical price override AuditLog rejected before FIFO' USING ERRCODE = '22012';
+				END IF; RETURN NEW; END $$`);
+			await prisma.$executeRawUnsafe(`CREATE TRIGGER "${trigger}" BEFORE INSERT ON "AuditLog"
+				FOR EACH ROW EXECUTE FUNCTION "${fn}"()`);
+			try {
+				await expect(VentaMutationService.create({ input, user: user() as never }))
+					.rejects.toThrow('physical price override AuditLog rejected before FIFO');
+			} finally {
+				await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "AuditLog"`);
+				await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"()`);
+			}
+			expect(await prisma.venta.count({ where: { tenantId } })).toBe(before.sales);
+			expect(await prisma.ventaItem.count({ where: { venta: { tenantId } } })).toBe(before.items);
+			expect(await prisma.producto.findUniqueOrThrow({ where: { id: productId } })).toEqual(before.product);
+			expect(await prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } })).toEqual(before.stock);
+			expect(await prisma.purchaseAllocation.findMany({ where: { tenantId }, orderBy: { id: 'asc' } })).toEqual(before.allocations);
+			expect(await prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } })).toEqual(before.kardex);
+			expect(await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } })).toEqual(before.account);
+			expect(await prisma.reconciliacionVenta.findMany({ where: { tenantId }, orderBy: { reconciliacionId: 'asc' } })).toEqual(before.reconciliations);
+			expect(await prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' }, include: { lineas: { orderBy: { lineaId: 'asc' } } } })).toEqual(before.entries);
+			expect(await prisma.auditLog.findMany({ where: { usuarioId: actorId, entidad: 'VENTA' }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })).toEqual(before.audit);
+			expect(await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } })).toEqual(before.cache);
+			// Consume the second fixture lot so later shadow tests retain their isolated missing-FX case.
+			await VentaMutationService.create({ input, user: user() as never });
+		} finally {
+			if (previous === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previous;
+		}
 	});
 
 	it('shadow preserves sale and records durable COGS valuation failure', async () => {

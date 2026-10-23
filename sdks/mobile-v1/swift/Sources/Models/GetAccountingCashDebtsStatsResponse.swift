@@ -42,4 +42,3 @@ public struct GetAccountingCashDebtsStatsResponse: Codable, JSONEncodable, Hasha
         try container.encodeIfPresent(vencido, forKey: .vencido)
     }
 }
-

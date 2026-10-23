@@ -41,4 +41,3 @@ public struct PayableAccountSummary: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(saldoPendiente, forKey: .saldoPendiente)
     }
 }
-

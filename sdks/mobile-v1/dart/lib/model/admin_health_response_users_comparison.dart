@@ -116,4 +116,3 @@ class AdminHealthResponseUsersComparison {
     'previous7DaysUsers',
   };
 }
-

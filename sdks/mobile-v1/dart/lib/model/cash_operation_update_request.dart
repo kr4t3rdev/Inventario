@@ -149,4 +149,3 @@ class CashOperationUpdateRequest {
   static const requiredKeys = <String>{
   };
 }
-

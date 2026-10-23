@@ -61,4 +61,3 @@ public struct BankAccountTransaction: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

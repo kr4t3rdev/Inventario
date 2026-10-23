@@ -30,4 +30,3 @@ public struct LockAdminUserRequest: Codable, JSONEncodable, Hashable {
         try container.encode(userId, forKey: .userId)
     }
 }
-

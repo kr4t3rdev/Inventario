@@ -19,18 +19,18 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tipo 
- * @param contratoId 
- * @param monto 
- * @param moneda 
- * @param proveedorId 
- * @param clienteId 
- * @param cuentaOrigenId 
- * @param tipoPagoOrigenId 
- * @param referenciaExterna 
- * @param vigenciaHasta 
+ *
+ * @param tipo
+ * @param contratoId
+ * @param monto
+ * @param moneda
+ * @param proveedorId
+ * @param clienteId
+ * @param cuentaOrigenId
+ * @param tipoPagoOrigenId
+ * @param referenciaExterna
+ * @param vigenciaHasta
  */
 
 
@@ -70,4 +70,3 @@ data class AccountingAdvancesPostRequest (
 
 
 }
-

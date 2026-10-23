@@ -66,4 +66,3 @@ public struct PatchSalesIdUpdateResponse: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
     }
 }
-

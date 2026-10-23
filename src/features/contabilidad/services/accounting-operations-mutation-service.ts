@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
@@ -81,6 +82,131 @@ function sameSuppliedDate(
     : persisted != null && persisted.getTime() === supplied.getTime();
 }
 
+/**
+ * @description Fingerprints every normalized field that changes a capital injection or its record.
+ * @param {z.infer<typeof createCapitalInjectionSchema>} parsed - Validated capital request.
+ * @returns {string} Stable SHA-256 payload fingerprint.
+ */
+function capitalInjectionPayloadFingerprint(
+  parsed: z.infer<typeof createCapitalInjectionSchema>,
+): string {
+  const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
+  const payload = {
+    montoRecibido: new Prisma.Decimal(parsed.montoRecibido),
+    moneda: parsed.moneda,
+    tipo: parsed.tipo,
+    cuentaId: parsed.cuentaId,
+    descripcion: parsed.descripcion ?? null,
+    socio: isDebt ? null : parsed.socio ?? null,
+    entidadPrestamista: isDebt ? parsed.entidadPrestamista ?? null : null,
+    tasaInteres: isDebt ? new Prisma.Decimal(parsed.tasaInteres ?? 0) : null,
+    tasaCambio: parsed.tasaCambio === undefined
+      ? null
+      : new Prisma.Decimal(parsed.tasaCambio),
+    plazoMeses: isDebt ? parsed.plazoMeses ?? null : null,
+    fechaInicioPago: isDebt ? parsed.fechaInicioPago ?? null : null,
+    fechaOperacion: parsed.fechaOperacion ?? null,
+  };
+  return createHash('sha256')
+    .update(canonicalIdempotencyValue(payload), 'utf8')
+    .digest('hex');
+}
+
+/**
+ * @description Checks only the tenant-scoped capital idempotency unique constraint.
+ * @param {unknown} error - Error thrown by Prisma.
+ * @returns {boolean} Whether this is the key uniqueness race for capital injection.
+ */
+function isCapitalInjectionIdempotencyUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const prismaError = error as { code?: unknown; meta?: { target?: unknown } };
+  if (prismaError.code !== 'P2002') return false;
+  const target = prismaError.meta?.target;
+  if (Array.isArray(target)) {
+    return target.includes('tenantId') && target.includes('idempotencyKey');
+  }
+  return typeof target === 'string' &&
+    target.includes('InyeccionCapital_tenantId_idempotencyKey_key');
+}
+
+/**
+ * @description Creates a conflict error for a key already bound to another payload.
+ * @returns {ActionError} Explicit idempotency conflict.
+ */
+function capitalInjectionIdempotencyConflict(): ActionError {
+  return new ActionError(
+    'La clave de idempotencia ya fue usada con datos diferentes',
+    'IDEMPOTENCY_CONFLICT',
+  );
+}
+
+/**
+ * @description Matches a pre-fingerprint injection only when its persisted identity is provable.
+ * @param {Record<string, unknown>} existing - Legacy row bound to the tenant key.
+ * @param {z.infer<typeof createCapitalInjectionSchema>} parsed - Normalized retry input.
+ * @returns {boolean} Whether every persisted, behavior-affecting input matches.
+ */
+function matchesLegacyCapitalInjection(
+  existing: Record<string, unknown>,
+  parsed: z.infer<typeof createCapitalInjectionSchema>,
+): boolean {
+  const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
+  const expectedInterest = isDebt ? new Prisma.Decimal(parsed.tasaInteres ?? 0) : null;
+  const expectedInterestAmount = isDebt
+    ? new Prisma.Decimal(parsed.montoRecibido)
+        .mul(expectedInterest!.div(100))
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+    : null;
+  const expectedDebtTotal = isDebt
+    ? new Prisma.Decimal(parsed.montoRecibido).add(expectedInterestAmount!)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+    : null;
+  const operationDateMatches = parsed.fechaOperacion !== undefined &&
+    existing.fechaRegistro instanceof Date &&
+    existing.fechaRegistro.getTime() === parsed.fechaOperacion.getTime();
+  const optionalDateMatches = (persisted: unknown, supplied: Date | undefined) =>
+    supplied === undefined
+      ? persisted == null
+      : persisted instanceof Date && persisted.getTime() === supplied.getTime();
+  const rateMatches = parsed.tasaCambio === undefined
+    ? existing.tasaCambio == null
+    : sameIdempotencyDecimal(existing.tasaCambio, parsed.tasaCambio);
+
+  return existing.tipo === parsed.tipo &&
+    sameIdempotencyDecimal(existing.montoRecibido, parsed.montoRecibido) &&
+    typeof existing.moneda === 'string' && existing.moneda.trim().toUpperCase() === parsed.moneda &&
+    existing.cuentaId === parsed.cuentaId &&
+    (existing.descripcion ?? null) === (parsed.descripcion ?? null) &&
+    (existing.socio ?? null) === (isDebt ? null : parsed.socio ?? null) &&
+    (existing.entidadPrestamista ?? null) === (isDebt ? parsed.entidadPrestamista ?? null : null) &&
+    sameIdempotencyDecimal(existing.tasaInteres, expectedInterest) &&
+    sameIdempotencyDecimal(existing.montoInteres, expectedInterestAmount) &&
+    sameIdempotencyDecimal(existing.montoTotalDeuda, expectedDebtTotal) &&
+    (existing.plazoMeses ?? null) === (isDebt ? parsed.plazoMeses ?? null : null) &&
+    optionalDateMatches(existing.fechaInicioPago, isDebt ? parsed.fechaInicioPago : undefined) &&
+    rateMatches &&
+    operationDateMatches;
+}
+
+/**
+ * @description Verifies a current or legacy keyed row against a normalized capital request.
+ * @param {Record<string, unknown>} existing - Persisted idempotent record.
+ * @param {z.infer<typeof createCapitalInjectionSchema>} parsed - Normalized request.
+ * @param {string} fingerprint - Current request fingerprint.
+ * @returns {void} Throws an explicit conflict when identity cannot be proven.
+ */
+function assertCapitalInjectionReplayMatches(
+  existing: Record<string, unknown>,
+  parsed: z.infer<typeof createCapitalInjectionSchema>,
+  fingerprint: string,
+): void {
+  const persistedFingerprint = existing.payloadFingerprint;
+  const matches = typeof persistedFingerprint === 'string'
+    ? persistedFingerprint === fingerprint
+    : matchesLegacyCapitalInjection(existing, parsed);
+  if (!matches) throw capitalInjectionIdempotencyConflict();
+}
+
 const validateBankTransferSchema = z.object({
   cuentaOrigenId: z.string().min(1, 'Cuenta origen es requerida'),
   cuentaDestinoId: z.string().min(1, 'Cuenta destino es requerida'),
@@ -112,6 +238,38 @@ const createBankAdjustmentSchema = z.object({
   idempotencyKey: z.string().trim().min(1).max(64).optional(),
 });
 
+/**
+ * @description Compares the persisted adjustment with every behavior-affecting retry field.
+ * @param {Record<string, unknown>} existing - Existing adjustment bound to the idempotency key.
+ * @param {z.infer<typeof createBankAdjustmentSchema>} parsed - Normalized retry input.
+ * @returns {boolean} Whether the request is an exact idempotent replay.
+ */
+function matchesBankAdjustmentReplay(
+  existing: Record<string, unknown>,
+  parsed: z.infer<typeof createBankAdjustmentSchema>,
+): boolean {
+  return existing.tipo === parsed.tipo &&
+    sameIdempotencyDecimal(existing.monto, parsed.monto) &&
+    typeof existing.moneda === 'string' &&
+    existing.moneda.trim().toUpperCase() === parsed.moneda.trim().toUpperCase() &&
+    existing.cuentaId === parsed.cuentaId &&
+    sameIdempotencyDecimal(existing.tasaCambio, parsed.tasaCambio, '1') &&
+    existing.descripcion === parsed.descripcion &&
+    existing.motivo === parsed.motivo &&
+    sameSuppliedDate(existing.fechaOperacion as Date | null | undefined, parsed.fechaOperacion);
+}
+
+/**
+ * @description Produces the established conflict when a key is reused with different input.
+ * @returns {ActionError} Explicit idempotency conflict.
+ */
+function bankAdjustmentIdempotencyConflict(): ActionError {
+  return new ActionError(
+    'La clave de idempotencia ya fue usada con datos diferentes',
+    'IDEMPOTENCY_CONFLICT',
+  );
+}
+
 const optionalText = z.preprocess(
   (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
   z.string().trim().min(1).optional(),
@@ -130,7 +288,7 @@ export const createCapitalInjectionSchema = z.object({
   plazoMeses: z.coerce.number().int().positive().optional(),
   fechaInicioPago: z.coerce.date().optional(),
   fechaOperacion: z.coerce.date().optional(),
-  idempotencyKey: z.string().trim().min(1).max(64).optional(),
+  idempotencyKey: z.string().trim().min(1).max(64),
 }).superRefine((input, ctx) => {
   if (input.tipo === 'CAPITAL_SOCIAL' && !input.socio) {
     ctx.addIssue({
@@ -519,20 +677,11 @@ export const AccountingOperationsMutationService = {
           where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
         });
         if (existente) {
-          const mismoPayload =
-            existente.tipo === parsed.tipo &&
-            sameIdempotencyDecimal(existente.monto, parsed.monto) &&
-            existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
-            existente.cuentaId === parsed.cuentaId &&
-            sameIdempotencyDecimal(existente.tasaCambio, parsed.tasaCambio, '1') &&
-            existente.descripcion === parsed.descripcion &&
-            existente.motivo === parsed.motivo &&
-            sameSuppliedDate(existente.fechaOperacion, parsed.fechaOperacion);
-          if (!mismoPayload) {
-            throw new ActionError(
-              'La clave de idempotencia ya fue usada con datos diferentes',
-              'IDEMPOTENCY_CONFLICT',
-            );
+          if (!matchesBankAdjustmentReplay(
+            existente as unknown as Record<string, unknown>,
+            parsed,
+          )) {
+            throw bankAdjustmentIdempotencyConflict();
           }
 
           const cuentaExistente = await tx.cuentaBancaria.findFirst({
@@ -655,6 +804,58 @@ export const AccountingOperationsMutationService = {
     return resultado;
   },
 
+  /**
+   * @description Resolves a tenant-scoped exact retry before the period-write guard.
+   * @param {Object} params - Request and authenticated actor.
+   * @returns {Promise<unknown | null>} Existing result or null when the key is unused.
+   */
+  async findBankAdjustmentReplay({
+    input,
+    user,
+  }: {
+    input: z.input<typeof createBankAdjustmentSchema>;
+    user: AuthenticatedUser;
+  }) {
+    const parsed = createBankAdjustmentSchema.parse(input);
+    const tenantId = requireTenant(user);
+    requireFeature(user, 'contabilidad', 'crear ajustes bancarios');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear ajustes bancarios');
+    const idempotencyKey = parsed.idempotencyKey?.trim();
+    if (!idempotencyKey) return null;
+
+    return prisma.$transaction(async (tx: any) => {
+      // Use the same tenant lock as the writer so a retry waits for any in-flight
+      // keyed create and observes its committed row before the period gate decides.
+      await acquireAccountingTenantLock(tx, tenantId);
+      const existing = await tx.ajusteBancario.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (!existing) return null;
+      if (!matchesBankAdjustmentReplay(
+        existing as unknown as Record<string, unknown>,
+        parsed,
+      )) {
+        throw bankAdjustmentIdempotencyConflict();
+      }
+
+      const cuenta = await tx.cuentaBancaria.findFirst({
+        where: { cuentaId: existing.cuentaId, tenantId },
+        select: { saldo: true },
+      });
+      const saldoNuevo = new Prisma.Decimal(cuenta?.saldo ?? 0);
+      const montoAjuste = parsed.tipo === 'ingreso'
+        ? new Prisma.Decimal(parsed.monto)
+        : new Prisma.Decimal(parsed.monto).neg();
+      return {
+        ajuste: existing,
+        saldoAnterior: saldoNuevo.sub(montoAjuste).toNumber(),
+        saldoNuevo: saldoNuevo.toNumber(),
+        advertenciaSaldoNegativo: saldoNuevo.lt(0),
+        message: 'Ajuste bancario ya registrado (reintento idempotente)',
+      };
+    });
+  },
+
   async createCapitalInjection({
     input,
     user,
@@ -667,7 +868,8 @@ export const AccountingOperationsMutationService = {
     requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
     requirePermission(user, 'financiero.contabilidad.acceder', 'registrar inyecciones de capital');
 
-    const idempotencyKey = parsed.idempotencyKey?.trim() || null;
+    const idempotencyKey = parsed.idempotencyKey;
+    const payloadFingerprint = capitalInjectionPayloadFingerprint(parsed);
 
     const inyeccion = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -675,36 +877,16 @@ export const AccountingOperationsMutationService = {
       // Lookup idempotente bajo el mismo lock que protege el saldo y el asiento.
       // Esto evita que el perdedor de dos requests simultáneos vea un snapshot
       // vacío y termine en P2002 después de haber ejecutado efectos parciales.
-      if (idempotencyKey) {
-        const existente = await tx.inyeccionCapital.findUnique({
-          where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
-        });
-        if (existente) {
-          const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
-          const mismoPayload =
-            sameIdempotencyDecimal(existente.montoRecibido, parsed.montoRecibido) &&
-            existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
-            existente.tipo === parsed.tipo &&
-            existente.cuentaId === parsed.cuentaId &&
-            existente.descripcion === (parsed.descripcion ?? null) &&
-            existente.socio === (parsed.socio ?? null) &&
-            existente.entidadPrestamista === (parsed.entidadPrestamista ?? null) &&
-            sameIdempotencyDecimal(
-              existente.tasaInteres,
-              isDebt ? parsed.tasaInteres ?? 0 : null,
-            ) &&
-            sameIdempotencyDecimal(existente.tasaCambio, parsed.tasaCambio, '1') &&
-            existente.plazoMeses === (parsed.plazoMeses ?? null) &&
-            sameSuppliedDate(existente.fechaInicioPago, parsed.fechaInicioPago) &&
-            sameSuppliedDate(existente.fechaRegistro, parsed.fechaOperacion);
-          if (!mismoPayload) {
-            throw new ActionError(
-              'La clave de idempotencia ya fue usada con datos diferentes',
-              'IDEMPOTENCY_CONFLICT',
-            );
-          }
-          return existente;
-        }
+      const existente = await tx.inyeccionCapital.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (existente) {
+        assertCapitalInjectionReplayMatches(
+          existente as Record<string, unknown>,
+          parsed,
+          payloadFingerprint,
+        );
+        return existente;
       }
 
       const cuenta = await tx.cuentaBancaria.findFirst({
@@ -763,6 +945,7 @@ export const AccountingOperationsMutationService = {
         data: {
           tenantId,
           idempotencyKey,
+          payloadFingerprint,
           montoRecibido: montoRecibidoDecimal,
           moneda: parsed.moneda,
           tasaCambio: conversion.tasaCambio,
@@ -833,9 +1016,59 @@ export const AccountingOperationsMutationService = {
       }, tx);
 
       return created;
+    }).catch(async (error: unknown) => {
+      if (!isCapitalInjectionIdempotencyUniqueViolation(error)) throw error;
+
+      // The tenant lock is the normal race barrier; this unique-index recovery
+      // protects callers that race outside that serialization path as well.
+      const existente = await prisma.inyeccionCapital.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (!existente) throw error;
+      assertCapitalInjectionReplayMatches(
+        existente as unknown as Record<string, unknown>,
+        parsed,
+        payloadFingerprint,
+      );
+      return existente;
     });
 
     return inyeccion;
+  },
+
+  /**
+   * @description Returns an exact existing retry without entering the period-write gate.
+   * @param {Object} params - Request and authenticated actor.
+   * @returns {Promise<unknown | null>} Existing injection or null when the key is unused.
+   */
+  async findCapitalInjectionReplay({
+    input,
+    user,
+  }: {
+    input: z.input<typeof createCapitalInjectionSchema>;
+    user: AuthenticatedUser;
+  }) {
+    const parsed = createCapitalInjectionSchema.parse(input);
+    const tenantId = requireTenant(user);
+    requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar inyecciones de capital');
+    const fingerprint = capitalInjectionPayloadFingerprint(parsed);
+    const existing = await prisma.inyeccionCapital.findUnique({
+      where: {
+        tenantId_idempotencyKey: {
+          tenantId,
+          idempotencyKey: parsed.idempotencyKey,
+        },
+      },
+    });
+    if (!existing) return null;
+
+    assertCapitalInjectionReplayMatches(
+      existing as unknown as Record<string, unknown>,
+      parsed,
+      fingerprint,
+    );
+    return existing;
   },
 
   async registerCapitalPayment({

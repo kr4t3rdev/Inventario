@@ -46,7 +46,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
 
 ### Return type
 
@@ -64,11 +64,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **mobilePostAccountingCapitalInjections**
-> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo)
+> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo)
 
 Registrar inyecciones de capital
 
-Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
 
 ### Example
 ```dart
@@ -81,11 +81,12 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingCapitalApi();
-final capitalInjectionCreateRequest = CapitalInjectionCreateRequest(); // CapitalInjectionCreateRequest | 
+final capitalInjectionCreateRequest = CapitalInjectionCreateRequest(); // CapitalInjectionCreateRequest |
+final idempotencyKey = idempotencyKey_example; // String | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia.
 final tipo = tipo_example; // String | Tipo de registro solicitado.
 
 try {
-    final result = api_instance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo);
+    final result = api_instance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo);
     print(result);
 } catch (e) {
     print('Exception when calling AccountingCapitalApi->mobilePostAccountingCapitalInjections: $e\n');
@@ -96,8 +97,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **capitalInjectionCreateRequest** | [**CapitalInjectionCreateRequest**](CapitalInjectionCreateRequest.md)|  | 
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
+ **capitalInjectionCreateRequest** | [**CapitalInjectionCreateRequest**](CapitalInjectionCreateRequest.md)|  |
+ **idempotencyKey** | **String**| Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. | [optional]
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
 
 ### Return type
 
@@ -133,7 +135,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingCapitalApi();
 final id = id_example; // String | Identificador único del recurso.
-final capitalPaymentRequest = CapitalPaymentRequest(); // CapitalPaymentRequest | 
+final capitalPaymentRequest = CapitalPaymentRequest(); // CapitalPaymentRequest |
 
 try {
     final result = api_instance.mobilePostAccountingCapitalInjectionsByIdPayments(id, capitalPaymentRequest);
@@ -147,8 +149,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **capitalPaymentRequest** | [**CapitalPaymentRequest**](CapitalPaymentRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **capitalPaymentRequest** | [**CapitalPaymentRequest**](CapitalPaymentRequest.md)|  |
 
 ### Return type
 

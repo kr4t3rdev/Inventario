@@ -379,7 +379,10 @@ describe('Órdenes de compra y recepciones', () => {
 
     expect(result.success).toBe(true);
     if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito');
-    expect(result.data?.data.yaRegistrada).toBe(true);
+    expect(result).toMatchObject({
+      success: true,
+      data: { yaRegistrada: true },
+    });
     expect(prisma.recepcion.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 'tenant-1', claveIdempotencia: 'misma-clave' },

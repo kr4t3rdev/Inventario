@@ -72,7 +72,7 @@ describe('facturarOfertaAction – propagación de errores de turno', () => {
     mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
     mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'Prod', tenantId: 'tenant-test' } as any);
     mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
-    mockTx.data.servicios = undefined;
+    (mockTx as any).data = { servicios: undefined };
     mockTx.oferta.update.mockResolvedValue({ id: 'of-1', estado: 'FACTURADA' } as any);
   });
 

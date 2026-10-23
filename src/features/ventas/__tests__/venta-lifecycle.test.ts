@@ -438,7 +438,7 @@ describe('anularVentaPorEstado', () => {
 	});
 
 	it('permite anular un PEDIDO aunque su turno esté cerrado (sin efectos que revertir)', async () => {
-		mirarVenta({ ...ventaPedido, turno: { estado: 'CERRADO', arqueos: [{ id: 'a1' }] } });
+		mirarVenta({ ...ventaPedido, turno: { estado: 'CERRADO', arqueos: [{ id: 'a1' }] } as never });
 		const result = await svc.anularVentaPorEstado({
 			ventaId: 'venta-1',
 			motivo: null,

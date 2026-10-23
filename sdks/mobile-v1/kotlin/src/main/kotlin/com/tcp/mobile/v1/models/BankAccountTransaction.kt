@@ -19,17 +19,17 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param transaccionId 
- * @param fecha 
- * @param tipoMovimiento 
- * @param descripcion 
- * @param montoOriginal 
- * @param monedaOriginal 
- * @param tasaCambio 
- * @param montoConvertido 
- * @param observaciones 
+ *
+ * @param transaccionId
+ * @param fecha
+ * @param tipoMovimiento
+ * @param descripcion
+ * @param montoOriginal
+ * @param monedaOriginal
+ * @param tasaCambio
+ * @param montoConvertido
+ * @param observaciones
  */
 
 
@@ -66,4 +66,3 @@ data class BankAccountTransaction (
 
 
 }
-

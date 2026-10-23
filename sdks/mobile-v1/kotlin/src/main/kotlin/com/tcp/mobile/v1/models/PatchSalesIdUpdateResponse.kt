@@ -22,16 +22,16 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de PATCH /sales/{id}/update.
  *
- * @param ventaId 
- * @param puntoDeVentaId 
- * @param clienteId 
- * @param empleadoId 
- * @param subtotal 
- * @param descuento 
- * @param total 
- * @param observaciones 
- * @param items 
- * @param createdAt 
+ * @param ventaId
+ * @param puntoDeVentaId
+ * @param clienteId
+ * @param empleadoId
+ * @param subtotal
+ * @param descuento
+ * @param total
+ * @param observaciones
+ * @param items
+ * @param createdAt
  */
 
 
@@ -71,4 +71,3 @@ data class PatchSalesIdUpdateResponse (
 
 
 }
-

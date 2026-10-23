@@ -98,4 +98,3 @@ public struct AdminLicenseItem: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tenant, forKey: .tenant)
     }
 }
-

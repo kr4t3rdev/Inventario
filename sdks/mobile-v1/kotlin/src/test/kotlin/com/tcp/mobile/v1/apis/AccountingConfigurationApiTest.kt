@@ -97,7 +97,7 @@ class AccountingConfigurationApiTest : ShouldSpec() {
         should("test mobilePutAccountingPaymentTypesById") {
             // uncomment below to test mobilePutAccountingPaymentTypesById
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val paymentTypeUpdateRequest : PaymentTypeUpdateRequest =  // PaymentTypeUpdateRequest | 
+            //val paymentTypeUpdateRequest : PaymentTypeUpdateRequest =  // PaymentTypeUpdateRequest |
             //val result : PutAccountingPaymentTypesIdResponse = apiInstance.mobilePutAccountingPaymentTypesById(id, paymentTypeUpdateRequest)
             //result shouldBe ("TODO")
         }

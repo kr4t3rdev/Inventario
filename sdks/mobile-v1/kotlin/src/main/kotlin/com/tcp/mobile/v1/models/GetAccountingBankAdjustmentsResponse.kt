@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/bank-adjustments.
  *
- * @param items 
- * @param cuentaBancaria 
- * @param pagination 
+ * @param items
+ * @param cuentaBancaria
+ * @param pagination
  */
 
 
@@ -45,4 +45,3 @@ data class GetAccountingBankAdjustmentsResponse (
 
 
 }
-

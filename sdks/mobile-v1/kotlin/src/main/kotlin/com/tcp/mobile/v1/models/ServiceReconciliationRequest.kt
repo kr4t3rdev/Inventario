@@ -20,11 +20,12 @@ import com.tcp.mobile.v1.models.ServiceDistributionRequest
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param ventaServicioId 
- * @param distribuciones 
- * @param fechaReconciliacion 
+ *
+ * @param ventaServicioId
+ * @param distribuciones
+ * @param fechaReconciliacion
+ * @param idempotencyKey Clave estable para reintentar una conciliación sin duplicar el pago.
  */
 
 
@@ -37,10 +38,13 @@ data class ServiceReconciliationRequest (
     val distribuciones: kotlin.collections.List<ServiceDistributionRequest>,
 
     @get:JsonProperty("fechaReconciliacion")
-    val fechaReconciliacion: java.time.OffsetDateTime? = null
+    val fechaReconciliacion: java.time.OffsetDateTime? = null,
+
+    /* Clave estable para reintentar una conciliación sin duplicar el pago. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 
 
 }
-

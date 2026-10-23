@@ -35,4 +35,3 @@ public struct AdminHealthResponseUsersComparison: Codable, JSONEncodable, Hashab
         try container.encode(previous7DaysUsers, forKey: .previous7DaysUsers)
     }
 }
-

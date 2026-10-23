@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/reconciliation/expenses/history.
  *
- * @param items 
- * @param estadisticas 
- * @param pagination 
+ * @param items
+ * @param estadisticas
+ * @param pagination
  */
 
 
@@ -45,4 +45,3 @@ data class GetAccountingReconciliationExpensesHistoryResponse (
 
 
 }
-

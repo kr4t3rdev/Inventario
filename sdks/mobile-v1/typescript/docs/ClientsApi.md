@@ -31,7 +31,7 @@ import type { MobileDeleteClientsByIdRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -106,7 +106,7 @@ import type { MobileGetClientsRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -172,7 +172,7 @@ import type { MobileGetClientsByIdRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -247,7 +247,7 @@ import type { MobilePostClientsCreateRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -322,7 +322,7 @@ import type { MobilePutClientsByIdRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

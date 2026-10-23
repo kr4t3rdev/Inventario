@@ -192,4 +192,3 @@ class ProveedorUpdateRequest {
   static const requiredKeys = <String>{
   };
 }
-

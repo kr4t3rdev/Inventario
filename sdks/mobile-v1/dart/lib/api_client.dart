@@ -210,6 +210,8 @@ class ApiClient {
           return AdminHealthResponseUsersComparison.fromJson(value);
         case 'AdminHealthResponseUsersTrendInner':
           return AdminHealthResponseUsersTrendInner.fromJson(value);
+        case 'AdminLicenciaIdRequest':
+          return AdminLicenciaIdRequest.fromJson(value);
         case 'AdminLicenseItem':
           return AdminLicenseItem.fromJson(value);
         case 'AdminLicenseItemCreatedByUser':
@@ -218,6 +220,8 @@ class ApiClient {
           return AdminLicenseItemTenant.fromJson(value);
         case 'AdminLicenseManagerItem':
           return AdminLicenseManagerItem.fromJson(value);
+        case 'AdminLicenseSummary':
+          return AdminLicenseSummary.fromJson(value);
         case 'AdminPendingUserItem':
           return AdminPendingUserItem.fromJson(value);
         case 'AdminTenantItem':
@@ -230,6 +234,10 @@ class ApiClient {
           return AdminTenantLicenseItemPlan.fromJson(value);
         case 'AdminTenantLite':
           return AdminTenantLite.fromJson(value);
+        case 'AdminUserDetail':
+          return AdminUserDetail.fromJson(value);
+        case 'AdminUserIdRequest':
+          return AdminUserIdRequest.fromJson(value);
         case 'AdminUserItem':
           return AdminUserItem.fromJson(value);
         case 'AdminUserItemSalesAgentBalance':
@@ -238,6 +246,14 @@ class ApiClient {
           return AdminUserItemSalesAgentProfile.fromJson(value);
         case 'AdminUserLite':
           return AdminUserLite.fromJson(value);
+        case 'AdminUserMembership':
+          return AdminUserMembership.fromJson(value);
+        case 'AdminUserMembershipTenant':
+          return AdminUserMembershipTenant.fromJson(value);
+        case 'AdminUserStatus':
+          return AdminUserStatus.fromJson(value);
+        case 'AdminUserSummary':
+          return AdminUserSummary.fromJson(value);
         case 'Advance':
           return Advance.fromJson(value);
         case 'AdvanceWorkflowResult':
@@ -256,6 +272,8 @@ class ApiClient {
           return ApiError.fromJson(value);
         case 'ApproveAdminMembershipRequest':
           return ApproveAdminMembershipRequest.fromJson(value);
+        case 'AssignAdminUserTenantRequest':
+          return AssignAdminUserTenantRequest.fromJson(value);
         case 'AuditLog':
           return AuditLog.fromJson(value);
         case 'AuthSession':
@@ -296,6 +314,8 @@ class ApiClient {
           return CashOperationUpdateRequest.fromJson(value);
         case 'CashPaymentRequest':
           return CashPaymentRequest.fromJson(value);
+        case 'ChangeAdminUserTenantRoleRequest':
+          return ChangeAdminUserTenantRoleRequest.fromJson(value);
         case 'Cliente':
           return Cliente.fromJson(value);
         case 'ClienteCreateRequest':
@@ -408,6 +428,8 @@ class ApiClient {
           return GetAdminLicenseStatsResponse.fromJson(value);
         case 'GetAdminLicensesResponse':
           return GetAdminLicensesResponse.fromJson(value);
+        case 'GetAdminUserDetailResponse':
+          return GetAdminUserDetailResponse.fromJson(value);
         case 'GetAdminUsersResponse':
           return GetAdminUsersResponse.fromJson(value);
         case 'GetDashboardStatsResponse':
@@ -430,6 +452,10 @@ class ApiClient {
           return LoginRequest.fromJson(value);
         case 'Pagination':
           return Pagination.fromJson(value);
+        case 'PatchAdminUsersChangeTenantRoleResponse':
+          return PatchAdminUsersChangeTenantRoleResponse.fromJson(value);
+        case 'PatchAdminUsersUpdateResponse':
+          return PatchAdminUsersUpdateResponse.fromJson(value);
         case 'PatchSalesIdUpdateResponse':
           return PatchSalesIdUpdateResponse.fromJson(value);
         case 'PayableAccountSummary':
@@ -472,14 +498,40 @@ class ApiClient {
           return PostAccountingReconciliationSalesResponse.fromJson(value);
         case 'PostAccountingReconciliationServicesResponse':
           return PostAccountingReconciliationServicesResponse.fromJson(value);
+        case 'PostAdminLicensesActivateResponse':
+          return PostAdminLicensesActivateResponse.fromJson(value);
+        case 'PostAdminLicensesDeactivateResponse':
+          return PostAdminLicensesDeactivateResponse.fromJson(value);
+        case 'PostAdminLicensesDeleteResponse':
+          return PostAdminLicensesDeleteResponse.fromJson(value);
+        case 'PostAdminLicensesRenewResponse':
+          return PostAdminLicensesRenewResponse.fromJson(value);
         case 'PostAdminMembershipsApproveResponse':
           return PostAdminMembershipsApproveResponse.fromJson(value);
         case 'PostAdminMembershipsRejectResponse':
           return PostAdminMembershipsRejectResponse.fromJson(value);
+        case 'PostAdminUsersActivateResponse':
+          return PostAdminUsersActivateResponse.fromJson(value);
+        case 'PostAdminUsersAssignTenantResponse':
+          return PostAdminUsersAssignTenantResponse.fromJson(value);
+        case 'PostAdminUsersDeactivateResponse':
+          return PostAdminUsersDeactivateResponse.fromJson(value);
+        case 'PostAdminUsersDeleteResponse':
+          return PostAdminUsersDeleteResponse.fromJson(value);
         case 'PostAdminUsersLockResponse':
           return PostAdminUsersLockResponse.fromJson(value);
         case 'PostAdminUsersLockResponseUser':
           return PostAdminUsersLockResponseUser.fromJson(value);
+        case 'PostAdminUsersResendVerificationResponse':
+          return PostAdminUsersResendVerificationResponse.fromJson(value);
+        case 'PostAdminUsersResetPasswordResponse':
+          return PostAdminUsersResetPasswordResponse.fromJson(value);
+        case 'PostAdminUsersRevokeSessionsResponse':
+          return PostAdminUsersRevokeSessionsResponse.fromJson(value);
+        case 'PostAdminUsersVerifyEmailResponse':
+          return PostAdminUsersVerifyEmailResponse.fromJson(value);
+        case 'PostAdminUsersVerifyEmailResponseUser':
+          return PostAdminUsersVerifyEmailResponseUser.fromJson(value);
         case 'PostSalesCreateResponse':
           return PostSalesCreateResponse.fromJson(value);
         case 'PostSalesIdCancelResponse':
@@ -522,6 +574,8 @@ class ApiClient {
           return RegisterResponse.fromJson(value);
         case 'RejectAdminMembershipRequest':
           return RejectAdminMembershipRequest.fromJson(value);
+        case 'RenewAdminLicenseRequest':
+          return RenewAdminLicenseRequest.fromJson(value);
         case 'ReportFilters':
           return ReportFilters.fromJson(value);
         case 'ReportResult':
@@ -564,6 +618,8 @@ class ApiClient {
           return TokenPair.fromJson(value);
         case 'UnlockAdminUserRequest':
           return UnlockAdminUserRequest.fromJson(value);
+        case 'UpdateAdminUserRequest':
+          return UpdateAdminUserRequest.fromJson(value);
         default:
           dynamic match;
           if (value is List && (match = _regList.firstMatch(targetType)?.group(1)) != null) {

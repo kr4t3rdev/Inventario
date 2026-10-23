@@ -228,4 +228,3 @@ class AccountPayable {
   static const requiredKeys = <String>{
   };
 }
-

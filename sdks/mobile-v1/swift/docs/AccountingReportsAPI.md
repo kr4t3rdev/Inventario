@@ -51,9 +51,9 @@ AccountingReportsAPI.mobileGetAccountingAdvancesReportsCustomers(clienteId: clie
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteId** | **String** | Identificador del cliente. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
+ **clienteId** | **String** | Identificador del cliente. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -105,9 +105,9 @@ AccountingReportsAPI.mobileGetAccountingAdvancesReportsProviders(proveedorId: pr
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **proveedorId** | **String** | Identificador del proveedor. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
+ **proveedorId** | **String** | Identificador del proveedor. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -159,9 +159,9 @@ AccountingReportsAPI.mobileGetAccountingAdvancesReportsSummary(tipo: tipo, fecha
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
 
 ### Return type
 
@@ -211,7 +211,7 @@ AccountingReportsAPI.mobileGetAccountingReportsClientAccountAnalysis(clienteId: 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteId** | **String** | Identificador del cliente. | [optional] 
+ **clienteId** | **String** | Identificador del cliente. | [optional]
 
 ### Return type
 
@@ -265,11 +265,11 @@ AccountingReportsAPI.mobileGetAccountingReportsExchange(fechaInicio: fechaInicio
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **monedaOrigen** | **String** | Valor de monedaOrigen aceptado por el handler. | [optional] 
- **monedaDestino** | **String** | Valor de monedaDestino aceptado por el handler. | [optional] 
- **export** | **String** | Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **monedaOrigen** | **String** | Valor de monedaOrigen aceptado por el handler. | [optional]
+ **monedaDestino** | **String** | Valor de monedaDestino aceptado por el handler. | [optional]
+ **export** | **String** | Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -322,10 +322,10 @@ AccountingReportsAPI.mobileGetAccountingReportsExchangeImpact(fechaInicio: fecha
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **monedaBase** | **String** | Valor de monedaBase aceptado por el handler. | [optional] 
- **tipoAnalisis** | **String** | Valor de tipoAnalisis aceptado por el handler. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **monedaBase** | **String** | Valor de monedaBase aceptado por el handler. | [optional]
+ **tipoAnalisis** | **String** | Valor de tipoAnalisis aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -383,15 +383,15 @@ AccountingReportsAPI.mobileGetAccountingReportsMovements(busqueda: busqueda, fec
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **busqueda** | **String** | Valor de busqueda aceptado por el handler. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **tipoMovimiento** | **String** | Valor de tipoMovimiento aceptado por el handler. | [optional] 
- **moneda** | **String** | Código de moneda. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
- **formato** | **String** | Valor de formato aceptado por el handler. | [optional] 
+ **busqueda** | **String** | Valor de busqueda aceptado por el handler. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **tipoMovimiento** | **String** | Valor de tipoMovimiento aceptado por el handler. | [optional]
+ **moneda** | **String** | Código de moneda. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
+ **formato** | **String** | Valor de formato aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -491,11 +491,11 @@ AccountingReportsAPI.mobileGetAccountingReportsSummary(fechaInicio: fechaInicio,
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **moneda** | **String** | Código de moneda. | [optional] 
- **export** | **String** | Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **moneda** | **String** | Código de moneda. | [optional]
+ **export** | **String** | Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 
@@ -553,15 +553,15 @@ AccountingReportsAPI.mobileGetAccountingReportsTransfers(fechaInicio: fechaInici
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaOrigenId** | **String** | Valor de cuentaOrigenId aceptado por el handler. | [optional] 
- **cuentaDestinoId** | **String** | Valor de cuentaDestinoId aceptado por el handler. | [optional] 
- **moneda** | **String** | Código de moneda. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
- **realizadoPor** | **String** | Valor de realizadoPor aceptado por el handler. | [optional] 
- **export** | **String** | Valor de export aceptado por el handler. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaOrigenId** | **String** | Valor de cuentaOrigenId aceptado por el handler. | [optional]
+ **cuentaDestinoId** | **String** | Valor de cuentaDestinoId aceptado por el handler. | [optional]
+ **moneda** | **String** | Código de moneda. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
+ **realizadoPor** | **String** | Valor de realizadoPor aceptado por el handler. | [optional]
+ **export** | **String** | Valor de export aceptado por el handler. | [optional]
 
 ### Return type
 

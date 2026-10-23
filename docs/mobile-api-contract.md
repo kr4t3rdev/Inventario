@@ -208,17 +208,23 @@ Devuelve el detalle de una venta del tenant autenticado. Si la venta no existe d
 
 ```http
 Authorization: Bearer <accessToken>
+Idempotency-Key: <optional-key>
 ```
 
 **Body**
 
 Usa el mismo payload lógico que hoy consume la creación web de ventas. La validación y la lógica de stock/facturación viven en `VentaMutationService`.
 
+La solicitud acepta `idempotencyKey` opcional en el cuerpo o `Idempotency-Key` en el encabezado. Si la propiedad del cuerpo está presente, tiene precedencia incluso si su valor es inválido; no se usa el encabezado como alternativa. La clave se recorta y debe contener de 1 a 64 caracteres. La clave inválida devuelve `400`.
+
+La idempotencia se limita al tenant autenticado y a la clave. Repetirla con el mismo payload normalizado devuelve la respuesta original; reutilizarla con un payload normalizado diferente devuelve `409`. La autenticación y autorización se validan antes de consultar si la operación ya fue procesada. El cliente debe generar una clave estable por cada venta lógica pendiente y conservarla para todos los reintentos de esa solicitud; no debe generar una clave nueva en cada intento. Solo una venta nueva debe recibir otra clave.
+
 Errores esperables de negocio:
 
 - `VALIDATION_ERROR` → `400`
 - `INSUFFICIENT_STOCK` → `400`
 - `TENANT_REQUIRED` → `403`
+- `IDEMPOTENCY_KEY_REUSED` → `409`
 
 ### `PUT /api/mobile/v1/sales/:id/update`
 
@@ -476,7 +482,33 @@ Devuelve inyecciones de capital del tenant autenticado usando la lógica compart
 Authorization: Bearer <accessToken>
 ```
 
-Registra una inyección de capital usando la misma lógica hoy expuesta por las actions web.
+Registra una inyección de capital usando la misma lógica hoy expuesta por las actions web. El
+payload incluye `idempotencyKey` (1–64 caracteres), requerido para toda creación. La misma clave
+con los mismos valores normalizados devuelve el registro original sin volver a afectar saldo,
+asiento ni auditoría; reutilizarla con otro payload devuelve `409 IDEMPOTENCY_CONFLICT`. El cliente
+debe conservar la clave mientras reintenta la misma operación y generar una nueva para otra
+inyección. Una repetición exacta se devuelve incluso si el período de su fecha ya cerró; una clave
+nueva sigue sujeta al control normal del período.
+
+Para registros creados antes de persistir la huella de payload, el servidor compara los campos
+contables que quedaron guardados. Como la fecha de operación no conserva si fue explícita o se
+asignó por defecto, y la tasa aplicada no conserva si el cliente la envió o se resolvió por política,
+el reintento legado solo se reproduce si envía `fechaOperacion` explícitamente y coincide, y si
+envía `tasaCambio` cuando el registro guarda una tasa no nula (si la tasa persistida es nula, debe
+haber omitido esa entrada). Si no se puede probar la identidad, responde `409 IDEMPOTENCY_CONFLICT`
+sin volver a contabilizar. Las inyecciones nuevas persisten la huella completa y no tienen esta
+limitación.
+
+```json
+{
+  "montoRecibido": 500,
+  "moneda": "CUP",
+  "tipo": "CAPITAL_SOCIAL",
+  "cuentaId": "bank-1",
+  "socio": "Socio fundador",
+  "idempotencyKey": "client-generated-key"
+}
+```
 
 ### `POST /api/mobile/v1/accounting/capital-injections/:id/payments`
 
@@ -728,6 +760,13 @@ Authorization: Bearer <accessToken>
 - `moneda` (opcional)
 - `tasaCambio` (opcional)
 - `observaciones` (opcional)
+- `fechaOperacion` (opcional): fecha ISO 8601 (`YYYY-MM-DD`) o timestamp ISO 8601 con zona
+  horaria. Si se omite, se conserva el comportamiento actual usando la fecha actual.
+- `idempotencyKey` (opcional, 1–64 caracteres)
+
+También se puede enviar `Idempotency-Key` en el encabezado. Si se envían ambas claves,
+prevalece `idempotencyKey` en el cuerpo. Una clave no válida devuelve `400`; reutilizarla con
+un payload diferente devuelve `409`. El `:id` de la ruta determina el préstamo pagado.
 
 ### `GET /api/mobile/v1/accounting/cash-loans/:id/comprobante`
 
@@ -835,6 +874,13 @@ Authorization: Bearer <accessToken>
 - `moneda` (opcional)
 - `tasaCambio` (opcional)
 - `observaciones` (opcional)
+- `fechaOperacion` (opcional): fecha ISO 8601 (`YYYY-MM-DD`) o timestamp ISO 8601 con zona
+  horaria. Si se omite, se conserva el comportamiento actual usando la fecha actual.
+- `idempotencyKey` (opcional, 1–64 caracteres)
+
+También se puede enviar `Idempotency-Key` en el encabezado. Si se envían ambas claves,
+prevalece `idempotencyKey` en el cuerpo. Una clave no válida devuelve `400`; reutilizarla con
+un payload diferente devuelve `409`. El `:id` de la ruta determina la deuda pagada.
 
 ### `GET /api/mobile/v1/accounting/cash-debts/stats`
 

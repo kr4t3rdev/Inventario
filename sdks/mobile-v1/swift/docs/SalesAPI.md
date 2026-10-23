@@ -90,7 +90,7 @@ SalesAPI.mobileGetSalesById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -122,7 +122,7 @@ Modifica únicamente el descuento y las observaciones editables de la venta sele
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let saleUpdateRequest = SaleUpdateRequest(observaciones: "observaciones_example", descuento: 123) // SaleUpdateRequest | 
+let saleUpdateRequest = SaleUpdateRequest(observaciones: "observaciones_example", descuento: 123) // SaleUpdateRequest |
 
 // Actualizar datos de venta
 SalesAPI.mobilePatchSalesByIdUpdate(id: id, saleUpdateRequest: saleUpdateRequest) { (response, error) in
@@ -141,8 +141,8 @@ SalesAPI.mobilePatchSalesByIdUpdate(id: id, saleUpdateRequest: saleUpdateRequest
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **saleUpdateRequest** | [**SaleUpdateRequest**](SaleUpdateRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **saleUpdateRequest** | [**SaleUpdateRequest**](SaleUpdateRequest.md) |  |
 
 ### Return type
 
@@ -174,7 +174,7 @@ Anula la venta seleccionada y revierte los efectos permitidos sobre inventario y
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let saleCancelRequest = SaleCancelRequest(motivo: "motivo_example") // SaleCancelRequest | 
+let saleCancelRequest = SaleCancelRequest(motivo: "motivo_example") // SaleCancelRequest |
 
 // Anular venta
 SalesAPI.mobilePostSalesByIdCancel(id: id, saleCancelRequest: saleCancelRequest) { (response, error) in
@@ -193,8 +193,8 @@ SalesAPI.mobilePostSalesByIdCancel(id: id, saleCancelRequest: saleCancelRequest)
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **saleCancelRequest** | [**SaleCancelRequest**](SaleCancelRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **saleCancelRequest** | [**SaleCancelRequest**](SaleCancelRequest.md) |  |
 
 ### Return type
 
@@ -213,22 +213,23 @@ Name | Type | Description  | Notes
 
 # **mobilePostSalesCreate**
 ```swift
-    open class func mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest, completion: @escaping (_ data: PostSalesCreateResponse?, _ error: Error?) -> Void)
+    open class func mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest, idempotencyKey: String? = nil, completion: @escaping (_ data: PostSalesCreateResponse?, _ error: Error?) -> Void)
 ```
 
 Registrar venta
 
-Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
 
 ### Example
 ```swift
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let saleCreateRequest = SaleCreateRequest(puntoDeVentaId: "puntoDeVentaId_example", clienteId: "clienteId_example", empleadoId: "empleadoId_example", descuento: 123, observaciones: "observaciones_example", items: [SaleItemRequest(productoId: "productoId_example", cantidad: 123, precioUnitario: 123)], turnoId: "turnoId_example", metodoPago: "metodoPago_example", montoEfectivo: 123, montoTarjeta: 123, montoTransferencia: 123, montoCredito: 123, tipoVencimiento: "tipoVencimiento_example", fechaVencimiento: "fechaVencimiento_example", cuentaBancariaId: "cuentaBancariaId_example") // SaleCreateRequest | 
+let saleCreateRequest = SaleCreateRequest(puntoDeVentaId: "puntoDeVentaId_example", clienteId: "clienteId_example", empleadoId: "empleadoId_example", descuento: 123, observaciones: "observaciones_example", items: [SaleItemRequest(productoId: "productoId_example", cantidad: 123, precioUnitario: 123)], turnoId: "turnoId_example", metodoPago: "metodoPago_example", montoEfectivo: 123, montoTarjeta: 123, montoTransferencia: 123, montoCredito: 123, tipoVencimiento: "tipoVencimiento_example", fechaVencimiento: "fechaVencimiento_example", cuentaBancariaId: "cuentaBancariaId_example", idempotencyKey: "idempotencyKey_example") // SaleCreateRequest |
+let idempotencyKey = "idempotencyKey_example" // String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
 
 // Registrar venta
-SalesAPI.mobilePostSalesCreate(saleCreateRequest: saleCreateRequest) { (response, error) in
+SalesAPI.mobilePostSalesCreate(saleCreateRequest: saleCreateRequest, idempotencyKey: idempotencyKey) { (response, error) in
     guard error == nil else {
         print(error)
         return
@@ -244,7 +245,8 @@ SalesAPI.mobilePostSalesCreate(saleCreateRequest: saleCreateRequest) { (response
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md) |  | 
+ **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md) |  |
+ **idempotencyKey** | **String** | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional]
 
 ### Return type
 

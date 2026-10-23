@@ -217,4 +217,3 @@ class GetAccountingBankAccountsIdResponse {
   static const requiredKeys = <String>{
   };
 }
-

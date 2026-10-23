@@ -188,4 +188,3 @@ class PostAccountingCapitalInjectionsResponse {
   static const requiredKeys = <String>{
   };
 }
-

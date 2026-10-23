@@ -16,6 +16,12 @@ import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-data
 
 assertDisposableDatabase(process.env);
 
+const { serverActionState } = vi.hoisted(() => ({
+  serverActionState: { user: null as unknown },
+}));
+vi.mock('@/lib/server-actions/get-current-user', () => ({
+  getCurrentUser: async () => serverActionState.user,
+}));
 vi.mock('@/lib/auth-middleware', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/auth-middleware')>();
   return { ...original, authenticateUser: async () => ({
@@ -31,7 +37,15 @@ vi.mock('@/lib/services/validate-period-write', async (importOriginal) => {
 });
 vi.mock('@/lib/server-actions', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/server-actions')>();
-  return { ...original, withAction: (fn: (...args: never[]) => unknown) => fn };
+  return {
+    ...original,
+    withAction: (fn: (...args: never[]) => unknown) => {
+      const wrapped = original.withAction(fn as never);
+      return (input?: unknown, testUser?: unknown) => testUser
+        ? fn(input as never, testUser as never)
+        : wrapped(input as never);
+    },
+  };
 });
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
 import {
@@ -42,10 +56,11 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { ServerAction } from '@/lib/server-actions/types';
 type RawAction<A> = A extends ServerAction<infer I, infer O> ? (input: I, user: AuthenticatedUser) => Promise<O> : never;
 const reconciliarServicioAction = _reconciliarServicioAction as unknown as RawAction<typeof _reconciliarServicioAction>;
-const reconciliarVentaAction = _reconciliarVentaAction as unknown as RawAction<typeof _reconciliarVentaAction>;
+const reconciliarVentaAction = _reconciliarVentaAction;
 
 const prefix = `cta-servicio-${crypto.randomUUID()}`;
 const fecha = '2026-02-15T12:00:00.000Z';
+const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 let tenantId = '';
 let otherTenantId = '';
 let ventaServicioId = '';
@@ -237,7 +252,8 @@ describe('reconciliarServicioAction — PostgreSQL aislado', { timeout: 60_000 }
   });
 
   afterAll(async () => {
-    delete process.env.CONTABILIDAD_FORMAL_MODE;
+    if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+    else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
     if (trigger) {
       await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "${triggerTable}"`);
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
@@ -349,6 +365,10 @@ describe('reconciliarServicioAction — PostgreSQL aislado', { timeout: 60_000 }
 
     expect(resultado.montoConvertido!.toString()).toBe('240');
     expect(resultado.fxEvidenceFingerprint).toBeTruthy();
+    await expect(prisma.auditLog.findFirst({ where: {
+      usuarioId: 'actor-real', entidad: 'RECONCILIACION',
+      entidadId: resultado.reconciliacionId, accion: 'CREATE',
+    } })).resolves.toMatchObject({ entidadId: resultado.reconciliacionId });
     const asientos = await prisma.asiento.findMany({ where: {
       tenantId, origenTipo: 'reconciliacion_venta', origenId: resultado.reconciliacionId,
     }, include: { lineas: true } });
@@ -356,6 +376,80 @@ describe('reconciliarServicioAction — PostgreSQL aislado', { timeout: 60_000 }
     expect(asientos[0].lineas.some((linea) =>
       linea.fxEvidenceFingerprint === resultado.fxEvidenceFingerprint
       && linea.tasaCambio?.toString() === '24')).toBe(true);
+  });
+
+  it('reconcileSale revierte todas las escrituras ante fallo del AuditLog físico', async () => {
+    const actorId = `reconcile-sale-audit-${crypto.randomUUID()}`;
+    const successful = await AccountingReconciliationService.reconcileSale({
+      input: {
+        ventaId, cuentaId, tipoPagoId, monto: 10, moneda: 'USD', tasaCambio: 24,
+        fechaReconciliacion: fecha,
+      },
+      user: { tenantId, userId: actorId, tenantRole: 'manager',
+        planFeatures: { contabilidad: true } } as never,
+    });
+    const durableAudit = await prisma.auditLog.findFirstOrThrow({ where: {
+      usuarioId: actorId, entidad: 'RECONCILIACION',
+      entidadId: successful.reconciliacionId, accion: 'CREATE',
+    } });
+    expect(durableAudit.detalles).toMatchObject({ tipo: 'VENTA', ventaId });
+
+    const before = {
+      account: await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } }),
+      reconciliations: await prisma.reconciliacionVenta.findMany({
+        where: { tenantId, ventaId: rollbackVentaId }, orderBy: { reconciliacionId: 'asc' },
+      }),
+      entries: await prisma.asiento.findMany({
+        where: { tenantId }, orderBy: { asientoId: 'asc' },
+        include: { lineas: { orderBy: { lineaId: 'asc' } } },
+      }),
+      audit: await prisma.auditLog.findMany({
+        where: { usuarioId: actorId, entidad: 'RECONCILIACION' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+      cache: await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+    };
+    const suffix = crypto.randomUUID().replaceAll('-', '');
+    const functionName = `reconcile_sale_audit_${suffix}_fn`;
+    const triggerName = `reconcile_sale_audit_${suffix}`;
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION "${functionName}"() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."usuarioId" = '${actorId}' AND NEW."entidad" = 'RECONCILIACION'
+          AND NEW."accion" = 'CREATE' THEN
+          RAISE EXCEPTION 'physical reconcileSale AuditLog rejected' USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER "${triggerName}" BEFORE INSERT ON "AuditLog"
+      FOR EACH ROW EXECUTE FUNCTION "${functionName}"()`);
+    try {
+      await expect(AccountingReconciliationService.reconcileSale({
+        input: {
+          ventaId: rollbackVentaId, cuentaId, tipoPagoId, monto: 10, moneda: 'USD', tasaCambio: 24,
+          fechaReconciliacion: fecha,
+        },
+        user: { tenantId, userId: actorId, tenantRole: 'manager',
+          planFeatures: { contabilidad: true } } as never,
+      })).rejects.toThrow('physical reconcileSale AuditLog rejected');
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "AuditLog"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
+    }
+    expect(await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } }))
+      .toEqual(before.account);
+    expect(await prisma.reconciliacionVenta.findMany({
+      where: { tenantId, ventaId: rollbackVentaId }, orderBy: { reconciliacionId: 'asc' },
+    })).toEqual(before.reconciliations);
+    expect(await prisma.asiento.findMany({
+      where: { tenantId }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+    })).toEqual(before.entries);
+    expect(await prisma.auditLog.findMany({
+      where: { usuarioId: actorId, entidad: 'RECONCILIACION' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    })).toEqual(before.audit);
+    expect(await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }))
+      .toEqual(before.cache);
   });
 
   it('la Server Action de ventas delega al writer compartido con FX y autorización', async () => {
@@ -366,27 +460,37 @@ describe('reconciliarServicioAction — PostgreSQL aislado', { timeout: 60_000 }
       planFeatures: { contabilidad: true },
       permissions: new Set(['financiero.contabilidad.acceder']),
     } as Record<string, unknown>;
-    const result = await reconciliarVentaAction({
-      ventaId,
-      cuentaId,
-      tipoPagoId,
-      monto: 10,
-      moneda: 'USD',
-      tasaCambio: 24,
-      fechaReconciliacion: fecha,
-	}, actor as any);
+    serverActionState.user = actor;
+    let result: Awaited<ReturnType<typeof reconciliarVentaAction>>;
+    try {
+      result = await reconciliarVentaAction({
+        ventaId,
+        cuentaId,
+        tipoPagoId,
+        monto: 10,
+        moneda: 'USD',
+        tasaCambio: 24,
+        fechaReconciliacion: fecha,
+      });
+    } finally {
+      serverActionState.user = null;
+    }
 
-    expect(result.success).toBe(true)
-    if (!result.success) expect.unreachable('Se esperaba que la accion tuviera exito')
-    expect(result).toMatchObject({ tenantId, ventaId });
+    expect(result.success).toBe(true);
+    if (!result.success) expect.unreachable('Se esperaba que la acción tuviera éxito');
+    expect(result.data).toMatchObject({ tenantId, ventaId });
     const asiento = await prisma.asiento.findFirstOrThrow({
-      where: { tenantId, origenTipo: 'reconciliacion_venta', origenId: result.data.reconciliacionId },
+      where: {
+        tenantId,
+        origenTipo: 'reconciliacion_venta',
+        origenId: result.data.reconciliacionId,
+      },
       include: { lineas: true },
     });
     expect(asiento.createdBy).toBe('actor-action-cxc');
     expect(asiento.lineas).toHaveLength(2);
     expect(asiento.lineas.every((linea) =>
-      linea.fxEvidenceFingerprint === result.fxEvidenceFingerprint &&
+      linea.fxEvidenceFingerprint === result.data.fxEvidenceFingerprint &&
       linea.tasaCambio?.eq(new Prisma.Decimal('24')),
     )).toBe(true);
   });

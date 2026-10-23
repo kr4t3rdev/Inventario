@@ -9,6 +9,7 @@ Name | Type
 `ventaServicioId` | string
 `distribuciones` | [Array&lt;ServiceDistributionRequest&gt;](ServiceDistributionRequest.md)
 `fechaReconciliacion` | Date
+`idempotencyKey` | string
 
 ## Example
 
@@ -20,6 +21,7 @@ const example = {
   "ventaServicioId": null,
   "distribuciones": null,
   "fechaReconciliacion": null,
+  "idempotencyKey": null,
 } satisfies ServiceReconciliationRequest
 
 console.log(example)

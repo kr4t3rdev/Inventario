@@ -160,4 +160,3 @@ class AccountingAdvancesIdPutRequest {
   static const requiredKeys = <String>{
   };
 }
-

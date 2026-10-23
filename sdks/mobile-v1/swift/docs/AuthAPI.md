@@ -119,7 +119,7 @@ Valida las credenciales y entrega el usuario autenticado junto con los tokens de
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let loginRequest = LoginRequest(email: "email_example", password: "password_example") // LoginRequest | 
+let loginRequest = LoginRequest(email: "email_example", password: "password_example") // LoginRequest |
 let xTenantId = "xTenantId_example" // String | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
 
 // Iniciar sesión móvil
@@ -139,8 +139,8 @@ AuthAPI.mobilePostAuthLogin(loginRequest: loginRequest, xTenantId: xTenantId) { 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **loginRequest** | [**LoginRequest**](LoginRequest.md) |  | 
- **xTenantId** | **String** | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. | [optional] 
+ **loginRequest** | [**LoginRequest**](LoginRequest.md) |  |
+ **xTenantId** | **String** | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. | [optional]
 
 ### Return type
 
@@ -217,7 +217,7 @@ Valida el token de renovación y emite un nuevo par de tokens para continuar la 
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let refreshRequest = RefreshRequest(refreshToken: "refreshToken_example") // RefreshRequest | 
+let refreshRequest = RefreshRequest(refreshToken: "refreshToken_example") // RefreshRequest |
 
 // Renovar tokens de sesión
 AuthAPI.mobilePostAuthRefresh(refreshRequest: refreshRequest) { (response, error) in
@@ -236,7 +236,7 @@ AuthAPI.mobilePostAuthRefresh(refreshRequest: refreshRequest) { (response, error
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **refreshRequest** | [**RefreshRequest**](RefreshRequest.md) |  | 
+ **refreshRequest** | [**RefreshRequest**](RefreshRequest.md) |  |
 
 ### Return type
 
@@ -267,7 +267,7 @@ Crea un usuario inactivo pendiente de verificación de correo y envía el enlace
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let registerRequest = RegisterRequest(name: "name_example", email: "email_example", password: "password_example") // RegisterRequest | 
+let registerRequest = RegisterRequest(name: "name_example", email: "email_example", password: "password_example") // RegisterRequest |
 
 // Registrar cuenta móvil
 AuthAPI.mobilePostAuthRegister(registerRequest: registerRequest) { (response, error) in
@@ -286,7 +286,7 @@ AuthAPI.mobilePostAuthRegister(registerRequest: registerRequest) { (response, er
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **registerRequest** | [**RegisterRequest**](RegisterRequest.md) |  | 
+ **registerRequest** | [**RegisterRequest**](RegisterRequest.md) |  |
 
 ### Return type
 
@@ -317,7 +317,7 @@ Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía s
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let switchTenantRequest = SwitchTenantRequest(tenantId: "tenantId_example") // SwitchTenantRequest | 
+let switchTenantRequest = SwitchTenantRequest(tenantId: "tenantId_example") // SwitchTenantRequest |
 
 // Cambiar tenant activo
 AuthAPI.mobilePostAuthTenants(switchTenantRequest: switchTenantRequest) { (response, error) in
@@ -336,7 +336,7 @@ AuthAPI.mobilePostAuthTenants(switchTenantRequest: switchTenantRequest) { (respo
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **switchTenantRequest** | [**SwitchTenantRequest**](SwitchTenantRequest.md) |  | 
+ **switchTenantRequest** | [**SwitchTenantRequest**](SwitchTenantRequest.md) |  |
 
 ### Return type
 

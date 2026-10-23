@@ -240,4 +240,3 @@ class PatchSalesIdUpdateResponse {
   static const requiredKeys = <String>{
   };
 }
-

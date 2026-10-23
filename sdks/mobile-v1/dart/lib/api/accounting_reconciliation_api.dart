@@ -109,7 +109,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationExpensesResponse',) as GetAccountingReconciliationExpensesResponse;
-    
+
     }
     return null;
   }
@@ -234,7 +234,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationExpensesHistoryResponse',) as GetAccountingReconciliationExpensesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -359,7 +359,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationExpensesHistoryResponse',) as GetAccountingReconciliationExpensesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -457,7 +457,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationSalesResponse',) as GetAccountingReconciliationSalesResponse;
-    
+
     }
     return null;
   }
@@ -555,7 +555,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationSalesHistoryResponse',) as GetAccountingReconciliationSalesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -635,7 +635,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationSalesHistoryResponse',) as GetAccountingReconciliationSalesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -724,7 +724,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationServicesResponse',) as GetAccountingReconciliationServicesResponse;
-    
+
     }
     return null;
   }
@@ -804,7 +804,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationServicesHistoryResponse',) as GetAccountingReconciliationServicesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -884,7 +884,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationServicesHistoryResponse',) as GetAccountingReconciliationServicesHistoryResponse;
-    
+
     }
     return null;
   }
@@ -932,7 +932,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingReconciliationStatsResponse',) as GetAccountingReconciliationStatsResponse;
-    
+
     }
     return null;
   }
@@ -1034,7 +1034,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingReconciliationExpensesResponse',) as PostAccountingReconciliationExpensesResponse;
-    
+
     }
     return null;
   }
@@ -1136,7 +1136,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingReconciliationSalesResponse',) as PostAccountingReconciliationSalesResponse;
-    
+
     }
     return null;
   }
@@ -1229,7 +1229,7 @@ class AccountingReconciliationApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingReconciliationServicesResponse',) as PostAccountingReconciliationServicesResponse;
-    
+
     }
     return null;
   }

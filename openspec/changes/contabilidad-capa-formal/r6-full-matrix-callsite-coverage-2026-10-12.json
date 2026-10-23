@@ -1,0 +1,660 @@
+{
+  "sourceSnapshot": "5f60f6f6aff45e83d36270656af3c0b7609fd844",
+  "callsiteCount": 31,
+  "fileCount": 19,
+  "executed": 31,
+  "coverageMeaning": "Executed statement only; does not certify eight dimensions or every adapter/branch",
+  "calls": [
+    {
+      "id": 1,
+      "path": "src/app/api/contabilidad/deudas-cash/[id]/pagar/route.ts",
+      "line": 258,
+      "eventExpression": "buildEventoPagoDeuda({\n        reconciliacionId: reconciliacion.reconciliacionId,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda,\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: functionalCurrency,\n          tasaCambio: reconciliacion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,\n        },\n        fecha: reconciliacion.fechaReconciliacion,\n        descripcion: body.observaciones || `Pago de deuda ${deuda.id}`,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "257",
+          "count": 9,
+          "start": {
+            "line": 258,
+            "column": 0
+          },
+          "end": {
+            "line": 258,
+            "column": 84
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "path": "src/app/api/contabilidad/deudas-cash/route.ts",
+      "line": 362,
+      "eventExpression": "buildEventoDeudaRecibida({\n        deudaId: deudaCreada.id,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda || 'CUP',\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: functionalCurrency,\n          tasaCambio: reconciliacion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,\n        },\n        fecha: reconciliacion.fechaReconciliacion,\n        descripcion: body.observaciones || `Deuda recibida de proveedor ${body.proveedorId}`,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "361",
+          "count": 11,
+          "start": {
+            "line": 362,
+            "column": 0
+          },
+          "end": {
+            "line": 362,
+            "column": 88
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "path": "src/app/api/contabilidad/prestamos-cash/[id]/pagar/route.ts",
+      "line": 269,
+      "eventExpression": "buildEventoCobroPrestamo({\n        reconciliacionId: reconciliacion.reconciliacionId,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda || 'CUP',\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: functionalCurrency,\n          tasaCambio: reconciliacion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,\n        },\n        fecha: reconciliacion.fechaReconciliacion,\n        descripcion: body.observaciones || `Cobro de pr\u00e9stamo ${prestamo.id}`,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "268",
+          "count": 8,
+          "start": {
+            "line": 269,
+            "column": 0
+          },
+          "end": {
+            "line": 269,
+            "column": 88
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "path": "src/app/api/contabilidad/prestamos-cash/route.ts",
+      "line": 354,
+      "eventExpression": "buildEventoPrestamoOtorgado({\n        prestamoId: creado.id,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda || 'CUP',\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: functionalCurrency,\n          tasaCambio: reconciliacion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,\n        },\n        fecha: reconciliacion.fechaReconciliacion,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "353",
+          "count": 5,
+          "start": {
+            "line": 354,
+            "column": 0
+          },
+          "end": {
+            "line": 354,
+            "column": 91
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "path": "src/app/api/contabilidad/reconciliacion/ventas/route.ts",
+      "line": 884,
+      "eventExpression": "(venta.factura ? buildEventoCobroCxc : buildEventoVentaContado)({\n\t\t\t\t\t\t\treconciliacionId: reconciliacion.reconciliacionId,\n\t\t\t\t\t\t\tfecha: reconciliacion.fechaReconciliacion,\n\t\t\t\t\t\ttesoreria: {\n\t\t\t\t\t\t\tmonto: reconciliacion.monto,\n\t\t\t\t\t\t\tmoneda: reconciliacion.moneda || 'CUP',\n\t\t\t\t\t\t\t\tmontoFuncional: reconciliacion.montoConvertido ?? reconciliacion.monto,\n\t\t\t\t\t\t\t\ttasaCambio: reconciliacion.tasaCambio ?? null,\n\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\tfxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,\n\t\t\t\t\t\t\t\tdiferenciaFx: diferenciaFxCxc,\n\t\t\t\t\t\t\t\tmonedaFuncionalCodigo: reconciliacion.functionalCurrency ?? functionalCurrency,\n\t\t\t\t\t\t\t\ttipoCuenta: cuentaDestinoLocked?.tipoCuenta ?? null,\n\t\t\t\t\t\t\t\treferencia: referenciaTransferencia,\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\tdescripcion: validatedData.observaciones ?? undefined,\n\t\t\t\t\t\t})",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "883",
+          "count": 6,
+          "start": {
+            "line": 884,
+            "column": 0
+          },
+          "end": {
+            "line": 884,
+            "column": 22
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "path": "src/app/api/produccion/ordenes/[id]/completar/route.ts",
+      "line": 204,
+      "eventExpression": "buildEventoProduccionSalida({\n            ordenId: id,\n            costo: costoMateriales,\n            monedaFuncional: accountingPolicy.functionalCurrencyCode,\n            fecha: new Date(),\n            descripcion: `Salida de producci\u00f3n ${orden_updated.ordenProduccionId}`,\n          })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "203",
+          "count": 5,
+          "start": {
+            "line": 204,
+            "column": 0
+          },
+          "end": {
+            "line": 204,
+            "column": 25
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "path": "src/features/compras-productos/actions.ts",
+      "line": 446,
+      "eventExpression": "buildEventoCompraCredito({\n            compraId: compra.compraDocumentoId,\n            monto: total,\n            moneda: parsed.moneda,\n            montoFuncional: Number(compra.montoConvertido),\n            tasaCambio: compra.tasaCambio == null ? null : Number(compra.tasaCambio),\n            fxEvidenceFingerprint: compra.fxEvidenceFingerprint ?? null,\n            monedaFuncionalCodigo: compra.functionalCurrency ?? 'CUP',\n            descripcion: `Compra a cr\u00e9dito ${parsed.numeroFactura || compra.compraDocumentoId}`,\n            fecha: compra.fechaCompra,\n            referencia: parsed.numeroFactura || undefined,\n          })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "445",
+          "count": 4,
+          "start": {
+            "line": 446,
+            "column": 0
+          },
+          "end": {
+            "line": 446,
+            "column": 25
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "path": "src/features/compras-servicios/actions.ts",
+      "line": 155,
+      "eventExpression": "buildEventoGastoCredito({\n          compraId: compraServicio.compraServicioId,\n          origenTipo: 'compra_servicio',\n          valoracion: anticipoEventValuation(snapshot),\n          descripcion: `Servicio recibido ${compraServicio.compraServicioId}`,\n          fecha: fechaServicio,\n          referencia: parsed.numeroFactura || undefined,\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "154",
+          "count": 6,
+          "start": {
+            "line": 155,
+            "column": 0
+          },
+          "end": {
+            "line": 155,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 683,
+      "eventExpression": "buildEventoPrestamoOtorgado({\n        prestamoId: prestamoCreado.id,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda,\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',\n          tasaCambio: reconciliacion.tasaCambio,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? null,\n        },\n        tipoCuenta: cuentaOrigen.tipoCuenta,\n        fecha: fechaReconciliacion,\n        descripcion: input.observaciones || `Desembolso de pr\u00e9stamo cash para cliente ${input.clienteId}`,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "682",
+          "count": 31,
+          "start": {
+            "line": 683,
+            "column": 0
+          },
+          "end": {
+            "line": 683,
+            "column": 91
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 947,
+      "eventExpression": "buildEventoCobroPrestamo({\n        reconciliacionId: reconciliacion.reconciliacionId,\n        valoracion: {\n          monto: new Prisma.Decimal(input.monto),\n          moneda,\n          montoFuncional,\n          monedaFuncionalCodigo: evidenciaFx.functionalCurrency,\n          tasaCambio: conversion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: evidenciaFx.fxEvidenceFingerprint,\n        },\n        tipoCuenta: cuenta.tipoCuenta,\n        fecha: fechaReconciliacion,\n        descripcion: input.observaciones ?? undefined,\n        referencia: prestamo.id,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "946",
+          "count": 26,
+          "start": {
+            "line": 947,
+            "column": 0
+          },
+          "end": {
+            "line": 947,
+            "column": 88
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 1169,
+      "eventExpression": "buildEventoDeudaRecibida({\n        deudaId: deudaCreada.id,\n        valoracion: {\n          monto: reconciliacion.monto,\n          moneda: reconciliacion.moneda,\n          montoFuncional: reconciliacion.montoConvertido ?? undefined,\n          monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',\n          tasaCambio: reconciliacion.tasaCambio,\n          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? null,\n        },\n        tipoCuenta: cuentaOrigen.tipoCuenta,\n        fecha: fechaReconciliacion,\n        descripcion: input.observaciones || `Desembolso de deuda cash para proveedor ${input.proveedorId}`,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "1168",
+          "count": 27,
+          "start": {
+            "line": 1169,
+            "column": 0
+          },
+          "end": {
+            "line": 1169,
+            "column": 88
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 1415,
+      "eventExpression": "buildEventoPagoDeuda({\n        reconciliacionId: reconciliacion.reconciliacionId,\n        valoracion: {\n          monto: new Prisma.Decimal(input.monto),\n          moneda,\n          montoFuncional,\n          monedaFuncionalCodigo: evidenciaFx.functionalCurrency,\n          tasaCambio: conversion.tasaCambio ?? undefined,\n          fxEvidenceFingerprint: evidenciaFx.fxEvidenceFingerprint,\n        },\n        tipoCuenta: cuenta.tipoCuenta,\n        fecha: fechaReconciliacion,\n        descripcion: input.observaciones ?? undefined,\n        referencia: deuda.id,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "1414",
+          "count": 21,
+          "start": {
+            "line": 1415,
+            "column": 0
+          },
+          "end": {
+            "line": 1415,
+            "column": 84
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 597,
+      "eventExpression": "buildEventoTransferenciaBancaria({\n          transferenciaId: creada.transferenciaId,\n          montoOrigen: montoOrigenDecimal,\n          monedaOrigen,\n          montoDestino,\n          monedaDestino,\n          tasaCambio: conversion.tasaCambio,\n          montoFuncional: conversion.montoConvertido,\n          monedaFuncionalCodigo: creada.functionalCurrency ?? 'CUP',\n          fxEvidenceFingerprint: creada.fxEvidenceFingerprint ?? null,\n          fecha: creada.fechaTransferencia,\n          referencia: numeroComprobante,\n          descripcion: parsed.motivo,\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "596",
+          "count": 7,
+          "start": {
+            "line": 597,
+            "column": 0
+          },
+          "end": {
+            "line": 597,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 758,
+      "eventExpression": "buildEventoAjusteBancario({\n          ajusteId: ajuste.ajusteId,\n          tipo: parsed.tipo,\n          valoracion: {\n            monto: ajuste.monto,\n            moneda: ajuste.moneda,\n            montoFuncional: ajuste.montoConvertido ?? undefined,\n            monedaFuncionalCodigo: ajuste.functionalCurrency ?? 'CUP',\n            tasaCambio: ajuste.tasaCambio,\n            fxEvidenceFingerprint: ajuste.fxEvidenceFingerprint ?? null,\n          },\n          descripcion: parsed.descripcion ?? undefined,\n          fecha: ajuste.fechaOperacion ?? fechaOperacion,\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "757",
+          "count": 12,
+          "start": {
+            "line": 758,
+            "column": 0
+          },
+          "end": {
+            "line": 758,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 985,
+      "eventExpression": "isDebt\n          ? buildEventoDeudaRecibida({\n              deudaId: created.id,\n              valoracion: valoracionCapital,\n              tipoCuenta: cuenta.tipoCuenta,\n              fecha: created.fechaRegistro,\n              descripcion: parsed.descripcion ?? undefined,\n            })\n          : buildEventoInyeccionCapital({\n              inyeccionId: created.id,\n              valoracion: valoracionCapital,\n              tipoCuenta: cuenta.tipoCuenta,\n              fecha: created.fechaRegistro,\n              descripcion: parsed.descripcion ?? undefined,\n            })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "984",
+          "count": 17,
+          "start": {
+            "line": 985,
+            "column": 0
+          },
+          "end": {
+            "line": 985,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 1172,
+      "eventExpression": "buildEventoPagoDeudaCapital({\n          pagoDeudaId: created.id,\n          valoracion: {\n            monto: created.montoPagado,\n            moneda: created.moneda,\n            montoFuncional: created.montoConvertido ?? undefined,\n            monedaFuncionalCodigo: created.functionalCurrency ?? 'CUP',\n            tasaCambio: created.tasaCambio,\n            fxEvidenceFingerprint: created.fxEvidenceFingerprint ?? null,\n          },\n          tipoCuenta: cuenta.tipoCuenta,\n          fecha: created.fechaPago,\n          descripcion: parsed.observaciones ?? undefined,\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "1171",
+          "count": 4,
+          "start": {
+            "line": 1172,
+            "column": 0
+          },
+          "end": {
+            "line": 1172,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "path": "src/features/contabilidad/services/accounting-reconciliation-service.ts",
+      "line": 551,
+      "eventExpression": "(cuentaPorCobrar ? buildEventoCobroCxc : buildEventoVentaContado)({\n          reconciliacionId: reconciliacion.reconciliacionId,\n          descripcion: input.observaciones ?? undefined,\n          fecha: reconciliacion.fechaReconciliacion,\n          tesoreria: {\n            monto: reconciliacion.monto,\n            moneda: reconciliacion.moneda,\n            montoFuncional: reconciliacion.montoConvertido,\n            tasaCambio: reconciliacion.tasaCambio,\n            fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,\n            diferenciaFx,\n            tipoCuenta: cuentaBancaria.tipoCuenta,\n            monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',\n            referencia: `Venta ${input.ventaId}`,\n          },\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "550",
+          "count": 7,
+          "start": {
+            "line": 551,
+            "column": 0
+          },
+          "end": {
+            "line": 551,
+            "column": 61
+          }
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "path": "src/features/contabilidad/services/accounting-reconciliation-service.ts",
+      "line": 1306,
+      "eventExpression": "cxcActualizacion\n          ? {\n            ...evento,\n            auxiliares: {\n              ...(evento.auxiliares ?? {}),\n              diferenciaFx: cxcActualizacion.diferenciasFx[index],\n            },\n          }\n          : evento",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "1305",
+          "count": 16,
+          "start": {
+            "line": 1306,
+            "column": 0
+          },
+          "end": {
+            "line": 1306,
+            "column": 80
+          }
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "path": "src/features/mermas/actions.ts",
+      "line": 197,
+      "eventExpression": "buildEventoMerma({\n\t\t\t\t\tmermaId: creada.mermaId,\n\t\t\t\t\tcosto: costoTotal,\n\t\t\t\t\tmonedaFuncional: accountingPolicy.functionalCurrencyCode,\n\t\t\t\t\tdescripcion: parsed.motivo ?? undefined,\n\t\t\t\t\treferencia: parsed.productoId,\n\t\t\t\t})",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "196",
+          "count": 4,
+          "start": {
+            "line": 197,
+            "column": 0
+          },
+          "end": {
+            "line": 197,
+            "column": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "path": "src/features/productos/actions-restock.ts",
+      "line": 620,
+      "eventExpression": "buildEventoEgreso({\n\t\t\t\ttipo: 'COMPRA_CONTADO',\n\t\t\t\treconciliacionId: restockRec.reconciliacionId,\n\t\t\t\tdescripcion: `Restock pagado - ${productoNombre}`,\n\t\t\t\ttesoreria: {\n\t\t\t\t\tmonto: restockRec.monto,\n\t\t\t\t\tmoneda: restockRec.moneda,\n\t\t\t\t\tmontoFuncional: restockRec.montoConvertido ?? undefined,\n\t\t\t\t\tmonedaFuncionalCodigo: restockRec.functionalCurrency ?? 'CUP',\n\t\t\t\t\ttasaCambio: restockRec.tasaCambio,\n\t\t\t\t\tfxEvidenceFingerprint: restockRec.fxEvidenceFingerprint,\n\t\t\t\t\treferencia: gastoCompraId,\n\t\t\t\t},\n\t\t\t})",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "619",
+          "count": 4,
+          "start": {
+            "line": 620,
+            "column": 0
+          },
+          "end": {
+            "line": 620,
+            "column": 19
+          }
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "path": "src/features/venta-servicios/actions.ts",
+      "line": 701,
+      "eventExpression": "buildEventoVentaServicioCredito({\n              ventaServicioId: venta.ventaServicioId, fecha: venta.createdAt,\n              valoracion: { monto: venta.total, moneda: valoracion.evidence.originalCurrency,\n                montoFuncional: valoracion.montoConvertido,\n                monedaFuncionalCodigo: valoracion.evidence.functionalCurrency,\n                tasaCambio: valoracion.tasaCambio,\n                fxEvidenceFingerprint: valoracion.evidence.fxEvidenceFingerprint },\n            })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "700",
+          "count": 2,
+          "start": {
+            "line": 701,
+            "column": 0
+          },
+          "end": {
+            "line": 701,
+            "column": 65
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "path": "src/features/venta-servicios/actions.ts",
+      "line": 871,
+      "eventExpression": "buildEventoVentaServicioCredito({\n          ventaServicioId: ventaServicio.ventaServicioId,\n          valoracion: {\n            monto: ventaTotal,\n            moneda: valoracionCxC!.evidence.originalCurrency,\n            montoFuncional: valoracionCxC!.montoConvertido,\n            monedaFuncionalCodigo: valoracionCxC!.evidence.functionalCurrency,\n            tasaCambio: valoracionCxC!.tasaCambio,\n            fxEvidenceFingerprint: valoracionCxC!.evidence.fxEvidenceFingerprint,\n          },\n          fecha: ventaServicio.createdAt,\n        })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "870",
+          "count": 7,
+          "start": {
+            "line": 871,
+            "column": 0
+          },
+          "end": {
+            "line": 871,
+            "column": 23
+          }
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "path": "src/features/ventas/services/devolucion-venta-service.ts",
+      "line": 586,
+      "eventExpression": "buildEventoDevolucionVenta({\n            devolucionId: devolucion.devolucionId,\n            total: montos.total,\n            valoracion: modoFormal !== 'off' && valoracionDisponible && costoFifoCompleto\n              ? valoracionDevolucion\n              : null,\n            costoFifoRestaurado:\n              modoFormal !== 'off' && valoracionDisponible && costoFifoCompleto\n                ? costoFifoRestaurado\n                : undefined,\n            descripcion: `Devoluci\u00f3n de la venta ${actual.ventaId}`,\n          })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "585",
+          "count": 6,
+          "start": {
+            "line": 586,
+            "column": 0
+          },
+          "end": {
+            "line": 586,
+            "column": 25
+          }
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 641,
+      "eventExpression": "buildEventoVentaContado({\n      reconciliacionId: reconciliacion.reconciliacionId,\n      descripcion: params.observaciones || `Cobro total por contra pago`,\n      fecha: fechaReconciliacion,\n    tesoreria: {\n      monto: montoTotal,\n      moneda: cuenta.moneda,\n      montoFuncional: conversion.montoConvertido ?? montoTotal,\n      monedaFuncionalCodigo: conversion.fxEvidence?.functionalCurrency ?? null,\n      tasaCambio: conversion.tasaCambio,\n      fxEvidenceFingerprint: conversion.fxEvidence?.fxEvidenceFingerprint ?? null,\n      tipoCuenta: cuenta.tipoCuenta,\n      referencia: referenciaCobro,\n    },\n  })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "640",
+          "count": 8,
+          "start": {
+            "line": 641,
+            "column": 0
+          },
+          "end": {
+            "line": 641,
+            "column": 107
+          }
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 726,
+      "eventExpression": "buildEventoVentaContado({\n      reconciliacionId: reconciliacionContado.reconciliacionId,\n      descripcion: params.observaciones || 'Cobro parcial al contado de la venta a cr\u00e9dito',\n      fecha: fechaReconciliacionContado,\n      tesoreria: {\n        monto: cobradoHoy,\n        moneda: cuenta.moneda,\n        montoFuncional: conversionContado.montoConvertido ?? cobradoHoy,\n        monedaFuncionalCodigo: conversionContado.fxEvidence?.functionalCurrency ?? null,\n        tasaCambio: conversionContado.tasaCambio,\n        fxEvidenceFingerprint: conversionContado.fxEvidence?.fxEvidenceFingerprint ?? null,\n        tipoCuenta: cuenta.tipoCuenta,\n        referencia: params.facturaId,\n      },\n    })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "725",
+          "count": 3,
+          "start": {
+            "line": 726,
+            "column": 0
+          },
+          "end": {
+            "line": 726,
+            "column": 107
+          }
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 837,
+      "eventExpression": "buildEventoVentaCredito({\n    facturaId: params.facturaId,\n    monto: eventoValoracion?.monto ?? montoCredito,\n    ...(eventoValoracion ? { valoracion: eventoValoracion.valoracion } : {}),\n    descripcion: params.observaciones || `Venta a cr\u00e9dito (${params.facturaId.slice(-8)})`,\n    fecha: fechaOperacion,\n    referencia: params.facturaId,\n  })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "836",
+          "count": 15,
+          "start": {
+            "line": 837,
+            "column": 0
+          },
+          "end": {
+            "line": 837,
+            "column": 105
+          }
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "path": "src/features/ventas/services/venta-mutation-service.ts",
+      "line": 536,
+      "eventExpression": "buildEventoCostoVenta({\n                  ventaId: venta.ventaId,\n                  costoFifo: costoFifo.montoFuncional,\n                  monedaFuncional: costoFifo.monedaFuncional,\n                })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "535",
+          "count": 3,
+          "start": {
+            "line": 536,
+            "column": 0
+          },
+          "end": {
+            "line": 536,
+            "column": 31
+          }
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "path": "src/features/ventas/services/venta-mutation-service.ts",
+      "line": 554,
+      "eventExpression": "buildEventoCostoVenta({\n\t\t\t\t\t\tventaId: venta.ventaId,\n\t\t\t\t\t\tcostoFifo: null,\n\t\t\t\t\t\tmonedaFuncional: null,\n\t\t\t\t\t})",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "553",
+          "count": 3,
+          "start": {
+            "line": 554,
+            "column": 0
+          },
+          "end": {
+            "line": 554,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "path": "src/lib/services/anticipos-workflow.ts",
+      "line": 233,
+      "eventExpression": "buildEventoAnticipoCreado({\n      anticipoId: anticipo.anticipoId,\n      tipo: params.tipo,\n      valoracion,\n      tipoCuenta: cuenta.tipoCuenta,\n      descripcion: params.referenciaExterna ?? undefined,\n    })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "232",
+          "count": 24,
+          "start": {
+            "line": 233,
+            "column": 0
+          },
+          "end": {
+            "line": 233,
+            "column": 19
+          }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "path": "src/lib/services/anticipos-workflow.ts",
+      "line": 574,
+      "eventExpression": "buildEventoAnticipoAplicado({\n        movimientoId: movimiento.movimientoId,\n        tipo: anticipo.tipo === 'COBRO' ? 'CLIENTE' : 'PROVEEDOR',\n        valoracion: valoracionAplicada,\n        diferenciaFx,\n        referencia: context.documentoDestinoId,\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "573",
+          "count": 12,
+          "start": {
+            "line": 574,
+            "column": 0
+          },
+          "end": {
+            "line": 574,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "path": "src/lib/services/pago-gastos-workflow.ts",
+      "line": 666,
+      "eventExpression": "buildEventoEgreso({\n        tipo: resolverTipoEventoEgreso({\n          cuentaPorPagarId: params.cuentaPorPagarId,\n          pgId: params.pgId,\n          gastoCompraId: params.gastoCompraId,\n        }),\n        reconciliacionId: reconciliacion.reconciliacionId,\n        descripcion: reconciliacion.descripcion ?? undefined,\n        fecha: fechaOperacion,\n        tesoreria: {\n          monto: montoPago,\n          moneda: params.moneda,\n          montoFuncional: montoConvertido,\n          monedaFuncionalCodigo: fxEvidence.functionalCurrency,\n          tasaCambio: params.tasaCambio ?? null,\n          fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,\n          tipoCuenta: cuentaPago?.tipoCuenta ?? null,\n          referencia: params.referenciaId,\n        },\n      })",
+      "executed": true,
+      "statementMatches": [
+        {
+          "statement": "665",
+          "count": 104,
+          "start": {
+            "line": 666,
+            "column": 0
+          },
+          "end": {
+            "line": 666,
+            "column": 109
+          }
+        }
+      ]
+    }
+  ]
+}

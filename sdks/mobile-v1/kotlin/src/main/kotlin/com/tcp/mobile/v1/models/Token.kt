@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param token 
- * @param expiresInSeconds 
+ *
+ * @param token
+ * @param expiresInSeconds
  */
 
 
@@ -40,4 +40,3 @@ data class Token (
     override fun toString(): String = "Token(<redacted>)"
 
 }
-

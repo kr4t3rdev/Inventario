@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/cash-loans/{id}/payments.
  *
- * @param id 
- * @param clienteId 
- * @param montoCapital 
- * @param moneda 
- * @param tasaInteres 
- * @param fechaVencimiento 
- * @param estado 
- * @param cuentaBancariaId 
- * @param pagination 
+ * @param id
+ * @param clienteId
+ * @param montoCapital
+ * @param moneda
+ * @param tasaInteres
+ * @param fechaVencimiento
+ * @param estado
+ * @param cuentaBancariaId
+ * @param pagination
  */
 
 
@@ -67,4 +67,3 @@ data class PostAccountingCashLoansIdPaymentsResponse (
 
 
 }
-

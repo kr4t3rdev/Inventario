@@ -37,4 +37,3 @@ public struct PutAccountingPaymentTypesIdResponse: Codable, JSONEncodable, Hasha
         try container.encode(message, forKey: .message)
     }
 }
-

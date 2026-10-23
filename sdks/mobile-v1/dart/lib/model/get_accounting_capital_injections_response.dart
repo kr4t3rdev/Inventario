@@ -106,4 +106,3 @@ class GetAccountingCapitalInjectionsResponse {
     'items',
   };
 }
-

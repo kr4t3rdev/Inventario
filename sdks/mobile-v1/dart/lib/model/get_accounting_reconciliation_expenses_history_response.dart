@@ -122,4 +122,3 @@ class GetAccountingReconciliationExpensesHistoryResponse {
     'pagination',
   };
 }
-

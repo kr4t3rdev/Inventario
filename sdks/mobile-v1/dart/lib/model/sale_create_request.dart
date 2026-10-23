@@ -28,6 +28,7 @@ class SaleCreateRequest {
     this.tipoVencimiento,
     this.fechaVencimiento,
     this.cuentaBancariaId,
+    this.idempotencyKey,
   });
 
   String puntoDeVentaId;
@@ -61,6 +62,15 @@ class SaleCreateRequest {
 
   String? cuentaBancariaId;
 
+  /// Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  String? idempotencyKey;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is SaleCreateRequest &&
     other.puntoDeVentaId == puntoDeVentaId &&
@@ -77,7 +87,8 @@ class SaleCreateRequest {
     other.montoCredito == montoCredito &&
     other.tipoVencimiento == tipoVencimiento &&
     other.fechaVencimiento == fechaVencimiento &&
-    other.cuentaBancariaId == cuentaBancariaId;
+    other.cuentaBancariaId == cuentaBancariaId &&
+    other.idempotencyKey == idempotencyKey;
 
   @override
   int get hashCode =>
@@ -96,10 +107,11 @@ class SaleCreateRequest {
     (montoCredito == null ? 0 : montoCredito!.hashCode) +
     (tipoVencimiento == null ? 0 : tipoVencimiento!.hashCode) +
     (fechaVencimiento == null ? 0 : fechaVencimiento!.hashCode) +
-    (cuentaBancariaId == null ? 0 : cuentaBancariaId!.hashCode);
+    (cuentaBancariaId == null ? 0 : cuentaBancariaId!.hashCode) +
+    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
 
   @override
-  String toString() => 'SaleCreateRequest[puntoDeVentaId=$puntoDeVentaId, clienteId=$clienteId, empleadoId=$empleadoId, descuento=$descuento, observaciones=$observaciones, items=$items, turnoId=$turnoId, metodoPago=$metodoPago, montoEfectivo=$montoEfectivo, montoTarjeta=$montoTarjeta, montoTransferencia=$montoTransferencia, montoCredito=$montoCredito, tipoVencimiento=$tipoVencimiento, fechaVencimiento=$fechaVencimiento, cuentaBancariaId=$cuentaBancariaId]';
+  String toString() => 'SaleCreateRequest[puntoDeVentaId=$puntoDeVentaId, clienteId=$clienteId, empleadoId=$empleadoId, descuento=$descuento, observaciones=$observaciones, items=$items, turnoId=$turnoId, metodoPago=$metodoPago, montoEfectivo=$montoEfectivo, montoTarjeta=$montoTarjeta, montoTransferencia=$montoTransferencia, montoCredito=$montoCredito, tipoVencimiento=$tipoVencimiento, fechaVencimiento=$fechaVencimiento, cuentaBancariaId=$cuentaBancariaId, idempotencyKey=$idempotencyKey]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -166,6 +178,9 @@ class SaleCreateRequest {
     } else {
       json[r'cuentaBancariaId'] = null;
     }
+    if (this.idempotencyKey != null) {
+      json[r'idempotencyKey'] = this.idempotencyKey;
+    }
     return json;
   }
 
@@ -211,6 +226,7 @@ class SaleCreateRequest {
         tipoVencimiento: SaleCreateRequestTipoVencimientoEnum.fromJson(json[r'tipoVencimiento']),
         fechaVencimiento: mapValueOfType<String>(json, r'fechaVencimiento'),
         cuentaBancariaId: mapValueOfType<String>(json, r'cuentaBancariaId'),
+        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;
@@ -338,5 +354,3 @@ class SaleCreateRequestTipoVencimientoEnumTypeTransformer {
   /// Singleton [SaleCreateRequestTipoVencimientoEnumTypeTransformer] instance.
   static SaleCreateRequestTipoVencimientoEnumTypeTransformer? _instance;
 }
-
-

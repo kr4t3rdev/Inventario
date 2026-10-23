@@ -14,8 +14,8 @@ open class WarehousesAPI {
 
     /**
      Eliminar almacén
-     
-     - parameter id: (path) Identificador del almacén. 
+
+     - parameter id: (path) Identificador del almacén.
      - returns: AlmacenDeleteResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -30,8 +30,8 @@ open class WarehousesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del almacén. 
-     - returns: RequestBuilder<AlmacenDeleteResponse> 
+     - parameter id: (path) Identificador del almacén.
+     - returns: RequestBuilder<AlmacenDeleteResponse>
      */
     open class func mobileDeleteWarehousesByIdWithRequestBuilder(id: String) -> RequestBuilder<AlmacenDeleteResponse> {
         var localVariablePath = "/warehouses/{id}"
@@ -56,7 +56,7 @@ open class WarehousesAPI {
 
     /**
      Listar almacenes
-     
+
      - returns: AlmacenListResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -71,7 +71,7 @@ open class WarehousesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<AlmacenListResponse> 
+     - returns: RequestBuilder<AlmacenListResponse>
      */
     open class func mobileGetWarehousesWithRequestBuilder() -> RequestBuilder<AlmacenListResponse> {
         let localVariablePath = "/warehouses"
@@ -93,8 +93,8 @@ open class WarehousesAPI {
 
     /**
      Consultar almacén
-     
-     - parameter id: (path) Identificador del almacén. 
+
+     - parameter id: (path) Identificador del almacén.
      - returns: Almacen
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -109,8 +109,8 @@ open class WarehousesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del almacén. 
-     - returns: RequestBuilder<Almacen> 
+     - parameter id: (path) Identificador del almacén.
+     - returns: RequestBuilder<Almacen>
      */
     open class func mobileGetWarehousesByIdWithRequestBuilder(id: String) -> RequestBuilder<Almacen> {
         var localVariablePath = "/warehouses/{id}"
@@ -135,8 +135,8 @@ open class WarehousesAPI {
 
     /**
      Crear almacén
-     
-     - parameter almacenCreateRequest: (body)  
+
+     - parameter almacenCreateRequest: (body)
      - returns: Almacen
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -151,8 +151,8 @@ open class WarehousesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter almacenCreateRequest: (body)  
-     - returns: RequestBuilder<Almacen> 
+     - parameter almacenCreateRequest: (body)
+     - returns: RequestBuilder<Almacen>
      */
     open class func mobilePostWarehousesCreateWithRequestBuilder(almacenCreateRequest: AlmacenCreateRequest) -> RequestBuilder<Almacen> {
         let localVariablePath = "/warehouses/create"
@@ -174,9 +174,9 @@ open class WarehousesAPI {
 
     /**
      Editar almacén
-     
-     - parameter id: (path) Identificador del almacén. 
-     - parameter almacenUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador del almacén.
+     - parameter almacenUpdateRequest: (body)
      - returns: Almacen
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -191,9 +191,9 @@ open class WarehousesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del almacén. 
-     - parameter almacenUpdateRequest: (body)  
-     - returns: RequestBuilder<Almacen> 
+     - parameter id: (path) Identificador del almacén.
+     - parameter almacenUpdateRequest: (body)
+     - returns: RequestBuilder<Almacen>
      */
     open class func mobilePutWarehousesByIdWithRequestBuilder(id: String, almacenUpdateRequest: AlmacenUpdateRequest) -> RequestBuilder<Almacen> {
         var localVariablePath = "/warehouses/{id}"

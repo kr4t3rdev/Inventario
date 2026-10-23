@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/advances/{id}/revertir.
  *
- * @param result 
+ * @param result
  */
 
 
@@ -35,4 +35,3 @@ data class PostAccountingAdvancesIdRevertirResponse (
 
 
 }
-

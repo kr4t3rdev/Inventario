@@ -63,6 +63,63 @@ describe('/api/ventas/punto-venta/ventas', () => {
     expect(revalidatePath).toHaveBeenCalledWith('/busy/sales');
   });
 
+  it('forwards body idempotency keys to the receipt service', async () => {
+    vi.mocked(VentaMutationService.create).mockResolvedValue({ ventaId: 'v-1' } as never);
+    const request = new NextRequest('http://localhost/api/ventas/punto-venta/ventas', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ idempotencyKey: ' browser-key ', puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    await POST(request, {});
+
+    expect(VentaMutationService.create).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ idempotencyKey: 'browser-key' }),
+    }));
+  });
+
+  it('accepts a header-only key', async () => {
+    vi.mocked(VentaMutationService.create).mockResolvedValue({ ventaId: 'v-1' } as never);
+    const request = new NextRequest('http://localhost/api/ventas/punto-venta/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': 'header-key' },
+      body: JSON.stringify({ puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    await POST(request, {});
+
+    expect(VentaMutationService.create).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ idempotencyKey: 'header-key' }),
+    }));
+  });
+
+  it('gives the body key precedence over the header', async () => {
+    vi.mocked(VentaMutationService.create).mockResolvedValue({ ventaId: 'v-1' } as never);
+    const request = new NextRequest('http://localhost/api/ventas/punto-venta/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': 'header-key' },
+      body: JSON.stringify({ idempotencyKey: 'body-key', puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    await POST(request, {});
+
+    expect(VentaMutationService.create).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ idempotencyKey: 'body-key' }),
+    }));
+  });
+
+  it('rejects an invalid body key instead of masking it with a valid header', async () => {
+    const request = new NextRequest('http://localhost/api/ventas/punto-venta/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': 'header-key' },
+      body: JSON.stringify({ idempotencyKey: '   ', puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    const response = await POST(request, {});
+
+    expect(response.status).toBe(400);
+    expect(VentaMutationService.create).not.toHaveBeenCalled();
+  });
+
   it('maps stock errors to 400 for recoverable POS failures', async () => {
     vi.mocked(VentaMutationService.create).mockRejectedValue(
       new ActionError('Stock insuficiente', 'STOCK_INSUFICIENTE'),
@@ -82,5 +139,19 @@ describe('/api/ventas/punto-venta/ventas', () => {
 
     expect(response.status).toBe(400);
     expect(data).toMatchObject({ error: 'Stock insuficiente', code: 'STOCK_INSUFICIENTE' });
+  });
+
+  it('maps reused keys with different payloads to 409', async () => {
+    vi.mocked(VentaMutationService.create).mockRejectedValue(
+      new ActionError('La clave ya se utilizó con otro contenido.', 'IDEMPOTENCY_KEY_REUSED'),
+    );
+    const request = new NextRequest('http://localhost/api/ventas/punto-venta/ventas', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ puntoDeVentaId: 'pv-1', items: [] }),
+    });
+
+    const response = await POST(request, {});
+
+    expect(response.status).toBe(409);
   });
 });

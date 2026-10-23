@@ -183,4 +183,3 @@ class SaleItem {
   static const requiredKeys = <String>{
   };
 }
-

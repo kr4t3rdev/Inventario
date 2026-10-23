@@ -123,11 +123,12 @@ export async function fetchAnticiposCobroDisponibles(
 export async function createVentaPos(
   input: CreateVentaInput,
   clearState?: () => void,
+  idempotencyKey?: string,
 ): Promise<ClientAuthFetchResult<unknown>> {
   return fetchClientAuthJson<unknown>('/api/ventas/punto-venta/ventas', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, ...(idempotencyKey ? { idempotencyKey } : {}) }),
     clearState,
     defaultErrorMessage: 'Ha ocurrido un error al procesar la venta. Intente nuevamente.',
   });

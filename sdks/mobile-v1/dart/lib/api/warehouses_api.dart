@@ -70,7 +70,7 @@ class WarehousesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'AlmacenDeleteResponse',) as AlmacenDeleteResponse;
-    
+
     }
     return null;
   }
@@ -118,7 +118,7 @@ class WarehousesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'AlmacenListResponse',) as AlmacenListResponse;
-    
+
     }
     return null;
   }
@@ -177,7 +177,7 @@ class WarehousesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Almacen',) as Almacen;
-    
+
     }
     return null;
   }
@@ -233,7 +233,7 @@ class WarehousesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Almacen',) as Almacen;
-    
+
     }
     return null;
   }
@@ -296,7 +296,7 @@ class WarehousesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Almacen',) as Almacen;
-    
+
     }
     return null;
   }

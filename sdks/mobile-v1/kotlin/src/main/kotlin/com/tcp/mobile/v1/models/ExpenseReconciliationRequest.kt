@@ -20,25 +20,25 @@ import com.tcp.mobile.v1.models.ExpenseDistributionRequest
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tipoGasto 
- * @param monto 
- * @param descripcion 
- * @param pgId 
- * @param gastosDEId 
- * @param gastoCompraId 
- * @param referenciaId 
- * @param cuentaId 
- * @param tipoPagoId 
- * @param moneda 
- * @param tasaCambio 
- * @param periodo 
- * @param observaciones 
- * @param estado 
- * @param cuentaPorPagarId 
- * @param numeroTransaccion 
- * @param distribucion 
+ *
+ * @param tipoGasto
+ * @param monto
+ * @param descripcion
+ * @param pgId
+ * @param gastosDEId
+ * @param gastoCompraId
+ * @param referenciaId
+ * @param cuentaId
+ * @param tipoPagoId
+ * @param moneda
+ * @param tasaCambio
+ * @param periodo
+ * @param observaciones
+ * @param estado
+ * @param cuentaPorPagarId
+ * @param numeroTransaccion
+ * @param distribucion
  */
 
 
@@ -98,7 +98,7 @@ data class ExpenseReconciliationRequest (
 ) {
 
     /**
-     * 
+     *
      *
      * Values: salario,gastoDE,compra
      */
@@ -108,7 +108,7 @@ data class ExpenseReconciliationRequest (
         @JsonProperty(value = "compra") compra("compra");
     }
     /**
-     * 
+     *
      *
      * Values: PENDIENTE,PAGADA,PARCIAL
      */
@@ -119,4 +119,3 @@ data class ExpenseReconciliationRequest (
     }
 
 }
-

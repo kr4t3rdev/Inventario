@@ -19,16 +19,16 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param total 
- * @param montoTotal 
- * @param totalIngresos 
- * @param totalEgresos 
- * @param flujoNeto 
- * @param montoConvertidoTotal 
- * @param saldoPendiente 
- * @param cantidad 
+ *
+ * @param total
+ * @param montoTotal
+ * @param totalIngresos
+ * @param totalEgresos
+ * @param flujoNeto
+ * @param montoConvertidoTotal
+ * @param saldoPendiente
+ * @param cantidad
  */
 
 
@@ -62,4 +62,3 @@ data class ReportTotals (
 
 
 }
-

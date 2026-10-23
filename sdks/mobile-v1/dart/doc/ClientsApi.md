@@ -48,7 +48,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del cliente. | 
+ **id** | **String**| Identificador del cliente. |
 
 ### Return type
 
@@ -142,7 +142,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del cliente. | 
+ **id** | **String**| Identificador del cliente. |
 
 ### Return type
 
@@ -177,7 +177,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = ClientsApi();
-final clienteCreateRequest = ClienteCreateRequest(); // ClienteCreateRequest | 
+final clienteCreateRequest = ClienteCreateRequest(); // ClienteCreateRequest |
 
 try {
     final result = api_instance.mobilePostClientsCreate(clienteCreateRequest);
@@ -191,7 +191,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteCreateRequest** | [**ClienteCreateRequest**](ClienteCreateRequest.md)|  | 
+ **clienteCreateRequest** | [**ClienteCreateRequest**](ClienteCreateRequest.md)|  |
 
 ### Return type
 
@@ -227,7 +227,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = ClientsApi();
 final id = id_example; // String | Identificador del cliente.
-final clienteUpdateRequest = ClienteUpdateRequest(); // ClienteUpdateRequest | 
+final clienteUpdateRequest = ClienteUpdateRequest(); // ClienteUpdateRequest |
 
 try {
     final result = api_instance.mobilePutClientsById(id, clienteUpdateRequest);
@@ -241,8 +241,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador del cliente. | 
- **clienteUpdateRequest** | [**ClienteUpdateRequest**](ClienteUpdateRequest.md)|  | 
+ **id** | **String**| Identificador del cliente. |
+ **clienteUpdateRequest** | [**ClienteUpdateRequest**](ClienteUpdateRequest.md)|  |
 
 ### Return type
 

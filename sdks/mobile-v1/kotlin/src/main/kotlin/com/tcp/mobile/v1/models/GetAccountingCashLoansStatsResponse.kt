@@ -21,10 +21,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/cash-loans/stats.
  *
- * @param total 
- * @param pendiente 
- * @param pagado 
- * @param vencido 
+ * @param total
+ * @param pendiente
+ * @param pagado
+ * @param vencido
  */
 
 
@@ -46,4 +46,3 @@ data class GetAccountingCashLoansStatsResponse (
 
 
 }
-

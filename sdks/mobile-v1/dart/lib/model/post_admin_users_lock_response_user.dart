@@ -129,4 +129,3 @@ class PostAdminUsersLockResponseUser {
     'userId',
   };
 }
-

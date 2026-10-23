@@ -38,4 +38,3 @@ public struct GetAccountingBankAccountsIdHistoryResponse: Codable, JSONEncodable
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

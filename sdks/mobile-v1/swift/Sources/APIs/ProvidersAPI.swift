@@ -14,8 +14,8 @@ open class ProvidersAPI {
 
     /**
      Eliminar proveedor
-     
-     - parameter id: (path) Identificador del proveedor. 
+
+     - parameter id: (path) Identificador del proveedor.
      - returns: ProveedorDeleteResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -30,8 +30,8 @@ open class ProvidersAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del proveedor. 
-     - returns: RequestBuilder<ProveedorDeleteResponse> 
+     - parameter id: (path) Identificador del proveedor.
+     - returns: RequestBuilder<ProveedorDeleteResponse>
      */
     open class func mobileDeleteProvidersByIdWithRequestBuilder(id: String) -> RequestBuilder<ProveedorDeleteResponse> {
         var localVariablePath = "/providers/{id}"
@@ -56,7 +56,7 @@ open class ProvidersAPI {
 
     /**
      Listar proveedores
-     
+
      - returns: ProveedorListResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -71,7 +71,7 @@ open class ProvidersAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<ProveedorListResponse> 
+     - returns: RequestBuilder<ProveedorListResponse>
      */
     open class func mobileGetProvidersWithRequestBuilder() -> RequestBuilder<ProveedorListResponse> {
         let localVariablePath = "/providers"
@@ -93,8 +93,8 @@ open class ProvidersAPI {
 
     /**
      Consultar proveedor
-     
-     - parameter id: (path) Identificador del proveedor. 
+
+     - parameter id: (path) Identificador del proveedor.
      - returns: Proveedor
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -109,8 +109,8 @@ open class ProvidersAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del proveedor. 
-     - returns: RequestBuilder<Proveedor> 
+     - parameter id: (path) Identificador del proveedor.
+     - returns: RequestBuilder<Proveedor>
      */
     open class func mobileGetProvidersByIdWithRequestBuilder(id: String) -> RequestBuilder<Proveedor> {
         var localVariablePath = "/providers/{id}"
@@ -135,8 +135,8 @@ open class ProvidersAPI {
 
     /**
      Crear proveedor
-     
-     - parameter proveedorCreateRequest: (body)  
+
+     - parameter proveedorCreateRequest: (body)
      - returns: Proveedor
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -151,8 +151,8 @@ open class ProvidersAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter proveedorCreateRequest: (body)  
-     - returns: RequestBuilder<Proveedor> 
+     - parameter proveedorCreateRequest: (body)
+     - returns: RequestBuilder<Proveedor>
      */
     open class func mobilePostProvidersCreateWithRequestBuilder(proveedorCreateRequest: ProveedorCreateRequest) -> RequestBuilder<Proveedor> {
         let localVariablePath = "/providers/create"
@@ -174,9 +174,9 @@ open class ProvidersAPI {
 
     /**
      Editar proveedor
-     
-     - parameter id: (path) Identificador del proveedor. 
-     - parameter proveedorUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador del proveedor.
+     - parameter proveedorUpdateRequest: (body)
      - returns: Proveedor
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -191,9 +191,9 @@ open class ProvidersAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del proveedor. 
-     - parameter proveedorUpdateRequest: (body)  
-     - returns: RequestBuilder<Proveedor> 
+     - parameter id: (path) Identificador del proveedor.
+     - parameter proveedorUpdateRequest: (body)
+     - returns: RequestBuilder<Proveedor>
      */
     open class func mobilePutProvidersByIdWithRequestBuilder(id: String, proveedorUpdateRequest: ProveedorUpdateRequest) -> RequestBuilder<Proveedor> {
         var localVariablePath = "/providers/{id}"

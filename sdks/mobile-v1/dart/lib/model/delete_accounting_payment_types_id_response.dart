@@ -132,4 +132,3 @@ class DeleteAccountingPaymentTypesIdResponse {
   static const requiredKeys = <String>{
   };
 }
-

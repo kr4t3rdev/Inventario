@@ -31,32 +31,10 @@ import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-data
 
 assertDisposableDatabase(process.env);
 
-vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: {
-    log: async () => undefined,
-    logStrict: async (params: {
-      accion: string;
-      entidad: string;
-      entidadId: string;
-      usuarioId: string;
-      detalles?: Record<string, unknown>;
-    }, client: { auditLog: { create: (args: unknown) => Promise<unknown> } }) =>
-      client.auditLog.create({
-        data: {
-          accion: params.accion,
-          entidad: params.entidad,
-          entidadId: params.entidadId,
-          usuarioId: params.usuarioId,
-          detalles: params.detalles ?? {},
-          ip: 'internal',
-          userAgent: 'system',
-        },
-      }),
-  },
-}));
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
 
 const prefix = `cta-ant-fx-${crypto.randomUUID()}`;
+const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 let tenantId = '';
 let userId = '';
 let userIdDependente = '';
@@ -162,7 +140,7 @@ describe('filas 25/26 — FX y permiso de anticipos', { timeout: 90_000 }, () =>
     tasaId = (await prisma.tasaCambio.create({
       data: {
         monedaOrigenId: 'USD', monedaDestino: 'CUP', tasa: 24,
-        fechaVigencia: new Date('2026-01-01T00:00:00Z'),
+        fechaVigencia: new Date(),
       },
     })).tasaId;
     await prisma.$transaction(async (tx) => {
@@ -178,7 +156,8 @@ describe('filas 25/26 — FX y permiso de anticipos', { timeout: 90_000 }, () =>
   });
 
   afterAll(async () => {
-    delete process.env.CONTABILIDAD_FORMAL_MODE;
+    if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+    else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
     if (!tenantId) return;
     const anticipoIds = (await prisma.anticipo.findMany({
       where: { tenantId },
@@ -242,6 +221,73 @@ describe('filas 25/26 — FX y permiso de anticipos', { timeout: 90_000 }, () =>
     expect(asientos).toHaveLength(1);
     expect(asientos[0].lineas.some((linea) =>
       linea.tasaCambio?.toString() === '24' && linea.fxEvidenceFingerprint)).toBe(true);
+    await expect(prisma.auditLog.findFirst({ where: {
+      usuarioId: userId, entidad: 'ANTICIPO', entidadId: anticipo.anticipoId, accion: 'CREATE',
+    } })).resolves.toMatchObject({ entidadId: anticipo.anticipoId });
+  });
+
+  it('revierte anticipo, tesorería, asiento y snapshot al fallar el AuditLog físico', async () => {
+    const successful = await prisma.$transaction((tx) => createAnticipo(tx, {
+      tenantId, tipo: 'COBRO', contratoId, clienteId, monto: 15, moneda: 'USD',
+      cuentaOrigenId: cuentaId, tipoPagoOrigenId: tipoPagoId, usuarioId: userId,
+    }));
+    const successfulAudit = await prisma.auditLog.findFirstOrThrow({ where: {
+      usuarioId: userId, entidad: 'ANTICIPO', entidadId: successful.anticipoId, accion: 'CREATE',
+    } });
+    expect(successfulAudit.detalles).toMatchObject({ moneda: 'USD', montoFuncional: '360' });
+
+    const before = {
+      anticipos: await prisma.anticipo.findMany({ where: { tenantId }, orderBy: { anticipoId: 'asc' } }),
+      movimientos: await prisma.anticipoMovimiento.findMany({
+        where: { anticipo: { tenantId } }, orderBy: { movimientoId: 'asc' },
+      }),
+      account: await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } }),
+      entries: await prisma.asiento.findMany({
+        where: { tenantId }, orderBy: { asientoId: 'asc' },
+        include: { lineas: { orderBy: { lineaId: 'asc' } } },
+      }),
+      audit: await prisma.auditLog.findMany({
+        where: { usuarioId: userId, entidad: 'ANTICIPO' }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+      cache: await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+    };
+    const suffix = crypto.randomUUID().replaceAll('-', '');
+    const trigger = `anticipo_audit_${suffix}`;
+    const fn = `${trigger}_fn`;
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION "${fn}"() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."usuarioId" = '${userId}' AND NEW."entidad" = 'ANTICIPO'
+          AND NEW."accion" = 'CREATE' THEN
+          RAISE EXCEPTION 'physical anticipo AuditLog rejected' USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER "${trigger}" BEFORE INSERT ON "AuditLog"
+      FOR EACH ROW EXECUTE FUNCTION "${fn}"()`);
+    try {
+      await expect(prisma.$transaction((tx) => createAnticipo(tx, {
+        tenantId, tipo: 'COBRO', contratoId, clienteId, monto: 20, moneda: 'USD',
+        cuentaOrigenId: cuentaId, tipoPagoOrigenId: tipoPagoId, usuarioId: userId,
+      }))).rejects.toThrow('physical anticipo AuditLog rejected');
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "AuditLog"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"()`);
+    }
+    expect(await prisma.anticipo.findMany({ where: { tenantId }, orderBy: { anticipoId: 'asc' } }))
+      .toEqual(before.anticipos);
+    expect(await prisma.anticipoMovimiento.findMany({
+      where: { anticipo: { tenantId } }, orderBy: { movimientoId: 'asc' },
+    })).toEqual(before.movimientos);
+    expect(await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } })).toEqual(before.account);
+    expect(await prisma.asiento.findMany({
+      where: { tenantId }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+    })).toEqual(before.entries);
+    expect(await prisma.auditLog.findMany({
+      where: { usuarioId: userId, entidad: 'ANTICIPO' }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    })).toEqual(before.audit);
+    expect(await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }))
+      .toEqual(before.cache);
   });
 
   it('valoración aplicada del anticipo extranjero lleva FX al evento', async () => {

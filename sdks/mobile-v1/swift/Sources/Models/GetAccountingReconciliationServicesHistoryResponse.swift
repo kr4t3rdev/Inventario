@@ -38,4 +38,3 @@ public struct GetAccountingReconciliationServicesHistoryResponse: Codable, JSONE
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

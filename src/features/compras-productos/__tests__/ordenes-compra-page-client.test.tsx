@@ -136,11 +136,19 @@ describe('OrdenesCompraPageClient', () => {
     fireEvent.change(screen.getByLabelText(/cantidad a recibir/i), { target: { value: '4' } });
     fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
     await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(1));
-    const firstKey = vi.mocked(registrarRecepcionAction).mock.calls[0]![0].claveIdempotencia;
+    const firstCall = vi.mocked(registrarRecepcionAction).mock.calls.at(0);
+    expect(firstCall).toBeDefined();
+    if (!firstCall) throw new Error('Expected the first reception call');
+    const firstKey = firstCall[0]?.claveIdempotencia;
+    expect(firstKey).toEqual(expect.any(String));
 
     fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
     await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(registrarRecepcionAction).mock.calls[1]![0].claveIdempotencia).toBe(firstKey);
+    const retryCall = vi.mocked(registrarRecepcionAction).mock.calls.at(1);
+    expect(retryCall).toBeDefined();
+    if (!retryCall) throw new Error('Expected the retry reception call');
+    const retryKey = retryCall[0]?.claveIdempotencia;
+    expect(retryKey).toBe(firstKey);
   });
 
   it('oculta crear y cancelar sin permiso de órdenes y recibir sin permiso de recepciones', () => {

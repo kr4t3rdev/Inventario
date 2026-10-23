@@ -62,6 +62,7 @@ const mockUser: AuthenticatedUser = {
 };
 
 const mockVendorRow = {
+  tenantId: 'tenant-1',
   vendorId: 'ven-1',
   nombre: 'Proveedor Test',
   vendorCode: '01',

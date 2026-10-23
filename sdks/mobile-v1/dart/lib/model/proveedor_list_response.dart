@@ -106,4 +106,3 @@ class ProveedorListResponse {
     'items',
   };
 }
-

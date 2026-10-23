@@ -45,4 +45,3 @@ public struct Currency: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

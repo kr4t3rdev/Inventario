@@ -38,4 +38,3 @@ public struct AdminUserLite: Codable, JSONEncodable, Hashable {
         try container.encode(email, forKey: .email)
     }
 }
-

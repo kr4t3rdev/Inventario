@@ -200,4 +200,3 @@ class AdvanceWorkflowResult {
   static const requiredKeys = <String>{
   };
 }
-

@@ -122,4 +122,3 @@ class GetAccountingReportsOverdueInvoicesResponse {
   static const requiredKeys = <String>{
   };
 }
-

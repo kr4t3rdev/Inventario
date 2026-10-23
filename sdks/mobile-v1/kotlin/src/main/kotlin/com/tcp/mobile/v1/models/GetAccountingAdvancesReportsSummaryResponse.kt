@@ -25,10 +25,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/advances/reports/summary.
  *
- * @param items 
- * @param totales 
- * @param estadisticas 
- * @param pagination 
+ * @param items
+ * @param totales
+ * @param estadisticas
+ * @param pagination
  */
 
 
@@ -50,4 +50,3 @@ data class GetAccountingAdvancesReportsSummaryResponse (
 
 
 }
-

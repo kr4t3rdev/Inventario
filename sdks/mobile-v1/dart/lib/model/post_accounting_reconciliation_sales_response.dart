@@ -237,4 +237,3 @@ class PostAccountingReconciliationSalesResponse {
   static const requiredKeys = <String>{
   };
 }
-

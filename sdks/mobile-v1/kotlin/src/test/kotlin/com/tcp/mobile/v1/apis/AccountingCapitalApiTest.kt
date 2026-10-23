@@ -42,9 +42,10 @@ class AccountingCapitalApiTest : ShouldSpec() {
         // to test mobilePostAccountingCapitalInjections
         should("test mobilePostAccountingCapitalInjections") {
             // uncomment below to test mobilePostAccountingCapitalInjections
-            //val capitalInjectionCreateRequest : CapitalInjectionCreateRequest =  // CapitalInjectionCreateRequest | 
+            //val capitalInjectionCreateRequest : CapitalInjectionCreateRequest =  // CapitalInjectionCreateRequest |
+            //val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia.
             //val tipo : kotlin.String = tipo_example // kotlin.String | Tipo de registro solicitado.
-            //val result : PostAccountingCapitalInjectionsResponse = apiInstance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo)
+            //val result : PostAccountingCapitalInjectionsResponse = apiInstance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo)
             //result shouldBe ("TODO")
         }
 
@@ -52,7 +53,7 @@ class AccountingCapitalApiTest : ShouldSpec() {
         should("test mobilePostAccountingCapitalInjectionsByIdPayments") {
             // uncomment below to test mobilePostAccountingCapitalInjectionsByIdPayments
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val capitalPaymentRequest : CapitalPaymentRequest =  // CapitalPaymentRequest | 
+            //val capitalPaymentRequest : CapitalPaymentRequest =  // CapitalPaymentRequest |
             //val result : PostAccountingCapitalInjectionsIdPaymentsResponse = apiInstance.mobilePostAccountingCapitalInjectionsByIdPayments(id, capitalPaymentRequest)
             //result shouldBe ("TODO")
         }

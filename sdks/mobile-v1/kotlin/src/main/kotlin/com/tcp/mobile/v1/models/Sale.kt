@@ -20,18 +20,18 @@ import com.tcp.mobile.v1.models.SaleItem
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param ventaId 
- * @param puntoDeVentaId 
- * @param clienteId 
- * @param empleadoId 
- * @param subtotal 
- * @param descuento 
- * @param total 
- * @param observaciones 
- * @param items 
- * @param createdAt 
+ *
+ * @param ventaId
+ * @param puntoDeVentaId
+ * @param clienteId
+ * @param empleadoId
+ * @param subtotal
+ * @param descuento
+ * @param total
+ * @param observaciones
+ * @param items
+ * @param createdAt
  */
 
 
@@ -71,4 +71,3 @@ data class Sale (
 
 
 }
-

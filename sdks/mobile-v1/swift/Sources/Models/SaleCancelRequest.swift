@@ -29,4 +29,3 @@ public struct SaleCancelRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(motivo, forKey: .motivo)
     }
 }
-

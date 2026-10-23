@@ -241,4 +241,3 @@ class PostAccountingCashLoansIdPaymentsResponse {
   static const requiredKeys = <String>{
   };
 }
-

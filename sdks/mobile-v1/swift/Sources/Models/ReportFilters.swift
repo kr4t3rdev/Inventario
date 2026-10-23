@@ -49,4 +49,3 @@ public struct ReportFilters: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(busqueda, forKey: .busqueda)
     }
 }
-

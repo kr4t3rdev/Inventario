@@ -37,4 +37,3 @@ public struct ReconciliationModules: Codable, JSONEncodable, Hashable {
         try container.encode(gastos, forKey: .gastos)
     }
 }
-

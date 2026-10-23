@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/bank-transfers/validate.
  *
- * @param saldoSuficiente 
- * @param advertencias 
+ * @param saldoSuficiente
+ * @param advertencias
  */
 
 
@@ -38,4 +38,3 @@ data class PostAccountingBankTransfersValidateResponse (
 
 
 }
-

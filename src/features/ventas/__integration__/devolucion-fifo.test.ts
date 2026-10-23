@@ -17,7 +17,10 @@ import { DevolucionVentaService } from '@/features/ventas/services/devolucion-ve
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const stamp = Date.now();
-const nuevosIds: { tenantIds: string[] } = { tenantIds: [] };
+const nuevosIds: { tenantIds: string[]; auditActorIds: string[] } = {
+  tenantIds: [],
+  auditActorIds: [],
+};
 
 /**
  * @description Crea el escenario: compra de 3 unidades a 100 y otra de 2 a 300;
@@ -34,6 +37,7 @@ async function crearEscenario() {
   const user = await prisma.user.create({
     data: { name: 'Tester DNC', email: `dnc-${stamp}-${scenarioId}@test.local`, password: 'x' },
   });
+  nuevosIds.auditActorIds.push(user.userId);
   const categoria = await prisma.categoria.create({
     data: { nombre: `Cat ${stamp}`, tenantId },
   });
@@ -182,7 +186,12 @@ async function crearEscenario() {
 
 describe('devolución FIFO con NC e idempotencia (integración real)', { timeout: 60_000 }, () => {
   afterAll(async () => {
-    // Limpieza opcional: la base es descartable; se deja el rastro para inspección.
+    if (nuevosIds.auditActorIds.length > 0) {
+      await prisma.auditLog.deleteMany({
+        where: { usuarioId: { in: nuevosIds.auditActorIds }, entidad: 'VENTA' },
+      });
+    }
+    // El fixture mantiene el grafo tenant/FIFO para inspección; solo se limpian logs del test.
     await prisma.$disconnect();
   });
 
@@ -269,6 +278,118 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
       where: { tenantId, origenId: r1.devolucionId },
     });
     expect(kardexTotal).toBe(1);
+  });
+
+  it('revierte efectos FIFO y financieros ante el AuditLog físico de la devolución', async () => {
+    const { tenantId, user, venta, ventaItem, producto, factura, cxc } = await crearEscenario();
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+    } as unknown as AuthenticatedUser;
+    const successful = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: ventaItem.id, cantidad: 1 }],
+        motivo: 'Happy path para auditar el rollback',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: crypto.randomUUID(),
+      },
+      user: userCtx,
+    });
+    const durableAudit = await prisma.auditLog.findFirstOrThrow({ where: {
+      usuarioId: user.userId, entidad: 'VENTA', entidadId: venta.ventaId, accion: 'EXECUTE',
+    } });
+    expect(durableAudit.detalles).toMatchObject({
+      tipo: 'DEVOLUCION_REGISTRADA', devolucionId: successful.devolucionId,
+    });
+
+    const before = {
+      product: await prisma.producto.findUniqueOrThrow({ where: { id: producto.id } }),
+      stock: await prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+      kardex: await prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+      allocations: await prisma.purchaseAllocation.findMany({
+        where: { tenantId }, orderBy: { id: 'asc' },
+      }),
+      refunds: await prisma.devolucionVenta.findMany({ where: { tenantId }, orderBy: { devolucionId: 'asc' } }),
+      refundItems: await prisma.devolucionVentaItem.findMany({
+        where: { devolucion: { tenantId } }, orderBy: { id: 'asc' },
+      }),
+      cxc: await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { facturaId: factura.idFactura } }),
+      creditNotes: await prisma.factura.findMany({ where: { tenantId }, orderBy: { idFactura: 'asc' } }),
+      advances: await prisma.anticipo.findMany({ where: { tenantId }, orderBy: { anticipoId: 'asc' } }),
+      advanceMoves: await prisma.anticipoMovimiento.findMany({
+        where: { anticipo: { tenantId } }, orderBy: { movimientoId: 'asc' },
+      }),
+      entries: await prisma.asiento.findMany({
+        where: { tenantId }, orderBy: { asientoId: 'asc' },
+        include: { lineas: { orderBy: { lineaId: 'asc' } } },
+      }),
+      audit: await prisma.auditLog.findMany({
+        where: { usuarioId: user.userId, entidad: 'VENTA', entidadId: venta.ventaId },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+      cache: await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+    };
+    expect(before.creditNotes.some((note) => note.idFactura !== factura.idFactura)).toBe(true);
+    const suffix = crypto.randomUUID().replaceAll('-', '');
+    const functionName = `devolucion_audit_${suffix}_fn`;
+    const triggerName = `devolucion_audit_${suffix}`;
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION "${functionName}"() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."usuarioId" = '${user.userId}' AND NEW."entidad" = 'VENTA'
+          AND NEW."entidadId" = '${venta.ventaId}' AND NEW."accion" = 'EXECUTE' THEN
+          RAISE EXCEPTION 'physical devolución AuditLog rejected' USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER "${triggerName}" BEFORE INSERT ON "AuditLog"
+      FOR EACH ROW EXECUTE FUNCTION "${functionName}"()`);
+    try {
+      await expect(DevolucionVentaService.registrar({
+        input: {
+          ventaId: venta.ventaId,
+          items: [{ ventaItemId: ventaItem.id, cantidad: 1 }],
+          motivo: 'Debe hacer rollback real',
+          preferenciaFinanciera: 'SALDO_FAVOR',
+          idempotencyKey: crypto.randomUUID(),
+        },
+        user: userCtx,
+      })).rejects.toThrow('physical devolución AuditLog rejected');
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "AuditLog"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
+    }
+    expect(await prisma.producto.findUniqueOrThrow({ where: { id: producto.id } })).toEqual(before.product);
+    expect(await prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }))
+      .toEqual(before.stock);
+    expect(await prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }))
+      .toEqual(before.kardex);
+    expect(await prisma.purchaseAllocation.findMany({
+      where: { tenantId }, orderBy: { id: 'asc' },
+    })).toEqual(before.allocations);
+    expect(await prisma.devolucionVenta.findMany({ where: { tenantId }, orderBy: { devolucionId: 'asc' } }))
+      .toEqual(before.refunds);
+    expect(await prisma.devolucionVentaItem.findMany({
+      where: { devolucion: { tenantId } }, orderBy: { id: 'asc' },
+    })).toEqual(before.refundItems);
+    expect(await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { facturaId: factura.idFactura } }))
+      .toEqual(before.cxc);
+    expect(await prisma.factura.findMany({ where: { tenantId }, orderBy: { idFactura: 'asc' } }))
+      .toEqual(before.creditNotes);
+    expect(await prisma.anticipo.findMany({ where: { tenantId }, orderBy: { anticipoId: 'asc' } }))
+      .toEqual(before.advances);
+    expect(await prisma.anticipoMovimiento.findMany({
+      where: { anticipo: { tenantId } }, orderBy: { movimientoId: 'asc' },
+    })).toEqual(before.advanceMoves);
+    expect(await prisma.asiento.findMany({
+      where: { tenantId }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } },
+    })).toEqual(before.entries);
+    expect(await prisma.auditLog.findMany({
+      where: { usuarioId: user.userId, entidad: 'VENTA', entidadId: venta.ventaId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    })).toEqual(before.audit);
+    expect(await prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }))
+      .toEqual(before.cache);
   });
 
   it('reintenta toda la transacción tras SQLSTATE 40001 después del progreso FIFO', async () => {

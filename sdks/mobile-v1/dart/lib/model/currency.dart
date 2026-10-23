@@ -183,4 +183,3 @@ class Currency {
   static const requiredKeys = <String>{
   };
 }
-

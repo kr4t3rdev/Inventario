@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/accounts-receivable.
  *
- * @param items 
- * @param pagination 
+ * @param items
+ * @param pagination
  */
 
 
@@ -40,4 +40,3 @@ data class GetAccountingAccountsReceivableResponse (
 
 
 }
-

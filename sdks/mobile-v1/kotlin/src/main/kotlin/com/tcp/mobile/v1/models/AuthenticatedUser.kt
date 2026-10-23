@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param userId 
- * @param email 
- * @param name 
- * @param role 
- * @param tenantId 
- * @param tenantRole 
+ *
+ * @param userId
+ * @param email
+ * @param name
+ * @param role
+ * @param tenantId
+ * @param tenantRole
  */
 
 
@@ -54,4 +54,3 @@ data class AuthenticatedUser (
 
 
 }
-

@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param current7DaysUsers 
- * @param previous7DaysUsers 
+ *
+ * @param current7DaysUsers
+ * @param previous7DaysUsers
  */
 
 
@@ -38,4 +38,3 @@ data class AdminHealthResponseUsersComparison (
 
 
 }
-

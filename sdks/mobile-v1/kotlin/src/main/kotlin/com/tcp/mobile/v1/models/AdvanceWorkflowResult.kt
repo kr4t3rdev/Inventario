@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param anticipoId 
- * @param movimientoId 
- * @param documentoDestinoId 
- * @param monto 
- * @param saldoDisponible 
- * @param estado 
+ *
+ * @param anticipoId
+ * @param movimientoId
+ * @param documentoDestinoId
+ * @param monto
+ * @param saldoDisponible
+ * @param estado
  */
 
 
@@ -54,4 +54,3 @@ data class AdvanceWorkflowResult (
 
 
 }
-

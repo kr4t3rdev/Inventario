@@ -109,7 +109,7 @@ class AccountingReceivablesAndPayablesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingAccountsPayableResponse',) as GetAccountingAccountsPayableResponse;
-    
+
     }
     return null;
   }
@@ -207,7 +207,7 @@ class AccountingReceivablesAndPayablesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingAccountsReceivableResponse',) as GetAccountingAccountsReceivableResponse;
-    
+
     }
     return null;
   }
@@ -255,7 +255,7 @@ class AccountingReceivablesAndPayablesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingAccountsReceivableMetricsResponse',) as GetAccountingAccountsReceivableMetricsResponse;
-    
+
     }
     return null;
   }

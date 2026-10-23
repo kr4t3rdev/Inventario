@@ -24,13 +24,13 @@ import com.tcp.mobile.v1.models.ReportTotals
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param items 
- * @param totales 
- * @param estadisticas 
- * @param pagination 
- * @param filtros 
+ *
+ * @param items
+ * @param totales
+ * @param estadisticas
+ * @param pagination
+ * @param filtros
  */
 
 
@@ -55,4 +55,3 @@ data class ReportResult (
 
 
 }
-

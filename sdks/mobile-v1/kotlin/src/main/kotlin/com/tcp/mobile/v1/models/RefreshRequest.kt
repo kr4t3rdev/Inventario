@@ -19,9 +19,9 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param refreshToken 
+ *
+ * @param refreshToken
  */
 
 
@@ -36,4 +36,3 @@ data class RefreshRequest (
     override fun toString(): String = "RefreshRequest(<redacted>)"
 
 }
-

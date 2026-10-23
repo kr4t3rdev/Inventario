@@ -50,11 +50,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **search** | **String**| Texto de búsqueda aplicado por el servicio. | [optional] 
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **tipo** | **String**| Tipo de registro solicitado. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **search** | **String**| Texto de búsqueda aplicado por el servicio. | [optional]
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **tipo** | **String**| Tipo de registro solicitado. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -107,11 +107,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **search** | **String**| Texto de búsqueda aplicado por el servicio. | [optional] 
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
- **clienteId** | **String**| Identificador del cliente. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **search** | **String**| Texto de búsqueda aplicado por el servicio. | [optional]
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
+ **clienteId** | **String**| Identificador del cliente. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 

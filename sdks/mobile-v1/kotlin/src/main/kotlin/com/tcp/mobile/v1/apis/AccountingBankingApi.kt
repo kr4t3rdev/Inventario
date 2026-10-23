@@ -653,7 +653,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-adjustments
      * Registrar ajustes bancarios
      * Registra un ingreso o egreso manual y actualiza el saldo de la cuenta bancaria seleccionada.
-     * @param bankAdjustmentRequest 
+     * @param bankAdjustmentRequest
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
@@ -691,7 +691,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-adjustments
      * Registrar ajustes bancarios
      * Registra un ingreso o egreso manual y actualiza el saldo de la cuenta bancaria seleccionada.
-     * @param bankAdjustmentRequest 
+     * @param bankAdjustmentRequest
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
@@ -715,7 +715,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * To obtain the request config of the operation mobilePostAccountingBankAdjustments
      *
-     * @param bankAdjustmentRequest 
+     * @param bankAdjustmentRequest
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
@@ -765,7 +765,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-transfers
      * Registrar transferencias bancarias
      * Transfiere fondos entre dos cuentas, aplicando conversión cuando las monedas son diferentes.
-     * @param bankTransferCreateRequest 
+     * @param bankTransferCreateRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
@@ -800,7 +800,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-transfers
      * Registrar transferencias bancarias
      * Transfiere fondos entre dos cuentas, aplicando conversión cuando las monedas son diferentes.
-     * @param bankTransferCreateRequest 
+     * @param bankTransferCreateRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
@@ -821,7 +821,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * To obtain the request config of the operation mobilePostAccountingBankTransfers
      *
-     * @param bankTransferCreateRequest 
+     * @param bankTransferCreateRequest
      * @param fechaInicio Inicio inclusivo del período consultado. (optional)
      * @param fechaFin Fin inclusivo del período consultado. (optional)
      * @param cuentaId Identificador de la cuenta bancaria. (optional)
@@ -859,7 +859,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-transfers/validate
      * Validar transferencia bancaria
      * Comprueba cuentas, monedas, saldo e importes antes de registrar una transferencia.
-     * @param bankTransferValidationRequest 
+     * @param bankTransferValidationRequest
      * @return PostAccountingBankTransfersValidateResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -891,7 +891,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * POST /accounting/bank-transfers/validate
      * Validar transferencia bancaria
      * Comprueba cuentas, monedas, saldo e importes antes de registrar una transferencia.
-     * @param bankTransferValidationRequest 
+     * @param bankTransferValidationRequest
      * @return ApiResponse<PostAccountingBankTransfersValidateResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -909,7 +909,7 @@ class AccountingBankingApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * To obtain the request config of the operation mobilePostAccountingBankTransfersValidate
      *
-     * @param bankTransferValidationRequest 
+     * @param bankTransferValidationRequest
      * @return RequestConfig
      */
     fun mobilePostAccountingBankTransfersValidateRequestConfig(bankTransferValidationRequest: BankTransferValidationRequest) : RequestConfig<BankTransferValidationRequest> {

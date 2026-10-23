@@ -241,4 +241,3 @@ class GetAccountingCashLoansIdHistoryResponse {
   static const requiredKeys = <String>{
   };
 }
-

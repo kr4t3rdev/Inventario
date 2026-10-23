@@ -149,4 +149,3 @@ class PayablePaymentSummary {
   static const requiredKeys = <String>{
   };
 }
-

@@ -270,7 +270,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
      * POST /clients/create
      * Crear cliente
      * Crea un cliente en el tenant activo y devuelve el registro creado.
-     * @param clienteCreateRequest 
+     * @param clienteCreateRequest
      * @return Cliente
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -302,7 +302,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
      * POST /clients/create
      * Crear cliente
      * Crea un cliente en el tenant activo y devuelve el registro creado.
-     * @param clienteCreateRequest 
+     * @param clienteCreateRequest
      * @return ApiResponse<Cliente?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -320,7 +320,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
     /**
      * To obtain the request config of the operation mobilePostClientsCreate
      *
-     * @param clienteCreateRequest 
+     * @param clienteCreateRequest
      * @return RequestConfig
      */
     fun mobilePostClientsCreateRequestConfig(clienteCreateRequest: ClienteCreateRequest) : RequestConfig<ClienteCreateRequest> {
@@ -345,7 +345,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
      * Editar cliente
      * Actualiza los datos de un cliente del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del cliente.
-     * @param clienteUpdateRequest 
+     * @param clienteUpdateRequest
      * @return Cliente
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -378,7 +378,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
      * Editar cliente
      * Actualiza los datos de un cliente del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del cliente.
-     * @param clienteUpdateRequest 
+     * @param clienteUpdateRequest
      * @return ApiResponse<Cliente?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -397,7 +397,7 @@ class ClientsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory
      * To obtain the request config of the operation mobilePutClientsById
      *
      * @param id Identificador del cliente.
-     * @param clienteUpdateRequest 
+     * @param clienteUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutClientsByIdRequestConfig(id: kotlin.String, clienteUpdateRequest: ClienteUpdateRequest) : RequestConfig<ClienteUpdateRequest> {

@@ -118,7 +118,7 @@ Valida las credenciales y entrega el usuario autenticado junto con los tokens de
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AuthApi()
-val loginRequest : LoginRequest =  // LoginRequest | 
+val loginRequest : LoginRequest =  // LoginRequest |
 val xTenantId : kotlin.String = xTenantId_example // kotlin.String | Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible.
 try {
     val result : AuthSession = apiInstance.mobilePostAuthLogin(loginRequest, xTenantId)
@@ -211,7 +211,7 @@ Valida el token de renovación y emite un nuevo par de tokens para continuar la 
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AuthApi()
-val refreshRequest : RefreshRequest =  // RefreshRequest | 
+val refreshRequest : RefreshRequest =  // RefreshRequest |
 try {
     val result : TokenPair = apiInstance.mobilePostAuthRefresh(refreshRequest)
     println(result)
@@ -257,7 +257,7 @@ Crea un usuario inactivo pendiente de verificación de correo y envía el enlace
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AuthApi()
-val registerRequest : RegisterRequest =  // RegisterRequest | 
+val registerRequest : RegisterRequest =  // RegisterRequest |
 try {
     val result : RegisterResponse = apiInstance.mobilePostAuthRegister(registerRequest)
     println(result)
@@ -303,7 +303,7 @@ Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía s
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AuthApi()
-val switchTenantRequest : SwitchTenantRequest =  // SwitchTenantRequest | 
+val switchTenantRequest : SwitchTenantRequest =  // SwitchTenantRequest |
 try {
     val result : SwitchTenantResponse = apiInstance.mobilePostAuthTenants(switchTenantRequest)
     println(result)

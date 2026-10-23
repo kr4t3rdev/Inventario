@@ -122,4 +122,3 @@ class AuthSession {
     'user',
   };
 }
-

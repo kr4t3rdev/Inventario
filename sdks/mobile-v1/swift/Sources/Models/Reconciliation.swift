@@ -61,4 +61,3 @@ public struct Reconciliation: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

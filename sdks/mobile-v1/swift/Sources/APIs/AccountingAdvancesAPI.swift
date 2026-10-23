@@ -14,8 +14,8 @@ open class AccountingAdvancesAPI {
 
     /**
      Eliminar anticipo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: DeleteAccountingAdvancesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -30,8 +30,8 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<DeleteAccountingAdvancesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<DeleteAccountingAdvancesIdResponse>
      */
     open class func mobileDeleteAccountingAdvancesByIdWithRequestBuilder(id: String) -> RequestBuilder<DeleteAccountingAdvancesIdResponse> {
         var localVariablePath = "/accounting/advances/{id}"
@@ -56,7 +56,7 @@ open class AccountingAdvancesAPI {
 
     /**
      Consultar anticipos
-     
+
      - returns: GetAccountingAdvancesResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -71,7 +71,7 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingAdvancesResponse> 
+     - returns: RequestBuilder<GetAccountingAdvancesResponse>
      */
     open class func mobileGetAccountingAdvancesWithRequestBuilder() -> RequestBuilder<GetAccountingAdvancesResponse> {
         let localVariablePath = "/accounting/advances"
@@ -101,7 +101,7 @@ open class AccountingAdvancesAPI {
 
     /**
      Consultar anticipos disponibles
-     
+
      - parameter contexto: (query) Valor de contexto aceptado por el handler. (optional)
      - parameter proveedorId: (query) Identificador del proveedor. (optional)
      - parameter clienteId: (query) Identificador del cliente. (optional)
@@ -126,7 +126,7 @@ open class AccountingAdvancesAPI {
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
-     - returns: RequestBuilder<GetAccountingAdvancesAvailableResponse> 
+     - returns: RequestBuilder<GetAccountingAdvancesAvailableResponse>
      */
     open class func mobileGetAccountingAdvancesAvailableWithRequestBuilder(contexto: Contexto_mobileGetAccountingAdvancesAvailable? = nil, proveedorId: String? = nil, clienteId: String? = nil, moneda: String? = nil, estado: Bool? = nil) -> RequestBuilder<GetAccountingAdvancesAvailableResponse> {
         let localVariablePath = "/accounting/advances/available"
@@ -155,8 +155,8 @@ open class AccountingAdvancesAPI {
 
     /**
      Consultar anticipo
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingAdvancesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -171,8 +171,8 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingAdvancesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingAdvancesIdResponse>
      */
     open class func mobileGetAccountingAdvancesByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingAdvancesIdResponse> {
         var localVariablePath = "/accounting/advances/{id}"
@@ -197,8 +197,8 @@ open class AccountingAdvancesAPI {
 
     /**
      Registrar anticipos
-     
-     - parameter accountingAdvancesPostRequest: (body)  
+
+     - parameter accountingAdvancesPostRequest: (body)
      - returns: PostAccountingAdvancesResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -213,8 +213,8 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter accountingAdvancesPostRequest: (body)  
-     - returns: RequestBuilder<PostAccountingAdvancesResponse> 
+     - parameter accountingAdvancesPostRequest: (body)
+     - returns: RequestBuilder<PostAccountingAdvancesResponse>
      */
     open class func mobilePostAccountingAdvancesWithRequestBuilder(accountingAdvancesPostRequest: AccountingAdvancesPostRequest) -> RequestBuilder<PostAccountingAdvancesResponse> {
         let localVariablePath = "/accounting/advances"
@@ -236,9 +236,9 @@ open class AccountingAdvancesAPI {
 
     /**
      Ejecutar anticipo reservado
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdEjecutarPostRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdEjecutarPostRequest: (body)
      - returns: PostAccountingAdvancesIdEjecutarResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -253,9 +253,9 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdEjecutarPostRequest: (body)  
-     - returns: RequestBuilder<PostAccountingAdvancesIdEjecutarResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdEjecutarPostRequest: (body)
+     - returns: RequestBuilder<PostAccountingAdvancesIdEjecutarResponse>
      */
     open class func mobilePostAccountingAdvancesByIdEjecutarWithRequestBuilder(id: String, accountingAdvancesIdEjecutarPostRequest: AccountingAdvancesIdEjecutarPostRequest) -> RequestBuilder<PostAccountingAdvancesIdEjecutarResponse> {
         var localVariablePath = "/accounting/advances/{id}/ejecutar"
@@ -280,9 +280,9 @@ open class AccountingAdvancesAPI {
 
     /**
      Revertir ejecución de anticipo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdRevertirPostRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdRevertirPostRequest: (body)
      - returns: PostAccountingAdvancesIdRevertirResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -297,9 +297,9 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdRevertirPostRequest: (body)  
-     - returns: RequestBuilder<PostAccountingAdvancesIdRevertirResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdRevertirPostRequest: (body)
+     - returns: RequestBuilder<PostAccountingAdvancesIdRevertirResponse>
      */
     open class func mobilePostAccountingAdvancesByIdRevertirWithRequestBuilder(id: String, accountingAdvancesIdRevertirPostRequest: AccountingAdvancesIdRevertirPostRequest) -> RequestBuilder<PostAccountingAdvancesIdRevertirResponse> {
         var localVariablePath = "/accounting/advances/{id}/revertir"
@@ -324,9 +324,9 @@ open class AccountingAdvancesAPI {
 
     /**
      Actualizar anticipo
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdPutRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdPutRequest: (body)
      - returns: PutAccountingAdvancesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -341,9 +341,9 @@ open class AccountingAdvancesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter accountingAdvancesIdPutRequest: (body)  
-     - returns: RequestBuilder<PutAccountingAdvancesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter accountingAdvancesIdPutRequest: (body)
+     - returns: RequestBuilder<PutAccountingAdvancesIdResponse>
      */
     open class func mobilePutAccountingAdvancesByIdWithRequestBuilder(id: String, accountingAdvancesIdPutRequest: AccountingAdvancesIdPutRequest) -> RequestBuilder<PutAccountingAdvancesIdResponse> {
         var localVariablePath = "/accounting/advances/{id}"

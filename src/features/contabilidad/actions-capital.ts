@@ -35,7 +35,7 @@ export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: st
   });
 });
 
-export const createInyeccionCapitalAction = withAction(withPeriodValidation(
+const createCapitalInjectionWithPeriodValidation = withPeriodValidation(
   (input) => createSchema.safeParse(input).data?.fechaOperacion ?? new Date(),
   async (input: z.input<typeof createSchema>, user: AuthenticatedUser) => {
   requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
@@ -45,7 +45,30 @@ export const createInyeccionCapitalAction = withAction(withPeriodValidation(
   });
   revalidatePath('/busy/contabilidad/capital');
   return inyeccion;
-}));
+});
+
+export const createInyeccionCapitalAction = withAction(async (
+  input: z.input<typeof createSchema>,
+  user: AuthenticatedUser,
+) => {
+  const existingReplay = await AccountingOperationsMutationService.findCapitalInjectionReplay({
+    input,
+    user,
+  });
+  if (existingReplay) return existingReplay;
+
+  try {
+    return await createCapitalInjectionWithPeriodValidation(input, user);
+  } catch (error) {
+    // Re-check only as a replay; a failed period gate must never authorize a new write.
+    const replayAfterGate = await AccountingOperationsMutationService.findCapitalInjectionReplay({
+      input,
+      user,
+    });
+    if (replayAfterGate) return replayAfterGate;
+    throw error;
+  }
+});
 
 export const registrarPagoCapitalAction = withAction(withPeriodValidation(
   () => new Date(),

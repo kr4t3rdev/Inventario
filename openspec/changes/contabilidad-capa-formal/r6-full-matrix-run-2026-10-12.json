@@ -1,0 +1,838 @@
+{
+  "sourceSnapshot": "5b197db38471da17b50124105d62f175050cebdc",
+  "database": "tcp_test_r6_matrix_5b197db3",
+  "runExit": 1,
+  "total": 180,
+  "passed": 175,
+  "failed": 5,
+  "suites": [
+    {
+      "path": "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra compra extranjera y hereda FX al asiento de CxP",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado anular una compra a cr\u00e9dito crea reverso formal y preserva evidencia FX",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado registra PAGO_COMPLETO como COMPRA_CONTADO, debita la cuenta y es idempotente",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado mantiene precio de inventario y asiento en la moneda funcional no-CUP",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte compra, reconciliaci\u00f3n y saldo si falla el asiento de PAGO_COMPLETO",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado devenga compra bruta, aplica anticipo al CxP sin segundo movimiento bancario",
+          "status": "passed"
+        },
+        {
+          "name": "compra de producto a cr\u00e9dito FX \u2014 PostgreSQL aislado revierte CxP y documento si falla SQL en el asiento de compra",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado confirma un asiento por transferencia y mantiene origen/destino dentro del tenant",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte transferencia y asiento si falla la auditor\u00eda transaccional",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado rechaza la cuenta de otro tenant antes de transacci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado registra ajuste CUP con permiso, saldo tenant-scoped y asiento \u00fanico",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado ajuste USD persiste fingerprint y hereda tasa funcional al asiento",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado transferencia USD\u2192CUP persiste monto funcional y evidencia FX heredada",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado inyecci\u00f3n de capital USD conserva FX y la hereda al asiento",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado pago de deuda de capital USD conserva FX y la hereda al asiento",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte ajuste, saldo y asiento si AuditLog rechaza AJUSTE_BANCARIO",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte alta CAPITAL_SOCIAL, saldo y asiento si AuditLog rechaza INYECCION_CAPITAL",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte alta DEUDA_EXTERNA, saldo y asiento si AuditLog rechaza INYECCION_CAPITAL",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte pago, saldo pendiente, banco y asiento si AuditLog rechaza PAGO_DEUDA",
+          "status": "passed"
+        },
+        {
+          "name": "transferencia bancaria compartida \u2014 PostgreSQL aislado revierte ambas cuentas y la transferencia ante error SQL en postEvento",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "R6 \u2014 cash-loan creation rolls back when physical AuditLog INSERT fails persists all cash-loan effects and its durable audit event on success",
+          "status": "passed"
+        },
+        {
+          "name": "R6 \u2014 cash-loan creation rolls back when physical AuditLog INSERT fails rolls back bank, loan, CxC, reconciliation, formal asiento, and audit after AuditLog trigger failure",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back canonical registerCashLoanPayment when physical AuditLog insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back canonical createCashDebt when physical AuditLog insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back canonical registerCashDebtPayment when physical AuditLog insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back legacy POST loan payment and returns the route internal-error contract",
+          "status": "passed"
+        },
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back legacy POST debt creation and returns the route internal-error contract",
+          "status": "passed"
+        },
+        {
+          "name": "cash writer and legacy route AuditLog INSERT rollback proofs rolls back legacy POST debt payment and returns the route internal-error contract",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado aisla referencias de otro tenant antes de abrir transacci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado crea deuda CUP, acredita saldo y contabiliza un asiento por origen",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado revierte el POST de deuda si falla la auditor\u00eda antes del commit",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado scopea la edici\u00f3n y revierte el cambio si falla la auditor\u00eda transaccional",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado crea deuda extranjera con tasa y hereda evidencia FX en el asiento",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado paga deuda CUP, debita saldo y contabiliza un asiento por origen",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado preserva cuatro decimales de la deuda y su pago funcional al pagar 0.0123 CUP (A5)",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado servicio can\u00f3nico crea deuda USD y hereda la FX persistida al \u00fanico asiento",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado servicio can\u00f3nico scopea pago al tenant y hereda la FX persistida al asiento",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado serializa pagos 600+600 sobre saldo 1000 en el canal web",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado serializa pagos 600+600 sobre saldo 1000 en el canal servicio",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado convierte pago USD a principal y caja CUP en el canal web",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado convierte pago USD a principal y caja CUP en el canal servicio",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado revierte el desembolso cuando falla SQL dentro de postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado revierte el pago cuando falla SQL dentro de postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado rechaza el reintento de pago de una deuda ya pagada (idempotencia por estado)",
+          "status": "passed"
+        },
+        {
+          "name": "deudas cash legacy \u2014 PostgreSQL aislado protege la creaci\u00f3n legacy y los pagos parciales/finales con claves idempotentes",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado aisla referencias de otro tenant antes de abrir transacci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado paga pr\u00e9stamo CUP, acredita saldo y contabiliza un asiento por origen",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado preserva 4 decimales en montoPagadoFuncional al pagar 0.0123 CUP (A5)",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado paga pr\u00e9stamo extranjero con tasa y hereda evidencia FX en el asiento",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado servicio can\u00f3nico crea pr\u00e9stamo USD con un asiento y FX heredada",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado POST web convierte desembolso USD al saldo de cuenta CUP",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado servicio can\u00f3nico registra pago USD con un asiento y FX heredada",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado deniega crear pr\u00e9stamo si el rol autenticado no tiene acceso contable",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado deniega el canal m\u00f3vil/compartido si el plan no habilita pr\u00e9stamos cash",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado el adaptador m\u00f3vil rechaza la solicitud sin token antes de escribir",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado revierte creaci\u00f3n can\u00f3nica, cuenta por cobrar y reconciliaci\u00f3n si falla postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado revierte el pago can\u00f3nico y todos sus efectos si falla postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado revierte el pago cuando falla SQL dentro de postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado rechaza el reintento de pago de un pr\u00e9stamo ya pagado (idempotencia por estado)",
+          "status": "passed"
+        },
+        {
+          "name": "pr\u00e9stamos cash legacy [id]/pagar \u2014 PostgreSQL aislado protege la creaci\u00f3n legacy y los pagos parciales/finales con claves idempotentes",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado a\u00edsla referencias de otro tenant antes de acreditar saldo",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado usa autorizaci\u00f3n real del action: dependiente sin permiso no muta distribuci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado usa feature real del tenant: plan sin servicios no inicia la mutaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado mobile reconcileSale persiste FX y un \u00fanico asiento por reconciliaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado reconcileSale revierte todas las escrituras ante fallo del AuditLog f\u00edsico",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado la Server Action de ventas delega al writer compartido con FX y autorizaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado actualiza el nominal/funcional de CxC y asienta la diferencia FX",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado revierte tesorer\u00eda, asiento y cobro si falla actualizar la CxC",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado legacy web ventas persiste fingerprint FX y lo transmite al asiento",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado legacy web COBRO_CXC actualiza pago nominal y funcional desde el snapshot",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado legacy web rollback SQL revierte tesorer\u00eda, CxC funcional y asiento en COBRO_CXC",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado reconcileSale rechaza FX sin fecha/tasa efectiva y rol sin permiso",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado revierte saldo, reconciliaci\u00f3n y asiento de reconcileSale ante fallo SQL",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado contabiliza exactamente un asiento con FX heredada de la fila",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado mueve origen y destino con el importe nativo de cada cuenta",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado revierte caja, reconciliaci\u00f3n y asiento si falla la auditor\u00eda transaccional",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado aplica cobros parciales y finales de servicio a cr\u00e9dito con FX y auditor\u00eda durable",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado serializa reintentos concurrentes del mismo cobro parcial de servicio",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado revierte CxC, tesorer\u00eda, asiento y auditor\u00eda si falla el update de CxC",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado web confirma FX \u00fanica y rechaza reintento",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado mobile confirma FX \u00fanica y rechaza reintento",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado web rechaza referencia de otro tenant",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado mobile rechaza referencia de otro tenant",
+          "status": "passed"
+        },
+        {
+          "name": "reconciliarServicioAction \u2014 PostgreSQL aislado revierte saldo y reconciliaci\u00f3n cuando falla SQL dentro de postEvento",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/mermas/__integration__/merma-formal-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "createMermaAction \u2014 posting enforce y rollback real posts MERMA_INVENTARIO at cost in enforce within the same transaction",
+          "status": "passed"
+        },
+        {
+          "name": "createMermaAction \u2014 posting enforce y rollback real mantiene inmutable la merma cuando ya existe evidencia formal",
+          "status": "passed"
+        },
+        {
+          "name": "createMermaAction \u2014 posting enforce y rollback real rolls back merma, stock y documento espejo cuando el posteo formal falla",
+          "status": "passed"
+        },
+        {
+          "name": "createMermaAction \u2014 posting enforce y rollback real devuelve la merma existente ante un reintento con la misma clave de idempotencia",
+          "status": "passed"
+        },
+        {
+          "name": "createMermaAction \u2014 posting enforce y rollback real 5 llamadas concurrentes con la misma clave crean una sola merma (P2002)",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/productos/__integration__/restock-formal-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "restockProductoAction \u2014 posting enforce y rollback real posts the restock expense in enforce with persisted FX valuation",
+          "status": "passed"
+        },
+        {
+          "name": "restockProductoAction \u2014 posting enforce y rollback real rolls back stock and expense when the formal posting fails",
+          "status": "passed"
+        },
+        {
+          "name": "restockProductoAction \u2014 posting enforce y rollback real rechaza el reintento con el mismo numero de factura (RESTOCK_DUPLICADO)",
+          "status": "passed"
+        },
+        {
+          "name": "restockProductoAction \u2014 posting enforce y rollback real 5 llamadas concurrentes con la misma factura crean una sola compra",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo devengo directo crea venta, CxC y asiento VENTA_SERVICIO_CREDITO",
+          "status": "passed"
+        },
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo fallo en el asiento revierte venta y CxC (rollback)",
+          "status": "passed"
+        },
+        {
+          "name": "venta servicio a cr\u00e9dito \u2014 devengo directo el flujo mixto revierte venta, CxC y asiento si falla el devengo SQL",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/devolucion-fifo.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) devuelve 2 unidades y aplica toda la cadena de efectos",
+          "status": "passed"
+        },
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) revierte efectos FIFO y financieros ante el AuditLog f\u00edsico de la devoluci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) reintenta toda la transacci\u00f3n tras SQLSTATE 40001 despu\u00e9s del progreso FIFO",
+          "status": "passed"
+        },
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) hereda FX del snapshot CxC y revierte ingreso/COGS con asientos balanceados",
+          "status": "passed"
+        },
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) enforce rechaza CxC hist\u00f3rica sin snapshot y no usa Factura.tasaCambio aislada",
+          "status": "passed"
+        },
+        {
+          "name": "devoluci\u00f3n FIFO con NC e idempotencia (integraci\u00f3n real) shadow conserva devoluci\u00f3n hist\u00f3rica sin FX y deja causa durable en el outbox",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts a balanced real VENTA_CONTADO in enforce with original tenant actor",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer anular una venta revierte todos sus asientos formales sin borrar el historial",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer eliminar una n\u00f3mina revierte los asientos PAGO_NOMINA junto con caja y reconciliaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer posts COSTO_VENTA_DEVENGADO at the persisted functional purchase value",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer el AuditLog f\u00edsico bloquea la venta antes del FIFO y del posteo COGS",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer shadow preserves sale and records durable COGS valuation failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls sale, stock and FIFO allocation back when source FX is absent",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer enforce rolls back the sale and FIFO allocation when the COGS asiento insert fails",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back a USD cash sale without applied FX evidence",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer commits the cash sale and durable ERROR_SHADOW after a real formal posting SQL failure",
+          "status": "passed"
+        },
+        {
+          "name": "cash sale formal shadow \u2014 real PostgreSQL writer fails closed and rolls back the sale when durable shadow outbox insertion fails",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos venta-servicios: devengo bruto VENTA_CREDITO, sin COBRO_SERVICIO bancario",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos liquida anticipo USD a valor hist\u00f3rico y registra diferencia FX contra CxC",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos compras-servicios: devengo bruto GASTO_CREDITO con CxP, sin GASTO_CON_ANTICIPO",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos compras-servicios: revierte todo si falla postEvento del GASTO_CREDITO inicial",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos si el per\u00edodo est\u00e1 cerrado, la reversi\u00f3n formal aborta toda la eliminaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos al eliminar un gasto pagado crea reverso para su asiento de reconciliaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos al eliminar servicio revierte y enlaza todos los asientos formales del documento",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos liquida anticipo proveedor al valor hist\u00f3rico con diferencia FX contra CxP",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos cobra el remanente sin tratar el anticipo como otro ingreso bancario",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos un fallo SQL en el devengo revierte documento, obligaci\u00f3n y aplicaci\u00f3n",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 devengo bruto y aplicaci\u00f3n de anticipos un fallo SQL en la aplicaci\u00f3n revierte devengo bruto, CxP y anticipo",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+      "status": "failed",
+      "tests": [
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos RED FX: anticipo extranjero resuelve tasa de cat\u00e1logo y transmite evidencia",
+          "status": "failed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos revierte anticipo, tesorer\u00eda, asiento y snapshot al fallar el AuditLog f\u00edsico",
+          "status": "failed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos valoraci\u00f3n aplicada del anticipo extranjero lleva FX al evento",
+          "status": "failed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos RED permiso: el canal web deniega un dependiente sin permiso",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos el canal m\u00f3vil aplica el permiso de grupo al dependiente",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos web y m\u00f3vil crean anticipo USD con sesi\u00f3n Bearer y valoraci\u00f3n de fondos real",
+          "status": "failed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos web y m\u00f3vil bloquean ejecuci\u00f3n/reversi\u00f3n manual sin tocar anticipos ni movimientos",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos reintentos concurrentes de creaci\u00f3n mueven fondos una \u00fanica vez",
+          "status": "failed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos aplicar dos veces al mismo documento no consume el saldo ni postea otra vez",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos rechaza un snapshot alterado antes de consumir el anticipo",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos un fallo SQL en el posteo revierte creaci\u00f3n, movimiento inicial y fondos",
+          "status": "passed"
+        },
+        {
+          "name": "filas 25/26 \u2014 FX y permiso de anticipos un fallo SQL al aplicar revierte movimiento y saldo disponible",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'salario' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=undefined monto=undefined: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'web' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'gastoDE' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=40: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'mobile' 'compra' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter 'action' 'venta_servicio' CxP=true monto=120: rollback f\u00edsico y retry confirmado",
+          "status": "passed"
+        },
+        {
+          "name": "R6 #31 \u2014 pago de gastos por variante y adapter caller de alta compra PAGO_COMPLETO revierte tambi\u00e9n documento, stock y costo",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado persista el snapshot de valoraci\u00f3n en la CxC creada (precommit y postcommit)",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado contra_pago en enforce persiste reconciliaci\u00f3n, banco, factura y asiento balanceado",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado VENTACONTADO parcial en enforce conserva CxC y postea cobro con origen \u00fanico",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado revierte VENTACONTADO parcial y CxC ante fallo SQL de postEvento",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado revierte contra_pago, reconciliaci\u00f3n y banco ante fallo SQL tard\u00edo del posteo",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado factura extranjera persista tasa hist\u00f3rica y fingerprint comparable desde la fila le\u00edda",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado moneda extranjera sin valoraci\u00f3n expl\u00edcita rechaza antes de escribir",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado shadow conserva cr\u00e9dito sin FX y deja causa durable en el outbox",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado serializa reintentos concurrentes y conserva un \u00fanico asiento por factura",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado revierte la transacci\u00f3n cuando PostgreSQL rechaza el INSERT de la CxC",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado revierte factura, CxC y asiento ante fallo SQL tard\u00edo del posteo VENTA_CREDITO",
+          "status": "passed"
+        },
+        {
+          "name": "writers de facturaci\u00f3n \u2014 PostgreSQL aislado aislamiento tenant: la CxC creada pertenece al tenant del writer y no toca filas ajenas",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "POST reconciliaci\u00f3n ventas \u2014 HTTP real e idempotencia rechaza 401 sin token y autentica sesi\u00f3n HTTP real con Bearer",
+          "status": "passed"
+        },
+        {
+          "name": "POST reconciliaci\u00f3n ventas \u2014 HTTP real e idempotencia reintento con Idempotency-Key devuelve el resultado previo sin doble cobro",
+          "status": "passed"
+        },
+        {
+          "name": "POST reconciliaci\u00f3n ventas \u2014 HTTP real e idempotencia misma clave con payload distinto se rechaza con 409 IDEMPOTENCY_CONFLICT",
+          "status": "passed"
+        },
+        {
+          "name": "POST reconciliaci\u00f3n ventas \u2014 HTTP real e idempotencia revierte el pago y el asiento ante auditor\u00eda SQL tard\u00eda con sesi\u00f3n Bearer real",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "completar producci\u00f3n \u2014 rollback PostgreSQL real revierte stock, orden, historial y reconciliaci\u00f3n al fallar el INSERT",
+          "status": "passed"
+        },
+        {
+          "name": "completar producci\u00f3n \u2014 rollback PostgreSQL real deniega dependiente sin permiso antes de cambiar la orden o el stock",
+          "status": "passed"
+        },
+        {
+          "name": "completar producci\u00f3n \u2014 rollback PostgreSQL real registra costo de producci\u00f3n en la moneda funcional y deja el asiento cuadrado",
+          "status": "passed"
+        },
+        {
+          "name": "completar producci\u00f3n \u2014 rollback PostgreSQL real rechaza el reintento de completar una orden ya completada (idempotencia por estado)",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

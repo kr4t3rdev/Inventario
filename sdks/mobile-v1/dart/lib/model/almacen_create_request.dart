@@ -106,4 +106,3 @@ class AlmacenCreateRequest {
     'nombre',
   };
 }
-

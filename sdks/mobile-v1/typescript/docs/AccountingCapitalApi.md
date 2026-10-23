@@ -29,7 +29,7 @@ import type { MobileGetAccountingCapitalInjectionsRequest } from '@tcp/mobile-v1
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -86,11 +86,11 @@ example().catch(console.error);
 
 ## mobilePostAccountingCapitalInjections
 
-> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo)
+> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo)
 
 Registrar inyecciones de capital
 
-Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
 
 ### Example
 
@@ -103,7 +103,7 @@ import type { MobilePostAccountingCapitalInjectionsRequest } from '@tcp/mobile-v
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -112,6 +112,8 @@ async function example() {
   const body = {
     // CapitalInjectionCreateRequest
     capitalInjectionCreateRequest: ...,
+    // string | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
+    idempotencyKey: idempotencyKey_example,
     // string | Tipo de registro solicitado. (optional)
     tipo: tipo_example,
   } satisfies MobilePostAccountingCapitalInjectionsRequest;
@@ -134,6 +136,7 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **capitalInjectionCreateRequest** | [CapitalInjectionCreateRequest](CapitalInjectionCreateRequest.md) |  | |
+| **idempotencyKey** | `string` | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. | [Optional] [Defaults to `undefined`] |
 | **tipo** | `string` | Tipo de registro solicitado. | [Optional] [Defaults to `undefined`] |
 
 ### Return type
@@ -156,6 +159,7 @@ example().catch(console.error);
 | **200** | Operación completada |  -  |
 | **400** | Solicitud inválida |  -  |
 | **401** | No autenticado |  -  |
+| **409** | La clave de idempotencia ya fue usada con otro payload |  -  |
 | **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -180,7 +184,7 @@ import type { MobilePostAccountingCapitalInjectionsByIdPaymentsRequest } from '@
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

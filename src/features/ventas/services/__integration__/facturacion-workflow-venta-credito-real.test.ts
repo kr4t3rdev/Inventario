@@ -1,9 +1,7 @@
 /**
- * @description Integración real del slice R6.1/R0.5 fila 3: el writer de venta
- * a crédito persista el snapshot de valoración FX en la fila `CuentaPorCobrar`
- * creada dentro de la misma transacción, rechaza antes de escribir sin política
- * o sin valoración FX explícita, persiste el asiento cuadrado y revierte ante
- * un fallo SQL del INSERT de la CxC. También valida el outbox durable en shadow.
+ * @description Integración real de R6/R0.5 filas 3 y 24: verifica valoración y
+ * rollback del writer de venta a crédito, y éxito/rollback tardío de contra_pago.
+ * También valida la rama shadow durable y límites de valoración FX.
  * Corre con base desechable verificada (`assertDisposableDatabase`) y prepara
  * licencia, plan formal y período contable por escenario.
  */
@@ -29,6 +27,91 @@ const monedasCreadas: string[] = [];
 const originalFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 let trigger = '';
 let functionName = '';
+let asientoTrigger = '';
+let asientoFunctionName = '';
+
+/**
+ * @description Convierte valores completos de Prisma a una representación estable para comparar snapshots.
+ * @param {unknown} value - Valor devuelto por Prisma.
+ * @returns {unknown} Valor normalizado, sin perder campos escalares.
+ */
+function normalizarFila(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof Prisma.Decimal) return value.toString();
+  if (typeof value === 'bigint') return value.toString();
+  if (Array.isArray(value)) return value.map(normalizarFila);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [key, normalizarFila(nested)]),
+    );
+  }
+  return value;
+}
+
+/**
+ * @description Captura filas completas del documento y sus efectos contables persistidos.
+ * @param {string} tenantId - Tenant aislado del escenario.
+ * @param {string} facturaId - Factura procesada por el writer.
+ * @returns {Promise<unknown>} Snapshot estable con filas completas y líneas de asiento.
+ */
+async function capturarSnapshotCredito(tenantId: string, facturaId: string): Promise<unknown> {
+  const factura = await prisma.factura.findUniqueOrThrow({ where: { idFactura: facturaId } });
+  const cuentasPorCobrar = await prisma.cuentaPorCobrar.findMany({
+    where: { tenantId, facturaId },
+    orderBy: { id: 'asc' },
+  });
+  const asientos = await prisma.asiento.findMany({
+    where: { tenantId, origenTipo: 'factura', origenId: facturaId },
+    include: { lineas: { orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }] } },
+    orderBy: { asientoId: 'asc' },
+  });
+  return normalizarFila({ factura, cuentasPorCobrar, asientos });
+}
+
+/**
+ * @description Captura todos los efectos persistidos del flujo de factura contra pago.
+ * @param {string} tenantId - Tenant aislado del escenario.
+ * @param {string} facturaId - Factura procesada por el writer.
+ * @param {string} ventaId - Venta enlazada a la reconciliación.
+ * @param {string} cuentaId - Cuenta bancaria que recibe el cobro.
+ * @returns {Promise<unknown>} Filas completas normalizadas, incluidas líneas de asiento.
+ */
+async function capturarSnapshotContraPago(
+  tenantId: string,
+  facturaId: string,
+  ventaId: string,
+  cuentaId: string,
+): Promise<unknown> {
+  const factura = await prisma.factura.findUniqueOrThrow({ where: { idFactura: facturaId } });
+  const venta = await prisma.venta.findUniqueOrThrow({ where: { ventaId } });
+  const cuentasPorCobrar = await prisma.cuentaPorCobrar.findMany({
+    where: { tenantId, facturaId },
+    orderBy: { id: 'asc' },
+  });
+  const cuentaBancaria = await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId } });
+  const reconciliaciones = await prisma.reconciliacionVenta.findMany({
+    where: { tenantId, ventaId },
+    orderBy: { reconciliacionId: 'asc' },
+  });
+  const asientos = await prisma.asiento.findMany({
+    where: { tenantId },
+    include: { lineas: { orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }] } },
+    orderBy: { asientoId: 'asc' },
+  });
+  const outbox = await prisma.shadowPosteoOutbox.findMany({
+    where: { tenantId },
+    orderBy: { id: 'asc' },
+  });
+  return normalizarFila({
+    factura,
+    venta,
+    cuentasPorCobrar,
+    cuentaBancaria,
+    reconciliaciones,
+    asientos,
+    outbox,
+  });
+}
 
 /**
  * @description Crea un escenario aislado: tenant, usuario, punto de venta,
@@ -50,7 +133,8 @@ async function crearEscenario(opts?: {
   const monedaTasa = opts?.conTasa?.monedaOrigen;
   const monedasEscenario = new Set(
     [monedaCuenta, monedaTasa].filter(
-      (codigo): codigo is string => Boolean(codigo) && !['CUP', 'USD'].includes(codigo),
+      (codigo): codigo is string =>
+        typeof codigo === 'string' && codigo.length > 0 && !['CUP', 'USD'].includes(codigo),
     ),
   );
   for (const codigo of monedasEscenario) {
@@ -155,6 +239,14 @@ async function crearEscenario(opts?: {
  * @returns {Promise<void>} Limpieza best-effort sobre BD desechable.
  */
 async function limpiar(): Promise<void> {
+  if (asientoTrigger) {
+    await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${asientoTrigger} ON "asientos"`);
+    asientoTrigger = '';
+  }
+  if (asientoFunctionName) {
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${asientoFunctionName}()`);
+    asientoFunctionName = '';
+  }
   if (trigger) {
     await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "CuentaPorCobrar"`);
     trigger = '';
@@ -177,6 +269,7 @@ async function limpiar(): Promise<void> {
   await prisma.shadowPosteoOutbox.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await prisma.asiento.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await prisma.cuentaPorCobrar.deleteMany({ where: { tenantId: { in: tenantIds } } });
+  await prisma.reconciliacionVenta.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await prisma.factura.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await prisma.venta.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await prisma.serieFacturacion.deleteMany({ where: { tenantId: { in: tenantIds } } });
@@ -196,7 +289,7 @@ async function limpiar(): Promise<void> {
 }
 
 /** @description Valida atomicidad y valoración FX del writer de venta a crédito. */
-describe('writer VENTA_CREDITO — valoración autoritativa en PostgreSQL aislado', { timeout: 90_000 }, () => {
+describe('writers de facturación — PostgreSQL aislado', { timeout: 90_000 }, () => {
   beforeAll(async () => {
     const [prismaModule, workflowModule] = await Promise.all([
       import('@/lib/prisma'),
@@ -328,6 +421,339 @@ describe('writer VENTA_CREDITO — valoración autoritativa en PostgreSQL aislad
     });
     expect(asientoReintentado).toHaveLength(1);
     expect(cxcReintentada.fxEvidenceFingerprint).toBe(post.fxEvidenceFingerprint);
+  });
+
+  it('contra_pago en enforce persiste reconciliación, banco, factura y asiento balanceado', async () => {
+    const { tenantId, user, factura, cuenta } = await crearEscenario();
+    if (!cuenta) throw new Error('El escenario contra_pago requiere una cuenta bancaria');
+
+    const result = await prisma.$transaction((tx) => applyFacturacionCobroWorkflow(tx, {
+      ventaId: factura.ventaId as string,
+      facturaId: factura.idFactura,
+      clienteId: factura.clienteId,
+      montoTotal: 900,
+      usuarioId: user.userId,
+      tenantId,
+      tipoVencimiento: 'contra_pago',
+    }));
+
+    expect(result.tipoVencimiento).toBe('contra_pago');
+    expect(result.reconciliacionId).toBeTruthy();
+    const reconciliacion = await prisma.reconciliacionVenta.findUniqueOrThrow({
+      where: { reconciliacionId: result.reconciliacionId! },
+    });
+    expect(reconciliacion).toMatchObject({
+      tenantId,
+      ventaId: factura.ventaId,
+      cuentaId: cuenta.cuentaId,
+      reconciliadoPor: user.userId,
+      moneda: 'CUP',
+      monedaCuenta: 'CUP',
+    });
+    expect(reconciliacion.monto.eq(new Prisma.Decimal('900'))).toBe(true);
+    expect(reconciliacion.montoCuenta?.eq(new Prisma.Decimal('900'))).toBe(true);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuenta.cuentaId },
+    })).saldo).toBe(900);
+    expect((await prisma.factura.findUniqueOrThrow({
+      where: { idFactura: factura.idFactura },
+    })).estado).toBe('PAGADA');
+    expect(await prisma.cuentaPorCobrar.count({ where: { tenantId, facturaId: factura.idFactura } }))
+      .toBe(0);
+
+    const asiento = await prisma.asiento.findFirstOrThrow({
+      where: {
+        tenantId,
+        origenTipo: 'reconciliacion_venta',
+        origenId: reconciliacion.reconciliacionId,
+      },
+      include: { lineas: { orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }] } },
+    });
+    expect(asiento.createdBy).toBe(user.userId);
+    expect(asiento.lineas).toHaveLength(2);
+    const debe = asiento.lineas.reduce((sum, linea) => sum.add(linea.debe), new Prisma.Decimal(0));
+    const haber = asiento.lineas.reduce((sum, linea) => sum.add(linea.haber), new Prisma.Decimal(0));
+    expect(debe.eq(haber)).toBe(true);
+  });
+
+  it('VENTACONTADO parcial en enforce conserva CxC y postea cobro con origen único', async () => {
+    const { tenantId, user, factura, cuenta } = await crearEscenario();
+    if (!cuenta) throw new Error('El escenario parcial requiere una cuenta bancaria');
+
+    const result = await prisma.$transaction((tx) => applyFacturacionCobroWorkflow(tx, {
+      ventaId: factura.ventaId as string,
+      facturaId: factura.idFactura,
+      clienteId: factura.clienteId,
+      montoTotal: 900,
+      montoCobradoContado: 300,
+      usuarioId: user.userId,
+      tenantId,
+      tipoVencimiento: 'fecha',
+      fechaVencimiento: '2026-10-15',
+    }));
+
+    expect(result.tipoVencimiento).toBe('fecha');
+    expect(result.reconciliacionId).toBeTruthy();
+    const reconciliaciones = await prisma.reconciliacionVenta.findMany({
+      where: { tenantId, ventaId: factura.ventaId },
+    });
+    expect(reconciliaciones).toHaveLength(1);
+    const reconciliacion = reconciliaciones[0];
+    expect(reconciliacion).toMatchObject({
+      tenantId,
+      ventaId: factura.ventaId,
+      cuentaId: cuenta.cuentaId,
+      reconciliadoPor: user.userId,
+      moneda: 'CUP',
+      monedaCuenta: 'CUP',
+    });
+    expect(reconciliacion.reconciliacionId).toBe(result.reconciliacionId);
+    expect(reconciliacion.monto.eq(new Prisma.Decimal('300'))).toBe(true);
+    expect(reconciliacion.montoCuenta?.eq(new Prisma.Decimal('300'))).toBe(true);
+    expect((await prisma.cuentaBancaria.findUniqueOrThrow({
+      where: { cuentaId: cuenta.cuentaId },
+    })).saldo).toBe(300);
+
+    const facturaPersistida = await prisma.factura.findUniqueOrThrow({
+      where: { idFactura: factura.idFactura },
+    });
+    expect(facturaPersistida.estado).toBe('PENDIENTE');
+    expect(facturaPersistida.fechaVencimiento?.toISOString().slice(0, 10)).toBe('2026-10-15');
+    const cuentasPorCobrar = await prisma.cuentaPorCobrar.findMany({
+      where: { tenantId, facturaId: factura.idFactura },
+    });
+    expect(cuentasPorCobrar).toHaveLength(1);
+    expect(cuentasPorCobrar[0].montoDeuda.eq(new Prisma.Decimal('600'))).toBe(true);
+    expect(cuentasPorCobrar[0].montoPagado.eq(new Prisma.Decimal('0'))).toBe(true);
+
+    const [bancos, clientesPorVentas, ventasProductos] = await Promise.all([
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '1.1.02' } },
+      }),
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '1.2.01' } },
+      }),
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '4.1' } },
+      }),
+    ]);
+
+    const asientosCobro = await prisma.asiento.findMany({
+      where: {
+        tenantId,
+        origenTipo: 'reconciliacion_venta',
+        origenId: reconciliacion.reconciliacionId,
+      },
+      include: {
+        lineas: {
+          include: { cuenta: { select: { codigo: true } } },
+          orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }],
+        },
+      },
+    });
+    expect(asientosCobro).toHaveLength(1);
+    expect(asientosCobro[0].createdBy).toBe(user.userId);
+    expect(asientosCobro[0].lineas).toHaveLength(2);
+    expect(asientosCobro[0].lineas.map((linea) => ({
+      cuentaId: linea.cuentaId,
+      cuentaCodigo: linea.cuenta.codigo,
+      debe: linea.debe.toString(),
+      haber: linea.haber.toString(),
+      monedaOriginal: linea.monedaOriginal,
+      montoOriginal: linea.montoOriginal.toString(),
+    }))).toEqual([
+      {
+        cuentaId: bancos.cuentaContableId,
+        cuentaCodigo: '1.1.02',
+        debe: '300',
+        haber: '0',
+        monedaOriginal: 'CUP',
+        montoOriginal: '300',
+      },
+      {
+        cuentaId: ventasProductos.cuentaContableId,
+        cuentaCodigo: '4.1',
+        debe: '0',
+        haber: '300',
+        monedaOriginal: 'CUP',
+        montoOriginal: '300',
+      },
+    ]);
+    const debeCobro = asientosCobro[0].lineas.reduce(
+      (sum, linea) => sum.add(linea.debe), new Prisma.Decimal(0),
+    );
+    const haberCobro = asientosCobro[0].lineas.reduce(
+      (sum, linea) => sum.add(linea.haber), new Prisma.Decimal(0),
+    );
+    expect(debeCobro.eq(haberCobro)).toBe(true);
+
+    const asientoFactura = await prisma.asiento.findMany({
+      where: { tenantId, origenTipo: 'factura', origenId: factura.idFactura },
+      include: {
+        lineas: {
+          include: { cuenta: { select: { codigo: true } } },
+          orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }],
+        },
+      },
+    });
+    expect(asientoFactura).toHaveLength(1);
+    expect(asientoFactura[0].createdBy).toBe(user.userId);
+    expect(asientoFactura[0].lineas).toHaveLength(2);
+    expect(asientoFactura[0].lineas.map((linea) => ({
+      cuentaId: linea.cuentaId,
+      cuentaCodigo: linea.cuenta.codigo,
+      debe: linea.debe.toString(),
+      haber: linea.haber.toString(),
+      monedaOriginal: linea.monedaOriginal,
+      montoOriginal: linea.montoOriginal.toString(),
+    }))).toEqual([
+      {
+        cuentaId: clientesPorVentas.cuentaContableId,
+        cuentaCodigo: '1.2.01',
+        debe: '600',
+        haber: '0',
+        monedaOriginal: 'CUP',
+        montoOriginal: '600',
+      },
+      {
+        cuentaId: ventasProductos.cuentaContableId,
+        cuentaCodigo: '4.1',
+        debe: '0',
+        haber: '600',
+        monedaOriginal: 'CUP',
+        montoOriginal: '600',
+      },
+    ]);
+    const debeFactura = asientoFactura[0].lineas.reduce(
+      (sum, linea) => sum.add(linea.debe), new Prisma.Decimal(0),
+    );
+    const haberFactura = asientoFactura[0].lineas.reduce(
+      (sum, linea) => sum.add(linea.haber), new Prisma.Decimal(0),
+    );
+    expect(debeFactura.eq(haberFactura)).toBe(true);
+  });
+
+  it('revierte VENTACONTADO parcial y CxC ante fallo SQL de postEvento', async () => {
+    const { tenantId, user, factura, cuenta } = await crearEscenario();
+    if (!cuenta) throw new Error('El escenario parcial requiere una cuenta bancaria');
+    const ventaId = factura.ventaId as string;
+    const marker = `r61_venta_contado_parcial_${crypto.randomUUID().replaceAll('-', '')}`;
+    asientoTrigger = marker;
+    asientoFunctionName = `${marker}_fn`;
+
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION ${asientoFunctionName}() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."tenantId" = '${tenantId}'
+          AND NEW."origenTipo" = 'reconciliacion_venta'
+          AND EXISTS (
+            SELECT 1 FROM "ReconciliacionVenta" r
+            WHERE r."reconciliacionId" = NEW."origenId"
+              AND r."tenantId" = NEW."tenantId"
+              AND r."ventaId" = '${ventaId}'
+          ) THEN
+          RAISE EXCEPTION 'VENTACONTADO_PARCIAL_POSTEVENTO_FAILPOINT'
+            USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER ${asientoTrigger} BEFORE INSERT ON "asientos"
+      FOR EACH ROW EXECUTE FUNCTION ${asientoFunctionName}()`);
+
+    const snapshotBefore = await capturarSnapshotContraPago(
+      tenantId,
+      factura.idFactura,
+      ventaId,
+      cuenta.cuentaId,
+    );
+    try {
+      const rejection = await prisma.$transaction((tx) => applyFacturacionCobroWorkflow(tx, {
+        ventaId,
+        facturaId: factura.idFactura,
+        clienteId: factura.clienteId,
+        montoTotal: 900,
+        montoCobradoContado: 300,
+        usuarioId: user.userId,
+        tenantId,
+        tipoVencimiento: 'fecha',
+        fechaVencimiento: '2026-10-15',
+      })).then(() => null, (error: unknown) => error);
+
+      expect(rejection).toBeInstanceOf(Error);
+      expect((rejection as Error).message).toContain('code: "22012"');
+      expect((rejection as Error).message).toContain('VENTACONTADO_PARCIAL_POSTEVENTO_FAILPOINT');
+      expect(await capturarSnapshotContraPago(
+        tenantId,
+        factura.idFactura,
+        ventaId,
+        cuenta.cuentaId,
+      )).toEqual(snapshotBefore);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${asientoTrigger} ON "asientos"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${asientoFunctionName}()`);
+      asientoTrigger = '';
+      asientoFunctionName = '';
+    }
+  });
+
+  it('revierte contra_pago, reconciliación y banco ante fallo SQL tardío del posteo', async () => {
+    const { tenantId, user, factura, cuenta } = await crearEscenario();
+    if (!cuenta) throw new Error('El escenario contra_pago requiere una cuenta bancaria');
+    const ventaId = factura.ventaId as string;
+    const marker = `r61_contra_pago_asiento_${crypto.randomUUID().replaceAll('-', '')}`;
+    asientoTrigger = marker;
+    asientoFunctionName = `${marker}_fn`;
+
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION ${asientoFunctionName}() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."tenantId" = '${tenantId}'
+          AND NEW."origenTipo" = 'reconciliacion_venta'
+          AND EXISTS (
+            SELECT 1 FROM "ReconciliacionVenta" r
+            WHERE r."reconciliacionId" = NEW."origenId"
+              AND r."tenantId" = NEW."tenantId"
+              AND r."ventaId" = '${ventaId}'
+          ) THEN
+          RAISE EXCEPTION 'VENTA_CONTADO_CONTRA_PAGO_ASIENTO_FAILPOINT'
+            USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER ${asientoTrigger} BEFORE INSERT ON "asientos"
+      FOR EACH ROW EXECUTE FUNCTION ${asientoFunctionName}()`);
+
+    const snapshotBefore = await capturarSnapshotContraPago(
+      tenantId,
+      factura.idFactura,
+      ventaId,
+      cuenta.cuentaId,
+    );
+    try {
+      const rejection = await prisma.$transaction((tx) => applyFacturacionCobroWorkflow(tx, {
+        ventaId,
+        facturaId: factura.idFactura,
+        clienteId: factura.clienteId,
+        montoTotal: 900,
+        usuarioId: user.userId,
+        tenantId,
+        tipoVencimiento: 'contra_pago',
+      })).then(() => null, (error: unknown) => error);
+
+      expect(rejection).toBeInstanceOf(Error);
+      expect((rejection as Error).message).toContain('code: "22012"');
+      expect((rejection as Error).message)
+        .toContain('VENTA_CONTADO_CONTRA_PAGO_ASIENTO_FAILPOINT');
+      expect(await capturarSnapshotContraPago(
+        tenantId,
+        factura.idFactura,
+        ventaId,
+        cuenta.cuentaId,
+      )).toEqual(snapshotBefore);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${asientoTrigger} ON "asientos"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${asientoFunctionName}()`);
+      asientoTrigger = '';
+      asientoFunctionName = '';
+    }
   });
 
   it('factura extranjera persista tasa histórica y fingerprint comparable desde la fila leída', async () => {
@@ -538,6 +964,52 @@ describe('writer VENTA_CREDITO — valoración autoritativa en PostgreSQL aislad
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${functionName}()`);
       trigger = '';
       functionName = '';
+    }
+  });
+
+  it('revierte factura, CxC y asiento ante fallo SQL tardío del posteo VENTA_CREDITO', async () => {
+    const { tenantId, user, factura } = await crearEscenario({ sinTesoreria: true });
+    const marker = `r61_asiento_${crypto.randomUUID().replaceAll('-', '')}`;
+    asientoTrigger = marker;
+    asientoFunctionName = `${marker}_fn`;
+
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION ${asientoFunctionName}() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW."tenantId" = '${tenantId}'
+          AND NEW."origenTipo" = 'factura'
+          AND NEW."origenId" = '${factura.idFactura}' THEN
+          RAISE EXCEPTION 'VENTA_CREDITO_ASIENTO_FAILPOINT'
+            USING ERRCODE = '22012';
+        END IF;
+        RETURN NEW;
+      END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER ${asientoTrigger} BEFORE INSERT ON "asientos"
+      FOR EACH ROW EXECUTE FUNCTION ${asientoFunctionName}()`);
+
+    const snapshotBefore = await capturarSnapshotCredito(tenantId, factura.idFactura);
+    try {
+      const rejection = await prisma.$transaction(async (tx) => {
+        await applyFacturacionCobroWorkflow(tx, {
+          ventaId: factura.ventaId as string,
+          facturaId: factura.idFactura,
+          clienteId: factura.clienteId,
+          montoTotal: 900,
+          usuarioId: user.userId,
+          tenantId,
+          tipoVencimiento: 'fecha',
+          fechaVencimiento: '2026-10-15',
+        });
+      }).then(() => null, (error: unknown) => error);
+
+      expect(rejection).toBeInstanceOf(Error);
+      expect((rejection as Error).message).toContain('code: "22012"');
+      expect((rejection as Error).message).toContain('VENTA_CREDITO_ASIENTO_FAILPOINT');
+      expect(await capturarSnapshotCredito(tenantId, factura.idFactura)).toEqual(snapshotBefore);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${asientoTrigger} ON "asientos"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${asientoFunctionName}()`);
+      asientoTrigger = '';
+      asientoFunctionName = '';
     }
   });
 

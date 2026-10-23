@@ -128,7 +128,7 @@ describe('getCostoFifoVentaValorado', () => {
       currency: 'USD', functionalCurrency: 'CUP', price: 100, quantity: 2,
       total: 200, rate: '24',
     });
-    allocation.compraDocumentoItem.compraDocumento.fxEvidenceFingerprint = null;
+    (allocation.compraDocumentoItem.compraDocumento as { fxEvidenceFingerprint: string | null }).fxEvidenceFingerprint = null;
     const tx = fixture({ allocations: [allocation] });
 
     await expect(getCostoFifoVentaValorado(tx as never, 'tenant-1', 'venta-1'))

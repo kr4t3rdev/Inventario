@@ -30,4 +30,3 @@ public struct RejectAdminMembershipRequest: Codable, JSONEncodable, Hashable {
         try container.encode(membershipId, forKey: .membershipId)
     }
 }
-

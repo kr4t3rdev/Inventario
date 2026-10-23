@@ -20,17 +20,17 @@ import com.tcp.mobile.v1.models.Pagination
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param id 
- * @param clienteId 
- * @param montoCapital 
- * @param moneda 
- * @param tasaInteres 
- * @param fechaVencimiento 
- * @param estado 
- * @param cuentaBancariaId 
- * @param pagination 
+ *
+ * @param id
+ * @param clienteId
+ * @param montoCapital
+ * @param moneda
+ * @param tasaInteres
+ * @param fechaVencimiento
+ * @param estado
+ * @param cuentaBancariaId
+ * @param pagination
  */
 
 
@@ -67,4 +67,3 @@ data class CashLoan (
 
 
 }
-

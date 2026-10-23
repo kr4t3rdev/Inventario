@@ -47,7 +47,7 @@ AccountingAdvancesAPI.mobileDeleteAccountingAdvancesById(id: id) { (response, er
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -147,11 +147,11 @@ AccountingAdvancesAPI.mobileGetAccountingAdvancesAvailable(contexto: contexto, p
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **contexto** | **String** | Valor de contexto aceptado por el handler. | [optional] 
- **proveedorId** | **String** | Identificador del proveedor. | [optional] 
- **clienteId** | **String** | Identificador del cliente. | [optional] 
- **moneda** | **String** | Código de moneda. | [optional] 
- **estado** | **Bool** | Estado usado para filtrar resultados. | [optional] 
+ **contexto** | **String** | Valor de contexto aceptado por el handler. | [optional]
+ **proveedorId** | **String** | Identificador del proveedor. | [optional]
+ **clienteId** | **String** | Identificador del cliente. | [optional]
+ **moneda** | **String** | Código de moneda. | [optional]
+ **estado** | **Bool** | Estado usado para filtrar resultados. | [optional]
 
 ### Return type
 
@@ -201,7 +201,7 @@ AccountingAdvancesAPI.mobileGetAccountingAdvancesById(id: id) { (response, error
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -232,7 +232,7 @@ Crea una reserva de anticipo de pago o cobro, vinculada al contrato y contrapart
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let accountingAdvancesPostRequest = AccountingAdvancesPostRequest(tipo: "tipo_example", contratoId: "contratoId_example", proveedorId: "proveedorId_example", clienteId: "clienteId_example", monto: 123, moneda: "moneda_example", cuentaOrigenId: "cuentaOrigenId_example", tipoPagoOrigenId: "tipoPagoOrigenId_example", referenciaExterna: "referenciaExterna_example", vigenciaHasta: Date()) // AccountingAdvancesPostRequest | 
+let accountingAdvancesPostRequest = AccountingAdvancesPostRequest(tipo: "tipo_example", contratoId: "contratoId_example", proveedorId: "proveedorId_example", clienteId: "clienteId_example", monto: 123, moneda: "moneda_example", cuentaOrigenId: "cuentaOrigenId_example", tipoPagoOrigenId: "tipoPagoOrigenId_example", referenciaExterna: "referenciaExterna_example", vigenciaHasta: Date()) // AccountingAdvancesPostRequest |
 
 // Registrar anticipos
 AccountingAdvancesAPI.mobilePostAccountingAdvances(accountingAdvancesPostRequest: accountingAdvancesPostRequest) { (response, error) in
@@ -251,7 +251,7 @@ AccountingAdvancesAPI.mobilePostAccountingAdvances(accountingAdvancesPostRequest
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **accountingAdvancesPostRequest** | [**AccountingAdvancesPostRequest**](AccountingAdvancesPostRequest.md) |  | 
+ **accountingAdvancesPostRequest** | [**AccountingAdvancesPostRequest**](AccountingAdvancesPostRequest.md) |  |
 
 ### Return type
 
@@ -283,7 +283,7 @@ Aplica el saldo completo del anticipo al documento destino con control de idempo
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let accountingAdvancesIdEjecutarPostRequest = AccountingAdvancesIdEjecutarPostRequest(contexto: "contexto_example", documentoDestinoId: "documentoDestinoId_example", montoObjetivo: 123, monedaObjetivo: "monedaObjetivo_example", tasaAplicada: 123, idempotencyKey: "idempotencyKey_example", observaciones: "observaciones_example") // AccountingAdvancesIdEjecutarPostRequest | 
+let accountingAdvancesIdEjecutarPostRequest = AccountingAdvancesIdEjecutarPostRequest(contexto: "contexto_example", documentoDestinoId: "documentoDestinoId_example", montoObjetivo: 123, monedaObjetivo: "monedaObjetivo_example", tasaAplicada: 123, idempotencyKey: "idempotencyKey_example", observaciones: "observaciones_example") // AccountingAdvancesIdEjecutarPostRequest |
 
 // Ejecutar anticipo reservado
 AccountingAdvancesAPI.mobilePostAccountingAdvancesByIdEjecutar(id: id, accountingAdvancesIdEjecutarPostRequest: accountingAdvancesIdEjecutarPostRequest) { (response, error) in
@@ -302,8 +302,8 @@ AccountingAdvancesAPI.mobilePostAccountingAdvancesByIdEjecutar(id: id, accountin
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **accountingAdvancesIdEjecutarPostRequest** | [**AccountingAdvancesIdEjecutarPostRequest**](AccountingAdvancesIdEjecutarPostRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **accountingAdvancesIdEjecutarPostRequest** | [**AccountingAdvancesIdEjecutarPostRequest**](AccountingAdvancesIdEjecutarPostRequest.md) |  |
 
 ### Return type
 
@@ -335,7 +335,7 @@ Revierte el importe aplicado al documento destino y restablece el estado contabl
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let accountingAdvancesIdRevertirPostRequest = AccountingAdvancesIdRevertirPostRequest(documentoDestinoId: "documentoDestinoId_example", montoReverso: 123, observaciones: "observaciones_example") // AccountingAdvancesIdRevertirPostRequest | 
+let accountingAdvancesIdRevertirPostRequest = AccountingAdvancesIdRevertirPostRequest(documentoDestinoId: "documentoDestinoId_example", montoReverso: 123, observaciones: "observaciones_example") // AccountingAdvancesIdRevertirPostRequest |
 
 // Revertir ejecución de anticipo
 AccountingAdvancesAPI.mobilePostAccountingAdvancesByIdRevertir(id: id, accountingAdvancesIdRevertirPostRequest: accountingAdvancesIdRevertirPostRequest) { (response, error) in
@@ -354,8 +354,8 @@ AccountingAdvancesAPI.mobilePostAccountingAdvancesByIdRevertir(id: id, accountin
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **accountingAdvancesIdRevertirPostRequest** | [**AccountingAdvancesIdRevertirPostRequest**](AccountingAdvancesIdRevertirPostRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **accountingAdvancesIdRevertirPostRequest** | [**AccountingAdvancesIdRevertirPostRequest**](AccountingAdvancesIdRevertirPostRequest.md) |  |
 
 ### Return type
 
@@ -387,7 +387,7 @@ Modifica estado, saldo disponible, vigencia o referencia externa del anticipo ex
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let accountingAdvancesIdPutRequest = AccountingAdvancesIdPutRequest(estado: false, saldoDisponible: 123, vigenciaHasta: Date(), referenciaExterna: "referenciaExterna_example") // AccountingAdvancesIdPutRequest | 
+let accountingAdvancesIdPutRequest = AccountingAdvancesIdPutRequest(estado: false, saldoDisponible: 123, vigenciaHasta: Date(), referenciaExterna: "referenciaExterna_example") // AccountingAdvancesIdPutRequest |
 
 // Actualizar anticipo
 AccountingAdvancesAPI.mobilePutAccountingAdvancesById(id: id, accountingAdvancesIdPutRequest: accountingAdvancesIdPutRequest) { (response, error) in
@@ -406,8 +406,8 @@ AccountingAdvancesAPI.mobilePutAccountingAdvancesById(id: id, accountingAdvances
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **accountingAdvancesIdPutRequest** | [**AccountingAdvancesIdPutRequest**](AccountingAdvancesIdPutRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **accountingAdvancesIdPutRequest** | [**AccountingAdvancesIdPutRequest**](AccountingAdvancesIdPutRequest.md) |  |
 
 ### Return type
 

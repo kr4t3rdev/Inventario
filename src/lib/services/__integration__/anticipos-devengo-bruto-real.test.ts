@@ -9,6 +9,7 @@
  *   devenga bruto en GASTO_CREDITO y la obligación se materializa en CxP).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import {
   seedPlanContable,
@@ -38,7 +39,13 @@ assertDisposableDatabase(process.env);
 
 vi.mock('@/lib/server-actions', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/server-actions')>();
-  return { ...original, withAction: (fn: (...args: never[]) => unknown) => fn };
+  return {
+    ...original,
+    withAction: (fn: (...args: never[]) => unknown) => async (...args: never[]) => ({
+      success: true,
+      data: await fn(...args),
+    }),
+  };
 });
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
 
@@ -55,6 +62,47 @@ let tipoPagoId = '';
 let anticipoCobroId = '';
 let anticipoPagoId = '';
 const tasaIds: string[] = [];
+
+/**
+ * @description Normaliza las filas completas de Prisma para comparar snapshots de rollback.
+ * @param {unknown} value - Fila, arreglo o escalar retornado por Prisma.
+ * @returns {unknown} Valor comparable sin instancias mutables de Decimal o Date.
+ */
+function normalizarFila(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof Prisma.Decimal) return value.toString();
+  if (typeof value === 'bigint') return value.toString();
+  if (Array.isArray(value)) return value.map(normalizarFila);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [key, normalizarFila(nested)]),
+    );
+  }
+  return value;
+}
+
+/**
+ * @description Captura todos los efectos persistidos relevantes de una compra con anticipo.
+ * @returns {Promise<unknown>} Snapshot por tenant con documento, CxP, anticipos, asientos y outbox.
+ */
+async function capturarSnapshotCompraServicio(): Promise<unknown> {
+  const [compras, cuentasPorPagar, anticipos, movimientos, asientos, outbox] = await Promise.all([
+    prisma.compraServicio.findMany({ where: { tenantId }, orderBy: { compraServicioId: 'asc' } }),
+    prisma.cuentaPorPagar.findMany({ where: { tenantId }, orderBy: { cuentaPorPagarId: 'asc' } }),
+    prisma.anticipo.findMany({ where: { tenantId }, orderBy: { anticipoId: 'asc' } }),
+    prisma.anticipoMovimiento.findMany({
+      where: { anticipo: { tenantId } },
+      orderBy: { movimientoId: 'asc' },
+    }),
+    prisma.asiento.findMany({
+      where: { tenantId },
+      include: { lineas: { orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }] } },
+      orderBy: { asientoId: 'asc' },
+    }),
+    prisma.shadowPosteoOutbox.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+  ]);
+  return normalizarFila({ compras, cuentasPorPagar, anticipos, movimientos, asientos, outbox });
+}
 const admin = {
   userId: 'actor-bruto', name: 'Test', email: 'test@test.com', role: 'admin', isActive: true, tenantId: '', tenantRole: 'manager',
   planFeatures: { gastos: true, servicios: true, compras: true, contabilidad: true },
@@ -265,31 +313,128 @@ describe('filas 25/26 — devengo bruto y aplicación de anticipos', { timeout: 
       proveedorId,
       anticipos: [{ anticipoId: anticipoPagoId, montoAplicado: 40 }],
     } as never, admin);
+    expect(compra.success).toBe(true);
+    if (!compra.success) expect.unreachable('Se esperaba que la accion tuviera exito');
+    const compraServicioId = compra.data.compraServicio.compraServicioId;
 
     const cxp = await prisma.cuentaPorPagar.findFirstOrThrow({
-      where: { tenantId, proveedorId, montoDeuda: 100 },
+      where: { tenantId, compraServicioId },
     });
     expect(cxp.montoDeuda.toString()).toBe('100');
     expect(cxp.montoPagado.toString()).toBe('40');
+    expect(cxp.saldoPendiente.toString()).toBe('60');
     expect(cxp.estado).toBe('PARCIAL');
 
     const asientos = await prisma.asiento.findMany({ where: { tenantId }, include: { lineas: true } });
     const conAnticipo = asientos.filter((a) => a.origenTipo === 'reconciliacion_gasto');
     expect(conAnticipo).toHaveLength(0);
-    const gastoCredito = asientos.filter((a) => a.origenTipo === 'compra_servicio');
+    const gastoCredito = asientos.filter((a) => a.origenTipo === 'compra_servicio' &&
+      a.origenId === compraServicioId);
     expect(gastoCredito).toHaveLength(1);
     const movimiento = await prisma.anticipoMovimiento.findFirstOrThrow({
-      where: { anticipoId: anticipoPagoId, tipoMovimiento: 'EJECUCION' },
+      where: {
+        anticipoId: anticipoPagoId,
+        tipoMovimiento: 'EJECUCION',
+        documentoDestinoId: compraServicioId,
+      },
     });
     const aplicado = asientos.find((a) => a.origenTipo === 'anticipo_movimiento' &&
       a.origenId === movimiento.movimientoId);
     expect(aplicado).toBeTruthy();
-    expect(compra.success).toBe(true);
-    if (!compra.success) expect.unreachable('Se esperaba que la accion tuviera exito');
-    expect(cxp.compraServicioId).toBe(compra.data.compraServicio.compraServicioId);
+    expect(cxp.compraServicioId).toBe(compraServicioId);
 
-    expect(compra.success).toBe(true)
-    if (!compra.success) expect.unreachable('Se esperaba que la accion tuviera exito')
+    const [gastosOperativos, cuentasPorPagar, anticiposProveedores] = await Promise.all([
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '6.1' } },
+      }),
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '2.1.01' } },
+      }),
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '1.2.03' } },
+      }),
+    ]);
+    const asientoDevengo = await prisma.asiento.findFirstOrThrow({
+      where: { tenantId, origenTipo: 'compra_servicio', origenId: compraServicioId },
+      include: {
+        lineas: {
+          include: { cuenta: { select: { codigo: true } } },
+          orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }],
+        },
+      },
+    });
+    expect(asientoDevengo.createdBy).toBe(admin.userId);
+    expect(asientoDevengo.lineas.map((linea) => ({
+      cuentaId: linea.cuentaId,
+      cuentaCodigo: linea.cuenta.codigo,
+      debe: linea.debe.toString(),
+      haber: linea.haber.toString(),
+      monedaOriginal: linea.monedaOriginal,
+      montoOriginal: linea.montoOriginal.toString(),
+    }))).toEqual([
+      {
+        cuentaId: gastosOperativos.cuentaContableId,
+        cuentaCodigo: '6.1',
+        debe: '100',
+        haber: '0',
+        monedaOriginal: 'CUP',
+        montoOriginal: '100',
+      },
+      {
+        cuentaId: cuentasPorPagar.cuentaContableId,
+        cuentaCodigo: '2.1.01',
+        debe: '0',
+        haber: '100',
+        monedaOriginal: 'CUP',
+        montoOriginal: '100',
+      },
+    ]);
+    const movimientoPersistido = await prisma.anticipoMovimiento.findUniqueOrThrow({
+      where: { movimientoId: movimiento.movimientoId },
+    });
+    expect(movimientoPersistido.monto.toString()).toBe('40');
+    expect(movimientoPersistido.saldoAntes.toString()).toBe('40');
+    expect(movimientoPersistido.saldoDespues.toString()).toBe('0');
+    const asientoAplicacion = await prisma.asiento.findFirstOrThrow({
+      where: {
+        tenantId,
+        origenTipo: 'anticipo_movimiento',
+        origenId: movimiento.movimientoId,
+      },
+      include: {
+        lineas: {
+          include: { cuenta: { select: { codigo: true } } },
+          orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }],
+        },
+      },
+    });
+    expect(asientoAplicacion.createdBy).toBe(admin.userId);
+    expect(asientoAplicacion.lineas.map((linea) => ({
+      cuentaId: linea.cuentaId,
+      cuentaCodigo: linea.cuenta.codigo,
+      debe: linea.debe.toString(),
+      haber: linea.haber.toString(),
+      monedaOriginal: linea.monedaOriginal,
+      montoOriginal: linea.montoOriginal.toString(),
+    }))).toEqual([
+      {
+        cuentaId: cuentasPorPagar.cuentaContableId,
+        cuentaCodigo: '2.1.01',
+        debe: '40',
+        haber: '0',
+        monedaOriginal: 'CUP',
+        montoOriginal: '40',
+      },
+      {
+        cuentaId: anticiposProveedores.cuentaContableId,
+        cuentaCodigo: '1.2.03',
+        debe: '0',
+        haber: '40',
+        monedaOriginal: 'CUP',
+        montoOriginal: '40',
+      },
+    ]);
+
     await prisma.$transaction((tx) => applyPagoGastoWorkflow(tx, {
       tipoGasto: 'servicio',
       referenciaId: compra.data.compraServicio.compraServicioId,
@@ -315,6 +460,63 @@ describe('filas 25/26 — devengo bruto y aplicación de anticipos', { timeout: 
     } });
     expect(pagosCxp).toHaveLength(1);
     expect(pagosCxp[0].monto.toString()).toBe('60');
+  });
+
+  it('compras-servicios: revierte todo si falla postEvento del GASTO_CREDITO inicial', async () => {
+    const anticipo = await prisma.$transaction((tx) => createAnticipo(tx, {
+      tenantId,
+      tipo: 'PAGO',
+      contratoId,
+      proveedorId,
+      monto: 40,
+      moneda: 'CUP',
+      cuentaOrigenId: cuentaId,
+      tipoPagoOrigenId: tipoPagoId,
+      usuarioId: userId,
+    }));
+    const numeroFactura = `${prefix}-initial-gasto-credit-rollback`;
+    const trigger = `purchase_service_initial_accrual_${crypto.randomUUID().replaceAll('-', '')}`;
+
+    try {
+      await prisma.$executeRawUnsafe(`CREATE FUNCTION ${trigger}() RETURNS trigger
+        LANGUAGE plpgsql AS $$ BEGIN
+          IF NEW."tenantId" = '${tenantId}'
+            AND NEW."origenTipo" = 'compra_servicio'
+            AND EXISTS (
+              SELECT 1 FROM "CompraServicio" compra
+              WHERE compra."compraServicioId" = NEW."origenId"
+                AND compra."tenantId" = NEW."tenantId"
+                AND compra."numeroFactura" = '${numeroFactura}'
+            ) THEN
+            RAISE EXCEPTION 'COMPRA_SERVICIO_INITIAL_GASTO_CREDITO_FAILPOINT'
+              USING ERRCODE = '22012';
+          END IF;
+          RETURN NEW;
+        END $$`);
+      await prisma.$executeRawUnsafe(`CREATE TRIGGER ${trigger} BEFORE INSERT ON "asientos"
+        FOR EACH ROW EXECUTE FUNCTION ${trigger}()`);
+
+      const snapshotBefore = await capturarSnapshotCompraServicio();
+      const rejection = await createCompraServicioAction({
+        servicioId,
+        cantidad: 1,
+        costoUnitario: 100,
+        formaPago: 'ANTICIPO_PAGO',
+        estado: 'PENDIENTE',
+        proveedorId,
+        numeroFactura,
+        anticipos: [{ anticipoId: anticipo.anticipoId, montoAplicado: 40 }],
+      } as never, admin).then(() => null, (error: unknown) => error);
+
+      expect(rejection).toBeInstanceOf(Error);
+      expect((rejection as Error).message).toContain('code: "22012"');
+      expect((rejection as Error).message)
+        .toContain('COMPRA_SERVICIO_INITIAL_GASTO_CREDITO_FAILPOINT');
+      expect(await capturarSnapshotCompraServicio()).toEqual(snapshotBefore);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
+    }
   });
 
   it('si el período está cerrado, la reversión formal aborta toda la eliminación', async () => {

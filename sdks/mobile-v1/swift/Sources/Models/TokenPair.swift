@@ -35,4 +35,3 @@ public struct TokenPair: CustomStringConvertible, Codable, JSONEncodable, Hashab
 
     public var description: String { "TokenPair(<redacted>)" }
 }
-

@@ -603,7 +603,7 @@ class AccountingConfigurationApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar tipos de pago
      * Actualiza nombre, descripción, requisito de cuenta, cuenta predeterminada o estado activo del medio de pago.
      * @param id Identificador único del recurso.
-     * @param paymentTypeUpdateRequest 
+     * @param paymentTypeUpdateRequest
      * @return PutAccountingPaymentTypesIdResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -636,7 +636,7 @@ class AccountingConfigurationApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar tipos de pago
      * Actualiza nombre, descripción, requisito de cuenta, cuenta predeterminada o estado activo del medio de pago.
      * @param id Identificador único del recurso.
-     * @param paymentTypeUpdateRequest 
+     * @param paymentTypeUpdateRequest
      * @return ApiResponse<PutAccountingPaymentTypesIdResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -655,7 +655,7 @@ class AccountingConfigurationApi(basePath: kotlin.String = defaultBasePath, clie
      * To obtain the request config of the operation mobilePutAccountingPaymentTypesById
      *
      * @param id Identificador único del recurso.
-     * @param paymentTypeUpdateRequest 
+     * @param paymentTypeUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutAccountingPaymentTypesByIdRequestConfig(id: kotlin.String, paymentTypeUpdateRequest: PaymentTypeUpdateRequest) : RequestConfig<PaymentTypeUpdateRequest> {

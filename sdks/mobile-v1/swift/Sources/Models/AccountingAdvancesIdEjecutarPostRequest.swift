@@ -53,4 +53,3 @@ public struct AccountingAdvancesIdEjecutarPostRequest: Codable, JSONEncodable, H
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

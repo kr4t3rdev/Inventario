@@ -173,4 +173,3 @@ class ReportResult {
   static const requiredKeys = <String>{
   };
 }
-

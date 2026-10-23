@@ -21,13 +21,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/bank-adjustments.
  *
- * @param ajusteId 
- * @param cuentaId 
- * @param tipo 
- * @param monto 
- * @param moneda 
- * @param descripcion 
- * @param motivo 
+ * @param ajusteId
+ * @param cuentaId
+ * @param tipo
+ * @param monto
+ * @param moneda
+ * @param descripcion
+ * @param motivo
  */
 
 
@@ -57,7 +57,7 @@ data class PostAccountingBankAdjustmentsResponse (
 ) {
 
     /**
-     * 
+     *
      *
      * Values: ingreso,egreso
      */
@@ -67,4 +67,3 @@ data class PostAccountingBankAdjustmentsResponse (
     }
 
 }
-

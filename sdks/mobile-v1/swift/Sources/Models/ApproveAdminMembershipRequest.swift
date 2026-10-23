@@ -40,4 +40,3 @@ public struct ApproveAdminMembershipRequest: Codable, JSONEncodable, Hashable {
         try container.encode(tenantRole, forKey: .tenantRole)
     }
 }
-

@@ -265,6 +265,7 @@ model Tenant {
   valesSalidaItem                ValeSalidaItem[]
   vendors                        Vendor[]
   ventas                         Venta[]
+  ventasCreateIdempotency        VentaCreateIdempotency[]
   devolucionesVenta              DevolucionVenta[]
   cobroNotas                     CobroNota[]
   ventasServicios                VentaServicios[]
@@ -755,10 +756,27 @@ model Venta {
   items              VentaItem[]
   VentaServicios     VentaServicios[]
   devoluciones       DevolucionVenta[]
+  createIdempotency  VentaCreateIdempotency?
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([turnoId])
+}
+
+/// Immutable receipt for a keyed product-sale creation request.
+model VentaCreateIdempotency {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  keyHash            String
+  payloadFingerprint String
+  ventaId            String?  @unique
+  responseSnapshot   Json?
+  createdAt          DateTime @default(now())
+  tenant             Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  venta              Venta?   @relation(fields: [ventaId], references: [ventaId], onDelete: SetNull)
+
+  @@unique([tenantId, keyHash], name: "tenantId_keyHash")
+  @@index([tenantId, createdAt])
 }
 
 model VentaItem {

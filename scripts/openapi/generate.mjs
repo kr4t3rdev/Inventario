@@ -60,6 +60,152 @@ function removeGeneratedPublishingArtifacts(directory) {
 }
 
 /**
+ * @description Removes generator-template trailing whitespace from Markdown output.
+ * @param {string} directory - Generated SDK root.
+ * @param {string} sdk - SDK language being postprocessed.
+ * @returns {void}
+ */
+function normalizeGeneratedMarkdownWhitespace(directory, sdk) {
+  for (const file of listGeneratedFiles(directory).filter((entry) => entry.endsWith('.md'))) {
+    const source = readFileSync(file, 'utf8');
+    const newline = source.includes('\r\n') ? '\r\n' : '\n';
+    let fenceCharacter = null;
+    let fenceLength = 0;
+    const normalized = source.split(/\r?\n/).map((line) => {
+      if (fenceCharacter !== null) {
+        const closingFence = new RegExp(`^\\s{0,3}${fenceCharacter}{${fenceLength},}\\s*$`);
+        if (closingFence.test(line)) {
+          fenceCharacter = null;
+          fenceLength = 0;
+        }
+        // The generator adds this terminal separator to an API example comment; it is not code data.
+        if (/^\s*(?:\/\/\/?|\/\*|\*|-\s+(?:parameter|returns)\b)/.test(line) ||
+          / \/\/ [A-Za-z][A-Za-z0-9_]* \| $/.test(line)) {
+          return line.trimEnd();
+        }
+        if (sdk === 'typescript' &&
+          /^\s*const config = new Configuration\(\{\s+$/.test(line)) {
+          // This template marker closes no literal or expression; its terminal space is noise.
+          return line.trimEnd();
+        }
+        return line;
+      }
+
+      const openingFence = line.match(/^\s{0,3}(`{3,}|~{3,})/);
+      if (openingFence) {
+        fenceCharacter = openingFence[1][0];
+        fenceLength = openingFence[1].length;
+        return line;
+      }
+
+      const trailingWhitespace = line.match(/[\t ]+$/)?.[0] ?? '';
+      if (trailingWhitespace.length >= 2 || trailingWhitespace.includes('\t')) {
+        return `${line.slice(0, -trailingWhitespace.length)}\\`;
+      }
+      if (trailingWhitespace.length === 0) return line;
+      return line.slice(0, -trailingWhitespace.length);
+    }).join(newline);
+    if (source !== normalized) writeFileSync(file, normalized);
+  }
+}
+
+/**
+ * @description Removes generator-template trailing whitespace from source comments and blank lines.
+ * @param {string} directory - Generated SDK root.
+ * @returns {void}
+ */
+function normalizeGeneratedSourceWhitespace(directory) {
+  const sourceExtensions = new Set(['.dart', '.kt', '.swift', '.ts']);
+  for (const file of listGeneratedFiles(directory).filter((entry) =>
+    sourceExtensions.has(path.extname(entry)),
+  )) {
+    const source = readFileSync(file, 'utf8');
+    const newline = source.includes('\r\n') ? '\r\n' : '\n';
+    const normalized = source.split(/\r?\n/).map((line) => {
+      if (line.trim().length === 0) return '';
+      if (/^\s*(?:\/\/\/?|\/\*|\*|#|-\s+(?:parameter|returns)\b)/.test(line)) {
+        return line.trimEnd();
+      }
+      return line;
+    });
+    while (normalized.at(-1) === '') normalized.pop();
+    normalized.push('');
+    const normalizedSource = normalized.join(newline);
+    if (source !== normalizedSource) writeFileSync(file, normalizedSource);
+  }
+}
+
+/**
+ * @description Keeps optional Kotlin idempotency-header parameters source-compatible.
+ * @param {string} outputDirectory - Generated Kotlin SDK root.
+ * @returns {void}
+ */
+function defaultKotlinOptionalIdempotencyHeaders(outputDirectory) {
+  const contract = JSON.parse(readFileSync('docs/openapi/mobile-v1.json', 'utf8'));
+  const optionalHeaderOperations = new Set(
+    Object.values(contract.paths).flatMap((pathItem) =>
+      Object.values(pathItem).flatMap((operation) =>
+        operation && typeof operation === 'object' &&
+          operation.parameters?.some((parameter) =>
+            parameter.in === 'header' && parameter.name === 'Idempotency-Key' &&
+            parameter.required !== true,
+          )
+          ? [operation.operationId]
+          : [],
+      ),
+    ),
+  );
+
+  const apiDirectory = path.join(
+    outputDirectory,
+    'src/main/kotlin/com/tcp/mobile/v1/apis',
+  );
+  for (const apiFile of listGeneratedFiles(apiDirectory).filter((file) => file.endsWith('.kt'))) {
+    const source = readFileSync(apiFile, 'utf8');
+    const updated = source.replace(
+      /(fun (mobile[A-Z][A-Za-z0-9]*)(?:WithHttpInfo|RequestConfig)?\([^\n]*\bidempotencyKey: kotlin\.String\?)(\s*\))/g,
+      (signature, prefix, declaredName, suffix) => {
+        const operationId = declaredName.replace(/(?:WithHttpInfo|RequestConfig)$/, '');
+        return optionalHeaderOperations.has(operationId)
+          ? `${prefix} = null${suffix}`
+          : signature;
+      },
+    );
+    if (source !== updated) writeFileSync(apiFile, updated);
+  }
+}
+
+/**
+ * @description Omits absent optional request-only fields from generated Dart payloads.
+ * @param {string} outputDirectory - Dart SDK root.
+ * @returns {void}
+ */
+function omitDartOptionalPayloadFields(outputDirectory) {
+  const modelFields = {
+    'sale_create_request.dart': ['idempotencyKey'],
+    'cash_payment_request.dart': ['idempotencyKey', 'fechaOperacion'],
+  };
+
+  for (const [modelFile, fields] of Object.entries(modelFields)) {
+    const file = path.join(outputDirectory, 'lib/model', modelFile);
+    let source = readFileSync(file, 'utf8');
+    for (const field of fields) {
+      const block = new RegExp(
+        `(\\n\\s*if \\(this\\.${field} != null\\) \\{\\n` +
+          `\\s+json\\[r'${field}'\\] = this\\.${field};\\n\\s*\\})` +
+          `\\s*else \\{\\n\\s+json\\[r'${field}'\\] = null;\\n\\s*\\}`,
+      );
+      const matches = [...source.matchAll(new RegExp(block.source, 'g'))];
+      if (!matches || matches.length !== 1) {
+        throw new Error(`Cannot locate optional Dart payload field ${field} in ${file}.`);
+      }
+      source = source.replace(block, '$1');
+    }
+    writeFileSync(file, source);
+  }
+}
+
+/**
  * @description Redacts secret interpolation from generated Dart model representations.
  * @param {string} outputDirectory - Dart SDK root.
  * @returns {void}
@@ -180,14 +326,18 @@ export function resolveGeneratorRuntime() {
  */
 export function postprocessGeneratedSdk(sdk, outputDirectory) {
   removeGeneratedPublishingArtifacts(outputDirectory);
+  normalizeGeneratedMarkdownWhitespace(outputDirectory, sdk);
+  normalizeGeneratedSourceWhitespace(outputDirectory);
 
   if (sdk === 'dart') {
+    omitDartOptionalPayloadFields(outputDirectory);
     redactDartRepresentations(outputDirectory);
     return;
   }
 
   if (sdk === 'kotlin') {
     redactKotlinRepresentations(outputDirectory);
+    defaultKotlinOptionalIdempotencyHeaders(outputDirectory);
     return;
   }
 

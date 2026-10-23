@@ -104,4 +104,3 @@ public struct ExpenseReconciliationRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(distribucion, forKey: .distribucion)
     }
 }
-

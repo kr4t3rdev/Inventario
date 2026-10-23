@@ -96,7 +96,7 @@ function buildAuthUser(overrides: Record<string, unknown> = {}): AuthenticatedUs
 		planName: 'Básico',
 		permissions: [],
 		...overrides,
-	} as AuthenticatedUser;
+	} as unknown as AuthenticatedUser;
 }
 
 beforeEach(() => {

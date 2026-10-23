@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/advances.
  *
- * @param anticipos 
+ * @param anticipos
  */
 
 
@@ -35,4 +35,3 @@ data class GetAccountingAdvancesResponse (
 
 
 }
-

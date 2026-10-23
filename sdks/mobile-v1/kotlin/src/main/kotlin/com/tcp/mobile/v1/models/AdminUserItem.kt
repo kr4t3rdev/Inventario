@@ -21,27 +21,27 @@ import com.tcp.mobile.v1.models.AdminUserItemSalesAgentProfile
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param userId 
- * @param name 
- * @param email 
- * @param role 
- * @param isActive 
- * @param onboardingType 
- * @param onboardingStatus 
- * @param createdAt 
- * @param expiresAt 
- * @param lockedUntil 
- * @param avatar 
- * @param tenantRole 
- * @param tenantId 
- * @param tenantName 
- * @param membershipId 
- * @param membershipCount 
- * @param salesAgentProfile 
- * @param salesAgentBalance 
- * @param activeReferralCount 
+ *
+ * @param userId
+ * @param name
+ * @param email
+ * @param role
+ * @param isActive
+ * @param onboardingType
+ * @param onboardingStatus
+ * @param createdAt
+ * @param expiresAt
+ * @param lockedUntil
+ * @param avatar
+ * @param tenantRole
+ * @param tenantId
+ * @param tenantName
+ * @param membershipId
+ * @param membershipCount
+ * @param salesAgentProfile
+ * @param salesAgentBalance
+ * @param activeReferralCount
  */
 
 
@@ -108,4 +108,3 @@ data class AdminUserItem (
 
 
 }
-

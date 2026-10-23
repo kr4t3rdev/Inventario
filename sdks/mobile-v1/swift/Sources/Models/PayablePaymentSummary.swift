@@ -37,4 +37,3 @@ public struct PayablePaymentSummary: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(monto, forKey: .monto)
     }
 }
-

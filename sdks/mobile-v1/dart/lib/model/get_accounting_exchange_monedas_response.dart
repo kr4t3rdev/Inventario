@@ -105,4 +105,3 @@ class GetAccountingExchangeMonedasResponse {
   static const requiredKeys = <String>{
   };
 }
-

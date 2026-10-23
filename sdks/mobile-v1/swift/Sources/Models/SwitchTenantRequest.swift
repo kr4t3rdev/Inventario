@@ -30,4 +30,3 @@ public struct SwitchTenantRequest: Codable, JSONEncodable, Hashable {
         try container.encode(tenantId, forKey: .tenantId)
     }
 }
-

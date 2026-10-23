@@ -61,5 +61,17 @@ class CashPaymentRequestTest : ShouldSpec() {
             //modelInstance.observaciones shouldBe ("TODO")
         }
 
+        // to test the property `idempotencyKey` - Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+        should("test idempotencyKey") {
+            // uncomment below to test the property
+            //modelInstance.idempotencyKey shouldBe ("TODO")
+        }
+
+        // to test the property `fechaOperacion` - Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual.
+        should("test fechaOperacion") {
+            // uncomment below to test the property
+            //modelInstance.fechaOperacion shouldBe ("TODO")
+        }
+
     }
 }

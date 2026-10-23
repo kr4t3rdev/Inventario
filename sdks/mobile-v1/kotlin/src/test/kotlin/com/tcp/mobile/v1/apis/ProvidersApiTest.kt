@@ -57,7 +57,7 @@ class ProvidersApiTest : ShouldSpec() {
         // to test mobilePostProvidersCreate
         should("test mobilePostProvidersCreate") {
             // uncomment below to test mobilePostProvidersCreate
-            //val proveedorCreateRequest : ProveedorCreateRequest =  // ProveedorCreateRequest | 
+            //val proveedorCreateRequest : ProveedorCreateRequest =  // ProveedorCreateRequest |
             //val result : Proveedor = apiInstance.mobilePostProvidersCreate(proveedorCreateRequest)
             //result shouldBe ("TODO")
         }
@@ -66,7 +66,7 @@ class ProvidersApiTest : ShouldSpec() {
         should("test mobilePutProvidersById") {
             // uncomment below to test mobilePutProvidersById
             //val id : kotlin.String = id_example // kotlin.String | Identificador del proveedor.
-            //val proveedorUpdateRequest : ProveedorUpdateRequest =  // ProveedorUpdateRequest | 
+            //val proveedorUpdateRequest : ProveedorUpdateRequest =  // ProveedorUpdateRequest |
             //val result : Proveedor = apiInstance.mobilePutProvidersById(id, proveedorUpdateRequest)
             //result shouldBe ("TODO")
         }

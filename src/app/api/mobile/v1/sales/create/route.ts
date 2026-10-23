@@ -2,6 +2,8 @@ import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
+import { withVentaCreateIdempotencyKey } from '@/features/ventas/lib/venta-create-request';
+import type { CreateVentaInput } from '@/features/ventas/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +18,9 @@ function mapActionErrorStatus(code: string): number {
     case 'STOCK_INCONSISTENTE':
     case 'FEATURE_NOT_AVAILABLE':
       return 400;
+    case 'IDEMPOTENCY_KEY_REUSED':
+    case 'IDEMPOTENCY_RECEIPT_INCOMPLETE':
+      return 409;
     default:
       return 400;
   }
@@ -33,9 +38,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const body = withVentaCreateIdempotencyKey(
+      await request.json(),
+      request.headers.get('idempotency-key'),
+    );
     const result = await VentaMutationService.create({
-      input: body,
+      input: body as CreateVentaInput,
       user: authResult.user,
     });
     return successResponse(result);

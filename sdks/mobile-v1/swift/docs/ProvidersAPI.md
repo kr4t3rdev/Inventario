@@ -44,7 +44,7 @@ ProvidersAPI.mobileDeleteProvidersById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del proveedor. | 
+ **id** | **String** | Identificador del proveedor. |
 
 ### Return type
 
@@ -140,7 +140,7 @@ ProvidersAPI.mobileGetProvidersById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del proveedor. | 
+ **id** | **String** | Identificador del proveedor. |
 
 ### Return type
 
@@ -171,7 +171,7 @@ Crea un proveedor en el tenant activo y devuelve el registro creado.
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let proveedorCreateRequest = ProveedorCreateRequest(nombre: "nombre_example", contacto: "contacto_example", direccion: "direccion_example", telefono: "telefono_example", cuentaCUP: "cuentaCUP_example", cuentaUSD: "cuentaUSD_example", logo: "logo_example", contrato: "contrato_example") // ProveedorCreateRequest | 
+let proveedorCreateRequest = ProveedorCreateRequest(nombre: "nombre_example", contacto: "contacto_example", direccion: "direccion_example", telefono: "telefono_example", cuentaCUP: "cuentaCUP_example", cuentaUSD: "cuentaUSD_example", logo: "logo_example", contrato: "contrato_example") // ProveedorCreateRequest |
 
 // Crear proveedor
 ProvidersAPI.mobilePostProvidersCreate(proveedorCreateRequest: proveedorCreateRequest) { (response, error) in
@@ -190,7 +190,7 @@ ProvidersAPI.mobilePostProvidersCreate(proveedorCreateRequest: proveedorCreateRe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **proveedorCreateRequest** | [**ProveedorCreateRequest**](ProveedorCreateRequest.md) |  | 
+ **proveedorCreateRequest** | [**ProveedorCreateRequest**](ProveedorCreateRequest.md) |  |
 
 ### Return type
 
@@ -222,7 +222,7 @@ Actualiza los datos de un proveedor del tenant activo y devuelve el registro act
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador del proveedor.
-let proveedorUpdateRequest = ProveedorUpdateRequest(nombre: "nombre_example", contacto: "contacto_example", direccion: "direccion_example", telefono: "telefono_example", cuentaCUP: "cuentaCUP_example", cuentaUSD: "cuentaUSD_example", logo: "logo_example", contrato: "contrato_example") // ProveedorUpdateRequest | 
+let proveedorUpdateRequest = ProveedorUpdateRequest(nombre: "nombre_example", contacto: "contacto_example", direccion: "direccion_example", telefono: "telefono_example", cuentaCUP: "cuentaCUP_example", cuentaUSD: "cuentaUSD_example", logo: "logo_example", contrato: "contrato_example") // ProveedorUpdateRequest |
 
 // Editar proveedor
 ProvidersAPI.mobilePutProvidersById(id: id, proveedorUpdateRequest: proveedorUpdateRequest) { (response, error) in
@@ -241,8 +241,8 @@ ProvidersAPI.mobilePutProvidersById(id: id, proveedorUpdateRequest: proveedorUpd
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del proveedor. | 
- **proveedorUpdateRequest** | [**ProveedorUpdateRequest**](ProveedorUpdateRequest.md) |  | 
+ **id** | **String** | Identificador del proveedor. |
+ **proveedorUpdateRequest** | [**ProveedorUpdateRequest**](ProveedorUpdateRequest.md) |  |
 
 ### Return type
 

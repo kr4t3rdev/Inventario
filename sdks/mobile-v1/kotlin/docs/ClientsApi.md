@@ -167,7 +167,7 @@ Crea un cliente en el tenant activo y devuelve el registro creado.
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = ClientsApi()
-val clienteCreateRequest : ClienteCreateRequest =  // ClienteCreateRequest | 
+val clienteCreateRequest : ClienteCreateRequest =  // ClienteCreateRequest |
 try {
     val result : Cliente = apiInstance.mobilePostClientsCreate(clienteCreateRequest)
     println(result)
@@ -216,7 +216,7 @@ Actualiza los datos de un cliente del tenant activo y devuelve el registro actua
 
 val apiInstance = ClientsApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador del cliente.
-val clienteUpdateRequest : ClienteUpdateRequest =  // ClienteUpdateRequest | 
+val clienteUpdateRequest : ClienteUpdateRequest =  // ClienteUpdateRequest |
 try {
     val result : Cliente = apiInstance.mobilePutClientsById(id, clienteUpdateRequest)
     println(result)

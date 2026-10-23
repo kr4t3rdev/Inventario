@@ -39,4 +39,3 @@ public struct ExpenseDistributionRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(porcentaje, forKey: .porcentaje)
     }
 }
-

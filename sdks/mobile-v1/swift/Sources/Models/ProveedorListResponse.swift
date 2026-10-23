@@ -29,4 +29,3 @@ public struct ProveedorListResponse: Codable, JSONEncodable, Hashable {
         try container.encode(items, forKey: .items)
     }
 }
-

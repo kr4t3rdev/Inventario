@@ -19,12 +19,12 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param saldoActual 
- * @param totalIngresos 
- * @param totalEgresos 
- * @param totalMovimientos 
+ *
+ * @param saldoActual
+ * @param totalIngresos
+ * @param totalEgresos
+ * @param totalMovimientos
  */
 
 
@@ -46,4 +46,3 @@ data class BankAccountHistorySummary (
 
 
 }
-

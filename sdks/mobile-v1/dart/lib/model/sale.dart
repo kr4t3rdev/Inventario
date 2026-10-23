@@ -240,4 +240,3 @@ class Sale {
   static const requiredKeys = <String>{
   };
 }
-

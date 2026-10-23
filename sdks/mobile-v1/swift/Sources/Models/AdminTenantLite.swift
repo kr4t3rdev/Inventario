@@ -34,4 +34,3 @@ public struct AdminTenantLite: Codable, JSONEncodable, Hashable {
         try container.encode(nombre, forKey: .nombre)
     }
 }
-

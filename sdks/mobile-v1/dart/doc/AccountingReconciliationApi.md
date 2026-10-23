@@ -60,11 +60,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional] 
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional]
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -120,14 +120,14 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **periodo** | **String**| Valor de periodo aceptado por el handler. | [optional] 
- **reconciliadoPor** | **String**| Valor de reconciliadoPor aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **periodo** | **String**| Valor de periodo aceptado por el handler. | [optional]
+ **reconciliadoPor** | **String**| Valor de reconciliadoPor aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -183,14 +183,14 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **periodo** | **String**| Valor de periodo aceptado por el handler. | [optional] 
- **reconciliadoPor** | **String**| Valor de reconciliadoPor aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **periodo** | **String**| Valor de periodo aceptado por el handler. | [optional]
+ **reconciliadoPor** | **String**| Valor de reconciliadoPor aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -243,11 +243,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **puntoDeVentaId** | **String**| Valor de puntoDeVentaId aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **puntoDeVentaId** | **String**| Valor de puntoDeVentaId aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -300,11 +300,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -355,9 +355,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -409,10 +409,10 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -463,9 +463,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -516,9 +516,9 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional] 
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **cuentaId** | **String**| Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -598,7 +598,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingReconciliationApi();
-final expenseReconciliationRequest = ExpenseReconciliationRequest(); // ExpenseReconciliationRequest | 
+final expenseReconciliationRequest = ExpenseReconciliationRequest(); // ExpenseReconciliationRequest |
 final tipoGasto = tipoGasto_example; // String | Valor de tipoGasto aceptado por el handler.
 final fechaDesde = 2013-10-20T19:20:30+01:00; // DateTime | Valor de fechaDesde aceptado por el handler.
 final fechaHasta = 2013-10-20T19:20:30+01:00; // DateTime | Valor de fechaHasta aceptado por el handler.
@@ -617,12 +617,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **expenseReconciliationRequest** | [**ExpenseReconciliationRequest**](ExpenseReconciliationRequest.md)|  | 
- **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional] 
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **expenseReconciliationRequest** | [**ExpenseReconciliationRequest**](ExpenseReconciliationRequest.md)|  |
+ **tipoGasto** | **String**| Valor de tipoGasto aceptado por el handler. | [optional]
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -657,7 +657,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingReconciliationApi();
-final saleReconciliationRequest = SaleReconciliationRequest(); // SaleReconciliationRequest | 
+final saleReconciliationRequest = SaleReconciliationRequest(); // SaleReconciliationRequest |
 final fechaInicio = 2013-10-20T19:20:30+01:00; // DateTime | Inicio inclusivo del período consultado.
 final fechaFin = 2013-10-20T19:20:30+01:00; // DateTime | Fin inclusivo del período consultado.
 final puntoDeVentaId = puntoDeVentaId_example; // String | Valor de puntoDeVentaId aceptado por el handler.
@@ -676,12 +676,12 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **saleReconciliationRequest** | [**SaleReconciliationRequest**](SaleReconciliationRequest.md)|  | 
- **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional] 
- **puntoDeVentaId** | **String**| Valor de puntoDeVentaId aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **saleReconciliationRequest** | [**SaleReconciliationRequest**](SaleReconciliationRequest.md)|  |
+ **fechaInicio** | **DateTime**| Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **DateTime**| Fin inclusivo del período consultado. | [optional]
+ **puntoDeVentaId** | **String**| Valor de puntoDeVentaId aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -716,7 +716,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingReconciliationApi();
-final serviceReconciliationRequest = ServiceReconciliationRequest(); // ServiceReconciliationRequest | 
+final serviceReconciliationRequest = ServiceReconciliationRequest(); // ServiceReconciliationRequest |
 final fechaDesde = 2013-10-20T19:20:30+01:00; // DateTime | Valor de fechaDesde aceptado por el handler.
 final fechaHasta = 2013-10-20T19:20:30+01:00; // DateTime | Valor de fechaHasta aceptado por el handler.
 final page = 56; // int | Página solicitada, comenzando en 1.
@@ -734,11 +734,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **serviceReconciliationRequest** | [**ServiceReconciliationRequest**](ServiceReconciliationRequest.md)|  | 
- **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional] 
- **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional] 
- **page** | **int**| Página solicitada, comenzando en 1. | [optional] 
- **limit** | **int**| Cantidad máxima de elementos por página. | [optional] 
+ **serviceReconciliationRequest** | [**ServiceReconciliationRequest**](ServiceReconciliationRequest.md)|  |
+ **fechaDesde** | **DateTime**| Valor de fechaDesde aceptado por el handler. | [optional]
+ **fechaHasta** | **DateTime**| Valor de fechaHasta aceptado por el handler. | [optional]
+ **page** | **int**| Página solicitada, comenzando en 1. | [optional]
+ **limit** | **int**| Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 

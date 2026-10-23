@@ -156,4 +156,3 @@ class GetAccountingAdvancesReportsSummaryResponse {
   static const requiredKeys = <String>{
   };
 }
-

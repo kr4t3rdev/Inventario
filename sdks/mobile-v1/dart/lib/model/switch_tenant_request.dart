@@ -106,4 +106,3 @@ class SwitchTenantRequest {
     'tenantId',
   };
 }
-

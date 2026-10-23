@@ -270,7 +270,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * POST /warehouses/create
      * Crear almacén
      * Crea un almacén en el tenant activo y devuelve el registro creado.
-     * @param almacenCreateRequest 
+     * @param almacenCreateRequest
      * @return Almacen
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -302,7 +302,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * POST /warehouses/create
      * Crear almacén
      * Crea un almacén en el tenant activo y devuelve el registro creado.
-     * @param almacenCreateRequest 
+     * @param almacenCreateRequest
      * @return ApiResponse<Almacen?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -320,7 +320,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
     /**
      * To obtain the request config of the operation mobilePostWarehousesCreate
      *
-     * @param almacenCreateRequest 
+     * @param almacenCreateRequest
      * @return RequestConfig
      */
     fun mobilePostWarehousesCreateRequestConfig(almacenCreateRequest: AlmacenCreateRequest) : RequestConfig<AlmacenCreateRequest> {
@@ -345,7 +345,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * Editar almacén
      * Actualiza los datos de un almacén del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del almacén.
-     * @param almacenUpdateRequest 
+     * @param almacenUpdateRequest
      * @return Almacen
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -378,7 +378,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * Editar almacén
      * Actualiza los datos de un almacén del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del almacén.
-     * @param almacenUpdateRequest 
+     * @param almacenUpdateRequest
      * @return ApiResponse<Almacen?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -397,7 +397,7 @@ class WarehousesApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * To obtain the request config of the operation mobilePutWarehousesById
      *
      * @param id Identificador del almacén.
-     * @param almacenUpdateRequest 
+     * @param almacenUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutWarehousesByIdRequestConfig(id: kotlin.String, almacenUpdateRequest: AlmacenUpdateRequest) : RequestConfig<AlmacenUpdateRequest> {

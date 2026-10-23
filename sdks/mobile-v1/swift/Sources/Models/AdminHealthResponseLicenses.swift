@@ -40,4 +40,3 @@ public struct AdminHealthResponseLicenses: Codable, JSONEncodable, Hashable {
         try container.encode(expiringSoon, forKey: .expiringSoon)
     }
 }
-

@@ -14,8 +14,8 @@ open class ClientsAPI {
 
     /**
      Eliminar cliente
-     
-     - parameter id: (path) Identificador del cliente. 
+
+     - parameter id: (path) Identificador del cliente.
      - returns: ClienteDeleteResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -30,8 +30,8 @@ open class ClientsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del cliente. 
-     - returns: RequestBuilder<ClienteDeleteResponse> 
+     - parameter id: (path) Identificador del cliente.
+     - returns: RequestBuilder<ClienteDeleteResponse>
      */
     open class func mobileDeleteClientsByIdWithRequestBuilder(id: String) -> RequestBuilder<ClienteDeleteResponse> {
         var localVariablePath = "/clients/{id}"
@@ -56,7 +56,7 @@ open class ClientsAPI {
 
     /**
      Listar clientes
-     
+
      - returns: ClienteListResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -71,7 +71,7 @@ open class ClientsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<ClienteListResponse> 
+     - returns: RequestBuilder<ClienteListResponse>
      */
     open class func mobileGetClientsWithRequestBuilder() -> RequestBuilder<ClienteListResponse> {
         let localVariablePath = "/clients"
@@ -93,8 +93,8 @@ open class ClientsAPI {
 
     /**
      Consultar cliente
-     
-     - parameter id: (path) Identificador del cliente. 
+
+     - parameter id: (path) Identificador del cliente.
      - returns: Cliente
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -109,8 +109,8 @@ open class ClientsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del cliente. 
-     - returns: RequestBuilder<Cliente> 
+     - parameter id: (path) Identificador del cliente.
+     - returns: RequestBuilder<Cliente>
      */
     open class func mobileGetClientsByIdWithRequestBuilder(id: String) -> RequestBuilder<Cliente> {
         var localVariablePath = "/clients/{id}"
@@ -135,8 +135,8 @@ open class ClientsAPI {
 
     /**
      Crear cliente
-     
-     - parameter clienteCreateRequest: (body)  
+
+     - parameter clienteCreateRequest: (body)
      - returns: Cliente
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -151,8 +151,8 @@ open class ClientsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter clienteCreateRequest: (body)  
-     - returns: RequestBuilder<Cliente> 
+     - parameter clienteCreateRequest: (body)
+     - returns: RequestBuilder<Cliente>
      */
     open class func mobilePostClientsCreateWithRequestBuilder(clienteCreateRequest: ClienteCreateRequest) -> RequestBuilder<Cliente> {
         let localVariablePath = "/clients/create"
@@ -174,9 +174,9 @@ open class ClientsAPI {
 
     /**
      Editar cliente
-     
-     - parameter id: (path) Identificador del cliente. 
-     - parameter clienteUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador del cliente.
+     - parameter clienteUpdateRequest: (body)
      - returns: Cliente
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -191,9 +191,9 @@ open class ClientsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador del cliente. 
-     - parameter clienteUpdateRequest: (body)  
-     - returns: RequestBuilder<Cliente> 
+     - parameter id: (path) Identificador del cliente.
+     - parameter clienteUpdateRequest: (body)
+     - returns: RequestBuilder<Cliente>
      */
     open class func mobilePutClientsByIdWithRequestBuilder(id: String, clienteUpdateRequest: ClienteUpdateRequest) -> RequestBuilder<Cliente> {
         var localVariablePath = "/clients/{id}"

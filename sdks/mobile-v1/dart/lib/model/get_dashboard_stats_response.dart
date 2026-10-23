@@ -166,4 +166,3 @@ class GetDashboardStatsResponse {
   static const requiredKeys = <String>{
   };
 }
-

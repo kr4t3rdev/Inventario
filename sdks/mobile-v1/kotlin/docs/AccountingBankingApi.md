@@ -388,7 +388,7 @@ Registra un ingreso o egreso manual y actualiza el saldo de la cuenta bancaria s
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingBankingApi()
-val bankAdjustmentRequest : BankAdjustmentRequest =  // BankAdjustmentRequest | 
+val bankAdjustmentRequest : BankAdjustmentRequest =  // BankAdjustmentRequest |
 val cuentaId : kotlin.String = cuentaId_example // kotlin.String | Identificador de la cuenta bancaria.
 val tipo : kotlin.String = tipo_example // kotlin.String | Tipo de registro solicitado.
 val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
@@ -448,7 +448,7 @@ Transfiere fondos entre dos cuentas, aplicando conversión cuando las monedas so
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingBankingApi()
-val bankTransferCreateRequest : BankTransferCreateRequest =  // BankTransferCreateRequest | 
+val bankTransferCreateRequest : BankTransferCreateRequest =  // BankTransferCreateRequest |
 val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
 val fechaFin : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Fin inclusivo del período consultado.
 val cuentaId : kotlin.String = cuentaId_example // kotlin.String | Identificador de la cuenta bancaria.
@@ -502,7 +502,7 @@ Comprueba cuentas, monedas, saldo e importes antes de registrar una transferenci
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingBankingApi()
-val bankTransferValidationRequest : BankTransferValidationRequest =  // BankTransferValidationRequest | 
+val bankTransferValidationRequest : BankTransferValidationRequest =  // BankTransferValidationRequest |
 try {
     val result : PostAccountingBankTransfersValidateResponse = apiInstance.mobilePostAccountingBankTransfersValidate(bankTransferValidationRequest)
     println(result)

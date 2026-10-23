@@ -44,7 +44,7 @@ ClientsAPI.mobileDeleteClientsById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del cliente. | 
+ **id** | **String** | Identificador del cliente. |
 
 ### Return type
 
@@ -140,7 +140,7 @@ ClientsAPI.mobileGetClientsById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del cliente. | 
+ **id** | **String** | Identificador del cliente. |
 
 ### Return type
 
@@ -171,7 +171,7 @@ Crea un cliente en el tenant activo y devuelve el registro creado.
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let clienteCreateRequest = ClienteCreateRequest(nombre: "nombre_example", direccion: "direccion_example", telefono: "telefono_example", logoUrl: "logoUrl_example", numeroCuentaCUP: "numeroCuentaCUP_example", numeroCuentaUSD: "numeroCuentaUSD_example", numeroContrato: "numeroContrato_example") // ClienteCreateRequest | 
+let clienteCreateRequest = ClienteCreateRequest(nombre: "nombre_example", direccion: "direccion_example", telefono: "telefono_example", logoUrl: "logoUrl_example", numeroCuentaCUP: "numeroCuentaCUP_example", numeroCuentaUSD: "numeroCuentaUSD_example", numeroContrato: "numeroContrato_example") // ClienteCreateRequest |
 
 // Crear cliente
 ClientsAPI.mobilePostClientsCreate(clienteCreateRequest: clienteCreateRequest) { (response, error) in
@@ -190,7 +190,7 @@ ClientsAPI.mobilePostClientsCreate(clienteCreateRequest: clienteCreateRequest) {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **clienteCreateRequest** | [**ClienteCreateRequest**](ClienteCreateRequest.md) |  | 
+ **clienteCreateRequest** | [**ClienteCreateRequest**](ClienteCreateRequest.md) |  |
 
 ### Return type
 
@@ -222,7 +222,7 @@ Actualiza los datos de un cliente del tenant activo y devuelve el registro actua
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador del cliente.
-let clienteUpdateRequest = ClienteUpdateRequest(nombre: "nombre_example", direccion: "direccion_example", telefono: "telefono_example", logoUrl: "logoUrl_example", numeroCuentaCUP: "numeroCuentaCUP_example", numeroCuentaUSD: "numeroCuentaUSD_example", numeroContrato: "numeroContrato_example") // ClienteUpdateRequest | 
+let clienteUpdateRequest = ClienteUpdateRequest(nombre: "nombre_example", direccion: "direccion_example", telefono: "telefono_example", logoUrl: "logoUrl_example", numeroCuentaCUP: "numeroCuentaCUP_example", numeroCuentaUSD: "numeroCuentaUSD_example", numeroContrato: "numeroContrato_example") // ClienteUpdateRequest |
 
 // Editar cliente
 ClientsAPI.mobilePutClientsById(id: id, clienteUpdateRequest: clienteUpdateRequest) { (response, error) in
@@ -241,8 +241,8 @@ ClientsAPI.mobilePutClientsById(id: id, clienteUpdateRequest: clienteUpdateReque
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del cliente. | 
- **clienteUpdateRequest** | [**ClienteUpdateRequest**](ClienteUpdateRequest.md) |  | 
+ **id** | **String** | Identificador del cliente. |
+ **clienteUpdateRequest** | [**ClienteUpdateRequest**](ClienteUpdateRequest.md) |  |
 
 ### Return type
 

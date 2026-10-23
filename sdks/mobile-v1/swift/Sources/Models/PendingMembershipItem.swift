@@ -60,4 +60,3 @@ public struct PendingMembershipItem: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tenant, forKey: .tenant)
     }
 }
-

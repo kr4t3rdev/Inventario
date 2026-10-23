@@ -73,14 +73,14 @@ class AccountingCapitalApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCapitalInjectionsResponse',) as GetAccountingCapitalInjectionsResponse;
-    
+
     }
     return null;
   }
 
   /// Registrar inyecciones de capital
   ///
-  /// Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+  /// Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
   ///
   /// Note: This method returns the HTTP [Response].
   ///
@@ -88,9 +88,12 @@ class AccountingCapitalApi {
   ///
   /// * [CapitalInjectionCreateRequest] capitalInjectionCreateRequest (required):
   ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia.
+  ///
   /// * [String] tipo:
   ///   Tipo de registro solicitado.
-  Future<Response> mobilePostAccountingCapitalInjectionsWithHttpInfo(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String? tipo, }) async {
+  Future<Response> mobilePostAccountingCapitalInjectionsWithHttpInfo(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String? idempotencyKey, String? tipo, }) async {
     // ignore: prefer_const_declarations
     final path = r'/accounting/capital-injections';
 
@@ -103,6 +106,10 @@ class AccountingCapitalApi {
 
     if (tipo != null) {
       queryParams.addAll(_queryParams('', 'tipo', tipo));
+    }
+
+    if (idempotencyKey != null) {
+      headerParams[r'Idempotency-Key'] = parameterToString(idempotencyKey);
     }
 
     const contentTypes = <String>['application/json'];
@@ -121,16 +128,19 @@ class AccountingCapitalApi {
 
   /// Registrar inyecciones de capital
   ///
-  /// Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+  /// Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
   ///
   /// Parameters:
   ///
   /// * [CapitalInjectionCreateRequest] capitalInjectionCreateRequest (required):
   ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia.
+  ///
   /// * [String] tipo:
   ///   Tipo de registro solicitado.
-  Future<PostAccountingCapitalInjectionsResponse?> mobilePostAccountingCapitalInjections(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String? tipo, }) async {
-    final response = await mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest,  tipo: tipo, );
+  Future<PostAccountingCapitalInjectionsResponse?> mobilePostAccountingCapitalInjections(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String? idempotencyKey, String? tipo, }) async {
+    final response = await mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest,  idempotencyKey: idempotencyKey, tipo: tipo, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -139,7 +149,7 @@ class AccountingCapitalApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCapitalInjectionsResponse',) as PostAccountingCapitalInjectionsResponse;
-    
+
     }
     return null;
   }
@@ -202,7 +212,7 @@ class AccountingCapitalApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCapitalInjectionsIdPaymentsResponse',) as PostAccountingCapitalInjectionsIdPaymentsResponse;
-    
+
     }
     return null;
   }

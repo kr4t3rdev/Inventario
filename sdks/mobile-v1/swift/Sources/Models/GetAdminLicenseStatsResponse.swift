@@ -55,4 +55,3 @@ public struct GetAdminLicenseStatsResponse: Codable, JSONEncodable, Hashable {
         try container.encode(adminTest, forKey: .adminTest)
     }
 }
-

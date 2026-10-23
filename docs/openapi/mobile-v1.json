@@ -2073,8 +2073,8 @@
               }
             }
           },
-          "500": {
-            "description": "Error interno",
+          "404": {
+            "description": "Transferencia bancaria no encontrada",
             "content": {
               "application/json": {
                 "schema": {
@@ -2083,8 +2083,8 @@
               }
             }
           },
-          "404": {
-            "description": "Transferencia bancaria no encontrada",
+          "500": {
+            "description": "Error interno",
             "content": {
               "application/json": {
                 "schema": {
@@ -2177,6 +2177,17 @@
         ],
         "parameters": [
           {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "description": "Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia."
+          },
+          {
             "name": "tipo",
             "in": "query",
             "required": false,
@@ -2227,6 +2238,16 @@
               }
             }
           },
+          "409": {
+            "description": "La clave de idempotencia ya fue usada con otro payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno",
             "content": {
@@ -2238,7 +2259,7 @@
             }
           }
         },
-        "description": "Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde."
+        "description": "Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final."
       }
     },
     "/accounting/capital-injections/{id}/payments": {
@@ -2731,6 +2752,17 @@
               "$ref": "#/components/schemas/Identifier"
             },
             "description": "Identificador único del recurso."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "description": "Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia."
           }
         ],
         "requestBody": {
@@ -2774,6 +2806,26 @@
               }
             }
           },
+          "403": {
+            "description": "Sin permiso para registrar el pago",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La clave de idempotencia ya fue usada con otro payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno",
             "content": {
@@ -2785,7 +2837,7 @@
             }
           }
         },
-        "description": "Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables."
+        "description": "Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado."
       }
     },
     "/accounting/cash-loans": {
@@ -3327,6 +3379,17 @@
               "$ref": "#/components/schemas/Identifier"
             },
             "description": "Identificador único del recurso."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "description": "Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia."
           }
         ],
         "requestBody": {
@@ -3370,6 +3433,26 @@
               }
             }
           },
+          "403": {
+            "description": "Sin permiso para registrar el pago",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La clave de idempotencia ya fue usada con otro payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno",
             "content": {
@@ -3381,7 +3464,7 @@
             }
           }
         },
-        "description": "Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables."
+        "description": "Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado."
       }
     },
     "/accounting/exchange/monedas": {
@@ -9874,8 +9957,28 @@
               }
             }
           },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_KEY_REUSED: La clave ya se utilizó con otro contenido; una misma clave no puede reutilizarse con un payload normalizado diferente",
             "content": {
               "application/json": {
                 "schema": {
@@ -9895,7 +9998,20 @@
             }
           }
         },
-        "description": "Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan."
+        "description": "Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "description": "Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia."
+          }
+        ]
       }
     },
     "/sales/{id}": {
@@ -13109,8 +13225,9 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "monto": {
-            "type": "number"
+          "montoRecibido": {
+            "type": "number",
+            "exclusiveMinimum": 0
           },
           "moneda": {
             "type": "string",
@@ -13118,23 +13235,57 @@
           },
           "tipo": {
             "type": "string",
-            "default": "APORTE"
+            "enum": [
+              "CAPITAL_SOCIAL",
+              "DEUDA_EXTERNA"
+            ]
           },
           "descripcion": {
             "type": "string"
           },
-          "cuentaBancariaId": {
-            "type": "string"
+          "cuentaId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "socio": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entidadPrestamista": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tasaInteres": {
+            "type": "number",
+            "minimum": 0
+          },
+          "tasaCambio": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "plazoMeses": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "fechaInicioPago": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaOperacion": {
+            "type": "string",
+            "format": "date-time"
           },
           "idempotencyKey": {
             "type": "string",
             "minLength": 1,
             "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
+            "description": "Clave opcional de idempotencia (1 a 64 caracteres). Si se proporciona también Idempotency-Key, prevalece esta propiedad."
           }
         },
         "required": [
-          "monto"
+          "montoRecibido",
+          "tipo",
+          "cuentaId"
         ]
       },
       "CapitalPaymentRequest": {
@@ -13295,7 +13446,11 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 64,
-            "description": "Clave opcional para repetir la misma operación sin duplicarla."
+            "description": "Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad."
+          },
+          "fechaOperacion": {
+            "type": "string",
+            "description": "Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual."
           }
         },
         "required": [
@@ -13424,6 +13579,12 @@
               "string",
               "null"
             ]
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad."
           }
         },
         "required": [

@@ -34,4 +34,3 @@ public struct GetAccountingReconciliationExpensesResponse: Codable, JSONEncodabl
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

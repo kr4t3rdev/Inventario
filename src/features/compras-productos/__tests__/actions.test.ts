@@ -767,12 +767,39 @@ describe("ComprasProductos Server Actions", () => {
 
 		it("permite soft-delete solo si la compra no tiene items ni impacto", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			const compraSinItems = Object.assign({
 				compraDocumentoId: "cd-1",
+				tenantId: "tenant-test",
+				proveedorId: "ven-1",
+				numeroFactura: "",
+				facturaUrl: "",
+				formaPago: "PAGO_COMPLETO",
+				moneda: "CUP",
+				tasaCambio: null,
+				montoConvertido: null,
+				functionalCurrency: null,
+				rateEffectiveAt: null,
+				fxProvenanceKind: null,
+				fxProvenanceSource: null,
+				fxCatalogRateId: null,
+				fxEvidenceJson: null,
+				fxEvidenceFingerprint: null,
+				fxEvidenceVersion: null,
+				estado: "PENDIENTE",
+				tipoOperacion: "REGULAR",
+				descripcion: null,
+				fechaCompra: new Date(),
+				total: 0,
 				gastoCompraId: null,
 				cuentaPorPagarId: null,
-				items: [],
-			});
+				ordenCompraId: null,
+				deletedAt: null,
+				claveIdempotencia: null,
+				updatedById: null,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			}, { items: [] });
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue(compraSinItems);
 			vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue(null);
 			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
 

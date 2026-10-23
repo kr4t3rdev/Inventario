@@ -29,11 +29,11 @@ vi.mock('@/lib/server-actions', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/server-actions')>();
   return {
     ...original,
-    withAction: (handler: (input: unknown, user: AuthenticatedUser) => unknown) =>
+    withAction: (handler: (input: unknown, user: AuthenticatedUser) => Promise<unknown>) =>
       async (input: unknown) => {
         const user = await getCurrentUser();
         if (!user) throw new Error('getCurrentUser mock no configurado');
-        return handler(input, user);
+        return { success: true, data: await handler(input, user) };
       },
   };
 });
@@ -195,8 +195,10 @@ describe('fila 23 — pagos CxC servicios con FX de liquidación', { timeout: 90
       condicionPago: 'CREDITO',
       clienteId,
     });
-    expect(venta.mode).toBe('LEGACY');
-    ventaUsdId = (venta.ventaServicio as { ventaServicioId: string }).ventaServicioId;
+    expect(venta.success).toBe(true);
+    if (!venta.success) expect.unreachable('La creación de venta debía completarse');
+    expect(venta.data.mode).toBe('LEGACY');
+    ventaUsdId = venta.data.ventaServicio.ventaServicioId;
 
     const cxc = await prisma.cuentaPorCobrar.findFirstOrThrow({
       where: { tenantId, ventaServicioId: ventaUsdId },

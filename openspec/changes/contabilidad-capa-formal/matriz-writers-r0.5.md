@@ -373,6 +373,20 @@ que la suite PostgreSQL y el caso existen y la matriz conserva su resultado fech
 significa que se reejecutaron en este corte. `Código/éxito` no prueba fallo físico tardío.
 Un failpoint en un servicio compartido tampoco certifica automáticamente cada adaptador.
 
+**Aplicabilidad del failpoint de AuditLog (verificación de fuente, 2026-10-12):** para las filas
+#6–8, #19–22, #24–26 y #30, el callsite emite el evento mediante `postEvento` y no escribe un
+`AuditLog` propio; el motor `postEvento`/`postEventoInterno` tampoco inserta `AuditLog`. En esas
+filas un trigger de AuditLog separado es **N/A**, no evidencia faltante: el rollback físico
+pertinente es el failpoint de `asientos`/`asiento_lineas` ya indicado en cada fila. En contraste:
+#9 tiene un caso dedicado de fallo físico de AuditLog en
+`cash-loan-create-audit-rollback-real.test.ts` (archivo local no rastreado al verificar);
+#10–12 y las rutas legacy #1–3 tienen casos nominados en
+`cash-writers-audit-rollback-real.test.ts` (también local no rastreado); #13 sí emite
+`AuditLogService.logStrict(..., tx)` y su trigger físico es el caso de transferencia en
+`accounting-bank-transfers-real.test.ts`. #27 conserva dos etapas distintas: `PRICE_OVERRIDE`
+falla AuditLog antes de FIFO; el failpoint de asiento COGS posterior a FIFO demuestra el rollback
+tardío de posting, no una auditoría tardía.
+
 | # | Callsite vivo → frontera tx/adapter | Evidencia física y alcance | Estado R6 por callsite |
 |---|---|---|---|
 | 1 | `deudas-cash/[id]/pagar/route.ts:258` → ruta web legacy | `cash-writers-audit-rollback-real.test.ts`, caso de rollback del POST legacy de pago de deuda (AuditLog); `deudas-cash-real.test.ts` cubre fallo SQL de posteo del pago canónico. | Física histórica; adapter web no equivale a todos los canales. |

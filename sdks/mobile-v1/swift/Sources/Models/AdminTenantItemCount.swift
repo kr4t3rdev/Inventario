@@ -40,4 +40,3 @@ public struct AdminTenantItemCount: Codable, JSONEncodable, Hashable {
         try container.encode(almacenes, forKey: .almacenes)
     }
 }
-

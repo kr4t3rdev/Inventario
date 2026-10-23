@@ -34,4 +34,3 @@ public struct GetAccountingPaymentTypesAvailableAccountsResponse: Codable, JSONE
         try container.encode(estadisticas, forKey: .estadisticas)
     }
 }
-

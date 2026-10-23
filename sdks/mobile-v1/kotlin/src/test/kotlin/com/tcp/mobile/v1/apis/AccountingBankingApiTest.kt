@@ -108,7 +108,7 @@ class AccountingBankingApiTest : ShouldSpec() {
         // to test mobilePostAccountingBankAdjustments
         should("test mobilePostAccountingBankAdjustments") {
             // uncomment below to test mobilePostAccountingBankAdjustments
-            //val bankAdjustmentRequest : BankAdjustmentRequest =  // BankAdjustmentRequest | 
+            //val bankAdjustmentRequest : BankAdjustmentRequest =  // BankAdjustmentRequest |
             //val cuentaId : kotlin.String = cuentaId_example // kotlin.String | Identificador de la cuenta bancaria.
             //val tipo : kotlin.String = tipo_example // kotlin.String | Tipo de registro solicitado.
             //val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
@@ -122,7 +122,7 @@ class AccountingBankingApiTest : ShouldSpec() {
         // to test mobilePostAccountingBankTransfers
         should("test mobilePostAccountingBankTransfers") {
             // uncomment below to test mobilePostAccountingBankTransfers
-            //val bankTransferCreateRequest : BankTransferCreateRequest =  // BankTransferCreateRequest | 
+            //val bankTransferCreateRequest : BankTransferCreateRequest =  // BankTransferCreateRequest |
             //val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
             //val fechaFin : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Fin inclusivo del período consultado.
             //val cuentaId : kotlin.String = cuentaId_example // kotlin.String | Identificador de la cuenta bancaria.
@@ -133,7 +133,7 @@ class AccountingBankingApiTest : ShouldSpec() {
         // to test mobilePostAccountingBankTransfersValidate
         should("test mobilePostAccountingBankTransfersValidate") {
             // uncomment below to test mobilePostAccountingBankTransfersValidate
-            //val bankTransferValidationRequest : BankTransferValidationRequest =  // BankTransferValidationRequest | 
+            //val bankTransferValidationRequest : BankTransferValidationRequest =  // BankTransferValidationRequest |
             //val result : PostAccountingBankTransfersValidateResponse = apiInstance.mobilePostAccountingBankTransfersValidate(bankTransferValidationRequest)
             //result shouldBe ("TODO")
         }

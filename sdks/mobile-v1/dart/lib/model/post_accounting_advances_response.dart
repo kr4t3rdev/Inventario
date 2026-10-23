@@ -106,4 +106,3 @@ class PostAccountingAdvancesResponse {
     'anticipo',
   };
 }
-

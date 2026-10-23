@@ -30,4 +30,3 @@ public struct GetAccountingExchangeTasasResponse: Codable, JSONEncodable, Hashab
         try container.encodeIfPresent(items, forKey: .items)
     }
 }
-

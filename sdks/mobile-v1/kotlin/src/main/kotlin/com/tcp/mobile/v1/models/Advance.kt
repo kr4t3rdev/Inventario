@@ -19,15 +19,15 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param anticipoId 
- * @param tipo 
- * @param montoOriginal 
- * @param saldoDisponible 
- * @param moneda 
- * @param estado 
- * @param vigenciaHasta 
+ *
+ * @param anticipoId
+ * @param tipo
+ * @param montoOriginal
+ * @param saldoDisponible
+ * @param moneda
+ * @param estado
+ * @param vigenciaHasta
  */
 
 
@@ -57,7 +57,7 @@ data class Advance (
 ) {
 
     /**
-     * 
+     *
      *
      * Values: PAGO,COBRO
      */
@@ -66,7 +66,7 @@ data class Advance (
         @JsonProperty(value = "COBRO") COBRO("COBRO");
     }
     /**
-     * 
+     *
      *
      * Values: RESERVADO,EJECUTADO,ANULADO
      */
@@ -77,4 +77,3 @@ data class Advance (
     }
 
 }
-

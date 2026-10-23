@@ -34,4 +34,3 @@ public struct GetAccountingReportsOverdueInvoicesResponse: Codable, JSONEncodabl
         try container.encodeIfPresent(pagination, forKey: .pagination)
     }
 }
-

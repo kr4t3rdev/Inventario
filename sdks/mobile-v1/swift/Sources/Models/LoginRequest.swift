@@ -36,4 +36,3 @@ public struct LoginRequest: CustomStringConvertible, Codable, JSONEncodable, Has
 
     public var description: String { "LoginRequest(<redacted>)" }
 }
-

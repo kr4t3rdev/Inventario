@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param membershipId 
- * @param tenantRole 
+ *
+ * @param membershipId
+ * @param tenantRole
  */
 
 
@@ -37,7 +37,7 @@ data class ApproveAdminMembershipRequest (
 ) {
 
     /**
-     * 
+     *
      *
      * Values: manager,economico,dependiente,admin
      */
@@ -49,4 +49,3 @@ data class ApproveAdminMembershipRequest (
     }
 
 }
-

@@ -109,4 +109,3 @@ class SaleCancelRequest {
   static const requiredKeys = <String>{
   };
 }
-

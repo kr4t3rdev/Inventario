@@ -34,4 +34,3 @@ public struct PostAccountingBankTransfersValidateResponse: Codable, JSONEncodabl
         try container.encode(advertencias, forKey: .advertencias)
     }
 }
-

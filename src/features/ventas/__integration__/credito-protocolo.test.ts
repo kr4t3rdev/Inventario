@@ -192,7 +192,15 @@ describe('protocolo de cupo: writers reales venta vs préstamo en PostgreSQL', (
         select: { montoDeuda: true, montoPagado: true, estado: true },
       });
       expect(cxc).toHaveLength(1);
-      expect(saldoVivoCliente(cxc)).toBe(60);
+      expect(
+        saldoVivoCliente(
+          cxc.map((cuenta) => ({
+            estado: String(cuenta.estado),
+            montoDeuda: Number(cuenta.montoDeuda),
+            montoPagado: Number(cuenta.montoPagado),
+          })),
+        ),
+      ).toBe(60);
     } finally {
       if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
       else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;

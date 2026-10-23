@@ -194,4 +194,3 @@ class AuditLog {
   static const requiredKeys = <String>{
   };
 }
-

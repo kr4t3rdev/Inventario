@@ -27,7 +27,7 @@ import type { MobileGetDashboardStatsRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

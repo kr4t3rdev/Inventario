@@ -34,4 +34,3 @@ public struct GetAccountingBankTransfersResponse: Codable, JSONEncodable, Hashab
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

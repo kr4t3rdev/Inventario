@@ -43,4 +43,3 @@ public struct SwitchTenantResponse: CustomStringConvertible, Codable, JSONEncoda
 
     public var description: String { "SwitchTenantResponse(<redacted>)" }
 }
-

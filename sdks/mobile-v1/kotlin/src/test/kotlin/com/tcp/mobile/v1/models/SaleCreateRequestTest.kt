@@ -116,5 +116,11 @@ class SaleCreateRequestTest : ShouldSpec() {
             //modelInstance.cuentaBancariaId shouldBe ("TODO")
         }
 
+        // to test the property `idempotencyKey` - Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+        should("test idempotencyKey") {
+            // uncomment below to test the property
+            //modelInstance.idempotencyKey shouldBe ("TODO")
+        }
+
     }
 }

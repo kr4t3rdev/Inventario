@@ -56,4 +56,3 @@ public struct SaleReconciliationRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

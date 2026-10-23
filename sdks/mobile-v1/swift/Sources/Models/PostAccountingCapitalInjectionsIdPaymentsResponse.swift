@@ -50,4 +50,3 @@ public struct PostAccountingCapitalInjectionsIdPaymentsResponse: Codable, JSONEn
         try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
     }
 }
-

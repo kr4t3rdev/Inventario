@@ -140,8 +140,11 @@ mediante un servidor Next y transporte de red end-to-end.
   incluyen banco, entidades, obligaciones, reconciliaciones, asientos/líneas, AuditLog y
   outbox; no incluyen sesión ni caché/estado del período, que cambian deliberadamente.
 
-La UI probada conserva claves de pagos durante retry. Los siete casos lifecycle incluyen
-servicios y no certifican por sí solos los formularios de alta cash.
+**Corte histórico 2026-10-11 — brecha de alta cash supersedida el 2026-10-12:** la UI
+probada conservaba claves de pagos durante retry; esos siete casos lifecycle incluían
+servicios y no certificaban por sí solos los formularios de alta cash. El alcance vigente
+se actualiza en el addendum al final de este documento, sin sumar esos siete casos al total
+actual de 13/13 de la suite.
 
 ## R0.5: cruce con el inventario vigente
 
@@ -202,7 +205,46 @@ conservan su alcance.
 
 R0.5 mantiene las dependencias declaradas de A8/R6, baseline por entorno y A9/R7.
 La continuación de baseline está en `r6-baseline-entornos-2026-10-11.md`: diagnóstico
-local read-only con guards operativos, pero sin historial Prisma; producción elegida
-por el responsable y pendiente de conexión segura y corrida propia.
+local read-only con guards operativos, pero sin historial Prisma; producción consultada
+por Railway con 9/23 guards ready, 13 discrepancias de checksum y 2 migraciones solo
+en historial frente al commit desplegado `e6c20706`. Acceso resuelto; baseline abierto.
 A10 captura actual sigue verificada y no requiere reconstrucción histórica. Este
 dictamen no autoriza modos operativos, replay, release ni un nuevo intento cloud.
+
+## Addendum UI de alta cash — 2026-10-12
+
+La cobertura UI vigente pasa a **13/13 casos totales** en
+`src/features/contabilidad/components/__tests__/ui-idempotency-lifecycle.test.tsx`.
+Esta suite expandida incluye los siete casos anotados en el corte histórico del 2026-10-11;
+**13/13 es el total nuevo, no 13 + 7**. Prueba los componentes reales `PrestamoCashForm` y
+`DeudaCashForm` renderizados con las actions de creación mockeadas: clave no vacía,
+reintento con payload/clave idénticos tras fallo confirmado o rechazo de red, y clave nueva
+tras éxito o descarte explícito ya resuelto. Dos pruebas adicionales usan promesas diferidas:
+mientras cada creación permanece pendiente, Cancelar está deshabilitado y Escape/dismiss no
+cierra el diálogo ni libera la clave; al resolver con éxito, el cierre normal del padre sucede
+y solo hay una llamada de creación con esa clave.
+
+La ejecución RED previa a la protección nueva fue **11 PASS / 2 FAIL**: ambos formularios
+dejaban Cancelar activo durante la promesa en vuelo. También se corrigió una brecha descubierta
+en la corrida anterior de esta misma unidad: `DeudaCashForm` no restablecía `isLoading` en los
+caminos de fallo/respuesta de error, bloqueando el reintento; un `finally` ahora lo limpia sin
+rotar la clave pendiente. Los guardas de cierre de ambos formularios evitan que el usuario
+libere la clave mientras la escritura está en curso; tras un fallo asentado sigue siendo posible
+descartar explícitamente y empezar otra intención.
+
+Comando unitario exacto:
+
+```bash
+pnpm exec vitest run --maxWorkers=1 --no-file-parallelism \
+  src/features/contabilidad/components/__tests__/ui-idempotency-lifecycle.test.tsx
+```
+
+Resultado final: **13/13 PASS**. `pnpm run typecheck`, `pnpm run typecheck:tests` y
+`git diff --check` pasaron. Revisión fresca aprobada sin bloqueadores. No se probó por separado
+el click exterior: usa el mismo callback de dismiss con guarda que el Escape ejercitado en las
+pruebas. Esto es evidencia de ciclo de vida UI focal, separada de la firma de identidad/reintento
+de las **18 combinaciones server G5** descrita arriba; no amplía su matriz.
+
+No altera el dictamen: **R0.5-ACCEPT sigue parcial y retenido**, R6 global/baseline permanece
+abierto y A9/R7 continúa pendiente. No hay waiver, autorización de modos operativos, replay,
+release ni nuevo intento cloud.

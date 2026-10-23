@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de PUT /accounting/advances/{id}.
  *
- * @param anticipo 
+ * @param anticipo
  */
 
 
@@ -35,4 +35,3 @@ data class PutAccountingAdvancesIdResponse (
 
 
 }
-

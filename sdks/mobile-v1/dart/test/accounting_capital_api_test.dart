@@ -28,9 +28,9 @@ void main() {
 
     // Registrar inyecciones de capital
     //
-    // Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+    // Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
     //
-    //Future<PostAccountingCapitalInjectionsResponse> mobilePostAccountingCapitalInjections(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String tipo }) async
+    //Future<PostAccountingCapitalInjectionsResponse> mobilePostAccountingCapitalInjections(CapitalInjectionCreateRequest capitalInjectionCreateRequest, { String idempotencyKey, String tipo }) async
     test('test mobilePostAccountingCapitalInjections', () async {
       // TODO
     });

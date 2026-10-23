@@ -106,4 +106,3 @@ class AlmacenListResponse {
     'items',
   };
 }
-

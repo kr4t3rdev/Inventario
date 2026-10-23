@@ -349,5 +349,3 @@ class AdvanceEstadoEnumTypeTransformer {
   /// Singleton [AdvanceEstadoEnumTypeTransformer] instance.
   static AdvanceEstadoEnumTypeTransformer? _instance;
 }
-
-

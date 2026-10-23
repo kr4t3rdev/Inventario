@@ -95,7 +95,7 @@ AccountingBankingAPI.mobileGetAccountingBankAccountsById(id: id) { (response, er
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -150,12 +150,12 @@ AccountingBankingAPI.mobileGetAccountingBankAccountsByIdNestedHistory(id: id, fe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **tipoMovimiento** | **String** | Valor de tipoMovimiento aceptado por el handler. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **id** | **String** | Identificador único del recurso. |
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **tipoMovimiento** | **String** | Valor de tipoMovimiento aceptado por el handler. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -210,12 +210,12 @@ AccountingBankingAPI.mobileGetAccountingBankAdjustments(cuentaId: cuentaId, tipo
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -267,9 +267,9 @@ AccountingBankingAPI.mobileGetAccountingBankTransfers(fechaInicio: fechaInicio, 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -319,7 +319,7 @@ AccountingBankingAPI.mobileGetAccountingBankTransfersById(id: id) { (response, e
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -369,7 +369,7 @@ AccountingBankingAPI.mobileGetAccountingBankTransfersByIdComprobante(id: id) { (
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -400,7 +400,7 @@ Registra un ingreso o egreso manual y actualiza el saldo de la cuenta bancaria s
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let bankAdjustmentRequest = BankAdjustmentRequest(cuentaId: "cuentaId_example", tipo: "tipo_example", monto: 123, moneda: "moneda_example", descripcion: "descripcion_example", motivo: "motivo_example") // BankAdjustmentRequest | 
+let bankAdjustmentRequest = BankAdjustmentRequest(cuentaId: "cuentaId_example", tipo: "tipo_example", monto: 123, moneda: "moneda_example", descripcion: "descripcion_example", motivo: "motivo_example", idempotencyKey: "idempotencyKey_example") // BankAdjustmentRequest |
 let cuentaId = "cuentaId_example" // String | Identificador de la cuenta bancaria. (optional)
 let tipo = "tipo_example" // String | Tipo de registro solicitado. (optional)
 let fechaInicio = Date() // Date | Inicio inclusivo del período consultado. (optional)
@@ -425,13 +425,13 @@ AccountingBankingAPI.mobilePostAccountingBankAdjustments(bankAdjustmentRequest: 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankAdjustmentRequest** | [**BankAdjustmentRequest**](BankAdjustmentRequest.md) |  | 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **page** | **Int** | Página solicitada, comenzando en 1. | [optional] 
- **limit** | **Int** | Cantidad máxima de elementos por página. | [optional] 
+ **bankAdjustmentRequest** | [**BankAdjustmentRequest**](BankAdjustmentRequest.md) |  |
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **page** | **Int** | Página solicitada, comenzando en 1. | [optional]
+ **limit** | **Int** | Cantidad máxima de elementos por página. | [optional]
 
 ### Return type
 
@@ -462,7 +462,7 @@ Transfiere fondos entre dos cuentas, aplicando conversión cuando las monedas so
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let bankTransferCreateRequest = BankTransferCreateRequest(cuentaOrigenId: "cuentaOrigenId_example", cuentaDestinoId: "cuentaDestinoId_example", montoOrigen: 123, montoDestino: 123, motivo: "motivo_example", descripcion: "descripcion_example", tasaCambio: 123, monedaPrincipal: "monedaPrincipal_example") // BankTransferCreateRequest | 
+let bankTransferCreateRequest = BankTransferCreateRequest(cuentaOrigenId: "cuentaOrigenId_example", cuentaDestinoId: "cuentaDestinoId_example", montoOrigen: 123, montoDestino: 123, motivo: "motivo_example", descripcion: "descripcion_example", tasaCambio: 123, monedaPrincipal: "monedaPrincipal_example") // BankTransferCreateRequest |
 let fechaInicio = Date() // Date | Inicio inclusivo del período consultado. (optional)
 let fechaFin = Date() // Date | Fin inclusivo del período consultado. (optional)
 let cuentaId = "cuentaId_example" // String | Identificador de la cuenta bancaria. (optional)
@@ -484,10 +484,10 @@ AccountingBankingAPI.mobilePostAccountingBankTransfers(bankTransferCreateRequest
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankTransferCreateRequest** | [**BankTransferCreateRequest**](BankTransferCreateRequest.md) |  | 
- **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional] 
- **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional] 
- **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional] 
+ **bankTransferCreateRequest** | [**BankTransferCreateRequest**](BankTransferCreateRequest.md) |  |
+ **fechaInicio** | **Date** | Inicio inclusivo del período consultado. | [optional]
+ **fechaFin** | **Date** | Fin inclusivo del período consultado. | [optional]
+ **cuentaId** | **String** | Identificador de la cuenta bancaria. | [optional]
 
 ### Return type
 
@@ -518,7 +518,7 @@ Comprueba cuentas, monedas, saldo e importes antes de registrar una transferenci
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let bankTransferValidationRequest = BankTransferValidationRequest(cuentaOrigenId: "cuentaOrigenId_example", cuentaDestinoId: "cuentaDestinoId_example", monto: 123, motivo: "motivo_example", descripcion: "descripcion_example") // BankTransferValidationRequest | 
+let bankTransferValidationRequest = BankTransferValidationRequest(cuentaOrigenId: "cuentaOrigenId_example", cuentaDestinoId: "cuentaDestinoId_example", monto: 123, motivo: "motivo_example", descripcion: "descripcion_example") // BankTransferValidationRequest |
 
 // Validar transferencia bancaria
 AccountingBankingAPI.mobilePostAccountingBankTransfersValidate(bankTransferValidationRequest: bankTransferValidationRequest) { (response, error) in
@@ -537,7 +537,7 @@ AccountingBankingAPI.mobilePostAccountingBankTransfersValidate(bankTransferValid
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **bankTransferValidationRequest** | [**BankTransferValidationRequest**](BankTransferValidationRequest.md) |  | 
+ **bankTransferValidationRequest** | [**BankTransferValidationRequest**](BankTransferValidationRequest.md) |  |
 
 ### Return type
 

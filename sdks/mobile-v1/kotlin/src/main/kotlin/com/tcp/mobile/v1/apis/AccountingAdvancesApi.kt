@@ -396,7 +396,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * POST /accounting/advances
      * Registrar anticipos
      * Crea una reserva de anticipo de pago o cobro, vinculada al contrato y contraparte indicados.
-     * @param accountingAdvancesPostRequest 
+     * @param accountingAdvancesPostRequest
      * @return PostAccountingAdvancesResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -428,7 +428,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * POST /accounting/advances
      * Registrar anticipos
      * Crea una reserva de anticipo de pago o cobro, vinculada al contrato y contraparte indicados.
-     * @param accountingAdvancesPostRequest 
+     * @param accountingAdvancesPostRequest
      * @return ApiResponse<PostAccountingAdvancesResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -446,7 +446,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
     /**
      * To obtain the request config of the operation mobilePostAccountingAdvances
      *
-     * @param accountingAdvancesPostRequest 
+     * @param accountingAdvancesPostRequest
      * @return RequestConfig
      */
     fun mobilePostAccountingAdvancesRequestConfig(accountingAdvancesPostRequest: AccountingAdvancesPostRequest) : RequestConfig<AccountingAdvancesPostRequest> {
@@ -471,7 +471,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Ejecutar anticipo reservado
      * Aplica el saldo completo del anticipo al documento destino con control de idempotencia y período contable.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdEjecutarPostRequest 
+     * @param accountingAdvancesIdEjecutarPostRequest
      * @return PostAccountingAdvancesIdEjecutarResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -504,7 +504,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Ejecutar anticipo reservado
      * Aplica el saldo completo del anticipo al documento destino con control de idempotencia y período contable.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdEjecutarPostRequest 
+     * @param accountingAdvancesIdEjecutarPostRequest
      * @return ApiResponse<PostAccountingAdvancesIdEjecutarResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -523,7 +523,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * To obtain the request config of the operation mobilePostAccountingAdvancesByIdEjecutar
      *
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdEjecutarPostRequest 
+     * @param accountingAdvancesIdEjecutarPostRequest
      * @return RequestConfig
      */
     fun mobilePostAccountingAdvancesByIdEjecutarRequestConfig(id: kotlin.String, accountingAdvancesIdEjecutarPostRequest: AccountingAdvancesIdEjecutarPostRequest) : RequestConfig<AccountingAdvancesIdEjecutarPostRequest> {
@@ -548,7 +548,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Revertir ejecución de anticipo
      * Revierte el importe aplicado al documento destino y restablece el estado contable correspondiente.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdRevertirPostRequest 
+     * @param accountingAdvancesIdRevertirPostRequest
      * @return PostAccountingAdvancesIdRevertirResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -581,7 +581,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Revertir ejecución de anticipo
      * Revierte el importe aplicado al documento destino y restablece el estado contable correspondiente.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdRevertirPostRequest 
+     * @param accountingAdvancesIdRevertirPostRequest
      * @return ApiResponse<PostAccountingAdvancesIdRevertirResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -600,7 +600,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * To obtain the request config of the operation mobilePostAccountingAdvancesByIdRevertir
      *
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdRevertirPostRequest 
+     * @param accountingAdvancesIdRevertirPostRequest
      * @return RequestConfig
      */
     fun mobilePostAccountingAdvancesByIdRevertirRequestConfig(id: kotlin.String, accountingAdvancesIdRevertirPostRequest: AccountingAdvancesIdRevertirPostRequest) : RequestConfig<AccountingAdvancesIdRevertirPostRequest> {
@@ -625,7 +625,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Actualizar anticipo
      * Modifica estado, saldo disponible, vigencia o referencia externa del anticipo existente.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdPutRequest 
+     * @param accountingAdvancesIdPutRequest
      * @return PutAccountingAdvancesIdResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -658,7 +658,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * Actualizar anticipo
      * Modifica estado, saldo disponible, vigencia o referencia externa del anticipo existente.
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdPutRequest 
+     * @param accountingAdvancesIdPutRequest
      * @return ApiResponse<PutAccountingAdvancesIdResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -677,7 +677,7 @@ class AccountingAdvancesApi(basePath: kotlin.String = defaultBasePath, client: C
      * To obtain the request config of the operation mobilePutAccountingAdvancesById
      *
      * @param id Identificador único del recurso.
-     * @param accountingAdvancesIdPutRequest 
+     * @param accountingAdvancesIdPutRequest
      * @return RequestConfig
      */
     fun mobilePutAccountingAdvancesByIdRequestConfig(id: kotlin.String, accountingAdvancesIdPutRequest: AccountingAdvancesIdPutRequest) : RequestConfig<AccountingAdvancesIdPutRequest> {

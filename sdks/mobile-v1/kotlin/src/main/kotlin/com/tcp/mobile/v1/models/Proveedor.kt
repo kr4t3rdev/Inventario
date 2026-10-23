@@ -19,20 +19,20 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param vendorId 
- * @param nombre 
- * @param contacto 
- * @param direccion 
- * @param telefono 
- * @param cuentaCUP 
- * @param cuentaUSD 
- * @param logo 
- * @param contrato 
- * @param vendorCode 
- * @param createdAt 
- * @param updatedAt 
+ *
+ * @param vendorId
+ * @param nombre
+ * @param contacto
+ * @param direccion
+ * @param telefono
+ * @param cuentaCUP
+ * @param cuentaUSD
+ * @param logo
+ * @param contrato
+ * @param vendorCode
+ * @param createdAt
+ * @param updatedAt
  */
 
 
@@ -78,4 +78,3 @@ data class Proveedor (
 
 
 }
-

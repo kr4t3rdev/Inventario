@@ -83,7 +83,7 @@ open class RequestBuilder<T> {
             self.requestTask.cancel()
         }
     }
-    
+
     public func addHeader(name: String, value: String) -> Self {
         if !value.isEmpty {
             headers[name] = value

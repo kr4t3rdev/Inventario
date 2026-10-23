@@ -59,7 +59,7 @@ class SalesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetSalesResponse',) as GetSalesResponse;
-    
+
     }
     return null;
   }
@@ -118,7 +118,7 @@ class SalesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetSalesIdResponse',) as GetSalesIdResponse;
-    
+
     }
     return null;
   }
@@ -181,7 +181,7 @@ class SalesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PatchSalesIdUpdateResponse',) as PatchSalesIdUpdateResponse;
-    
+
     }
     return null;
   }
@@ -244,21 +244,24 @@ class SalesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostSalesIdCancelResponse',) as PostSalesIdCancelResponse;
-    
+
     }
     return null;
   }
 
   /// Registrar venta
   ///
-  /// Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+  /// Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
   ///
   /// Note: This method returns the HTTP [Response].
   ///
   /// Parameters:
   ///
   /// * [SaleCreateRequest] saleCreateRequest (required):
-  Future<Response> mobilePostSalesCreateWithHttpInfo(SaleCreateRequest saleCreateRequest,) async {
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<Response> mobilePostSalesCreateWithHttpInfo(SaleCreateRequest saleCreateRequest, { String? idempotencyKey, }) async {
     // ignore: prefer_const_declarations
     final path = r'/sales/create';
 
@@ -268,6 +271,10 @@ class SalesApi {
     final queryParams = <QueryParam>[];
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
+
+    if (idempotencyKey != null) {
+      headerParams[r'Idempotency-Key'] = parameterToString(idempotencyKey);
+    }
 
     const contentTypes = <String>['application/json'];
 
@@ -285,13 +292,16 @@ class SalesApi {
 
   /// Registrar venta
   ///
-  /// Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+  /// Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
   ///
   /// Parameters:
   ///
   /// * [SaleCreateRequest] saleCreateRequest (required):
-  Future<PostSalesCreateResponse?> mobilePostSalesCreate(SaleCreateRequest saleCreateRequest,) async {
-    final response = await mobilePostSalesCreateWithHttpInfo(saleCreateRequest,);
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<PostSalesCreateResponse?> mobilePostSalesCreate(SaleCreateRequest saleCreateRequest, { String? idempotencyKey, }) async {
+    final response = await mobilePostSalesCreateWithHttpInfo(saleCreateRequest,  idempotencyKey: idempotencyKey, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -300,7 +310,7 @@ class SalesApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostSalesCreateResponse',) as PostSalesCreateResponse;
-    
+
     }
     return null;
   }

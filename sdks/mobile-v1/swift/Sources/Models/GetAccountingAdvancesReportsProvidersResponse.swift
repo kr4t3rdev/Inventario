@@ -34,4 +34,3 @@ public struct GetAccountingAdvancesReportsProvidersResponse: Codable, JSONEncoda
         try container.encodeIfPresent(pagination, forKey: .pagination)
     }
 }
-

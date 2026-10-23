@@ -57,4 +57,3 @@ public struct BankAdjustment: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(motivo, forKey: .motivo)
     }
 }
-

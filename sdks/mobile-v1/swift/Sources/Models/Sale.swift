@@ -65,4 +65,3 @@ public struct Sale: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
     }
 }
-

@@ -116,7 +116,7 @@ class AccountingCashFinancingApiTest : ShouldSpec() {
         // to test mobilePostAccountingCashDebts
         should("test mobilePostAccountingCashDebts") {
             // uncomment below to test mobilePostAccountingCashDebts
-            //val cashDebtCreateRequest : CashDebtCreateRequest =  // CashDebtCreateRequest | 
+            //val cashDebtCreateRequest : CashDebtCreateRequest =  // CashDebtCreateRequest |
             //val estado : kotlin.Boolean = true // kotlin.Boolean | Estado usado para filtrar resultados.
             //val proveedorId : kotlin.String = proveedorId_example // kotlin.String | Identificador del proveedor.
             //val moneda : kotlin.String = moneda_example // kotlin.String | Código de moneda.
@@ -130,15 +130,16 @@ class AccountingCashFinancingApiTest : ShouldSpec() {
         should("test mobilePostAccountingCashDebtsByIdPayments") {
             // uncomment below to test mobilePostAccountingCashDebtsByIdPayments
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest | 
-            //val result : PostAccountingCashDebtsIdPaymentsResponse = apiInstance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest)
+            //val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest |
+            //val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+            //val result : PostAccountingCashDebtsIdPaymentsResponse = apiInstance.mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey)
             //result shouldBe ("TODO")
         }
 
         // to test mobilePostAccountingCashLoans
         should("test mobilePostAccountingCashLoans") {
             // uncomment below to test mobilePostAccountingCashLoans
-            //val cashLoanCreateRequest : CashLoanCreateRequest =  // CashLoanCreateRequest | 
+            //val cashLoanCreateRequest : CashLoanCreateRequest =  // CashLoanCreateRequest |
             //val estado : kotlin.Boolean = true // kotlin.Boolean | Estado usado para filtrar resultados.
             //val clienteId : kotlin.String = clienteId_example // kotlin.String | Identificador del cliente.
             //val moneda : kotlin.String = moneda_example // kotlin.String | Código de moneda.
@@ -152,8 +153,9 @@ class AccountingCashFinancingApiTest : ShouldSpec() {
         should("test mobilePostAccountingCashLoansByIdPayments") {
             // uncomment below to test mobilePostAccountingCashLoansByIdPayments
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest | 
-            //val result : PostAccountingCashLoansIdPaymentsResponse = apiInstance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest)
+            //val cashPaymentRequest : CashPaymentRequest =  // CashPaymentRequest |
+            //val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+            //val result : PostAccountingCashLoansIdPaymentsResponse = apiInstance.mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey)
             //result shouldBe ("TODO")
         }
 
@@ -161,7 +163,7 @@ class AccountingCashFinancingApiTest : ShouldSpec() {
         should("test mobilePutAccountingCashDebtsById") {
             // uncomment below to test mobilePutAccountingCashDebtsById
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest | 
+            //val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest |
             //val result : PutAccountingCashDebtsIdResponse = apiInstance.mobilePutAccountingCashDebtsById(id, cashOperationUpdateRequest)
             //result shouldBe ("TODO")
         }
@@ -170,7 +172,7 @@ class AccountingCashFinancingApiTest : ShouldSpec() {
         should("test mobilePutAccountingCashLoansById") {
             // uncomment below to test mobilePutAccountingCashLoansById
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest | 
+            //val cashOperationUpdateRequest : CashOperationUpdateRequest =  // CashOperationUpdateRequest |
             //val result : PutAccountingCashLoansIdResponse = apiInstance.mobilePutAccountingCashLoansById(id, cashOperationUpdateRequest)
             //result shouldBe ("TODO")
         }

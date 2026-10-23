@@ -41,4 +41,3 @@ public struct Pagination: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(totalPages, forKey: .totalPages)
     }
 }
-

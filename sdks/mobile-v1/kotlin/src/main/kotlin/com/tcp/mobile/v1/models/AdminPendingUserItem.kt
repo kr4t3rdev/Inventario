@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param userId 
- * @param name 
- * @param email 
- * @param onboardingType 
- * @param onboardingStatus 
- * @param createdAt 
+ *
+ * @param userId
+ * @param name
+ * @param email
+ * @param onboardingType
+ * @param onboardingStatus
+ * @param createdAt
  */
 
 
@@ -54,4 +54,3 @@ data class AdminPendingUserItem (
 
 
 }
-

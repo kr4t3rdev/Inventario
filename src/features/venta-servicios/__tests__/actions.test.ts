@@ -21,9 +21,15 @@ vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
 
 const mockTx = {
 	$queryRaw: vi.fn().mockResolvedValue([]),
-	ventaServicios: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+	ventaServicios: {
+		create: vi.fn(),
+		findMany: vi.fn().mockResolvedValue([]),
+		updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+	},
 	cuentaPorCobrar: { create: vi.fn(), findMany: vi.fn(),
 		updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+	auditLog: { findMany: vi.fn().mockResolvedValue([]) },
+	anticipoMovimiento: { findMany: vi.fn().mockResolvedValue([]) },
 	cliente: { findFirst: vi.fn() },
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
@@ -107,6 +113,12 @@ const mockVentaRow = {
 describe("VentaServicios Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockTx.$queryRaw.mockReset().mockResolvedValue([]);
+		mockTx.ventaServicios.findMany.mockReset().mockResolvedValue([]);
+		mockTx.cuentaPorCobrar.findMany.mockReset().mockResolvedValue([]);
+		mockTx.auditLog.findMany.mockReset().mockResolvedValue([]);
+		mockTx.anticipoMovimiento.findMany.mockReset().mockResolvedValue([]);
+		vi.mocked(prisma.anticipoMovimiento.findMany).mockReset().mockResolvedValue([] as any);
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
 		mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'c-1', limiteCredito: null });
 		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cl-1' } as never);
@@ -153,6 +165,91 @@ describe("VentaServicios Server Actions", () => {
 	});
 
 	describe("createVentaServicioAction", () => {
+		it("consulta el lock y la clave original dentro de la transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow as any);
+			vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb(mockTx));
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				idempotencyKey: "service-race-key",
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.$queryRaw).toHaveBeenCalledTimes(1);
+			expect(mockTx.ventaServicios.findMany).toHaveBeenCalledTimes(1);
+			expect(prisma.ventaServicios.findMany).not.toHaveBeenCalled();
+		});
+
+		it("no confunde claves relacionadas por dos puntos", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			const persistedRows: any[] = [];
+			mockTx.ventaServicios.findMany.mockImplementation(async () => persistedRows);
+			mockTx.ventaServicios.create.mockImplementation(async ({ data }: any) => {
+				const row = {
+					...mockVentaRow,
+					...data,
+					ventaServicioId: `vs-related-key-${persistedRows.length + 1}`,
+				};
+				persistedRows.push(row);
+				return row;
+			});
+
+			const nested = await createVentaServicioAction({
+				servicioId: "sv-1", cantidad: 1, idempotencyKey: "foo:bar",
+			});
+			const parent = await createVentaServicioAction({
+				servicioId: "sv-1", cantidad: 2, idempotencyKey: "foo",
+			});
+
+			expect(nested.success).toBe(true);
+			expect(parent.success).toBe(true);
+			expect(persistedRows).toHaveLength(2);
+		});
+
+		it('no reproduce un legacy key que aliasa el namespace anterior de otra clave', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
+			] as any);
+			const persistedRows: any[] = [];
+			mockTx.ventaServicios.findMany.mockImplementation(async () => persistedRows);
+			mockTx.ventaServicios.create.mockImplementation(async ({ data }: any) => {
+				const row = {
+					...mockVentaRow,
+					...data,
+					ventaServicioId: `vs-namespace-collision-${persistedRows.length + 1}`,
+				};
+				persistedRows.push(row);
+				return row;
+			});
+
+			const original = await createVentaServicioAction({
+				servicioId: 'sv-1', cantidad: 1, idempotencyKey: 'hash-source',
+			});
+			expect(original.success).toBe(true);
+			const payloadHash = persistedRows[0].idempotencyKey.split(':').at(-1);
+			const historicalRawKey = `v1:YQA:${payloadHash}`;
+			expect(historicalRawKey).toMatch(/^v1:YQA:[0-9a-f]{64}$/);
+			persistedRows[0].idempotencyKey = historicalRawKey;
+
+			const otherKey = await createVentaServicioAction({
+				servicioId: 'sv-1', cantidad: 1, idempotencyKey: 'a',
+			});
+
+			expect(otherKey.success).toBe(true);
+			if (otherKey.success) expect(otherKey.data.replayed).toBe(false);
+			expect(persistedRows).toHaveLength(2);
+		});
+
 		it("acepta y persiste idempotencyKey en legacy", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([] as any);
@@ -173,7 +270,9 @@ describe("VentaServicios Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(expect.objectContaining({
-				data: expect.objectContaining({ idempotencyKey: expect.stringContaining('service-key:') }),
+				data: expect.objectContaining({
+					idempotencyKey: expect.stringMatching(/^v2:[^:]+:x+:[0-9a-f]{64}$/),
+				}),
 			}));
 		});
 
@@ -187,9 +286,9 @@ describe("VentaServicios Server Actions", () => {
 				cantidad: 1,
 				costo: 0,
 				condicionPago: 'CONTADO',
-				idempotencyKey: 'service-key:legacy',
+				idempotencyKey: 'service-key',
 			};
-			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([stored] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([stored] as any);
 
 			const result = await createVentaServicioAction({
 				lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 1 }],
@@ -201,12 +300,124 @@ describe("VentaServicios Server Actions", () => {
 				expect(Array.isArray(result.data)).toBe(false);
 				expect(result.data).toMatchObject({ mode: 'MIXED_LINES', replayed: true });
 			}
-			expect(prisma.$transaction).not.toHaveBeenCalled();
+			expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+
+		it('reproduce un replay mixto histórico con CxC y evidencia idénticas', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([{
+				...mockVentaRow,
+				ventaServicioId: 'vs-mixed-exact',
+				clienteId: 'cl-1',
+				condicionPago: 'CREDITO',
+				idempotencyKey: 'historical-mixed-exact',
+			}] as any);
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{
+				id: 'cxc-mixed-exact',
+				ventaServicioId: 'vs-mixed-exact',
+				fechaVencimiento: new Date('2026-11-01T00:00:00.000Z'),
+			}] as any);
+			mockTx.auditLog.findMany.mockResolvedValue([{
+				detalles: {
+					tipo: 'CREDITO_OVERRIDE',
+					tenantId: 'tenant-test',
+					clienteId: 'cl-1',
+					origen: 'VENTA_SERVICIO',
+					montoNuevo: 5000,
+					motivo: 'Excepción aprobada',
+				},
+			}] as any);
+
+			const result = await createVentaServicioAction({
+				lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 1 }],
+				condicionPago: 'CREDITO',
+				clienteId: 'cl-1',
+				fechaVencimiento: '2026-11-01T00:00:00.000Z',
+				solicitarCreditoOverride: true,
+				motivoCreditoOverride: '  Excepción aprobada  ',
+				idempotencyKey: 'historical-mixed-exact',
+			} as any);
+
+			expect(result.success).toBe(true);
+			if (result.success) expect(result.data).toMatchObject({ mode: 'MIXED_LINES', replayed: true });
+			expect(mockTx.auditLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
+				where: expect.objectContaining({ entidadId: 'vs-mixed-exact' }),
+			}));
+		});
+
+		it.each([
+			{
+				name: 'intención default sin evidencia histórica tampoco es demostrable',
+				storedDueDate: new Date('2026-11-01T00:00:00.000Z'),
+				payload: { fechaVencimiento: '2026-11-01T00:00:00.000Z' },
+				auditRows: [],
+			},
+			{
+				name: 'fecha de vencimiento',
+				storedDueDate: new Date('2026-11-01T00:00:00.000Z'),
+				payload: { fechaVencimiento: '2026-11-02T00:00:00.000Z' },
+				auditRows: [],
+			},
+			{
+				name: 'intención de override sin evidencia es ambigua',
+				storedDueDate: null,
+				payload: { solicitarCreditoOverride: true, motivoCreditoOverride: 'Excepción' },
+				auditRows: [],
+			},
+			{
+				name: 'motivo de override auditado',
+				storedDueDate: null,
+				payload: { solicitarCreditoOverride: true, motivoCreditoOverride: 'Motivo cambiado' },
+				auditRows: [{
+					detalles: {
+						tipo: 'CREDITO_OVERRIDE',
+						tenantId: 'tenant-test',
+						clienteId: 'cl-1',
+						origen: 'VENTA_SERVICIO',
+						montoNuevo: 5000,
+						motivo: 'Motivo persistido',
+					},
+				}],
+			},
+		])('rechaza replay histórico mixto si cambia $name', async ({
+			storedDueDate, payload, auditRows,
+		}) => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([{
+				...mockVentaRow,
+				ventaServicioId: 'vs-mixed-legacy',
+				clienteId: 'cl-1',
+				condicionPago: 'CREDITO',
+				idempotencyKey: 'historical-mixed-key',
+			}] as any);
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{
+				id: 'cxc-mixed-legacy',
+				ventaServicioId: 'vs-mixed-legacy',
+				fechaVencimiento: storedDueDate,
+			}] as any);
+			mockTx.auditLog.findMany.mockResolvedValue(auditRows as any);
+
+			const result = await createVentaServicioAction({
+				lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 1 }],
+				condicionPago: 'CREDITO',
+				clienteId: 'cl-1',
+				idempotencyKey: 'historical-mixed-key',
+				...payload,
+			} as any);
+
+			expect(result.success).toBe(false);
+			if (!result.success) expect(result.error?.code).toBe('IDEMPOTENCY_CONFLICT');
 		});
 
 		it("rechaza la misma clave legacy cuando la cantidad cambia de 1 a 2", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([] as any);
 			vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb(mockTx));
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
 				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
@@ -214,18 +425,18 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.ventaServicios.create.mockResolvedValue({
 				...mockVentaRow,
 				cantidad: 1,
-				idempotencyKey: 'service-key:stored-hash',
+				idempotencyKey: `service-key:${'a'.repeat(64)}`,
 			} as any);
 			const first = await createVentaServicioAction({
 				servicioId: 'sv-1', cantidad: 1, idempotencyKey: 'service-key',
 			});
 			expect(first.success).toBe(true);
-			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([{
+			mockTx.ventaServicios.findMany.mockResolvedValue([{
 				...mockVentaRow,
 				cantidad: 1,
 				costo: 0,
 				condicionPago: 'CONTADO',
-				idempotencyKey: 'service-key:stored-hash',
+				idempotencyKey: `service-key:${'a'.repeat(64)}`,
 			}] as any);
 
 			const conflict = await createVentaServicioAction({
@@ -236,9 +447,101 @@ describe("VentaServicios Server Actions", () => {
 			if (!conflict.success) expect(conflict.error?.code).toBe('IDEMPOTENCY_CONFLICT');
 		});
 
+		it.each([
+			{
+				name: 'fecha de vencimiento',
+				stored: { fechaVencimiento: new Date('2026-11-01T00:00:00.000Z') },
+				payload: { fechaVencimiento: '2026-11-02T00:00:00.000Z' },
+			},
+			{
+				name: 'anticipos',
+				stored: { anticipos: [{ anticipoId: 'advance-1', montoAplicado: 100 }] },
+				payload: { anticipos: [{ anticipoId: 'advance-2', montoAplicado: 100 }] },
+			},
+			{
+				name: 'override histórico sin AuditLog es ambiguo y falla cerrado',
+				stored: {},
+				payload: { solicitarCreditoOverride: true, motivoCreditoOverride: 'Excepción' },
+			},
+			{
+				name: 'crédito histórico sin evidencia no demuestra que el override no fuera necesario',
+				stored: {},
+				payload: {},
+			},
+		])('rechaza replay histórico si cambia $name', async ({ stored, payload }) => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([{
+				...mockVentaRow,
+				clienteId: 'cl-1',
+				condicionPago: 'CREDITO',
+				idempotencyKey: 'historical-service-key',
+			}] as any);
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue(stored.fechaVencimiento === undefined
+				? [{ id: 'cxc-1', fechaVencimiento: null }]
+				: [{ id: 'cxc-1', fechaVencimiento: stored.fechaVencimiento }]);
+			mockTx.anticipoMovimiento.findMany.mockResolvedValue(stored.anticipos?.map((item: any) => ({
+				anticipoId: item.anticipoId,
+				monto: new Prisma.Decimal(item.montoAplicado),
+			})) ?? []);
+
+			// Legacy rows without AuditLog cannot prove whether an override was unnecessary.
+			const result = await createVentaServicioAction({
+				servicioId: 'sv-1',
+				cantidad: 1,
+				condicionPago: 'CREDITO',
+				clienteId: 'cl-1',
+				idempotencyKey: 'historical-service-key',
+				...payload,
+			} as any);
+
+			expect(result.success).toBe(false);
+			if (!result.success) expect(result.error?.code).toBe('IDEMPOTENCY_CONFLICT');
+		});
+
+		it('acepta el motivo canónico del override histórico aun si el replay incluye espacios', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValue([{
+				...mockVentaRow,
+				clienteId: 'cl-1',
+				condicionPago: 'CREDITO',
+				idempotencyKey: 'historical-override-key',
+			}] as any);
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([
+				{ id: 'cxc-override', fechaVencimiento: null },
+			]);
+			mockTx.auditLog.findMany.mockResolvedValue([{
+				detalles: {
+					tipo: 'CREDITO_OVERRIDE',
+					tenantId: 'tenant-test',
+					clienteId: 'cl-1',
+					origen: 'VENTA_SERVICIO',
+					montoNuevo: 5000,
+					motivo: 'Excepción aprobada',
+				},
+			}] as any);
+			const result = await createVentaServicioAction({
+				servicioId: 'sv-1',
+				cantidad: 1,
+				condicionPago: 'CREDITO',
+				clienteId: 'cl-1',
+				solicitarCreditoOverride: true,
+				motivoCreditoOverride: '  Excepción aprobada  ',
+				idempotencyKey: 'historical-override-key',
+			} as any);
+
+			expect(result.success).toBe(true);
+			if (result.success) expect(result.data).toMatchObject({ mode: 'LEGACY', replayed: true });
+		});
+
 		it("reconstruye allocationsResult de anticipos en replay legacy con la misma clave", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValueOnce([] as any);
+			mockTx.ventaServicios.findMany.mockResolvedValueOnce([] as any);
 			vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb(mockTx));
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
 				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
@@ -268,7 +571,7 @@ describe("VentaServicios Server Actions", () => {
 			expect(first.data.allocationsResult).toEqual(expectedAllocations);
 			const storedKey = mockTx.ventaServicios.create.mock.calls.at(-1)?.[0].data.idempotencyKey;
 
-			vi.mocked(prisma.ventaServicios.findMany).mockResolvedValueOnce([
+			mockTx.ventaServicios.findMany.mockResolvedValueOnce([
 				{ ...persistedVenta, idempotencyKey: storedKey },
 			] as any);
 			vi.mocked(prisma.anticipoMovimiento.findMany).mockResolvedValueOnce([
@@ -293,7 +596,7 @@ describe("VentaServicios Server Actions", () => {
 			if (!replay.success) expect.unreachable('Se esperaba que la accion tuviera exito');
 			expect(replay.data).toMatchObject({ mode: "LEGACY", replayed: true });
 			expect(replay.data.allocationsResult).toEqual(expectedAllocations);
-			expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+			expect(prisma.$transaction).toHaveBeenCalledTimes(2);
 			expect(prisma.anticipoMovimiento.findMany).toHaveBeenCalledWith(expect.objectContaining({
 				where: expect.objectContaining({
 					documentoDestinoId: "vs-advance-replay",
@@ -302,10 +605,9 @@ describe("VentaServicios Server Actions", () => {
 			}));
 		});
 
-		it("reconstruye allocationsResult de anticipos en replay legacy por carrera P2002", async () => {
+		it("no convierte un P2002 ajeno al lock en un replay de idempotencia", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.ventaServicios.findMany)
-				.mockResolvedValueOnce([] as any)
 				.mockResolvedValueOnce([{
 					...mockVentaRow,
 					ventaServicioId: "vs-race-replay",
@@ -326,7 +628,7 @@ describe("VentaServicios Server Actions", () => {
 				},
 			] as any);
 
-			const replay = await createVentaServicioAction({
+			const result = await createVentaServicioAction({
 				servicioId: "sv-1",
 				cantidad: 1,
 				condicionPago: "CREDITO",
@@ -335,17 +637,9 @@ describe("VentaServicios Server Actions", () => {
 				idempotencyKey: "service-race-key",
 			});
 
-			expect(replay.success).toBe(true);
-			if (!replay.success) expect.unreachable('Se esperaba que la accion tuviera exito');
-			expect(replay.data).toMatchObject({ mode: "LEGACY", replayed: true });
-			expect(replay.data.allocationsResult).toEqual([
-				{
-					anticipoId: "a1",
-					movimientoId: "mov-race-1",
-					montoAplicado: 100,
-					saldoRestante: 900,
-				},
-			]);
+			expect(result.success).toBe(false);
+			if (!result.success) expect(result.error?.code).toBe("P2002");
+			expect(prisma.ventaServicios.findMany).not.toHaveBeenCalled();
 		});
 
 		it("deniega actor sin permiso de registrar ventas antes de abrir transacción", async () => {

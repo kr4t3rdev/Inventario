@@ -217,4 +217,3 @@ class BankAccount {
   static const requiredKeys = <String>{
   };
 }
-

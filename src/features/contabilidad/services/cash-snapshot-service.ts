@@ -182,9 +182,24 @@ export const CashSnapshotService = {
       return capturarEnCliente(input.client);
     }
 
-    return prisma.$transaction(capturarEnCliente, {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        return await prisma.$transaction(capturarEnCliente, {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        });
+      } catch (error) {
+        const code = typeof error === 'object' && error !== null && 'code' in error
+          ? error.code
+          : undefined;
+        if ((code === 'P2034' || code === '40P01') && attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 10));
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new Error('No se pudo completar la captura de snapshots cash.');
   },
 
   /** @description Lee los snapshots de un corte para auditoría/conciliación. */

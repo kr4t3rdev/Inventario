@@ -19,13 +19,13 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param monedaId 
- * @param codigo 
- * @param nombre 
- * @param simbolo 
- * @param isActive 
+ *
+ * @param monedaId
+ * @param codigo
+ * @param nombre
+ * @param simbolo
+ * @param isActive
  */
 
 
@@ -50,4 +50,3 @@ data class Currency (
 
 
 }
-

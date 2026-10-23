@@ -34,4 +34,3 @@ public struct DeleteAccountingPaymentTypesIdResponse: Codable, JSONEncodable, Ha
         try container.encodeIfPresent(message, forKey: .message)
     }
 }
-

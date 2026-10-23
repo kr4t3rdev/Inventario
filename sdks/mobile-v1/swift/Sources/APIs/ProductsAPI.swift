@@ -14,7 +14,7 @@ open class ProductsAPI {
 
     /**
      Consultar productos
-     
+
      - returns: GetProductsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -29,7 +29,7 @@ open class ProductsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetProductsResponse> 
+     - returns: RequestBuilder<GetProductsResponse>
      */
     open class func mobileGetProductsWithRequestBuilder() -> RequestBuilder<GetProductsResponse> {
         let localVariablePath = "/products"
@@ -51,8 +51,8 @@ open class ProductsAPI {
 
     /**
      Consultar producto
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetProductsIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -67,8 +67,8 @@ open class ProductsAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetProductsIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetProductsIdResponse>
      */
     open class func mobileGetProductsByIdWithRequestBuilder(id: String) -> RequestBuilder<GetProductsIdResponse> {
         var localVariablePath = "/products/{id}"
@@ -109,7 +109,7 @@ open class ProductsAPI {
 
     /**
      Consultar existencias por ubicación
-     
+
      - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
      - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
      - parameter includeZero: (query) Valor de includeZero aceptado por el handler. (optional)
@@ -130,7 +130,7 @@ open class ProductsAPI {
      - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
      - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
      - parameter includeZero: (query) Valor de includeZero aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetProductsStockResponse> 
+     - returns: RequestBuilder<GetProductsStockResponse>
      */
     open class func mobileGetProductsStockWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetProductsStock? = nil, includeZero: IncludeZero_mobileGetProductsStock? = nil) -> RequestBuilder<GetProductsStockResponse> {
         let localVariablePath = "/products/stock"

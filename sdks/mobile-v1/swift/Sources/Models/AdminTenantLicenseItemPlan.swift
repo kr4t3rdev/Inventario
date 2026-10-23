@@ -50,4 +50,3 @@ public struct AdminTenantLicenseItemPlan: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

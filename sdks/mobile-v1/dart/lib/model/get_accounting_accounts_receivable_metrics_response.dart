@@ -166,4 +166,3 @@ class GetAccountingAccountsReceivableMetricsResponse {
   static const requiredKeys = <String>{
   };
 }
-

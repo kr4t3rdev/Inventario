@@ -72,6 +72,7 @@ describe('/api/mi-empresa', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ nombre: 'Mi Empresa', usaCodigoEan13: false }),
       }),
+      {},
     );
     const data = await response.json();
 
@@ -97,6 +98,7 @@ describe('/api/mi-empresa', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ usaCodigoEan13: true }),
       }),
+      {},
     );
     const data = await response.json();
 

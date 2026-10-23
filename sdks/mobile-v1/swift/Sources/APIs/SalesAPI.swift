@@ -14,7 +14,7 @@ open class SalesAPI {
 
     /**
      Consultar ventas
-     
+
      - returns: GetSalesResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -29,7 +29,7 @@ open class SalesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetSalesResponse> 
+     - returns: RequestBuilder<GetSalesResponse>
      */
     open class func mobileGetSalesWithRequestBuilder() -> RequestBuilder<GetSalesResponse> {
         let localVariablePath = "/sales"
@@ -51,8 +51,8 @@ open class SalesAPI {
 
     /**
      Consultar venta
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetSalesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -67,8 +67,8 @@ open class SalesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetSalesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetSalesIdResponse>
      */
     open class func mobileGetSalesByIdWithRequestBuilder(id: String) -> RequestBuilder<GetSalesIdResponse> {
         var localVariablePath = "/sales/{id}"
@@ -93,9 +93,9 @@ open class SalesAPI {
 
     /**
      Actualizar datos de venta
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter saleUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter saleUpdateRequest: (body)
      - returns: PatchSalesIdUpdateResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -110,9 +110,9 @@ open class SalesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter saleUpdateRequest: (body)  
-     - returns: RequestBuilder<PatchSalesIdUpdateResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter saleUpdateRequest: (body)
+     - returns: RequestBuilder<PatchSalesIdUpdateResponse>
      */
     open class func mobilePatchSalesByIdUpdateWithRequestBuilder(id: String, saleUpdateRequest: SaleUpdateRequest) -> RequestBuilder<PatchSalesIdUpdateResponse> {
         var localVariablePath = "/sales/{id}/update"
@@ -137,9 +137,9 @@ open class SalesAPI {
 
     /**
      Anular venta
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter saleCancelRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter saleCancelRequest: (body)
      - returns: PostSalesIdCancelResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -154,9 +154,9 @@ open class SalesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter saleCancelRequest: (body)  
-     - returns: RequestBuilder<PostSalesIdCancelResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter saleCancelRequest: (body)
+     - returns: RequestBuilder<PostSalesIdCancelResponse>
      */
     open class func mobilePostSalesByIdCancelWithRequestBuilder(id: String, saleCancelRequest: SaleCancelRequest) -> RequestBuilder<PostSalesIdCancelResponse> {
         var localVariablePath = "/sales/{id}/cancel"
@@ -181,26 +181,28 @@ open class SalesAPI {
 
     /**
      Registrar venta
-     
-     - parameter saleCreateRequest: (body)  
+
+     - parameter saleCreateRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      - returns: PostSalesCreateResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest) async throws -> PostSalesCreateResponse {
-        return try await mobilePostSalesCreateWithRequestBuilder(saleCreateRequest: saleCreateRequest).execute().body
+    open class func mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest, idempotencyKey: String? = nil) async throws -> PostSalesCreateResponse {
+        return try await mobilePostSalesCreateWithRequestBuilder(saleCreateRequest: saleCreateRequest, idempotencyKey: idempotencyKey).execute().body
     }
 
     /**
      Registrar venta
      - POST /sales/create
-     - Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+     - Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter saleCreateRequest: (body)  
-     - returns: RequestBuilder<PostSalesCreateResponse> 
+     - parameter saleCreateRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+     - returns: RequestBuilder<PostSalesCreateResponse>
      */
-    open class func mobilePostSalesCreateWithRequestBuilder(saleCreateRequest: SaleCreateRequest) -> RequestBuilder<PostSalesCreateResponse> {
+    open class func mobilePostSalesCreateWithRequestBuilder(saleCreateRequest: SaleCreateRequest, idempotencyKey: String? = nil) -> RequestBuilder<PostSalesCreateResponse> {
         let localVariablePath = "/sales/create"
         let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
         let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: saleCreateRequest)
@@ -209,6 +211,7 @@ open class SalesAPI {
 
         let localVariableNillableHeaders: [String: Any?] = [
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey?.encodeToJSON(),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)

@@ -88,7 +88,7 @@ ProductsAPI.mobileGetProductsById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
+ **id** | **String** | Identificador único del recurso. |
 
 ### Return type
 
@@ -140,9 +140,9 @@ ProductsAPI.mobileGetProductsStock(ubicacionId: ubicacionId, tipoUbicacion: tipo
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ubicacionId** | **String** | Valor de ubicacionId aceptado por el handler. | [optional] 
- **tipoUbicacion** | **String** | Valor de tipoUbicacion aceptado por el handler. | [optional] 
- **includeZero** | **String** | Valor de includeZero aceptado por el handler. | [optional] 
+ **ubicacionId** | **String** | Valor de ubicacionId aceptado por el handler. | [optional]
+ **tipoUbicacion** | **String** | Valor de tipoUbicacion aceptado por el handler. | [optional]
+ **includeZero** | **String** | Valor de includeZero aceptado por el handler. | [optional]
 
 ### Return type
 

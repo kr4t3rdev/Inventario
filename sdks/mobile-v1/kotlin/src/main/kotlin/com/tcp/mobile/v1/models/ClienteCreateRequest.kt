@@ -19,15 +19,15 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param nombre 
- * @param direccion 
- * @param telefono 
- * @param logoUrl 
- * @param numeroCuentaCUP 
- * @param numeroCuentaUSD 
- * @param numeroContrato 
+ *
+ * @param nombre
+ * @param direccion
+ * @param telefono
+ * @param logoUrl
+ * @param numeroCuentaCUP
+ * @param numeroCuentaUSD
+ * @param numeroContrato
  */
 
 
@@ -58,4 +58,3 @@ data class ClienteCreateRequest (
 
 
 }
-

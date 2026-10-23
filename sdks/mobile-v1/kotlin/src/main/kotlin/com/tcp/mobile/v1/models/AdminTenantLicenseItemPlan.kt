@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param planId 
- * @param nombre 
- * @param descripcion 
- * @param precio 
- * @param billingCycle 
- * @param isActive 
+ *
+ * @param planId
+ * @param nombre
+ * @param descripcion
+ * @param precio
+ * @param billingCycle
+ * @param isActive
  */
 
 
@@ -54,4 +54,3 @@ data class AdminTenantLicenseItemPlan (
 
 
 }
-

@@ -57,7 +57,7 @@ class ClientsApiTest : ShouldSpec() {
         // to test mobilePostClientsCreate
         should("test mobilePostClientsCreate") {
             // uncomment below to test mobilePostClientsCreate
-            //val clienteCreateRequest : ClienteCreateRequest =  // ClienteCreateRequest | 
+            //val clienteCreateRequest : ClienteCreateRequest =  // ClienteCreateRequest |
             //val result : Cliente = apiInstance.mobilePostClientsCreate(clienteCreateRequest)
             //result shouldBe ("TODO")
         }
@@ -66,7 +66,7 @@ class ClientsApiTest : ShouldSpec() {
         should("test mobilePutClientsById") {
             // uncomment below to test mobilePutClientsById
             //val id : kotlin.String = id_example // kotlin.String | Identificador del cliente.
-            //val clienteUpdateRequest : ClienteUpdateRequest =  // ClienteUpdateRequest | 
+            //val clienteUpdateRequest : ClienteUpdateRequest =  // ClienteUpdateRequest |
             //val result : Cliente = apiInstance.mobilePutClientsById(id, clienteUpdateRequest)
             //result shouldBe ("TODO")
         }

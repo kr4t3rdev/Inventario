@@ -75,7 +75,7 @@ describe('Notificaciones Server Actions', () => {
     it('rechaza si no es admin', async () => {
       const user = { ...mockUser, role: 'user' as const };
       vi.mocked(getCurrentUser).mockResolvedValue(user as never);
-      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg' });
+      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg', prioridad: 'media', type: 'info' });
       expect(result.success).toBe(false);
       if (result.success) expect.unreachable('Se esperaba que la accion fallara');
       expect(result.error!.code).toBe('FORBIDDEN');

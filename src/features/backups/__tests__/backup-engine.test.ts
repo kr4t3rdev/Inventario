@@ -120,7 +120,7 @@ describe('BackupEngine', () => {
     await engine.run({ type: 'full' }, TEST_LOG_ID, undefined, 'user_1')
 
     expect(mockStorage.save).toHaveBeenCalledOnce()
-    const saveCall = mockStorage.save.mock.calls[0]
+    const saveCall = vi.mocked(mockStorage.save).mock.calls[0]
     expect(saveCall[0]).toMatch(/^full_.+\.sql\.gz$/)
     expect(saveCall[1]).toBeInstanceOf(Buffer)
   })

@@ -58,4 +58,3 @@ public struct PostAccountingBankAdjustmentsResponse: Codable, JSONEncodable, Has
         try container.encodeIfPresent(motivo, forKey: .motivo)
     }
 }
-

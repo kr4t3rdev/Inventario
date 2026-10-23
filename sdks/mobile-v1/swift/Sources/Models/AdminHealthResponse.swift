@@ -49,4 +49,3 @@ public struct AdminHealthResponse: Codable, JSONEncodable, Hashable {
         try container.encode(usersComparison, forKey: .usersComparison)
     }
 }
-

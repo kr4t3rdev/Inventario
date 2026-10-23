@@ -43,4 +43,3 @@ public struct CapitalPaymentRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

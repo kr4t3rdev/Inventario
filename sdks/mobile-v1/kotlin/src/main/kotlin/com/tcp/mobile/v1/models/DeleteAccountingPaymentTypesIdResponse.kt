@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de DELETE /accounting/payment-types/{id}.
  *
- * @param success 
- * @param message 
+ * @param success
+ * @param message
  */
 
 
@@ -38,4 +38,3 @@ data class DeleteAccountingPaymentTypesIdResponse (
 
 
 }
-

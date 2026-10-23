@@ -32,4 +32,3 @@ public struct RefreshRequest: CustomStringConvertible, Codable, JSONEncodable, H
 
     public var description: String { "RefreshRequest(<redacted>)" }
 }
-

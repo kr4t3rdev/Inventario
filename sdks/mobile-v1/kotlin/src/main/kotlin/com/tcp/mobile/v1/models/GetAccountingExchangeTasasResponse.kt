@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/exchange/tasas.
  *
- * @param items 
+ * @param items
  */
 
 
@@ -35,4 +35,3 @@ data class GetAccountingExchangeTasasResponse (
 
 
 }
-

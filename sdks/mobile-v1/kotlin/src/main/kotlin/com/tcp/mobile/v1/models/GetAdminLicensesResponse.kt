@@ -20,12 +20,12 @@ import com.tcp.mobile.v1.models.AdminLicenseItem
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param licencias 
- * @param total 
- * @param page 
- * @param limit 
+ *
+ * @param licencias
+ * @param total
+ * @param page
+ * @param limit
  */
 
 
@@ -47,4 +47,3 @@ data class GetAdminLicensesResponse (
 
 
 }
-

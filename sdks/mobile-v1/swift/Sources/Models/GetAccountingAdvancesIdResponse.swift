@@ -30,4 +30,3 @@ public struct GetAccountingAdvancesIdResponse: Codable, JSONEncodable, Hashable 
         try container.encode(anticipo, forKey: .anticipo)
     }
 }
-

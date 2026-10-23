@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param documentoDestinoId 
- * @param montoReverso 
- * @param observaciones 
+ *
+ * @param documentoDestinoId
+ * @param montoReverso
+ * @param observaciones
  */
 
 
@@ -42,4 +42,3 @@ data class AccountingAdvancesIdRevertirPostRequest (
 
 
 }
-

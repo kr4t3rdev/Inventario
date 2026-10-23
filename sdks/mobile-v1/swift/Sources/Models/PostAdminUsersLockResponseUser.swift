@@ -39,4 +39,3 @@ public struct PostAdminUsersLockResponseUser: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(loginAttempts, forKey: .loginAttempts)
     }
 }
-

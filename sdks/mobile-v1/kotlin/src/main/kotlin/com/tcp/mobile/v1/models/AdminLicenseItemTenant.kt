@@ -20,11 +20,11 @@ import com.tcp.mobile.v1.models.AdminLicenseManagerItem
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tenantId 
- * @param nombre 
- * @param memberships 
+ *
+ * @param tenantId
+ * @param nombre
+ * @param memberships
  */
 
 
@@ -43,4 +43,3 @@ data class AdminLicenseItemTenant (
 
 
 }
-

@@ -131,8 +131,9 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * POST /accounting/capital-injections
      * Registrar inyecciones de capital
-     * Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
-     * @param capitalInjectionCreateRequest 
+     * Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
+     * @param capitalInjectionCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @return PostAccountingCapitalInjectionsResponse
      * @throws IllegalStateException If the request is not correctly configured
@@ -143,8 +144,8 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: kotlin.String? = null) : PostAccountingCapitalInjectionsResponse {
-        val localVarResponse = mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest = capitalInjectionCreateRequest, tipo = tipo)
+    fun mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: kotlin.String? = null, tipo: kotlin.String? = null) : PostAccountingCapitalInjectionsResponse {
+        val localVarResponse = mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest = capitalInjectionCreateRequest, idempotencyKey = idempotencyKey, tipo = tipo)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as PostAccountingCapitalInjectionsResponse
@@ -164,8 +165,9 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * POST /accounting/capital-injections
      * Registrar inyecciones de capital
-     * Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
-     * @param capitalInjectionCreateRequest 
+     * Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
+     * @param capitalInjectionCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @return ApiResponse<PostAccountingCapitalInjectionsResponse?>
      * @throws IllegalStateException If the request is not correctly configured
@@ -173,8 +175,8 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: kotlin.String?) : ApiResponse<PostAccountingCapitalInjectionsResponse?> {
-        val localVariableConfig = mobilePostAccountingCapitalInjectionsRequestConfig(capitalInjectionCreateRequest = capitalInjectionCreateRequest, tipo = tipo)
+    fun mobilePostAccountingCapitalInjectionsWithHttpInfo(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: kotlin.String?, tipo: kotlin.String?) : ApiResponse<PostAccountingCapitalInjectionsResponse?> {
+        val localVariableConfig = mobilePostAccountingCapitalInjectionsRequestConfig(capitalInjectionCreateRequest = capitalInjectionCreateRequest, idempotencyKey = idempotencyKey, tipo = tipo)
 
         return request<CapitalInjectionCreateRequest, PostAccountingCapitalInjectionsResponse>(
             localVariableConfig
@@ -184,11 +186,12 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
     /**
      * To obtain the request config of the operation mobilePostAccountingCapitalInjections
      *
-     * @param capitalInjectionCreateRequest 
+     * @param capitalInjectionCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
      * @param tipo Tipo de registro solicitado. (optional)
      * @return RequestConfig
      */
-    fun mobilePostAccountingCapitalInjectionsRequestConfig(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: kotlin.String?) : RequestConfig<CapitalInjectionCreateRequest> {
+    fun mobilePostAccountingCapitalInjectionsRequestConfig(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: kotlin.String?, tipo: kotlin.String?) : RequestConfig<CapitalInjectionCreateRequest> {
         val localVariableBody = capitalInjectionCreateRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
             .apply {
@@ -197,6 +200,7 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        idempotencyKey?.apply { localVariableHeaders["Idempotency-Key"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -215,7 +219,7 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * Registrar pago de inyecciones de capital
      * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
      * @param id Identificador único del recurso.
-     * @param capitalPaymentRequest 
+     * @param capitalPaymentRequest
      * @return PostAccountingCapitalInjectionsIdPaymentsResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -248,7 +252,7 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * Registrar pago de inyecciones de capital
      * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
      * @param id Identificador único del recurso.
-     * @param capitalPaymentRequest 
+     * @param capitalPaymentRequest
      * @return ApiResponse<PostAccountingCapitalInjectionsIdPaymentsResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -267,7 +271,7 @@ class AccountingCapitalApi(basePath: kotlin.String = defaultBasePath, client: Ca
      * To obtain the request config of the operation mobilePostAccountingCapitalInjectionsByIdPayments
      *
      * @param id Identificador único del recurso.
-     * @param capitalPaymentRequest 
+     * @param capitalPaymentRequest
      * @return RequestConfig
      */
     fun mobilePostAccountingCapitalInjectionsByIdPaymentsRequestConfig(id: kotlin.String, capitalPaymentRequest: CapitalPaymentRequest) : RequestConfig<CapitalPaymentRequest> {

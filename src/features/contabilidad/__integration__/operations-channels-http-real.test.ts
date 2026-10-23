@@ -14,6 +14,7 @@ import {
 	seedPlanContable,
 	seedPlantillasGlobales,
 } from '@/features/contabilidad-formal/services/seed-plan-contable';
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import { POST as postTransferencia } from '@/app/api/mobile/v1/accounting/bank-transfers/route';
 import { POST as postAjuste } from '@/app/api/mobile/v1/accounting/bank-adjustments/route';
 import { POST as postCapital } from '@/app/api/mobile/v1/accounting/capital-injections/route';
@@ -34,10 +35,18 @@ let cuentaB = '';
 let tipoPagoId = '';
 const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 
-function authed(url: string, body: Record<string, unknown>, withToken = true) {
+function authed(
+	url: string,
+	body: Record<string, unknown>,
+	withToken = true,
+	idempotencyKey?: string,
+) {
 	return new NextRequest(url, {
 		method: 'POST',
-		headers: withToken ? { authorization: `Bearer ${token}` } : {},
+		headers: {
+			...(withToken ? { authorization: `Bearer ${token}` } : {}),
+			...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+		},
 		body: JSON.stringify(body),
 	});
 }
@@ -183,7 +192,7 @@ describe('operaciones contables — canales HTTP reales (filas 17–20)', { time
 		const capital = await postCapital(authed(
 			'http://localhost/api/mobile/v1/accounting/capital-injections',
 			{ montoRecibido: 1000, moneda: 'CUP', cuentaId: cuentaB, descripcion: 'Capital real',
-				tipo: 'CAPITAL_SOCIAL', socio: 'Socio Test' },
+				tipo: 'CAPITAL_SOCIAL', socio: 'Socio Test', idempotencyKey: `capital-${prefix}` },
 		));
 		const capitalBody = await capital.json();
 		expect(capital.status, JSON.stringify(capitalBody)).toBe(200);
@@ -200,6 +209,117 @@ describe('operaciones contables — canales HTTP reales (filas 17–20)', { time
 			const haber = asiento.lineas.reduce((acc, l) => acc + Number(l.haber), 0);
 			expect(debe).toBe(haber);
 		}
+	});
+
+	it('replays a header-keyed bank adjustment after period close without duplicate effects', async () => {
+		const idempotencyKey = `adjust-${prefix.slice(-16)}`;
+		const payload = {
+			cuentaId: cuentaA, tipo: 'ingreso', monto: 25, moneda: 'CUP',
+			descripcion: 'Ajuste con reintento', motivo: 'Reintento móvil',
+		};
+		const url = 'http://localhost/api/mobile/v1/accounting/bank-adjustments';
+		const first = await postAjuste(authed(url, payload, true, idempotencyKey));
+		const firstBody = await first.json();
+		expect(first.status, JSON.stringify(firstBody)).toBe(200);
+		const adjustmentId = firstBody.ajuste.ajusteId;
+		expect(adjustmentId).toBeTruthy();
+
+		const initialBalance = (await prisma.cuentaBancaria.findUniqueOrThrow({
+			where: { cuentaId: cuentaA },
+		})).saldo.toString();
+		expect(await prisma.ajusteBancario.count({
+			where: { tenantId, idempotencyKey },
+		})).toBe(1);
+		expect(await prisma.asiento.count({
+			where: { tenantId, origenTipo: 'ajuste_bancario', origenId: adjustmentId },
+		})).toBe(1);
+		const rowCountBefore = await prisma.ajusteBancario.count({ where: { tenantId } });
+		const journalCountBefore = await prisma.asiento.count({ where: { tenantId } });
+		await prisma.periodoContable.updateMany({ where: { tenantId }, data: { estado: 'CERRADO' } });
+
+		try {
+			const replay = await postAjuste(authed(url, payload, true, idempotencyKey));
+			const replayBody = await replay.json();
+			expect(replay.status, JSON.stringify(replayBody)).toBe(200);
+			expect(replayBody.ajuste.ajusteId).toBe(adjustmentId);
+			expect(await prisma.ajusteBancario.count({ where: { tenantId } })).toBe(rowCountBefore);
+			expect(await prisma.asiento.count({ where: { tenantId } })).toBe(journalCountBefore);
+			expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaA } }))
+				.saldo.toString()).toBe(initialBalance);
+
+			const changed = await postAjuste(authed(
+				url,
+				{ ...payload, monto: 26 },
+				true,
+				idempotencyKey,
+			));
+			const changedBody = await changed.json();
+			expect(changed.status, JSON.stringify(changedBody)).toBe(409);
+			expect(changedBody.code).toBe('IDEMPOTENCY_CONFLICT');
+			expect(await prisma.ajusteBancario.count({ where: { tenantId } })).toBe(rowCountBefore);
+			expect(await prisma.asiento.count({ where: { tenantId } })).toBe(journalCountBefore);
+			expect((await prisma.cuentaBancaria.findUniqueOrThrow({ where: { cuentaId: cuentaA } }))
+				.saldo.toString()).toBe(initialBalance);
+
+			const newOperation = await postAjuste(authed(url, {
+				...payload, descripcion: 'Operación nueva con período cerrado',
+			}));
+			expect(newOperation.status).toBe(400);
+			expect((await newOperation.json()).code).toBe('PERIODO_CERRADO');
+			expect(await prisma.ajusteBancario.count({ where: { tenantId } })).toBe(rowCountBefore);
+			expect(await prisma.asiento.count({ where: { tenantId } })).toBe(journalCountBefore);
+		} finally {
+			await prisma.periodoContable.updateMany({ where: { tenantId }, data: { estado: 'ABIERTO' } });
+		}
+
+		// A concurrent keyed writer and replay resolver share this advisory lock.
+		await prisma.periodoContable.updateMany({ where: { tenantId }, data: { estado: 'CERRADO' } });
+		let releaseLock!: () => void;
+		let lockAcquired!: () => void;
+		const releaseLockPromise = new Promise<void>((resolve) => { releaseLock = resolve; });
+		const lockAcquiredPromise = new Promise<void>((resolve) => { lockAcquired = resolve; });
+		const lockHolder = prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			lockAcquired();
+			await releaseLockPromise;
+		});
+		await lockAcquiredPromise;
+		let replaySettled = false;
+		const concurrentReplay = postAjuste(authed(url, payload, true, idempotencyKey))
+			.then((response) => {
+				replaySettled = true;
+				return response;
+			});
+
+		let advisoryWaitObserved = false;
+		const deadline = Date.now() + 5_000;
+		try {
+			while (Date.now() < deadline && !advisoryWaitObserved) {
+				const waiting = await prisma.$queryRaw<Array<{ pid: number }>>`
+					SELECT pid
+					FROM pg_stat_activity
+					WHERE datname = current_database()
+					  AND pid <> pg_backend_pid()
+					  AND wait_event_type = 'Lock'
+					  AND wait_event = 'advisory'
+					  AND query ILIKE '%pg_advisory_xact_lock%'
+				`;
+				advisoryWaitObserved = waiting.length > 0;
+				if (!advisoryWaitObserved) {
+					await new Promise((resolve) => setTimeout(resolve, 25));
+				}
+			}
+			expect(advisoryWaitObserved).toBe(true);
+			expect(replaySettled).toBe(false);
+		} finally {
+			releaseLock();
+			await prisma.periodoContable.updateMany({ where: { tenantId }, data: { estado: 'ABIERTO' } });
+		}
+		await lockHolder;
+		const concurrentReplayResponse = await concurrentReplay;
+		const concurrentReplayBody = await concurrentReplayResponse.json();
+		expect(concurrentReplayResponse.status, JSON.stringify(concurrentReplayBody)).toBe(200);
+		expect(concurrentReplayBody.ajuste.ajusteId).toBe(adjustmentId);
 	});
 
 	it('web transfer endpoint delegates to the same tenant-scoped formal writer', async () => {
@@ -246,6 +366,7 @@ describe('operaciones contables — canales HTTP reales (filas 17–20)', { time
 				montoRecibido: 500, moneda: 'CUP', cuentaId: cuentaA,
 				descripcion: 'Deuda real', tipo: 'DEUDA_EXTERNA',
 				entidadPrestamista: 'Prestamista Test', tasaInteres: 0,
+				idempotencyKey: `debt-${prefix}`,
 			},
 		));
 		const deudaBody = await deuda.json();

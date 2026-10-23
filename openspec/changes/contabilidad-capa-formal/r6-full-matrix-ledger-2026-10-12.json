@@ -1,0 +1,2342 @@
+{
+  "sourceSnapshot": "3e7801ae8db9fbb4ce3f0b3b68607c15e433fd31",
+  "runEvidence": "r6-full-matrix-candidate4-run-2026-10-12.json",
+  "callsiteCount": 31,
+  "dimensionCount": 8,
+  "cellCount": 248,
+  "globalAccepted": false,
+  "statusCounts": {
+    "FOCAL_EVIDENCE": 220,
+    "PENDING_SPECIFIC_ACCEPTANCE": 27,
+    "SHADOW_RECOVERY": 1
+  },
+  "rows": [
+    {
+      "id": 1,
+      "writer": "Pago deuda web",
+      "path": "src/app/api/contabilidad/deudas-cash/[id]/pagar/route.ts",
+      "line": 258,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "writer": "Alta deuda web",
+      "path": "src/app/api/contabilidad/deudas-cash/route.ts",
+      "line": 362,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/deudas-cash-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "writer": "Pago pr\u00e9stamo web",
+      "path": "src/app/api/contabilidad/prestamos-cash/[id]/pagar/route.ts",
+      "line": 269,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "writer": "Alta pr\u00e9stamo web",
+      "path": "src/app/api/contabilidad/prestamos-cash/route.ts",
+      "line": 354,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pago-auth-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "writer": "Reconciliaci\u00f3n venta web",
+      "path": "src/app/api/contabilidad/reconciliacion/ventas/route.ts",
+      "line": 884,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "writer": "Completar producci\u00f3n",
+      "path": "src/app/api/produccion/ordenes/[id]/completar/route.ts",
+      "line": 204,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/auth-http-real.test.ts",
+            "src/app/api/produccion/ordenes/[id]/completar/__integration__/completar-auth-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "writer": "Compra producto cr\u00e9dito",
+      "path": "src/features/compras-productos/actions.ts",
+      "line": 446,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "writer": "Compra servicio cr\u00e9dito",
+      "path": "src/features/compras-servicios/actions.ts",
+      "line": 155,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+            "src/features/compras-servicios/__integration__/compra-servicios-retry-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "writer": "Alta pr\u00e9stamo core",
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 683,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "writer": "Pago pr\u00e9stamo core",
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 947,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-loans-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "writer": "Alta deuda core",
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 1169,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "writer": "Pago deuda core",
+      "path": "src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts",
+      "line": 1415,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-debts-http-real.test.ts",
+            "src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "writer": "Transferencia banco",
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 597,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "writer": "Ajuste banco",
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 758,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/ajuste-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "writer": "Capital / deuda externa",
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 985,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/capital-idempotency-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "writer": "Pago deuda capital",
+      "path": "src/features/contabilidad/services/accounting-operations-mutation-service.ts",
+      "line": 1172,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+            "src/features/contabilidad/__integration__/operations-channels-http-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "writer": "Reconciliar venta core",
+      "path": "src/features/contabilidad/services/accounting-reconciliation-service.ts",
+      "line": 551,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "writer": "Reconciliar servicio core",
+      "path": "src/features/contabilidad/services/accounting-reconciliation-service.ts",
+      "line": 1306,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "writer": "Merma",
+      "path": "src/features/mermas/actions.ts",
+      "line": 197,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/mermas/__integration__/merma-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "writer": "Restock",
+      "path": "src/features/productos/actions-restock.ts",
+      "line": 620,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/productos/__integration__/restock-formal-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "writer": "Venta servicio mixta",
+      "path": "src/features/venta-servicios/actions.ts",
+      "line": 701,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "writer": "Venta servicio legacy",
+      "path": "src/features/venta-servicios/actions.ts",
+      "line": 871,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-idempotency-race-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-credit-cxc-real.test.ts",
+            "src/features/venta-servicios/__integration__/service-cxc-pago-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "writer": "Devoluci\u00f3n / FIFO",
+      "path": "src/features/ventas/services/devolucion-venta-service.ts",
+      "line": 586,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/devolucion-fifo.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "writer": "Facturaci\u00f3n contra pago",
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 641,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 25,
+      "writer": "Facturaci\u00f3n contado mixto",
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 726,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+            "src/features/ventas/__integration__/facturacion-workflow-cxc-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "writer": "Facturaci\u00f3n cr\u00e9dito",
+      "path": "src/features/ventas/services/facturacion-workflow.ts",
+      "line": 837,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 27,
+      "writer": "COGS valorado",
+      "path": "src/features/ventas/services/venta-mutation-service.ts",
+      "line": 536,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+            "src/features/ventas/__integration__/venta-create-idempotency-race.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "writer": "COGS shadow no valorado",
+      "path": "src/features/ventas/services/venta-mutation-service.ts",
+      "line": 554,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "SHADOW_RECOVERY",
+          "suiteReferences": [
+            "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "writer": "Crear anticipo",
+      "path": "src/lib/services/anticipos-workflow.ts",
+      "line": 233,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "writer": "Aplicar anticipo",
+      "path": "src/lib/services/anticipos-workflow.ts",
+      "line": 574,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+            "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    },
+    {
+      "id": 31,
+      "writer": "Egresos / CxP / n\u00f3mina",
+      "path": "src/lib/services/pago-gastos-workflow.ts",
+      "line": 666,
+      "executed": true,
+      "dimensions": {
+        "actorPermission": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "tenantIsolation": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "uniqueOrigin": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "currencyFx": {
+          "status": "PENDING_SPECIFIC_ACCEPTANCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "transaction": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "retryIdempotency": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "postingAudit": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        },
+        "sqlRollback": {
+          "status": "FOCAL_EVIDENCE",
+          "suiteReferences": [
+            "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts",
+            "src/lib/services/__integration__/pago-gastos-workflow-real.test.ts"
+          ],
+          "interpretation": "Suite references are scoped evidence; individual case applicability requires branch/adapter review"
+        }
+      }
+    }
+  ]
+}

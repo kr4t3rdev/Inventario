@@ -115,4 +115,3 @@ class AlmacenUpdateRequest {
   static const requiredKeys = <String>{
   };
 }
-

@@ -1,4 +1,5 @@
 import { Prisma } from '@/generated/prisma';
+import type { Venta } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
@@ -8,6 +9,13 @@ import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/f
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoCostoVenta } from '@/features/contabilidad-formal/lib/event-builders';
 import { createVentaSchema } from '@/features/ventas/schemas';
+import {
+	fingerprintVentaCreatePayload,
+	hashVentaCreateKey,
+	isVentaCreateReceiptUniqueViolation,
+	reviveVentaCreateResponse,
+	snapshotVentaCreateResponse,
+} from '@/features/ventas/services/venta-create-idempotency';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { resolvePrecioVenta, type PrecioVentaFuente } from '@/features/ventas/services/precio-venta-resolver';
 import { resolverTurnoDentroDeTx } from '@/features/turnos-pos/services/turno-tx';
@@ -32,6 +40,126 @@ type PriceOverrideDetalle = {
   precioAplicado: number;
   fuente: PrecioVentaFuente;
 };
+
+type VentaCatalogReader = Pick<Prisma.TransactionClient, 'puntoDeVenta' | 'cliente' | 'producto'>;
+type ParsedCreateVentaInput = ReturnType<typeof createVentaSchema.parse>;
+type VentaCatalogValidation = {
+	itemsData: { productoId: string; cantidad: number; precioUnitario: number; total: number }[];
+	overrides: PriceOverrideDetalle[];
+	subtotalVenta: number;
+	cargoTransporte: number;
+	totalVenta: number;
+	totalCantidad: number;
+	cambioDerivado: number | null;
+};
+
+/**
+ * @description Resolves tenant-scoped catalog prices and validates sale totals/cash.
+ * @param {VentaCatalogReader} reader - Prisma root client or active transaction client.
+ * @param {ParsedCreateVentaInput} parsed - Validated and normalized request payload.
+ * @param {string} tenantId - Authenticated tenant identifier.
+ * @param {AuthenticatedUser} user - Authenticated actor used for price overrides.
+ * @returns {Promise<VentaCatalogValidation>} Verified sale totals and persisted line data.
+ */
+async function validarCatalogoVenta(
+	reader: VentaCatalogReader,
+	parsed: ParsedCreateVentaInput,
+	tenantId: string,
+	user: AuthenticatedUser,
+): Promise<VentaCatalogValidation> {
+	const puntoVenta = await reader.puntoDeVenta.findFirst({
+		where: { pvId: parsed.puntoDeVentaId, tenantId },
+		select: { pvId: true, listaPrecioId: true },
+	});
+	if (!puntoVenta) throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
+
+	let clienteListaId: string | null = null;
+	if (parsed.clienteId) {
+		const cliente = await reader.cliente.findFirst({
+			where: { clienteId: parsed.clienteId, tenantId },
+			select: { listaPrecioId: true },
+		});
+		if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+		clienteListaId = cliente.listaPrecioId;
+	}
+	const productoIds = [...new Set(parsed.items.map((item) => item.productoId))];
+	const productos = await reader.producto.findMany({
+		where: { id: { in: productoIds }, tenantId },
+		select: {
+			id: true,
+			nombre: true,
+			precioVenta: true,
+			precios: { select: { listaPrecioId: true, precio: true } },
+		},
+	});
+	const productoPrecioMap = new Map(productos.map((product) => [product.id, product]));
+	const puedeOverridePrecio = hasPermission(user, 'ventas.precio.override');
+	const overrides: PriceOverrideDetalle[] = [];
+	const itemsData = parsed.items.map((item) => {
+		const producto = productoPrecioMap.get(item.productoId);
+		if (!producto) {
+			throw new ActionError(`Producto con ID ${item.productoId} no encontrado`, 'NOT_FOUND');
+		}
+		const { precio, fuente } = resolvePrecioVenta({
+			precioBase: producto.precioVenta,
+			precios: producto.precios,
+			pvListaId: puntoVenta.listaPrecioId,
+			clienteListaId,
+		});
+		if (precio !== item.precioUnitario) {
+			if (!puedeOverridePrecio) {
+				throw new ActionError(
+					`El precio de "${producto.nombre}" no coincide con el vigente (${precio}). Recarga los productos e inténtalo de nuevo.`,
+					'PRICE_MISMATCH',
+				);
+			}
+			overrides.push({
+				productoId: producto.id,
+				nombre: producto.nombre,
+				precioEsperado: precio,
+				precioAplicado: item.precioUnitario,
+				fuente,
+			});
+		}
+		return {
+			productoId: item.productoId,
+			cantidad: item.cantidad,
+			precioUnitario: item.precioUnitario,
+			total: item.cantidad * item.precioUnitario,
+		};
+	});
+	const subtotalVenta = itemsData.reduce((sum, item) => sum + item.total, 0);
+	const cargoTransporte = parsed.cargoTransporte ?? 0;
+	const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
+	const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
+	const cobro = validarCobro({
+		metodoPago: parsed.metodoPago ?? null,
+		montoEfectivo: parsed.montoEfectivo ?? 0,
+		montoRecibidoEfectivo: parsed.montoRecibidoEfectivo ?? null,
+	});
+	if (!cobro.ok) {
+		throw new ActionError(
+			'El efectivo recibido no alcanza la porción en efectivo de la venta.',
+			'RECIBIDO_INSUFICIENTE',
+		);
+	}
+	const cambioDerivado = parsed.modoPedido ? null : cobro.cambio;
+	if (parsed.cambioDevuelto != null && parsed.cambioDevuelto !== cambioDerivado) {
+		throw new ActionError(
+			'El cambio declarado no coincide con el efectivo recibido y la porción cobrada.',
+			'CAMBIO_INCONSISTENTE',
+		);
+	}
+	return {
+		itemsData,
+		overrides,
+		subtotalVenta,
+		cargoTransporte,
+		totalVenta,
+		totalCantidad,
+		cambioDerivado,
+	};
+}
 
 /**
  * @description Descuenta el stock por item, registra el kardex de salida y
@@ -182,12 +310,18 @@ export const VentaMutationService = {
   }: {
     input: CreateVentaInput;
     user: AuthenticatedUser;
-  }) {
+  }): Promise<Venta> {
     requireFeature(user, 'ventas-pos', 'realizar ventas');
     requirePermission(user, 'ventas.venta.registrar', 'registrar ventas');
     const parsed = createVentaSchema.parse(input);
     const tenantId = requireTenant(user);
     const hasFacturacion = user.planFeatures?.facturacion === true;
+    const esPedido = parsed.modoPedido === true;
+    const { idempotencyKey, ...payload } = parsed;
+    const keyHash = idempotencyKey ? hashVentaCreateKey(idempotencyKey) : null;
+    const payloadFingerprint = idempotencyKey
+      ? fingerprintVentaCreatePayload(payload)
+      : null;
 
     if (parsed.clienteId && !hasFacturacion) {
       throw new ActionError(
@@ -203,118 +337,40 @@ export const VentaMutationService = {
 
     // 3.2.c.iii: el turno se resuelve DENTRO de la transacción (ver abajo) para
     // que un turno AUTO no persista huérfano si la venta se rechaza.
+    const catalogWithoutKey = idempotencyKey
+      ? null
+      : await validarCatalogoVenta(prisma, parsed, tenantId, user);
 
-    // ── Resolución server-side de precios (LP-0): el precioUnitario del
-    // payload nunca se persiste tal cual; se valida contra la cadena
-    // cliente > PV > base antes de abrir la transacción.
-    const puntoVenta = await prisma.puntoDeVenta.findFirst({
-      where: { pvId: parsed.puntoDeVentaId, tenantId },
-      select: { pvId: true, listaPrecioId: true },
-    });
-    if (!puntoVenta) {
-      throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
-    }
-
-    let clienteListaId: string | null = null;
-    if (parsed.clienteId) {
-      const cliente = await prisma.cliente.findFirst({
-        where: { clienteId: parsed.clienteId, tenantId },
-        select: { listaPrecioId: true },
-      });
-      if (!cliente) {
-        throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
-      }
-      clienteListaId = cliente.listaPrecioId;
-    }
-    const productoIds = [...new Set(parsed.items.map((item) => item.productoId))];
-    const productosParaPrecio = await prisma.producto.findMany({
-      where: { id: { in: productoIds }, tenantId },
-      select: {
-        id: true,
-        nombre: true,
-        precioVenta: true,
-        precios: { select: { listaPrecioId: true, precio: true } },
-      },
-    });
-    const productoPrecioMap = new Map(productosParaPrecio.map((p) => [p.id, p]));
-
-    const puedeOverridePrecio = hasPermission(user, 'ventas.precio.override');
-    const overrides: PriceOverrideDetalle[] = [];
-
-    const itemsData = parsed.items.map((item) => {
-      const producto = productoPrecioMap.get(item.productoId);
-      if (!producto) {
-        throw new ActionError(
-          `Producto con ID ${item.productoId} no encontrado`,
-          'NOT_FOUND',
-        );
-      }
-      const { precio, fuente } = resolvePrecioVenta({
-        precioBase: producto.precioVenta,
-        precios: producto.precios,
-        pvListaId: puntoVenta.listaPrecioId,
-        clienteListaId,
-      });
-      if (precio !== item.precioUnitario) {
-        if (!puedeOverridePrecio) {
-          throw new ActionError(
-            `El precio de "${producto.nombre}" no coincide con el vigente (${precio}). Recarga los productos e inténtalo de nuevo.`,
-            'PRICE_MISMATCH',
-          );
-        }
-        overrides.push({
-          productoId: producto.id,
-          nombre: producto.nombre,
-          precioEsperado: precio,
-          precioAplicado: item.precioUnitario,
-          fuente,
+    // Reserve the compound tenant+key receipt before catalog/credit validation.
+    // The uncommitted reservation and sale effects become visible atomically.
+    return conReintentosCredito<Venta>(() =>
+      prisma.$transaction(async (tx) => {
+      if (keyHash && payloadFingerprint) {
+        await tx.ventaCreateIdempotency.create({
+          data: {
+            tenantId,
+            keyHash,
+            payloadFingerprint,
+            ventaId: null,
+            responseSnapshot: Prisma.DbNull,
+          },
         });
       }
-      return {
-        productoId: item.productoId,
-        cantidad: item.cantidad,
-        precioUnitario: item.precioUnitario,
-        total: item.cantidad * item.precioUnitario,
-      };
-    });
 
-    const subtotalVenta = itemsData.reduce((sum, item) => sum + item.total, 0);
-    const cargoTransporte = parsed.cargoTransporte ?? 0;
-    const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
-    const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
-    const esPedido = parsed.modoPedido === true;
+      const catalog = idempotencyKey
+        ? await validarCatalogoVenta(tx, parsed, tenantId, user)
+        : catalogWithoutKey;
+      if (!catalog) throw new Error('Missing validated product sale catalog');
+      const {
+        itemsData,
+        overrides,
+        subtotalVenta,
+        cargoTransporte,
+        totalVenta,
+        totalCantidad,
+        cambioDerivado,
+      } = catalog;
 
-    // VC: defensa de la invariante del recibido (el schema Zod ya la valida) y
-    // derivación del vuelto desde el recibido (server es la fuente de verdad).
-    const cobro = validarCobro({
-      metodoPago: parsed.metodoPago ?? null,
-      montoEfectivo: parsed.montoEfectivo ?? 0,
-      montoRecibidoEfectivo: parsed.montoRecibidoEfectivo ?? null,
-    });
-    if (!cobro.ok) {
-      throw new ActionError(
-        'El efectivo recibido no alcanza la porción en efectivo de la venta.',
-        'RECIBIDO_INSUFICIENTE',
-      );
-    }
-    const cambioDerivado = esPedido ? null : cobro.cambio;
-
-    // VC (3.4): el vuelto declarado es opcional (compatibilidad legacy), pero
-    // si viene debe coincidir exactamente con el derivado del recibido y la
-    // porción en efectivo; el servidor persiste siempre el DERIVADO. Se
-    // revalida antes de abrir la transacción: sin venta parcial.
-    if (parsed.cambioDevuelto != null && parsed.cambioDevuelto !== cambioDerivado) {
-      throw new ActionError(
-        'El cambio declarado no coincide con el efectivo recibido y la porción cobrada.',
-        'CAMBIO_INCONSISTENTE',
-      );
-    }
-
-    // La transacción completa se reintenta ante conflictos de serialización
-    // (P2034/deadlock) con backoff+jitter; la factory crea una tx nueva por
-    // intento. Errores de dominio (CREDITO_EXCEDIDO, PRICE_MISMATCH...) se
-    // propagan sin gastar reintentos.
-    return conReintentosCredito(() => prisma.$transaction(async (tx) => {
       let creditoDecision: CreditoOverrideDecision | null = null;
       let montoCreditoAuditado = 0;
       // Porción cobrada hoy (efectivo+tarjeta+transferencia): en MIXTO con
@@ -547,8 +603,40 @@ export const VentaMutationService = {
         }
       }
 
+      if (keyHash && payloadFingerprint) {
+        await tx.ventaCreateIdempotency.update({
+          where: { tenantId_keyHash: { tenantId, keyHash } },
+          data: {
+            ventaId: venta.ventaId,
+            responseSnapshot: snapshotVentaCreateResponse(venta),
+          },
+        });
+      }
+
       return venta;
-    }));
+      }, { maxWait: 5_000, timeout: 30_000 }).catch(async (error) => {
+        if (!keyHash || !payloadFingerprint || !isVentaCreateReceiptUniqueViolation(error)) {
+          throw error;
+        }
+        const receipt = await prisma.ventaCreateIdempotency.findUnique({
+          where: { tenantId_keyHash: { tenantId, keyHash } },
+        });
+        if (!receipt) throw error;
+        if (receipt.payloadFingerprint !== payloadFingerprint) {
+          throw new ActionError(
+            'La clave de idempotencia ya se utilizó con otro contenido.',
+            'IDEMPOTENCY_KEY_REUSED',
+          );
+        }
+        if (!receipt.responseSnapshot) {
+          throw new ActionError(
+            'La solicitud de venta todavía no tiene un resultado reproducible.',
+            'IDEMPOTENCY_RECEIPT_INCOMPLETE',
+          );
+        }
+        return reviveVentaCreateResponse(receipt.responseSnapshot);
+      }),
+    );
   },
 
   /**

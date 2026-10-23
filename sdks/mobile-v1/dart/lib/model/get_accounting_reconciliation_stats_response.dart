@@ -122,4 +122,3 @@ class GetAccountingReconciliationStatsResponse {
     'recentActivity',
   };
 }
-

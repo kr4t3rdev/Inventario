@@ -33,4 +33,3 @@ public struct SuccessResponse: Codable, JSONEncodable, Hashable {
         try container.encode(message, forKey: .message)
     }
 }
-

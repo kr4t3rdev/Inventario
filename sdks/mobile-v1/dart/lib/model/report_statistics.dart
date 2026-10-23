@@ -224,4 +224,3 @@ class ReportStatistics {
   static const requiredKeys = <String>{
   };
 }
-

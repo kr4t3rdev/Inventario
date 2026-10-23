@@ -143,4 +143,3 @@ class GetAccountingReportsMovementsResponse {
     'exportContent',
   };
 }
-

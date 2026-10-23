@@ -14,7 +14,7 @@ open class AccountingCapitalAPI {
 
     /**
      Consultar inyecciones de capital
-     
+
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - returns: GetAccountingCapitalInjectionsResponse
      */
@@ -31,7 +31,7 @@ open class AccountingCapitalAPI {
        - type: http
        - name: bearerAuth
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
-     - returns: RequestBuilder<GetAccountingCapitalInjectionsResponse> 
+     - returns: RequestBuilder<GetAccountingCapitalInjectionsResponse>
      */
     open class func mobileGetAccountingCapitalInjectionsWithRequestBuilder(tipo: String? = nil) -> RequestBuilder<GetAccountingCapitalInjectionsResponse> {
         let localVariablePath = "/accounting/capital-injections"
@@ -56,28 +56,30 @@ open class AccountingCapitalAPI {
 
     /**
      Registrar inyecciones de capital
-     
-     - parameter capitalInjectionCreateRequest: (body)  
+
+     - parameter capitalInjectionCreateRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - returns: PostAccountingCapitalInjectionsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: String? = nil) async throws -> PostAccountingCapitalInjectionsResponse {
-        return try await mobilePostAccountingCapitalInjectionsWithRequestBuilder(capitalInjectionCreateRequest: capitalInjectionCreateRequest, tipo: tipo).execute().body
+    open class func mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: String? = nil, tipo: String? = nil) async throws -> PostAccountingCapitalInjectionsResponse {
+        return try await mobilePostAccountingCapitalInjectionsWithRequestBuilder(capitalInjectionCreateRequest: capitalInjectionCreateRequest, idempotencyKey: idempotencyKey, tipo: tipo).execute().body
     }
 
     /**
      Registrar inyecciones de capital
      - POST /accounting/capital-injections
-     - Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+     - Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter capitalInjectionCreateRequest: (body)  
+     - parameter capitalInjectionCreateRequest: (body)
+     - parameter idempotencyKey: (header) Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
-     - returns: RequestBuilder<PostAccountingCapitalInjectionsResponse> 
+     - returns: RequestBuilder<PostAccountingCapitalInjectionsResponse>
      */
-    open class func mobilePostAccountingCapitalInjectionsWithRequestBuilder(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: String? = nil) -> RequestBuilder<PostAccountingCapitalInjectionsResponse> {
+    open class func mobilePostAccountingCapitalInjectionsWithRequestBuilder(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: String? = nil, tipo: String? = nil) -> RequestBuilder<PostAccountingCapitalInjectionsResponse> {
         let localVariablePath = "/accounting/capital-injections"
         let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
         let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: capitalInjectionCreateRequest)
@@ -89,6 +91,7 @@ open class AccountingCapitalAPI {
 
         let localVariableNillableHeaders: [String: Any?] = [
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey?.encodeToJSON(),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
@@ -100,9 +103,9 @@ open class AccountingCapitalAPI {
 
     /**
      Registrar pago de inyecciones de capital
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter capitalPaymentRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter capitalPaymentRequest: (body)
      - returns: PostAccountingCapitalInjectionsIdPaymentsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -117,9 +120,9 @@ open class AccountingCapitalAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter capitalPaymentRequest: (body)  
-     - returns: RequestBuilder<PostAccountingCapitalInjectionsIdPaymentsResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter capitalPaymentRequest: (body)
+     - returns: RequestBuilder<PostAccountingCapitalInjectionsIdPaymentsResponse>
      */
     open class func mobilePostAccountingCapitalInjectionsByIdPaymentsWithRequestBuilder(id: String, capitalPaymentRequest: CapitalPaymentRequest) -> RequestBuilder<PostAccountingCapitalInjectionsIdPaymentsResponse> {
         var localVariablePath = "/accounting/capital-injections/{id}/payments"

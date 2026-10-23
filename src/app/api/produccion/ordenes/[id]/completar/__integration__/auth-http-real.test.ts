@@ -85,7 +85,7 @@ describe('completar producción — sesión HTTP real', { timeout: 60_000 }, () 
     } });
     await prisma.moneda.upsert({
       where: { codigo: 'USD' },
-      update: { isActive: true },
+      update: {},
       create: { codigo: 'USD', nombre: 'Dólar', simbolo: '$', esPrincipal: false },
     });
     await prisma.tenantAccountingPolicy.create({

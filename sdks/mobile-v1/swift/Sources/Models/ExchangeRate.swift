@@ -45,4 +45,3 @@ public struct ExchangeRate: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(fecha, forKey: .fecha)
     }
 }
-

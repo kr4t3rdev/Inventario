@@ -14,7 +14,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar conciliación de gastos
-     
+
      - parameter tipoGasto: (query) Valor de tipoGasto aceptado por el handler. (optional)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
@@ -39,7 +39,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationExpensesResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationExpensesResponse>
      */
     open class func mobileGetAccountingReconciliationExpensesWithRequestBuilder(tipoGasto: String? = nil, fechaDesde: Date? = nil, fechaHasta: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingReconciliationExpensesResponse> {
         let localVariablePath = "/accounting/reconciliation/expenses"
@@ -68,7 +68,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial de conciliaciones de gastos
-     
+
      - parameter tipoGasto: (query) Valor de tipoGasto aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
@@ -99,7 +99,7 @@ open class AccountingReconciliationAPI {
      - parameter reconciliadoPor: (query) Valor de reconciliadoPor aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationExpensesHistoryWithRequestBuilder(tipoGasto: String? = nil, cuentaId: String? = nil, fechaDesde: Date? = nil, fechaHasta: Date? = nil, periodo: String? = nil, reconciliadoPor: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/expenses-history"
@@ -131,7 +131,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial paginado de conciliaciones de gastos
-     
+
      - parameter tipoGasto: (query) Valor de tipoGasto aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
@@ -162,7 +162,7 @@ open class AccountingReconciliationAPI {
      - parameter reconciliadoPor: (query) Valor de reconciliadoPor aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationExpensesNestedHistoryWithRequestBuilder(tipoGasto: String? = nil, cuentaId: String? = nil, fechaDesde: Date? = nil, fechaHasta: Date? = nil, periodo: String? = nil, reconciliadoPor: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingReconciliationExpensesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/expenses/history"
@@ -194,7 +194,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar conciliación de ventas
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter puntoDeVentaId: (query) Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -219,7 +219,7 @@ open class AccountingReconciliationAPI {
      - parameter puntoDeVentaId: (query) Valor de puntoDeVentaId aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationSalesResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationSalesResponse>
      */
     open class func mobileGetAccountingReconciliationSalesWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, puntoDeVentaId: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingReconciliationSalesResponse> {
         let localVariablePath = "/accounting/reconciliation/sales"
@@ -248,7 +248,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial de conciliaciones de ventas
-     
+
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
@@ -273,7 +273,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationSalesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationSalesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationSalesHistoryWithRequestBuilder(fechaDesde: Date? = nil, fechaInicio: Date? = nil, fechaHasta: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<GetAccountingReconciliationSalesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/sales-history"
@@ -302,7 +302,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial paginado de conciliaciones de ventas
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -323,7 +323,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationSalesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationSalesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationSalesNestedHistoryWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<GetAccountingReconciliationSalesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/sales/history"
@@ -350,7 +350,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar conciliación de servicios
-     
+
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
@@ -373,7 +373,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationServicesResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationServicesResponse>
      */
     open class func mobileGetAccountingReconciliationServicesWithRequestBuilder(fechaDesde: Date? = nil, fechaHasta: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingReconciliationServicesResponse> {
         let localVariablePath = "/accounting/reconciliation/services"
@@ -401,7 +401,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial de conciliaciones de servicios
-     
+
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -422,7 +422,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationServicesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationServicesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationServicesHistoryWithRequestBuilder(fechaDesde: Date? = nil, fechaHasta: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<GetAccountingReconciliationServicesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/services-history"
@@ -449,7 +449,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar historial paginado de conciliaciones de servicios
-     
+
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -470,7 +470,7 @@ open class AccountingReconciliationAPI {
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<GetAccountingReconciliationServicesHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationServicesHistoryResponse>
      */
     open class func mobileGetAccountingReconciliationServicesNestedHistoryWithRequestBuilder(fechaDesde: Date? = nil, fechaHasta: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<GetAccountingReconciliationServicesHistoryResponse> {
         let localVariablePath = "/accounting/reconciliation/services/history"
@@ -497,7 +497,7 @@ open class AccountingReconciliationAPI {
 
     /**
      Consultar panel de conciliaciones
-     
+
      - returns: GetAccountingReconciliationStatsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -512,7 +512,7 @@ open class AccountingReconciliationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingReconciliationStatsResponse> 
+     - returns: RequestBuilder<GetAccountingReconciliationStatsResponse>
      */
     open class func mobileGetAccountingReconciliationStatsWithRequestBuilder() -> RequestBuilder<GetAccountingReconciliationStatsResponse> {
         let localVariablePath = "/accounting/reconciliation/stats"
@@ -534,8 +534,8 @@ open class AccountingReconciliationAPI {
 
     /**
      Registrar conciliación de gastos
-     
-     - parameter expenseReconciliationRequest: (body)  
+
+     - parameter expenseReconciliationRequest: (body)
      - parameter tipoGasto: (query) Valor de tipoGasto aceptado por el handler. (optional)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
@@ -555,13 +555,13 @@ open class AccountingReconciliationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter expenseReconciliationRequest: (body)  
+     - parameter expenseReconciliationRequest: (body)
      - parameter tipoGasto: (query) Valor de tipoGasto aceptado por el handler. (optional)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingReconciliationExpensesResponse> 
+     - returns: RequestBuilder<PostAccountingReconciliationExpensesResponse>
      */
     open class func mobilePostAccountingReconciliationExpensesWithRequestBuilder(expenseReconciliationRequest: ExpenseReconciliationRequest, tipoGasto: String? = nil, fechaDesde: Date? = nil, fechaHasta: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingReconciliationExpensesResponse> {
         let localVariablePath = "/accounting/reconciliation/expenses"
@@ -590,8 +590,8 @@ open class AccountingReconciliationAPI {
 
     /**
      Registrar conciliación de ventas
-     
-     - parameter saleReconciliationRequest: (body)  
+
+     - parameter saleReconciliationRequest: (body)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter puntoDeVentaId: (query) Valor de puntoDeVentaId aceptado por el handler. (optional)
@@ -611,13 +611,13 @@ open class AccountingReconciliationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter saleReconciliationRequest: (body)  
+     - parameter saleReconciliationRequest: (body)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter puntoDeVentaId: (query) Valor de puntoDeVentaId aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingReconciliationSalesResponse> 
+     - returns: RequestBuilder<PostAccountingReconciliationSalesResponse>
      */
     open class func mobilePostAccountingReconciliationSalesWithRequestBuilder(saleReconciliationRequest: SaleReconciliationRequest, fechaInicio: Date? = nil, fechaFin: Date? = nil, puntoDeVentaId: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingReconciliationSalesResponse> {
         let localVariablePath = "/accounting/reconciliation/sales"
@@ -646,8 +646,8 @@ open class AccountingReconciliationAPI {
 
     /**
      Registrar conciliación de servicios
-     
-     - parameter serviceReconciliationRequest: (body)  
+
+     - parameter serviceReconciliationRequest: (body)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
@@ -666,12 +666,12 @@ open class AccountingReconciliationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter serviceReconciliationRequest: (body)  
+     - parameter serviceReconciliationRequest: (body)
      - parameter fechaDesde: (query) Valor de fechaDesde aceptado por el handler. (optional)
      - parameter fechaHasta: (query) Valor de fechaHasta aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingReconciliationServicesResponse> 
+     - returns: RequestBuilder<PostAccountingReconciliationServicesResponse>
      */
     open class func mobilePostAccountingReconciliationServicesWithRequestBuilder(serviceReconciliationRequest: ServiceReconciliationRequest, fechaDesde: Date? = nil, fechaHasta: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingReconciliationServicesResponse> {
         let localVariablePath = "/accounting/reconciliation/services"

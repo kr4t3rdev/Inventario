@@ -934,3 +934,415 @@ de 9 casos, la matriz global 31×8, G5 global, el baseline R6/R0.5, ni R7; tampo
 una auditoría nueva del contrato público de adaptadores o del mock `withAction`. A9 permanece
 pendiente según el estado registrado arriba. No se editaron código ni otras documentaciones, no
 se recreó la base y no se utilizó cloud.
+
+### Revalidación UI G5 — altas cash — 2026-10-12
+
+La brecha histórica de cobertura de los formularios de alta queda **supersedida en alcance
+focal** por la suite actual de 13/13 casos en
+`src/features/contabilidad/components/__tests__/ui-idempotency-lifecycle.test.tsx`. El conteo
+13/13 es el total expandido que incluye los siete casos lifecycle del corte anterior, no se suma
+como 13 + 7. La suite renderiza los componentes reales `PrestamoCashForm` y `DeudaCashForm`
+con actions de creación mockeadas y verifica clave no vacía, payload/clave estables tras rechazo
+del servidor o error de red, rotación tras éxito/descarte asentado y protección frente a cierre
+del usuario durante una creación pendiente.
+
+La reproducción RED antes de corregir el cierre dejó **11 PASS / 2 FAIL**: Cancelar permanecía
+activo durante una llamada en vuelo en ambos formularios. El camino también confirmó el defecto
+previo de `DeudaCashForm`: `isLoading` no se limpiaba tras fallo/respuesta negativa y bloqueaba
+reintentos. Se añadió limpieza en `finally`; ambos formularios ahora bloquean Cancelar y
+descartar por el callback de diálogo mientras la solicitud está pendiente (deuda también guarda
+la subida). El éxito cierra directamente después de limpiar la clave. El fallo asentado conserva
+la clave para reintento; el descarte posterior al cierre confirmado permite una clave nueva.
+
+Comando exacto y resultado actual:
+
+```bash
+pnpm exec vitest run --maxWorkers=1 --no-file-parallelism \
+  src/features/contabilidad/components/__tests__/ui-idempotency-lifecycle.test.tsx
+# 13/13 PASS
+pnpm run typecheck
+pnpm run typecheck:tests
+git diff --check
+```
+
+Typechecks de aplicación/tests y diff check pasaron. Revisión fresca independiente aprobó el
+alcance sin bloqueadores; el click exterior no se probó como gesto separado, aunque comparte el
+callback de dismiss protegido que se ejercitó con Escape. La revisión no se convierte en una
+revalidación de los adaptadores públicos.
+
+Esta evidencia es UI focal y distinta de la firma de identidad/reintento de **18 combinaciones
+server G5**. No confirma el probe histórico no versionado de 9 casos ni suma corridas fechadas
+independientes. No firma R0.5-ACCEPT, G5 global, R6 global/baseline, ni concede waiver de A9/R7;
+A9 sigue pendiente. No autoriza modos operativos, replay, release ni nuevos intentos cloud.
+
+### Corrección de procedencia A7/A8 — estado verificado al 2026-10-12
+
+La descripción de A8 arriba conserva el hallazgo y el estado histórico del corte original; su
+afirmación sobre el `HEAD` actual quedó **supersedida**. En la verificación de este addendum,
+`HEAD` era `4be1b3b0f7b41224077359c9c7646e4f7d36128a`, rama
+`feat/contabilidad-capa-formal`. `src/features/contabilidad/actions-periodos.ts` y
+`src/features/contabilidad/__integration__/periodo-rollback-real.test.ts` estaban limpios
+respecto de ese `HEAD` (sin cambios staged, unstaged o untracked en esas rutas). En el código de
+ese commit, `cerrarPeriodoAction` llama `AuditLogService.logStrict(..., tx)` dentro de la
+transacción Serializable. La prueba PostgreSQL del archivo indicado instala un trigger
+`BEFORE INSERT` sobre `AuditLog` que lanza SQLSTATE `22012`, invoca el cierre y comprueba que el
+período permanece `ABIERTO`; también ejecuta un cierre exitoso previo. Esto acredita ese caso
+focal en el árbol verificado, no todos los writers de períodos, el baseline heredado ni la
+aceptación global R6/R0.5.
+
+Para A7, el corte actual conserva los nueve símbolos ya enumerados y anotados
+`@deprecated R6-ORPHANS`; la tarea correspondiente de `tasks.md` sigue marcada `[x]`. La consulta
+del grafo indexado para esos nombres encontró sus nueve definiciones y cero relaciones entrantes
+`CALLS` hacia esos nodos. Este resultado se limita a esos símbolos, la dirección/relación
+consultada y la versión del grafo; no es una garantía absoluta frente a referencias dinámicas,
+invocación externa ni todo caller posible. A7 sigue siendo disposición documental, sin pruebas
+nuevas y sin cerrar R6-ROLLBACK, R6-BASELINE o R0.5.
+
+### Revalidación focal R6 — 22 suites PostgreSQL — 2026-10-12
+
+En el candidato de ejecución `a05bffb4deb9fd2bc5af2d7ecc0991dd7edda8b3`
+(`feat/contabilidad-capa-formal`), el batch explícito terminó con **22/22 archivos y 201/201
+tests PASS** en 30,41 s. La base se identificó con consulta de solo lectura como
+`tcp_test_local`, rol `arturo`, `127.0.0.1:5433`. Se llamó Vitest directamente con la config de
+integración y rutas explícitas; no se ejecutó `pnpm test:integration`, cuyo script prepara la
+base antes de correr. La config consultada fija `envFile: false`, un worker y sin paralelismo de
+archivos.
+
+Al comienzo del batch había cambios compartidos en siete tests seleccionados y un octavo archivo
+seleccionado sin seguimiento. Por eso este resultado **no** declara limpio el `HEAD` frente al
+worktree: es evidencia del árbol existente durante la corrida, no autoría de esta validación.
+Los siete paths modificados eran `reconciliar-servicio-real.test.ts`,
+`service-devengo-directo-real.test.ts`, `devolucion-fifo.test.ts`,
+`formal-shadow-cash-sale.test.ts`, `facturacion-workflow-venta-credito-real.test.ts`,
+`anticipos-devengo-bruto-real.test.ts` y `anticipos-fx-real.test.ts`; el path nuevo/no rastreado
+era `cash-writers-audit-rollback-real.test.ts`.
+
+Un manifiesto SHA-256 previo y posterior, de **2.455 archivos** limitados a código bajo `src`
+(`.ts`, `.tsx`, `.js`, `.jsx`, `.json`) y a schema/config/package/test-runner seleccionados,
+permaneció idéntico: `1c95b2c1295e41caabc4d6ab9a0293abe0f409956f096cfe41efb972d91904c1`. Es una
+huella estable de ese allowlist entre ambas mediciones; no es snapshot inmutable, no cubre todo
+el checkout y no aporta evidencia de producción. En el momento de redactar esta nota, `HEAD` ya
+había avanzado a `b04a5f8ecf8922901be5507bfe62be631067abab`; el resultado siguiente queda
+atribuido exclusivamente al candidato `a05b...` ejecutado y fingerprinted.
+
+Comando exacto (URLs explícitas sin contraseña; ejecución secuencial):
+
+```bash
+env ALLOW_DISPOSABLE_TEST_DB=1 NODE_ENV=test \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  pnpm exec vitest run --config vitest.integration.config.mjs \
+    --maxWorkers=1 --no-file-parallelism \
+    src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts \
+    src/features/contabilidad/__integration__/deudas-cash-real.test.ts \
+    src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts \
+    src/features/contabilidad/__integration__/cash-g5-acceptance-real.test.ts \
+    src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts \
+    src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts \
+    src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts \
+    'src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts' \
+    src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts \
+    src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts \
+    src/lib/services/__integration__/anticipos-fx-real.test.ts \
+    src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts \
+    src/features/mermas/__integration__/merma-formal-real.test.ts \
+    src/features/productos/__integration__/restock-formal-real.test.ts \
+    src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts \
+    src/features/ventas/__integration__/devolucion-fifo.test.ts \
+    src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts \
+    src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts \
+    src/lib/services/__integration__/pago-gastos-workflow-real.test.ts \
+    src/features/contabilidad/__integration__/audit-config-rollback-real.test.ts \
+    src/features/contabilidad/__integration__/periodo-rollback-real.test.ts \
+    src/features/contabilidad/__integration__/cuentas-audit-rollback-real.test.ts
+```
+
+Los errores SQLSTATE `22012` esperados por los tests de rollback aparecieron en stderr, con
+resultado verde. No se reprodujeron fallos en este batch; no se infiere que el hallazgo histórico
+de 50/59 esté resuelto o sea incorrecto, pues este candidato, conjunto y corrida son distintos.
+Esta evidencia permanece **focal** y no cierra R6 global/baseline, R0.5, A9 ni criterios de
+aceptación; cualquier cierre requiere revisión del inventario y criterios completos.
+
+### Alcance de AuditLog en el crosswalk R6 — 2026-10-12
+
+La inspección del árbol de trabajo observado en la rama `feat/contabilidad-capa-formal`, con
+referencia `HEAD` `b04a5f8ecf8922901be5507bfe62be631067abab`, separa el fallo del posteo formal de
+un fallo de `AuditLog`: los callsites #6–8, #19–22, #24–26 y #30 delegan a `postEvento`, y ni
+esos flujos ni `postEvento`/`postEventoInterno` insertan un `AuditLog` propio. Para esos
+callsites un trigger adicional de `AuditLog` es **no aplicable**;
+sus failpoints de asiento/línea siguen siendo la evidencia física pertinente y no se retiran ni
+se sustituyen. Esto clasifica aplicabilidad, no reduce la cobertura esperada de los writers que
+sí emiten auditoría.
+
+En el subconjunto revisado, las escrituras auditables restantes tienen evidencia física
+nominada: #9 en `cash-loan-create-audit-rollback-real.test.ts`; #10–12 y rutas legacy #1–3 en
+`cash-writers-audit-rollback-real.test.ts`; #13 en `accounting-bank-transfers-real.test.ts`,
+donde `createBankTransfer` usa `AuditLogService.logStrict(..., tx)` y el test fuerza fallo de
+AuditLog y comprueba rollback de transferencia, asiento y saldos bancarios; #27 en
+`formal-shadow-cash-sale.test.ts`, donde el failpoint `PRICE_OVERRIDE` ocurre antes de FIFO.
+Para #27, el failpoint separado de inserción COGS después de FIFO prueba el rollback tardío del
+asiento, no un fallo tardío de AuditLog. Los tests de cash `cash-loan-create-audit-rollback` y
+`cash-writers-audit-rollback` estaban locales y sin seguimiento al verificar; su presencia en
+este árbol no equivale a evidencia comprometida en `HEAD`. Las filas #4–5 conservan su evidencia
+de adapters en la matriz.
+
+La revisión de esta nota fue por inspección, no una nueva ejecución. El worktree tenía cambios
+locales en `accounting-operations-mutation-service.ts`, `venta-servicios/actions.ts` y tests
+relacionados, incluidos los dos tests cash sin seguimiento antes citados; por tanto esto no es
+una attestation de `HEAD` limpio ni de ejecución desde ese commit. No cambia el estado de `[ ]`
+R6-ROLLBACK en `tasks.md`. No se identificó un
+caso adicional sin asignar de fallo de AuditLog dentro del subconjunto indicado. No cierra R6
+global/baseline, R0.5, A9 ni los criterios globales de aceptación.
+
+### Precisión física de columnas FX — 2026-10-12
+
+Se añadió `src/features/contabilidad/__integration__/fx-schema-precision-real.test.ts`, que
+consulta `format_type(atttypid, atttypmod)` en PostgreSQL para las siete columnas cubiertas por las
+migraciones FX: `TransferenciaBancaria.montoConvertido`; `InyeccionCapital.tasaCambio` y
+`montoConvertido`; `PagoDeuda.tasaCambio` y `montoConvertido`; `CompraDocumento.tasaCambio` y
+`montoConvertido`. Es una prueba de catálogo de solo lectura: no crea fixtures, triggers ni filas.
+
+La primera corrida contra la base local existente identificó `tcp_test_local`, rol `arturo`,
+`127.0.0.1:5433`. Falló **1/1** con evidencia de desalineación: las siete columnas eran
+`numeric(65,30)`, frente a `numeric(20,4)` para montos convertidos y `numeric(20,10)` para tasas.
+Esa corrida solo hizo consultas; la base preexistente no se modificó. La identidad se comprobó
+antes de crear una base separada y única, `tcp_test_r6_precision_20261012_25a70a79`, en el mismo
+servidor local, también como `arturo`. La comprobación previa confirmó que ese nombre no existía
+y que el rol tenía permiso para crear bases. La nueva base permanece disponible; no se borró.
+
+Comando de esa corrida RED de solo lectura:
+
+```bash
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  PGPASSFILE=/dev/null ALLOW_DISPOSABLE_TEST_DB=1 NODE_ENV=test \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_local' \
+  pnpm exec vitest run --config vitest.integration.config.mjs \
+    src/features/contabilidad/__integration__/fx-schema-precision-real.test.ts
+```
+
+En la base nueva se ejecutó `prisma migrate deploy` sobre las **147 migraciones** presentes en el
+árbol de trabajo. `prisma migrate status` informó que el esquema estaba actualizado; una consulta
+de solo lectura confirmó **147** filas terminadas en `_prisma_migrations`, cero revertidas y cero
+pendientes/incompletas. La prueba focal pasó **1/1** y volvió a leer los siete tipos esperados.
+`pnpm run typecheck:tests` terminó correctamente. La validación se hizo en la rama
+`feat/contabilidad-capa-formal`, con `HEAD` `b04a5f8ecf8922901be5507bfe62be631067abab`; el
+worktree compartido estaba sucio y el test nuevo, junto con una migración no rastreada, formaba
+parte del árbol de trabajo. Por tanto, esta evidencia corresponde a ese árbol y no certifica un
+checkout limpio ni una migración exclusivamente rastreada. No se cambió el schema ni se corrigió
+ninguna migración: la cadena existente produjo las precisiones esperadas en una base nueva.
+
+Los comandos de Prisma se ejecutaron con el preload aprobado que convierte
+`process.loadEnvFile()` en una operación no-op, sobrescrito en `NODE_OPTIONS`, y con las tres
+URLs explícitas al destino local, sin contraseña en la URL ni lectura de archivos de entorno. La
+base existente solo recibió la prueba de lectura; el despliegue de migraciones se limitó al nombre
+nuevo indicado arriba.
+
+Comandos de migración y estado en la base nueva (se creó solo después de validar identidad del
+servidor y ausencia del nombre):
+
+```bash
+psql 'postgresql://arturo@127.0.0.1:5433/postgres' -X -v ON_ERROR_STOP=1 \
+  -c 'CREATE DATABASE "tcp_test_r6_precision_20261012_25a70a79"'
+
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  ALLOW_DISPOSABLE_TEST_DB=1 NODE_ENV=test \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  pnpm exec prisma migrate deploy
+
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  ALLOW_DISPOSABLE_TEST_DB=1 NODE_ENV=test \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  pnpm exec prisma migrate status
+```
+
+Comando exacto de la corrida verde:
+
+```bash
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  PGPASSFILE=/dev/null ALLOW_DISPOSABLE_TEST_DB=1 NODE_ENV=test \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_precision_20261012_25a70a79' \
+  pnpm exec vitest run --config vitest.integration.config.mjs \
+    src/features/contabilidad/__integration__/fx-schema-precision-real.test.ts
+```
+
+Un diff **de solo lectura** entre la base migrada y el datamodel Prisma actual sigue siendo no
+vacío (exit 2; 25.456 bytes y 737 líneas de SQL diagnóstico, no aplicadas). No referencia las
+cuatro tablas ni las siete columnas FX de esta prueba; confirma que queda otra diferencia de
+schema fuera de este alcance. Este resultado es evidencia focal de precisión en la base recién
+migrada, no cierre de R6 baseline, R6-ROLLBACK, R0.5, A9 ni de la aceptación global.
+
+### Brecha de migración tenant contable — pendiente al 2026-10-12
+
+El diff de solo lectura de la base nueva con 147 migraciones y la revisión de la historia
+identificaron una brecha distinta de la precisión FX: el datamodel exige `tenantId` en
+`CierreContable`, `PagoCuentaPorPagar` y `CompraServicio`, sin la migración correspondiente;
+`GastoCompra.tenantId` está migrado nullable pero es obligatorio en el datamodel.
+
+La corrección debe preservar datos y validar la procedencia antes de imponer FK, índices y
+`NOT NULL`: pago desde su CuentaPorPagar; compra de servicio desde Servicios, validando el
+proveedor; gasto desde Producto y Proveedor solo si sus tenants coinciden. Deben rechazarse
+procedencias ausentes o contradictorias, incluyendo valores ya asignados incompatibles.
+`CierreContable` no ofrece un padre autoritativo: filas históricas sin tenant necesitan un
+mapeo explícito revisado; no se permite elegir un tenant arbitrario.
+
+La implementación delegada se interrumpió por límite de uso. La comprobación posterior no
+encontró una nueva migración tenant ni el test propuesto
+`accounting-tenant-schema-migration-real.test.ts`; no se aplicó esta corrección. La migración
+untracked de idempotencia de ventas ya existente no pertenece a este cambio. El siguiente paso
+es escribir la prueba de catálogo y de backfill/conflictos, preparar una migración atómica
+y validarla exclusivamente en otra base local desechable. No debe modificarse
+`tcp_test_local` ni aplicarse el diff generado completo, que incluye drops de objetos ajenos.
+
+Esta brecha permanece pendiente; no cierra R6-BASELINE, R0.5 ni el objetivo global.
+
+### Actualización posterior: replay tenant contable en base limpia — 2026-10-12
+
+Esta evidencia posterior **actualiza el estado de la sección tenant anterior**: ya existe un
+candidato de migración y su prueba focal en el worktree compartido. No se modificó el datamodel
+Prisma ni se resolvió la brecha mediante un cambio de esquema generado. El alcance sigue siendo
+focal y no cierra la aceptación global.
+
+La primera prueba de rollback-only en la base local fallida encontró SQLSTATE `42703`
+(`column servicio.tenantId does not exist`) durante la prevalidación de `CompraServicio`: la
+historia migrada no había creado `Servicios.tenantId`. El diagnóstico fue solo rollback y la base
+se preservó con **147 migraciones terminadas y una pendiente/incompleta**, sin `migrate resolve` ni
+reintentos. La base separada de precisión FX tampoco se alteró.
+
+El candidato untracked
+`prisma/migrations/20261012100000_accounting_tenant_id_hardening/migration.sql` añade, en una
+transacción, la frontera tenant para `CierreContable`, `Servicios`, `PagoCuentaPorPagar`,
+`CompraServicio` y `GastoCompra`. `Servicios.tenantId` se deriva solo cuando concuerdan los
+propietarios explícitos/relacionados y la fila enlazada de `VentaServicios`; el origen histórico
+opcional `Servicios.vendorId → Vendor.tenantId` se consulta mediante SQL dinámico condicionado por
+catálogo. Las compras derivan el tenant del servicio y validan un proveedor opcional. Los valores
+explícitos contradictorios, linajes ausentes o propietarios discrepantes fallan de forma cerrada.
+Para cierres contables poblados sin un mapeo explícito revisado, la migración falla; no asigna un
+tenant arbitrario. Esta solución cubre la dependencia de `Servicios` que faltaba en la historia
+fresca.
+
+La prueba focal
+`src/features/contabilidad/__integration__/accounting-tenant-schema-migration-real.test.ts` tiene
+**14 casos en total: 13 fixtures de backfill/conflicto/rollback y una verificación de catálogo**.
+Los 13 fixtures pasaron en esquemas temporales aislados; se ejecutaron primero sobre la base
+fallida y después dentro de la corrida completa en la base nueva. La prueba completa fue **14/14**
+(no son 14 más 13). En la base nueva también pasó **1/1**
+`src/features/contabilidad/__integration__/fx-schema-precision-real.test.ts`.
+
+Se creó una única base local nueva y vacía, `tcp_test_r6_tenants_green_20261012_f48c2d17`, con
+rol `arturo` en `127.0.0.1:5433`, tras verificar que el nombre no existía, que la identidad era
+correcta y que no había tablas públicas ni sesiones activas ajenas. Se aplicaron las **148
+migraciones** del árbol, incluida la candidata. La consulta final de `_prisma_migrations` confirmó
+**148 terminadas, cero incompletas y cero revertidas**. Las cinco columnas `tenantId` físicas son
+`TEXT NOT NULL`; existen las cinco FK con destino `tenants` y los cinco índices esperados. La base
+se mantiene local y no recibió fixtures de negocio. La cadena limpia demuestra replay y catálogo,
+pero no demuestra backfill con datos históricos poblados reales ni constituye autorización de
+rollout a producción.
+
+Comando único de despliegue completo en la base nueva (config temporal revisada; URLs explícitas,
+sin contraseña, y preload no-op para impedir lectura de archivos de entorno):
+
+```bash
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  PGPASSFILE=/dev/null ALLOW_DISPOSABLE_TEST_DB=1 \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  node '/Users/arturo/Documents/Proyecto Inventario/TCP/node_modules/.pnpm/prisma@6.19.1_magicast@0.3.5_typescript@5.9.3/node_modules/prisma/build/index.js' \
+  migrate deploy --config /tmp/tcp-prisma-safe-config.mjs
+```
+
+La prueba focal completa y la de FX usaron Vitest 3.2.4 del runtime local existente y el config
+temporal `/tmp/tcp-tenant-vitest-config.mjs` (`envFile: false`, una sola worker, destino explícito);
+no se instalaron dependencias ni se alteraron symlinks o `node_modules` compartidos. La prueba focal
+también pasó un chequeo TypeScript **solo para ese test y sus imports**, con TypeScript 5.9.3 y
+`/tmp/tcp-tenant-test-tsconfig.json`. No se ejecutó typecheck de toda la aplicación o de todos los
+tests.
+
+Comandos de las corridas completas y del chequeo TypeScript focal:
+
+```bash
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  PGPASSFILE=/dev/null ALLOW_DISPOSABLE_TEST_DB=1 \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  TCP_ACCOUNTING_TENANT_MIGRATION_DB='tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  '/Users/arturo/Documents/Proyecto Inventario/TCP/node_modules/.bin/vitest' run \
+  --config /tmp/tcp-tenant-vitest-config.mjs \
+  src/features/contabilidad/__integration__/accounting-tenant-schema-migration-real.test.ts
+
+env NODE_OPTIONS='--import=file:///tmp/tcp-prisma-preload.szhMfJ/no-load-env.mjs' \
+  PGPASSFILE=/dev/null ALLOW_DISPOSABLE_TEST_DB=1 \
+  DATABASE_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  DIRECT_URL='postgresql://arturo@127.0.0.1:5433/tcp_test_r6_tenants_green_20261012_f48c2d17' \
+  '/Users/arturo/Documents/Proyecto Inventario/TCP/node_modules/.bin/vitest' run \
+  --config /tmp/tcp-tenant-vitest-config.mjs \
+  src/features/contabilidad/__integration__/fx-schema-precision-real.test.ts
+
+node '/Users/arturo/Documents/Proyecto Inventario/TCP/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/bin/tsc' \
+  --project /tmp/tcp-tenant-test-tsconfig.json --pretty false
+```
+
+La evidencia corresponde a `feat/contabilidad-capa-formal`, `HEAD`
+`b04a5f8ecf8922901be5507bfe62be631067abab` y un worktree compartido/sucio, no a un checkout limpio.
+La migración y el test focal siguen untracked. SHA-256 al verificar:
+
+- Migración candidata: `d3c36dcfb2dc1ee3d485119f469bb22a6568735c9aa2aa7248662b9aacc6ad67`.
+- Test focal: `5dc2712d55ef36e424f68d727a60a2cef18d4e7fc1a31d4ea0749bf525164a1a`.
+- Config temporal de Prisma: `674e921d33a10257d0ac98cfe304b65b393125dfb538aa841110f02a416a503e`.
+
+No se cambiaron ni resolvieron las filas pendientes de la base fallida; permanece en `147/1`.
+El diff global de schema, R6 baseline/rollback, R0.5, A9 y cualquier alcance de Shadow siguen fuera
+de esta verificación y pendientes. Esta actualización no declara cierre de baseline ni de auditoría
+global.
+
+## 2026-10-12 — preflight agregado de backfill histórico por tenant
+
+Se agregó `scripts/ops/preflight-accounting-tenant-hardening.mjs` para revisar, sin modificar
+datos, el estado agregado de `CierreContable`, `PagoCuentaPorPagar`, `Servicios`, `CompraServicio`
+y `GastoCompra`. Lee el catálogo antes de generar consultas con identificadores fijos, comprueba
+consenso de propietarios y clasifica cada fila como lista, faltante, ambigua o inválida/conflictiva.
+También cuenta relaciones `VentaServicios` huérfanas o con tenant inválido. No devuelve IDs ni
+valores de negocio. La ejecución abre `REPEATABLE READ READ ONLY`, ejecuta únicamente SELECT y
+termina con `ROLLBACK`; no crea esquema, corrige filas ni aplica migraciones. La importación del
+módulo no inicia conexiones. No carga archivos de entorno: requiere `DATABASE_URL` explícita y
+limita por defecto la ejecución a bases locales `tcp_test_*`; cualquier destino no local necesita
+confirmación explícita exacta con `--allow-nonlocal-target <host>/<base>`.
+
+Validación focal del 2026-10-12:
+
+- Vitest unitario: 6/6; chequeo TypeScript focal, `node --check` y `git diff --check` pasaron.
+- Vitest PostgreSQL: 1/1 contra un esquema UUID aislado y datos ficticios en la base local
+  `tcp_test_r6_tenants_green_20261012_f48c2d17` (rol `arturo`, `127.0.0.1:5433`). Reconfirmó
+  148 migraciones terminadas y cero incompletas antes de crear el esquema de prueba; la transacción
+  del preflight observó `transaction_read_only=on`, revirtió y el fingerprint de las filas ficticias
+  no cambió. El esquema aislado se eliminó en limpieza.
+- En esas fixtures ficticias, la partición SQL esperada fue: cierres 3 (1 lista, 1 faltante,
+  1 inválida); pagos 4 (1, 0, 3); servicios 8 (2, 1, 1, 4); compras de servicio 7 (1, 1, 1, 4);
+  gastos 7 (1, 0, 1, 5), además de 3 relaciones `VentaServicios` inválidas. Los 26 bloqueos son
+  deliberados en fixtures y no representan datos históricos.
+- Corrida agregada de solo lectura en `tcp_test_local` encontró 7 servicios listos y cero filas
+  escaneadas en los otros cuatro modelos; resultado `GO`, cero bloqueos. En la base limpia de
+  148 migraciones los cinco modelos estaban vacíos: `GO`, cero bloqueos y cero filas escaneadas.
+- El wrapper zsh que ejecutó ambas corridas terminó con código 1 después de imprimir los dos
+  informes, al intentar asignar el nombre reservado `status`; los hashes se verificaron en un
+  comando separado. No fue un error del preflight ni se repitieron consultas a la base.
+
+Estos `GO` solo describen las dos bases locales de prueba observadas. El resultado vacío de la base
+limpia no acredita datos históricos; el resultado de `tcp_test_local` tampoco sustituye una
+revisión de producción. No se inspeccionó ni se declaró lista ninguna base histórica/producción,
+no se aplicó la migración mediante esta herramienta y no se autoriza rollout. Antes de un rollout,
+el operador debe ejecutar el preflight contra el destino aprobado y revisar los conteos; cualquier
+bloqueo requiere mapeo explícito revisado, nunca tenant por defecto. Evidencia acotada a las tres
+fuentes del preflight y la prueba focal; el baseline global y la preparación de producción siguen
+pendientes.

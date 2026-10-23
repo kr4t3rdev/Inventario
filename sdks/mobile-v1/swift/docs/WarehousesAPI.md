@@ -44,7 +44,7 @@ WarehousesAPI.mobileDeleteWarehousesById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del almacén. | 
+ **id** | **String** | Identificador del almacén. |
 
 ### Return type
 
@@ -140,7 +140,7 @@ WarehousesAPI.mobileGetWarehousesById(id: id) { (response, error) in
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del almacén. | 
+ **id** | **String** | Identificador del almacén. |
 
 ### Return type
 
@@ -171,7 +171,7 @@ Crea un almacén en el tenant activo y devuelve el registro creado.
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let almacenCreateRequest = AlmacenCreateRequest(nombre: "nombre_example") // AlmacenCreateRequest | 
+let almacenCreateRequest = AlmacenCreateRequest(nombre: "nombre_example") // AlmacenCreateRequest |
 
 // Crear almacén
 WarehousesAPI.mobilePostWarehousesCreate(almacenCreateRequest: almacenCreateRequest) { (response, error) in
@@ -190,7 +190,7 @@ WarehousesAPI.mobilePostWarehousesCreate(almacenCreateRequest: almacenCreateRequ
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **almacenCreateRequest** | [**AlmacenCreateRequest**](AlmacenCreateRequest.md) |  | 
+ **almacenCreateRequest** | [**AlmacenCreateRequest**](AlmacenCreateRequest.md) |  |
 
 ### Return type
 
@@ -222,7 +222,7 @@ Actualiza los datos de un almacén del tenant activo y devuelve el registro actu
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador del almacén.
-let almacenUpdateRequest = AlmacenUpdateRequest(nombre: "nombre_example") // AlmacenUpdateRequest | 
+let almacenUpdateRequest = AlmacenUpdateRequest(nombre: "nombre_example") // AlmacenUpdateRequest |
 
 // Editar almacén
 WarehousesAPI.mobilePutWarehousesById(id: id, almacenUpdateRequest: almacenUpdateRequest) { (response, error) in
@@ -241,8 +241,8 @@ WarehousesAPI.mobilePutWarehousesById(id: id, almacenUpdateRequest: almacenUpdat
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador del almacén. | 
- **almacenUpdateRequest** | [**AlmacenUpdateRequest**](AlmacenUpdateRequest.md) |  | 
+ **id** | **String** | Identificador del almacén. |
+ **almacenUpdateRequest** | [**AlmacenUpdateRequest**](AlmacenUpdateRequest.md) |  |
 
 ### Return type
 

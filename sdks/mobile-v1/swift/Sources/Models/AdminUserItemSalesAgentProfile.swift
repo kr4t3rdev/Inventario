@@ -33,4 +33,3 @@ public struct AdminUserItemSalesAgentProfile: Codable, JSONEncodable, Hashable {
         try container.encode(status, forKey: .status)
     }
 }
-

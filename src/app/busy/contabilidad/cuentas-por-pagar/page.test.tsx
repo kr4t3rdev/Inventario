@@ -16,7 +16,21 @@ vi.mock('@/contexts/auth-context', () => ({
 }));
 
 vi.mock('@/features/contabilidad', () => ({
-  getCuentasPorPagarAction: vi.fn().mockResolvedValue({ success: true, data: { cuentas: [], pagination: { totalPages: 1 } } }),
+  getCuentasPorPagarAction: vi.fn().mockResolvedValue({
+    success: true,
+    data: {
+      cuentas: [],
+      pagination: { page: 1, limit: 50, total: 0, totalPages: 1 },
+      metricas: {
+        totalCuentas: 0,
+        totalFacturado: 0,
+        totalPagado: 0,
+        totalSaldo: 0,
+        cuentasPendientes: 0,
+        cuentasPagadas: 0,
+      },
+    },
+  }),
 }));
 
 vi.mock('sonner', () => ({
@@ -87,7 +101,21 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
 
     vi.mocked(getCuentasPorPagarAction)
       .mockResolvedValueOnce({ success: false, error: { message: 'fallo' } })
-      .mockResolvedValueOnce({ success: true, data: { cuentas: [], pagination: { totalPages: 1 } } });
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          cuentas: [],
+          pagination: { page: 1, limit: 50, total: 0, totalPages: 1 },
+          metricas: {
+            totalCuentas: 0,
+            totalFacturado: 0,
+            totalPagado: 0,
+            totalSaldo: 0,
+            cuentasPendientes: 0,
+            cuentasPagadas: 0,
+          },
+        },
+      });
 
     render(<CuentasPorPagarPage />);
 

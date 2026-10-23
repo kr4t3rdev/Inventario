@@ -240,4 +240,3 @@ class PostSalesIdCancelResponse {
   static const requiredKeys = <String>{
   };
 }
-

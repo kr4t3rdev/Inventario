@@ -49,4 +49,3 @@ public struct AuthenticatedUser: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tenantRole, forKey: .tenantRole)
     }
 }
-

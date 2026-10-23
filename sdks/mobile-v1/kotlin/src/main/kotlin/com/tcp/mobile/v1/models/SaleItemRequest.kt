@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param productoId 
- * @param cantidad 
- * @param precioUnitario 
+ *
+ * @param productoId
+ * @param cantidad
+ * @param precioUnitario
  */
 
 
@@ -42,4 +42,3 @@ data class SaleItemRequest (
 
 
 }
-

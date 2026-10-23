@@ -19,11 +19,11 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tenantId 
- * @param nombre 
- * @param tenantRole 
+ *
+ * @param tenantId
+ * @param nombre
+ * @param tenantRole
  */
 
 
@@ -42,4 +42,3 @@ data class TenantSummary (
 
 
 }
-

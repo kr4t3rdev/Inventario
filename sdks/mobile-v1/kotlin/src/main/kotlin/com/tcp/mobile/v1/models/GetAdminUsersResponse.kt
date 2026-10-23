@@ -20,10 +20,10 @@ import com.tcp.mobile.v1.models.AdminUserItem
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param users 
- * @param total 
+ *
+ * @param users
+ * @param total
  */
 
 
@@ -39,4 +39,3 @@ data class GetAdminUsersResponse (
 
 
 }
-

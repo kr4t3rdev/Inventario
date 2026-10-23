@@ -116,6 +116,47 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
     vi.mocked(getCurrentUser).mockResolvedValue(admin());
   });
 
+  const normalizeSnapshotValue = (value: unknown): unknown => {
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === 'bigint') return value.toString();
+    if (Array.isArray(value)) return value.map(normalizeSnapshotValue);
+    if (value && typeof value === 'object') {
+      const decimal = value as { toFixed?: unknown; toString?: unknown };
+      if (typeof decimal.toFixed === 'function' && typeof decimal.toString === 'function') {
+        return decimal.toString();
+      }
+      return Object.fromEntries(
+        Object.entries(value).map(([key, nested]) => [key, normalizeSnapshotValue(nested)]),
+      );
+    }
+    return value;
+  };
+
+  const readAccountingSnapshot = async () => {
+    const [ventas, cuentasPorCobrar, asientos] = await Promise.all([
+      prisma.ventaServicios.findMany({
+        where: { tenantId },
+        orderBy: { ventaServicioId: 'asc' },
+      }),
+      prisma.cuentaPorCobrar.findMany({
+        where: { tenantId, tipoCuenta: 'VENTA_SERVICIO' },
+        orderBy: { id: 'asc' },
+      }),
+      prisma.asiento.findMany({
+        where: { tenantId },
+        orderBy: { asientoId: 'asc' },
+        include: {
+          lineas: { orderBy: [{ orden: 'asc' }, { lineaId: 'asc' }] },
+        },
+      }),
+    ]);
+
+    return {
+      rows: normalizeSnapshotValue({ ventas, cuentasPorCobrar, asientos }),
+      asientoLineIds: asientos.flatMap((asiento) => asiento.lineas.map((linea) => linea.lineaId)),
+    };
+  };
+
   afterAll(async () => {
     delete process.env.CONTABILIDAD_FORMAL_MODE;
     if (!prisma) return;
@@ -162,26 +203,68 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
     expect(asientos[0].origenTipo).toBe('venta_servicio');
   });
 
+  it.each(['legacy', 'mixto'] as const)(
+    '%s deniega permiso sin crear venta, CxC o asiento', async (branch) => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...admin(), role: 'regularUser', permissions: new Set<string>(),
+      });
+      const before = await readAccountingSnapshot();
+      const input = branch === 'legacy'
+        ? { servicioId: serviceId, cantidad: 1, condicionPago: 'CREDITO' as const,
+          clienteId: customerId }
+        : { lineas: [{ tipoLinea: 'SERVICIO' as const, servicioId: serviceId, cantidad: 1 }],
+          condicionPago: 'CREDITO' as const, clienteId: customerId };
+      await expect(createVentaServicioAction(input)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      expect(await readAccountingSnapshot()).toEqual(before);
+    },
+  );
+
+  it.each(['legacy', 'mixto'] as const)(
+    '%s rechaza referencias existentes de otro tenant sin efectos', async (branch) => {
+      const foreign = await prisma.tenant.create({ data: {
+        nombre: 'Tenant ajeno R6 servicios', slug: `r6-service-${crypto.randomUUID()}`,
+      } });
+      const now = new Date();
+      await prisma.periodoContable.create({ data: {
+        tenantId: foreign.tenantId, tipo: 'MENSUAL', estado: 'ABIERTO',
+        fechaInicio: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+        fechaFin: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59)),
+      } });
+      await prisma.tenantAccountingPolicy.create({ data: {
+        tenantId: foreign.tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId,
+      } });
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...admin(), tenantId: foreign.tenantId });
+      const before = await readAccountingSnapshot();
+      const input = branch === 'legacy'
+        ? { servicioId: serviceId, cantidad: 1, condicionPago: 'CREDITO' as const,
+          clienteId: customerId }
+        : { lineas: [{ tipoLinea: 'SERVICIO' as const, servicioId: serviceId, cantidad: 1 }],
+          condicionPago: 'CREDITO' as const, clienteId: customerId };
+      await expect(createVentaServicioAction(input)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      expect(await readAccountingSnapshot()).toEqual(before);
+      expect(await prisma.ventaServicios.count({ where: { tenantId: foreign.tenantId } })).toBe(0);
+      expect(await prisma.cuentaPorCobrar.count({ where: { tenantId: foreign.tenantId } })).toBe(0);
+      expect(await prisma.asiento.count({ where: { tenantId: foreign.tenantId } })).toBe(0);
+    },
+  );
+
   it('fallo en el asiento revierte venta y CxC (rollback)', async () => {
     const trigger = `trg_asiento_fail_${prefix.replaceAll('-', '_')}`.slice(0, 50);
     const fn = `${trigger}_fn`;
-    await prisma.$executeRawUnsafe(`
-      CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger AS $$
-      BEGIN
-        RAISE EXCEPTION 'asiento bloqueado' USING ERRCODE = '22012';
-      END; $$ LANGUAGE plpgsql;
-    `);
-    await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos";`);
-    await prisma.$executeRawUnsafe(`
-      CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asientos"
-      FOR EACH ROW EXECUTE FUNCTION "${fn}"();
-    `);
     try {
-      const before = await Promise.all([
-        prisma.ventaServicios.count({ where: { tenantId, servicioId: serviceId } }),
-        prisma.cuentaPorCobrar.count({ where: { tenantId, tipoCuenta: 'VENTA_SERVICIO' } }),
-        prisma.asiento.count({ where: { tenantId } }),
-      ]);
+      await prisma.$executeRawUnsafe(`
+        CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger AS $$
+        BEGIN
+          RAISE EXCEPTION 'asiento bloqueado' USING ERRCODE = '22012';
+        END; $$ LANGUAGE plpgsql;
+      `);
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos";`);
+      await prisma.$executeRawUnsafe(`
+        CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asientos"
+        FOR EACH ROW EXECUTE FUNCTION "${fn}"();
+      `);
+
+      const before = await readAccountingSnapshot();
       await expect(createVentaServicioAction({
         servicioId: serviceId,
         cantidad: 1,
@@ -189,15 +272,142 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
         clienteId: customerId,
       })).rejects.toThrow('asiento bloqueado');
 
-      const after = await Promise.all([
-        prisma.ventaServicios.count({ where: { tenantId, servicioId: serviceId } }),
-        prisma.cuentaPorCobrar.count({ where: { tenantId, tipoCuenta: 'VENTA_SERVICIO' } }),
-        prisma.asiento.count({ where: { tenantId } }),
-      ]);
+      const after = await readAccountingSnapshot();
       expect(after).toEqual(before);
     } finally {
-      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`).catch(() => undefined);
-      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`).catch(() => undefined);
+      try {
+        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`);
+      } finally {
+        await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`);
+      }
     }
   });
+
+  it('el flujo mixto revierte venta, CxC y asiento si falla el devengo SQL', async () => {
+    const mixedInput = {
+      lineas: [{ tipoLinea: 'SERVICIO' as const, servicioId: serviceId, cantidad: 1 }],
+      condicionPago: 'CREDITO' as const,
+      clienteId: customerId,
+    };
+
+    const successful = await createVentaServicioAction(mixedInput) as {
+      mode?: string;
+      replayed?: boolean;
+      lineasProcesadas?: number;
+      ventasServicios?: Array<{ ventaServicioId: string }>;
+    };
+    expect(successful).toMatchObject({
+      mode: 'MIXED_LINES',
+      replayed: false,
+      lineasProcesadas: 1,
+    });
+    const firstSaleId = successful.ventasServicios?.[0]?.ventaServicioId;
+    expect(firstSaleId).toBeTruthy();
+    expect(await prisma.cuentaPorCobrar.count({
+      where: { tenantId, ventaServicioId: firstSaleId },
+    })).toBe(1);
+    expect(await prisma.asiento.count({
+      where: { tenantId, origenTipo: 'venta_servicio', origenId: firstSaleId },
+    })).toBe(1);
+    const successfulAsiento = await prisma.asiento.findFirst({
+      where: { tenantId, origenTipo: 'venta_servicio', origenId: firstSaleId },
+      include: { lineas: true },
+    });
+    expect(successfulAsiento?.lineas.length).toBeGreaterThan(0);
+
+    const trigger = `trg_mixed_asiento_fail_${prefix.replaceAll('-', '_')}`.slice(0, 50);
+    const fn = `${trigger}_fn`;
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger AS $$
+        BEGIN
+          IF NEW."tenantId" = '${tenantId}' AND NEW."origenTipo" = 'venta_servicio' THEN
+            RAISE EXCEPTION 'mixed service asiento blocked' USING ERRCODE = '22012';
+          END IF;
+          RETURN NEW;
+        END; $$ LANGUAGE plpgsql;
+      `);
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos";`);
+      await prisma.$executeRawUnsafe(`
+        CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asientos"
+        FOR EACH ROW EXECUTE FUNCTION "${fn}"();
+      `);
+
+      const before = await readAccountingSnapshot();
+      await expect(createVentaServicioAction(mixedInput))
+        .rejects.toThrow('mixed service asiento blocked');
+      const after = await readAccountingSnapshot();
+      const priorLineIds = new Set(before.asientoLineIds);
+      expect(after.rows).toEqual(before.rows);
+      expect(after.asientoLineIds).toEqual(before.asientoLineIds);
+      expect(after.asientoLineIds.filter((lineId) => !priorLineIds.has(lineId))).toEqual([]);
+    } finally {
+      try {
+        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`);
+      } finally {
+        await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`);
+      }
+    }
+  });
+
+  it('mixto USD hereda valoración de catálogo y revierte todas las filas ante fallo SQL',
+    async () => {
+      await prisma.moneda.upsert({
+        where: { codigo: 'USD' }, update: {},
+        create: { codigo: 'USD', nombre: 'Dólar estadounidense', simbolo: 'USD' },
+      });
+      const usd = await prisma.servicios.create({ data: {
+        tenantId, nombre: `Servicio USD ${prefix}`, precio: 10, moneda: 'USD',
+      } });
+      const rate = await prisma.tasaCambio.create({ data: {
+        monedaOrigenId: 'USD', monedaDestino: 'CUP', tasa: 24, fechaVigencia: new Date(),
+      } });
+      const trigger = `r6_mixed_fx_${crypto.randomUUID().replaceAll('-', '')}`;
+      const input = {
+        lineas: [{ tipoLinea: 'SERVICIO' as const, servicioId: usd.servicioId, cantidad: 2 }],
+        condicionPago: 'CREDITO' as const, clienteId: customerId,
+      };
+      try {
+        const result = await createVentaServicioAction(input) as {
+          mode: string; ventasServicios: Array<{ ventaServicioId: string }>;
+        };
+        expect(result.mode).toBe('MIXED_LINES');
+        const saleId = result.ventasServicios[0].ventaServicioId;
+        const cxc = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: {
+          tenantId, ventaServicioId: saleId,
+        } });
+        expect(cxc.monedaOriginal).toBe('USD');
+        expect(cxc.montoOriginal?.toString()).toBe('20');
+        expect(cxc.montoDeudaFuncional?.toString()).toBe('480');
+        expect(cxc.tasaCambio?.toString()).toBe('24');
+        expect(cxc.fxEvidenceFingerprint).toBeTruthy();
+        const asiento = await prisma.asiento.findFirstOrThrow({ where: {
+          tenantId, origenTipo: 'venta_servicio', origenId: saleId,
+        }, include: { lineas: true } });
+        expect(asiento.createdBy).toBe(userId);
+        expect(asiento.lineas.reduce((sum, line) => sum + Number(line.debe), 0)).toBe(480);
+        expect(asiento.lineas.reduce((sum, line) => sum + Number(line.haber), 0)).toBe(480);
+        expect(asiento.lineas.every((line) => line.monedaOriginal === 'USD'
+          && line.tasaCambio?.toString() === '24'
+          && line.fxEvidenceFingerprint === cxc.fxEvidenceFingerprint)).toBe(true);
+        await prisma.$executeRawUnsafe(`CREATE FUNCTION "${trigger}"() RETURNS trigger
+          LANGUAGE plpgsql AS $$ BEGIN
+            IF NEW."tenantId" = '${tenantId}' AND NEW."origenTipo" = 'venta_servicio' THEN
+              RAISE EXCEPTION 'R6_MIXED_USD_POSTING_FAILPOINT' USING ERRCODE = '22012';
+            END IF;
+            RETURN NEW;
+          END $$`);
+        await prisma.$executeRawUnsafe(`CREATE TRIGGER "${trigger}"
+          BEFORE INSERT ON "asientos" FOR EACH ROW EXECUTE FUNCTION "${trigger}"()`);
+        const before = await readAccountingSnapshot();
+        await expect(createVentaServicioAction(input))
+          .rejects.toThrow('R6_MIXED_USD_POSTING_FAILPOINT');
+        expect(await readAccountingSnapshot()).toEqual(before);
+      } finally {
+        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`);
+        await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${trigger}"()`);
+        await prisma.tasaCambio.delete({ where: { tasaId: rate.tasaId } });
+      }
+    },
+  );
 });

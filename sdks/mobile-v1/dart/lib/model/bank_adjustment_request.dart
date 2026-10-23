@@ -19,6 +19,7 @@ class BankAdjustmentRequest {
     this.moneda = 'CUP',
     required this.descripcion,
     required this.motivo,
+    this.idempotencyKey,
   });
 
   String cuentaId;
@@ -33,6 +34,15 @@ class BankAdjustmentRequest {
 
   String motivo;
 
+  /// Clave opcional para repetir la misma operación sin duplicarla.
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  String? idempotencyKey;
+
   @override
   bool operator ==(Object other) => identical(this, other) || other is BankAdjustmentRequest &&
     other.cuentaId == cuentaId &&
@@ -40,7 +50,8 @@ class BankAdjustmentRequest {
     other.monto == monto &&
     other.moneda == moneda &&
     other.descripcion == descripcion &&
-    other.motivo == motivo;
+    other.motivo == motivo &&
+    other.idempotencyKey == idempotencyKey;
 
   @override
   int get hashCode =>
@@ -50,10 +61,11 @@ class BankAdjustmentRequest {
     (monto.hashCode) +
     (moneda.hashCode) +
     (descripcion.hashCode) +
-    (motivo.hashCode);
+    (motivo.hashCode) +
+    (idempotencyKey == null ? 0 : idempotencyKey!.hashCode);
 
   @override
-  String toString() => 'BankAdjustmentRequest[cuentaId=$cuentaId, tipo=$tipo, monto=$monto, moneda=$moneda, descripcion=$descripcion, motivo=$motivo]';
+  String toString() => 'BankAdjustmentRequest[cuentaId=$cuentaId, tipo=$tipo, monto=$monto, moneda=$moneda, descripcion=$descripcion, motivo=$motivo, idempotencyKey=$idempotencyKey]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -63,6 +75,11 @@ class BankAdjustmentRequest {
       json[r'moneda'] = this.moneda;
       json[r'descripcion'] = this.descripcion;
       json[r'motivo'] = this.motivo;
+    if (this.idempotencyKey != null) {
+      json[r'idempotencyKey'] = this.idempotencyKey;
+    } else {
+      json[r'idempotencyKey'] = null;
+    }
     return json;
   }
 
@@ -91,6 +108,7 @@ class BankAdjustmentRequest {
         moneda: mapValueOfType<String>(json, r'moneda') ?? 'CUP',
         descripcion: mapValueOfType<String>(json, r'descripcion')!,
         motivo: mapValueOfType<String>(json, r'motivo')!,
+        idempotencyKey: mapValueOfType<String>(json, r'idempotencyKey'),
       );
     }
     return null;
@@ -218,5 +236,3 @@ class BankAdjustmentRequestTipoEnumTypeTransformer {
   /// Singleton [BankAdjustmentRequestTipoEnumTypeTransformer] instance.
   static BankAdjustmentRequestTipoEnumTypeTransformer? _instance;
 }
-
-

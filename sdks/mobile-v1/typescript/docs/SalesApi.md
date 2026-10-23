@@ -31,7 +31,7 @@ import type { MobileGetSalesRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -97,7 +97,7 @@ import type { MobileGetSalesByIdRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -171,7 +171,7 @@ import type { MobilePatchSalesByIdUpdateRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -247,7 +247,7 @@ import type { MobilePostSalesByIdCancelRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -306,11 +306,11 @@ example().catch(console.error);
 
 ## mobilePostSalesCreate
 
-> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest)
+> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest, idempotencyKey)
 
 Registrar venta
 
-Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
 
 ### Example
 
@@ -323,7 +323,7 @@ import type { MobilePostSalesCreateRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -332,6 +332,8 @@ async function example() {
   const body = {
     // SaleCreateRequest
     saleCreateRequest: ...,
+    // string | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+    idempotencyKey: idempotencyKey_example,
   } satisfies MobilePostSalesCreateRequest;
 
   try {
@@ -352,6 +354,7 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **saleCreateRequest** | [SaleCreateRequest](SaleCreateRequest.md) |  | |
+| **idempotencyKey** | `string` | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -371,7 +374,9 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Operación completada |  -  |
+| **400** | Solicitud inválida |  -  |
 | **401** | No autenticado |  -  |
+| **409** | IDEMPOTENCY_KEY_REUSED: La clave ya se utilizó con otro contenido; una misma clave no puede reutilizarse con un payload normalizado diferente |  -  |
 | **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

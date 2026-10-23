@@ -42,7 +42,7 @@ AccountingCapitalAPI.mobileGetAccountingCapitalInjections(tipo: tipo) { (respons
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
 
 ### Return type
 
@@ -61,23 +61,24 @@ Name | Type | Description  | Notes
 
 # **mobilePostAccountingCapitalInjections**
 ```swift
-    open class func mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, tipo: String? = nil, completion: @escaping (_ data: PostAccountingCapitalInjectionsResponse?, _ error: Error?) -> Void)
+    open class func mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: CapitalInjectionCreateRequest, idempotencyKey: String? = nil, tipo: String? = nil, completion: @escaping (_ data: PostAccountingCapitalInjectionsResponse?, _ error: Error?) -> Void)
 ```
 
 Registrar inyecciones de capital
 
-Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
 
 ### Example
 ```swift
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import TCPMobileV1SDK
 
-let capitalInjectionCreateRequest = CapitalInjectionCreateRequest(monto: 123, moneda: "moneda_example", tipo: "tipo_example", descripcion: "descripcion_example", cuentaBancariaId: "cuentaBancariaId_example") // CapitalInjectionCreateRequest | 
+let capitalInjectionCreateRequest = CapitalInjectionCreateRequest(montoRecibido: 123, moneda: "moneda_example", tipo: "tipo_example", descripcion: "descripcion_example", cuentaId: "cuentaId_example", socio: "socio_example", entidadPrestamista: "entidadPrestamista_example", tasaInteres: 123, tasaCambio: 123, plazoMeses: 123, fechaInicioPago: Date(), fechaOperacion: Date(), idempotencyKey: "idempotencyKey_example") // CapitalInjectionCreateRequest |
+let idempotencyKey = "idempotencyKey_example" // String | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. (optional)
 let tipo = "tipo_example" // String | Tipo de registro solicitado. (optional)
 
 // Registrar inyecciones de capital
-AccountingCapitalAPI.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: capitalInjectionCreateRequest, tipo: tipo) { (response, error) in
+AccountingCapitalAPI.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest: capitalInjectionCreateRequest, idempotencyKey: idempotencyKey, tipo: tipo) { (response, error) in
     guard error == nil else {
         print(error)
         return
@@ -93,8 +94,9 @@ AccountingCapitalAPI.mobilePostAccountingCapitalInjections(capitalInjectionCreat
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **capitalInjectionCreateRequest** | [**CapitalInjectionCreateRequest**](CapitalInjectionCreateRequest.md) |  | 
- **tipo** | **String** | Tipo de registro solicitado. | [optional] 
+ **capitalInjectionCreateRequest** | [**CapitalInjectionCreateRequest**](CapitalInjectionCreateRequest.md) |  |
+ **idempotencyKey** | **String** | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. | [optional]
+ **tipo** | **String** | Tipo de registro solicitado. | [optional]
 
 ### Return type
 
@@ -126,7 +128,7 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 import TCPMobileV1SDK
 
 let id = "id_example" // String | Identificador único del recurso.
-let capitalPaymentRequest = CapitalPaymentRequest(monto: 123, cuentaBancariaId: "cuentaBancariaId_example", tipoPagoId: "tipoPagoId_example", observaciones: "observaciones_example") // CapitalPaymentRequest | 
+let capitalPaymentRequest = CapitalPaymentRequest(monto: 123, cuentaBancariaId: "cuentaBancariaId_example", tipoPagoId: "tipoPagoId_example", observaciones: "observaciones_example") // CapitalPaymentRequest |
 
 // Registrar pago de inyecciones de capital
 AccountingCapitalAPI.mobilePostAccountingCapitalInjectionsByIdPayments(id: id, capitalPaymentRequest: capitalPaymentRequest) { (response, error) in
@@ -145,8 +147,8 @@ AccountingCapitalAPI.mobilePostAccountingCapitalInjectionsByIdPayments(id: id, c
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String** | Identificador único del recurso. | 
- **capitalPaymentRequest** | [**CapitalPaymentRequest**](CapitalPaymentRequest.md) |  | 
+ **id** | **String** | Identificador único del recurso. |
+ **capitalPaymentRequest** | [**CapitalPaymentRequest**](CapitalPaymentRequest.md) |  |
 
 ### Return type
 

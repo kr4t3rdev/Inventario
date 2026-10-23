@@ -93,7 +93,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -129,7 +129,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = SalesApi();
 final id = id_example; // String | Identificador único del recurso.
-final saleUpdateRequest = SaleUpdateRequest(); // SaleUpdateRequest | 
+final saleUpdateRequest = SaleUpdateRequest(); // SaleUpdateRequest |
 
 try {
     final result = api_instance.mobilePatchSalesByIdUpdate(id, saleUpdateRequest);
@@ -143,8 +143,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **saleUpdateRequest** | [**SaleUpdateRequest**](SaleUpdateRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **saleUpdateRequest** | [**SaleUpdateRequest**](SaleUpdateRequest.md)|  |
 
 ### Return type
 
@@ -180,7 +180,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = SalesApi();
 final id = id_example; // String | Identificador único del recurso.
-final saleCancelRequest = SaleCancelRequest(); // SaleCancelRequest | 
+final saleCancelRequest = SaleCancelRequest(); // SaleCancelRequest |
 
 try {
     final result = api_instance.mobilePostSalesByIdCancel(id, saleCancelRequest);
@@ -194,8 +194,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **saleCancelRequest** | [**SaleCancelRequest**](SaleCancelRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **saleCancelRequest** | [**SaleCancelRequest**](SaleCancelRequest.md)|  |
 
 ### Return type
 
@@ -213,11 +213,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **mobilePostSalesCreate**
-> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest)
+> PostSalesCreateResponse mobilePostSalesCreate(saleCreateRequest, idempotencyKey)
 
 Registrar venta
 
-Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
+Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
 
 ### Example
 ```dart
@@ -230,10 +230,11 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = SalesApi();
-final saleCreateRequest = SaleCreateRequest(); // SaleCreateRequest | 
+final saleCreateRequest = SaleCreateRequest(); // SaleCreateRequest |
+final idempotencyKey = idempotencyKey_example; // String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
 
 try {
-    final result = api_instance.mobilePostSalesCreate(saleCreateRequest);
+    final result = api_instance.mobilePostSalesCreate(saleCreateRequest, idempotencyKey);
     print(result);
 } catch (e) {
     print('Exception when calling SalesApi->mobilePostSalesCreate: $e\n');
@@ -244,7 +245,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md)|  | 
+ **saleCreateRequest** | [**SaleCreateRequest**](SaleCreateRequest.md)|  |
+ **idempotencyKey** | **String**| Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [optional]
 
 ### Return type
 

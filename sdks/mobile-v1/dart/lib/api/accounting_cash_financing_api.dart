@@ -109,7 +109,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashDebtsResponse',) as GetAccountingCashDebtsResponse;
-    
+
     }
     return null;
   }
@@ -168,7 +168,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashDebtsIdResponse',) as GetAccountingCashDebtsIdResponse;
-    
+
     }
     return null;
   }
@@ -216,7 +216,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashDebtsStatsResponse',) as GetAccountingCashDebtsStatsResponse;
-    
+
     }
     return null;
   }
@@ -314,7 +314,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashLoansResponse',) as GetAccountingCashLoansResponse;
-    
+
     }
     return null;
   }
@@ -373,7 +373,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashLoansIdResponse',) as GetAccountingCashLoansIdResponse;
-    
+
     }
     return null;
   }
@@ -432,7 +432,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'MultipartFile',) as MultipartFile;
-    
+
     }
     return null;
   }
@@ -491,7 +491,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashLoansIdHistoryResponse',) as GetAccountingCashLoansIdHistoryResponse;
-    
+
     }
     return null;
   }
@@ -539,7 +539,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetAccountingCashLoansStatsResponse',) as GetAccountingCashLoansStatsResponse;
-    
+
     }
     return null;
   }
@@ -641,14 +641,14 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCashDebtsResponse',) as PostAccountingCashDebtsResponse;
-    
+
     }
     return null;
   }
 
   /// Registrar pago de deudas de efectivo
   ///
-  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
   ///
   /// Note: This method returns the HTTP [Response].
   ///
@@ -658,7 +658,10 @@ class AccountingCashFinancingApi {
   ///   Identificador único del recurso.
   ///
   /// * [CashPaymentRequest] cashPaymentRequest (required):
-  Future<Response> mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(String id, CashPaymentRequest cashPaymentRequest,) async {
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<Response> mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(String id, CashPaymentRequest cashPaymentRequest, { String? idempotencyKey, }) async {
     // ignore: prefer_const_declarations
     final path = r'/accounting/cash-debts/{id}/payments'
       .replaceAll('{id}', id);
@@ -669,6 +672,10 @@ class AccountingCashFinancingApi {
     final queryParams = <QueryParam>[];
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
+
+    if (idempotencyKey != null) {
+      headerParams[r'Idempotency-Key'] = parameterToString(idempotencyKey);
+    }
 
     const contentTypes = <String>['application/json'];
 
@@ -686,7 +693,7 @@ class AccountingCashFinancingApi {
 
   /// Registrar pago de deudas de efectivo
   ///
-  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
   ///
   /// Parameters:
   ///
@@ -694,8 +701,11 @@ class AccountingCashFinancingApi {
   ///   Identificador único del recurso.
   ///
   /// * [CashPaymentRequest] cashPaymentRequest (required):
-  Future<PostAccountingCashDebtsIdPaymentsResponse?> mobilePostAccountingCashDebtsByIdPayments(String id, CashPaymentRequest cashPaymentRequest,) async {
-    final response = await mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id, cashPaymentRequest,);
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<PostAccountingCashDebtsIdPaymentsResponse?> mobilePostAccountingCashDebtsByIdPayments(String id, CashPaymentRequest cashPaymentRequest, { String? idempotencyKey, }) async {
+    final response = await mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id, cashPaymentRequest,  idempotencyKey: idempotencyKey, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -704,7 +714,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCashDebtsIdPaymentsResponse',) as PostAccountingCashDebtsIdPaymentsResponse;
-    
+
     }
     return null;
   }
@@ -806,14 +816,14 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCashLoansResponse',) as PostAccountingCashLoansResponse;
-    
+
     }
     return null;
   }
 
   /// Registrar pago de préstamos de efectivo
   ///
-  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
   ///
   /// Note: This method returns the HTTP [Response].
   ///
@@ -823,7 +833,10 @@ class AccountingCashFinancingApi {
   ///   Identificador único del recurso.
   ///
   /// * [CashPaymentRequest] cashPaymentRequest (required):
-  Future<Response> mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(String id, CashPaymentRequest cashPaymentRequest,) async {
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<Response> mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(String id, CashPaymentRequest cashPaymentRequest, { String? idempotencyKey, }) async {
     // ignore: prefer_const_declarations
     final path = r'/accounting/cash-loans/{id}/payments'
       .replaceAll('{id}', id);
@@ -834,6 +847,10 @@ class AccountingCashFinancingApi {
     final queryParams = <QueryParam>[];
     final headerParams = <String, String>{};
     final formParams = <String, String>{};
+
+    if (idempotencyKey != null) {
+      headerParams[r'Idempotency-Key'] = parameterToString(idempotencyKey);
+    }
 
     const contentTypes = <String>['application/json'];
 
@@ -851,7 +868,7 @@ class AccountingCashFinancingApi {
 
   /// Registrar pago de préstamos de efectivo
   ///
-  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+  /// Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
   ///
   /// Parameters:
   ///
@@ -859,8 +876,11 @@ class AccountingCashFinancingApi {
   ///   Identificador único del recurso.
   ///
   /// * [CashPaymentRequest] cashPaymentRequest (required):
-  Future<PostAccountingCashLoansIdPaymentsResponse?> mobilePostAccountingCashLoansByIdPayments(String id, CashPaymentRequest cashPaymentRequest,) async {
-    final response = await mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id, cashPaymentRequest,);
+  ///
+  /// * [String] idempotencyKey:
+  ///   Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+  Future<PostAccountingCashLoansIdPaymentsResponse?> mobilePostAccountingCashLoansByIdPayments(String id, CashPaymentRequest cashPaymentRequest, { String? idempotencyKey, }) async {
+    final response = await mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id, cashPaymentRequest,  idempotencyKey: idempotencyKey, );
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -869,7 +889,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PostAccountingCashLoansIdPaymentsResponse',) as PostAccountingCashLoansIdPaymentsResponse;
-    
+
     }
     return null;
   }
@@ -932,7 +952,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PutAccountingCashDebtsIdResponse',) as PutAccountingCashDebtsIdResponse;
-    
+
     }
     return null;
   }
@@ -995,7 +1015,7 @@ class AccountingCashFinancingApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'PutAccountingCashLoansIdResponse',) as PutAccountingCashLoansIdResponse;
-    
+
     }
     return null;
   }

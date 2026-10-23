@@ -702,7 +702,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * POST /accounting/cash-debts
      * Registrar deudas de efectivo
      * Registra financiamiento recibido de un proveedor, incrementa la cuenta bancaria y crea la cuenta por pagar.
-     * @param cashDebtCreateRequest 
+     * @param cashDebtCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param proveedorId Identificador del proveedor. (optional)
      * @param moneda Código de moneda. (optional)
@@ -739,7 +739,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * POST /accounting/cash-debts
      * Registrar deudas de efectivo
      * Registra financiamiento recibido de un proveedor, incrementa la cuenta bancaria y crea la cuenta por pagar.
-     * @param cashDebtCreateRequest 
+     * @param cashDebtCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param proveedorId Identificador del proveedor. (optional)
      * @param moneda Código de moneda. (optional)
@@ -762,7 +762,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * To obtain the request config of the operation mobilePostAccountingCashDebts
      *
-     * @param cashDebtCreateRequest 
+     * @param cashDebtCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param proveedorId Identificador del proveedor. (optional)
      * @param moneda Código de moneda. (optional)
@@ -807,9 +807,10 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * POST /accounting/cash-debts/{id}/payments
      * Registrar pago de deudas de efectivo
-     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return PostAccountingCashDebtsIdPaymentsResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -819,8 +820,8 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun mobilePostAccountingCashDebtsByIdPayments(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : PostAccountingCashDebtsIdPaymentsResponse {
-        val localVarResponse = mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id = id, cashPaymentRequest = cashPaymentRequest)
+    fun mobilePostAccountingCashDebtsByIdPayments(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : PostAccountingCashDebtsIdPaymentsResponse {
+        val localVarResponse = mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id = id, cashPaymentRequest = cashPaymentRequest, idempotencyKey = idempotencyKey)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as PostAccountingCashDebtsIdPaymentsResponse
@@ -840,17 +841,18 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * POST /accounting/cash-debts/{id}/payments
      * Registrar pago de deudas de efectivo
-     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return ApiResponse<PostAccountingCashDebtsIdPaymentsResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : ApiResponse<PostAccountingCashDebtsIdPaymentsResponse?> {
-        val localVariableConfig = mobilePostAccountingCashDebtsByIdPaymentsRequestConfig(id = id, cashPaymentRequest = cashPaymentRequest)
+    fun mobilePostAccountingCashDebtsByIdPaymentsWithHttpInfo(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : ApiResponse<PostAccountingCashDebtsIdPaymentsResponse?> {
+        val localVariableConfig = mobilePostAccountingCashDebtsByIdPaymentsRequestConfig(id = id, cashPaymentRequest = cashPaymentRequest, idempotencyKey = idempotencyKey)
 
         return request<CashPaymentRequest, PostAccountingCashDebtsIdPaymentsResponse>(
             localVariableConfig
@@ -861,13 +863,15 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * To obtain the request config of the operation mobilePostAccountingCashDebtsByIdPayments
      *
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return RequestConfig
      */
-    fun mobilePostAccountingCashDebtsByIdPaymentsRequestConfig(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : RequestConfig<CashPaymentRequest> {
+    fun mobilePostAccountingCashDebtsByIdPaymentsRequestConfig(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : RequestConfig<CashPaymentRequest> {
         val localVariableBody = cashPaymentRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        idempotencyKey?.apply { localVariableHeaders["Idempotency-Key"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -885,7 +889,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * POST /accounting/cash-loans
      * Registrar préstamos de efectivo
      * Registra un préstamo a un cliente, descuenta fondos de la cuenta bancaria y crea la cuenta por cobrar.
-     * @param cashLoanCreateRequest 
+     * @param cashLoanCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param clienteId Identificador del cliente. (optional)
      * @param moneda Código de moneda. (optional)
@@ -922,7 +926,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * POST /accounting/cash-loans
      * Registrar préstamos de efectivo
      * Registra un préstamo a un cliente, descuenta fondos de la cuenta bancaria y crea la cuenta por cobrar.
-     * @param cashLoanCreateRequest 
+     * @param cashLoanCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param clienteId Identificador del cliente. (optional)
      * @param moneda Código de moneda. (optional)
@@ -945,7 +949,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * To obtain the request config of the operation mobilePostAccountingCashLoans
      *
-     * @param cashLoanCreateRequest 
+     * @param cashLoanCreateRequest
      * @param estado Estado usado para filtrar resultados. (optional)
      * @param clienteId Identificador del cliente. (optional)
      * @param moneda Código de moneda. (optional)
@@ -990,9 +994,10 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * POST /accounting/cash-loans/{id}/payments
      * Registrar pago de préstamos de efectivo
-     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return PostAccountingCashLoansIdPaymentsResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1002,8 +1007,8 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun mobilePostAccountingCashLoansByIdPayments(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : PostAccountingCashLoansIdPaymentsResponse {
-        val localVarResponse = mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id = id, cashPaymentRequest = cashPaymentRequest)
+    fun mobilePostAccountingCashLoansByIdPayments(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : PostAccountingCashLoansIdPaymentsResponse {
+        val localVarResponse = mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id = id, cashPaymentRequest = cashPaymentRequest, idempotencyKey = idempotencyKey)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as PostAccountingCashLoansIdPaymentsResponse
@@ -1023,17 +1028,18 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
     /**
      * POST /accounting/cash-loans/{id}/payments
      * Registrar pago de préstamos de efectivo
-     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+     * Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return ApiResponse<PostAccountingCashLoansIdPaymentsResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : ApiResponse<PostAccountingCashLoansIdPaymentsResponse?> {
-        val localVariableConfig = mobilePostAccountingCashLoansByIdPaymentsRequestConfig(id = id, cashPaymentRequest = cashPaymentRequest)
+    fun mobilePostAccountingCashLoansByIdPaymentsWithHttpInfo(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : ApiResponse<PostAccountingCashLoansIdPaymentsResponse?> {
+        val localVariableConfig = mobilePostAccountingCashLoansByIdPaymentsRequestConfig(id = id, cashPaymentRequest = cashPaymentRequest, idempotencyKey = idempotencyKey)
 
         return request<CashPaymentRequest, PostAccountingCashLoansIdPaymentsResponse>(
             localVariableConfig
@@ -1044,13 +1050,15 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * To obtain the request config of the operation mobilePostAccountingCashLoansByIdPayments
      *
      * @param id Identificador único del recurso.
-     * @param cashPaymentRequest 
+     * @param cashPaymentRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return RequestConfig
      */
-    fun mobilePostAccountingCashLoansByIdPaymentsRequestConfig(id: kotlin.String, cashPaymentRequest: CashPaymentRequest) : RequestConfig<CashPaymentRequest> {
+    fun mobilePostAccountingCashLoansByIdPaymentsRequestConfig(id: kotlin.String, cashPaymentRequest: CashPaymentRequest, idempotencyKey: kotlin.String? = null) : RequestConfig<CashPaymentRequest> {
         val localVariableBody = cashPaymentRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        idempotencyKey?.apply { localVariableHeaders["Idempotency-Key"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1069,7 +1077,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar deudas de efectivo
      * Actualiza vencimiento, tasa de interés u observaciones de la deuda identificada.
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return PutAccountingCashDebtsIdResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1102,7 +1110,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar deudas de efectivo
      * Actualiza vencimiento, tasa de interés u observaciones de la deuda identificada.
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return ApiResponse<PutAccountingCashDebtsIdResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1121,7 +1129,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * To obtain the request config of the operation mobilePutAccountingCashDebtsById
      *
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutAccountingCashDebtsByIdRequestConfig(id: kotlin.String, cashOperationUpdateRequest: CashOperationUpdateRequest) : RequestConfig<CashOperationUpdateRequest> {
@@ -1146,7 +1154,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar préstamos de efectivo
      * Actualiza vencimiento, tasa de interés u observaciones del préstamo identificado.
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return PutAccountingCashLoansIdResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1179,7 +1187,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * Actualizar préstamos de efectivo
      * Actualiza vencimiento, tasa de interés u observaciones del préstamo identificado.
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return ApiResponse<PutAccountingCashLoansIdResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -1198,7 +1206,7 @@ class AccountingCashFinancingApi(basePath: kotlin.String = defaultBasePath, clie
      * To obtain the request config of the operation mobilePutAccountingCashLoansById
      *
      * @param id Identificador único del recurso.
-     * @param cashOperationUpdateRequest 
+     * @param cashOperationUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutAccountingCashLoansByIdRequestConfig(id: kotlin.String, cashOperationUpdateRequest: CashOperationUpdateRequest) : RequestConfig<CashOperationUpdateRequest> {

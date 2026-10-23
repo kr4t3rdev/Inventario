@@ -20,6 +20,7 @@ public struct SaleCreateRequest: Codable, JSONEncodable, Hashable {
     public static let puntoDeVentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let descuentoRule = NumericRule<Int>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
     public static let itemsRule = ArrayRule(minItems: 1, maxItems: nil, uniqueItems: false)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var puntoDeVentaId: String
     public var clienteId: String?
     public var empleadoId: String?
@@ -35,8 +36,10 @@ public struct SaleCreateRequest: Codable, JSONEncodable, Hashable {
     public var tipoVencimiento: TipoVencimiento?
     public var fechaVencimiento: String?
     public var cuentaBancariaId: String?
+    /** Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. */
+    public var idempotencyKey: String?
 
-    public init(puntoDeVentaId: String, clienteId: String? = nil, empleadoId: String? = nil, descuento: Int? = 0, observaciones: String? = nil, items: [SaleItemRequest], turnoId: String? = nil, metodoPago: String? = nil, montoEfectivo: Double? = nil, montoTarjeta: Double? = nil, montoTransferencia: Double? = nil, montoCredito: Double? = nil, tipoVencimiento: TipoVencimiento? = nil, fechaVencimiento: String? = nil, cuentaBancariaId: String? = nil) {
+    public init(puntoDeVentaId: String, clienteId: String? = nil, empleadoId: String? = nil, descuento: Int? = 0, observaciones: String? = nil, items: [SaleItemRequest], turnoId: String? = nil, metodoPago: String? = nil, montoEfectivo: Double? = nil, montoTarjeta: Double? = nil, montoTransferencia: Double? = nil, montoCredito: Double? = nil, tipoVencimiento: TipoVencimiento? = nil, fechaVencimiento: String? = nil, cuentaBancariaId: String? = nil, idempotencyKey: String? = nil) {
         self.puntoDeVentaId = puntoDeVentaId
         self.clienteId = clienteId
         self.empleadoId = empleadoId
@@ -52,6 +55,7 @@ public struct SaleCreateRequest: Codable, JSONEncodable, Hashable {
         self.tipoVencimiento = tipoVencimiento
         self.fechaVencimiento = fechaVencimiento
         self.cuentaBancariaId = cuentaBancariaId
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -70,6 +74,7 @@ public struct SaleCreateRequest: Codable, JSONEncodable, Hashable {
         case tipoVencimiento
         case fechaVencimiento
         case cuentaBancariaId
+        case idempotencyKey
     }
 
     // Encodable protocol methods
@@ -91,6 +96,6 @@ public struct SaleCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tipoVencimiento, forKey: .tipoVencimiento)
         try container.encodeIfPresent(fechaVencimiento, forKey: .fechaVencimiento)
         try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
-

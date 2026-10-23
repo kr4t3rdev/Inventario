@@ -270,7 +270,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
      * POST /providers/create
      * Crear proveedor
      * Crea un proveedor en el tenant activo y devuelve el registro creado.
-     * @param proveedorCreateRequest 
+     * @param proveedorCreateRequest
      * @return Proveedor
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -302,7 +302,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
      * POST /providers/create
      * Crear proveedor
      * Crea un proveedor en el tenant activo y devuelve el registro creado.
-     * @param proveedorCreateRequest 
+     * @param proveedorCreateRequest
      * @return ApiResponse<Proveedor?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -320,7 +320,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
     /**
      * To obtain the request config of the operation mobilePostProvidersCreate
      *
-     * @param proveedorCreateRequest 
+     * @param proveedorCreateRequest
      * @return RequestConfig
      */
     fun mobilePostProvidersCreateRequestConfig(proveedorCreateRequest: ProveedorCreateRequest) : RequestConfig<ProveedorCreateRequest> {
@@ -345,7 +345,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
      * Editar proveedor
      * Actualiza los datos de un proveedor del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del proveedor.
-     * @param proveedorUpdateRequest 
+     * @param proveedorUpdateRequest
      * @return Proveedor
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -378,7 +378,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
      * Editar proveedor
      * Actualiza los datos de un proveedor del tenant activo y devuelve el registro actualizado.
      * @param id Identificador del proveedor.
-     * @param proveedorUpdateRequest 
+     * @param proveedorUpdateRequest
      * @return ApiResponse<Proveedor?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -397,7 +397,7 @@ class ProvidersApi(basePath: kotlin.String = defaultBasePath, client: Call.Facto
      * To obtain the request config of the operation mobilePutProvidersById
      *
      * @param id Identificador del proveedor.
-     * @param proveedorUpdateRequest 
+     * @param proveedorUpdateRequest
      * @return RequestConfig
      */
     fun mobilePutProvidersByIdRequestConfig(id: kotlin.String, proveedorUpdateRequest: ProveedorUpdateRequest) : RequestConfig<ProveedorUpdateRequest> {

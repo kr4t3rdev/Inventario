@@ -1,0 +1,24 @@
+{
+  "sourceSnapshot": "e592311702476d56be14272ed282090c2793e9d5",
+  "sourceLockSha256": "b3d43aaeaf8b91661a74ae0ee23e2a564ea7d92a7291244cbc73008a1e060d73",
+  "scopedLockSha256": "a55880981a0a1ac65ee120f5a6e7c895218168e4a55bac0d4c8c8a45960d9e68",
+  "retainedPackages": [
+    "@prisma/client",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom",
+    "@vitest/coverage-v8",
+    "eslint",
+    "eslint-config-next",
+    "jsonwebtoken",
+    "next",
+    "prisma",
+    "prom-client",
+    "typescript",
+    "vitest",
+    "zod"
+  ],
+  "filesTraversed": 204,
+  "scope": "Test dependency importer subset; package resolution records unchanged; not full application release installation",
+  "harness": "/private/var/folders/n_/2tnvb4k17q7bvzg4kk6lb14h0000gn/T/opencode/r6-production-clone-lggw2k9_/r6-dependency-harness-e5923117"
+}

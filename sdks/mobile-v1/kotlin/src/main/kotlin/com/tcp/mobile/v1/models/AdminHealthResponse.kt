@@ -25,14 +25,14 @@ import com.tcp.mobile.v1.models.AdminHealthResponseUsersTrendInner
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param users 
- * @param tenants 
- * @param sessions 
- * @param licenses 
- * @param usersTrend 
- * @param usersComparison 
+ *
+ * @param users
+ * @param tenants
+ * @param sessions
+ * @param licenses
+ * @param usersTrend
+ * @param usersComparison
  */
 
 
@@ -60,4 +60,3 @@ data class AdminHealthResponse (
 
 
 }
-

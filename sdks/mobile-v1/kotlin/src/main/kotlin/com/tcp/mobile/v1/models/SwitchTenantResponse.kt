@@ -20,12 +20,12 @@ import com.tcp.mobile.v1.models.Token
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param accessToken 
- * @param refreshToken 
- * @param tenantId 
- * @param tenantRole 
+ *
+ * @param accessToken
+ * @param refreshToken
+ * @param tenantId
+ * @param tenantRole
  */
 
 
@@ -49,4 +49,3 @@ data class SwitchTenantResponse (
     override fun toString(): String = "SwitchTenantResponse(<redacted>)"
 
 }
-

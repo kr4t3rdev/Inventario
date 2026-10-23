@@ -19,12 +19,12 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param totalPending 
- * @param completedToday 
- * @param reconciledAmount 
- * @param efficiency 
+ *
+ * @param totalPending
+ * @param completedToday
+ * @param reconciledAmount
+ * @param efficiency
  */
 
 
@@ -46,4 +46,3 @@ data class ReconciliationOverviewStats (
 
 
 }
-

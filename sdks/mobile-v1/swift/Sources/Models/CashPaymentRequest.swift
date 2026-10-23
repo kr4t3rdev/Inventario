@@ -14,20 +14,27 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
 
     public static let cuentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
     public static let tipoPagoIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
     public var monto: Double
     public var cuentaId: String
     public var tipoPagoId: String
     public var moneda: String?
     public var tasaCambio: Double?
     public var observaciones: String?
+    /** Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. */
+    public var idempotencyKey: String?
+    /** Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual. */
+    public var fechaOperacion: String?
 
-    public init(monto: Double, cuentaId: String, tipoPagoId: String, moneda: String? = nil, tasaCambio: Double? = nil, observaciones: String? = nil) {
+    public init(monto: Double, cuentaId: String, tipoPagoId: String, moneda: String? = nil, tasaCambio: Double? = nil, observaciones: String? = nil, idempotencyKey: String? = nil, fechaOperacion: String? = nil) {
         self.monto = monto
         self.cuentaId = cuentaId
         self.tipoPagoId = tipoPagoId
         self.moneda = moneda
         self.tasaCambio = tasaCambio
         self.observaciones = observaciones
+        self.idempotencyKey = idempotencyKey
+        self.fechaOperacion = fechaOperacion
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -37,6 +44,8 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
         case moneda
         case tasaCambio
         case observaciones
+        case idempotencyKey
+        case fechaOperacion
     }
 
     // Encodable protocol methods
@@ -49,6 +58,7 @@ public struct CashPaymentRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(moneda, forKey: .moneda)
         try container.encodeIfPresent(tasaCambio, forKey: .tasaCambio)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
+        try container.encodeIfPresent(fechaOperacion, forKey: .fechaOperacion)
     }
 }
-

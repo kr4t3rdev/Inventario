@@ -106,4 +106,3 @@ class GetProductsStockResponse {
     'items',
   };
 }
-

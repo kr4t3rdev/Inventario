@@ -6,11 +6,19 @@
 
 Name | Type
 ------------ | -------------
-`monto` | number
+`montoRecibido` | number
 `moneda` | string
 `tipo` | string
 `descripcion` | string
-`cuentaBancariaId` | string
+`cuentaId` | string
+`socio` | string
+`entidadPrestamista` | string
+`tasaInteres` | number
+`tasaCambio` | number
+`plazoMeses` | number
+`fechaInicioPago` | Date
+`fechaOperacion` | Date
+`idempotencyKey` | string
 
 ## Example
 
@@ -19,11 +27,19 @@ import type { CapitalInjectionCreateRequest } from '@tcp/mobile-v1-sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "monto": null,
+  "montoRecibido": null,
   "moneda": null,
   "tipo": null,
   "descripcion": null,
-  "cuentaBancariaId": null,
+  "cuentaId": null,
+  "socio": null,
+  "entidadPrestamista": null,
+  "tasaInteres": null,
+  "tasaCambio": null,
+  "plazoMeses": null,
+  "fechaInicioPago": null,
+  "fechaOperacion": null,
+  "idempotencyKey": null,
 } satisfies CapitalInjectionCreateRequest
 
 console.log(example)

@@ -167,7 +167,15 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
     const pre = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(Number(pre.montoPagado)).toBe(400);
     expect(pre.estado).toBe('PARCIAL');
-    expect(saldoVivoCliente([pre])).toBe(1600);
+    expect(
+      saldoVivoCliente([
+        {
+          estado: String(pre.estado),
+          montoDeuda: Number(pre.montoDeuda),
+          montoPagado: Number(pre.montoPagado),
+        },
+      ]),
+    ).toBe(1600);
 
     // El servicio de facturación reejecuta el workflow con vencimiento.
     await prisma.$transaction(async (tx) => {
@@ -186,7 +194,15 @@ describe('gate 1.2: upsert de facturación sobre CxC real (PostgreSQL aislado)',
     const post = await prisma.cuentaPorCobrar.findUniqueOrThrow({ where: { id: cxc!.id } });
     expect(Number(post.montoPagado)).toBe(400);
     expect(post.estado).toBe('PARCIAL');
-    expect(saldoVivoCliente([post])).toBe(1600);
+    expect(
+      saldoVivoCliente([
+        {
+          estado: String(post.estado),
+          montoDeuda: Number(post.montoDeuda),
+          montoPagado: Number(post.montoPagado),
+        },
+      ]),
+    ).toBe(1600);
   });
 
   it('MIXTO/vencimiento: la deuda queda por el total completo con pagado 0 (precommit y postcommit)', async () => {

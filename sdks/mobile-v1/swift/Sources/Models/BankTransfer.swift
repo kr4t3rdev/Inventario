@@ -57,4 +57,3 @@ public struct BankTransfer: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
     }
 }
-

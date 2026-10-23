@@ -9,10 +9,10 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **items** | [**List<JsonValue>**](JsonValue.md) |  | [optional] [default to const []]
-**totales** | [**ReportTotals**](ReportTotals.md) |  | [optional] 
-**estadisticas** | [**ReportStatistics**](ReportStatistics.md) |  | [optional] 
-**pagination** | [**Pagination**](Pagination.md) |  | [optional] 
-**filtros** | [**ReportFilters**](ReportFilters.md) |  | [optional] 
+**totales** | [**ReportTotals**](ReportTotals.md) |  | [optional]
+**estadisticas** | [**ReportStatistics**](ReportStatistics.md) |  | [optional]
+**pagination** | [**Pagination**](Pagination.md) |  | [optional]
+**filtros** | [**ReportFilters**](ReportFilters.md) |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

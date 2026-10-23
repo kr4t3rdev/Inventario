@@ -177,4 +177,3 @@ class AccountReceivable {
   static const requiredKeys = <String>{
   };
 }
-

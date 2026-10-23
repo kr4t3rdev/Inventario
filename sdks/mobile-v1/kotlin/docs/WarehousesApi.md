@@ -167,7 +167,7 @@ Crea un almacén en el tenant activo y devuelve el registro creado.
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = WarehousesApi()
-val almacenCreateRequest : AlmacenCreateRequest =  // AlmacenCreateRequest | 
+val almacenCreateRequest : AlmacenCreateRequest =  // AlmacenCreateRequest |
 try {
     val result : Almacen = apiInstance.mobilePostWarehousesCreate(almacenCreateRequest)
     println(result)
@@ -216,7 +216,7 @@ Actualiza los datos de un almacén del tenant activo y devuelve el registro actu
 
 val apiInstance = WarehousesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador del almacén.
-val almacenUpdateRequest : AlmacenUpdateRequest =  // AlmacenUpdateRequest | 
+val almacenUpdateRequest : AlmacenUpdateRequest =  // AlmacenUpdateRequest |
 try {
     val result : Almacen = apiInstance.mobilePutWarehousesById(id, almacenUpdateRequest)
     println(result)

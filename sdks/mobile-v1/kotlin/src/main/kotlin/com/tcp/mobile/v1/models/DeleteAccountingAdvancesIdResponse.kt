@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de DELETE /accounting/advances/{id}.
  *
- * @param message 
+ * @param message
  */
 
 
@@ -34,4 +34,3 @@ data class DeleteAccountingAdvancesIdResponse (
 
 
 }
-

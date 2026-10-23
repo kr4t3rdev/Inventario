@@ -47,4 +47,3 @@ public struct GetAccountingReportsTransfersResponse: Codable, JSONEncodable, Has
         try container.encode(exportContent, forKey: .exportContent)
     }
 }
-

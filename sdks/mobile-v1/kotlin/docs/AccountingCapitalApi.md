@@ -59,11 +59,11 @@ Configure bearerAuth:
 
 <a id="mobilePostAccountingCapitalInjections"></a>
 # **mobilePostAccountingCapitalInjections**
-> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo)
+> PostAccountingCapitalInjectionsResponse mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo)
 
 Registrar inyecciones de capital
 
-Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde.
+Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuando corresponde. Para idempotencia, acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado. Si ambos están presentes, prevalece el valor del cuerpo. La clave debe ser una cadena de 1 a 64 caracteres; se eliminan espacios al inicio y al final.
 
 ### Example
 ```kotlin
@@ -72,10 +72,11 @@ Registra un aporte de capital y lo vincula con la cuenta bancaria indicada cuand
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingCapitalApi()
-val capitalInjectionCreateRequest : CapitalInjectionCreateRequest =  // CapitalInjectionCreateRequest | 
+val capitalInjectionCreateRequest : CapitalInjectionCreateRequest =  // CapitalInjectionCreateRequest |
+val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia.
 val tipo : kotlin.String = tipo_example // kotlin.String | Tipo de registro solicitado.
 try {
-    val result : PostAccountingCapitalInjectionsResponse = apiInstance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, tipo)
+    val result : PostAccountingCapitalInjectionsResponse = apiInstance.mobilePostAccountingCapitalInjections(capitalInjectionCreateRequest, idempotencyKey, tipo)
     println(result)
 } catch (e: ClientException) {
     println("4xx response calling AccountingCapitalApi#mobilePostAccountingCapitalInjections")
@@ -88,6 +89,7 @@ try {
 
 ### Parameters
 | **capitalInjectionCreateRequest** | [**CapitalInjectionCreateRequest**](CapitalInjectionCreateRequest.md)|  | |
+| **idempotencyKey** | **kotlin.String**| Clave opcional de idempotencia. Se usa solo cuando idempotencyKey no está presente en el cuerpo; el valor del cuerpo tiene precedencia. | [optional] |
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |
 | **tipo** | **kotlin.String**| Tipo de registro solicitado. | [optional] |
@@ -123,7 +125,7 @@ Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
 
 val apiInstance = AccountingCapitalApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val capitalPaymentRequest : CapitalPaymentRequest =  // CapitalPaymentRequest | 
+val capitalPaymentRequest : CapitalPaymentRequest =  // CapitalPaymentRequest |
 try {
     val result : PostAccountingCapitalInjectionsIdPaymentsResponse = apiInstance.mobilePostAccountingCapitalInjectionsByIdPayments(id, capitalPaymentRequest)
     println(result)

@@ -117,7 +117,7 @@ const adminUser: AuthenticatedUser = {
 
 const nonAdmin: AuthenticatedUser = {
   userId: 'user-reg', name: 'User', email: 'user@test.com',
-  role: 'regularUser', isActive: true, tenantId: 't1', tenantRole: 'regularUser',
+  role: 'regularUser', isActive: true, tenantId: 't1', tenantRole: 'economico',
 };
 
 const managerUser: AuthenticatedUser = {
@@ -1116,6 +1116,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await createDemoTenantAction({
         planId: 'plan-pro',
+        durationDays: 7,
       });
       expect(r.success).toBe(false);
       if (r.success) expect.unreachable('Se esperaba que la accion fallara');

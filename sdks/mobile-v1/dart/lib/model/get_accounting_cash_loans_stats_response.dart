@@ -166,4 +166,3 @@ class GetAccountingCashLoansStatsResponse {
   static const requiredKeys = <String>{
   };
 }
-

@@ -4,6 +4,7 @@ import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-ve
 import { useState, useEffect, useCallback , useRef} from "react";
 import { Producto } from "@/app/models/model";
 import { createVentaAction } from "@/features/ventas/actions";
+import { getVentaCreateIntentKey, resetVentaCreateIntent } from "@/features/ventas/lib/venta-create-intent";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ interface VentaFormProps extends Producto{
 }
 
 export default function VentaInter() {
+    const saleIntent = useRef({ key: null as string | null })
 
     const [productos, setProductos] = useState<any[]>([])
     const isLoadingProductos = useRef(true)
@@ -96,6 +98,7 @@ export default function VentaInter() {
         }))
 
         const result = await createVentaAction({
+            idempotencyKey: getVentaCreateIntentKey(saleIntent.current),
             puntoDeVentaId: puntoVenta,
             descuento: 0,
             cargoTransporte: 0,
@@ -104,6 +107,7 @@ export default function VentaInter() {
         })
 
         if (result.success) {
+            resetVentaCreateIntent(saleIntent.current)
             toast.success('Venta única creada correctamente')
             setCarrito([])
         } else {

@@ -62,4 +62,3 @@ public struct Advance: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(vigenciaHasta, forKey: .vigenciaHasta)
     }
 }
-

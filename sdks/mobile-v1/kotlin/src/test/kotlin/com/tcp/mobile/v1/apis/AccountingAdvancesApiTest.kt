@@ -76,7 +76,7 @@ class AccountingAdvancesApiTest : ShouldSpec() {
         // to test mobilePostAccountingAdvances
         should("test mobilePostAccountingAdvances") {
             // uncomment below to test mobilePostAccountingAdvances
-            //val accountingAdvancesPostRequest : AccountingAdvancesPostRequest =  // AccountingAdvancesPostRequest | 
+            //val accountingAdvancesPostRequest : AccountingAdvancesPostRequest =  // AccountingAdvancesPostRequest |
             //val result : PostAccountingAdvancesResponse = apiInstance.mobilePostAccountingAdvances(accountingAdvancesPostRequest)
             //result shouldBe ("TODO")
         }
@@ -85,7 +85,7 @@ class AccountingAdvancesApiTest : ShouldSpec() {
         should("test mobilePostAccountingAdvancesByIdEjecutar") {
             // uncomment below to test mobilePostAccountingAdvancesByIdEjecutar
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val accountingAdvancesIdEjecutarPostRequest : AccountingAdvancesIdEjecutarPostRequest =  // AccountingAdvancesIdEjecutarPostRequest | 
+            //val accountingAdvancesIdEjecutarPostRequest : AccountingAdvancesIdEjecutarPostRequest =  // AccountingAdvancesIdEjecutarPostRequest |
             //val result : PostAccountingAdvancesIdEjecutarResponse = apiInstance.mobilePostAccountingAdvancesByIdEjecutar(id, accountingAdvancesIdEjecutarPostRequest)
             //result shouldBe ("TODO")
         }
@@ -94,7 +94,7 @@ class AccountingAdvancesApiTest : ShouldSpec() {
         should("test mobilePostAccountingAdvancesByIdRevertir") {
             // uncomment below to test mobilePostAccountingAdvancesByIdRevertir
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val accountingAdvancesIdRevertirPostRequest : AccountingAdvancesIdRevertirPostRequest =  // AccountingAdvancesIdRevertirPostRequest | 
+            //val accountingAdvancesIdRevertirPostRequest : AccountingAdvancesIdRevertirPostRequest =  // AccountingAdvancesIdRevertirPostRequest |
             //val result : PostAccountingAdvancesIdRevertirResponse = apiInstance.mobilePostAccountingAdvancesByIdRevertir(id, accountingAdvancesIdRevertirPostRequest)
             //result shouldBe ("TODO")
         }
@@ -103,7 +103,7 @@ class AccountingAdvancesApiTest : ShouldSpec() {
         should("test mobilePutAccountingAdvancesById") {
             // uncomment below to test mobilePutAccountingAdvancesById
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val accountingAdvancesIdPutRequest : AccountingAdvancesIdPutRequest =  // AccountingAdvancesIdPutRequest | 
+            //val accountingAdvancesIdPutRequest : AccountingAdvancesIdPutRequest =  // AccountingAdvancesIdPutRequest |
             //val result : PutAccountingAdvancesIdResponse = apiInstance.mobilePutAccountingAdvancesById(id, accountingAdvancesIdPutRequest)
             //result shouldBe ("TODO")
         }

@@ -41,4 +41,3 @@ public struct AdminLicenseManagerItem: Codable, JSONEncodable, Hashable {
         try container.encode(user, forKey: .user)
     }
 }
-

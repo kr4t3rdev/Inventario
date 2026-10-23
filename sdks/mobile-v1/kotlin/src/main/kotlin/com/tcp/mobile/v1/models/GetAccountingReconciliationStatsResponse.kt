@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/reconciliation/stats.
  *
- * @param modules 
- * @param stats 
- * @param recentActivity 
+ * @param modules
+ * @param stats
+ * @param recentActivity
  */
 
 
@@ -45,4 +45,3 @@ data class GetAccountingReconciliationStatsResponse (
 
 
 }
-

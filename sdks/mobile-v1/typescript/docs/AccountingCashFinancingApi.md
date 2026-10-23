@@ -40,7 +40,7 @@ import type { MobileGetAccountingCashDebtsRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -125,7 +125,7 @@ import type { MobileGetAccountingCashDebtsByIdRequest } from '@tcp/mobile-v1-sdk
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -198,7 +198,7 @@ import type { MobileGetAccountingCashDebtsStatsRequest } from '@tcp/mobile-v1-sd
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -263,7 +263,7 @@ import type { MobileGetAccountingCashLoansRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -348,7 +348,7 @@ import type { MobileGetAccountingCashLoansByIdRequest } from '@tcp/mobile-v1-sdk
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -421,7 +421,7 @@ import type { MobileGetAccountingCashLoansByIdComprobanteRequest } from '@tcp/mo
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -495,7 +495,7 @@ import type { MobileGetAccountingCashLoansByIdNestedHistoryRequest } from '@tcp/
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -568,7 +568,7 @@ import type { MobileGetAccountingCashLoansStatsRequest } from '@tcp/mobile-v1-sd
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -633,7 +633,7 @@ import type { MobilePostAccountingCashDebtsRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -705,11 +705,11 @@ example().catch(console.error);
 
 ## mobilePostAccountingCashDebtsByIdPayments
 
-> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashDebtsIdPaymentsResponse mobilePostAccountingCashDebtsByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de deudas de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 
@@ -722,7 +722,7 @@ import type { MobilePostAccountingCashDebtsByIdPaymentsRequest } from '@tcp/mobi
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -733,6 +733,8 @@ async function example() {
     id: id_example,
     // CashPaymentRequest
     cashPaymentRequest: ...,
+    // string | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+    idempotencyKey: idempotencyKey_example,
   } satisfies MobilePostAccountingCashDebtsByIdPaymentsRequest;
 
   try {
@@ -754,6 +756,7 @@ example().catch(console.error);
 |------------- | ------------- | ------------- | -------------|
 | **id** | `string` | Identificador único del recurso. | [Defaults to `undefined`] |
 | **cashPaymentRequest** | [CashPaymentRequest](CashPaymentRequest.md) |  | |
+| **idempotencyKey** | `string` | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -775,6 +778,8 @@ example().catch(console.error);
 | **200** | Operación completada |  -  |
 | **400** | Solicitud inválida |  -  |
 | **401** | No autenticado |  -  |
+| **403** | Sin permiso para registrar el pago |  -  |
+| **409** | La clave de idempotencia ya fue usada con otro payload |  -  |
 | **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -799,7 +804,7 @@ import type { MobilePostAccountingCashLoansRequest } from '@tcp/mobile-v1-sdk';
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -871,11 +876,11 @@ example().catch(console.error);
 
 ## mobilePostAccountingCashLoansByIdPayments
 
-> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest)
+> PostAccountingCashLoansIdPaymentsResponse mobilePostAccountingCashLoansByIdPayments(id, cashPaymentRequest, idempotencyKey)
 
 Registrar pago de préstamos de efectivo
 
-Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
 
 ### Example
 
@@ -888,7 +893,7 @@ import type { MobilePostAccountingCashLoansByIdPaymentsRequest } from '@tcp/mobi
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -899,6 +904,8 @@ async function example() {
     id: id_example,
     // CashPaymentRequest
     cashPaymentRequest: ...,
+    // string | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
+    idempotencyKey: idempotencyKey_example,
   } satisfies MobilePostAccountingCashLoansByIdPaymentsRequest;
 
   try {
@@ -920,6 +927,7 @@ example().catch(console.error);
 |------------- | ------------- | ------------- | -------------|
 | **id** | `string` | Identificador único del recurso. | [Defaults to `undefined`] |
 | **cashPaymentRequest** | [CashPaymentRequest](CashPaymentRequest.md) |  | |
+| **idempotencyKey** | `string` | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -941,6 +949,8 @@ example().catch(console.error);
 | **200** | Operación completada |  -  |
 | **400** | Solicitud inválida |  -  |
 | **401** | No autenticado |  -  |
+| **403** | Sin permiso para registrar el pago |  -  |
+| **409** | La clave de idempotencia ya fue usada con otro payload |  -  |
 | **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -965,7 +975,7 @@ import type { MobilePutAccountingCashDebtsByIdRequest } from '@tcp/mobile-v1-sdk
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -1042,7 +1052,7 @@ import type { MobilePutAccountingCashLoansByIdRequest } from '@tcp/mobile-v1-sdk
 
 async function example() {
   console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });

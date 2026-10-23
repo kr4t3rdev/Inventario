@@ -14,7 +14,7 @@ open class AccountingReceivablesAndPayablesAPI {
 
     /**
      Consultar cuentas por pagar
-     
+
      - parameter search: (query) Texto de búsqueda aplicado por el servicio. (optional)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
@@ -39,7 +39,7 @@ open class AccountingReceivablesAndPayablesAPI {
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingAccountsPayableResponse> 
+     - returns: RequestBuilder<GetAccountingAccountsPayableResponse>
      */
     open class func mobileGetAccountingAccountsPayableWithRequestBuilder(search: String? = nil, estado: Bool? = nil, tipo: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingAccountsPayableResponse> {
         let localVariablePath = "/accounting/accounts-payable"
@@ -68,7 +68,7 @@ open class AccountingReceivablesAndPayablesAPI {
 
     /**
      Consultar cuentas por cobrar
-     
+
      - parameter search: (query) Texto de búsqueda aplicado por el servicio. (optional)
      - parameter estado: (query) Estado usado para filtrar resultados. (optional)
      - parameter clienteId: (query) Identificador del cliente. (optional)
@@ -93,7 +93,7 @@ open class AccountingReceivablesAndPayablesAPI {
      - parameter clienteId: (query) Identificador del cliente. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingAccountsReceivableResponse> 
+     - returns: RequestBuilder<GetAccountingAccountsReceivableResponse>
      */
     open class func mobileGetAccountingAccountsReceivableWithRequestBuilder(search: String? = nil, estado: Bool? = nil, clienteId: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingAccountsReceivableResponse> {
         let localVariablePath = "/accounting/accounts-receivable"
@@ -122,7 +122,7 @@ open class AccountingReceivablesAndPayablesAPI {
 
     /**
      Consultar métricas de cuentas por cobrar
-     
+
      - returns: GetAccountingAccountsReceivableMetricsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -137,7 +137,7 @@ open class AccountingReceivablesAndPayablesAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingAccountsReceivableMetricsResponse> 
+     - returns: RequestBuilder<GetAccountingAccountsReceivableMetricsResponse>
      */
     open class func mobileGetAccountingAccountsReceivableMetricsWithRequestBuilder() -> RequestBuilder<GetAccountingAccountsReceivableMetricsResponse> {
         let localVariablePath = "/accounting/accounts-receivable/metrics"

@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import { seedPlanContable } from '@/features/contabilidad-formal/services/seed-plan-contable';
+import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 import { CashSnapshotService } from '@/features/contabilidad/services/cash-snapshot-service';
@@ -61,7 +62,10 @@ describe('snapshots funcionales cash — PostgreSQL aislado', { timeout: 90_000 
     await prisma.tenantAccountingPolicy.create({
       data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: 'actor-real' },
     });
-    await prisma.$transaction((tx) => seedPlanContable(tx, tenantId));
+    await prisma.$transaction(async (tx) => {
+      await seedPlanContable(tx, tenantId);
+      await seedPlantillasGlobales(tx);
+    });
     const hoy = new Date();
     const mesInicio = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1));
     const mesFin = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() + 1, 0, 23, 59, 59));
@@ -160,6 +164,152 @@ describe('snapshots funcionales cash — PostgreSQL aislado', { timeout: 90_000 
     expect(segunda.existentes).toBe(primera.creados + primera.existentes);
     const filas = await CashSnapshotService.leerCorte(tenantId, corte);
     expect(filas).toHaveLength(primera.creados + primera.existentes);
+  });
+
+  it('resuelve capturas concurrentes del mismo corte con conteos por caller', async () => {
+    // Wait until both real serializable transactions have read both source tables.
+    // The query results still come from PostgreSQL; the proxy only synchronizes
+    // transaction progress so the unique-key race is deterministic.
+    let readers = 0;
+    let releaseReaders!: () => void;
+    const readersReady = new Promise<void>((resolve) => { releaseReaders = resolve; });
+    let barrierReleased = false;
+    const prismaClient = prisma as unknown as { $transaction: typeof prisma.$transaction };
+    const originalTransaction = prismaClient.$transaction.bind(prisma);
+    const wrapReadDelegate = <T extends object>(delegate: T): T => new Proxy(delegate, {
+      get(target, property, receiver) {
+        const value = Reflect.get(target, property, receiver);
+        if (property !== 'findMany' || typeof value !== 'function') return value;
+        return async (...args: unknown[]) => {
+          const rows = await Reflect.apply(value, target, args);
+          if (!barrierReleased) {
+            readers += 1;
+            if (readers === 4) {
+              barrierReleased = true;
+              releaseReaders();
+            }
+            await readersReady;
+          }
+          return rows;
+        };
+      },
+    });
+    const wrapTransactionClient = (tx: Prisma.TransactionClient) => new Proxy(tx, {
+      get(target, property, receiver) {
+        if (property === 'cuentaPorCobrar' || property === 'cuentaPorPagar') {
+          return wrapReadDelegate(Reflect.get(target, property, receiver));
+        }
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    prismaClient.$transaction = ((callback: (tx: Prisma.TransactionClient) => Promise<unknown>, options?: object) =>
+      originalTransaction((tx) => callback(wrapTransactionClient(tx)), options as never)) as never;
+
+    try {
+      const fechaCorte = new Date('2098-03-04T12:00:00.000Z');
+      const outcomes = await Promise.allSettled([
+        CashSnapshotService.capturar({ tenantId, fechaCorte, motivo: 'RACE_A' }),
+        CashSnapshotService.capturar({ tenantId, fechaCorte, motivo: 'RACE_B' }),
+      ]);
+
+      expect(readers).toBeGreaterThanOrEqual(4);
+      expect(
+        outcomes.every((outcome) => outcome.status === 'fulfilled'),
+        JSON.stringify(outcomes.map((outcome) => outcome.status === 'rejected'
+          ? { status: outcome.status, error: String(outcome.reason) }
+          : { status: outcome.status, result: outcome.value })),
+      ).toBe(true);
+      const results = outcomes.map((outcome) => {
+        if (outcome.status !== 'fulfilled') throw outcome.reason;
+        return outcome.value;
+      });
+      expect(results.map(({ creados, existentes }) => ({ creados, existentes })).sort(
+        (a, b) => b.creados - a.creados,
+      )).toEqual([
+        { creados: 2, existentes: 0 },
+        { creados: 0, existentes: 2 },
+      ]);
+      expect(results.every(({ omitidos }) => omitidos === 0)).toBe(true);
+      expect(await CashSnapshotService.leerCorte(tenantId, fechaCorte)).toHaveLength(2);
+    } finally {
+      prismaClient.$transaction = originalTransaction;
+    }
+  });
+
+  it('lee CxC y CxP desde una versión coherente ante actualización concurrente', async () => {
+    const cxc = await prisma.cuentaPorCobrar.findFirstOrThrow({
+      where: { tenantId, tipoCuenta: 'PRESTAMO_CASH' },
+      select: { id: true, montoPagadoFuncional: true },
+    });
+    const cxp = await prisma.cuentaPorPagar.findFirstOrThrow({
+      where: { tenantId, tipoDeuda: 'DEUDA_CASH' },
+      select: { cuentaPorPagarId: true, montoPagadoFuncional: true },
+    });
+    let signalCxcRead!: () => void;
+    let releaseCxpRead!: () => void;
+    const cxcRead = new Promise<void>((resolve) => { signalCxcRead = resolve; });
+    const cxpReadGate = new Promise<void>((resolve) => { releaseCxpRead = resolve; });
+    const prismaClient = prisma as unknown as { $transaction: typeof prisma.$transaction };
+    const originalTransaction = prismaClient.$transaction.bind(prisma);
+    const wrapTransactionClient = (tx: Prisma.TransactionClient) => new Proxy(tx, {
+      get(target, property, receiver) {
+        if (property !== 'cuentaPorCobrar' && property !== 'cuentaPorPagar') {
+          return Reflect.get(target, property, receiver);
+        }
+        const delegate = Reflect.get(target, property, receiver);
+        return new Proxy(delegate, {
+          get(delegateTarget, delegateProperty, delegateReceiver) {
+            const value = Reflect.get(delegateTarget, delegateProperty, delegateReceiver);
+            if (delegateProperty !== 'findMany' || typeof value !== 'function') return value;
+            return async (...args: unknown[]) => {
+              if (property === 'cuentaPorPagar') await cxpReadGate;
+              const rows = await Reflect.apply(value, delegateTarget, args);
+              if (property === 'cuentaPorCobrar') signalCxcRead();
+              return rows;
+            };
+          },
+        });
+      },
+    });
+    prismaClient.$transaction = ((callback: (tx: Prisma.TransactionClient) => Promise<unknown>, options?: object) =>
+      originalTransaction((tx) => callback(wrapTransactionClient(tx)), options as never)) as never;
+
+    try {
+      const fechaCorte = new Date('2098-03-05T12:00:00.000Z');
+      const capture = CashSnapshotService.capturar({ tenantId, fechaCorte });
+      await cxcRead;
+      await originalTransaction(async (tx) => {
+        await tx.cuentaPorCobrar.update({
+          where: { id: cxc.id }, data: { montoPagadoFuncional: 10 },
+        });
+        await tx.cuentaPorPagar.update({
+          where: { cuentaPorPagarId: cxp.cuentaPorPagarId },
+          data: { montoPagadoFuncional: 10 },
+        });
+      });
+      releaseCxpRead();
+      await capture;
+
+      const filas = await CashSnapshotService.leerCorte(tenantId, fechaCorte);
+      const snapshotCxc = filas.find((row) => row.tipo === 'PRESTAMO_CASH');
+      const snapshotCxp = filas.find((row) => row.tipo === 'DEUDA_CASH');
+      expect(snapshotCxc?.montoPagadoFuncional.toString()).toBe(
+        snapshotCxp?.montoPagadoFuncional.toString(),
+      );
+      expect(['0', '10']).toContain(snapshotCxc?.montoPagadoFuncional.toString());
+    } finally {
+      releaseCxpRead();
+      prismaClient.$transaction = originalTransaction;
+      await originalTransaction(async (tx) => {
+        await tx.cuentaPorCobrar.update({
+          where: { id: cxc.id }, data: { montoPagadoFuncional: cxc.montoPagadoFuncional },
+        });
+        await tx.cuentaPorPagar.update({
+          where: { cuentaPorPagarId: cxp.cuentaPorPagarId },
+          data: { montoPagadoFuncional: cxp.montoPagadoFuncional },
+        });
+      });
+    }
   });
 
   it('refleja pagos en un corte nuevo y conserva el histórico', async () => {

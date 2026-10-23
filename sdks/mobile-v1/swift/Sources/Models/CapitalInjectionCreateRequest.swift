@@ -12,37 +12,78 @@ import AnyCodable
 
 public struct CapitalInjectionCreateRequest: Codable, JSONEncodable, Hashable {
 
-    public var monto: Double
+    public enum Tipo: String, Codable, CaseIterable {
+        case capitalSocial = "CAPITAL_SOCIAL"
+        case deudaExterna = "DEUDA_EXTERNA"
+    }
+    public static let cuentaIdRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let socioRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let entidadPrestamistaRule = StringRule(minLength: 1, maxLength: nil, pattern: nil)
+    public static let tasaInteresRule = NumericRule<Double>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
+    public static let idempotencyKeyRule = StringRule(minLength: 1, maxLength: 64, pattern: nil)
+    public var montoRecibido: Double
     public var moneda: String? = "CUP"
-    public var tipo: String? = "APORTE"
+    public var tipo: Tipo
     public var descripcion: String?
-    public var cuentaBancariaId: String?
+    public var cuentaId: String
+    public var socio: String?
+    public var entidadPrestamista: String?
+    public var tasaInteres: Double?
+    public var tasaCambio: Double?
+    public var plazoMeses: Int?
+    public var fechaInicioPago: Date?
+    public var fechaOperacion: Date?
+    /** Clave opcional de idempotencia (1 a 64 caracteres). Si se proporciona también Idempotency-Key, prevalece esta propiedad. */
+    public var idempotencyKey: String?
 
-    public init(monto: Double, moneda: String? = "CUP", tipo: String? = "APORTE", descripcion: String? = nil, cuentaBancariaId: String? = nil) {
-        self.monto = monto
+    public init(montoRecibido: Double, moneda: String? = "CUP", tipo: Tipo, descripcion: String? = nil, cuentaId: String, socio: String? = nil, entidadPrestamista: String? = nil, tasaInteres: Double? = nil, tasaCambio: Double? = nil, plazoMeses: Int? = nil, fechaInicioPago: Date? = nil, fechaOperacion: Date? = nil, idempotencyKey: String? = nil) {
+        self.montoRecibido = montoRecibido
         self.moneda = moneda
         self.tipo = tipo
         self.descripcion = descripcion
-        self.cuentaBancariaId = cuentaBancariaId
+        self.cuentaId = cuentaId
+        self.socio = socio
+        self.entidadPrestamista = entidadPrestamista
+        self.tasaInteres = tasaInteres
+        self.tasaCambio = tasaCambio
+        self.plazoMeses = plazoMeses
+        self.fechaInicioPago = fechaInicioPago
+        self.fechaOperacion = fechaOperacion
+        self.idempotencyKey = idempotencyKey
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case monto
+        case montoRecibido
         case moneda
         case tipo
         case descripcion
-        case cuentaBancariaId
+        case cuentaId
+        case socio
+        case entidadPrestamista
+        case tasaInteres
+        case tasaCambio
+        case plazoMeses
+        case fechaInicioPago
+        case fechaOperacion
+        case idempotencyKey
     }
 
     // Encodable protocol methods
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(monto, forKey: .monto)
+        try container.encode(montoRecibido, forKey: .montoRecibido)
         try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(tipo, forKey: .tipo)
+        try container.encode(tipo, forKey: .tipo)
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
-        try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
+        try container.encode(cuentaId, forKey: .cuentaId)
+        try container.encodeIfPresent(socio, forKey: .socio)
+        try container.encodeIfPresent(entidadPrestamista, forKey: .entidadPrestamista)
+        try container.encodeIfPresent(tasaInteres, forKey: .tasaInteres)
+        try container.encodeIfPresent(tasaCambio, forKey: .tasaCambio)
+        try container.encodeIfPresent(plazoMeses, forKey: .plazoMeses)
+        try container.encodeIfPresent(fechaInicioPago, forKey: .fechaInicioPago)
+        try container.encodeIfPresent(fechaOperacion, forKey: .fechaOperacion)
+        try container.encodeIfPresent(idempotencyKey, forKey: .idempotencyKey)
     }
 }
-

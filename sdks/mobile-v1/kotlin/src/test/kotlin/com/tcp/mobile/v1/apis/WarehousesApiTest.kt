@@ -57,7 +57,7 @@ class WarehousesApiTest : ShouldSpec() {
         // to test mobilePostWarehousesCreate
         should("test mobilePostWarehousesCreate") {
             // uncomment below to test mobilePostWarehousesCreate
-            //val almacenCreateRequest : AlmacenCreateRequest =  // AlmacenCreateRequest | 
+            //val almacenCreateRequest : AlmacenCreateRequest =  // AlmacenCreateRequest |
             //val result : Almacen = apiInstance.mobilePostWarehousesCreate(almacenCreateRequest)
             //result shouldBe ("TODO")
         }
@@ -66,7 +66,7 @@ class WarehousesApiTest : ShouldSpec() {
         should("test mobilePutWarehousesById") {
             // uncomment below to test mobilePutWarehousesById
             //val id : kotlin.String = id_example // kotlin.String | Identificador del almacén.
-            //val almacenUpdateRequest : AlmacenUpdateRequest =  // AlmacenUpdateRequest | 
+            //val almacenUpdateRequest : AlmacenUpdateRequest =  // AlmacenUpdateRequest |
             //val result : Almacen = apiInstance.mobilePutWarehousesById(id, almacenUpdateRequest)
             //result shouldBe ("TODO")
         }

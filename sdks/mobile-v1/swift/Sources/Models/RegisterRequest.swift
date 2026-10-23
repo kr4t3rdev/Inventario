@@ -42,4 +42,3 @@ public struct RegisterRequest: CustomStringConvertible, Codable, JSONEncodable, 
 
     public var description: String { "RegisterRequest(<redacted>)" }
 }
-

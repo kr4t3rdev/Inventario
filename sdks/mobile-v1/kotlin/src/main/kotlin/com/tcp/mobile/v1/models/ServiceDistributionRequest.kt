@@ -19,13 +19,13 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param cuentaId 
- * @param tipoPagoId 
- * @param monto 
- * @param moneda 
- * @param observaciones 
+ *
+ * @param cuentaId
+ * @param tipoPagoId
+ * @param monto
+ * @param moneda
+ * @param observaciones
  */
 
 
@@ -50,4 +50,3 @@ data class ServiceDistributionRequest (
 
 
 }
-

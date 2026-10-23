@@ -76,6 +76,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const idempotencyKey = body.idempotencyKey ?? request.headers.get('Idempotency-Key') ?? undefined;
     const input = idempotencyKey ? { ...body, idempotencyKey } : body;
+    const existingReplay = await AccountingOperationsMutationService.findCapitalInjectionReplay({
+      input,
+      user: authResult.user,
+    });
+    if (existingReplay) return successResponse(existingReplay);
+
     const fechaOperacion = extraerFechaDeBody(input) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
@@ -85,6 +91,12 @@ export async function POST(request: Request) {
     });
 
     if (!validacionPeriodo.permitido) {
+      // Close the race where an identical request committed after the first lookup.
+      const replayAfterGate = await AccountingOperationsMutationService.findCapitalInjectionReplay({
+        input,
+        user: authResult.user,
+      });
+      if (replayAfterGate) return successResponse(replayAfterGate);
       return errorResponse(
         validacionPeriodo.error?.message ?? 'Período contable cerrado',
         400,

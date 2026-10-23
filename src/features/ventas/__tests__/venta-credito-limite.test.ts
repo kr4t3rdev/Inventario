@@ -163,7 +163,7 @@ describe('enforcement del límite de crédito (CRM-T2)', () => {
 		prepararEntorno({ limiteCredito: null, saldoCxc: 0 });
 		const delegado = vi.mocked(prisma.$transaction).getMockImplementation();
 		let llamadas = 0;
-		vi.mocked(prisma.$transaction).mockImplementation(async (cb: (tx: unknown) => unknown) => {
+		vi.mocked(prisma.$transaction).mockImplementation((async (cb: (tx: unknown) => unknown) => {
 			llamadas += 1;
 			if (llamadas === 1) {
 				const error = new Error('Transaction conflict or write conflict') as Error & { code: string };
@@ -171,7 +171,7 @@ describe('enforcement del límite de crédito (CRM-T2)', () => {
 				throw error;
 			}
 			return (delegado as (cb: (tx: unknown) => unknown) => unknown)(cb);
-		});
+		}) as never);
 
 		const r = await VentaMutationService.create({ input: baseVentaACredito, user: manager });
 

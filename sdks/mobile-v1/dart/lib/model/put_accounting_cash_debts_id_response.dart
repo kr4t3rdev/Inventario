@@ -224,4 +224,3 @@ class PutAccountingCashDebtsIdResponse {
   static const requiredKeys = <String>{
   };
 }
-

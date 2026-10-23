@@ -46,4 +46,3 @@ public struct PaymentTypeUpdateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

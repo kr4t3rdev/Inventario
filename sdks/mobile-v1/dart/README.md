@@ -134,16 +134,31 @@ Class | Method | HTTP request | Description
 *AccountingReportsApi* | [**mobileGetAccountingReportsOverdueInvoices**](doc//AccountingReportsApi.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas
 *AccountingReportsApi* | [**mobileGetAccountingReportsSummary**](doc//AccountingReportsApi.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero
 *AccountingReportsApi* | [**mobileGetAccountingReportsTransfers**](doc//AccountingReportsApi.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias
+*AdminApi* | [**mobileActivateAdminLicense**](doc//AdminApi.md#mobileactivateadminlicense) | **POST** /admin/licenses/activate | Activar una licencia
+*AdminApi* | [**mobileActivateAdminUser**](doc//AdminApi.md#mobileactivateadminuser) | **POST** /admin/users/activate | Activar un usuario
 *AdminApi* | [**mobileApproveAdminMembership**](doc//AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía
+*AdminApi* | [**mobileAssignAdminUserTenant**](doc//AdminApi.md#mobileassignadminusertenant) | **POST** /admin/users/assign-tenant | Asignar o cambiar la empresa de un usuario
+*AdminApi* | [**mobileChangeAdminUserTenantRole**](doc//AdminApi.md#mobilechangeadminusertenantrole) | **PATCH** /admin/users/change-tenant-role | Cambiar el rol de un usuario dentro de una empresa
+*AdminApi* | [**mobileDeactivateAdminLicense**](doc//AdminApi.md#mobiledeactivateadminlicense) | **POST** /admin/licenses/deactivate | Desactivar una licencia
+*AdminApi* | [**mobileDeactivateAdminUser**](doc//AdminApi.md#mobiledeactivateadminuser) | **POST** /admin/users/deactivate | Desactivar un usuario
+*AdminApi* | [**mobileDeleteAdminLicense**](doc//AdminApi.md#mobiledeleteadminlicense) | **POST** /admin/licenses/delete | Eliminar una licencia
+*AdminApi* | [**mobileDeleteAdminUser**](doc//AdminApi.md#mobiledeleteadminuser) | **POST** /admin/users/delete | Eliminar un usuario
 *AdminApi* | [**mobileGetAdminHealth**](doc//AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
 *AdminApi* | [**mobileGetAdminLicenseStats**](doc//AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
 *AdminApi* | [**mobileGetAdminLicenses**](doc//AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
 *AdminApi* | [**mobileGetAdminPendingMemberships**](doc//AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
 *AdminApi* | [**mobileGetAdminTenants**](doc//AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
+*AdminApi* | [**mobileGetAdminUserDetail**](doc//AdminApi.md#mobilegetadminuserdetail) | **GET** /admin/users/detail | Obtener el detalle de un usuario
 *AdminApi* | [**mobileGetAdminUsers**](doc//AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
 *AdminApi* | [**mobileLockAdminUser**](doc//AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas
 *AdminApi* | [**mobileRejectAdminMembership**](doc//AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía
+*AdminApi* | [**mobileRenewAdminLicense**](doc//AdminApi.md#mobilerenewadminlicense) | **POST** /admin/licenses/renew | Renovar una licencia
+*AdminApi* | [**mobileResendAdminUserVerification**](doc//AdminApi.md#mobileresendadminuserverification) | **POST** /admin/users/resend-verification | Reenviar el email de verificación
+*AdminApi* | [**mobileResetAdminUserPassword**](doc//AdminApi.md#mobileresetadminuserpassword) | **POST** /admin/users/reset-password | Enviar enlace de restablecimiento de contraseña
+*AdminApi* | [**mobileRevokeAdminUserSessions**](doc//AdminApi.md#mobilerevokeadminusersessions) | **POST** /admin/users/revoke-sessions | Revocar las sesiones activas de un usuario
 *AdminApi* | [**mobileUnlockAdminUser**](doc//AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario
+*AdminApi* | [**mobileUpdateAdminUser**](doc//AdminApi.md#mobileupdateadminuser) | **PATCH** /admin/users/update | Editar nombre, email o rol de un usuario
+*AdminApi* | [**mobileVerifyAdminUserEmail**](doc//AdminApi.md#mobileverifyadminuseremail) | **POST** /admin/users/verify-email | Marcar el email como verificado
 *AuthApi* | [**mobileGetAuthMe**](doc//AuthApi.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado
 *AuthApi* | [**mobileGetAuthTenants**](doc//AuthApi.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles
 *AuthApi* | [**mobilePostAuthLogin**](doc//AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
@@ -193,20 +208,28 @@ Class | Method | HTTP request | Description
  - [AdminHealthResponseUsersByRoleInner](doc//AdminHealthResponseUsersByRoleInner.md)
  - [AdminHealthResponseUsersComparison](doc//AdminHealthResponseUsersComparison.md)
  - [AdminHealthResponseUsersTrendInner](doc//AdminHealthResponseUsersTrendInner.md)
+ - [AdminLicenciaIdRequest](doc//AdminLicenciaIdRequest.md)
  - [AdminLicenseItem](doc//AdminLicenseItem.md)
  - [AdminLicenseItemCreatedByUser](doc//AdminLicenseItemCreatedByUser.md)
  - [AdminLicenseItemTenant](doc//AdminLicenseItemTenant.md)
  - [AdminLicenseManagerItem](doc//AdminLicenseManagerItem.md)
+ - [AdminLicenseSummary](doc//AdminLicenseSummary.md)
  - [AdminPendingUserItem](doc//AdminPendingUserItem.md)
  - [AdminTenantItem](doc//AdminTenantItem.md)
  - [AdminTenantItemCount](doc//AdminTenantItemCount.md)
  - [AdminTenantLicenseItem](doc//AdminTenantLicenseItem.md)
  - [AdminTenantLicenseItemPlan](doc//AdminTenantLicenseItemPlan.md)
  - [AdminTenantLite](doc//AdminTenantLite.md)
+ - [AdminUserDetail](doc//AdminUserDetail.md)
+ - [AdminUserIdRequest](doc//AdminUserIdRequest.md)
  - [AdminUserItem](doc//AdminUserItem.md)
  - [AdminUserItemSalesAgentBalance](doc//AdminUserItemSalesAgentBalance.md)
  - [AdminUserItemSalesAgentProfile](doc//AdminUserItemSalesAgentProfile.md)
  - [AdminUserLite](doc//AdminUserLite.md)
+ - [AdminUserMembership](doc//AdminUserMembership.md)
+ - [AdminUserMembershipTenant](doc//AdminUserMembershipTenant.md)
+ - [AdminUserStatus](doc//AdminUserStatus.md)
+ - [AdminUserSummary](doc//AdminUserSummary.md)
  - [Advance](doc//Advance.md)
  - [AdvanceWorkflowResult](doc//AdvanceWorkflowResult.md)
  - [Almacen](doc//Almacen.md)
@@ -216,6 +239,7 @@ Class | Method | HTTP request | Description
  - [AlmacenUpdateRequest](doc//AlmacenUpdateRequest.md)
  - [ApiError](doc//ApiError.md)
  - [ApproveAdminMembershipRequest](doc//ApproveAdminMembershipRequest.md)
+ - [AssignAdminUserTenantRequest](doc//AssignAdminUserTenantRequest.md)
  - [AuditLog](doc//AuditLog.md)
  - [AuthSession](doc//AuthSession.md)
  - [AuthenticatedUser](doc//AuthenticatedUser.md)
@@ -236,6 +260,7 @@ Class | Method | HTTP request | Description
  - [CashLoanCreateRequest](doc//CashLoanCreateRequest.md)
  - [CashOperationUpdateRequest](doc//CashOperationUpdateRequest.md)
  - [CashPaymentRequest](doc//CashPaymentRequest.md)
+ - [ChangeAdminUserTenantRoleRequest](doc//ChangeAdminUserTenantRoleRequest.md)
  - [Cliente](doc//Cliente.md)
  - [ClienteCreateRequest](doc//ClienteCreateRequest.md)
  - [ClienteDeleteResponse](doc//ClienteDeleteResponse.md)
@@ -292,6 +317,7 @@ Class | Method | HTTP request | Description
  - [GetAccountingReportsTransfersResponse](doc//GetAccountingReportsTransfersResponse.md)
  - [GetAdminLicenseStatsResponse](doc//GetAdminLicenseStatsResponse.md)
  - [GetAdminLicensesResponse](doc//GetAdminLicensesResponse.md)
+ - [GetAdminUserDetailResponse](doc//GetAdminUserDetailResponse.md)
  - [GetAdminUsersResponse](doc//GetAdminUsersResponse.md)
  - [GetDashboardStatsResponse](doc//GetDashboardStatsResponse.md)
  - [GetProductsIdResponse](doc//GetProductsIdResponse.md)
@@ -303,6 +329,8 @@ Class | Method | HTTP request | Description
  - [LockAdminUserRequest](doc//LockAdminUserRequest.md)
  - [LoginRequest](doc//LoginRequest.md)
  - [Pagination](doc//Pagination.md)
+ - [PatchAdminUsersChangeTenantRoleResponse](doc//PatchAdminUsersChangeTenantRoleResponse.md)
+ - [PatchAdminUsersUpdateResponse](doc//PatchAdminUsersUpdateResponse.md)
  - [PatchSalesIdUpdateResponse](doc//PatchSalesIdUpdateResponse.md)
  - [PayableAccountSummary](doc//PayableAccountSummary.md)
  - [PayablePaymentSummary](doc//PayablePaymentSummary.md)
@@ -324,10 +352,23 @@ Class | Method | HTTP request | Description
  - [PostAccountingReconciliationExpensesResponse](doc//PostAccountingReconciliationExpensesResponse.md)
  - [PostAccountingReconciliationSalesResponse](doc//PostAccountingReconciliationSalesResponse.md)
  - [PostAccountingReconciliationServicesResponse](doc//PostAccountingReconciliationServicesResponse.md)
+ - [PostAdminLicensesActivateResponse](doc//PostAdminLicensesActivateResponse.md)
+ - [PostAdminLicensesDeactivateResponse](doc//PostAdminLicensesDeactivateResponse.md)
+ - [PostAdminLicensesDeleteResponse](doc//PostAdminLicensesDeleteResponse.md)
+ - [PostAdminLicensesRenewResponse](doc//PostAdminLicensesRenewResponse.md)
  - [PostAdminMembershipsApproveResponse](doc//PostAdminMembershipsApproveResponse.md)
  - [PostAdminMembershipsRejectResponse](doc//PostAdminMembershipsRejectResponse.md)
+ - [PostAdminUsersActivateResponse](doc//PostAdminUsersActivateResponse.md)
+ - [PostAdminUsersAssignTenantResponse](doc//PostAdminUsersAssignTenantResponse.md)
+ - [PostAdminUsersDeactivateResponse](doc//PostAdminUsersDeactivateResponse.md)
+ - [PostAdminUsersDeleteResponse](doc//PostAdminUsersDeleteResponse.md)
  - [PostAdminUsersLockResponse](doc//PostAdminUsersLockResponse.md)
  - [PostAdminUsersLockResponseUser](doc//PostAdminUsersLockResponseUser.md)
+ - [PostAdminUsersResendVerificationResponse](doc//PostAdminUsersResendVerificationResponse.md)
+ - [PostAdminUsersResetPasswordResponse](doc//PostAdminUsersResetPasswordResponse.md)
+ - [PostAdminUsersRevokeSessionsResponse](doc//PostAdminUsersRevokeSessionsResponse.md)
+ - [PostAdminUsersVerifyEmailResponse](doc//PostAdminUsersVerifyEmailResponse.md)
+ - [PostAdminUsersVerifyEmailResponseUser](doc//PostAdminUsersVerifyEmailResponseUser.md)
  - [PostSalesCreateResponse](doc//PostSalesCreateResponse.md)
  - [PostSalesIdCancelResponse](doc//PostSalesIdCancelResponse.md)
  - [Product](doc//Product.md)
@@ -349,6 +390,7 @@ Class | Method | HTTP request | Description
  - [RegisterRequest](doc//RegisterRequest.md)
  - [RegisterResponse](doc//RegisterResponse.md)
  - [RejectAdminMembershipRequest](doc//RejectAdminMembershipRequest.md)
+ - [RenewAdminLicenseRequest](doc//RenewAdminLicenseRequest.md)
  - [ReportFilters](doc//ReportFilters.md)
  - [ReportResult](doc//ReportResult.md)
  - [ReportStatistics](doc//ReportStatistics.md)
@@ -370,6 +412,7 @@ Class | Method | HTTP request | Description
  - [Token](doc//Token.md)
  - [TokenPair](doc//TokenPair.md)
  - [UnlockAdminUserRequest](doc//UnlockAdminUserRequest.md)
+ - [UpdateAdminUserRequest](doc//UpdateAdminUserRequest.md)
 
 
 ## Documentation For Authorization

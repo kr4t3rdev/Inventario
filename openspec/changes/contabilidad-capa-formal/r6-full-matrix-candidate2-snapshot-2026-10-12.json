@@ -1,0 +1,38 @@
+{
+  "sourceSnapshot": "852412fc2f1a60c6d1c02053b787ec3c363ead5e",
+  "publishedParent": "b04a5f8ecf8922901be5507bfe62be631067abab",
+  "sourceIncludesSharedUncommittedChanges": true,
+  "export": "/private/var/folders/n_/2tnvb4k17q7bvzg4kk6lb14h0000gn/T/opencode/r6-production-clone-lggw2k9_/r6-matrix-852412fc",
+  "database": "tcp_test_r6_matrix_852412fc",
+  "schemaPackage": "/private/var/folders/n_/2tnvb4k17q7bvzg4kk6lb14h0000gn/T/opencode/r6-production-clone-lggw2k9_/r6-matrix-package-5b197db3",
+  "schemaPackageSource": "5b197db38471da17b50124105d62f175050cebdc",
+  "prismaTreeUnchanged": true,
+  "tests": [
+    "src/app/api/contabilidad/reconciliacion/ventas/__integration__/http-real-idempotencia.test.ts",
+    "src/app/api/produccion/ordenes/[id]/completar/__integration__/rollback-real.test.ts",
+    "src/features/compras-productos/__integration__/purchase-credit-fx-real.test.ts",
+    "src/features/contabilidad/__integration__/accounting-bank-transfers-real.test.ts",
+    "src/features/contabilidad/__integration__/cash-loan-create-audit-rollback-real.test.ts",
+    "src/features/contabilidad/__integration__/cash-writers-audit-rollback-real.test.ts",
+    "src/features/contabilidad/__integration__/deudas-cash-real.test.ts",
+    "src/features/contabilidad/__integration__/prestamos-cash-pagar-real.test.ts",
+    "src/features/contabilidad/__integration__/reconciliar-servicio-real.test.ts",
+    "src/features/mermas/__integration__/merma-formal-real.test.ts",
+    "src/features/productos/__integration__/restock-formal-real.test.ts",
+    "src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts",
+    "src/features/ventas/__integration__/devolucion-fifo.test.ts",
+    "src/features/ventas/__integration__/formal-shadow-cash-sale.test.ts",
+    "src/features/ventas/services/__integration__/facturacion-workflow-venta-credito-real.test.ts",
+    "src/lib/services/__integration__/anticipos-devengo-bruto-real.test.ts",
+    "src/lib/services/__integration__/anticipos-fx-real.test.ts",
+    "src/lib/services/__integration__/pago-gastos-r6-adapters-real.test.ts"
+  ],
+  "results": {
+    "deploy": {
+      "exit": 0
+    },
+    "generate": {
+      "exit": 0
+    }
+  }
+}

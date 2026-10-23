@@ -51,7 +51,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -149,11 +149,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **contexto** | **String**| Valor de contexto aceptado por el handler. | [optional] 
- **proveedorId** | **String**| Identificador del proveedor. | [optional] 
- **clienteId** | **String**| Identificador del cliente. | [optional] 
- **moneda** | **String**| Código de moneda. | [optional] 
- **estado** | **bool**| Estado usado para filtrar resultados. | [optional] 
+ **contexto** | **String**| Valor de contexto aceptado por el handler. | [optional]
+ **proveedorId** | **String**| Identificador del proveedor. | [optional]
+ **clienteId** | **String**| Identificador del cliente. | [optional]
+ **moneda** | **String**| Código de moneda. | [optional]
+ **estado** | **bool**| Estado usado para filtrar resultados. | [optional]
 
 ### Return type
 
@@ -202,7 +202,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
+ **id** | **String**| Identificador único del recurso. |
 
 ### Return type
 
@@ -237,7 +237,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AccountingAdvancesApi();
-final accountingAdvancesPostRequest = AccountingAdvancesPostRequest(); // AccountingAdvancesPostRequest | 
+final accountingAdvancesPostRequest = AccountingAdvancesPostRequest(); // AccountingAdvancesPostRequest |
 
 try {
     final result = api_instance.mobilePostAccountingAdvances(accountingAdvancesPostRequest);
@@ -251,7 +251,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **accountingAdvancesPostRequest** | [**AccountingAdvancesPostRequest**](AccountingAdvancesPostRequest.md)|  | 
+ **accountingAdvancesPostRequest** | [**AccountingAdvancesPostRequest**](AccountingAdvancesPostRequest.md)|  |
 
 ### Return type
 
@@ -287,7 +287,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingAdvancesApi();
 final id = id_example; // String | Identificador único del recurso.
-final accountingAdvancesIdEjecutarPostRequest = AccountingAdvancesIdEjecutarPostRequest(); // AccountingAdvancesIdEjecutarPostRequest | 
+final accountingAdvancesIdEjecutarPostRequest = AccountingAdvancesIdEjecutarPostRequest(); // AccountingAdvancesIdEjecutarPostRequest |
 
 try {
     final result = api_instance.mobilePostAccountingAdvancesByIdEjecutar(id, accountingAdvancesIdEjecutarPostRequest);
@@ -301,8 +301,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **accountingAdvancesIdEjecutarPostRequest** | [**AccountingAdvancesIdEjecutarPostRequest**](AccountingAdvancesIdEjecutarPostRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **accountingAdvancesIdEjecutarPostRequest** | [**AccountingAdvancesIdEjecutarPostRequest**](AccountingAdvancesIdEjecutarPostRequest.md)|  |
 
 ### Return type
 
@@ -338,7 +338,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingAdvancesApi();
 final id = id_example; // String | Identificador único del recurso.
-final accountingAdvancesIdRevertirPostRequest = AccountingAdvancesIdRevertirPostRequest(); // AccountingAdvancesIdRevertirPostRequest | 
+final accountingAdvancesIdRevertirPostRequest = AccountingAdvancesIdRevertirPostRequest(); // AccountingAdvancesIdRevertirPostRequest |
 
 try {
     final result = api_instance.mobilePostAccountingAdvancesByIdRevertir(id, accountingAdvancesIdRevertirPostRequest);
@@ -352,8 +352,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **accountingAdvancesIdRevertirPostRequest** | [**AccountingAdvancesIdRevertirPostRequest**](AccountingAdvancesIdRevertirPostRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **accountingAdvancesIdRevertirPostRequest** | [**AccountingAdvancesIdRevertirPostRequest**](AccountingAdvancesIdRevertirPostRequest.md)|  |
 
 ### Return type
 
@@ -389,7 +389,7 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 
 final api_instance = AccountingAdvancesApi();
 final id = id_example; // String | Identificador único del recurso.
-final accountingAdvancesIdPutRequest = AccountingAdvancesIdPutRequest(); // AccountingAdvancesIdPutRequest | 
+final accountingAdvancesIdPutRequest = AccountingAdvancesIdPutRequest(); // AccountingAdvancesIdPutRequest |
 
 try {
     final result = api_instance.mobilePutAccountingAdvancesById(id, accountingAdvancesIdPutRequest);
@@ -403,8 +403,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| Identificador único del recurso. | 
- **accountingAdvancesIdPutRequest** | [**AccountingAdvancesIdPutRequest**](AccountingAdvancesIdPutRequest.md)|  | 
+ **id** | **String**| Identificador único del recurso. |
+ **accountingAdvancesIdPutRequest** | [**AccountingAdvancesIdPutRequest**](AccountingAdvancesIdPutRequest.md)|  |
 
 ### Return type
 

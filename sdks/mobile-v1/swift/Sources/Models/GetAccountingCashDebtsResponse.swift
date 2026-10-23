@@ -34,4 +34,3 @@ public struct GetAccountingCashDebtsResponse: Codable, JSONEncodable, Hashable {
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

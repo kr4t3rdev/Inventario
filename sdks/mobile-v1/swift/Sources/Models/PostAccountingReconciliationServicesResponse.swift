@@ -21,9 +21,11 @@ public struct PostAccountingReconciliationServicesResponse: Codable, JSONEncodab
     public var tasaCambio: Double?
     public var montoConvertido: Double?
     public var fechaReconciliacion: Date?
+    /** Indica si se devolvió una conciliación existente para la misma clave idempotente. */
+    public var replayed: Bool?
     public var observaciones: String?
 
-    public init(reconciliacionId: String? = nil, cuentaId: String? = nil, tipoPagoId: String? = nil, monto: Double? = nil, moneda: String? = nil, tasaCambio: Double? = nil, montoConvertido: Double? = nil, fechaReconciliacion: Date? = nil, observaciones: String? = nil) {
+    public init(reconciliacionId: String? = nil, cuentaId: String? = nil, tipoPagoId: String? = nil, monto: Double? = nil, moneda: String? = nil, tasaCambio: Double? = nil, montoConvertido: Double? = nil, fechaReconciliacion: Date? = nil, replayed: Bool? = nil, observaciones: String? = nil) {
         self.reconciliacionId = reconciliacionId
         self.cuentaId = cuentaId
         self.tipoPagoId = tipoPagoId
@@ -32,6 +34,7 @@ public struct PostAccountingReconciliationServicesResponse: Codable, JSONEncodab
         self.tasaCambio = tasaCambio
         self.montoConvertido = montoConvertido
         self.fechaReconciliacion = fechaReconciliacion
+        self.replayed = replayed
         self.observaciones = observaciones
     }
 
@@ -44,6 +47,7 @@ public struct PostAccountingReconciliationServicesResponse: Codable, JSONEncodab
         case tasaCambio
         case montoConvertido
         case fechaReconciliacion
+        case replayed
         case observaciones
     }
 
@@ -59,7 +63,7 @@ public struct PostAccountingReconciliationServicesResponse: Codable, JSONEncodab
         try container.encodeIfPresent(tasaCambio, forKey: .tasaCambio)
         try container.encodeIfPresent(montoConvertido, forKey: .montoConvertido)
         try container.encodeIfPresent(fechaReconciliacion, forKey: .fechaReconciliacion)
+        try container.encodeIfPresent(replayed, forKey: .replayed)
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

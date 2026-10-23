@@ -1,5 +1,15 @@
 # Tasks — Capa de contabilidad formal (serie CTA)
 
+> **R6, continuación 2026-10-12:** snapshot privado fijo `3e7801ae`:
+> 299/299 casos de 40 suites, 31/31 callsites ejecutados y 1.353 filas heredadas
+> de 142 tablas preservadas. Ledger de 248 celdas: 220 con evidencia focal,
+> 27 pendientes y una de recuperación shadow. Ver
+> `r6-full-matrix-regression-2026-10-12.md` y
+> `r6-full-matrix-ledger-2026-10-12.json`. No es firma R6/R0.5 ni aceptación
+> del release publicado. Candidate5 amplía ocho negativos bancarios y está
+> pendiente de repetición con dependencias aisladas; instalación bloqueada
+> por timeouts del registry, después de cambios en `node_modules` compartido.
+
 > **ESTADO ACTUAL — 2026-10-11:** hay correcciones locales con evidencia focal, pero eso
 > **no equivale a 31/31 PASS ni cierra R0.5-ACCEPT**. R6-ROLLBACK global y R6-BASELINE
 > por entorno siguen abiertos; R7 requiere siete días de operación real. A10 tiene evidencia
@@ -3268,3 +3278,18 @@ ocho dimensiones por writer/adaptador y los gates globales R6, baseline, R7 y sn
 - [x] **Prueba focal PostgreSQL verificada (2/2):** `src/features/venta-servicios/__integration__/service-devengo-directo-real.test.ts`, contra `tcp_test_local` desechable (rol `arturo`, puerto 5433). El positivo persistió venta, CxC y asiento; el caso negativo alcanzó un `INSERT` real mediante trigger `BEFORE INSERT` en `asientos`, obtuvo exactamente `asiento bloqueado` / SQLSTATE `22012` y dejó iguales los snapshots completos de ventas, CxC y asientos.
 - [x] `pnpm run typecheck:tests` y `git diff --check` focal: PASS. Evidencia guardada en Engram obs. 5182.
 - **Alcance:** cierra solo esta verificación focal A6. No representa R6 global, no constituye mapeo físico de 31 callsites ni prueba universal; ese mapeo y sus failpoints siguen pendientes. No se demostró un bug global ni se habilitan `shadow`, `enforce` o replay.
+
+### Preparación de integración — 2026-10-13
+
+- [x] Documentar referencias, divergencia, conflictos de merge, propiedad/exclusiones del
+  paquete contable y validación operativa diferida: ver
+  [preparación de merge y pendientes](preparacion-merge-y-pendientes-2026-10-13.md).
+- [ ] Conciliar el paquete contable y los conflictos contra refs vigentes; resolver cambios
+  compartidos solo tras revisión funcional y confirmar la propiedad de archivos hoy sin
+  seguimiento.
+- [ ] Ejecutar y revisar CI obligatorio para el SHA candidato integrado; los resultados
+  focales/locales históricos no certifican ese SHA.
+- [ ] Completar smoke operativo únicamente con cuentas/tenant QA aislados y autorización,
+  siguiendo los límites de seguridad y evidencia del documento enlazado.
+- [ ] Mantener R0.5-ACCEPT, R6 global, G5 global, R6-BASELINE, R7 de siete días y snapshots
+  históricos sin cerrar hasta evidencia y aceptación propias de cada gate.

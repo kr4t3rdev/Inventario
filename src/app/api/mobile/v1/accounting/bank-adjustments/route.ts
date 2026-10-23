@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
@@ -70,6 +71,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const idempotencyKey = body.idempotencyKey ?? request.headers.get('Idempotency-Key') ?? undefined;
     const input = idempotencyKey ? { ...body, idempotencyKey } : body;
+    if (idempotencyKey) {
+      const existingReplay = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+        input,
+        user: authResult.user,
+      });
+      if (existingReplay) return successResponse(existingReplay);
+    }
+
     const fechaOperacion = extraerFechaDeBody(input) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
@@ -79,6 +88,14 @@ export async function POST(request: Request) {
     });
 
     if (!validacionPeriodo.permitido) {
+      // Close the race where an identical request committed after the first lookup.
+      if (idempotencyKey) {
+        const replayAfterGate = await AccountingOperationsMutationService.findBankAdjustmentReplay({
+          input,
+          user: authResult.user,
+        });
+        if (replayAfterGate) return successResponse(replayAfterGate);
+      }
       return errorResponse(
         validacionPeriodo.error?.message ?? 'Período contable cerrado',
         400,
@@ -94,6 +111,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ActionError) {
       return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
+    }
+    if (error instanceof ZodError) {
+      return errorResponse('Los datos del ajuste bancario no son válidos', 400, 'VALIDATION_ERROR');
     }
     console.error('Error en mobile accounting bank adjustments route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');

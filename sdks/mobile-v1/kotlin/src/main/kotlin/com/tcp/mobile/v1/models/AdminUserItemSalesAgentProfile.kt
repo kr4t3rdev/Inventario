@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param phone 
- * @param status 
+ *
+ * @param phone
+ * @param status
  */
 
 
@@ -38,4 +38,3 @@ data class AdminUserItemSalesAgentProfile (
 
 
 }
-

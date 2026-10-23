@@ -106,4 +106,3 @@ class GetAccountingAdvancesIdResponse {
     'anticipo',
   };
 }
-

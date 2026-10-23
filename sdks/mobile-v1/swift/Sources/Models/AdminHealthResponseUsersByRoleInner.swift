@@ -34,4 +34,3 @@ public struct AdminHealthResponseUsersByRoleInner: Codable, JSONEncodable, Hasha
         try container.encode(count, forKey: .count)
     }
 }
-

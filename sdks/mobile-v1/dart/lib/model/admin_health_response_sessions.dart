@@ -107,4 +107,3 @@ class AdminHealthResponseSessions {
     'active',
   };
 }
-

@@ -41,4 +41,3 @@ public struct BankAccountHistorySummary: Codable, JSONEncodable, Hashable {
         try container.encode(totalMovimientos, forKey: .totalMovimientos)
     }
 }
-

@@ -57,4 +57,3 @@ public struct ReportTotals: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(cantidad, forKey: .cantidad)
     }
 }
-

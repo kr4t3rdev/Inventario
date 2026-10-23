@@ -30,4 +30,3 @@ public struct AdminHealthResponseTenants: Codable, JSONEncodable, Hashable {
         try container.encode(total, forKey: .total)
     }
 }
-

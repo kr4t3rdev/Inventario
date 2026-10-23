@@ -166,4 +166,3 @@ class Pagination {
   static const requiredKeys = <String>{
   };
 }
-

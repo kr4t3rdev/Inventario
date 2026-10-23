@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { createVentaAction } from '@/features/ventas/actions';
+import { getVentaCreateIntentKey, resetVentaCreateIntent } from '@/features/ventas/lib/venta-create-intent';
 import { getPuntosDeVentaAction } from '@/features/puntos-venta/actions';
 import { getClientesAction } from '@/features/clientes/actions';
 import { getProductosPorUbicacion } from '@/app/actions/productos-ubicacion';
@@ -47,6 +48,7 @@ interface NuevoPedidoDialogProps {
  * @returns {JSX.Element} Diálogo de creación de pedido.
  */
 export function NuevoPedidoDialog({ open, onOpenChange }: NuevoPedidoDialogProps) {
+  const saleIntent = useRef({ key: null as string | null });
 	const router = useRouter();
 	const [puntosVenta, setPuntosVenta] = useState<{ pvId: string; nombre: string }[]>([]);
 	const [clientes, setClientes] = useState<{ clienteId: string; nombre: string; listaPrecioId?: string | null }[]>([]);
@@ -99,14 +101,25 @@ export function NuevoPedidoDialog({ open, onOpenChange }: NuevoPedidoDialogProps
 		setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
 	const quitarItem = (index: number) => setItems((prev) => prev.filter((_, i) => i !== index));
 
-	const handleSubmit = async () => {
+	const discardDraft = () => {
+		resetVentaCreateIntent(saleIntent.current);
+		setPvId('');
+		setClienteId('');
+		setItems([]);
+		setObservaciones('');
+		setDescuento(0);
+		onOpenChange(false);
+	};
+
+  const handleSubmit = async () => {
 		if (!pvId) return toast.error('Seleccione un punto de venta');
 		if (items.length === 0 || items.some((i) => !i.productoId)) {
 			return toast.error('Agregue al menos un producto al pedido');
 		}
 		setIsSaving(true);
 		try {
-			const r = await createVentaAction({
+      const r = await createVentaAction({
+        idempotencyKey: getVentaCreateIntentKey(saleIntent.current),
 				puntoDeVentaId: pvId,
 				clienteId: clienteId || null,
 				items: items.map((item) => {
@@ -122,7 +135,8 @@ export function NuevoPedidoDialog({ open, onOpenChange }: NuevoPedidoDialogProps
 				observaciones: observaciones || null,
 				modoPedido: true,
 			});
-			if (r.success) {
+      if (r.success) {
+        resetVentaCreateIntent(saleIntent.current);
 				toast.success('Pedido creado. Entréguelo cuando la mercancía salga.');
 				onOpenChange(false);
 				setItems([]);
@@ -242,6 +256,9 @@ export function NuevoPedidoDialog({ open, onOpenChange }: NuevoPedidoDialogProps
 					/>
 				</div>
 				<div className="flex justify-end gap-2">
+					<Button type="button" variant="ghost" onClick={discardDraft} disabled={isSaving}>
+						Descartar borrador
+					</Button>
 					<Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
 						Cancelar
 					</Button>

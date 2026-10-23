@@ -49,4 +49,3 @@ public struct PaymentType: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(isActive, forKey: .isActive)
     }
 }
-

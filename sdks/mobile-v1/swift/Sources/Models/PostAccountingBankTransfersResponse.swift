@@ -34,4 +34,3 @@ public struct PostAccountingBankTransfersResponse: Codable, JSONEncodable, Hasha
         try container.encode(numeroComprobante, forKey: .numeroComprobante)
     }
 }
-

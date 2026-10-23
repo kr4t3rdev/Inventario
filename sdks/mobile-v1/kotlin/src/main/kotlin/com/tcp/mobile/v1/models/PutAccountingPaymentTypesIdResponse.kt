@@ -20,11 +20,11 @@ import com.tcp.mobile.v1.models.PaymentType
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param success 
- * @param `data` 
- * @param message 
+ *
+ * @param success
+ * @param `data`
+ * @param message
  */
 
 
@@ -43,4 +43,3 @@ data class PutAccountingPaymentTypesIdResponse (
 
 
 }
-

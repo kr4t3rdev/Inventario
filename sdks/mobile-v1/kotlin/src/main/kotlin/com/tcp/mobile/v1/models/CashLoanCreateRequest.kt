@@ -19,16 +19,17 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param clienteId 
- * @param montoCapital 
- * @param cuentaBancariaId 
- * @param moneda 
- * @param tasaInteres 
- * @param tasaCambioAlCrear 
- * @param fechaVencimiento 
- * @param observaciones 
+ *
+ * @param clienteId
+ * @param montoCapital
+ * @param cuentaBancariaId
+ * @param moneda
+ * @param tasaInteres
+ * @param tasaCambioAlCrear
+ * @param fechaVencimiento
+ * @param observaciones
+ * @param idempotencyKey Clave opcional para repetir la misma operación sin duplicarla.
  */
 
 
@@ -56,10 +57,13 @@ data class CashLoanCreateRequest (
     val fechaVencimiento: java.time.OffsetDateTime? = null,
 
     @get:JsonProperty("observaciones")
-    val observaciones: kotlin.String? = null
+    val observaciones: kotlin.String? = null,
+
+    /* Clave opcional para repetir la misma operación sin duplicarla. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 
 
 }
-

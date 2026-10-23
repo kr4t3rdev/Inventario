@@ -224,4 +224,3 @@ class BankTransfer {
   static const requiredKeys = <String>{
   };
 }
-

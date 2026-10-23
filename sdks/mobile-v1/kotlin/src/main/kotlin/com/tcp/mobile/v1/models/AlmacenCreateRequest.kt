@@ -19,9 +19,9 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param nombre 
+ *
+ * @param nombre
  */
 
 
@@ -34,4 +34,3 @@ data class AlmacenCreateRequest (
 
 
 }
-

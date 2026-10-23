@@ -53,6 +53,10 @@ function documentedOperations(contract: OpenApiDocument): string[] {
   ).sort();
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function resolveSchema(
   contract: OpenApiDocument,
   schema: Record<string, unknown>,
@@ -197,6 +201,136 @@ describe('mobile v1 OpenAPI contract', () => {
 
     expect(contract.paths['/accounting/bank-transfers/{id}/comprobante'].get)
       .toHaveProperty('responses.404');
+  });
+
+  it('documents the capital-injection idempotency header and optional body key', async () => {
+    const contract = await loadContract();
+    const operation = contract.paths['/accounting/capital-injections'].post as {
+      parameters: Array<Record<string, unknown>>;
+      description: string;
+      requestBody: { content: { 'application/json': { schema: Record<string, unknown> } } };
+    };
+    const schema = resolveSchema(
+      contract,
+      operation.requestBody.content['application/json'].schema,
+    );
+    const schemaProperties = schema.properties;
+    expect(isRecord(schemaProperties)).toBe(true);
+    if (!isRecord(schemaProperties)) {
+      throw new Error('Expected the capital-injection schema to define properties');
+    }
+
+    const bodyKey = schemaProperties.idempotencyKey;
+    expect(isRecord(bodyKey)).toBe(true);
+    if (!isRecord(bodyKey)) {
+      throw new Error('Expected idempotencyKey to be an object schema');
+    }
+
+    expect(operation.parameters).toContainEqual(expect.objectContaining({
+      name: 'Idempotency-Key',
+      in: 'header',
+      required: false,
+      schema: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 64,
+      },
+    }));
+    expect(operation.description).toMatch(/cuerpo.*prevalece/i);
+    expect(bodyKey).toMatchObject({
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+    });
+    expect((schema.required as string[])).not.toContain('idempotencyKey');
+  });
+
+  it('documents sale-create idempotency precedence, replay, and payload conflicts', async () => {
+    const contract = await loadContract();
+    const operation = contract.paths['/sales/create'].post as {
+      parameters: Array<Record<string, unknown>>;
+      description: string;
+      requestBody: { content: { 'application/json': { schema: Record<string, unknown> } } };
+      responses: Record<string, { description?: string }>;
+    };
+    const schema = resolveSchema(
+      contract,
+      operation.requestBody.content['application/json'].schema,
+    );
+    const properties = schema.properties;
+    expect(isRecord(properties)).toBe(true);
+    if (!isRecord(properties)) {
+      throw new Error('Expected the sale-create schema to define properties');
+    }
+
+    expect(properties.idempotencyKey).toMatchObject({
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+    });
+    expect(schema.required as string[]).not.toContain('idempotencyKey');
+    expect(operation.parameters).toContainEqual(expect.objectContaining({
+      name: 'Idempotency-Key',
+      in: 'header',
+      required: false,
+      schema: { type: 'string', minLength: 1, maxLength: 64 },
+    }));
+    expect(operation.responses).toHaveProperty('409');
+    expect(operation.responses['409'].description)
+      .toMatch(/IDEMPOTENCY_KEY_REUSED.*misma clave.*payload normalizado diferente/i);
+    expect(operation.description)
+      .toMatch(/cuerpo.*prevalece.*payload normalizado.*respuesta original.*autenticaci[oó]n/i);
+    expect(operation.description)
+      .toMatch(/clave estable por venta l[oó]gica.*reintentos.*no debe generar.*clave nueva/i);
+  });
+
+  it('tells mobile clients to retain the same key across sale retries', async () => {
+    const docs = await readFile(path.join(process.cwd(), 'docs/mobile-api-contract.md'), 'utf8');
+    const saleSection = docs.split('### `PUT /api/mobile/v1/sales/:id/update`')[0];
+
+    expect(saleSection).toMatch(/clave estable por (?:cada )?venta l[oó]gica pendiente/i);
+    expect(saleSection).toMatch(/conservar.*reintento/i);
+    expect(saleSection).toMatch(/no debe generar.*clave nueva.*cada intento/i);
+  });
+
+  it('documents cash payment dates and idempotency for debts and loans', async () => {
+    const contract = await loadContract();
+    const paymentPaths = [
+      '/accounting/cash-debts/{id}/payments',
+      '/accounting/cash-loans/{id}/payments',
+    ];
+
+    for (const routePath of paymentPaths) {
+      const operation = contract.paths[routePath]?.post as {
+        parameters: Array<Record<string, unknown>>;
+        description: string;
+        requestBody: { content: { 'application/json': { schema: Record<string, unknown> } } };
+        responses: Record<string, unknown>;
+      };
+      const schema = resolveSchema(
+        contract,
+        operation.requestBody.content['application/json'].schema,
+      );
+      const properties = schema.properties as Record<string, Record<string, unknown>>;
+      const fechaOperacion = properties.fechaOperacion;
+
+      expect(fechaOperacion, routePath).toMatchObject({ type: 'string' });
+      expect(fechaOperacion.description, routePath).toMatch(/fecha|date/i);
+      expect(properties.idempotencyKey, routePath).toMatchObject({
+        type: 'string',
+        minLength: 1,
+        maxLength: 64,
+      });
+      expect((schema.required as string[]), routePath).not.toContain('fechaOperacion');
+      expect(operation.parameters, routePath).toContainEqual(expect.objectContaining({
+        name: 'Idempotency-Key',
+        in: 'header',
+        required: false,
+        schema: { type: 'string', minLength: 1, maxLength: 64 },
+      }));
+      expect(operation.responses, routePath).toHaveProperty('409');
+      expect(operation.description, routePath).toMatch(/cuerpo.*prevalece/i);
+    }
   });
 
   it('uses functional Spanish copy instead of generated method/path text', async () => {

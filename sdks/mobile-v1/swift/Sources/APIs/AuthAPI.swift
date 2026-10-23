@@ -14,7 +14,7 @@ open class AuthAPI {
 
     /**
      Consultar perfil autenticado
-     
+
      - returns: AuthenticatedUser
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -29,7 +29,7 @@ open class AuthAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<AuthenticatedUser> 
+     - returns: RequestBuilder<AuthenticatedUser>
      */
     open class func mobileGetAuthMeWithRequestBuilder() -> RequestBuilder<AuthenticatedUser> {
         let localVariablePath = "/auth/me"
@@ -51,7 +51,7 @@ open class AuthAPI {
 
     /**
      Listar tenants accesibles
-     
+
      - returns: TenantListResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -66,7 +66,7 @@ open class AuthAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<TenantListResponse> 
+     - returns: RequestBuilder<TenantListResponse>
      */
     open class func mobileGetAuthTenantsWithRequestBuilder() -> RequestBuilder<TenantListResponse> {
         let localVariablePath = "/auth/tenants"
@@ -88,8 +88,8 @@ open class AuthAPI {
 
     /**
      Iniciar sesión móvil
-     
-     - parameter loginRequest: (body)  
+
+     - parameter loginRequest: (body)
      - parameter xTenantId: (header) Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
      - returns: AuthSession
      */
@@ -102,9 +102,9 @@ open class AuthAPI {
      Iniciar sesión móvil
      - POST /auth/login
      - Valida las credenciales y entrega el usuario autenticado junto con los tokens de acceso y renovación.
-     - parameter loginRequest: (body)  
+     - parameter loginRequest: (body)
      - parameter xTenantId: (header) Tenant que se desea activar al iniciar sesión; si se omite, el servicio resuelve el contexto disponible. (optional)
-     - returns: RequestBuilder<AuthSession> 
+     - returns: RequestBuilder<AuthSession>
      */
     open class func mobilePostAuthLoginWithRequestBuilder(loginRequest: LoginRequest, xTenantId: String? = nil) -> RequestBuilder<AuthSession> {
         let localVariablePath = "/auth/login"
@@ -127,7 +127,7 @@ open class AuthAPI {
 
     /**
      Cerrar sesión actual
-     
+
      - returns: SuccessResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -142,7 +142,7 @@ open class AuthAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<SuccessResponse> 
+     - returns: RequestBuilder<SuccessResponse>
      */
     open class func mobilePostAuthLogoutWithRequestBuilder() -> RequestBuilder<SuccessResponse> {
         let localVariablePath = "/auth/logout"
@@ -164,8 +164,8 @@ open class AuthAPI {
 
     /**
      Renovar tokens de sesión
-     
-     - parameter refreshRequest: (body)  
+
+     - parameter refreshRequest: (body)
      - returns: TokenPair
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -177,8 +177,8 @@ open class AuthAPI {
      Renovar tokens de sesión
      - POST /auth/refresh
      - Valida el token de renovación y emite un nuevo par de tokens para continuar la sesión.
-     - parameter refreshRequest: (body)  
-     - returns: RequestBuilder<TokenPair> 
+     - parameter refreshRequest: (body)
+     - returns: RequestBuilder<TokenPair>
      */
     open class func mobilePostAuthRefreshWithRequestBuilder(refreshRequest: RefreshRequest) -> RequestBuilder<TokenPair> {
         let localVariablePath = "/auth/refresh"
@@ -200,8 +200,8 @@ open class AuthAPI {
 
     /**
      Registrar cuenta móvil
-     
-     - parameter registerRequest: (body)  
+
+     - parameter registerRequest: (body)
      - returns: RegisterResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -213,8 +213,8 @@ open class AuthAPI {
      Registrar cuenta móvil
      - POST /auth/register
      - Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
-     - parameter registerRequest: (body)  
-     - returns: RequestBuilder<RegisterResponse> 
+     - parameter registerRequest: (body)
+     - returns: RequestBuilder<RegisterResponse>
      */
     open class func mobilePostAuthRegisterWithRequestBuilder(registerRequest: RegisterRequest) -> RequestBuilder<RegisterResponse> {
         let localVariablePath = "/auth/register"
@@ -236,8 +236,8 @@ open class AuthAPI {
 
     /**
      Cambiar tenant activo
-     
-     - parameter switchTenantRequest: (body)  
+
+     - parameter switchTenantRequest: (body)
      - returns: SwitchTenantResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -252,8 +252,8 @@ open class AuthAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter switchTenantRequest: (body)  
-     - returns: RequestBuilder<SwitchTenantResponse> 
+     - parameter switchTenantRequest: (body)
+     - returns: RequestBuilder<SwitchTenantResponse>
      */
     open class func mobilePostAuthTenantsWithRequestBuilder(switchTenantRequest: SwitchTenantRequest) -> RequestBuilder<SwitchTenantResponse> {
         let localVariablePath = "/auth/tenants"

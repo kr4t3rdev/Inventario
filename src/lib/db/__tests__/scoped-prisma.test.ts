@@ -124,7 +124,7 @@ describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
     '%s inyecta tenantId con AND sin mutar el original',
     (op) => {
       const args = { where: { nombre: 'x' } };
-      const out = applyTenantScope('Venta', op, args, TENANT_A) as {
+      const out = applyTenantScope('Venta', op, args, TENANT_A) as unknown as {
         where: { AND: unknown[] };
       };
       expect(out.where).toEqual({ AND: [{ nombre: 'x' }, { tenantId: TENANT_A }] });

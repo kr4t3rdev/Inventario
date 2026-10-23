@@ -14,8 +14,8 @@ open class AccountingConfigurationAPI {
 
     /**
      Eliminar tipos de pago
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: DeleteAccountingPaymentTypesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -30,8 +30,8 @@ open class AccountingConfigurationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<DeleteAccountingPaymentTypesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<DeleteAccountingPaymentTypesIdResponse>
      */
     open class func mobileDeleteAccountingPaymentTypesByIdWithRequestBuilder(id: String) -> RequestBuilder<DeleteAccountingPaymentTypesIdResponse> {
         var localVariablePath = "/accounting/payment-types/{id}"
@@ -56,7 +56,7 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar monedas configuradas
-     
+
      - returns: GetAccountingExchangeMonedasResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -71,7 +71,7 @@ open class AccountingConfigurationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingExchangeMonedasResponse> 
+     - returns: RequestBuilder<GetAccountingExchangeMonedasResponse>
      */
     open class func mobileGetAccountingExchangeMonedasWithRequestBuilder() -> RequestBuilder<GetAccountingExchangeMonedasResponse> {
         let localVariablePath = "/accounting/exchange/monedas"
@@ -93,7 +93,7 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar tasas de cambio
-     
+
      - returns: GetAccountingExchangeTasasResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -108,7 +108,7 @@ open class AccountingConfigurationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingExchangeTasasResponse> 
+     - returns: RequestBuilder<GetAccountingExchangeTasasResponse>
      */
     open class func mobileGetAccountingExchangeTasasWithRequestBuilder() -> RequestBuilder<GetAccountingExchangeTasasResponse> {
         let localVariablePath = "/accounting/exchange/tasas"
@@ -130,7 +130,7 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar eventos de auditoría contable
-     
+
      - parameter entidad: (query) Valor de entidad aceptado por el handler. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
      - parameter offset: (query) Valor de offset aceptado por el handler. (optional)
@@ -151,7 +151,7 @@ open class AccountingConfigurationAPI {
      - parameter entidad: (query) Valor de entidad aceptado por el handler. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
      - parameter offset: (query) Valor de offset aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingLogsResponse> 
+     - returns: RequestBuilder<GetAccountingLogsResponse>
      */
     open class func mobileGetAccountingLogsWithRequestBuilder(entidad: String? = nil, limit: Int? = nil, offset: String? = nil) -> RequestBuilder<GetAccountingLogsResponse> {
         let localVariablePath = "/accounting/logs"
@@ -178,7 +178,7 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar tipos de pago
-     
+
      - parameter includeInactive: (query) Valor de includeInactive aceptado por el handler. (optional)
      - parameter requiereCuenta: (query) Valor de requiereCuenta aceptado por el handler. (optional)
      - returns: GetAccountingPaymentTypesResponse
@@ -197,7 +197,7 @@ open class AccountingConfigurationAPI {
        - name: bearerAuth
      - parameter includeInactive: (query) Valor de includeInactive aceptado por el handler. (optional)
      - parameter requiereCuenta: (query) Valor de requiereCuenta aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingPaymentTypesResponse> 
+     - returns: RequestBuilder<GetAccountingPaymentTypesResponse>
      */
     open class func mobileGetAccountingPaymentTypesWithRequestBuilder(includeInactive: Bool? = nil, requiereCuenta: String? = nil) -> RequestBuilder<GetAccountingPaymentTypesResponse> {
         let localVariablePath = "/accounting/payment-types"
@@ -223,7 +223,7 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar cuentas disponibles para tipos de pago
-     
+
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter tipoCuenta: (query) Valor de tipoCuenta aceptado por el handler. (optional)
      - returns: GetAccountingPaymentTypesAvailableAccountsResponse
@@ -242,7 +242,7 @@ open class AccountingConfigurationAPI {
        - name: bearerAuth
      - parameter moneda: (query) Código de moneda. (optional)
      - parameter tipoCuenta: (query) Valor de tipoCuenta aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetAccountingPaymentTypesAvailableAccountsResponse> 
+     - returns: RequestBuilder<GetAccountingPaymentTypesAvailableAccountsResponse>
      */
     open class func mobileGetAccountingPaymentTypesAvailableAccountsWithRequestBuilder(moneda: String? = nil, tipoCuenta: String? = nil) -> RequestBuilder<GetAccountingPaymentTypesAvailableAccountsResponse> {
         let localVariablePath = "/accounting/payment-types/available-accounts"
@@ -268,8 +268,8 @@ open class AccountingConfigurationAPI {
 
     /**
      Consultar tipos de pago
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingPaymentTypesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -284,8 +284,8 @@ open class AccountingConfigurationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingPaymentTypesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingPaymentTypesIdResponse>
      */
     open class func mobileGetAccountingPaymentTypesByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingPaymentTypesIdResponse> {
         var localVariablePath = "/accounting/payment-types/{id}"
@@ -310,9 +310,9 @@ open class AccountingConfigurationAPI {
 
     /**
      Actualizar tipos de pago
-     
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter paymentTypeUpdateRequest: (body)  
+
+     - parameter id: (path) Identificador único del recurso.
+     - parameter paymentTypeUpdateRequest: (body)
      - returns: PutAccountingPaymentTypesIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -327,9 +327,9 @@ open class AccountingConfigurationAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - parameter paymentTypeUpdateRequest: (body)  
-     - returns: RequestBuilder<PutAccountingPaymentTypesIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - parameter paymentTypeUpdateRequest: (body)
+     - returns: RequestBuilder<PutAccountingPaymentTypesIdResponse>
      */
     open class func mobilePutAccountingPaymentTypesByIdWithRequestBuilder(id: String, paymentTypeUpdateRequest: PaymentTypeUpdateRequest) -> RequestBuilder<PutAccountingPaymentTypesIdResponse> {
         var localVariablePath = "/accounting/payment-types/{id}"

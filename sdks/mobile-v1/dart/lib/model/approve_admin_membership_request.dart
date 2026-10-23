@@ -193,5 +193,3 @@ class ApproveAdminMembershipRequestTenantRoleEnumTypeTransformer {
   /// Singleton [ApproveAdminMembershipRequestTenantRoleEnumTypeTransformer] instance.
   static ApproveAdminMembershipRequestTenantRoleEnumTypeTransformer? _instance;
 }
-
-

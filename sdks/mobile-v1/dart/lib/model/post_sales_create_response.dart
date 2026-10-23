@@ -240,4 +240,3 @@ class PostSalesCreateResponse {
   static const requiredKeys = <String>{
   };
 }
-

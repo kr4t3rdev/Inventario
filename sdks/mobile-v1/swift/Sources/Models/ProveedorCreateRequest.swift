@@ -58,4 +58,3 @@ public struct ProveedorCreateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(contrato, forKey: .contrato)
     }
 }
-

@@ -106,4 +106,3 @@ class RejectAdminMembershipRequest {
     'membershipId',
   };
 }
-

@@ -20,10 +20,10 @@ import com.tcp.mobile.v1.models.PostAdminUsersLockResponseUser
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param user 
- * @param message 
+ *
+ * @param user
+ * @param message
  */
 
 
@@ -39,4 +39,3 @@ data class PostAdminUsersLockResponse (
 
 
 }
-

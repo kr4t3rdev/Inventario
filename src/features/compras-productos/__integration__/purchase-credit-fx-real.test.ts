@@ -17,18 +17,6 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
   getCurrentUser: vi.fn(async () => actionContext.user),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/features/inventario/movimientos', () => ({
-	registrarMovimiento: vi.fn(),
-	mapearMotivoLegacy: vi.fn((reason: string) => reason),
-	getMovimientosDeOrigen: vi.fn().mockResolvedValue([]),
-	revertirMovimientosDeOrigen: vi.fn(),
-}));
-vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
-vi.mock('@/lib/services/stock-ubicacion-queries', () => ({ getStockTotalProducto: vi.fn().mockResolvedValue(0) }));
-vi.mock('@/lib/cost-history-utils', () => ({
-	recordCostChange: vi.fn(),
-	CostChangeReason: { RESTOCK: 'RESTOCK' },
-}));
 
 const prefix = `cta-compra-fx-${crypto.randomUUID()}`;
 let tenantId = '';
@@ -41,10 +29,44 @@ let cuentaAnticipoId = '';
 let tipoPagoAnticipoId = '';
 let trigger = '';
 
-const manager = () => ({
+/**
+ * @description Captura los efectos reales de compra, inventario, costos y contabilidad.
+ * @param {string} scope - Tenant sintético propietario de las filas.
+ * @returns {Promise<unknown[]>} Filas completas ordenadas para verificar atomicidad.
+ */
+async function purchaseSnapshot(scope: string): Promise<unknown[]> {
+  return Promise.all([
+    prisma.producto.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+    prisma.stockUbicacion.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+    prisma.stockMoveLine.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+    prisma.productoCostHistory.findMany({ where: { producto: { tenantId: scope } },
+      orderBy: { id: 'asc' } }),
+    prisma.compraDocumento.findMany({ where: { tenantId: scope },
+      orderBy: { compraDocumentoId: 'asc' } }),
+    prisma.compraDocumentoItem.findMany({ where: { tenantId: scope },
+      orderBy: { compraDocumentoItemId: 'asc' } }),
+    prisma.gastoCompra.findMany({ where: { tenantId: scope }, orderBy: { gastoCompraId: 'asc' } }),
+    prisma.cuentaPorPagar.findMany({ where: { tenantId: scope },
+      orderBy: { cuentaPorPagarId: 'asc' } }),
+    prisma.reconciliacionGasto.findMany({ where: { tenantId: scope },
+      orderBy: { reconciliacionId: 'asc' } }),
+    prisma.cuentaBancaria.findMany({ where: { tenantId: scope }, orderBy: { cuentaId: 'asc' } }),
+    prisma.asiento.findMany({ where: { tenantId: scope }, orderBy: { asientoId: 'asc' },
+      include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+    prisma.periodoCache.findMany({ where: { tenantId: scope }, orderBy: { cacheKey: 'asc' } }),
+    prisma.shadowPosteoOutbox.findMany({ where: { tenantId: scope }, orderBy: { id: 'asc' } }),
+  ]);
+}
+
+/**
+ * @description Construye la identidad controlada usada por el wrapper real.
+ * @returns {AuthenticatedUser} Actor manager del tenant sintético.
+ */
+const manager = (): AuthenticatedUser => ({
 	userId: usuarioId, tenantId, tenantRole: 'manager',
+	name: prefix, email: `${prefix}@test.local`, role: 'regularUser', isActive: true,
 	planFeatures: { compras: true, anticipos: true, 'contabilidad-formal': true },
-}) as never;
+});
 
 beforeEach(() => {
   actionContext.user = manager();
@@ -122,37 +144,12 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${trigger}()`);
 		}
-    if (!tenantId) return;
-    await prisma.asientoLinea.deleteMany({ where: { asiento: { tenantId } } });
-    await prisma.asiento.deleteMany({ where: { tenantId } });
-    await prisma.reconciliacionGasto.deleteMany({ where: { tenantId } });
-    await prisma.compraDocumentoItem.deleteMany({ where: { tenantId } });
-		await prisma.cuentaPorPagar.deleteMany({ where: { tenantId } });
-		await prisma.compraDocumento.deleteMany({ where: { tenantId } });
-		await prisma.gastoCompra.deleteMany({ where: { tenantId } });
-		await prisma.anticipoMovimiento.deleteMany({ where: { anticipo: { tenantId } } });
-		await prisma.anticipo.deleteMany({ where: { tenantId } });
-		await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
-		await prisma.producto.deleteMany({ where: { tenantId } });
-		await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
-		await prisma.cuentaContable.deleteMany({ where: { tenantId } });
-		await prisma.diario.deleteMany({ where: { tenantId } });
-		await prisma.periodoCache.deleteMany({ where: { tenantId } });
-		await prisma.periodoContable.deleteMany({ where: { tenantId } });
-		await prisma.contrato.deleteMany({ where: { tenantId } });
-		await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
-		await prisma.tipoPago.deleteMany({ where: { tenantId } });
-		await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
-		await prisma.tenantLicense.deleteMany({ where: { tenantId } });
-		await prisma.vendor.deleteMany({ where: { tenantId } });
-		await prisma.almacen.deleteMany({ where: { tenantId } });
-		await prisma.categoria.deleteMany({ where: { tenantId } });
-		await prisma.tenant.delete({ where: { tenantId } });
-		await prisma.user.deleteMany({ where: { userId: usuarioId } });
-		await prisma.plan.deleteMany({ where: { planId } });
+    // Conservar fixtures sintéticos y su kardex apendicular en la DB desechable;
+    // no desactivar guards ni borrar parcialmente su cadena documental.
 	});
 
   it('registra compra extranjera y hereda FX al asiento de CxP', async () => {
+		const stockBefore = await prisma.stockMoveLine.count({ where: { tenantId, productoId } });
 		const result = await _createCompraProductoAction({
 			proveedorId,
 			formaPago: 'PAGO_PARCIAL',
@@ -176,10 +173,57 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
 			tenantId, origenTipo: 'compra_documento', origenId: documento.compraDocumentoId,
 		}, include: { lineas: true } });
 		expect(asientos).toHaveLength(1);
+		expect(await prisma.stockMoveLine.count({ where: { tenantId, productoId } }))
+			.toBe(stockBefore + 1);
+		expect(await prisma.stockUbicacion.findFirst({ where: { tenantId, productoId } }))
+			.toMatchObject({ cantidad: 1, cantidadDisponible: 1 });
     expect(asientos[0].lineas.some((line) =>
       line.fxEvidenceFingerprint === documento.fxEvidenceFingerprint
       && line.tasaCambio?.toString() === '24')).toBe(true);
   });
+
+  it('deniega al actor sin permiso antes de escribir compra, inventario o contabilidad', async () => {
+    actionContext.user = { ...manager(), permissions: new Set<string>() };
+    const before = await purchaseSnapshot(tenantId);
+    const result = await _createCompraProductoAction({
+      proveedorId, formaPago: 'PAGO_PARCIAL', estado: 'PENDIENTE', moneda: 'CUP',
+      items: [{ productoId, precioCosto: 100, cantidad: 1 }],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba rechazo por permiso');
+    expect(result.error.code).toBe('FORBIDDEN');
+    expect(await purchaseSnapshot(tenantId)).toEqual(before);
+  });
+
+  it.each(['producto', 'proveedor'] as const)(
+    'rechaza %s existente de otro tenant y conserva ambos snapshots', async (reference) => {
+      const foreign = await prisma.tenant.create({ data: {
+        nombre: `${prefix}-foreign`, slug: `${prefix}-${crypto.randomUUID()}`,
+      } });
+      const vendor = await prisma.vendor.create({
+        data: { tenantId: foreign.tenantId, nombre: 'Proveedor ajeno R6' },
+      });
+      const product = await prisma.producto.create({ data: {
+        tenant: { connect: { tenantId: foreign.tenantId } }, nombre: 'Producto ajeno R6',
+        precioCosto: 100, precioVenta: 150, stock: 0,
+        categoria: { create: { tenantId: foreign.tenantId, nombre: 'Categoría ajena R6' } },
+        almacen: { create: { tenantId: foreign.tenantId, nombre: 'Almacén ajeno R6' } },
+      } });
+      const before = await purchaseSnapshot(tenantId);
+      const foreignBefore = await purchaseSnapshot(foreign.tenantId);
+      const result = await _createCompraProductoAction({
+        proveedorId: reference === 'proveedor' ? vendor.vendorId : proveedorId,
+        formaPago: 'PAGO_PARCIAL', estado: 'PENDIENTE', moneda: 'CUP',
+        items: [{ productoId: reference === 'producto' ? product.id : productoId,
+          precioCosto: 100, cantidad: 1 }],
+      });
+      expect(result.success).toBe(false);
+      if (result.success) expect.unreachable('Se esperaba rechazo por pertenencia');
+      expect(result.error.code).toBe('NOT_FOUND');
+      expect(await purchaseSnapshot(tenantId)).toEqual(before);
+      expect(await purchaseSnapshot(foreign.tenantId)).toEqual(foreignBefore);
+    },
+  );
 
   it('anular una compra a crédito crea reverso formal y preserva evidencia FX', async () => {
     const result = await _createCompraProductoAction({
@@ -385,33 +429,12 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
         where: { cuentaId: cuentaUsd },
       })).saldo)).toBe(100);
     } finally {
-      await prisma.asientoLinea.deleteMany({ where: { asiento: { tenantId: tenantUsdId } } })
-        .catch(() => undefined);
-      await prisma.asiento.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.reconciliacionGasto.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.compraDocumentoItem.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.cuentaPorPagar.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.compraDocumento.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.gastoCompra.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.producto.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.cuentaRolTenant.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.cuentaContable.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.diario.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.periodoContable.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.tipoPago.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.cuentaBancaria.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.tenantLicense.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.vendor.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.almacen.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.categoria.deleteMany({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.tenant.delete({ where: { tenantId: tenantUsdId } }).catch(() => undefined);
-      await prisma.user.delete({ where: { userId: usuarioUsd.userId } }).catch(() => undefined);
-      await prisma.plan.deleteMany({ where: { planId: planUsd.planId } }).catch(() => undefined);
+      actionContext.user = manager();
     }
   });
 
   it('revierte compra, reconciliación y saldo si falla el asiento de PAGO_COMPLETO', async () => {
+    const before = await purchaseSnapshot(tenantId);
     trigger = `cta_purchase_cash_${crypto.randomUUID().replaceAll('-', '')}`;
     await prisma.$executeRawUnsafe(`CREATE FUNCTION ${trigger}() RETURNS trigger
       LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'pago contado fallido' USING ERRCODE = '22012';
@@ -442,6 +465,7 @@ describe('compra de producto a crédito FX — PostgreSQL aislado', { timeout: 9
       expect((await prisma.cuentaBancaria.findUniqueOrThrow({
         where: { cuentaId: cuentaAnticipoId },
       })).saldo).toEqual(saldoAntes);
+      expect(await purchaseSnapshot(tenantId)).toEqual(before);
     } finally {
       serverActionErrorSpy.mockRestore();
       await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger} ON "asientos"`);

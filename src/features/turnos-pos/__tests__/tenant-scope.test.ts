@@ -14,7 +14,7 @@ const mockPrisma = vi.hoisted(() => ({
 const mockUser = vi.hoisted(
   (): AuthenticatedUser => ({
     userId: 'user-1', tenantId: 'tenant-A',
-    role: 'ADMIN', email: 'admin@test.com', name: 'Admin',
+    role: 'admin', email: 'admin@test.com', name: 'Admin', isActive: true,
   }),
 );
 

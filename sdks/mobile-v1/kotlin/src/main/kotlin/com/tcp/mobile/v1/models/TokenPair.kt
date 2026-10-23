@@ -20,10 +20,10 @@ import com.tcp.mobile.v1.models.Token
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param accessToken 
- * @param refreshToken 
+ *
+ * @param accessToken
+ * @param refreshToken
  */
 
 
@@ -41,4 +41,3 @@ data class TokenPair (
     override fun toString(): String = "TokenPair(<redacted>)"
 
 }
-

@@ -41,8 +41,8 @@ DashboardAPI.mobileGetDashboardStats(ubicacionId: ubicacionId, tipoUbicacion: ti
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ubicacionId** | **String** | Valor de ubicacionId aceptado por el handler. | [optional] 
- **tipoUbicacion** | **String** | Valor de tipoUbicacion aceptado por el handler. | [optional] 
+ **ubicacionId** | **String** | Valor de ubicacionId aceptado por el handler. | [optional]
+ **tipoUbicacion** | **String** | Valor de tipoUbicacion aceptado por el handler. | [optional]
 
 ### Return type
 

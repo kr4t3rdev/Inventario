@@ -189,7 +189,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe mostrar todos los productos si búsqueda está vacía', () => {
-    const busquedaProductos = ''
+    const busquedaProductos: string = ''
     
     const productosInventario = [
       { id: 'p1', nombre: 'Harina de Trigo', precioCosto: 100, stock: 500 },
@@ -206,7 +206,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe permitir editar cantidad y unidad de producto agregado', () => {
-    let nuevoItems = [
+    let nuevoItems: { productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }[] = [
       { productoId: 'p1', cantidad: 1, unidadSimbolo: null, desperdicio: 0 },
     ]
 
@@ -258,7 +258,7 @@ describe('E2E: Crear Receta Completa con Productos', () => {
   })
 
   it('debe permitir crear receta sin producto final', () => {
-    const selectedProducto = ''
+    const selectedProducto: string = ''
     const isValid = selectedProducto === '' || selectedProducto.length > 0
 
     expect(isValid).toBe(true)

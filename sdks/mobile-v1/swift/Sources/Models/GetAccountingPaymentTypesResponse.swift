@@ -30,4 +30,3 @@ public struct GetAccountingPaymentTypesResponse: Codable, JSONEncodable, Hashabl
         try container.encode(items, forKey: .items)
     }
 }
-

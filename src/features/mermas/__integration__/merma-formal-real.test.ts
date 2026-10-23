@@ -36,7 +36,28 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 	let almacenId: string | null = null;
 	let productoId = '';
 	let actorId = '';
+	let foreignTenantId = '';
+	let foreignProductId = '';
 	const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+
+	/**
+	 * @description Captura filas completas de los efectos del writer de merma.
+	 * @returns {Promise<unknown[]>} Snapshot ordenado de inventario, contabilidad y auditoría.
+	 */
+	async function snapshot(): Promise<unknown[]> {
+		return Promise.all([
+			prisma.producto.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.stockUbicacion.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.stockMoveLine.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.merma.findMany({ where: { tenantId }, orderBy: { mermaId: 'asc' } }),
+			prisma.ajusteInventario.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+			prisma.asiento.findMany({ where: { tenantId }, orderBy: { asientoId: 'asc' },
+				include: { lineas: { orderBy: { lineaId: 'asc' } } } }),
+			prisma.auditLog.findMany({ where: { usuarioId: actorId }, orderBy: { id: 'asc' } }),
+			prisma.periodoCache.findMany({ where: { tenantId }, orderBy: { cacheKey: 'asc' } }),
+			prisma.shadowPosteoOutbox.findMany({ where: { tenantId }, orderBy: { id: 'asc' } }),
+		]);
+	}
 
 	beforeAll(async () => {
 		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
@@ -78,7 +99,7 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 		actorId = actor.userId;
 		await prisma.moneda.upsert({
 			where: { codigo: 'USD' },
-			update: { isActive: true },
+			update: {},
 			create: { codigo: 'USD', nombre: 'Dólar', simbolo: '$', esPrincipal: false },
 		});
 		await prisma.tenantAccountingPolicy.create({
@@ -103,6 +124,15 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 			},
 		});
 		productoId = producto.id;
+		foreignTenantId = (await prisma.tenant.create({
+			data: { nombre: 'Referencia R6 ajena', slug: `merma-foreign-${suffix}` },
+		})).tenantId;
+		foreignProductId = (await prisma.producto.create({ data: {
+			nombre: 'Producto R6 ajeno', tenant: { connect: { tenantId: foreignTenantId } },
+			precioCosto: 10, precioVenta: 15, stock: 100,
+			categoria: { create: { nombre: 'Categoría ajena', tenantId: foreignTenantId } },
+			almacen: { create: { nombre: 'Almacén ajeno', tenantId: foreignTenantId } },
+		} })).id;
 		await prisma.stockUbicacion.create({
 			data: {
 				tenantId, productoId, tipoUbicacion: 'almacen',
@@ -115,6 +145,12 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 		delete process.env.CONTABILIDAD_FORMAL_MODE;
 		if (originalMode !== undefined) process.env.CONTABILIDAD_FORMAL_MODE = originalMode;
 		if (!tenantId) return;
+		if (foreignTenantId) {
+			await prisma.producto.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.categoria.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.almacen.deleteMany({ where: { tenantId: foreignTenantId } });
+			await prisma.tenant.delete({ where: { tenantId: foreignTenantId } });
+		}
 		const productoIds = (
 			await prisma.producto.findMany({ where: { tenantId }, select: { id: true } })
 		).map((p) => p.id);
@@ -202,25 +238,41 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 
 		const trigger = `merma_fail_${randomUUID().replaceAll('-', '')}`;
 		const fn = `${trigger}_fn`;
+		const sequence = `${trigger}_seq`;
+		await prisma.$executeRawUnsafe(`CREATE SEQUENCE "${sequence}"`);
 		// TenantId interpolado con comillas seguras (identificador cuid, sin comillas).
 		await prisma.$executeRawUnsafe(
 			`CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger LANGUAGE plpgsql AS $$
-			 BEGIN IF NEW."tenantId" = '${tenantId.replaceAll("'", "''")}' THEN RAISE EXCEPTION 'injected merma posting failure'; END IF; RETURN NEW; END $$`,
+			 BEGIN IF EXISTS (SELECT 1 FROM "asientos" WHERE "asientoId" = NEW."asientoId"
+			 AND "tenantId" = '${tenantId.replaceAll("'", "''")}') THEN
+			 IF NOT EXISTS (SELECT 1 FROM "Merma" WHERE "productoId" = '${productoRollback.id}')
+			 OR NOT EXISTS (SELECT 1 FROM "StockUbicacion" WHERE "productoId" =
+			 '${productoRollback.id}' AND "cantidadDisponible" = 46)
+			 OR NOT EXISTS (SELECT 1 FROM "asientos" WHERE "asientoId" = NEW."asientoId") THEN
+			 RAISE EXCEPTION 'R6_MERMA_PROGRESS_NOT_REACHED'; END IF;
+			 PERFORM nextval('"${sequence}"');
+			 RAISE EXCEPTION 'R6_MERMA_LINE_FAILPOINT' USING ERRCODE = '22012';
+			 END IF; RETURN NEW; END $$`,
 		);
 		await prisma.$executeRawUnsafe(`
 			CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asiento_lineas"
 			FOR EACH ROW WHEN (NEW."referencia" = '${productoRollback.id}')
 			EXECUTE FUNCTION "${fn}"()`);
 
+		const before = await snapshot();
 		try {
 			const respuesta = await createMermaAction({
 				productoId: productoRollback.id, cantidad: 4, motivo: 'Rollback',
 				almacenId: almacenId as string,
 			} as never);
 			expect(respuesta.success).toBe(false);
+			expect(await prisma.$queryRawUnsafe(`SELECT is_called FROM "${sequence}"`))
+				.toEqual([{ is_called: true }]);
+			expect(await snapshot()).toEqual(before);
 		} finally {
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asiento_lineas"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`);
+			await prisma.$executeRawUnsafe(`DROP SEQUENCE IF EXISTS "${sequence}"`);
 		}
 
 		expect(await prisma.merma.count({
@@ -242,6 +294,32 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 			where: { tenantId, origenTipo: 'merma', origenId: productoRollback.id },
 		})).toBe(0);
 	});
+
+	it.each(['permiso', 'tenant'] as const)('rechaza %s inválido sin efectos físicos',
+		async (gate) => {
+			const permissions = currentUser.value.permissions;
+			const before = await snapshot();
+			const foreignBefore = await prisma.producto.findUniqueOrThrow({
+				where: { id: foreignProductId },
+			});
+			try {
+				if (gate === 'permiso') currentUser.value.permissions = new Set();
+				const result = await createMermaAction({
+					productoId: gate === 'tenant' ? foreignProductId : productoId,
+					cantidad: 1, motivo: 'R6 gate', almacenId: almacenId as string,
+				});
+				expect(result.success).toBe(false);
+				if (result.success) expect.unreachable('Se esperaba rechazo del writer');
+				expect(result.error.code).toBe(gate === 'permiso' ? 'FORBIDDEN' : 'NOT_FOUND');
+				expect(await snapshot()).toEqual(before);
+				expect(await prisma.producto.findUniqueOrThrow({
+					where: { id: foreignProductId },
+				})).toEqual(foreignBefore);
+			} finally {
+				currentUser.value.permissions = permissions;
+			}
+		});
+
 	it('devuelve la merma existente ante un reintento con la misma clave de idempotencia', async () => {
 		const key = `idem-${randomUUID().replaceAll('-', '').slice(0, 16)}`;
 		const input = {

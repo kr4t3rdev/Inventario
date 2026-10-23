@@ -19,12 +19,12 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param page 
- * @param limit 
- * @param total 
- * @param totalPages 
+ *
+ * @param page
+ * @param limit
+ * @param total
+ * @param totalPages
  */
 
 
@@ -46,4 +46,3 @@ data class Pagination (
 
 
 }
-

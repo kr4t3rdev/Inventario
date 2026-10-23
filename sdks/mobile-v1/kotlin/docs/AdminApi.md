@@ -4,17 +4,128 @@ All URIs are relative to */api/mobile/v1*
 
 | Method | HTTP request | Description |
 | ------------- | ------------- | ------------- |
+| [**mobileActivateAdminLicense**](AdminApi.md#mobileActivateAdminLicense) | **POST** /admin/licenses/activate | Activar una licencia |
+| [**mobileActivateAdminUser**](AdminApi.md#mobileActivateAdminUser) | **POST** /admin/users/activate | Activar un usuario |
 | [**mobileApproveAdminMembership**](AdminApi.md#mobileApproveAdminMembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía |
+| [**mobileAssignAdminUserTenant**](AdminApi.md#mobileAssignAdminUserTenant) | **POST** /admin/users/assign-tenant | Asignar o cambiar la empresa de un usuario |
+| [**mobileChangeAdminUserTenantRole**](AdminApi.md#mobileChangeAdminUserTenantRole) | **PATCH** /admin/users/change-tenant-role | Cambiar el rol de un usuario dentro de una empresa |
+| [**mobileDeactivateAdminLicense**](AdminApi.md#mobileDeactivateAdminLicense) | **POST** /admin/licenses/deactivate | Desactivar una licencia |
+| [**mobileDeactivateAdminUser**](AdminApi.md#mobileDeactivateAdminUser) | **POST** /admin/users/deactivate | Desactivar un usuario |
+| [**mobileDeleteAdminLicense**](AdminApi.md#mobileDeleteAdminLicense) | **POST** /admin/licenses/delete | Eliminar una licencia |
+| [**mobileDeleteAdminUser**](AdminApi.md#mobileDeleteAdminUser) | **POST** /admin/users/delete | Eliminar un usuario |
 | [**mobileGetAdminHealth**](AdminApi.md#mobileGetAdminHealth) | **GET** /admin/health | Consultar salud del sistema |
 | [**mobileGetAdminLicenseStats**](AdminApi.md#mobileGetAdminLicenseStats) | **GET** /admin/licenses/stats | Consultar métricas de licencias |
 | [**mobileGetAdminLicenses**](AdminApi.md#mobileGetAdminLicenses) | **GET** /admin/licenses | Listar licencias con filtros |
 | [**mobileGetAdminPendingMemberships**](AdminApi.md#mobileGetAdminPendingMemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes |
 | [**mobileGetAdminTenants**](AdminApi.md#mobileGetAdminTenants) | **GET** /admin/tenants | Listar empresas de la plataforma |
+| [**mobileGetAdminUserDetail**](AdminApi.md#mobileGetAdminUserDetail) | **GET** /admin/users/detail | Obtener el detalle de un usuario |
 | [**mobileGetAdminUsers**](AdminApi.md#mobileGetAdminUsers) | **GET** /admin/users | Listar usuarios de la plataforma |
 | [**mobileLockAdminUser**](AdminApi.md#mobileLockAdminUser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas |
 | [**mobileRejectAdminMembership**](AdminApi.md#mobileRejectAdminMembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía |
+| [**mobileRenewAdminLicense**](AdminApi.md#mobileRenewAdminLicense) | **POST** /admin/licenses/renew | Renovar una licencia |
+| [**mobileResendAdminUserVerification**](AdminApi.md#mobileResendAdminUserVerification) | **POST** /admin/users/resend-verification | Reenviar el email de verificación |
+| [**mobileResetAdminUserPassword**](AdminApi.md#mobileResetAdminUserPassword) | **POST** /admin/users/reset-password | Enviar enlace de restablecimiento de contraseña |
+| [**mobileRevokeAdminUserSessions**](AdminApi.md#mobileRevokeAdminUserSessions) | **POST** /admin/users/revoke-sessions | Revocar las sesiones activas de un usuario |
 | [**mobileUnlockAdminUser**](AdminApi.md#mobileUnlockAdminUser) | **POST** /admin/users/unlock | Desbloquear usuario |
+| [**mobileUpdateAdminUser**](AdminApi.md#mobileUpdateAdminUser) | **PATCH** /admin/users/update | Editar nombre, email o rol de un usuario |
+| [**mobileVerifyAdminUserEmail**](AdminApi.md#mobileVerifyAdminUserEmail) | **POST** /admin/users/verify-email | Marcar el email como verificado |
 
+
+<a id="mobileActivateAdminLicense"></a>
+# **mobileActivateAdminLicense**
+> PostAdminLicensesActivateResponse mobileActivateAdminLicense(adminLicenciaIdRequest)
+
+Activar una licencia
+
+Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest |
+try {
+    val result : PostAdminLicensesActivateResponse = apiInstance.mobileActivateAdminLicense(adminLicenciaIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileActivateAdminLicense")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileActivateAdminLicense")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminLicenciaIdRequest** | [**AdminLicenciaIdRequest**](AdminLicenciaIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminLicensesActivateResponse**](PostAdminLicensesActivateResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileActivateAdminUser"></a>
+# **mobileActivateAdminUser**
+> PostAdminUsersActivateResponse mobileActivateAdminUser(adminUserIdRequest)
+
+Activar un usuario
+
+Reactiva el acceso de un usuario desactivado, limpiando además cualquier bloqueo temporal y los intentos fallidos de inicio de sesión acumulados.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersActivateResponse = apiInstance.mobileActivateAdminUser(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileActivateAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileActivateAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersActivateResponse**](PostAdminUsersActivateResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 <a id="mobileApproveAdminMembership"></a>
 # **mobileApproveAdminMembership**
@@ -31,7 +142,7 @@ Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su fluj
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AdminApi()
-val approveAdminMembershipRequest : ApproveAdminMembershipRequest =  // ApproveAdminMembershipRequest | 
+val approveAdminMembershipRequest : ApproveAdminMembershipRequest =  // ApproveAdminMembershipRequest |
 try {
     val result : PostAdminMembershipsApproveResponse = apiInstance.mobileApproveAdminMembership(approveAdminMembershipRequest)
     println(result)
@@ -52,6 +163,294 @@ try {
 ### Return type
 
 [**PostAdminMembershipsApproveResponse**](PostAdminMembershipsApproveResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileAssignAdminUserTenant"></a>
+# **mobileAssignAdminUserTenant**
+> PostAdminUsersAssignTenantResponse mobileAssignAdminUserTenant(assignAdminUserTenantRequest)
+
+Asignar o cambiar la empresa de un usuario
+
+Crea o actualiza la membresía de un usuario en una empresa con el rol operativo indicado. Puede desactivar las demás membresías para efectuar un cambio de empresa.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val assignAdminUserTenantRequest : AssignAdminUserTenantRequest =  // AssignAdminUserTenantRequest |
+try {
+    val result : PostAdminUsersAssignTenantResponse = apiInstance.mobileAssignAdminUserTenant(assignAdminUserTenantRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileAssignAdminUserTenant")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileAssignAdminUserTenant")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **assignAdminUserTenantRequest** | [**AssignAdminUserTenantRequest**](AssignAdminUserTenantRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersAssignTenantResponse**](PostAdminUsersAssignTenantResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileChangeAdminUserTenantRole"></a>
+# **mobileChangeAdminUserTenantRole**
+> PatchAdminUsersChangeTenantRoleResponse mobileChangeAdminUserTenantRole(changeAdminUserTenantRoleRequest)
+
+Cambiar el rol de un usuario dentro de una empresa
+
+Actualiza el rol operativo (manager, economico o dependiente) de la membresía existente de un usuario en una empresa.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val changeAdminUserTenantRoleRequest : ChangeAdminUserTenantRoleRequest =  // ChangeAdminUserTenantRoleRequest |
+try {
+    val result : PatchAdminUsersChangeTenantRoleResponse = apiInstance.mobileChangeAdminUserTenantRole(changeAdminUserTenantRoleRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileChangeAdminUserTenantRole")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileChangeAdminUserTenantRole")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **changeAdminUserTenantRoleRequest** | [**ChangeAdminUserTenantRoleRequest**](ChangeAdminUserTenantRoleRequest.md)|  | |
+
+### Return type
+
+[**PatchAdminUsersChangeTenantRoleResponse**](PatchAdminUsersChangeTenantRoleResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileDeactivateAdminLicense"></a>
+# **mobileDeactivateAdminLicense**
+> PostAdminLicensesDeactivateResponse mobileDeactivateAdminLicense(adminLicenciaIdRequest)
+
+Desactivar una licencia
+
+Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest |
+try {
+    val result : PostAdminLicensesDeactivateResponse = apiInstance.mobileDeactivateAdminLicense(adminLicenciaIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileDeactivateAdminLicense")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileDeactivateAdminLicense")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminLicenciaIdRequest** | [**AdminLicenciaIdRequest**](AdminLicenciaIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminLicensesDeactivateResponse**](PostAdminLicensesDeactivateResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileDeactivateAdminUser"></a>
+# **mobileDeactivateAdminUser**
+> PostAdminUsersDeactivateResponse mobileDeactivateAdminUser(adminUserIdRequest)
+
+Desactivar un usuario
+
+Desactiva el acceso de un usuario y revoca de inmediato todas sus sesiones activas. No permite desactivar la propia cuenta ni al último administrador activo de la plataforma.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersDeactivateResponse = apiInstance.mobileDeactivateAdminUser(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileDeactivateAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileDeactivateAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersDeactivateResponse**](PostAdminUsersDeactivateResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileDeleteAdminLicense"></a>
+# **mobileDeleteAdminLicense**
+> PostAdminLicensesDeleteResponse mobileDeleteAdminLicense(adminLicenciaIdRequest)
+
+Eliminar una licencia
+
+Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminLicenciaIdRequest : AdminLicenciaIdRequest =  // AdminLicenciaIdRequest |
+try {
+    val result : PostAdminLicensesDeleteResponse = apiInstance.mobileDeleteAdminLicense(adminLicenciaIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileDeleteAdminLicense")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileDeleteAdminLicense")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminLicenciaIdRequest** | [**AdminLicenciaIdRequest**](AdminLicenciaIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminLicensesDeleteResponse**](PostAdminLicensesDeleteResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileDeleteAdminUser"></a>
+# **mobileDeleteAdminUser**
+> PostAdminUsersDeleteResponse mobileDeleteAdminUser(adminUserIdRequest)
+
+Eliminar un usuario
+
+Elimina permanentemente un usuario de la plataforma. Bloquea la operación si es un gestor de ventas con registros asociados, si es la propia cuenta o si es el último administrador activo.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersDeleteResponse = apiInstance.mobileDeleteAdminUser(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileDeleteAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileDeleteAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersDeleteResponse**](PostAdminUsersDeleteResponse.md)
 
 ### Authorization
 
@@ -315,6 +714,54 @@ Configure bearerAuth:
  - **Content-Type**: Not defined
  - **Accept**: application/json
 
+<a id="mobileGetAdminUserDetail"></a>
+# **mobileGetAdminUserDetail**
+> GetAdminUserDetailResponse mobileGetAdminUserDetail(userId)
+
+Obtener el detalle de un usuario
+
+Devuelve la ficha completa de un usuario de la plataforma sin descargar la lista entera: datos personales, estado, verificación de email, membresías por empresa y conteo de sesiones activas.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val userId : kotlin.String = userId_example // kotlin.String | Identificador del usuario a consultar.
+try {
+    val result : GetAdminUserDetailResponse = apiInstance.mobileGetAdminUserDetail(userId)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileGetAdminUserDetail")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileGetAdminUserDetail")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **userId** | **kotlin.String**| Identificador del usuario a consultar. | |
+
+### Return type
+
+[**GetAdminUserDetailResponse**](GetAdminUserDetailResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
 <a id="mobileGetAdminUsers"></a>
 # **mobileGetAdminUsers**
 > GetAdminUsersResponse mobileGetAdminUsers(tenantId, limit)
@@ -380,7 +827,7 @@ Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniend
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AdminApi()
-val lockAdminUserRequest : LockAdminUserRequest =  // LockAdminUserRequest | 
+val lockAdminUserRequest : LockAdminUserRequest =  // LockAdminUserRequest |
 try {
     val result : PostAdminUsersLockResponse = apiInstance.mobileLockAdminUser(lockAdminUserRequest)
     println(result)
@@ -428,7 +875,7 @@ Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve a
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AdminApi()
-val rejectAdminMembershipRequest : RejectAdminMembershipRequest =  // RejectAdminMembershipRequest | 
+val rejectAdminMembershipRequest : RejectAdminMembershipRequest =  // RejectAdminMembershipRequest |
 try {
     val result : PostAdminMembershipsRejectResponse = apiInstance.mobileRejectAdminMembership(rejectAdminMembershipRequest)
     println(result)
@@ -461,6 +908,198 @@ Configure bearerAuth:
  - **Content-Type**: application/json
  - **Accept**: application/json
 
+<a id="mobileRenewAdminLicense"></a>
+# **mobileRenewAdminLicense**
+> PostAdminLicensesRenewResponse mobileRenewAdminLicense(renewAdminLicenseRequest)
+
+Renovar una licencia
+
+Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val renewAdminLicenseRequest : RenewAdminLicenseRequest =  // RenewAdminLicenseRequest |
+try {
+    val result : PostAdminLicensesRenewResponse = apiInstance.mobileRenewAdminLicense(renewAdminLicenseRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileRenewAdminLicense")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileRenewAdminLicense")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **renewAdminLicenseRequest** | [**RenewAdminLicenseRequest**](RenewAdminLicenseRequest.md)|  | |
+
+### Return type
+
+[**PostAdminLicensesRenewResponse**](PostAdminLicensesRenewResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileResendAdminUserVerification"></a>
+# **mobileResendAdminUserVerification**
+> PostAdminUsersResendVerificationResponse mobileResendAdminUserVerification(adminUserIdRequest)
+
+Reenviar el email de verificación
+
+Genera un nuevo enlace de verificación y lo reenvía al correo del usuario. Falla si el correo ya fue verificado previamente.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersResendVerificationResponse = apiInstance.mobileResendAdminUserVerification(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileResendAdminUserVerification")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileResendAdminUserVerification")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersResendVerificationResponse**](PostAdminUsersResendVerificationResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileResetAdminUserPassword"></a>
+# **mobileResetAdminUserPassword**
+> PostAdminUsersResetPasswordResponse mobileResetAdminUserPassword(adminUserIdRequest)
+
+Enviar enlace de restablecimiento de contraseña
+
+Genera un enlace temporal de restablecimiento de contraseña y lo envía al correo del usuario. El administrador nunca ve ni define la contraseña del usuario.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersResetPasswordResponse = apiInstance.mobileResetAdminUserPassword(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileResetAdminUserPassword")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileResetAdminUserPassword")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersResetPasswordResponse**](PostAdminUsersResetPasswordResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileRevokeAdminUserSessions"></a>
+# **mobileRevokeAdminUserSessions**
+> PostAdminUsersRevokeSessionsResponse mobileRevokeAdminUserSessions(adminUserIdRequest)
+
+Revocar las sesiones activas de un usuario
+
+Invalida todas las sesiones activas del usuario, forzando un nuevo inicio de sesión en cada dispositivo donde estuviera conectado.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersRevokeSessionsResponse = apiInstance.mobileRevokeAdminUserSessions(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileRevokeAdminUserSessions")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileRevokeAdminUserSessions")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersRevokeSessionsResponse**](PostAdminUsersRevokeSessionsResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
 <a id="mobileUnlockAdminUser"></a>
 # **mobileUnlockAdminUser**
 > PostAdminUsersLockResponse mobileUnlockAdminUser(unlockAdminUserRequest)
@@ -476,7 +1115,7 @@ Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de se
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AdminApi()
-val unlockAdminUserRequest : UnlockAdminUserRequest =  // UnlockAdminUserRequest | 
+val unlockAdminUserRequest : UnlockAdminUserRequest =  // UnlockAdminUserRequest |
 try {
     val result : PostAdminUsersLockResponse = apiInstance.mobileUnlockAdminUser(unlockAdminUserRequest)
     println(result)
@@ -497,6 +1136,102 @@ try {
 ### Return type
 
 [**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileUpdateAdminUser"></a>
+# **mobileUpdateAdminUser**
+> PatchAdminUsersUpdateResponse mobileUpdateAdminUser(updateAdminUserRequest)
+
+Editar nombre, email o rol de un usuario
+
+Actualiza los datos básicos de un usuario: nombre, correo electrónico o rol de plataforma. Valida que el correo no esté en uso por otro usuario y protege al último administrador activo.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val updateAdminUserRequest : UpdateAdminUserRequest =  // UpdateAdminUserRequest |
+try {
+    val result : PatchAdminUsersUpdateResponse = apiInstance.mobileUpdateAdminUser(updateAdminUserRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileUpdateAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileUpdateAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **updateAdminUserRequest** | [**UpdateAdminUserRequest**](UpdateAdminUserRequest.md)|  | |
+
+### Return type
+
+[**PatchAdminUsersUpdateResponse**](PatchAdminUsersUpdateResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileVerifyAdminUserEmail"></a>
+# **mobileVerifyAdminUserEmail**
+> PostAdminUsersVerifyEmailResponse mobileVerifyAdminUserEmail(adminUserIdRequest)
+
+Marcar el email como verificado
+
+Marca manualmente el correo de un usuario como verificado, sin necesidad de que complete el flujo de verificación por email. Es idempotente si ya estaba verificado.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val adminUserIdRequest : AdminUserIdRequest =  // AdminUserIdRequest |
+try {
+    val result : PostAdminUsersVerifyEmailResponse = apiInstance.mobileVerifyAdminUserEmail(adminUserIdRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileVerifyAdminUserEmail")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileVerifyAdminUserEmail")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **adminUserIdRequest** | [**AdminUserIdRequest**](AdminUserIdRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersVerifyEmailResponse**](PostAdminUsersVerifyEmailResponse.md)
 
 ### Authorization
 

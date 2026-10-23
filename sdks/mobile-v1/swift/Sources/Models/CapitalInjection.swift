@@ -49,4 +49,3 @@ public struct CapitalInjection: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(cuentaBancariaId, forKey: .cuentaBancariaId)
     }
 }
-

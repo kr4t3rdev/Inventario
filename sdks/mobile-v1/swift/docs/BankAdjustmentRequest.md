@@ -3,12 +3,13 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**cuentaId** | **String** |  | 
-**tipo** | **String** |  | 
-**monto** | **Double** |  | 
+**cuentaId** | **String** |  |
+**tipo** | **String** |  |
+**monto** | **Double** |  |
 **moneda** | **String** |  | [optional] [default to "CUP"]
-**descripcion** | **String** |  | 
-**motivo** | **String** |  | 
+**descripcion** | **String** |  |
+**motivo** | **String** |  |
+**idempotencyKey** | **String** | Clave opcional para repetir la misma operación sin duplicarla. | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -54,7 +54,7 @@ const mockUserA: AuthenticatedUser = {
   role: 'admin',
   isActive: true,
   tenantId: TENANT_A,
-  tenantRole: 'admin',
+  tenantRole: 'manager',
 };
 
 const mockUnidadRow = {

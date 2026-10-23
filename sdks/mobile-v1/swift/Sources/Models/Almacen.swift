@@ -43,4 +43,3 @@ public struct Almacen: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
     }
 }
-

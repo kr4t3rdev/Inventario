@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param total 
- * @param activas 
- * @param expiradas 
- * @param demos 
- * @param porVencer 
- * @param adminTest 
+ *
+ * @param total
+ * @param activas
+ * @param expiradas
+ * @param demos
+ * @param porVencer
+ * @param adminTest
  */
 
 
@@ -54,4 +54,3 @@ data class GetAdminLicenseStatsResponse (
 
 
 }
-

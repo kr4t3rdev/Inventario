@@ -183,4 +183,3 @@ class ExchangeRate {
   static const requiredKeys = <String>{
   };
 }
-

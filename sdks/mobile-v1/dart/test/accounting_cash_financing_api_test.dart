@@ -100,9 +100,9 @@ void main() {
 
     // Registrar pago de deudas de efectivo
     //
-    // Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+    // Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
     //
-    //Future<PostAccountingCashDebtsIdPaymentsResponse> mobilePostAccountingCashDebtsByIdPayments(String id, CashPaymentRequest cashPaymentRequest) async
+    //Future<PostAccountingCashDebtsIdPaymentsResponse> mobilePostAccountingCashDebtsByIdPayments(String id, CashPaymentRequest cashPaymentRequest, { String idempotencyKey }) async
     test('test mobilePostAccountingCashDebtsByIdPayments', () async {
       // TODO
     });
@@ -118,9 +118,9 @@ void main() {
 
     // Registrar pago de préstamos de efectivo
     //
-    // Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables.
+    // Aplica un pago al saldo pendiente y registra sus efectos bancarios y contables. Acepta fechaOperacion como fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria; si se omite, conserva la fecha actual. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. Una clave inválida devuelve 400 y reutilizarla con otro payload devuelve 409. El identificador de la ruta determina el recurso pagado.
     //
-    //Future<PostAccountingCashLoansIdPaymentsResponse> mobilePostAccountingCashLoansByIdPayments(String id, CashPaymentRequest cashPaymentRequest) async
+    //Future<PostAccountingCashLoansIdPaymentsResponse> mobilePostAccountingCashLoansByIdPayments(String id, CashPaymentRequest cashPaymentRequest, { String idempotencyKey }) async
     test('test mobilePostAccountingCashLoansByIdPayments', () async {
       // TODO
     });

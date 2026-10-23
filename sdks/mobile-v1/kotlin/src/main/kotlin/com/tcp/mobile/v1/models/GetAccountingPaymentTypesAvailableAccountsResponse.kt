@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/payment-types/available-accounts.
  *
- * @param items 
- * @param estadisticas 
+ * @param items
+ * @param estadisticas
  */
 
 
@@ -40,4 +40,3 @@ data class GetAccountingPaymentTypesAvailableAccountsResponse (
 
 
 }
-

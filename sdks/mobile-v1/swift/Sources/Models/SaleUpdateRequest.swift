@@ -34,4 +34,3 @@ public struct SaleUpdateRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(descuento, forKey: .descuento)
     }
 }
-

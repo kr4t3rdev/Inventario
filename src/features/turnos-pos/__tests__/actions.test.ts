@@ -269,7 +269,7 @@ describe("getCuadresCerradosAction", () => {
 			},
 		]);
 
-		const result = await getCuadresCerradosAction({});
+		const result = await getCuadresCerradosAction({ limit: 10 });
 
 		expect(result.success).toBe(true);
 		if (result.success && result.data) {

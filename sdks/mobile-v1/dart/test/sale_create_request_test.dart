@@ -91,6 +91,12 @@ void main() {
       // TODO
     });
 
+    // Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+    // String idempotencyKey
+    test('to test the property `idempotencyKey`', () async {
+      // TODO
+    });
+
 
   });
 

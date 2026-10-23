@@ -70,7 +70,7 @@ class ProvidersApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'ProveedorDeleteResponse',) as ProveedorDeleteResponse;
-    
+
     }
     return null;
   }
@@ -118,7 +118,7 @@ class ProvidersApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'ProveedorListResponse',) as ProveedorListResponse;
-    
+
     }
     return null;
   }
@@ -177,7 +177,7 @@ class ProvidersApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Proveedor',) as Proveedor;
-    
+
     }
     return null;
   }
@@ -233,7 +233,7 @@ class ProvidersApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Proveedor',) as Proveedor;
-    
+
     }
     return null;
   }
@@ -296,7 +296,7 @@ class ProvidersApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'Proveedor',) as Proveedor;
-    
+
     }
     return null;
   }

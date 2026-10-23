@@ -58,4 +58,3 @@ public struct GetAccountingBankTransfersIdResponse: Codable, JSONEncodable, Hash
         try container.encodeIfPresent(descripcion, forKey: .descripcion)
     }
 }
-

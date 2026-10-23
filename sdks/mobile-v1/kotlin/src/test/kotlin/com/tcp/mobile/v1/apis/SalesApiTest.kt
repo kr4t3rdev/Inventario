@@ -53,7 +53,7 @@ class SalesApiTest : ShouldSpec() {
         should("test mobilePatchSalesByIdUpdate") {
             // uncomment below to test mobilePatchSalesByIdUpdate
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val saleUpdateRequest : SaleUpdateRequest =  // SaleUpdateRequest | 
+            //val saleUpdateRequest : SaleUpdateRequest =  // SaleUpdateRequest |
             //val result : PatchSalesIdUpdateResponse = apiInstance.mobilePatchSalesByIdUpdate(id, saleUpdateRequest)
             //result shouldBe ("TODO")
         }
@@ -62,7 +62,7 @@ class SalesApiTest : ShouldSpec() {
         should("test mobilePostSalesByIdCancel") {
             // uncomment below to test mobilePostSalesByIdCancel
             //val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-            //val saleCancelRequest : SaleCancelRequest =  // SaleCancelRequest | 
+            //val saleCancelRequest : SaleCancelRequest =  // SaleCancelRequest |
             //val result : PostSalesIdCancelResponse = apiInstance.mobilePostSalesByIdCancel(id, saleCancelRequest)
             //result shouldBe ("TODO")
         }
@@ -70,8 +70,9 @@ class SalesApiTest : ShouldSpec() {
         // to test mobilePostSalesCreate
         should("test mobilePostSalesCreate") {
             // uncomment below to test mobilePostSalesCreate
-            //val saleCreateRequest : SaleCreateRequest =  // SaleCreateRequest | 
-            //val result : PostSalesCreateResponse = apiInstance.mobilePostSalesCreate(saleCreateRequest)
+            //val saleCreateRequest : SaleCreateRequest =  // SaleCreateRequest |
+            //val idempotencyKey : kotlin.String = idempotencyKey_example // kotlin.String | Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia.
+            //val result : PostSalesCreateResponse = apiInstance.mobilePostSalesCreate(saleCreateRequest, idempotencyKey)
             //result shouldBe ("TODO")
         }
 

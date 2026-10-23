@@ -1,0 +1,2 @@
+captured_at_utc,database_session_timezone,tenant_id,window_start,window_end,evidence_status,tipoEvento,origenTipo,estado,causa,event_count,measured_duration_count,min_duration_ms,max_duration_ms,p95_duration_ms
+2026-10-09T14:12:11.829560Z,America/New_York,cmuwujy2z000014niitq61tn2,2026-10-08 20:00:00-04,2026-10-09 10:12:11.82956-04,NO_ROWS,,,,,0,0,,,

@@ -114,4 +114,3 @@ class GetAccountingReconciliationServicesResponse {
     'pagination',
   };
 }
-

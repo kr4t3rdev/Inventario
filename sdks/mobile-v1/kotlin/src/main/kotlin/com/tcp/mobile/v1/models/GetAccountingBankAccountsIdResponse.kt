@@ -21,13 +21,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/bank-accounts/{id}.
  *
- * @param cuentaId 
- * @param nombreBanco 
- * @param numeroCuenta 
- * @param tipoCuenta 
- * @param moneda 
- * @param saldo 
- * @param isActive 
+ * @param cuentaId
+ * @param nombreBanco
+ * @param numeroCuenta
+ * @param tipoCuenta
+ * @param moneda
+ * @param saldo
+ * @param isActive
  */
 
 
@@ -58,4 +58,3 @@ data class GetAccountingBankAccountsIdResponse (
 
 
 }
-

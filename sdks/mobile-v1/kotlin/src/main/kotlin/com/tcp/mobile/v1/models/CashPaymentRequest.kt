@@ -19,14 +19,16 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param monto 
- * @param cuentaId 
- * @param tipoPagoId 
- * @param moneda 
- * @param tasaCambio 
- * @param observaciones 
+ *
+ * @param monto
+ * @param cuentaId
+ * @param tipoPagoId
+ * @param moneda
+ * @param tasaCambio
+ * @param observaciones
+ * @param idempotencyKey Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+ * @param fechaOperacion Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual.
  */
 
 
@@ -48,10 +50,17 @@ data class CashPaymentRequest (
     val tasaCambio: java.math.BigDecimal? = null,
 
     @get:JsonProperty("observaciones")
-    val observaciones: kotlin.String? = null
+    val observaciones: kotlin.String? = null,
+
+    /* Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null,
+
+    /* Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual. */
+    @get:JsonProperty("fechaOperacion")
+    val fechaOperacion: kotlin.String? = null
 
 ) {
 
 
 }
-

@@ -34,4 +34,3 @@ public struct GetAccountingAccountsReceivableResponse: Codable, JSONEncodable, H
         try container.encode(pagination, forKey: .pagination)
     }
 }
-

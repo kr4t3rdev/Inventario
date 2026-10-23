@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param fechaInicio 
- * @param fechaFin 
- * @param cuentaId 
- * @param moneda 
- * @param tipo 
- * @param busqueda 
+ *
+ * @param fechaInicio
+ * @param fechaFin
+ * @param cuentaId
+ * @param moneda
+ * @param tipo
+ * @param busqueda
  */
 
 
@@ -54,4 +54,3 @@ data class ReportFilters (
 
 
 }
-

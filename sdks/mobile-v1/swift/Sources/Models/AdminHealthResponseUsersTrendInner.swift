@@ -34,4 +34,3 @@ public struct AdminHealthResponseUsersTrendInner: Codable, JSONEncodable, Hashab
         try container.encode(usuarios, forKey: .usuarios)
     }
 }
-

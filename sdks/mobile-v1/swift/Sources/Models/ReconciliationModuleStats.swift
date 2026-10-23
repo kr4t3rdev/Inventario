@@ -37,4 +37,3 @@ public struct ReconciliationModuleStats: Codable, JSONEncodable, Hashable {
         try container.encode(totalToday, forKey: .totalToday)
     }
 }
-

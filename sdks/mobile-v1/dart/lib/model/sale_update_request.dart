@@ -133,4 +133,3 @@ class SaleUpdateRequest {
   static const requiredKeys = <String>{
   };
 }
-

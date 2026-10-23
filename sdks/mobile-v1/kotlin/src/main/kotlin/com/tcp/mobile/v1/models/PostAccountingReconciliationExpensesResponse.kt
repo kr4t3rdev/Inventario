@@ -24,10 +24,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/reconciliation/expenses.
  *
- * @param reconciliaciones 
- * @param cuentaPorPagar 
- * @param pagoCuentaPorPagar 
- * @param distribucionMultiCuenta 
+ * @param reconciliaciones
+ * @param cuentaPorPagar
+ * @param pagoCuentaPorPagar
+ * @param distribucionMultiCuenta
  */
 
 
@@ -49,4 +49,3 @@ data class PostAccountingReconciliationExpensesResponse (
 
 
 }
-

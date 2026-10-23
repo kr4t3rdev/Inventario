@@ -39,7 +39,7 @@ describe('profile fetchers', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }
-      vi.mocked(prisma.user.findMany).mockResolvedValue([mockUser])
+      vi.mocked(prisma.user.findMany).mockResolvedValue([mockUser] as never)
 
       const result = await getProfile()
 

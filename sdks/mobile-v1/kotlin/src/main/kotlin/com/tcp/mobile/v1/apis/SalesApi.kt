@@ -201,7 +201,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * Actualizar datos de venta
      * Modifica únicamente el descuento y las observaciones editables de la venta seleccionada.
      * @param id Identificador único del recurso.
-     * @param saleUpdateRequest 
+     * @param saleUpdateRequest
      * @return PatchSalesIdUpdateResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -234,7 +234,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * Actualizar datos de venta
      * Modifica únicamente el descuento y las observaciones editables de la venta seleccionada.
      * @param id Identificador único del recurso.
-     * @param saleUpdateRequest 
+     * @param saleUpdateRequest
      * @return ApiResponse<PatchSalesIdUpdateResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -253,7 +253,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * To obtain the request config of the operation mobilePatchSalesByIdUpdate
      *
      * @param id Identificador único del recurso.
-     * @param saleUpdateRequest 
+     * @param saleUpdateRequest
      * @return RequestConfig
      */
     fun mobilePatchSalesByIdUpdateRequestConfig(id: kotlin.String, saleUpdateRequest: SaleUpdateRequest) : RequestConfig<SaleUpdateRequest> {
@@ -278,7 +278,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * Anular venta
      * Anula la venta seleccionada y revierte los efectos permitidos sobre inventario y conciliaciones.
      * @param id Identificador único del recurso.
-     * @param saleCancelRequest 
+     * @param saleCancelRequest
      * @return PostSalesIdCancelResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -311,7 +311,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * Anular venta
      * Anula la venta seleccionada y revierte los efectos permitidos sobre inventario y conciliaciones.
      * @param id Identificador único del recurso.
-     * @param saleCancelRequest 
+     * @param saleCancelRequest
      * @return ApiResponse<PostSalesIdCancelResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -330,7 +330,7 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      * To obtain the request config of the operation mobilePostSalesByIdCancel
      *
      * @param id Identificador único del recurso.
-     * @param saleCancelRequest 
+     * @param saleCancelRequest
      * @return RequestConfig
      */
     fun mobilePostSalesByIdCancelRequestConfig(id: kotlin.String, saleCancelRequest: SaleCancelRequest) : RequestConfig<SaleCancelRequest> {
@@ -353,8 +353,9 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * POST /sales/create
      * Registrar venta
-     * Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
-     * @param saleCreateRequest 
+     * Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
+     * @param saleCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return PostSalesCreateResponse
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -364,8 +365,8 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest) : PostSalesCreateResponse {
-        val localVarResponse = mobilePostSalesCreateWithHttpInfo(saleCreateRequest = saleCreateRequest)
+    fun mobilePostSalesCreate(saleCreateRequest: SaleCreateRequest, idempotencyKey: kotlin.String? = null) : PostSalesCreateResponse {
+        val localVarResponse = mobilePostSalesCreateWithHttpInfo(saleCreateRequest = saleCreateRequest, idempotencyKey = idempotencyKey)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as PostSalesCreateResponse
@@ -385,16 +386,17 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * POST /sales/create
      * Registrar venta
-     * Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan.
-     * @param saleCreateRequest 
+     * Crea la venta, sus líneas y los efectos de inventario, turno y facturación que correspondan. Acepta idempotencyKey en el cuerpo o Idempotency-Key en el encabezado; si ambos están presentes, prevalece el cuerpo. La clave se recorta y debe contener de 1 a 64 caracteres; una clave inválida en el cuerpo devuelve 400. La idempotencia se limita al tenant y a la clave. Si se repite la misma clave con el mismo payload normalizado, devuelve la respuesta original; si el payload normalizado difiere, responde 409. Se valida la autenticación y autorización antes de consultar una repetición. El cliente debe conservar una clave estable por venta lógica pendiente y reutilizarla en todos sus reintentos; no debe generar una clave nueva por intento.
+     * @param saleCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return ApiResponse<PostSalesCreateResponse?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun mobilePostSalesCreateWithHttpInfo(saleCreateRequest: SaleCreateRequest) : ApiResponse<PostSalesCreateResponse?> {
-        val localVariableConfig = mobilePostSalesCreateRequestConfig(saleCreateRequest = saleCreateRequest)
+    fun mobilePostSalesCreateWithHttpInfo(saleCreateRequest: SaleCreateRequest, idempotencyKey: kotlin.String? = null) : ApiResponse<PostSalesCreateResponse?> {
+        val localVariableConfig = mobilePostSalesCreateRequestConfig(saleCreateRequest = saleCreateRequest, idempotencyKey = idempotencyKey)
 
         return request<SaleCreateRequest, PostSalesCreateResponse>(
             localVariableConfig
@@ -404,13 +406,15 @@ class SalesApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
     /**
      * To obtain the request config of the operation mobilePostSalesCreate
      *
-     * @param saleCreateRequest 
+     * @param saleCreateRequest
+     * @param idempotencyKey Clave opcional de idempotencia; se usa solo si idempotencyKey no está presente en el cuerpo. El valor del cuerpo tiene precedencia. (optional)
      * @return RequestConfig
      */
-    fun mobilePostSalesCreateRequestConfig(saleCreateRequest: SaleCreateRequest) : RequestConfig<SaleCreateRequest> {
+    fun mobilePostSalesCreateRequestConfig(saleCreateRequest: SaleCreateRequest, idempotencyKey: kotlin.String? = null) : RequestConfig<SaleCreateRequest> {
         val localVariableBody = saleCreateRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        idempotencyKey?.apply { localVariableHeaders["Idempotency-Key"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 

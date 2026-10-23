@@ -44,4 +44,3 @@ public struct GetAdminLicensesResponse: Codable, JSONEncodable, Hashable {
         try container.encode(limit, forKey: .limit)
     }
 }
-

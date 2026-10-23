@@ -106,4 +106,3 @@ class PostAccountingAdvancesIdRevertirResponse {
     'result',
   };
 }
-

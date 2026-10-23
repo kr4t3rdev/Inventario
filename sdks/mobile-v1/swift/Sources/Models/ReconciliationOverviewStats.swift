@@ -42,4 +42,3 @@ public struct ReconciliationOverviewStats: Codable, JSONEncodable, Hashable {
         try container.encode(efficiency, forKey: .efficiency)
     }
 }
-

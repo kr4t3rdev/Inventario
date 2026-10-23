@@ -177,4 +177,3 @@ class PaymentTypeUpdateRequest {
   static const requiredKeys = <String>{
   };
 }
-

@@ -581,7 +581,7 @@ Distribuye el importe de un gasto entre una o varias cuentas y registra su pago 
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingReconciliationApi()
-val expenseReconciliationRequest : ExpenseReconciliationRequest =  // ExpenseReconciliationRequest | 
+val expenseReconciliationRequest : ExpenseReconciliationRequest =  // ExpenseReconciliationRequest |
 val tipoGasto : kotlin.String = tipoGasto_example // kotlin.String | Valor de tipoGasto aceptado por el handler.
 val fechaDesde : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaDesde aceptado por el handler.
 val fechaHasta : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaHasta aceptado por el handler.
@@ -639,7 +639,7 @@ Abona una venta en la cuenta y medio de pago indicados, respetando el importe co
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingReconciliationApi()
-val saleReconciliationRequest : SaleReconciliationRequest =  // SaleReconciliationRequest | 
+val saleReconciliationRequest : SaleReconciliationRequest =  // SaleReconciliationRequest |
 val fechaInicio : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Inicio inclusivo del período consultado.
 val fechaFin : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Fin inclusivo del período consultado.
 val puntoDeVentaId : kotlin.String = puntoDeVentaId_example // kotlin.String | Valor de puntoDeVentaId aceptado por el handler.
@@ -697,7 +697,7 @@ Distribuye el total de un servicio entre las cuentas y medios de pago enviados.
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingReconciliationApi()
-val serviceReconciliationRequest : ServiceReconciliationRequest =  // ServiceReconciliationRequest | 
+val serviceReconciliationRequest : ServiceReconciliationRequest =  // ServiceReconciliationRequest |
 val fechaDesde : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaDesde aceptado por el handler.
 val fechaHasta : java.time.OffsetDateTime = 2013-10-20T19:20:30+01:00 // java.time.OffsetDateTime | Valor de fechaHasta aceptado por el handler.
 val page : kotlin.Int = 56 // kotlin.Int | Página solicitada, comenzando en 1.

@@ -33,4 +33,3 @@ public struct PostAdminUsersLockResponse: Codable, JSONEncodable, Hashable {
         try container.encode(message, forKey: .message)
     }
 }
-

@@ -19,10 +19,10 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param role 
- * @param count 
+ *
+ * @param role
+ * @param count
  */
 
 
@@ -38,4 +38,3 @@ data class AdminHealthResponseUsersByRoleInner (
 
 
 }
-

@@ -22,7 +22,7 @@ open class DashboardAPI {
 
     /**
      Consultar indicadores del panel principal
-     
+
      - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
      - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
      - returns: GetDashboardStatsResponse
@@ -41,7 +41,7 @@ open class DashboardAPI {
        - name: bearerAuth
      - parameter ubicacionId: (query) Valor de ubicacionId aceptado por el handler. (optional)
      - parameter tipoUbicacion: (query) Valor de tipoUbicacion aceptado por el handler. (optional)
-     - returns: RequestBuilder<GetDashboardStatsResponse> 
+     - returns: RequestBuilder<GetDashboardStatsResponse>
      */
     open class func mobileGetDashboardStatsWithRequestBuilder(ubicacionId: String? = nil, tipoUbicacion: TipoUbicacion_mobileGetDashboardStats? = nil) -> RequestBuilder<GetDashboardStatsResponse> {
         let localVariablePath = "/dashboard/stats"

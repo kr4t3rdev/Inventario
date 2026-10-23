@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,6 +19,7 @@ import { DollarSign, Calculator } from "lucide-react"
 import { getProductosAction } from "@/features/productos/actions"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
+import { getVentaCreateIntentKey, resetVentaCreateIntent } from "@/features/ventas/lib/venta-create-intent"
 import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
@@ -54,6 +55,7 @@ interface EnhancedVentaFormProps {
 }
 
 export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
+  const saleIntent = useRef({ key: null as string | null })
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
@@ -63,6 +65,16 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
   const { monedas: monedasData } = useMonedas()
+
+  useEffect(() => {
+    let cancelled = false
+    getProductosAction().then((result) => {
+      if (cancelled) return
+      if (result.success) setProductos(result.data ?? [])
+      setIsLoadingProductos(false)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   const monedas = monedasData || []
   const monedasActivas = monedas.filter((m: any) => m.isActive)
@@ -117,12 +129,14 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
         const result = await createVentaAction({
+          idempotencyKey: getVentaCreateIntentKey(saleIntent.current),
           puntoDeVentaId: data.puntoDeVentaId,
           items,
         })
         if (!result.success) {
           throw new Error(result.error?.message || 'Error al crear la venta')
         }
+        resetVentaCreateIntent(saleIntent.current)
         sileo.success({ title: 'La venta ha sido registrada exitosamente' })
       }
       router.refresh()

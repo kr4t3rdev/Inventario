@@ -48,7 +48,7 @@ describe('GET /api/ops/tenant-isolation-violations', () => {
   it('rechaza usuarios que no sean administradores de plataforma', async () => {
     authenticateUserMock.mockResolvedValue({
       user: { userId: 'user-1', role: 'regularUser', isActive: true },
-    } as Awaited<ReturnType<typeof authenticateUser>>);
+    } as unknown as Awaited<ReturnType<typeof authenticateUser>>);
 
     const response = await GET(new NextRequest('http://localhost/api/ops/tenant-isolation-violations'));
 
@@ -59,7 +59,7 @@ describe('GET /api/ops/tenant-isolation-violations', () => {
   it('devuelve el snapshot local y advierte que no agrega réplicas', async () => {
     authenticateUserMock.mockResolvedValue({
       user: { userId: 'admin-1', role: 'admin', isActive: true },
-    } as Awaited<ReturnType<typeof authenticateUser>>);
+    } as unknown as Awaited<ReturnType<typeof authenticateUser>>);
 
     const response = await GET(new NextRequest('http://localhost/api/ops/tenant-isolation-violations'));
     const body = await response.json();
@@ -78,7 +78,7 @@ describe('GET /api/ops/tenant-isolation-violations', () => {
   it('acepta el alias legado SUPERADMIN mediante normalización de rol', async () => {
     authenticateUserMock.mockResolvedValue({
       user: { userId: 'admin-legacy', role: 'SUPERADMIN', isActive: true },
-    } as Awaited<ReturnType<typeof authenticateUser>>);
+    } as unknown as Awaited<ReturnType<typeof authenticateUser>>);
 
     const response = await GET(new NextRequest('http://localhost/api/ops/tenant-isolation-violations'));
 

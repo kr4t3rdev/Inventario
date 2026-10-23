@@ -30,4 +30,3 @@ public struct GetAccountingExchangeMonedasResponse: Codable, JSONEncodable, Hash
         try container.encodeIfPresent(items, forKey: .items)
     }
 }
-

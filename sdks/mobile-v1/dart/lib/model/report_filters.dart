@@ -164,4 +164,3 @@ class ReportFilters {
   static const requiredKeys = <String>{
   };
 }
-

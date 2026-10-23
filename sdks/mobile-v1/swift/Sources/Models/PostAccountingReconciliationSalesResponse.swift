@@ -62,4 +62,3 @@ public struct PostAccountingReconciliationSalesResponse: Codable, JSONEncodable,
         try container.encodeIfPresent(observaciones, forKey: .observaciones)
     }
 }
-

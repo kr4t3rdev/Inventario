@@ -234,4 +234,3 @@ class ReportTotals {
   static const requiredKeys = <String>{
   };
 }
-

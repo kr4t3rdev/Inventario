@@ -64,4 +64,3 @@ public struct ReportStatistics: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(porTipoDePago, forKey: .porTipoDePago)
     }
 }
-

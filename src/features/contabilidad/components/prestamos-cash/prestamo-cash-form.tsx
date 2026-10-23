@@ -204,7 +204,8 @@ export function PrestamoCashForm({
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (nextOpen?: boolean) => {
+    if (nextOpen === true || isLoading) return
     form.reset()
     pendingIdempotencyKey.current = null
     onOpenChange(false)
@@ -386,7 +387,7 @@ export function PrestamoCashForm({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={() => handleClose()} disabled={isLoading}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

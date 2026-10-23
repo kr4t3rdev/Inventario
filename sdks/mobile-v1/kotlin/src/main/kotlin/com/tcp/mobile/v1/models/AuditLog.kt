@@ -19,14 +19,14 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param id 
- * @param accion 
- * @param entidad 
- * @param entidadId 
- * @param usuarioId 
- * @param createdAt 
+ *
+ * @param id
+ * @param accion
+ * @param entidad
+ * @param entidadId
+ * @param usuarioId
+ * @param createdAt
  */
 
 
@@ -54,4 +54,3 @@ data class AuditLog (
 
 
 }
-

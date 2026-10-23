@@ -46,6 +46,18 @@ void main() {
       // TODO
     });
 
+    // Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
+    // String idempotencyKey
+    test('to test the property `idempotencyKey`', () async {
+      // TODO
+    });
+
+    // Fecha explícita de operación: fecha ISO 8601 (YYYY-MM-DD) o timestamp ISO 8601 con zona horaria. Si se omite, se conserva la fecha actual.
+    // String fechaOperacion
+    test('to test the property `fechaOperacion`', () async {
+      // TODO
+    });
+
 
   });
 

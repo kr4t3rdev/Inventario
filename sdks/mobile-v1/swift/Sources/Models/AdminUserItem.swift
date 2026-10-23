@@ -104,4 +104,3 @@ public struct AdminUserItem: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(activeReferralCount, forKey: .activeReferralCount)
     }
 }
-

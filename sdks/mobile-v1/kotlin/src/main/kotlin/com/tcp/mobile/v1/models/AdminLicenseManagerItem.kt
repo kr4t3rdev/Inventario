@@ -20,12 +20,12 @@ import com.tcp.mobile.v1.models.AdminUserLite
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param tenantRole 
- * @param user 
- * @param membershipId 
- * @param tenantId 
+ *
+ * @param tenantRole
+ * @param user
+ * @param membershipId
+ * @param tenantId
  */
 
 
@@ -47,4 +47,3 @@ data class AdminLicenseManagerItem (
 
 
 }
-

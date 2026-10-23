@@ -20,10 +20,10 @@ import com.tcp.mobile.v1.models.AdminHealthResponseUsersByRoleInner
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param total 
- * @param byRole 
+ *
+ * @param total
+ * @param byRole
  */
 
 
@@ -39,4 +39,3 @@ data class AdminHealthResponseUsers (
 
 
 }
-

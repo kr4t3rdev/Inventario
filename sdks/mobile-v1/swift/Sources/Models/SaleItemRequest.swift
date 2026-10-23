@@ -40,4 +40,3 @@ public struct SaleItemRequest: Codable, JSONEncodable, Hashable {
         try container.encode(precioUnitario, forKey: .precioUnitario)
     }
 }
-

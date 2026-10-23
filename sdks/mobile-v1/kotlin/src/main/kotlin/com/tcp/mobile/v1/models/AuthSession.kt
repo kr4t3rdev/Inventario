@@ -21,11 +21,11 @@ import com.tcp.mobile.v1.models.Token
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param accessToken 
- * @param refreshToken 
- * @param user 
+ *
+ * @param accessToken
+ * @param refreshToken
+ * @param user
  */
 
 
@@ -46,4 +46,3 @@ data class AuthSession (
     override fun toString(): String = "AuthSession(<redacted>)"
 
 }
-

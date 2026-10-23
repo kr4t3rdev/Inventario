@@ -39,4 +39,3 @@ public struct AuthSession: CustomStringConvertible, Codable, JSONEncodable, Hash
 
     public var description: String { "AuthSession(<redacted>)" }
 }
-

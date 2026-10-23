@@ -114,4 +114,3 @@ class GetAccountingCashDebtsResponse {
     'pagination',
   };
 }
-

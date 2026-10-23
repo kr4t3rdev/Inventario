@@ -22,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de POST /accounting/bank-transfers.
  *
- * @param transferencia 
- * @param numeroComprobante 
+ * @param transferencia
+ * @param numeroComprobante
  */
 
 
@@ -39,4 +39,3 @@ data class PostAccountingBankTransfersResponse (
 
 
 }
-

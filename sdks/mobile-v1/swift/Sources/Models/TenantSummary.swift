@@ -37,4 +37,3 @@ public struct TenantSummary: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(tenantRole, forKey: .tenantRole)
     }
 }
-

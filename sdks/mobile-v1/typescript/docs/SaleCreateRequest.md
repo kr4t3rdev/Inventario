@@ -21,6 +21,7 @@ Name | Type
 `tipoVencimiento` | string
 `fechaVencimiento` | string
 `cuentaBancariaId` | string
+`idempotencyKey` | string
 
 ## Example
 
@@ -44,6 +45,7 @@ const example = {
   "tipoVencimiento": null,
   "fechaVencimiento": null,
   "cuentaBancariaId": null,
+  "idempotencyKey": null,
 } satisfies SaleCreateRequest
 
 console.log(example)

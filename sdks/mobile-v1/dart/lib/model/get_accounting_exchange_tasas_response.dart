@@ -105,4 +105,3 @@ class GetAccountingExchangeTasasResponse {
   static const requiredKeys = <String>{
   };
 }
-

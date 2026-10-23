@@ -19,12 +19,12 @@ package com.tcp.mobile.v1.models
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param estado 
- * @param saldoDisponible 
- * @param vigenciaHasta 
- * @param referenciaExterna 
+ *
+ * @param estado
+ * @param saldoDisponible
+ * @param vigenciaHasta
+ * @param referenciaExterna
  */
 
 
@@ -46,4 +46,3 @@ data class AccountingAdvancesIdPutRequest (
 
 
 }
-

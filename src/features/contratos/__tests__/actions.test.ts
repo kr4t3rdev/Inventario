@@ -62,7 +62,7 @@ describe('Contratos Server Actions', () => {
   describe('getContratosAction', () => {
     it('retorna lista paginada', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.contrato.findMany).mockResolvedValue([mockContrato]);
+      vi.mocked(prisma.contrato.findMany).mockResolvedValue([mockContrato] as never);
       vi.mocked(prisma.contrato.count).mockResolvedValue(1);
 
       const result = await getContratosAction({ page: 1, limit: 10 });

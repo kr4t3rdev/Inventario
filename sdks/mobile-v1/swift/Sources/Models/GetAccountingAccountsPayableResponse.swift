@@ -38,4 +38,3 @@ public struct GetAccountingAccountsPayableResponse: Codable, JSONEncodable, Hash
         try container.encode(metricas, forKey: .metricas)
     }
 }
-

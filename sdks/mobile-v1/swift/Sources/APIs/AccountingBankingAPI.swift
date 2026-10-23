@@ -14,7 +14,7 @@ open class AccountingBankingAPI {
 
     /**
      Consultar cuentas bancarias
-     
+
      - returns: GetAccountingBankAccountsResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -29,7 +29,7 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - returns: RequestBuilder<GetAccountingBankAccountsResponse> 
+     - returns: RequestBuilder<GetAccountingBankAccountsResponse>
      */
     open class func mobileGetAccountingBankAccountsWithRequestBuilder() -> RequestBuilder<GetAccountingBankAccountsResponse> {
         let localVariablePath = "/accounting/bank-accounts"
@@ -51,8 +51,8 @@ open class AccountingBankingAPI {
 
     /**
      Consultar cuentas bancaria
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingBankAccountsIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -67,8 +67,8 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingBankAccountsIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingBankAccountsIdResponse>
      */
     open class func mobileGetAccountingBankAccountsByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingBankAccountsIdResponse> {
         var localVariablePath = "/accounting/bank-accounts/{id}"
@@ -93,8 +93,8 @@ open class AccountingBankingAPI {
 
     /**
      Consultar historial de cuentas bancarias
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter tipoMovimiento: (query) Valor de tipoMovimiento aceptado por el handler. (optional)
@@ -114,13 +114,13 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
+     - parameter id: (path) Identificador único del recurso.
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter tipoMovimiento: (query) Valor de tipoMovimiento aceptado por el handler. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingBankAccountsIdHistoryResponse> 
+     - returns: RequestBuilder<GetAccountingBankAccountsIdHistoryResponse>
      */
     open class func mobileGetAccountingBankAccountsByIdNestedHistoryWithRequestBuilder(id: String, fechaInicio: Date? = nil, fechaFin: Date? = nil, tipoMovimiento: String? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingBankAccountsIdHistoryResponse> {
         var localVariablePath = "/accounting/bank-accounts/{id}/history"
@@ -152,7 +152,7 @@ open class AccountingBankingAPI {
 
     /**
      Consultar ajustes bancarios
-     
+
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
@@ -179,7 +179,7 @@ open class AccountingBankingAPI {
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<GetAccountingBankAdjustmentsResponse> 
+     - returns: RequestBuilder<GetAccountingBankAdjustmentsResponse>
      */
     open class func mobileGetAccountingBankAdjustmentsWithRequestBuilder(cuentaId: String? = nil, tipo: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<GetAccountingBankAdjustmentsResponse> {
         let localVariablePath = "/accounting/bank-adjustments"
@@ -209,7 +209,7 @@ open class AccountingBankingAPI {
 
     /**
      Consultar transferencias bancarias
-     
+
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -230,7 +230,7 @@ open class AccountingBankingAPI {
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<GetAccountingBankTransfersResponse> 
+     - returns: RequestBuilder<GetAccountingBankTransfersResponse>
      */
     open class func mobileGetAccountingBankTransfersWithRequestBuilder(fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<GetAccountingBankTransfersResponse> {
         let localVariablePath = "/accounting/bank-transfers"
@@ -257,8 +257,8 @@ open class AccountingBankingAPI {
 
     /**
      Consultar transferencias bancaria
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: GetAccountingBankTransfersIdResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -273,8 +273,8 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<GetAccountingBankTransfersIdResponse> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<GetAccountingBankTransfersIdResponse>
      */
     open class func mobileGetAccountingBankTransfersByIdWithRequestBuilder(id: String) -> RequestBuilder<GetAccountingBankTransfersIdResponse> {
         var localVariablePath = "/accounting/bank-transfers/{id}"
@@ -299,8 +299,8 @@ open class AccountingBankingAPI {
 
     /**
      Descargar comprobante de transferencias bancarias
-     
-     - parameter id: (path) Identificador único del recurso. 
+
+     - parameter id: (path) Identificador único del recurso.
      - returns: URL
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -315,8 +315,8 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter id: (path) Identificador único del recurso. 
-     - returns: RequestBuilder<URL> 
+     - parameter id: (path) Identificador único del recurso.
+     - returns: RequestBuilder<URL>
      */
     open class func mobileGetAccountingBankTransfersByIdComprobanteWithRequestBuilder(id: String) -> RequestBuilder<URL> {
         var localVariablePath = "/accounting/bank-transfers/{id}/comprobante"
@@ -341,8 +341,8 @@ open class AccountingBankingAPI {
 
     /**
      Registrar ajustes bancarios
-     
-     - parameter bankAdjustmentRequest: (body)  
+
+     - parameter bankAdjustmentRequest: (body)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
@@ -363,14 +363,14 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter bankAdjustmentRequest: (body)  
+     - parameter bankAdjustmentRequest: (body)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
      - parameter tipo: (query) Tipo de registro solicitado. (optional)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter page: (query) Página solicitada, comenzando en 1. (optional)
      - parameter limit: (query) Cantidad máxima de elementos por página. (optional)
-     - returns: RequestBuilder<PostAccountingBankAdjustmentsResponse> 
+     - returns: RequestBuilder<PostAccountingBankAdjustmentsResponse>
      */
     open class func mobilePostAccountingBankAdjustmentsWithRequestBuilder(bankAdjustmentRequest: BankAdjustmentRequest, cuentaId: String? = nil, tipo: String? = nil, fechaInicio: Date? = nil, fechaFin: Date? = nil, page: Int? = nil, limit: Int? = nil) -> RequestBuilder<PostAccountingBankAdjustmentsResponse> {
         let localVariablePath = "/accounting/bank-adjustments"
@@ -400,8 +400,8 @@ open class AccountingBankingAPI {
 
     /**
      Registrar transferencias bancarias
-     
-     - parameter bankTransferCreateRequest: (body)  
+
+     - parameter bankTransferCreateRequest: (body)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
@@ -419,11 +419,11 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter bankTransferCreateRequest: (body)  
+     - parameter bankTransferCreateRequest: (body)
      - parameter fechaInicio: (query) Inicio inclusivo del período consultado. (optional)
      - parameter fechaFin: (query) Fin inclusivo del período consultado. (optional)
      - parameter cuentaId: (query) Identificador de la cuenta bancaria. (optional)
-     - returns: RequestBuilder<PostAccountingBankTransfersResponse> 
+     - returns: RequestBuilder<PostAccountingBankTransfersResponse>
      */
     open class func mobilePostAccountingBankTransfersWithRequestBuilder(bankTransferCreateRequest: BankTransferCreateRequest, fechaInicio: Date? = nil, fechaFin: Date? = nil, cuentaId: String? = nil) -> RequestBuilder<PostAccountingBankTransfersResponse> {
         let localVariablePath = "/accounting/bank-transfers"
@@ -450,8 +450,8 @@ open class AccountingBankingAPI {
 
     /**
      Validar transferencia bancaria
-     
-     - parameter bankTransferValidationRequest: (body)  
+
+     - parameter bankTransferValidationRequest: (body)
      - returns: PostAccountingBankTransfersValidateResponse
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -466,8 +466,8 @@ open class AccountingBankingAPI {
      - Bearer Token:
        - type: http
        - name: bearerAuth
-     - parameter bankTransferValidationRequest: (body)  
-     - returns: RequestBuilder<PostAccountingBankTransfersValidateResponse> 
+     - parameter bankTransferValidationRequest: (body)
+     - returns: RequestBuilder<PostAccountingBankTransfersValidateResponse>
      */
     open class func mobilePostAccountingBankTransfersValidateWithRequestBuilder(bankTransferValidationRequest: BankTransferValidationRequest) -> RequestBuilder<PostAccountingBankTransfersValidateResponse> {
         let localVariablePath = "/accounting/bank-transfers/validate"

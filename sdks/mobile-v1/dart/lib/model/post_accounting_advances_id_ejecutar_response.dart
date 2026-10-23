@@ -106,4 +106,3 @@ class PostAccountingAdvancesIdEjecutarResponse {
     'result',
   };
 }
-

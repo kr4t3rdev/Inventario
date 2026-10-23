@@ -57,4 +57,3 @@ public struct AccountPayable: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(fechaVencimiento, forKey: .fechaVencimiento)
     }
 }
-

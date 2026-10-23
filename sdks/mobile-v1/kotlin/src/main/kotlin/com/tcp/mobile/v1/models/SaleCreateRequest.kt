@@ -20,23 +20,24 @@ import com.tcp.mobile.v1.models.SaleItemRequest
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 
  *
- * @param puntoDeVentaId 
- * @param items 
- * @param clienteId 
- * @param empleadoId 
- * @param descuento 
- * @param observaciones 
- * @param turnoId 
- * @param metodoPago 
- * @param montoEfectivo 
- * @param montoTarjeta 
- * @param montoTransferencia 
- * @param montoCredito 
- * @param tipoVencimiento 
- * @param fechaVencimiento 
- * @param cuentaBancariaId 
+ *
+ * @param puntoDeVentaId
+ * @param items
+ * @param clienteId
+ * @param empleadoId
+ * @param descuento
+ * @param observaciones
+ * @param turnoId
+ * @param metodoPago
+ * @param montoEfectivo
+ * @param montoTarjeta
+ * @param montoTransferencia
+ * @param montoCredito
+ * @param tipoVencimiento
+ * @param fechaVencimiento
+ * @param cuentaBancariaId
+ * @param idempotencyKey Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad.
  */
 
 
@@ -85,12 +86,16 @@ data class SaleCreateRequest (
     val fechaVencimiento: kotlin.String? = null,
 
     @get:JsonProperty("cuentaBancariaId")
-    val cuentaBancariaId: kotlin.String? = null
+    val cuentaBancariaId: kotlin.String? = null,
+
+    /* Clave opcional de idempotencia (1 a 64 caracteres). Si también se envía Idempotency-Key en el encabezado, prevalece esta propiedad. */
+    @get:JsonProperty("idempotencyKey")
+    val idempotencyKey: kotlin.String? = null
 
 ) {
 
     /**
-     * 
+     *
      *
      * Values: contra_pago,fecha,plazo
      */
@@ -101,4 +106,3 @@ data class SaleCreateRequest (
     }
 
 }
-

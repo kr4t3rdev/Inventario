@@ -41,4 +41,3 @@ public struct AccountingAdvancesIdPutRequest: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(referenciaExterna, forKey: .referenciaExterna)
     }
 }
-

@@ -226,7 +226,7 @@ Crea una reserva de anticipo de pago o cobro, vinculada al contrato y contrapart
 //import com.tcp.mobile.v1.models.*
 
 val apiInstance = AccountingAdvancesApi()
-val accountingAdvancesPostRequest : AccountingAdvancesPostRequest =  // AccountingAdvancesPostRequest | 
+val accountingAdvancesPostRequest : AccountingAdvancesPostRequest =  // AccountingAdvancesPostRequest |
 try {
     val result : PostAccountingAdvancesResponse = apiInstance.mobilePostAccountingAdvances(accountingAdvancesPostRequest)
     println(result)
@@ -275,7 +275,7 @@ Aplica el saldo completo del anticipo al documento destino con control de idempo
 
 val apiInstance = AccountingAdvancesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val accountingAdvancesIdEjecutarPostRequest : AccountingAdvancesIdEjecutarPostRequest =  // AccountingAdvancesIdEjecutarPostRequest | 
+val accountingAdvancesIdEjecutarPostRequest : AccountingAdvancesIdEjecutarPostRequest =  // AccountingAdvancesIdEjecutarPostRequest |
 try {
     val result : PostAccountingAdvancesIdEjecutarResponse = apiInstance.mobilePostAccountingAdvancesByIdEjecutar(id, accountingAdvancesIdEjecutarPostRequest)
     println(result)
@@ -325,7 +325,7 @@ Revierte el importe aplicado al documento destino y restablece el estado contabl
 
 val apiInstance = AccountingAdvancesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val accountingAdvancesIdRevertirPostRequest : AccountingAdvancesIdRevertirPostRequest =  // AccountingAdvancesIdRevertirPostRequest | 
+val accountingAdvancesIdRevertirPostRequest : AccountingAdvancesIdRevertirPostRequest =  // AccountingAdvancesIdRevertirPostRequest |
 try {
     val result : PostAccountingAdvancesIdRevertirResponse = apiInstance.mobilePostAccountingAdvancesByIdRevertir(id, accountingAdvancesIdRevertirPostRequest)
     println(result)
@@ -375,7 +375,7 @@ Modifica estado, saldo disponible, vigencia o referencia externa del anticipo ex
 
 val apiInstance = AccountingAdvancesApi()
 val id : kotlin.String = id_example // kotlin.String | Identificador único del recurso.
-val accountingAdvancesIdPutRequest : AccountingAdvancesIdPutRequest =  // AccountingAdvancesIdPutRequest | 
+val accountingAdvancesIdPutRequest : AccountingAdvancesIdPutRequest =  // AccountingAdvancesIdPutRequest |
 try {
     val result : PutAccountingAdvancesIdResponse = apiInstance.mobilePutAccountingAdvancesById(id, accountingAdvancesIdPutRequest)
     println(result)
