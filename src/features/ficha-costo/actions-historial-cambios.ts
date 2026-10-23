@@ -48,11 +48,13 @@ export const getHistorialCambiosPrecioAction = withAction(
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const { productoId, page = 1, limit = 20 } = input
 
-    const where: any = {}
-    if (productoId) where.productoId = productoId
+    const where = {
+      producto: { is: { tenantId } },
+      ...(productoId ? { productoId } : {}),
+    }
 
     // ProductoCostHistory no tiene tenantId; la seguridad multi-tenant
-    // se garantiza validando que el productoId pertenezca al tenant.
+    // se garantiza siempre mediante su producto relacionado.
     if (productoId) {
       const producto = await prisma.producto.findFirst({
         where: { id: productoId, tenantId },

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, Trash2, Check } from 'lucide-react'
+import { Archive, Loader2, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { LazyMotion, m as motion } from 'framer-motion'
 import { TiposContratosForm } from './tipos-contratos-form'
@@ -86,7 +86,7 @@ export function TiposContratosList({
   }
 
   const handleDelete = async (tipoCustomId: string) => {
-    if (!confirm('¿Está seguro de que desea eliminar este tipo de contrato?')) {
+    if (!confirm('¿Desea desactivar este tipo? La información existente se conservará.')) {
       return
     }
 
@@ -104,12 +104,12 @@ export function TiposContratosList({
         throw new Error('Error al eliminar')
       }
 
-      toast.success('Tipo de contrato eliminado')
+      toast.success('Tipo de contrato desactivado; la información existente se conserva')
       setTipos(tipos.filter((t) => t.tipoCustomId !== tipoCustomId))
       onRefresh?.()
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Error al eliminar el tipo de contrato')
+      toast.error('Error al desactivar el tipo de contrato')
     } finally {
       setIsDeletingId(null)
     }
@@ -218,12 +218,12 @@ export function TiposContratosList({
                           onClick={() => handleDelete(tipo.tipoCustomId)}
                           disabled={isDeletingId === tipo.tipoCustomId}
                           className="p-1 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-                          title="Eliminar"
+                          title="Desactivar"
                         >
                           {isDeletingId === tipo.tipoCustomId ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <Archive className="h-4 w-4" />
                           )}
                         </motion.button>
                       </TableCell>

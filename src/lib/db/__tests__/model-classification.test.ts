@@ -77,6 +77,7 @@ describe('AS-01 contrato de clasificación de modelos', () => {
       ['VentaItem', 'child'],
       ['OfertaItem', 'child'],
       ['ContratoVersion', 'child'],
+      ['ReciboOrdenReparacion', 'child'],
       ['AnticipoMovimiento', 'child'],
       ['TransaccionMoneda', 'scoped'],
       ['AlertHistory', 'scoped'],
@@ -94,7 +95,7 @@ describe('AS-01 contrato de clasificación de modelos', () => {
       ['ReplayPreflight', 'scoped'],
       ['ReplayRun', 'scoped'],
       ['ShadowPosteoOutbox', 'scoped'],
-      ['TipoContratoCustom', 'pending-scope'],
+      ['TipoContratoCustom', 'scoped'],
     ];
     for (const [model, scope] of expectations) {
       expect(getModelScope(model), model).toBe(scope);

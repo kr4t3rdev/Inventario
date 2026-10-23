@@ -9,7 +9,6 @@ import { getVendorsAction } from '@/features/vendors'
 import { getContratoByIdAction } from '@/features/contratos'
 import { ContratoForm } from '@/features/contratos'
 import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
-import prisma from '@/lib/prisma'
 
 
 export const metadata = {
@@ -29,17 +28,10 @@ export default async function UpdateContratoPage(props: PageProps) {
   const params = await props.params
 
   // Obtener datos del servidor en paralelo
-  const [contratoResponse, clientesResponse, vendorsResponse, tiposCustom] = await Promise.all([
+  const [contratoResponse, clientesResponse, vendorsResponse] = await Promise.all([
     getContratoByIdAction(params.id),
     getClientesAction(),
     getVendorsAction(),
-    prisma.contrato.findMany({
-      where: { tenantId: { not: undefined } },
-      select: {
-  // @ts-expect-error TODO: fix prisma select type inference
-      tipoCustomId: true, nombre: true
-      }
-    }).catch(() => [])
   ])
 
   // Desempaquetar ActionResponses
@@ -79,10 +71,6 @@ export default async function UpdateContratoPage(props: PageProps) {
         clientes
         }
         initialVendors={vendors}
-  // @ts-expect-error TODO: fix type cast for tiposCustom array
-        initialTiposCustom={
-        tiposCustom
-        }
         isUpdate
       />
     </div>

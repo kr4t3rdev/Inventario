@@ -202,6 +202,7 @@ model Tenant {
   reglasReabastecimiento         ReglaReabastecimiento[]
   comprasServicio                CompraServicio[]
   contratos                      Contrato[]
+  tiposContratosCustom           TipoContratoCustom[]
   configuracionContratos         ConfiguracionContratos?
   cuentasBancarias               CuentaBancaria[]
   cuentasPorCobrar               CuentaPorCobrar[]
@@ -1252,9 +1253,9 @@ model VacationAccrual {
   accrualId              String   @id @default(cuid())
   employeeId             String
   periodo                String
-  diasAcumulados         Int
+  diasAcumulados         Float
   diasPorAntiguedad      Int
-  diasPorTiempoTrabajado Int
+  diasPorTiempoTrabajado Float
   tipoAcumulacion        String
   fechaCalculo           DateTime @default(now())
   procesado              Boolean  @default(false)
@@ -1280,8 +1281,8 @@ model Empleado {
   diasVacacionesAnuales Int                    @default(15)
   esTiempoCompleto      Boolean                @default(true)
   fechaContratacion     DateTime
-  vacationDaysAccrued   Int                    @default(0)
-  vacationDaysUsed      Int                    @default(0)
+  vacationDaysAccrued   Float                  @default(0)
+  vacationDaysUsed      Float                  @default(0)
   attendances           Attendance[]
   tenant                Tenant                 @relation(fields: [tenantId], references: [tenantId])
   workSchedules         EmployeeWorkSchedule[]
@@ -2367,16 +2368,20 @@ model ContratoAlerta {
 
 model TipoContratoCustom {
   tipoCustomId String   @id @default(cuid())
-  nombre       String   @unique
+  tenantId     String?
+  nombre       String
   descripcion  String?
   activo       Boolean  @default(true)
   creadoPor    String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   creador      User     @relation(fields: [creadoPor], references: [userId])
+  tenant       Tenant?  @relation(fields: [tenantId], references: [tenantId], onDelete: SetNull)
 
+  @@unique([tenantId, nombre])
   @@index([nombre])
   @@index([activo])
+  @@index([tenantId])
 }
 
 model Factura {
@@ -2729,8 +2734,25 @@ model OrdenReparacion {
   equipos            OrdenReparacionEquipo[]
   items              OrdenReparacionItem[]
   materiales         OrdenReparacionMaterial[]
+  recibos            ReciboOrdenReparacion[]
 
   @@index([tenantId])
+}
+
+model ReciboOrdenReparacion {
+  id             String          @id @default(cuid())
+  numeroRecibo   Int             @default(autoincrement())
+  ordenId        String
+  clienteNombre  String
+  equipoInfo     String
+  problema       String
+  fechaRecepcion DateTime        @default(now())
+  estadoInicial  String
+  fotosIniciales String[]        @default([])
+  observaciones  String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  orden          OrdenReparacion @relation(fields: [ordenId], references: [id], onDelete: Cascade)
 }
 
 model OrdenReparacionEquipo {
@@ -2906,15 +2928,17 @@ model ValeSalida {
 }
 
 model ValeSalidaItem {
-  valeSalidaItemId String     @id
-  tenantId         String
-  valeSalidaId     String
-  productoId       String
-  cantidad         Int
-  createdAt        DateTime   @default(now())
-  Producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  tenant           Tenant     @relation(fields: [tenantId], references: [tenantId])
-  ValeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
+  valeSalidaItemId   String     @id
+  tenantId           String
+  valeSalidaId       String
+  productoId         String
+  cantidad           Int
+  sourceTipoUbicacion String?
+  sourceUbicacionId   String?
+  createdAt          DateTime   @default(now())
+  Producto           Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tenant             Tenant     @relation(fields: [tenantId], references: [tenantId])
+  ValeSalida         ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
 
   @@index([tenantId])
 }

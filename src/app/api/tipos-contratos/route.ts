@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser, withAuth } from '@/lib/auth-middleware'
-import { ActionError } from '@/lib/server-actions'
-import { requirePermission } from '@/lib/services/tenant-scope'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+import { contratosAccessErrorResponse, requireContratosFeature } from '@/features/contratos/access'
 
 const tipoContratoCustomSchema = z.object({
   nombre: z
@@ -28,12 +28,13 @@ export const GET = withAuth(async (request: NextRequest) => {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
 
+    requireContratosFeature(authResultUser.user)
+    const tenantId = requireTenant(authResultUser.user)
     const searchParams = request.nextUrl.searchParams
     const activos = searchParams.get('activos')
-
-    const where: any = {}
-    if (activos === 'true') {
-      where.activo = true
+    const where = {
+      tenantId,
+      activo: activos === 'false' ? false : true,
     }
 
     const tipos = await prisma.tipoContratoCustom.findMany({
@@ -53,6 +54,8 @@ export const GET = withAuth(async (request: NextRequest) => {
     return NextResponse.json({ data: tipos })
   } catch (error) {
     console.error('Error al obtener tipos de contratos:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json(
       { error: 'Failed to fetch tipos de contratos' },
       { status: 500 }
@@ -68,14 +71,16 @@ export const POST = withAuth(async (request: NextRequest) => {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requireContratosFeature(user)
     requirePermission(user, 'config.tipos-contrato.crear', 'crear tipos de contrato')
+    const tenantId = requireTenant(user)
 
     const body = await request.json()
     const data = tipoContratoCustomSchema.parse(body)
 
     // Validar que el nombre no exista ya
-    const existe = await prisma.tipoContratoCustom.findUnique({
-      where: { nombre: data.nombre },
+    const existe = await prisma.tipoContratoCustom.findFirst({
+      where: { nombre: data.nombre, tenantId },
     })
 
     if (existe) {
@@ -88,6 +93,7 @@ export const POST = withAuth(async (request: NextRequest) => {
     const tipo = await prisma.tipoContratoCustom.create({
       data: {
         ...data,
+        tenantId,
         creadoPor: user.userId,
       },
       include: {
@@ -104,13 +110,8 @@ export const POST = withAuth(async (request: NextRequest) => {
     return NextResponse.json(tipo, { status: 201 })
   } catch (error) {
     console.error('Error al crear tipo de contrato:', error)
-
-    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: 403 }
-      )
-    }
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

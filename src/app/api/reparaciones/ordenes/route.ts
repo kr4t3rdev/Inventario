@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
 import { requireTenant } from "@/lib/services/tenant-scope"
+import { validateTenantOrderReferences } from "@/lib/api/reparaciones/tenant-order-references"
 
 // GET: Listar órdenes
 export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
@@ -104,15 +105,16 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
       return NextResponse.json({ error: "Marca y problema reportado son requeridos" }, { status: 400 })
     }
 
-    // Obtener información del cliente y equipo para el recibo
-    const [cliente, equipoTipo] = await Promise.all([
-      prisma.cliente.findUnique({ where: { clienteId: data.clienteId } }),
-      prisma.equipoReparacion.findUnique({ where: { id: primaryEquipo.equipoTipoId } })
-    ])
-
-    if (!cliente) {
-      return NextResponse.json({ error: "Cliente no encontrado" }, { status: 404 })
+    const references = await validateTenantOrderReferences(prisma, {
+      tenantId,
+      clienteId: data.clienteId,
+      equipoTipoIds: equiposNormalized.map((equipo: any) => equipo.equipoTipoId),
+      tecnicoId: data.tecnicoId,
+    })
+    if (!references.ok) {
+      return NextResponse.json({ error: references.message }, { status: 404 })
     }
+    const { cliente, equipoTipo, tecnicoId } = references
 
     // Crear orden y recibo en una transacción
     const resultado = await prisma.$transaction(async (tx: any) => {
@@ -132,7 +134,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
           esGarantia: data.esGarantia || false,
           estado: "RECIBIDO",
           moneda: "USD",
-          tecnicoId: data.tecnicoId,
+          tecnicoId,
           fotos: data.fotos || [],
           equipos: {
             create: equiposNormalized.map((equipo: any) => ({

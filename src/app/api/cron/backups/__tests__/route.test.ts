@@ -5,21 +5,29 @@ const {
   backupEngineRun,
   backupEngineCtor,
   calculateNextRun,
+  resolveTenantContext,
 } = vi.hoisted(() => ({
   backupEngineRun: vi.fn(),
   backupEngineCtor: vi.fn(),
   calculateNextRun: vi.fn(() => new Date('2026-08-09T00:00:00.000Z')),
+  resolveTenantContext: vi.fn(),
 }))
+vi.mock('@/lib/auth-middleware', () => ({ resolveTenantContext }))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     backupPlan: {
       findMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     backupLog: {
       create: vi.fn(),
+      findMany: vi.fn(),
+      updateMany: vi.fn(),
     },
+    user: { findUnique: vi.fn() },
+    tenant: { findUnique: vi.fn() },
   },
 }))
 
@@ -65,6 +73,11 @@ describe('backup cron route', () => {
       backupLogId: 'log-1',
     } as never)
     vi.mocked(prisma.backupPlan.update).mockResolvedValue({} as never)
+    vi.mocked(prisma.backupPlan.updateMany).mockResolvedValue({ count: 1 } as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'admin', isActive: true } as never)
+    vi.mocked(prisma.tenant.findUnique).mockResolvedValue({ tenantId: 'tenant-1' } as never)
+    resolveTenantContext.mockResolvedValue(null)
+    vi.mocked(pruneBackups).mockResolvedValue({ pruned: 0, failed: 0 })
   })
 
   afterEach(() => {
@@ -135,15 +148,18 @@ describe('backup cron route', () => {
       undefined,
       'admin-1',
     )
-    expect(prisma.backupPlan.update).toHaveBeenCalledWith({
-      where: { backupPlanId: 'plan-1' },
+    expect(prisma.backupPlan.updateMany).toHaveBeenCalledWith({
+      where: {
+        backupPlanId: 'plan-1', type: 'full', tenantId: null,
+        createdBy: 'admin-1', enabled: true,
+      },
       data: {
         lastRunAt: expect.any(Date),
         nextRunAt: expect.any(Date),
       },
     })
     expect(calculateNextRun).toHaveBeenCalledWith('hourly')
-    expect(pruneBackups).toHaveBeenCalledWith(30)
+    expect(pruneBackups).toHaveBeenCalledWith(30, { kind: 'global', type: 'full' })
   })
 
   it('accepts the x-cron-secret header', async () => {
@@ -165,18 +181,18 @@ describe('backup cron route', () => {
       {
         backupPlanId: 'plan-1',
         type: 'full',
-        tenantId: 'tenant-1',
+        tenantId: null,
         schedule: 'hourly',
         retention: 10,
         createdBy: 'admin-1',
       },
       {
         backupPlanId: 'plan-2',
-        type: 'config',
-        tenantId: null,
+        type: 'tenant',
+        tenantId: 'tenant-1',
         schedule: 'daily',
         retention: 20,
-        createdBy: 'admin-2',
+        createdBy: 'member-1',
       },
     ] as never)
     vi.mocked(prisma.backupLog.create)
@@ -189,6 +205,16 @@ describe('backup cron route', () => {
       await new Promise((resolve) => setTimeout(resolve, 0))
       activeBackups--
       events.push('end')
+    })
+    vi.mocked(prisma.user.findUnique).mockImplementation(async ({ where }: any) => ({
+      role: where.userId === 'member-1' ? 'regularUser' : 'admin',
+      isActive: true,
+    }) as never)
+    resolveTenantContext.mockResolvedValue({
+      tenantId: 'tenant-1',
+      tenantRole: 'manager',
+      planFeatures: { 'backups-tiempo-real': true },
+      permissions: new Set(),
     })
 
     const response = await GET(new NextRequest(
@@ -204,17 +230,160 @@ describe('backup cron route', () => {
     expect(prisma.backupLog.create).toHaveBeenCalledTimes(2)
     expect(backupEngineRun).toHaveBeenNthCalledWith(
       1,
-      { type: 'full', tenantId: 'tenant-1' },
+      { type: 'full', tenantId: undefined },
       'log-1',
       undefined,
       'admin-1',
     )
     expect(backupEngineRun).toHaveBeenNthCalledWith(
       2,
-        { type: 'config', tenantId: undefined },
+        { type: 'tenant', tenantId: 'tenant-1' },
       'log-2',
       undefined,
-      'admin-2',
+      'member-1',
     )
+    expect(pruneBackups).toHaveBeenNthCalledWith(1, 10, { kind: 'global', type: 'full' })
+    expect(pruneBackups).toHaveBeenNthCalledWith(2, 20, {
+      kind: 'tenant', tenantId: 'tenant-1',
+    })
+  })
+
+  it('skips a tenant plan when its creator has no active tenant context', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'legacy-plan', type: 'tenant', tenantId: 'tenant-1',
+      schedule: 'hourly', retention: 1, createdBy: 'regular-user',
+    }] as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      role: 'regularUser', isActive: true,
+    } as never)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 0, failed: 1 })
+    expect(backupEngineCtor).not.toHaveBeenCalled()
+    expect(pruneBackups).not.toHaveBeenCalled()
+  })
+
+  it('rejects a tenant plan when creator membership resolves to a different tenant', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'foreign-plan', type: 'tenant', tenantId: 'tenant-1',
+      schedule: 'hourly', retention: 1, createdBy: 'regular-user',
+    }] as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      role: 'regularUser', isActive: true,
+    } as never)
+    resolveTenantContext.mockResolvedValue({
+      tenantId: 'tenant-2', planFeatures: { 'backups-tiempo-real': true },
+    })
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 0, failed: 1 })
+    expect(backupEngineCtor).not.toHaveBeenCalled()
+    expect(pruneBackups).not.toHaveBeenCalled()
+  })
+
+  it('allows an active platform admin tenant plan without tenant membership', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'admin-tenant-plan', type: 'tenant', tenantId: 'tenant-1',
+      schedule: 'hourly', retention: 7, createdBy: 'admin-1',
+    }] as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'admin', isActive: true } as never)
+    resolveTenantContext.mockResolvedValue(null)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 1, failed: 0 })
+    expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1' }, select: { tenantId: true },
+    })
+    expect(backupEngineRun).toHaveBeenCalledWith(
+      { type: 'tenant', tenantId: 'tenant-1' }, 'log-1', undefined, 'admin-1',
+    )
+    expect(pruneBackups).toHaveBeenCalledWith(7, { kind: 'tenant', tenantId: 'tenant-1' })
+  })
+
+  it('rejects a tenant plan when its tenant no longer exists', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'deleted-tenant-plan', type: 'tenant', tenantId: 'deleted-tenant',
+      schedule: 'hourly', retention: 1, createdBy: 'admin-1',
+    }] as never)
+    vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null as never)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 0, failed: 1 })
+    expect(backupEngineCtor).not.toHaveBeenCalled()
+    expect(pruneBackups).not.toHaveBeenCalled()
+  })
+
+  it('logs a partial prune failure without masking the completed backup', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'plan-1', type: 'full', tenantId: null,
+      schedule: 'hourly', retention: 30, createdBy: 'admin-1',
+    }] as never)
+    vi.mocked(pruneBackups).mockResolvedValue({ pruned: 0, failed: 1 })
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 1, failed: 0 })
+    expect(log).toHaveBeenCalledWith(
+      '[cron/backups] Prune incomplete for plan plan-1:',
+      { pruned: 0, failed: 1 },
+    )
+    log.mockRestore()
+  })
+
+  it('skips plans with unknown creator records before creating a backup log', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'orphan-plan', type: 'full', tenantId: null,
+      schedule: 'hourly', retention: 1, createdBy: 'deleted-user',
+    }] as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+
+    expect(response.status).toBe(200)
+    expect(prisma.backupLog.create).not.toHaveBeenCalled()
+    expect(backupEngineCtor).not.toHaveBeenCalled()
+    expect(pruneBackups).not.toHaveBeenCalled()
+  })
+
+  it('rejects legacy global plans created by a non-admin', async () => {
+    vi.mocked(prisma.backupPlan.findMany).mockResolvedValue([{
+      backupPlanId: 'legacy-global-plan', type: 'full', tenantId: null,
+      schedule: 'hourly', retention: 1, createdBy: 'regular-user',
+    }] as never)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      role: 'regularUser', isActive: true,
+    } as never)
+
+    const response = await GET(new NextRequest('http://localhost/api/cron/backups', {
+      headers: { authorization: 'Bearer test-cron-secret' },
+    }))
+    const data = await response.json()
+
+    expect(data).toMatchObject({ executed: 0, failed: 1 })
+    expect(prisma.backupLog.create).not.toHaveBeenCalled()
+    expect(backupEngineCtor).not.toHaveBeenCalled()
+    expect(pruneBackups).not.toHaveBeenCalled()
   })
 })

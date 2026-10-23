@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { ActionError } from '@/lib/server-actions/types';
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { z } from 'zod';
@@ -24,7 +25,9 @@ const createValeSchema = z.object({
  */
 export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    if (!user.tenantId) return NextResponse.json({ error: 'Sin contexto de tenant.' }, { status: 403 });
     const tenantId = requireTenant(user);
+    requirePermission(user, 'produccion.vales.gestionar', 'gestionar vales de salida');
     const searchParams = request.nextUrl.searchParams;
     const concepto = searchParams.get('concepto')?.trim();
     const estado = searchParams.get('estado')?.trim();
@@ -53,6 +56,7 @@ export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: Aut
                 nombre: true,
                 precioCosto: true,
                 stock: true,
+                tenantId: true,
               },
             },
           },
@@ -63,8 +67,20 @@ export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: Aut
       },
     });
 
-    return NextResponse.json(vales);
+    const safeVales = vales.filter((vale) =>
+      vale.ValeSalidaItem.every((item) => item.tenantId === tenantId && item.Producto?.tenantId === tenantId)
+    ).map((vale) => ({
+      ...vale,
+      ValeSalidaItem: vale.ValeSalidaItem.map(({ Producto, ...item }) => ({
+        ...item,
+        Producto: Producto ? (({ tenantId: _tenantId, ...product }) => product)(Producto) : null,
+      })),
+    }));
+    return NextResponse.json(safeVales);
   } catch (error) {
+    if (error instanceof ActionError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === 'FORBIDDEN' ? 403 : 400 });
+    }
     console.error('Error al obtener vales de salida:', error);
     return NextResponse.json({ error: 'Error al obtener vales de salida.' }, { status: 500 });
   }
@@ -77,10 +93,11 @@ export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: Aut
  */
 export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    if (!user.tenantId) return NextResponse.json({ error: 'Sin contexto de tenant.' }, { status: 403 });
     const tenantId = requireTenant(user);
+    requirePermission(user, 'produccion.vales.gestionar', 'gestionar vales de salida');
     const body = await request.json();
     const payload = createValeSchema.parse(body);
-    const userId = body.userId || 'system';
 
     // Crear el vale y validar stock + decrementar de forma atómica en una sola transacción
     let vale;
@@ -96,19 +113,25 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
         }> = [];
 
         for (const item of payload.items) {
-          const producto = await tx.producto.findUnique({
-            where: { id: item.productoId },
+          const producto = await tx.producto.findFirst({
+            where: { id: item.productoId, tenantId },
             select: { id: true, nombre: true, almacenId: true },
           });
 
-          const stockEnAlmacen = producto?.almacenId
-            ? await tx.stockUbicacion.findUnique({
+          const almacen = producto?.almacenId
+            ? await tx.almacen.findFirst({
+                where: { almacenId: producto.almacenId, tenantId },
+                select: { almacenId: true },
+              })
+            : null;
+
+          const stockEnAlmacen = producto?.almacenId && almacen
+            ? await tx.stockUbicacion.findFirst({
                 where: {
-                  productoId_tipoUbicacion_ubicacionId: {
-                    productoId: item.productoId,
-                    tipoUbicacion: 'almacen',
-                    ubicacionId: producto.almacenId,
-                  },
+                  tenantId,
+                  productoId: item.productoId,
+                  tipoUbicacion: 'almacen',
+                  ubicacionId: producto.almacenId,
                 },
                 select: {
                   productoId: true,
@@ -119,7 +142,7 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
               })
             : null;
 
-          if (!producto || !producto.almacenId || !stockEnAlmacen || stockEnAlmacen.cantidadDisponible < item.cantidad) {
+          if (!producto || !producto.almacenId || !almacen || !stockEnAlmacen || stockEnAlmacen.cantidadDisponible < item.cantidad) {
             productosFaltantes.push({
               productoId: item.productoId,
               productoNombre: producto?.nombre || 'Desconocido',
@@ -162,10 +185,13 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
               valeSalidaId: nuevoVale.valeSalidaId,
               productoId: item.productoId,
               cantidad: item.cantidad,
+              sourceTipoUbicacion: 'almacen',
+              sourceUbicacionId: item.almacenId,
             },
           });
 
           await upsertStockUbicacion(tx, {
+            tenantId,
             productoId: item.productoId,
             tipoUbicacion: 'almacen',
             ubicacionId: item.almacenId,
@@ -174,8 +200,8 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
           });
         }
 
-        return tx.valeSalida.findUnique({
-          where: { valeSalidaId: nuevoVale.valeSalidaId },
+        return tx.valeSalida.findFirst({
+          where: { valeSalidaId: nuevoVale.valeSalidaId, tenantId },
           include: {
             ValeSalidaItem: {
               include: {
@@ -199,6 +225,9 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
 
     return NextResponse.json(vale, { status: 201 });
   } catch (error) {
+    if (error instanceof ActionError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === 'FORBIDDEN' ? 403 : 400 });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos inválidos para crear vale.', issues: error.issues },

@@ -54,6 +54,12 @@ describe('getHistorialCambiosPrecioAction', () => {
     expect(data.items[0].precioVenta).toEqual({ old: 100, new: 120 })
     expect(data.pagination.total).toBe(15)
     expect(data.pagination.totalPages).toBe(2)
+
+    const tenantHistoryWhere = { producto: { is: { tenantId: 'tenant-1' } } }
+    expect(prisma.productoCostHistory.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: tenantHistoryWhere }),
+    )
+    expect(prisma.productoCostHistory.count).toHaveBeenCalledWith({ where: tenantHistoryWhere })
   })
 
   it('filtra por productoId', async () => {
@@ -64,24 +70,36 @@ describe('getHistorialCambiosPrecioAction', () => {
       { productoId: 'p1', page: 1, limit: 10 },
     )
 
+    const tenantProductWhere = {
+      producto: { is: { tenantId: 'tenant-1' } },
+      productoId: 'p1',
+    }
+    expect(prisma.producto.findFirst).toHaveBeenCalledWith({
+      where: { id: 'p1', tenantId: 'tenant-1' },
+      select: { id: true },
+    })
     expect(prisma.productoCostHistory.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ productoId: 'p1' }),
-      }),
+      expect.objectContaining({ where: tenantProductWhere }),
     )
+    expect(prisma.productoCostHistory.count).toHaveBeenCalledWith({ where: tenantProductWhere })
   })
 
-  it('opcionalmente filtra por tenantId via producto', async () => {
-    vi.mocked(prisma.productoCostHistory.findMany).mockResolvedValue([])
-    vi.mocked(prisma.productoCostHistory.count).mockResolvedValue(0)
+  it('fails closed for a foreign product without querying its history', async () => {
+    vi.mocked(prisma.producto.findFirst).mockResolvedValueOnce(null)
 
-    await getHistorialCambiosPrecioAction(
-      { page: 1, limit: 10 },
-    )
+    const data = expectActionSuccess(await getHistorialCambiosPrecioAction(
+      { productoId: 'foreign-product', page: 1, limit: 10 },
+    )).data
 
-    // Since ProductoCostHistory doesn't have tenantId, we can't filter it directly.
-    // The test verifies the action runs without error (multi-tenant is handled
-    // by only returning records for products the tenant owns, via join).
-    expect(prisma.productoCostHistory.findMany).toHaveBeenCalled()
+    expect(data).toEqual({
+      items: [],
+      pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    })
+    expect(prisma.producto.findFirst).toHaveBeenCalledWith({
+      where: { id: 'foreign-product', tenantId: 'tenant-1' },
+      select: { id: true },
+    })
+    expect(prisma.productoCostHistory.findMany).not.toHaveBeenCalled()
+    expect(prisma.productoCostHistory.count).not.toHaveBeenCalled()
   })
 })

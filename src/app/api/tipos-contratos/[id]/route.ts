@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser, withAuth } from '@/lib/auth-middleware'
-import { ActionError } from '@/lib/server-actions'
-import { requirePermission } from '@/lib/services/tenant-scope'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+import { contratosAccessErrorResponse, requireContratosFeature } from '@/features/contratos/access'
 
 /**
  * @description DELETE /api/tipos-contratos/[id] - Elimina un tipo de contrato personalizado
@@ -14,39 +14,32 @@ export const DELETE = withAuth(async (
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    requireContratosFeature(authResultUser.user)
     requirePermission(authResultUser.user, 'config.tipos-contrato.eliminar', 'eliminar tipos de contrato')
+    const tenantId = requireTenant(authResultUser.user)
 
     const { id } = await params
 
-    // Validar que el tipo existe
-    const tipo = await prisma.tipoContratoCustom.findUnique({
-      where: { tipoCustomId: id },
+    const archived = await prisma.tipoContratoCustom.updateMany({
+      where: { tipoCustomId: id, tenantId, activo: true },
+      data: { activo: false },
     })
 
-    if (!tipo) {
+    if (archived.count !== 1) {
       return NextResponse.json(
         { error: 'Tipo de contrato no encontrado' },
         { status: 404 }
       )
     }
 
-    // Eliminar
-    await prisma.tipoContratoCustom.delete({
-      where: { tipoCustomId: id },
-    })
-
     return NextResponse.json(
-      { message: 'Tipo de contrato eliminado exitosamente' },
+      { message: 'Tipo de contrato desactivado exitosamente' },
       { status: 200 }
     )
   } catch (error) {
     console.error('Error al eliminar tipo de contrato:', error)
-    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: 403 }
-      )
-    }
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json(
       { error: 'Failed to delete tipo de contrato' },
       { status: 500 }

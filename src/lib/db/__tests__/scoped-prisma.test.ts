@@ -106,12 +106,18 @@ describe('AS-02 tenant-context (AsyncLocalStorage)', () => {
 });
 
 describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
-  it('modelos global/child/pending pasan sin cambios', () => {
+  it('modelos global/child pasan sin cambios', () => {
     const args = { where: { nombre: 'x' } };
     expect(applyTenantScope('Plan', 'findMany', args, TENANT_A)).toBe(args);
     expect(applyTenantScope('Tenant', 'findMany', args, TENANT_A)).toBe(args);
     expect(applyTenantScope('VentaItem', 'findMany', args, TENANT_A)).toBe(args);
-    expect(applyTenantScope('TipoContratoCustom', 'findMany', args, TENANT_A)).toBe(args);
+  });
+
+  it('TipoContratoCustom now injects the authenticated tenant scope', () => {
+    const args = { where: { activo: true } };
+    const scoped = applyTenantScope('TipoContratoCustom', 'findMany', args, TENANT_A);
+    expect(scoped).toEqual({ where: { AND: [{ activo: true }, { tenantId: TENANT_A }] } });
+    expect(args).toEqual({ where: { activo: true } });
   });
 
   it('modelo desconocido falla cerrado', () => {

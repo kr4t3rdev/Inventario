@@ -21,6 +21,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
 
   const valeSalida = {
     findMany: vi.fn(),
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -32,14 +33,18 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
   }
 
   const producto = {
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
     update: vi.fn(),
   }
 
   const stockUbicacion = {
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
     upsert: vi.fn(),
   }
+
+  const almacen = { findFirst: vi.fn() }
 
   const reconciliacionGasto = {
     create: vi.fn(),
@@ -55,6 +60,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     valeSalida,
     valeSalidaItem,
     producto,
+    almacen,
     stockUbicacion,
     reconciliacionGasto,
     ordenProduccionHistorial,
@@ -66,6 +72,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     valeSalida,
     valeSalidaItem,
     producto,
+    almacen,
     stockUbicacion,
     reconciliacionGasto,
     ordenProduccionHistorial,
@@ -554,8 +561,8 @@ describe('Production Module API Routes', () => {
   describe('GET /api/produccion/vales', () => {
     it('debe retornar lista de vales', async () => {
       const mockVales = [
-        { valeSalidaId: '1', concepto: 'Materia Prima', estado: 'COMPLETADA' },
-        { valeSalidaId: '2', concepto: 'Insumos', estado: 'PENDIENTE' },
+        { valeSalidaId: '1', concepto: 'Materia Prima', estado: 'COMPLETADA', ValeSalidaItem: [] },
+        { valeSalidaId: '2', concepto: 'Insumos', estado: 'PENDIENTE', ValeSalidaItem: [] },
       ]
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
@@ -569,7 +576,7 @@ describe('Production Module API Routes', () => {
 
     it('debe filtrar vales por concepto', async () => {
       const mockVales = [
-        { valeSalidaId: '1', concepto: 'Materia Prima', estado: 'COMPLETADA' },
+        { valeSalidaId: '1', concepto: 'Materia Prima', estado: 'COMPLETADA', ValeSalidaItem: [] },
       ]
       ;(prisma.valeSalida.findMany as Mock).mockResolvedValue(mockVales)
 
@@ -602,7 +609,15 @@ describe('Production Module API Routes', () => {
       }
       
       ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue(mockProducto)
+      ;(transactionClientMock.producto.findFirst as Mock).mockResolvedValue(mockProducto)
+      ;(transactionClientMock.almacen.findFirst as Mock).mockResolvedValue({ almacenId: 'alm-1' })
       ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+        productoId: 'prod-1',
+        cantidad: 100,
+        cantidadReservada: 0,
+        cantidadDisponible: 100,
+      })
+      ;(transactionClientMock.stockUbicacion.findFirst as Mock).mockResolvedValue({
         productoId: 'prod-1',
         cantidad: 100,
         cantidadReservada: 0,
@@ -610,7 +625,7 @@ describe('Production Module API Routes', () => {
       })
       ;(transactionClientMock.valeSalida.create as Mock).mockResolvedValue(mockVale)
       ;(transactionClientMock.valeSalidaItem.create as Mock).mockResolvedValue({})
-      ;(transactionClientMock.valeSalida.findUnique as Mock).mockResolvedValue(mockVale)
+      ;(transactionClientMock.valeSalida.findFirst as Mock).mockResolvedValue(mockVale)
 
       // Mock transaction
       ;(prisma.$transaction as Mock).mockImplementation(async (fn: Function) => fn(transactionClientMock))
@@ -642,8 +657,9 @@ describe('Production Module API Routes', () => {
 
     it('debe rechazar si no hay stock suficiente en StockUbicacion', async () => {
       const mockProducto = { id: 'prod-1', nombre: 'Harina', almacenId: 'alm-1' }
-      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue(mockProducto)
-      ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+      ;(transactionClientMock.producto.findFirst as Mock).mockResolvedValue(mockProducto)
+      ;(transactionClientMock.almacen.findFirst as Mock).mockResolvedValue({ almacenId: 'alm-1' })
+      ;(transactionClientMock.stockUbicacion.findFirst as Mock).mockResolvedValue({
         productoId: 'prod-1',
         cantidad: 5,
         cantidadReservada: 0,

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions/types'
+import { requireTenant } from '@/lib/services/tenant-scope'
+import { contratosAccessErrorResponse, requireContratosFeature } from '../access'
 import { puedeTransicionar } from '@/features/contratos/lib/estado-contrato-machine'
 import { registrarFirmaYTransicionar } from '@/features/contratos/lib/firmas-contrato'
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator'
@@ -18,6 +20,7 @@ import {
 } from './contrato-archivo-schema'
 import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
 import { resolveUploadPolicy } from '@/lib/upload/upload-policy'
+import { isAssignableContratoTipo } from '@/features/contratos/lib/tipo-contrato-assignment'
 
 const contratoSchema = z.object({
   tipo: z.string().min(1, 'El tipo de contrato es requerido'),
@@ -108,6 +111,7 @@ export async function getContratosHandler(request: NextRequest): Promise<Respons
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requireContratosFeature(user)
     const tenantId = user.tenantId ?? ''
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
@@ -151,6 +155,8 @@ export async function getContratosHandler(request: NextRequest): Promise<Respons
     })
   } catch (error) {
     console.error('Error al obtener contratos:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Failed to fetch contratos' }, { status: 500 })
   }
 }
@@ -160,10 +166,13 @@ export async function createContratoHandler(request: NextRequest): Promise<Respo
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requireContratosFeature(user)
+    const tenantId = requireTenant(user)
     const body = await request.json()
     const data = contratoSchema.parse(body)
-    if (!user.tenantId) return NextResponse.json({ error: 'Se requiere una membresía de empresa activa' }, { status: 403 })
-    const tenantId = user.tenantId ?? ''
+    if (!(await isAssignableContratoTipo(data.tipo, tenantId))) {
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
     if (data.clienteId) {
       const cliente = await prisma.cliente.findFirst({
         where: { clienteId: data.clienteId, tenantId },
@@ -219,6 +228,8 @@ export async function createContratoHandler(request: NextRequest): Promise<Respo
     return NextResponse.json(contratoAcc)
   } catch (error) {
     console.error('Error al crear contrato:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
     }
@@ -230,6 +241,7 @@ export async function getContratoByIdHandler(req: NextRequest, context: { params
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const tenantId = authResultReq1.user.tenantId ?? ''
     const { id } = await context.params
     const contrato = await prisma.contrato.findFirst({
@@ -250,6 +262,8 @@ export async function getContratoByIdHandler(req: NextRequest, context: { params
     return NextResponse.json(contrato)
   } catch (error) {
     console.error('Error al obtener contrato:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al obtener contrato' }, { status: 500 })
   }
 }
@@ -259,12 +273,20 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
-    const tenantId = user.tenantId ?? ''
+    requireContratosFeature(user)
+    const tenantId = requireTenant(user)
     const { id } = await params
     const body = await request.json()
     const validatedBody = contratoUpdateSchema.parse(body)
     const existingContrato = await findContratoDelTenant(id, tenantId)
     if (!existingContrato) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    if (validatedBody.tipo !== undefined && !(await isAssignableContratoTipo(
+      validatedBody.tipo,
+      tenantId,
+      existingContrato.tipo,
+    ))) {
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
     const tipoActual = validatedBody.tipo || existingContrato.tipo
     if ((tipoActual === 'COMPRA_VENTA' || tipoActual === 'SERVICIO')) {
       const clienteId = validatedBody.clienteId !== undefined ? validatedBody.clienteId : existingContrato.clienteId
@@ -315,6 +337,8 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
     return NextResponse.json(contrato)
   } catch (error) {
     console.error('Error al actualizar contrato:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
     }
@@ -326,7 +350,8 @@ export async function deleteContratoHandler(request: NextRequest, { params }: { 
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
-    const tenantId = authResultUser.user.tenantId ?? ''
+    requireContratosFeature(authResultUser.user)
+    const tenantId = requireTenant(authResultUser.user)
     const { id } = await params
     const contrato = await prisma.contrato.findFirst({
       where: { contratoId: id, tenantId },
@@ -343,6 +368,8 @@ export async function deleteContratoHandler(request: NextRequest, { params }: { 
     return NextResponse.json({ success: true, id })
   } catch (error) {
     console.error('Error al eliminar contrato:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al eliminar contrato' }, { status: 500 })
   }
 }
@@ -351,6 +378,7 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const tenantId = authResultReq1.user.tenantId ?? ''
     const body = await req.json()
     const { ids, estado } = bulkStatusSchema.parse(body)
@@ -403,6 +431,8 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
     return NextResponse.json({ success: true, actualizados: confirmados, fallidos })
   } catch (error) {
     console.error('Error in bulk status update:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -412,6 +442,7 @@ export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Resp
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const tenantIdBulk = authResultReq1.user.tenantId ?? ''
     const body = await req.json()
     const { ids } = bulkDeleteSchema.parse(body)
@@ -434,6 +465,8 @@ export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Resp
     return NextResponse.json({ success: true, count: result.count, message: `${result.count} contratos eliminados` })
   } catch (error) {
     console.error('Error in bulk delete:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -444,6 +477,7 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const user = authResultReq1.user
+    requireContratosFeature(user)
     const { id } = await params
     const tenantId = user.tenantId ?? 'sin-tenant'
     const owner = await findContratoDelTenant(id, user.tenantId ?? '')
@@ -532,6 +566,8 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     return NextResponse.json(version)
   } catch (error) {
     console.error('Error creating version:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 })
     }
@@ -566,6 +602,7 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const { id } = await params
     const ownerDiff = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
     if (!ownerDiff) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -611,6 +648,8 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
     return NextResponse.json({ hasChanges: true, message: 'Se detectaron cambios en el archivo.', diffSummary })
   } catch (error) {
     console.error('Error checking diff:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error checking diff' }, { status: 500 })
   }
 }
@@ -685,6 +724,7 @@ export async function getContratoFirmasHandler(req: NextRequest, context: { para
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const { id } = await context.params
     const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -696,6 +736,8 @@ export async function getContratoFirmasHandler(req: NextRequest, context: { para
     return NextResponse.json(firmas)
   } catch (error) {
     console.error('Error al obtener firmas:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al obtener firmas' }, { status: 500 })
   }
 }
@@ -704,6 +746,7 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    requireContratosFeature(authResultUser.user)
     const { id } = await params
     const tenantId = authResultUser.user.tenantId ?? ''
     const owner = await findContratoDelTenant(id, tenantId)
@@ -732,6 +775,8 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
     return NextResponse.json(firma)
   } catch (error) {
     console.error('Error al crear firma:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
     }
@@ -743,6 +788,7 @@ export async function getContratoArchivosHandler(req: NextRequest, context: { pa
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const { id } = await context.params
     const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -754,6 +800,8 @@ export async function getContratoArchivosHandler(req: NextRequest, context: { pa
     return NextResponse.json(archivos)
   } catch (error) {
     console.error('Error al obtener archivos:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al obtener archivos' }, { status: 500 })
   }
 }
@@ -763,6 +811,7 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requireContratosFeature(user)
     const { id } = await params
     const ownerArchivo = await findContratoDelTenant(id, user.tenantId ?? '')
     if (!ownerArchivo) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -815,6 +864,8 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     return NextResponse.json(archivo)
   } catch (error) {
     console.error('Error al crear archivo:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 })
     }
@@ -829,6 +880,7 @@ export async function getContratoAprobacionesHandler(req: NextRequest, context: 
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const { id } = await context.params
     const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -840,6 +892,8 @@ export async function getContratoAprobacionesHandler(req: NextRequest, context: 
     return NextResponse.json(aprobaciones)
   } catch (error) {
     console.error('Error al obtener aprobaciones:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al obtener aprobaciones' }, { status: 500 })
   }
 }
@@ -848,6 +902,7 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    requireContratosFeature(authResultUser.user)
     const { id } = await params
     const tenantId = authResultUser.user.tenantId ?? ''
     const owner = await findContratoDelTenant(id, tenantId)
@@ -884,6 +939,8 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
     return NextResponse.json(aprobacion)
   } catch (error) {
     console.error('Error al crear aprobación:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al crear aprobación' }, { status: 500 })
   }
 }
@@ -892,6 +949,7 @@ export async function getContratoAlertasHandler(req: NextRequest, context: { par
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    requireContratosFeature(authResultReq1.user)
     const { id } = await context.params
     const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -906,6 +964,8 @@ export async function getContratoAlertasHandler(req: NextRequest, context: { par
     return NextResponse.json(alertas)
   } catch (error) {
     console.error('Error al obtener alertas:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al obtener alertas' }, { status: 500 })
   }
 }
@@ -914,6 +974,7 @@ export async function createContratoAlertaHandler(request: NextRequest, { params
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    requireContratosFeature(authResultUser.user)
     const { id } = await params
     const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
@@ -930,6 +991,8 @@ export async function createContratoAlertaHandler(request: NextRequest, { params
     return NextResponse.json(alerta)
   } catch (error) {
     console.error('Error al crear alerta:', error)
+    const accessResponse = contratosAccessErrorResponse(error)
+    if (accessResponse) return accessResponse
     return NextResponse.json({ error: 'Error al crear alerta' }, { status: 500 })
   }
 }

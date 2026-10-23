@@ -144,7 +144,9 @@ export function KardexPageClient({
 				...result.data,
 				items: result.data.items.map((item) => ({
 					...item,
-					createdAt: item.createdAt.toISOString(),
+					createdAt: typeof item.createdAt === 'string'
+						? item.createdAt
+						: item.createdAt.toISOString(),
 				})),
 			});
 		} catch (err) {

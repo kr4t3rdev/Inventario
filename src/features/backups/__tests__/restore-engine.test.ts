@@ -2,9 +2,13 @@
  * @description Unit tests for RestoreEngine — pure logic only (parseSql, classify, countInsertRows, etc.)
  * DB-dependent integration tests are kept separate.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { RestoreEngine } from '../restore-engine'
 import type { BackupStorage } from '../storage/types'
+import type { PrismaClient } from '@/generated/prisma'
+import type { Pool } from 'pg'
+
+vi.mock('@/lib/db/platform-prisma', () => ({ prismaPlatform: {} }))
 
 // Create a minimal storage that throws if used (we only test pure parsing)
 const mockStorage: BackupStorage = {
@@ -186,6 +190,35 @@ describe('countInsertRows', () => {
 (2, 'Bob');`
     )
     expect(count).toBe(2)
+  })
+})
+
+describe('RestoreEngine tenant legacy SQL guard', () => {
+  it('rejects tenant SQL after the log read and before artifact or database access', async () => {
+    const prisma = {
+      backupLog: {
+        findUniqueOrThrow: vi.fn().mockResolvedValue({ type: 'tenant', tenantId: 'tenant-1' }),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    } as unknown as PrismaClient
+    const storage = { ...mockStorage, get: vi.fn() }
+    const pool = { connect: vi.fn() } as unknown as Pool
+    const engine = new RestoreEngine({ prisma, storage, pool })
+    const parseSql = vi.spyOn(engine, 'parseSql')
+
+    await expect(engine.restore('tenant-log', 'tenant.sql.gz', 'user-1'))
+      .rejects.toThrow('formato estructurado seguro')
+
+    expect(prisma.backupLog.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { backupLogId: 'tenant-log' },
+      select: { type: true, tenantId: true },
+    })
+    expect(storage.get).not.toHaveBeenCalled()
+    expect(parseSql).not.toHaveBeenCalled()
+    expect(pool.connect).not.toHaveBeenCalled()
+    expect(prisma.backupLog.create).not.toHaveBeenCalled()
+    expect(prisma.backupLog.update).not.toHaveBeenCalled()
   })
 })
 

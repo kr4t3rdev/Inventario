@@ -15,6 +15,8 @@ import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConCon
 import { contratoSchema, contratoUpdateSchema, cambioEstadoSchema, bulkStatusSchema, bulkDeleteSchema } from './schemas';
 import type { ContratoInput, ContratoUpdateInput, CambioEstadoInput, BulkStatusInput, BulkDeleteInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireContratosFeature } from '@/features/contratos/access';
+import { isAssignableContratoTipo } from '@/features/contratos/lib/tipo-contrato-assignment';
 
 const CONTRATO_LIST_INCLUDE = {
   cliente: true,
@@ -84,9 +86,14 @@ export const getContratoByIdAction = withAction(async (id: string, user: Authent
 });
 
 export const createContratoAction = withAction(async (input: ContratoInput, user: AuthenticatedUser) => {
-  requireFeature(user, 'contratos', 'gestionar contratos');
+  requireContratosFeature(user);
+  requirePermission(user, 'ventas.contratos.gestionar', 'gestionar contratos');
   const parsed = contratoSchema.parse(input);
   const tenantId = requireTenant(user);
+
+  if (!(await isAssignableContratoTipo(parsed.tipo, tenantId))) {
+    throw new ActionError('Tipo de contrato no encontrado', 'NOT_FOUND');
+  }
 
   // Validar pertenencia al tenant de cliente y vendor antes de crear
   if (parsed.clienteId) {
@@ -149,7 +156,8 @@ export const createContratoAction = withAction(async (input: ContratoInput, user
 });
 
 export const updateContratoAction = withAction(async (input: ContratoUpdateInput, user: AuthenticatedUser) => {
-  requireFeature(user, 'contratos', 'gestionar contratos');
+  requireContratosFeature(user);
+  requirePermission(user, 'ventas.contratos.gestionar', 'gestionar contratos');
   const parsed = contratoUpdateSchema.parse(input);
   const { contratoId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -158,6 +166,10 @@ export const updateContratoAction = withAction(async (input: ContratoUpdateInput
     where: { contratoId, tenantId },
   });
   if (!existing) throw new ActionError('Contrato no encontrado', 'NOT_FOUND');
+
+  if (data.tipo !== undefined && !(await isAssignableContratoTipo(data.tipo, tenantId, existing.tipo))) {
+    throw new ActionError('Tipo de contrato no encontrado', 'NOT_FOUND');
+  }
 
   const updateData: any = {};
   // CTF-2: estado, fechaAprobacion y aprobadoPor no provienen del payload;

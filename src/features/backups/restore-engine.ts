@@ -1,10 +1,8 @@
 /**
  * @description RestoreEngine — decompress and execute a SQL backup dump.
  *
- * Supports three restore modes:
- * - full:   BEGIN → TRUNCATE reverse FK order → INSERT in FK order → COMMIT
- * - tenant: BEGIN → DELETE tenant rows → INSERT tenant rows → COMMIT
- * - config: BEGIN → CREATE TABLE IF NOT EXISTS → INSERT ON CONFLICT → COMMIT
+ * Supports privileged full/imported and config restores. Legacy tenant SQL restore
+ * is rejected until a verified structured format and server policy are available.
  *
  * All modes run inside a single PostgreSQL transaction.
  * On any error: ROLLBACK + mark BackupLog as failed.
@@ -18,6 +16,8 @@ import { prismaPlatform } from '@/lib/db/platform-prisma'
 import type { BackupStorage } from './storage/types'
 
 const DEFAULT_PRISMA = prismaPlatform
+export const TENANT_SQL_RESTORE_UNAVAILABLE_MESSAGE =
+  'La restauración SQL por tenant no está disponible. El formato estructurado seguro aún no está habilitado.'
 
 export interface RestoreResult {
   backupLogId: string
@@ -89,6 +89,10 @@ export class RestoreEngine {
       select: { type: true, tenantId: true },
     })
 
+    if (log.type === 'tenant') {
+      throw new Error(TENANT_SQL_RESTORE_UNAVAILABLE_MESSAGE)
+    }
+
     // 2. Download & decompress
     const stream = await this.storage.get(fileName)
     const chunks: Buffer[] = []
@@ -129,8 +133,6 @@ export class RestoreEngine {
 
         if (log.type === 'full' || log.type === 'imported') {
           await this.executeFullRestore(client, tableOrder, inserts)
-        } else if (log.type === 'tenant') {
-          await this.executeTenantRestore(client, log.tenantId!, tableOrder, statements)
         } else {
           // config — UPSERT only
           await this.executeConfigRestore(client, statements)
@@ -209,40 +211,6 @@ export class RestoreEngine {
     }
 
     // Re-enable triggers
-    await client.query('SET session_replication_role = DEFAULT')
-  }
-
-  /**
-   * Tenant restore:
-   * 1. Disable triggers
-   * 2. DELETE existing tenant data from tenant-scoped tables (reverse FK order)
-   * 3. INSERT backed-up data (original FK order)
-   * 4. Re-enable triggers
-   */
-  private async executeTenantRestore(
-    client: import('pg').PoolClient,
-    tenantId: string,
-    tableOrder: string[],
-    statements: SqlStatement[],
-  ): Promise<void> {
-    await client.query('SET session_replication_role = replica')
-
-    // DELETE existing tenant data (reverse FK order, only tables with tenantId)
-    const reverseOrder = [...tableOrder].reverse()
-    for (const table of reverseOrder) {
-      const hasTenantId = await this.tableHasTenantColumn(client, table)
-      if (hasTenantId) {
-        await client.query(`DELETE FROM "${table}" WHERE "tenantId" = $1`, [tenantId])
-      }
-    }
-
-    // Execute INSERTs in FK order
-    for (const stmt of statements) {
-      if (stmt.type === 'insert') {
-        await client.query(stmt.sql)
-      }
-    }
-
     await client.query('SET session_replication_role = DEFAULT')
   }
 
@@ -475,20 +443,4 @@ export class RestoreEngine {
     return groups
   }
 
-  /**
-   * Check if a table has a tenantId column.
-   */
-  private async tableHasTenantColumn(
-    client: import('pg').PoolClient,
-    tableName: string,
-  ): Promise<boolean> {
-    const result = await client.query(
-      `SELECT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_name = $1 AND column_name = 'tenantId'
-      ) AS exists`,
-      [tableName],
-    )
-    return result.rows[0]?.exists ?? false
-  }
 }

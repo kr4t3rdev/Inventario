@@ -45,7 +45,6 @@ const CHILD = (
   reason: string,
 ): ModelClassificationEntry => ({ scope: 'child', parentModel, parentField, reason });
 
-const PENDING = (reason: string): ModelClassificationEntry => ({ scope: 'pending-scope', reason });
 
 /**
  * @description Clasificación total de los modelos del schema. El test de
@@ -125,6 +124,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   OrdenReparacionEquipo: SCOPED(),
   OrdenReparacionItem: SCOPED(),
   OrdenReparacionMaterial: SCOPED(),
+  ReciboOrdenReparacion: CHILD('OrdenReparacion', 'ordenId', 'Recibo histórico; hereda el tenant de la orden de reparación.'),
   PagoCuentaPorPagar: SCOPED(),
   Pagosalario: SCOPED(),
   PeriodoCache: SCOPED(),
@@ -215,13 +215,13 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   PagoDeuda: SCOPED('Pago de deuda denormalizado en AS-05 ola 3: tenantId nullable + índice. Writers: AccountingOperationsMutationService.registerCapitalPayment, handlers legacy.'),
   SaldoSnapshot: SCOPED('Snapshot de saldo denormalizado en AS-05 ola 3: tenantId nullable + índice. Writer: SnapshotService.generarSnapshot (resuelve tenant desde PeriodoContable). No llamado desde producción actualmente.'),
 
-  // ---- pending-scope (1): por tenant de hecho, sin columna; backlog AS-05 ----
+  // ---- modelos por tenant con ownership explícito ----
   TransaccionMoneda: SCOPED('Espejo contable multimoneda denormalizado en AS-05: tenantId nullable, backfill desde la tabla padre por tipoTransaccion y escritura dual en todos los writers. Las históricas exchange (sin padre) quedan sin tenant: fail-closed (no se exponen).'),
   AlertHistory: SCOPED('Alertas operativas denormalizadas en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; filas históricas NULL quedan fail-closed (no se exponen). Futuros writers deben asignar tenantId desde el contexto.'),
   ReportHistory: SCOPED('Historial de reportes denormalizado en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; generadoPor es userId (no atribuible a un tenant); históricos NULL fail-closed.'),
   ScheduledReport: SCOPED('Reportes programados denormalizados en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; creadoPor es userId (no atribuible); históricos NULL fail-closed.'),
   ScenarioSimulation: SCOPED('Simulaciones denormalizadas en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; creadoPor es userId (no atribuible); históricos NULL fail-closed.'),
-  TipoContratoCustom: PENDING('Tipos de contrato personalizados globales por accidente (nombre @unique global). Decisión tomada: por-tenant; migran a scoped con unicidad por tenant en AS-05.'),
+  TipoContratoCustom: SCOPED('Tipos de contrato por tenant con tenantId nullable; las filas históricas NULL no se atribuyen desde creadoPor y permanecen fuera de alcance.'),
 };
 
 /**

@@ -29,6 +29,7 @@ vi.mock('@/lib/prisma', () => ({
     contratoVersion: { create: vi.fn() },
     cliente: { findFirst: vi.fn(), update: vi.fn() },
     vendor: { findFirst: vi.fn() },
+    tipoContratoCustom: { findFirst: vi.fn() },
   },
 }));
 
@@ -98,6 +99,53 @@ describe('Contratos Server Actions', () => {
     });
   });
 
+  describe('RBAC de escritura para contratos', () => {
+    it.each(['create', 'update'])('permite %s a manager con feature y permiso', async (operation) => {
+      const manager = { ...mockUser, role: 'user', planFeatures: { contratos: true },
+        permissions: new Set(['ventas.contratos.gestionar']) };
+      vi.mocked(getCurrentUser).mockResolvedValue(manager);
+      if (operation === 'create') {
+        vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
+        vi.mocked(crearContratoConConsecutivo).mockImplementation(async ({ create }: any) =>
+          create({ numeroConsecutivo: 1, numeroContrato: 'CV-0001' }));
+        vi.mocked(prisma.contrato.create).mockResolvedValue(mockContrato);
+        vi.mocked(prisma.contratoVersion.create).mockResolvedValue({} as any);
+        vi.mocked(prisma.cliente.update).mockResolvedValue({} as any);
+        expect((await createContratoAction({ tipo: 'COMPRA_VENTA', fechaInicio: new Date().toISOString(),
+          clienteId: 'cli-1' } as any)).success).toBe(true);
+      } else {
+        vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
+        vi.mocked(prisma.contrato.update).mockResolvedValue(mockContrato);
+        expect((await updateContratoAction({ contratoId: 'ct-1', tipo: 'SERVICIO' })).success).toBe(true);
+      }
+    });
+
+    it.each(['create', 'update'])('deniega %s si el plan no habilita contratos', async (operation) => {
+      const basic = { ...mockUser, role: 'user', planFeatures: { contratos: false },
+        permissions: new Set(['ventas.contratos.gestionar']) };
+      vi.mocked(getCurrentUser).mockResolvedValue(basic);
+      const result = operation === 'create'
+        ? await createContratoAction({ tipo: 'COMPRA_VENTA', fechaInicio: new Date().toISOString(), clienteId: 'c1' } as any)
+        : await updateContratoAction({ contratoId: 'ct-1', tipo: 'SERVICIO' });
+      expect(result).toMatchObject({ success: false, error: { code: 'FEATURE_NOT_AVAILABLE' } });
+      expect(prisma.contrato.findFirst).not.toHaveBeenCalled();
+      expect(prisma.contrato.create).not.toHaveBeenCalled();
+      expect(prisma.contrato.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['create', 'update'])('deniega %s a manager sin permiso aunque el feature esté habilitado', async (operation) => {
+      const unauthorized = { ...mockUser, role: 'user', planFeatures: { contratos: true }, permissions: new Set<string>() };
+      vi.mocked(getCurrentUser).mockResolvedValue(unauthorized);
+      const result = operation === 'create'
+        ? await createContratoAction({ tipo: 'COMPRA_VENTA', fechaInicio: new Date().toISOString(), clienteId: 'c1' } as any)
+        : await updateContratoAction({ contratoId: 'ct-1', tipo: 'SERVICIO' });
+      expect(result).toMatchObject({ success: false, error: { code: 'FORBIDDEN' } });
+      expect(prisma.contrato.findFirst).not.toHaveBeenCalled();
+      expect(prisma.contrato.create).not.toHaveBeenCalled();
+      expect(prisma.contrato.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createContratoAction', () => {
     const validInput = {
       tipo: 'COMPRA_VENTA',
@@ -129,6 +177,40 @@ describe('Contratos Server Actions', () => {
 
       expect(result.success).toBe(false);
     });
+
+    it.each(['tipo-ajeno', 'tipo-sin-owner'])('rechaza tipo personalizado %s sin dueño activo del tenant', async (tipo) => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
+      vi.mocked(prisma.tipoContratoCustom.findFirst).mockResolvedValue(null as never);
+
+      const result = await createContratoAction({ ...validInput, tipo } as any);
+
+      expect(result.success).toBe(false);
+      expect(prisma.tipoContratoCustom.findFirst).toHaveBeenCalledWith({
+        where: { tipoCustomId: tipo, tenantId: 'tenant-test', activo: true },
+        select: { tipoCustomId: true },
+      });
+      expect(crearContratoConConsecutivo).not.toHaveBeenCalled();
+      expect(prisma.contrato.create).not.toHaveBeenCalled();
+    });
+
+    it('permite asignar un tipo personalizado activo del tenant e ignora tenant del payload', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
+      vi.mocked(prisma.tipoContratoCustom.findFirst).mockResolvedValue({ tipoCustomId: 'custom-a' } as never);
+      vi.mocked(crearContratoConConsecutivo).mockImplementation(async ({ create }: any) =>
+        create({ numeroConsecutivo: 1, numeroContrato: 'CUS-0001' }));
+      vi.mocked(prisma.contrato.create).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.contratoVersion.create).mockResolvedValue({} as any);
+
+      const result = await createContratoAction({ ...validInput, tipo: 'custom-a', tenantId: 'tenant-B' } as any);
+
+      expect(result.success).toBe(true);
+      expect(crearContratoConConsecutivo).toHaveBeenCalledWith(expect.objectContaining({
+        tenantId: 'tenant-test',
+        tipo: 'custom-a',
+      }));
+    });
   });
 
   describe('updateContratoAction', () => {
@@ -149,6 +231,52 @@ describe('Contratos Server Actions', () => {
       const result = await updateContratoAction({ contratoId: 'ct-noexiste', tipo: 'SERVICIO' });
 
       expect(result.success).toBe(false);
+    });
+
+    it('rechaza tipo custom de otro tenant antes de actualizar', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.tipoContratoCustom.findFirst).mockResolvedValue(null as never);
+
+      const result = await updateContratoAction({ contratoId: 'ct-1', tipo: 'custom-b' });
+
+      expect(result.success).toBe(false);
+      expect(prisma.tipoContratoCustom.findFirst).toHaveBeenCalledWith({
+        where: { tipoCustomId: 'custom-b', tenantId: 'tenant-test', activo: true },
+        select: { tipoCustomId: true },
+      });
+      expect(prisma.contrato.update).not.toHaveBeenCalled();
+    });
+
+    it('permite asignar un tipo custom activo del mismo tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue(mockContrato);
+      vi.mocked(prisma.tipoContratoCustom.findFirst).mockResolvedValue({ tipoCustomId: 'custom-a' } as never);
+      vi.mocked(prisma.contrato.update).mockResolvedValue({ ...mockContrato, tipo: 'custom-a' });
+
+      const result = await updateContratoAction({ contratoId: 'ct-1', tipo: 'custom-a' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.contrato.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { contratoId: 'ct-1' },
+        data: { tipo: 'custom-a' },
+      }));
+    });
+
+    it('permite conservar el tipo propio si fue archivado después de asignarse', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ ...mockContrato, tipo: 'custom-a' });
+      vi.mocked(prisma.tipoContratoCustom.findFirst).mockResolvedValueOnce(null as never)
+        .mockResolvedValueOnce({ tipoCustomId: 'custom-a' } as never);
+      vi.mocked(prisma.contrato.update).mockResolvedValue(mockContrato);
+
+      const result = await updateContratoAction({ contratoId: 'ct-1', tipo: 'custom-a' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.tipoContratoCustom.findFirst).toHaveBeenNthCalledWith(2, {
+        where: { tipoCustomId: 'custom-a', tenantId: 'tenant-test', activo: false },
+        select: { tipoCustomId: true },
+      });
     });
   });
 

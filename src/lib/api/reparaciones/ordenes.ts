@@ -6,6 +6,7 @@ import { hasPermission } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { syncOwnerAssets } from '@/lib/upload/cloudinary-admin'
 import type { CloudinaryAssetInput } from '@/lib/upload/cloudinary-asset'
+import { validateTenantOrderReferences } from './tenant-order-references'
 
 const db = prisma as any
 
@@ -188,14 +189,16 @@ export async function addOrdenReparacion(
   }
 
   try {
-    const [cliente, equipoTipo] = await Promise.all([
-      db.cliente.findUnique({ where: { clienteId: data.clienteId } }),
-      db.equipoReparacion.findUnique({ where: { id: primaryEquipo.equipoTipoId } }),
-    ])
-
-    if (!cliente) {
-      throw new ServerActionError('addOrdenReparacion', 'POST', 404, 'Cliente no encontrado')
+    const references = await validateTenantOrderReferences(db, {
+      tenantId,
+      clienteId: data.clienteId,
+      equipoTipoIds: equiposInput.map((equipo: any) => equipo.equipoTipoId),
+      tecnicoId: (data as any).tecnicoId,
+    })
+    if (!references.ok) {
+      throw new ServerActionError('addOrdenReparacion', 'POST', 404, references.message)
     }
+    const { cliente, equipoTipo, tecnicoId } = references
 
     const resultado = await db.$transaction(async (tx: any) => {
       const nuevaOrden = await tx.ordenReparacion.create({
@@ -213,7 +216,7 @@ export async function addOrdenReparacion(
           esGarantia: (data as any).esGarantia || false,
           estado: 'RECIBIDO',
           moneda: 'USD',
-          tecnicoId: (data as any).tecnicoId || null,
+          tecnicoId,
           fotos: (data as any).fotos || [],
           equipos: {
             create: equiposInput.map((equipo: any) => ({

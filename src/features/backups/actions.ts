@@ -1,9 +1,8 @@
 /**
  * @description Server Actions for backup operations.
  *
- * All actions require admin role (`user.role === 'admin'`).
- * Backup execution runs asynchronously — the action returns immediately
- * with the backupLogId, and the client polls via getBackupStatusAction.
+ * Platform admins retain global access; feature-enabled tenant users are
+ * restricted to their own tenant backups.
  *
  * @module features/backups/actions
  */
@@ -11,10 +10,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
-import { requireFeature } from '@/lib/services/tenant-scope'
-import { prisma } from '@/lib/prisma'
+import { prismaPlatform } from '@/lib/db/platform-prisma'
+import { backupLogWhere, resolveBackupActorScope } from './actor-scope'
 import { BackupEngine, validateBackupFile } from './backup-engine'
-import { RestoreEngine } from './restore-engine'
+import { RestoreEngine, TENANT_SQL_RESTORE_UNAVAILABLE_MESSAGE } from './restore-engine'
 import { createStorage } from './storage'
 import {
   createBackupSchema,
@@ -29,6 +28,7 @@ import type {
   GetBackupsInput,
   ImportBackupInput,
 } from './schemas'
+import type { Prisma } from '@/generated/prisma'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
 // ─── Backup Execution ───────────────────────────────────────
@@ -38,20 +38,21 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware'
  * Returns immediately with the backupLogId. The backup runs in the background.
  * The client can poll getBackupStatusAction for progress.
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const createBackupAction = withAction(
   async (input: CreateBackupInput, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
-
+    const scope = resolveBackupActorScope(user)
     const parsed = createBackupSchema.parse(input)
+    if (scope.kind === 'tenant' && (parsed.type !== 'tenant' || parsed.tenantId !== scope.tenantId)) {
+      throw new ActionError('No tienes autorización para crear esta copia', 'FORBIDDEN')
+    }
+    const tenantId = scope.kind === 'tenant' ? scope.tenantId : parsed.tenantId
 
     // For per-tenant backup, verify tenant exists
-    if (parsed.type === 'tenant' && parsed.tenantId) {
-      const tenant = await prisma.tenant.findUnique({
-        where: { tenantId: parsed.tenantId },
+    if (parsed.type === 'tenant' && tenantId) {
+      const tenant = await prismaPlatform.tenant.findUnique({
+        where: { tenantId },
         select: { tenantId: true },
       })
       if (!tenant) {
@@ -61,10 +62,10 @@ export const createBackupAction = withAction(
 
     // Create BackupLog synchronously (before fire-and-forget engine execution)
     // so the action can return the backupLogId immediately without a race condition.
-    const log = await prisma.backupLog.create({
+    const log = await prismaPlatform.backupLog.create({
       data: {
         type: parsed.type,
-        tenantId: parsed.tenantId ?? null,
+        tenantId: tenantId ?? null,
         status: 'running',
         createdBy: user.userId,
       },
@@ -73,7 +74,7 @@ export const createBackupAction = withAction(
 
     // Instantiate engine and start backup in background
     const engine = new BackupEngine({
-      prisma,
+      prisma: prismaPlatform,
       storage: createStorage(),
     })
 
@@ -81,7 +82,7 @@ export const createBackupAction = withAction(
     // The engine receives the existing backupLogId and updates it as it progresses.
     void engine
       .run(
-        { type: parsed.type, tenantId: parsed.tenantId },
+        { type: parsed.type, tenantId },
         log.backupLogId,
         undefined,
         user.userId,
@@ -100,24 +101,22 @@ export const createBackupAction = withAction(
 /**
  * @description Returns a paginated list of backup logs with optional filters.
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const getBackupsAction = withAction(
   async (input: GetBackupsInput, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
-
+    const scope = resolveBackupActorScope(user)
     const parsed = getBackupsSchema.parse(input)
 
-    const where: Record<string, unknown> = {}
+    const where: Prisma.BackupLogWhereInput = {}
     if (parsed.type) where.type = parsed.type
     if (parsed.tenantId) where.tenantId = parsed.tenantId
     if (parsed.status) where.status = parsed.status
 
+    const scopedWhere = backupLogWhere(scope, where)
     const [logs, total] = await Promise.all([
-      prisma.backupLog.findMany({
-        where,
+      prismaPlatform.backupLog.findMany({
+        where: scopedWhere,
         orderBy: { createdAt: 'desc' },
         take: parsed.limit,
         skip: parsed.offset,
@@ -136,7 +135,7 @@ export const getBackupsAction = withAction(
           createdAt: true,
         },
       }),
-      prisma.backupLog.count({ where }),
+      prismaPlatform.backupLog.count({ where: scopedWhere }),
     ])
 
     return { logs, total, limit: parsed.limit, offset: parsed.offset }
@@ -148,16 +147,14 @@ export const getBackupsAction = withAction(
 /**
  * @description Returns a single backup log by ID.
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const getBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
+    const scope = resolveBackupActorScope(user)
 
-    const log = await prisma.backupLog.findUnique({
-      where: { backupLogId: input.backupLogId },
+    const log = await prismaPlatform.backupLog.findFirst({
+      where: backupLogWhere(scope, { backupLogId: input.backupLogId }),
       select: {
         backupLogId: true,
         type: true,
@@ -188,16 +185,14 @@ export const getBackupAction = withAction(
  * @description Returns the current status of a backup (for polling).
  * Lightweight: returns only status + errorMessage.
  *
- * Auth: admin only
+ * Auth: platform admin only.
  */
 export const getBackupStatusAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
+    const scope = resolveBackupActorScope(user)
 
-    const log = await prisma.backupLog.findUnique({
-      where: { backupLogId: input.backupLogId },
+    const log = await prismaPlatform.backupLog.findFirst({
+      where: backupLogWhere(scope, { backupLogId: input.backupLogId }),
       select: {
         status: true,
         errorMessage: true,
@@ -224,12 +219,12 @@ export const getBackupStatusAction = withAction(
  *
  * For file upload (multipart), use POST /api/backups/import instead.
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const importBackupAction = withAction(
   async (input: ImportBackupInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
+      throw new ActionError('No tienes autorización para importar copias', 'FORBIDDEN')
     }
 
     const parsed = importBackupSchema.parse(input)
@@ -282,7 +277,7 @@ export const importBackupAction = withAction(
     const fileSize = parsed.fileSize ?? buffer.length
 
     // Create BackupLog — imported files are immediately completed
-    const log = await prisma.backupLog.create({
+    const log = await prismaPlatform.backupLog.create({
       data: {
         type: 'imported',
         status: 'completed',
@@ -305,18 +300,16 @@ export const importBackupAction = withAction(
 /**
  * @description Deletes a backup file from storage and marks the BackupLog as deleted.
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const deleteBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
+    const scope = resolveBackupActorScope(user)
 
     const parsed = deleteBackupSchema.parse(input)
 
-    const log = await prisma.backupLog.findUnique({
-      where: { backupLogId: parsed.backupLogId },
+    const log = await prismaPlatform.backupLog.findFirst({
+      where: backupLogWhere(scope, { backupLogId: parsed.backupLogId }),
       select: { backupLogId: true, fileUrl: true, fileName: true },
     })
 
@@ -336,8 +329,8 @@ export const deleteBackupAction = withAction(
     }
 
     // Mark BackupLog as deleted
-    await prisma.backupLog.update({
-      where: { backupLogId: parsed.backupLogId },
+    await prismaPlatform.backupLog.updateMany({
+      where: backupLogWhere(scope, { backupLogId: parsed.backupLogId }),
       data: { status: 'deleted' },
     })
 
@@ -351,16 +344,14 @@ export const deleteBackupAction = withAction(
 /**
  * @description Returns a download URL for a backup file (1h expiry for signed URLs).
  *
- * Auth: admin only
+ * Auth: platform admin globally; tenant feature users for their own tenant.
  */
 export const downloadBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
+    const scope = resolveBackupActorScope(user)
 
-    const log = await prisma.backupLog.findUnique({
-      where: { backupLogId: input.backupLogId },
+    const log = await prismaPlatform.backupLog.findFirst({
+      where: backupLogWhere(scope, { backupLogId: input.backupLogId }),
       select: { fileUrl: true, fileName: true, status: true },
     })
 
@@ -402,21 +393,19 @@ export const downloadBackupAction = withAction(
 // ─── Restore ────────────────────────────────────────────────
 
 /**
- * @description Restores a backup. Requires confirmation string to prevent accidents.
- * The actual restore engine is implemented in Phase 7.
+ * @description Restores an eligible backup after explicit confirmation. Legacy tenant SQL
+ * restore remains disabled until the structured format is ready.
  *
  * Auth: admin only
  */
 export const restoreBackupAction = withAction(
   async (input: RestoreBackupInput, user: AuthenticatedUser) => {
-    if (user.role !== 'admin') {
-      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
-    }
+    const scope = resolveBackupActorScope(user)
 
     const parsed = restoreBackupSchema.parse(input)
 
-    const log = await prisma.backupLog.findUnique({
-      where: { backupLogId: parsed.backupLogId },
+    const log = await prismaPlatform.backupLog.findFirst({
+      where: backupLogWhere(scope, { backupLogId: parsed.backupLogId }),
       select: {
         type: true,
         status: true,
@@ -427,6 +416,10 @@ export const restoreBackupAction = withAction(
 
     if (!log) {
       throw new ActionError('Copia de seguridad no encontrada', 'NOT_FOUND')
+    }
+
+    if (log.type === 'tenant') {
+      throw new ActionError(TENANT_SQL_RESTORE_UNAVAILABLE_MESSAGE, 'UNSUPPORTED_LEGACY_FORMAT')
     }
 
     if (log.status !== 'completed') {

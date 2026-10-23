@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuthGet } from '@/lib/auth-middleware';
+import { withAuthGet, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { ActionError } from '@/lib/server-actions/types';
 
 /**
  * @description Genera un PDF de un vale de salida.
@@ -8,12 +10,15 @@ import { prisma } from '@/lib/prisma';
  * @param {object} params - Parámetros de la ruta.
  * @returns {Promise<NextResponse>} PDF del vale.
  */
-export const GET = withAuthGet(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const GET = withAuthGet(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, user: AuthenticatedUser) => {
   try {
+    if (!user.tenantId) return NextResponse.json({ error: 'Sin contexto de tenant.' }, { status: 403 });
+    const tenantId = requireTenant(user);
+    requirePermission(user, 'produccion.vales.gestionar', 'gestionar vales de salida');
     const { id } = await params;
     
-    const vale = await prisma.valeSalida.findUnique({
-      where: { valeSalidaId: id },
+    const vale = await prisma.valeSalida.findFirst({
+      where: { valeSalidaId: id, tenantId },
       include: {
         ValeSalidaItem: {
           include: {
@@ -22,6 +27,7 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
                 id: true,
                 nombre: true,
                 precioCosto: true,
+                tenantId: true,
               },
             },
           },
@@ -30,6 +36,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
     });
 
     if (!vale) {
+      return NextResponse.json({ error: 'Vale de salida no encontrado.' }, { status: 404 });
+    }
+    if (vale.ValeSalidaItem.some((item) => item.tenantId !== tenantId || item.Producto?.tenantId !== tenantId)) {
       return NextResponse.json({ error: 'Vale de salida no encontrado.' }, { status: 404 });
     }
 
@@ -60,6 +69,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
       data: pdfContent,
     });
   } catch (error) {
+    if (error instanceof ActionError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === 'FORBIDDEN' ? 403 : 400 });
+    }
     console.error('Error al generar PDF del vale:', error);
     return NextResponse.json({ error: 'Error al generar PDF del vale.' }, { status: 500 });
   }

@@ -20,7 +20,47 @@ import { BackupEngine } from '@/features/backups/backup-engine'
 import { createStorage } from '@/features/backups/storage'
 import { pruneBackups } from '@/features/backups/prune'
 import { calculateNextRun } from '@/features/backups/cron-utils'
+import { resolveTenantContext } from '@/lib/auth-middleware'
 import type { BackupType } from '@/generated/prisma'
+
+type AuthorizedPruneScope =
+  | { kind: 'tenant'; tenantId: string }
+  | { kind: 'global'; type: 'full' | 'config' }
+
+async function authorizePersistedPlan(plan: {
+  type: BackupType
+  tenantId: string | null
+  createdBy: string
+}): Promise<AuthorizedPruneScope | null> {
+  const creator = await prisma.user.findUnique({
+    where: { userId: plan.createdBy },
+    select: { role: true, isActive: true },
+  })
+  if (!creator?.isActive) return null
+
+  if (plan.type === 'full' || plan.type === 'config') {
+    if (creator.role !== 'admin' || plan.tenantId !== null) return null
+    return { kind: 'global', type: plan.type }
+  }
+
+  if (plan.type !== 'tenant' || !plan.tenantId) return null
+  const tenant = await prisma.tenant.findUnique({
+    where: { tenantId: plan.tenantId },
+    select: { tenantId: true },
+  })
+  if (!tenant) return null
+  if (creator.role === 'admin') {
+    return { kind: 'tenant', tenantId: plan.tenantId }
+  }
+
+  const tenantContext = await resolveTenantContext(plan.createdBy, plan.tenantId)
+  if (!tenantContext || tenantContext.tenantId !== plan.tenantId) return null
+  if (tenantContext.planFeatures?.['backups-tiempo-real'] !== true) {
+    return null
+  }
+
+  return { kind: 'tenant', tenantId: plan.tenantId }
+}
 
 /**
  * @description Validates the cron request via CRON_SECRET env var.
@@ -102,11 +142,19 @@ export async function GET(request: Request): Promise<NextResponse> {
   // 3. Execute each plan
   let executed = 0
   let failed = 0
-  const storage = createStorage()
+  let storage: ReturnType<typeof createStorage> | undefined
   const errors: Array<{ planId: string; error: string }> = []
 
   for (const plan of plans) {
     try {
+      const pruneScope = await authorizePersistedPlan(plan)
+      if (!pruneScope) {
+        failed++
+        errors.push({ planId: plan.backupPlanId, error: 'Plan no autorizado' })
+        continue
+      }
+
+      storage ??= createStorage()
       // Create BackupLog entry first, then pass it to the engine
       const cronLog = await prisma.backupLog.create({
         data: {
@@ -132,14 +180,27 @@ export async function GET(request: Request): Promise<NextResponse> {
 
       // Update plan: lastRunAt + calculate nextRunAt
       const nextRunAt = calculateNextRun(plan.schedule)
-      await prisma.backupPlan.update({
-        where: { backupPlanId: plan.backupPlanId },
+      const updatedPlan = await prisma.backupPlan.updateMany({
+        where: {
+          backupPlanId: plan.backupPlanId,
+          type: plan.type,
+          tenantId: plan.tenantId,
+          createdBy: plan.createdBy,
+          enabled: true,
+        },
         data: { lastRunAt: new Date(), nextRunAt },
       })
+      if (updatedPlan.count !== 1) throw new Error('Plan no longer authorized')
 
       // Prune old backups for this plan's retention
       try {
-        await pruneBackups(plan.retention)
+        const pruneResult = await pruneBackups(plan.retention, pruneScope)
+        if (pruneResult.failed > 0) {
+          console.error(
+            `[cron/backups] Prune incomplete for plan ${plan.backupPlanId}:`,
+            pruneResult,
+          )
+        }
       } catch (pruneErr) {
         console.error(`[cron/backups] Prune error for plan ${plan.backupPlanId}:`, pruneErr)
         // Non-fatal: pruning error doesn't affect the backup itself
