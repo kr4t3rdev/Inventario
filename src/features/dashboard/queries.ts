@@ -159,8 +159,16 @@ export async function getDashboardStatsQuery(
     prisma.producto.count({ where: { tenantId } }),
     prisma.almacen.count({ where: { tenantId } }),
     prisma.puntoDeVenta.count({ where: { tenantId } }),
+    // Fuente única de ingresos de productos: ventas padre efectivas del tenant.
+    // Incluye ventas con items (productoId null) y legacy (productoId set);
+    // excluye pedidos no entregados y anuladas (la anulación escribe ANULADA + deletedAt).
     prisma.venta.findMany({
-      where: { ventaPadreId: null, producto: { tenantId } },
+      where: {
+        tenantId,
+        ventaPadreId: null,
+        deletedAt: null,
+        estado: { in: ['ENTREGADA', 'FACTURADA'] },
+      },
       select: { productoId: true, cantidad: true, descuento: true, total: true, createdAt: true },
     }),
     prisma.ventaItem.findMany({
@@ -268,16 +276,20 @@ export async function getDashboardStatsQuery(
     return acc
   }, {})
 
-  // Calcular totalIngresos incluyendo ventas legacy correctamente
+  // Ingreso de una venta: Venta.total es el monto neto persistido al vender
+  // (subtotal − descuento + cargo de transporte). Fallback legacy: registros
+  // antiguos sin total usan cantidad × precio de lista actual; la fase de
+  // integridad histórica congela esos casos con snapshot.
+  const ingresoDeVenta = (venta: { productoId: string | null; cantidad: number; total: number | null }): number => {
+    if (venta.total != null) return Number(venta.total)
+    if (!venta.productoId) return 0
+    return Number(venta.cantidad || 0) * (precioVentaPorProducto[venta.productoId] || 0)
+  }
+
+  // Calcular totalIngresos desde la fuente única: Venta.total (neto) + servicios.
+  // La suma por items se eliminó: duplicaba ventas con descuento y perdía ventas huérfanas.
   const totalIngresos =
-    // Ingresos de ventas con items (suma de item.total)
-    ventaItemsData.reduce((sum, item) => sum + Number(item.total || 0), 0) +
-    // Ingresos de ventas legacy (cantidad * precioVenta)
-    ventasLegacyData.reduce((sum, venta) => {
-      if (!venta.productoId) return sum
-      return sum + Number(venta.cantidad || 0) * (precioVentaPorProducto[venta.productoId] || 0)
-    }, 0) +
-    // Ingresos de servicios
+    ventasData.reduce((sum, venta) => sum + ingresoDeVenta(venta), 0) +
     ventaServiciosData.reduce((sum, servicio) => sum + Number(servicio.total || 0), 0)
   const totalGastosMermas = mermasData.reduce((s: number, m: MermaData) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0)
   const totalGastos = gastosDEData.reduce((s: number, g: GastoDEData) => s + g.monto, 0)
@@ -469,7 +481,7 @@ export async function getDashboardStatsQuery(
     const fFin = endOfDay(new Date(mes.getFullYear(), mes.getMonth() + 1, 0))
     return {
       mes: format(mes, 'MMM', { locale: es }),
-      ingresosVentas: (ventasData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: any) => s + (v.total ?? 0), 0),
+      ingresosVentas: (ventasData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: any) => s + ingresoDeVenta(v), 0),
       ingresosServicios: (ventaServiciosData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: any) => s + (v.total ?? 0), 0),
       gastosMermas: (mermasData as any[]).filter((m: any) => m.createdAt >= fInicio && m.createdAt <= fFin).reduce((s: number, m: any) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0),
       gastosDeExplotacion: (gastosDEData as any[]).filter((g: any) => g.createdAt >= fInicio && g.createdAt <= fFin).reduce((s: number, g: any) => s + g.monto, 0),
@@ -513,7 +525,7 @@ export async function getDashboardStatsQuery(
   }
 
   const ventasAgrupadasPorSemana = createWeeklyAggregation(ventasData, {
-    ingresos: (venta) => Number(venta.total || 0),
+    ingresos: (venta) => ingresoDeVenta(venta),
     cantidad: (venta) => venta.cantidad,
   })
 
@@ -572,7 +584,7 @@ export async function getDashboardStatsQuery(
     ...ventasData.map((venta) => ({
       createdAt: venta.createdAt,
       cantidad: venta.cantidad,
-      total: venta.total ?? 0,
+      total: ingresoDeVenta(venta),
     })),
     ...ventaServiciosData.map((servicio) => ({
       createdAt: servicio.createdAt,

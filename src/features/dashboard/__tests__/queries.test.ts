@@ -253,4 +253,37 @@ describe('getDashboardStatsQuery', () => {
     expect(stats.productosStockBajo[0].stockTotal).toBe(4)
     expect(stats.productosStockBajo[0].almacenId).toBe('alm-1')
   })
+
+  it('usa Venta.total neto como fuente única de ingresos (no la suma por items ni precios actuales)', async () => {
+    // Items con un total distinto: NO deben influir en totalIngresos
+    vi.mocked(mockPrisma.ventaItem.findMany).mockResolvedValue([
+      { productoId: 'prod-1', cantidad: 5, total: 999, producto: { precioCosto: 5, precioVenta: 10, nombre: 'Harina' } },
+    ] as never)
+    // Venta moderna con items (productoId null) y total neto ya con descuento,
+    // más una legacy sin total persistido (fallback cantidad × precio de lista)
+    vi.mocked(mockPrisma.venta.findMany).mockResolvedValue([
+      { productoId: null, cantidad: 5, descuento: 10, total: 200, createdAt: new Date('2026-06-22T09:00:00.000Z') },
+      { productoId: 'prod-1', cantidad: 2, descuento: null, total: null, createdAt: new Date('2026-06-21T09:00:00.000Z') },
+    ] as never)
+
+    const stats = await getDashboardStatsQuery('tenant-1')
+
+    // 200 (venta moderna, total neto) + 20 (legacy: 2 × precioVenta 10) + 60 (servicios) = 280
+    expect(stats.totalIngresos).toBe(280)
+
+    // La query de ingresos filtra pedidos, anuladas y borradas por estado + deletedAt
+    expect(mockPrisma.venta.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 'tenant-1',
+          ventaPadreId: null,
+          deletedAt: null,
+          estado: { in: ['ENTREGADA', 'FACTURADA'] },
+        }),
+      }),
+    )
+
+    // El flujo diario usa el total neto de la venta, no la suma por items
+    expect(stats.ventasDiarias.ingresosHoy).toBe(240)
+  })
 })
