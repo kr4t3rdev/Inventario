@@ -21,6 +21,13 @@ interface FinancialStatePanelProps {
   flujoNetoAnterior?: number | null;
 }
 
+/**
+ * @description Panel de estado financiero del período: flujo neto protagonista,
+ * ingresos y egresos totales, y contexto del saldo acumulado de cuentas para
+ * evitar confundirlo con el flujo del período.
+ * @param {FinancialStatePanelProps} props - Moneda principal, flujo neto, totales, balances por moneda y comparación con el período anterior.
+ * @returns {JSX.Element} Fila de tarjetas del resumen financiero.
+ */
 export function FinancialStatePanel({
   monedaPrincipal,
   flujoNeto,
@@ -81,6 +88,12 @@ export function FinancialStatePanel({
             )}
             <span className="text-slate-500">en moneda principal</span>
           </div>
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            Saldo actual de cuentas:{' '}
+            {monedaPrincipal}{' '}
+            {(balances.find((b) => b.moneda === monedaPrincipal)?.saldo ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}{' '}
+            (acumulado histórico, no solo del período)
+          </p>
         </CardContent>
         <div className={cn(
           "absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-20",
