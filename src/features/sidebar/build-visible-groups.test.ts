@@ -55,6 +55,17 @@ const FULL_FEATURES = {
   'cuadre-diario': true,
   'turnos-pos': true,
   'rentabilidad-compra': true,
+  notificaciones: true,
+  kardex: true,
+  'ajustes-inventario': true,
+  'conteo-fisico': true,
+  'ordenes-compra': true,
+  recepciones: true,
+  reabastecimiento: true,
+  'lotes-series': true,
+  variantes: true,
+  'ubicaciones-avanzadas': true,
+  'mrp-avanzado': true,
 } as const
 
 describe('buildVisibleSidebarGroups', () => {
@@ -138,6 +149,25 @@ describe('buildVisibleSidebarGroups', () => {
       expect(config?.items.find((i) => i.title === 'Planes')).toBeUndefined()
     })
 
+    it('manager does NOT see Ordenes de Compra, Recepciones ni Reabastecimiento when the keys are absent from planFeatures (licencia legacy)', () => {
+      const legacyFeatures = { ...FULL_FEATURES } as Record<string, boolean>
+      delete legacyFeatures['ordenes-compra']
+      delete legacyFeatures['recepciones']
+      delete legacyFeatures['reabastecimiento']
+      const ctx = makeCtx({
+        role: 'regularUser',
+        tenantRole: 'manager',
+        tenantId: 't1',
+        planFeatures: legacyFeatures,
+      })
+      const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
+      const allTitles = result.flatMap((g) => g.items.flatMap((i) => [i.title, ...(i.subItems?.map((s) => s.title) ?? [])]))
+
+      expect(allTitles).not.toContain('Órdenes de Compra')
+      expect(allTitles).not.toContain('Recepciones')
+      expect(allTitles).not.toContain('Reabastecimiento')
+    })
+
     it('manager without contabilidad feature has reduced Contabilidad visibility', () => {
       const ctx = makeCtx({
         role: 'regularUser',
@@ -204,7 +234,14 @@ describe('buildVisibleSidebarGroups', () => {
         role: 'regularUser',
         tenantRole: 'dependiente',
         tenantId: 't1',
-        planFeatures: {},
+        // Plan con las features de los ítems que el rol dependiente puede ver
+        // (Servicios, Reportes, Cuadres POS). Con el gate estricto, un mapa
+        // vacío oculta todo ítem con feature asignada.
+        planFeatures: {
+          servicios: true,
+          'reportes-financieros': true,
+          'turnos-pos': true,
+        },
       })
       const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
       const summary = toSummary(result)
@@ -307,7 +344,11 @@ describe('buildVisibleSidebarGroups', () => {
         role: 'regularUser',
         tenantRole: 'dependiente',
         tenantId: 't1',
-        planFeatures: {},
+        planFeatures: {
+          servicios: true,
+          'reportes-financieros': true,
+          'turnos-pos': true,
+        },
         permissions: [...getDefaultPermissionsForRole('dependiente')],
       })
       const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)

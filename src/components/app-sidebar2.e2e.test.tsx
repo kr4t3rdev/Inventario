@@ -159,6 +159,17 @@ const FULL_FEATURES: Record<string, boolean> = {
   'cuadre-diario': true,
   'turnos-pos': true,
   'rentabilidad-compra': true,
+  notificaciones: true,
+  kardex: true,
+  'ajustes-inventario': true,
+  'conteo-fisico': true,
+  'ordenes-compra': true,
+  recepciones: true,
+  reabastecimiento: true,
+  'lotes-series': true,
+  variantes: true,
+  'ubicaciones-avanzadas': true,
+  'mrp-avanzado': true,
 }
 
 function resetState() {
@@ -247,7 +258,11 @@ describe('AppSidebar2 role matrix E2E', () => {
         role: 'regularUser',
         tenantRole: 'dependiente',
         tenantId: 't1',
-        planFeatures: {},
+        planFeatures: {
+          servicios: true,
+          'reportes-financieros': true,
+          'turnos-pos': true,
+        },
       })
       expect(items).toContain('Productos')
       expect(items).toContain('Ventas')

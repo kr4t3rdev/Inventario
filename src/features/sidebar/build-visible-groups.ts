@@ -73,7 +73,11 @@ function canSeeItem(
   }
 
   const featureKey = config.featureMap[itemTitle]
-  if (featureKey && user.planFeatures?.[featureKey] === false) return false
+  // Gate estricto, igual que hasFeature(): un ítem con feature asignada solo
+  // se muestra si la feature es explícitamente true. Antes solo se ocultaba
+  // con `=== false`, y una key ausente (licencia legacy, drift del plan en
+  // DB) lo dejaba visible aunque las páginas/actions lo bloquearan.
+  if (featureKey && user.planFeatures?.[featureKey] !== true) return false
   if (featureKey === "ficha-costo" && !canAccessFichaCosto(user)) return false
 
   if (!user.tenantRole) {
