@@ -3,11 +3,11 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
-import { AuditLogService } from '@/lib/services/audit-log-service'
+import { ActionError } from '@/lib/server-actions'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
-import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { calcularSaldoPendienteDeuda, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
+import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -22,11 +22,25 @@ const createSchema = z.object({
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
   tasaInteres: z.coerce.number().min(0).optional(),
+  tasaInteresMoratorio: z.coerce.number().min(0).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().url().optional(),
-  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
+  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
+
+/** @description Resuelve la clave idempotente del cuerpo antes que la cabecera. */
+function resolveIdempotencyKey(bodyKey: string | undefined, headerKey: string | null): string | undefined {
+  if (bodyKey !== undefined) return bodyKey
+  if (headerKey === null) return undefined
+  const key = headerKey.trim()
+  if (!key || key.length > 64) {
+    throw new ActionError('La clave de idempotencia no es válida', 'VALIDATION_ERROR')
+  }
+  return key
+}
 
 /**
  * @description Verifica si el módulo de deudas cash está habilitado
@@ -138,143 +152,70 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const tenantId = requireTenant(user);
+    requireFeature(user, 'deudas-cash', 'crear deudas cash');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear deudas cash');
     const rawBody = await request.json()
-    console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
+    const idempotencyKey = resolveIdempotencyKey(
+      body.idempotencyKey,
+      request.headers.get('idempotency-key'),
+    )
 
-    // Validar período contable antes de crear la deuda
-    const fechaOperacion = extraerFechaDeBody(rawBody) ?? new Date()
+    const input = {
+      ...body,
+      tasaInteres: body.tasaInteres ?? 0,
+      tasaInteresMoratorio: body.tasaInteresMoratorio ?? 0,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    }
+    if (idempotencyKey) {
+      const replay = await AccountingCashOperationsMutationService.findCashDebtCreateReplay({
+        input,
+        user,
+      })
+      if (replay) return NextResponse.json({ deuda: replay }, { status: 201 })
+    }
+
+    // Preserve legacy date aliases for requests without replay keys; keyed requests use server time.
+    const operationDate = idempotencyKey
+      ? new Date()
+      : extraerFechaDeBody(rawBody) ?? new Date()
     const validacionPeriodo = await validarEscrituraPeriodo({
-      fecha: fechaOperacion,
+      fecha: operationDate,
       tenantId,
       tipoOperacion: 'deuda_cash',
       actor: user.userId,
     })
     if (!validacionPeriodo.permitido) {
+      if (idempotencyKey) {
+        const replayAfterGate = await AccountingCashOperationsMutationService.findCashDebtCreateReplay({
+          input,
+          user,
+        })
+        if (replayAfterGate) return NextResponse.json({ deuda: replayAfterGate }, { status: 201 })
+      }
       return NextResponse.json(
         { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const totalDeuda = calcularTotalDeudaConInteres(body.montoCapital, body.tasaInteres)
-
-    const proveedor = await prisma.vendor.findUnique({
-      where: { vendorId: body.proveedorId },
-      select: { nombre: true }
+    const deuda = await AccountingCashOperationsMutationService.createCashDebt({
+      input,
+      user,
+      operationDate,
     })
-
-    if (!proveedor) {
-      return NextResponse.json({ error: 'Proveedor no encontrado' }, { status: 404 })
-    }
-
-    const deuda = await prisma.$transaction(async (tx) => {
-      const tipoPagoDesembolso =
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
-
-      if (!tipoPagoDesembolso) {
-        throw new Error('No existe un tipo de pago válido para el desembolso de deuda')
-      }
-
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: body.cuentaBancariaId },
-        data: { saldo: { increment: body.montoCapital } }
-      })
-
-      const lastDeuda = await tx.deudaCash.findFirst({
-        orderBy: { idNumerico: 'desc' },
-        select: { idNumerico: true }
-      })
-      const nextNum = (lastDeuda?.idNumerico ?? 0) + 1
-
-      const cuentaPorPagar = await tx.cuentaPorPagar.create({
-        data: {
-          tenantId,
-          numeroFactura: `DC-${nextNum}`,
-          proveedorId: body.proveedorId,
-          proveedorNombre: proveedor.nombre,
-          montoDeuda: totalDeuda,
-          montoPagado: 0,
-          saldoPendiente: totalDeuda,
-          moneda: body.moneda,
-          tipo: 'compra',
-          tipoDeuda: 'DEUDA_CASH',
-          estado: 'PENDIENTE',
-          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined
-        }
-      })
-
-      const fechaReconciliacion = new Date();
-      const conversion = buildPersistedAccountingAmount(
-        Number(body.montoCapital),
-        body.moneda || 'CUP',
-        undefined,
-        fechaReconciliacion,
-      );
-      await tx.reconciliacionVenta.create({
-        data: {
-          tenantId,
-          cuentaId: body.cuentaBancariaId,
-          tipoPagoId: tipoPagoDesembolso.tipoId,
-          monto: body.montoCapital,
-          moneda: body.moneda,
-          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
-          ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
-          fechaReconciliacion,
-          ...(conversion.fxEvidence ?? {}),
-          observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`,
-          reconciliadoPor: user.userId,
-          deudaCashId: null,
-          tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO'
-        }
-      })
-
-      return tx.deudaCash.create({
-        data: {
-          tenantId,
-          proveedorId: body.proveedorId,
-          cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId,
-          montoCapital: body.montoCapital,
-          moneda: body.moneda,
-          tasaInteres: body.tasaInteres,
-          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
-          observaciones: body.observaciones,
-          comprobanteUrl: body.comprobanteUrl,
-          cuentaBancariaId: body.cuentaBancariaId,
-          createdById: user.userId
-        },
-        include: {
-          proveedor: {
-            select: {
-              vendorId: true,
-              nombre: true
-            }
-          },
-          cuentaPorPagar: true
-        }
-      })
-    })
-
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'DEUDA_CASH',
-      entidadId: deuda.id,
-      usuarioId: user.userId,
-      detalles: {
-        proveedorId: body.proveedorId,
-        montoCapital: body.montoCapital,
-        moneda: body.moneda
-      }
-    })
-
     return NextResponse.json({ deuda }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('[DeudaCash POST] Zod errors:', JSON.stringify(error.errors))
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
     console.error('Error creando deuda cash:', error)
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE' || error.code === 'TENANT_REQUIRED' ? 403
+        : error.code === 'NOT_FOUND' ? 404
+          : error.code === 'IDEMPOTENCY_CONFLICT' ? 409 : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
     return NextResponse.json({ error: 'Error creando deuda cash' }, { status: 500 })
   }
 })

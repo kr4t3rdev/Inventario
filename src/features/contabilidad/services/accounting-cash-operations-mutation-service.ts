@@ -8,6 +8,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
 import { buildCashPaymentEvent } from '@/features/contabilidad-formal/lib/cash-payment-event-builder';
 import { calculateCashObligationPaymentAllocation } from '@/features/contabilidad-formal/lib/cash-obligation-payment-allocation';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
@@ -213,6 +214,7 @@ async function buildObligationFxSnapshot(
   };
   return {
     amount: functionalAmount,
+    functionalCurrency,
     fields: {
       montoDeudaFuncional: functionalAmount,
       montoPagadoFuncional: new Prisma.Decimal(0),
@@ -1068,7 +1070,7 @@ export const AccountingCashOperationsMutationService = {
 
       const cuentaOrigen = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: input.cuentaBancariaId, tenantId },
-        select: { cuentaId: true, isActive: true },
+        select: { cuentaId: true, isActive: true, moneda: true },
       });
       if (!cuentaOrigen || !cuentaOrigen.isActive) {
         throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
@@ -1079,14 +1081,6 @@ export const AccountingCashOperationsMutationService = {
         (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
       if (!tp) {
         throw new ActionError('No existe un tipo de pago válido para el desembolso de deuda', 'VALIDATION_ERROR');
-      }
-
-      const accountUpdate = await tx.cuentaBancaria.updateMany({
-        where: { cuentaId: input.cuentaBancariaId, tenantId, isActive: true },
-        data: { saldo: { increment: input.montoCapital } },
-      });
-      if (accountUpdate.count !== 1) {
-        throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
       }
 
       const lastDeuda = await tx.deudaCash.findFirst({ orderBy: { idNumerico: 'desc' }, select: { idNumerico: true } });
@@ -1101,6 +1095,26 @@ export const AccountingCashOperationsMutationService = {
         fechaReconciliacion,
         'cash-debt-obligation',
       );
+      const amount = resolveCashDebtCurrencyAmounts({
+        monedaObligacion,
+        monedaFondos: monedaObligacion,
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: input.montoCapital,
+        montoFuncional: obligationFx.amount.toNumber(),
+        functionalCurrency: obligationFx.functionalCurrency,
+      });
+      const accountUpdate = await tx.cuentaBancaria.updateMany({
+        where: {
+          cuentaId: input.cuentaBancariaId,
+          tenantId,
+          isActive: true,
+          moneda: cuentaOrigen.moneda,
+        },
+        data: { saldo: { increment: amount.montoCuenta.toNumber() } },
+      });
+      if (accountUpdate.count !== 1) {
+        throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
+      }
 
       const cxp = await tx.cuentaPorPagar.create({
         data: {
@@ -1146,7 +1160,7 @@ export const AccountingCashOperationsMutationService = {
         include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
       });
 
-      await tx.reconciliacionVenta.create({
+      const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenant: { connect: { tenantId } },
           cuentaBancaria: { connect: { cuentaId: input.cuentaBancariaId } },
@@ -1154,7 +1168,18 @@ export const AccountingCashOperationsMutationService = {
           deudaCash: { connect: { id: deuda.id } },
           monto: input.montoCapital,
           moneda: input.moneda || 'CUP',
-          montoConvertido: input.montoCapital,
+          montoConvertido: obligationFx.amount,
+          functionalCurrency: obligationFx.functionalCurrency,
+          tasaCambio: obligationFx.fields.tasaCambio,
+          rateEffectiveAt: obligationFx.fields.rateEffectiveAt,
+          fxProvenanceKind: obligationFx.fields.fxProvenanceKind,
+          fxProvenanceSource: obligationFx.fields.fxProvenanceSource,
+          fxCatalogRateId: obligationFx.fields.fxCatalogRateId,
+          fxEvidenceJson: obligationFx.fields.fxEvidenceJson,
+          fxEvidenceFingerprint: obligationFx.fields.fxEvidenceFingerprint,
+          fxEvidenceVersion: obligationFx.fields.fxEvidenceVersion,
+          montoCuenta: amount.montoCuenta,
+          monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
           fechaReconciliacion,
           observaciones:
             input.observaciones || `Desembolso de deuda cash para proveedor ${input.proveedorId}`,
@@ -1162,6 +1187,20 @@ export const AccountingCashOperationsMutationService = {
           tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO',
           ...(idempotencyKey ? { idempotencyKey, idempotencyPayloadHash } : {}),
         },
+      });
+
+      await postEvento(tx, { tenantId, userId: user.userId }, {
+        tipo: 'DEUDA_RECIBIDA',
+        fecha: fechaReconciliacion,
+        descripcion: input.observaciones || `Deuda recibida de proveedor ${input.proveedorId}`,
+        origen: { tipo: 'deuda_cash', id: deuda.id },
+        monto: input.montoCapital,
+        moneda: monedaObligacion,
+        montoFuncional: obligationFx.amount,
+        monedaFuncional: obligationFx.functionalCurrency,
+        tasaCambio: obligationFx.fields.tasaCambio,
+        fxEvidenceFingerprint: obligationFx.fields.fxEvidenceFingerprint,
+        medioCobro: 'BANCOS',
       });
 
       await AuditLogService.logStrict({
