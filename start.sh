@@ -1,14 +1,25 @@
 #!/bin/sh
-# Script de inicio del contenedor.
-# Sincroniza el schema de Prisma con la DB antes de levantar el servidor.
-# Por compatibilidad, el modo por defecto sigue siendo `db-push`.
-# Una vez baselineada la DB de producción, configurar:
-#   PRISMA_MIGRATION_MODE=migrate-deploy
+# Schema synchronization is opt-in so deploying the app does not mutate the database.
+# Set PRISMA_SCHEMA_SYNC_ON_START=true and PRISMA_MIGRATION_MODE explicitly to enable it.
 
 set -e
 
-echo "[start] Sincronizando schema de Prisma con la base de datos..."
-/app/scripts/run-prisma-schema-sync.sh
+case "${PRISMA_SCHEMA_SYNC_ON_START:-false}" in
+  false)
+    echo "[start] Schema sync disabled; starting server without database schema changes."
+    ;;
+  true)
+    if [ -z "${PRISMA_MIGRATION_MODE:-}" ]; then
+      echo "[start] ERROR: PRISMA_MIGRATION_MODE must be explicitly set when schema sync is enabled."
+      exit 1
+    fi
+    echo "[start] Running explicitly configured Prisma schema sync..."
+    /app/scripts/run-prisma-schema-sync.sh
+    ;;
+  *)
+    echo "[start] ERROR: PRISMA_SCHEMA_SYNC_ON_START must be 'true' or 'false'."
+    exit 1
+    ;;
+esac
 
-echo "[start] Schema sincronizado. Iniciando servidor Next.js..."
 exec node server.js
