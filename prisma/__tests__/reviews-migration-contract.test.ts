@@ -25,8 +25,8 @@ describe('reviews schema migration contract', () => {
 
   it('adds only the reviewed tables, indexes, and tenant/user cascades', () => {
     const sql = readFileSync(migrationPath, 'utf8');
-    expect(sql).toContain('CREATE TABLE "reviews"');
-    expect(sql).toContain('CREATE TABLE "review_prompts"');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "reviews"');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "review_prompts"');
     expect(sql).toContain('"isApproved" BOOLEAN NOT NULL DEFAULT false');
     expect(sql).toContain('"promptedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP');
     expect(sql).toContain('"dismissedAt" TIMESTAMP(3)');
@@ -37,8 +37,9 @@ describe('reviews schema migration contract', () => {
     expect(sql).toContain('review_prompts_tenantId_userId_promptedAt_idx');
     expect(sql).toContain('REFERENCES "tenants"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE');
     expect(sql).toContain('REFERENCES "User"("userId") ON DELETE CASCADE ON UPDATE CASCADE');
-    expect(sql).not.toMatch(/\b(?:DROP|ALTER)\s+(?:TABLE|TYPE|COLUMN)\b/i);
-    expect(sql).not.toMatch(/\bIF\s+NOT\s+EXISTS\b/i);
+    expect(sql).not.toMatch(/\b(?:DROP|TRUNCATE|DELETE FROM)\b/i);
+    expect(sql).toMatch(/IF\s+NOT\s+EXISTS/);
+    expect(sql).toContain('RAISE EXCEPTION');
     expect(sql).not.toContain('ValeSalida');
     expect(sql).not.toContain('BackupType');
   });

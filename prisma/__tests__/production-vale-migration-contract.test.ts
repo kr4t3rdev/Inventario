@@ -17,9 +17,9 @@ describe('production vales and history schema contract', () => {
 
   it('creates only the three additive runtime tables with exact location snapshot columns', () => {
     const sql = readFileSync(migrationPath, 'utf8');
-    expect(sql).toContain('CREATE TABLE "OrdenProduccionHistorial"');
-    expect(sql).toContain('CREATE TABLE "ValeSalida"');
-    expect(sql).toContain('CREATE TABLE "ValeSalidaItem"');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "OrdenProduccionHistorial"');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "ValeSalida"');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "ValeSalidaItem"');
     expect(sql).toMatch(/"sourceTipoUbicacion" TEXT,\s*"sourceUbicacionId" TEXT,/);
     expect(sql).toContain('"estado" TEXT NOT NULL DEFAULT \'COMPLETADO\'');
     expect(sql).toContain('"id" TEXT NOT NULL DEFAULT (gen_random_uuid())::text');
@@ -29,8 +29,9 @@ describe('production vales and history schema contract', () => {
     expect(sql).toContain('ValeSalidaItem_tenantId_fkey');
     expect(sql).toContain('CREATE INDEX "ValeSalidaItem_tenantId_idx"');
     expect(sql).toContain('CREATE INDEX "ValeSalida_tenantId_idx"');
-    expect(sql).not.toMatch(/\b(?:DROP|ALTER)\s+(?:TABLE|TYPE|COLUMN)\b/i);
-    expect(sql).not.toMatch(/\bIF\s+NOT\s+EXISTS\b/i);
+    expect(sql).not.toMatch(/\b(?:DROP|TRUNCATE|DELETE FROM)\b/i);
+    expect(sql).toMatch(/IF\s+NOT\s+EXISTS/);
+    expect(sql).toContain('RAISE EXCEPTION');
     expect(sql).not.toContain('BackupType');
     expect(sql).not.toContain('BackupStatus');
   });
