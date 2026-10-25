@@ -89,7 +89,7 @@ describe('FinancialStatePanel', () => {
       />,
     );
 
-    expect(screen.getByText(/Flujo Neto del Período/i)).toBeInTheDocument();
+    expect(screen.getByText('Flujo Neto del Período', { selector: 'span' })).toBeInTheDocument();
     expect(container.textContent).toMatch(/\+/);
     expect(container.textContent).toMatch(/5.?000/);
   });
@@ -232,7 +232,8 @@ describe('CurrencySummaryTable', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     const headers = screen.getAllByRole('columnheader');
     expect(headers.map(h => h.textContent)).toEqual([
-      'Moneda', 'Saldo Actual', 'Ingresos', 'Egresos', 'Flujo Neto',
+      'Moneda', 'Saldo de cuentas (acumulado)', 'Saldo aprox. al inicio',
+      'Ingresos del período', 'Egresos del período', 'Flujo neto del período',
     ]);
   });
 
@@ -377,7 +378,7 @@ describe('ResumenFinanciero — loading, empty, error', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Flujo Neto del Período/i)).toBeInTheDocument();
+      expect(screen.getByText('Flujo Neto del Período', { selector: 'span' })).toBeInTheDocument();
     });
 
     const gridElements = container.querySelectorAll('.grid');
@@ -397,7 +398,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
     const { ResumenFinanciero } = await import('../resumen-financiero');
     render(<ResumenFinanciero periodo="Período completo" page={1} limit={10} />);
 
-    await screen.findByText(/Flujo Neto del Período/i);
+    await screen.findByText('Flujo Neto del Período', { selector: 'span' });
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(mocks.getResumenCompletoAction).toHaveBeenCalledWith(
       expect.objectContaining({ fechaInicio: undefined, fechaFin: undefined }),
@@ -409,7 +410,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
     render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />);
 
     await screen.findByRole('radiogroup', { name: /seleccionar período/i });
-    await screen.findByText(/Flujo Neto del Período/i);
+    await screen.findByText('Flujo Neto del Período', { selector: 'span' });
     expect(screen.getByText('Período: Este mes')).toBeInTheDocument();
 
     const hoy = new Date();
@@ -428,7 +429,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
     const { ResumenFinanciero } = await import('../resumen-financiero');
     render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />);
 
-    await screen.findByText(/Flujo Neto del Período/i);
+    await screen.findByText('Flujo Neto del Período', { selector: 'span' });
     await userEvent.click(screen.getByRole('radio', { name: 'Hoy' }));
 
     const hoy = new Date();
@@ -494,7 +495,7 @@ describe('ResumenFinanciero — cifras tabulares en disclosures', () => {
     const { ResumenFinanciero } = await import('../resumen-financiero');
     render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
 
-    await screen.findByText(/Flujo Neto del Período/i);
+    await screen.findByText('Flujo Neto del Período', { selector: 'span' });
     await userEvent.click(screen.getByText('Préstamos Cash'));
 
     const monto = await screen.findByText(/1.?234,50/);
@@ -515,7 +516,7 @@ describe('ResumenFinanciero — caché de último payload cálido', () => {
 
     // Primera montura: carga y guarda en caché
     const first = render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
-    await screen.findByText(/Flujo Neto del Período/i);
+    await screen.findByText('Flujo Neto del Período', { selector: 'span' });
     first.unmount();
 
     // Segunda montura: sin initialData ni fetch pendiente → no debe ir a skeleton
@@ -523,6 +524,6 @@ describe('ResumenFinanciero — caché de último payload cálido', () => {
     const { container } = render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
 
     expect(container.querySelector('[aria-busy="true"]')).toBeNull();
-    expect(await screen.findByText(/Flujo Neto del Período/i)).toBeInTheDocument();
+    expect(await screen.findByText('Flujo Neto del Período', { selector: 'span' })).toBeInTheDocument();
   });
 });
