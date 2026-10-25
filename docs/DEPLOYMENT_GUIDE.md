@@ -15,6 +15,19 @@
 3. Railway detecta el push, construye y despliega (~2-5 min)
 4. Verificar: `railway deployment list -s FinanceMDM` → status SUCCESS
 
+## Aceptación de release
+
+CI verde confirma los controles previos al despliegue; no confirma que Railway haya publicado
+ese commit. Antes de declarar un release completo:
+
+1. Confirma que todos los checks requeridos de CI terminaron correctamente.
+2. En Railway, verifica que el despliegue activo corresponde al SHA completo esperado.
+3. Ejecuta el workflow manual **Smoke post-deploy** para ese entorno y SHA. El smoke debe
+   confirmar `/api/health` saludable, el entorno esperado y el mismo SHA.
+
+Para staging, ejecuta la validación solo después de que staging tenga desplegado ese SHA.
+No marques el release como completo si el despliegue no coincide exactamente o el smoke falla.
+
 ## Migraciones de Base de Datos
 
 Railway ejecuta `prisma db push` automáticamente al iniciar el contenedor.
