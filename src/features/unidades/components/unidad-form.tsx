@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createUnidadAction, updateUnidadAction } from "@/features/unidades/actions"
 import { unidadSchema } from "@/features/unidades/schemas"
-import type { UnidadInput } from "@/features/unidades/schemas"
+import type { UnidadFormInput, UnidadInput } from "@/features/unidades/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, ArrowLeft, Loader2 } from "lucide-react"
 
@@ -38,7 +38,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<UnidadInput>({
+  const form = useForm<UnidadFormInput, unknown, UnidadInput>({
     resolver: zodResolver(unidadSchema),
     defaultValues: {
       nombre: initialData?.nombre || "",

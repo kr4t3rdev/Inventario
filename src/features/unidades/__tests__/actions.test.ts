@@ -28,9 +28,15 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    unidadConversion: {
+      findMany: vi.fn(),
+    },
     producto: {
       count: vi.fn(),
+      findMany: vi.fn(),
     },
+    $queryRaw: vi.fn(),
+    $transaction: vi.fn(),
   },
 }));
 
@@ -47,6 +53,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const TENANT_A = 'tenant-a';
 const TENANT_B = 'tenant-b';
+const dimensionTransactionOrder: string[] = [];
 
 const mockUserA: AuthenticatedUser = {
   userId: 'user-a',
@@ -63,6 +70,7 @@ const mockUnidadRow = {
   tenantId: TENANT_A,
   nombre: 'Kilogramo',
   simbolo: 'kg',
+  dimension: 'UNKNOWN',
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -72,6 +80,7 @@ const mockUnidadRow2 = {
   tenantId: TENANT_A,
   nombre: 'Libra',
   simbolo: 'lb',
+  dimension: 'UNKNOWN',
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -81,6 +90,7 @@ const mockUnidadTenantB = {
   tenantId: TENANT_B,
   nombre: 'Tonelada',
   simbolo: 't',
+  dimension: 'UNKNOWN',
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -101,6 +111,29 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
     // Por defecto: no hay duplicados, no hay productos en uso
     vi.mocked(prisma.unidad.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.producto.count).mockResolvedValue(0);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback, options) => {
+      dimensionTransactionOrder.length = 0;
+      if (typeof callback === 'function') {
+        return callback(prisma as never);
+      }
+      return Promise.all(callback as never);
+    });
+    vi.mocked(prisma.$queryRaw).mockImplementation(async (query) => {
+      const sql = Array.isArray(query)
+        ? query.join('')
+        : typeof query === 'object' && query !== null && 'sql' in query
+          ? String(query.sql)
+          : '';
+      if (sql.includes('FOR UPDATE')) {
+        dimensionTransactionOrder.push('unit-lock');
+        return [{ unidadId: 'uni-1' }] as never;
+      }
+      dimensionTransactionOrder.push('product-usage');
+      return [{ hasProductReference: false, hasForeignProductReference: false }] as never;
+    });
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.unidadConversion.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.unidad.findMany).mockResolvedValue([]);
   });
 
   // ══════════════════════════════════════════════════════
@@ -213,9 +246,25 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
             nombre: 'Kilogramo',
             simbolo: 'kg',
             tenantId: TENANT_A,
+            dimension: 'UNKNOWN',
           }),
         })
       );
+    });
+
+    it('persists an explicitly selected dimension during creation', async () => {
+      vi.mocked(prisma.unidad.create).mockResolvedValue({ ...mockUnidadRow, dimension: 'MASS' });
+
+      const result = await createUnidadAction({
+        nombre: 'Kilogramo',
+        simbolo: 'kg',
+        dimension: 'MASS',
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.unidad.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ dimension: 'MASS' }),
+      }));
     });
 
     it('retorna error de validación si falta el nombre', async () => {

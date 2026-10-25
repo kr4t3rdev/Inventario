@@ -11,11 +11,12 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import type { UnidadDimension } from '@/generated/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { unidadSchema, unidadUpdateSchema } from './schemas';
 import { checkUnidadUniqueness } from './validators';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import type { UnidadInput, UnidadUpdateInput } from './schemas';
+import type { UnidadFormInput, UnidadUpdateInput } from './schemas';
 
 // ─── Select reutilizable ──────────────────────────────────
 
@@ -24,6 +25,7 @@ const UNIDAD_SELECT = {
   tenantId: true,
   nombre: true,
   simbolo: true,
+  dimension: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -33,6 +35,7 @@ type UnidadRow = {
   tenantId: string;
   nombre: string;
   simbolo: string;
+  dimension: UnidadDimension;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -121,7 +124,7 @@ export const getUnidadByIdAction = withAction(async (
  * @description Crea una nueva unidad de medida scoped al tenant.
  */
 export const createUnidadAction = withAction(async (
-  input: UnidadInput,
+  input: UnidadFormInput,
   user: AuthenticatedUser
 ) => {
   const parsed = unidadSchema.parse(input);
@@ -139,6 +142,7 @@ export const createUnidadAction = withAction(async (
       data: {
         nombre: parsed.nombre,
         simbolo: parsed.simbolo,
+        dimension: parsed.dimension,
         tenantId,
       },
       select: UNIDAD_SELECT,

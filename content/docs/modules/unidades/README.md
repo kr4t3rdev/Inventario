@@ -19,6 +19,7 @@ Este módulo define cómo se expresa cantidad dentro del sistema: piezas, cajas,
 - Nombre y símbolo deben ser únicos dentro del tenant.
 - El sistema hace pre-check de unicidad y también protege contra race conditions.
 - No se puede eliminar una unidad si todavía está en uso por productos.
+- Por defecto, las unidades nuevas quedan como `UNKNOWN`.
 
 ## Qué conviene cuidar
 
