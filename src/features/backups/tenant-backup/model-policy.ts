@@ -28,7 +28,7 @@ export interface TenantBackupBusinessManifestEntry {
 const DIRECT_TENANT_MODELS = [
   'Categoria', 'Unidad', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
-  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto',
+  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'UnidadConversion',
   'StockUbicacion', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'Merma', 'Transferencia',
   'Empleado', 'Pagosalario', 'CierreContable', 'GastoCompra',
@@ -68,7 +68,7 @@ const EXCLUDED_MODELS = [
   'ShadowPosteoOutbox', 'BackupLog', 'BackupPlan', 'PeriodoCache',
 ] as const;
 const BUSINESS_MODEL_NAMES = [
-  'Categoria', 'Unidad', 'Vendor', 'InyeccionCapital',
+  'Categoria', 'Unidad', 'UnidadConversion', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
   'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto',
   'StockUbicacion', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
@@ -145,9 +145,16 @@ const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
   ...DIRECT_TENANT_MODELS.map((model) => ({
     model,
     kind: 'tenant-direct' as const,
-    ownerPath: model === 'TipoContratoCustom' ? 'tenantId; exclude legacy NULL rows' : 'tenantId',
+    ownerPath: model === 'TipoContratoCustom'
+      ? 'tenantId; exclude legacy NULL rows'
+      : model === 'UnidadConversion'
+        ? 'tenantId; composite Producto and Unidad foreign keys'
+        : 'tenantId',
     rationale: model === 'TipoContratoCustom'
       ? 'Tenant-owned model; never infer tenant ownership for legacy NULL tenantId rows.'
+      : model === 'UnidadConversion'
+        ? 'Tenant-owned conversion with tenantId and composite same-tenant Producto and Unidad references; '
+          + 'relation and field review still gates export and restore.'
       : POLICY_RATIONALE['tenant-direct'],
     protectedEvidenceCandidate: PROTECTED_EVIDENCE_MODEL_SET.has(model),
   })),
@@ -185,9 +192,19 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
     disposition: 'candidate',
     rationale: model === 'TipoContratoCustom'
       ? 'Tenant-owned model; include only validated non-null tenantId rows and never infer legacy NULL ownership.'
+      : model === 'UnidadConversion'
+        ? [
+            'UnidadConversion is required to preserve tenant product-unit conversion state;',
+            'include only after relation and field validation.',
+          ].join(' ')
       : 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
     productImpact: model === 'TipoContratoCustom'
       ? 'Legacy unattributed custom types remain excluded; current tenant rows are candidates only.'
+      : model === 'UnidadConversion'
+        ? [
+            'Omission can lose tenant conversion settings; export and restore eligibility remains',
+            'blocked pending relation and ordering review.',
+          ].join(' ')
       : 'Omission can lose tenant operational, accounting, or historical data; eligibility is not yet approved.',
   }));
 }
