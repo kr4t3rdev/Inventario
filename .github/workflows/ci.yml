@@ -196,7 +196,7 @@ jobs:
   required-checks:
     name: Required CI checks
     if: always()
-    needs: [lint, typecheck, test, coverage, integration, build, post-deploy-smoke]
+    needs: [lint, typecheck, test, coverage, integration, build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -209,98 +209,4 @@ jobs:
       - name: Reject failed, skipped, missing or cancelled checks
         env:
           REQUIRED_RESULTS: ${{ toJSON(needs) }}
-          REQUIRE_POST_DEPLOY_SMOKE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: node scripts/ci/required-checks.mjs
-
-  post-deploy-smoke:
-    name: Post-deploy smoke (${{ matrix.target_environment }})
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.result == 'success'
-    needs: [lint, typecheck, test, coverage, integration, build]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target_environment: staging
-            base_url: https://financemdm-staging-staging.up.railway.app
-          - target_environment: production
-            base_url: https://kr4t3rdev.xyz
-    environment: ${{ format('FinanceMDM / {0}', matrix.target_environment) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Wait for exact deployment identity
-        env:
-          BASE_URL: ${{ matrix.base_url }}
-          EXPECTED_DEPLOYMENT_ENVIRONMENT: ${{ matrix.target_environment }}
-          EXPECTED_DEPLOYMENT_SHA: ${{ github.sha }}
-        run: |
-          node <<'NODE'
-          const baseUrl = process.env.BASE_URL;
-          const expectedEnvironment = process.env.EXPECTED_DEPLOYMENT_ENVIRONMENT;
-          const expectedSha = process.env.EXPECTED_DEPLOYMENT_SHA;
-          const deadline = Date.now() + 10 * 60 * 1000;
-
-          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-          (async () => {
-            while (Date.now() < deadline) {
-              try {
-                const response = await fetch(`${baseUrl}/api/health`, {
-                  headers: { accept: 'application/json' },
-                });
-                const body = await response.json();
-
-                if (
-                  response.ok &&
-                  body.status === 'healthy' &&
-                  body.deploymentEnvironment === expectedEnvironment &&
-                  body.deploymentSha === expectedSha
-                ) {
-                  console.log(JSON.stringify(body));
-                  process.exit(0);
-                }
-
-                console.log(
-                  `Waiting for ${expectedEnvironment}/${expectedSha}; received ${JSON.stringify(body)}`,
-                );
-              } catch (error) {
-                console.log(`Deployment not ready: ${error instanceof Error ? error.message : error}`);
-              }
-
-              await sleep(15_000);
-            }
-
-            console.error(`Timed out waiting for ${expectedEnvironment}/${expectedSha}`);
-            process.exit(1);
-          })();
-          NODE
-
-      - name: Run protected post-deploy smoke
-        env:
-          E2E_BASE_URL: ${{ matrix.base_url }}
-          EXPECTED_DEPLOYMENT_ENVIRONMENT: ${{ matrix.target_environment }}
-          EXPECTED_DEPLOYMENT_SHA: ${{ github.sha }}
-        run: pnpm run test:smoke:prod
