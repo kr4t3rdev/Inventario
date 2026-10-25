@@ -29,6 +29,14 @@ Este módulo no solo guarda compras: también recalcula precio de costo, increme
 - `PAGO_PARCIAL` puede generar una cuenta por pagar enlazada.
 - `ANTICIPO_PAGO` tiene reglas especiales y no soporta ciertos cambios posteriores de reconciliación.
 
+## Unidades de compra (alcance F-1)
+
+- La acción de compra directa puede recibir una unidad de origen configurada para el producto.
+- El servidor valida la conversión y registra existencias y costos en la unidad base del producto.
+- La línea conserva una instantánea de la unidad, cantidad y costo de origen para su trazabilidad.
+- Este alcance no incluye interfaz de selección, órdenes/recepciones, POS ni ventas.
+- Las migraciones de esta funcionalidad aún requieren revisión y aplicación autorizada en producción.
+
 ## Qué conviene cuidar
 
 - Verificá proveedor, fecha y monto antes de guardar.
