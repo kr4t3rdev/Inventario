@@ -1488,6 +1488,15 @@ model CompraDocumentoItem {
   cantidad              Int
   precioUnitario        Int
   totalLinea            Int
+  unidadOrigenId        String?
+  unidadOrigenNombre    String?
+  unidadOrigenSimbolo   String?
+  cantidadOrigen        Int?
+  precioUnitarioOrigen  Int?
+  factorAStockAplicado   Decimal?             @db.Decimal(18, 8)
+  unidadBaseIdSnapshot   String?
+  unidadBaseNombreSnapshot String?
+  unidadBaseSimboloSnapshot String?
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   compraDocumento       CompraDocumento      @relation(fields: [compraDocumentoId], references: [compraDocumentoId], onDelete: Cascade)
