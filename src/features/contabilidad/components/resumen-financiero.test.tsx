@@ -87,10 +87,9 @@ describe('ResumenFinanciero — Rediseño Fase 4', () => {
     render(<ResumenFinanciero periodo="enero" page={1} limit={10} />);
 
     await waitFor(() => {
-      const elements = screen.getAllByText(/Flujo Neto/i);
-      expect(elements.length).toBeGreaterThan(0);
-      // At least one should be the protagonist metric
-      expect(screen.getByText(/Flujo Neto del Período/i)).toBeInTheDocument();
+      // Target the protagonist label, not the duplicate column heading in the
+      // currency table.
+      expect(screen.getByText('Flujo Neto del Período', { selector: 'span' })).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
@@ -143,7 +142,7 @@ describe('ResumenFinanciero — Rediseño Fase 4', () => {
     getResumenCompletoAction.mockResolvedValue(p);
     render(<ResumenFinanciero periodo="enero" page={1} limit={10} />);
     await waitFor(() => {
-      const netFlowLabel = screen.getByText('Flujo Neto del Período');
+      const netFlowLabel = screen.getByText('Flujo Neto del Período', { selector: 'span' });
       expect(netFlowLabel.parentElement?.parentElement).toHaveTextContent('USD');
     });
   });

@@ -17,7 +17,14 @@ describe('TipoContratoCustom tenant ownership migration contract', () => {
     const sql = readFileSync(migrationPath, 'utf8')
 
     expect(sql).toMatch(/ALTER TABLE "TipoContratoCustom"\s+ADD COLUMN "tenantId" TEXT/)
-    expect(sql).toMatch(/REFERENCES "tenants"\("tenantId"\)\s+ON DELETE SET NULL\s+ON UPDATE CASCADE/)
+    expect(sql).toContain(
+      'FOREIGN KEY ("tenantId") REFERENCES tenants("tenantId") ON DELETE SET NULL ON UPDATE CASCADE',
+    )
+    expect(sql).toContain(
+      'pg_get_constraintdef(c.oid)=\'FOREIGN KEY ("tenantId") REFERENCES tenants("tenantId") ON UPDATE CASCADE ON DELETE SET NULL\'',
+    )
+    expect(sql).toContain("c.contype='f'")
+    expect(sql).toContain('c.convalidated')
     expect(sql).toContain('CREATE INDEX "TipoContratoCustom_tenantId_idx"')
     expect(sql).toContain('CREATE UNIQUE INDEX "TipoContratoCustom_tenantId_nombre_key"')
     expect(sql).toContain('DROP INDEX "TipoContratoCustom_nombre_key"')
@@ -25,7 +32,9 @@ describe('TipoContratoCustom tenant ownership migration contract', () => {
     expect(sql).toContain('"TipoContratoCustom"')
     expect(sql).not.toMatch(/\bUPDATE\s+"TipoContratoCustom"\b/i)
     expect(sql).not.toMatch(/\bDROP\s+(?:TABLE|COLUMN|TYPE)\b/i)
-    expect(sql).not.toMatch(/\bIF\s+NOT\s+EXISTS\b/i)
+    // Catalog guards make the migration safe to resume without weakening the
+    // tenant FK or tenant-scoped uniqueness contract.
+    expect(sql).toContain("IF EXISTS (\n   SELECT 1 FROM pg_constraint c")
     expect(sql.indexOf('CREATE UNIQUE INDEX "TipoContratoCustom_tenantId_nombre_key"'))
       .toBeLessThan(sql.indexOf('DROP INDEX "TipoContratoCustom_nombre_key"'))
   })
