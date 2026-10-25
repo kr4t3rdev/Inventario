@@ -18,6 +18,8 @@ import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
+import { isCompatibleUnitConversion } from '@/lib/inventory-unit-conversion-compatibility';
+import { calculateUnitQuantityCost } from '@/lib/unit-quantity-cost';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
 import type { CreateCompraProductoInput, UpdateCompraProductoInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -101,9 +103,18 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   if (parsed.ordenCompraId) {
     requireFeature(user, 'ordenes-compra', 'facturar órdenes de compra');
   }
+  const usaUnidades = parsed.items.some((item) => item.unidadId);
+  if (usaUnidades) {
+    requireFeature(user, 'unidades', 'conversiones de unidades');
+    if (parsed.ordenCompraId) {
+      throw new ActionError(
+        'Las conversiones de unidades aún no están disponibles para facturas de órdenes de compra',
+        'VALIDATION_ERROR',
+      );
+    }
+  }
 
   const productos = new Map<string, any>();
-  const agregados = new Map<string, { cantidad: number; costoTotal: number }>();
   for (const item of parsed.items) {
     if (!productos.has(item.productoId)) {
       const producto = await prisma.producto.findFirst({
@@ -114,16 +125,140 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
       productos.set(item.productoId, producto);
     }
-    const actual = agregados.get(item.productoId) ?? { cantidad: 0, costoTotal: 0 };
-    actual.cantidad += item.cantidad;
-    actual.costoTotal += item.cantidad * item.precioCosto;
-    agregados.set(item.productoId, actual);
   }
-
-  const total = parsed.items.reduce((sum, item) => sum + item.precioCosto * item.cantidad, 0);
 
   try {
     const resultado = await prisma.$transaction(async (tx: any) => {
+      const unidades = new Map<string, any>();
+      const leerUnidad = async (unidadId: string) => {
+        if (!unidades.has(unidadId)) {
+          const unidad = await tx.unidad.findFirst({ where: { tenantId, unidadId } });
+          unidades.set(unidadId, unidad);
+        }
+        return unidades.get(unidadId);
+      };
+      const itemsNormalizados = [] as Array<{
+        productoId: string;
+        cantidad: number;
+        precioCosto: number;
+        totalLinea: number;
+        traza?: {
+          unidadOrigenId: string;
+          unidadOrigenNombre: string;
+          unidadOrigenSimbolo: string;
+          cantidadOrigen: number;
+          precioUnitarioOrigen: number;
+          factorAStockAplicado: string;
+          unidadBaseIdSnapshot: string;
+          unidadBaseNombreSnapshot: string;
+          unidadBaseSimboloSnapshot: string;
+        };
+      }>;
+      for (const item of parsed.items) {
+        if (!item.unidadId) {
+          itemsNormalizados.push({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioCosto: item.precioCosto,
+            totalLinea: item.cantidad * item.precioCosto,
+          });
+          continue;
+        }
+
+        const producto = await tx.producto.findFirst({
+          where: { id: item.productoId, tenantId },
+        });
+        if (!producto?.unidadId) {
+          throw new ActionError('El producto no tiene una unidad base de inventario configurada', 'VALIDATION_ERROR');
+        }
+        productos.set(item.productoId, producto);
+        const unidadOrigen = await leerUnidad(item.unidadId);
+        const unidadBase = item.unidadId === producto.unidadId
+          ? unidadOrigen
+          : await leerUnidad(producto.unidadId);
+        const conversion = item.unidadId === producto.unidadId
+          ? null
+          : await tx.unidadConversion.findFirst({
+              where: {
+                tenantId,
+                productoId: item.productoId,
+                baseUnidadId: producto.unidadId,
+                unidadId: item.unidadId,
+              },
+            });
+        if (!unidadOrigen || !unidadBase || (item.unidadId !== producto.unidadId && !conversion)) {
+          throw new ActionError('No existe una conversión válida para la unidad seleccionada', 'VALIDATION_ERROR');
+        }
+
+        const factorAStock = conversion?.factorAStock.toFixed(8) ?? '1';
+        const compatible = isCompatibleUnitConversion({
+          tenantId,
+          productId: item.productoId,
+          stockUnitId: producto.unidadId,
+          stockUnitDimension: unidadBase.dimension,
+          sourceTenantId: unidadOrigen.tenantId,
+          sourceUnitId: item.unidadId,
+          sourceUnitDimension: unidadOrigen.dimension,
+          conversionTenantId: conversion?.tenantId ?? tenantId,
+          conversionProductId: conversion?.productoId ?? item.productoId,
+          conversionStockUnitId: conversion?.baseUnidadId ?? producto.unidadId,
+          factorToStock: factorAStock,
+        });
+        if (!compatible) {
+          throw new ActionError('La conversión no corresponde al producto, tenant o unidad base actual', 'VALIDATION_ERROR');
+        }
+
+        const converted = calculateUnitQuantityCost({
+          sourceQuantity: item.cantidad,
+          sourceUnitPrice: item.precioCosto,
+          factorToStock: factorAStock,
+        });
+        if (!converted.success) {
+          throw new ActionError(
+            'La cantidad o el costo convertido no se puede representar exactamente con las unidades actuales',
+            'VALIDATION_ERROR',
+          );
+        }
+        itemsNormalizados.push({
+          productoId: item.productoId,
+          cantidad: converted.data.stockQuantity,
+          precioCosto: converted.data.stockUnitPrice,
+          totalLinea: converted.data.lineTotal,
+          traza: {
+            unidadOrigenId: item.unidadId,
+            unidadOrigenNombre: unidadOrigen.nombre,
+            unidadOrigenSimbolo: unidadOrigen.simbolo,
+            cantidadOrigen: item.cantidad,
+            precioUnitarioOrigen: item.precioCosto,
+            factorAStockAplicado: factorAStock,
+            unidadBaseIdSnapshot: producto.unidadId,
+            unidadBaseNombreSnapshot: unidadBase.nombre,
+            unidadBaseSimboloSnapshot: unidadBase.simbolo,
+          },
+        });
+      }
+
+      const agregados = new Map<string, { cantidad: number; costoTotal: number }>();
+      for (const item of itemsNormalizados) {
+        const actual = agregados.get(item.productoId) ?? { cantidad: 0, costoTotal: 0 };
+        actual.cantidad += item.cantidad;
+        actual.costoTotal += item.totalLinea;
+        agregados.set(item.productoId, actual);
+      }
+      const total = itemsNormalizados.reduce((sum, item) => sum + item.totalLinea, 0);
+      const cantidadTotal = itemsNormalizados.reduce((sum, item) => sum + item.cantidad, 0);
+      if (
+        usaUnidades &&
+        (!Number.isSafeInteger(total) || total > 2_147_483_647 ||
+          !Number.isSafeInteger(cantidadTotal) || cantidadTotal > 2_147_483_647 ||
+          total % cantidadTotal !== 0)
+      ) {
+        throw new ActionError(
+          'El costo promedio de la compra no se puede representar exactamente en el registro contable actual',
+          'VALIDATION_ERROR',
+        );
+      }
+
       let ordenVinculada: any = null;
       const preciosOc = new Map<string, number>();
 
@@ -239,7 +374,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         },
       });
 
-      for (const item of parsed.items) {
+      for (const item of itemsNormalizados) {
         await tx.compraDocumentoItem.create({
           data: {
             tenantId,
@@ -247,7 +382,8 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
             productoId: item.productoId,
             cantidad: item.cantidad,
             precioUnitario: item.precioCosto,
-            totalLinea: item.precioCosto * item.cantidad,
+            totalLinea: item.totalLinea,
+            ...(item.traza ?? {}),
           },
         });
       }
@@ -282,7 +418,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
 
       // Una factura vinculada documenta lo recibido y no crea otra entrada.
-      for (const [idx, item] of parsed.items.entries()) {
+      for (const [idx, item] of itemsNormalizados.entries()) {
         const producto = productos.get(item.productoId);
       if (!parsed.ordenCompraId) {
         await upsertStockUbicacion(tx, {
@@ -319,10 +455,10 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           tenantId,
             productoId: primeraLinea.productoId,
           vendorId: parsed.proveedorId,
-            cantidad: parsed.items.reduce((sum, item) => sum + item.cantidad, 0),
-            precioUnitario: Math.round(
-              total / parsed.items.reduce((sum, item) => sum + item.cantidad, 0),
-            ),
+            cantidad: cantidadTotal,
+            precioUnitario: usaUnidades
+              ? total / cantidadTotal
+              : Math.round(total / cantidadTotal),
           total,
           fechaCompra: now,
           descripcion: `Compra #${compra.compraDocumentoId}`,
@@ -372,7 +508,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
 
       return compraCompleta;
-    });
+    }, usaUnidades ? { isolationLevel: 'Serializable' } : undefined);
 
     revalidatePath('/busy/compras-productos');
     return resultado;
