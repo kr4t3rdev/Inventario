@@ -33,10 +33,12 @@ const mockTx = {
 	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
 	compraDocumentoItem: { create: vi.fn() },
 	ordenCompra: { findFirst: vi.fn(), updateMany: vi.fn() },
-	producto: { update: vi.fn() },
+	producto: { update: vi.fn(), findFirst: vi.fn() },
 	gastoCompra: { create: vi.fn() },
 	cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },
 	stockMoveLine: { upsert: vi.fn(), findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
+	unidadConversion: { findFirst: vi.fn() },
+	unidad: { findFirst: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -306,6 +308,8 @@ describe("ComprasProductos Server Actions", () => {
 				data: { precioCosto: 450 },
 			});
 			expect(mockTx.producto.update).toHaveBeenCalledTimes(1);
+			expect(mockTx.unidad.findFirst).not.toHaveBeenCalled();
+			expect(mockTx.unidadConversion.findFirst).not.toHaveBeenCalled();
 		expect(upsertStockUbicacion).toHaveBeenCalledWith(
 			mockTx,
 			expect.objectContaining({
@@ -334,6 +338,190 @@ describe("ComprasProductos Server Actions", () => {
 			}),
 		);
 	});
+
+		it("converts a direct purchase using the tenant conversion and persists source trace", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({
+				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+				unidadId: "unit-each",
+			});
+		mockTx.producto.findFirst.mockResolvedValue({ ...mockProductRow, unidadId: "unit-each" });
+		mockTx.unidad.findFirst
+				.mockResolvedValueOnce({ unidadId: "unit-box", tenantId: "tenant-test", nombre: "Caja", simbolo: "cj", dimension: "COUNT" } as any)
+				.mockResolvedValueOnce({ unidadId: "unit-each", tenantId: "tenant-test", nombre: "Unidad", simbolo: "u", dimension: "COUNT" } as any);
+			mockTx.unidadConversion.findFirst.mockResolvedValue({
+				tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-box",
+				factorAStock: new Prisma.Decimal("12"),
+			} as any);
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-unit" });
+			mockTx.compraDocumento.findUnique.mockResolvedValue({ compraDocumentoId: "cd-unit" } as any);
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-unit" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({ precioCostoNuevo: 500, metodoCosto: "PONDERADO" } as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [{ productoId: "prod-1", unidadId: "unit-box", precioCosto: 6000, cantidad: 2, factorAStock: "999" } as any],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.compraDocumento.create).toHaveBeenCalledWith(expect.objectContaining({
+				data: expect.objectContaining({ total: 12000 }),
+			}));
+			expect(mockTx.compraDocumentoItem.create).toHaveBeenCalledWith(expect.objectContaining({
+				data: expect.objectContaining({
+					cantidad: 24, precioUnitario: 500, totalLinea: 12000,
+					unidadOrigenId: "unit-box", unidadOrigenNombre: "Caja", unidadOrigenSimbolo: "cj",
+					cantidadOrigen: 2, precioUnitarioOrigen: 6000, factorAStockAplicado: "12.00000000",
+					unidadBaseIdSnapshot: "unit-each", unidadBaseNombreSnapshot: "Unidad", unidadBaseSimboloSnapshot: "u",
+				}),
+			}));
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(mockTx, expect.objectContaining({ delta: 24 }));
+			expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(expect.objectContaining({
+				create: expect.objectContaining({ cantidad: 24, costoUnitario: 500, costoTotal: 12000 }),
+			}));
+			expect(mockTx.gastoCompra.create).toHaveBeenCalledWith(expect.objectContaining({
+				data: expect.objectContaining({ cantidad: 24, precioUnitario: 500, total: 12000 }),
+			}));
+			expect(mockTx.unidadConversion.findFirst).toHaveBeenCalledWith({
+				where: { tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-box" },
+			});
+		});
+
+		it("requires the existing units plan feature only when a source unit is selected", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser, role: "regularUser", planFeatures: { unidades: false },
+			});
+			mockVendorResponse({ vendorId: "ven-1" });
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [{ productoId: "prod-1", unidadId: "unit-box", precioCosto: 6000, cantidad: 2 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(prisma.producto.findFirst).not.toHaveBeenCalled();
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
+		it("normalizes Prisma Decimal scientific notation before exact minimum-scale conversion", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", unidadId: "unit-each", tenantId: "tenant-test" });
+			mockTx.producto.findFirst.mockResolvedValue({ ...mockProductRow, unidadId: "unit-each" });
+			mockTx.unidad.findFirst
+				.mockResolvedValueOnce({ unidadId: "unit-pack", tenantId: "tenant-test", nombre: "Paquete", simbolo: "paq", dimension: "COUNT" } as any)
+				.mockResolvedValueOnce({ unidadId: "unit-each", tenantId: "tenant-test", nombre: "Unidad", simbolo: "u", dimension: "COUNT" } as any);
+			mockTx.unidadConversion.findFirst.mockResolvedValue({
+				tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-pack",
+				factorAStock: new Prisma.Decimal("0.00000001"),
+			} as any);
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-min-factor" });
+			mockTx.compraDocumento.findUnique.mockResolvedValue({ compraDocumentoId: "cd-min-factor" } as any);
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-min-factor" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(0);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({ precioCostoNuevo: 100000000, metodoCosto: "PONDERADO" } as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [{ productoId: "prod-1", unidadId: "unit-pack", precioCosto: 1, cantidad: 100000000 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.compraDocumentoItem.create).toHaveBeenCalledWith(expect.objectContaining({
+				data: expect.objectContaining({
+					cantidad: 1,
+					precioUnitario: 100000000,
+					totalLinea: 100000000,
+					factorAStockAplicado: "0.00000001",
+				}),
+			}));
+		});
+
+		it("rejects a cross-tenant unit before writing purchase or inventory rows", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", unidadId: "unit-each", tenantId: "tenant-test" });
+			mockTx.producto.findFirst.mockResolvedValue({ ...mockProductRow, unidadId: "unit-each" });
+			mockTx.unidad.findFirst
+				.mockResolvedValueOnce({ unidadId: "unit-box", tenantId: "tenant-other", nombre: "Caja", simbolo: "cj", dimension: "COUNT" } as any)
+				.mockResolvedValueOnce({ unidadId: "unit-each", tenantId: "tenant-test", nombre: "Unidad", simbolo: "u", dimension: "COUNT" } as any);
+			mockTx.unidadConversion.findFirst.mockResolvedValue({
+				tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-box",
+				factorAStock: new Prisma.Decimal("12"),
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [{ productoId: "prod-1", unidadId: "unit-box", precioCosto: 6000, cantidad: 2 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error.code).toBe("VALIDATION_ERROR");
+			expect(mockTx.compraDocumento.create).not.toHaveBeenCalled();
+			expect(mockTx.compraDocumentoItem.create).not.toHaveBeenCalled();
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		});
+
+		it("rejects a fractional converted unit cost before any writes", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", unidadId: "unit-each", tenantId: "tenant-test" });
+			mockTx.producto.findFirst.mockResolvedValue({ ...mockProductRow, unidadId: "unit-each" });
+			mockTx.unidad.findFirst
+				.mockResolvedValueOnce({ unidadId: "unit-pack", tenantId: "tenant-test", nombre: "Paquete", simbolo: "paq", dimension: "COUNT" } as any)
+				.mockResolvedValueOnce({ unidadId: "unit-each", tenantId: "tenant-test", nombre: "Unidad", simbolo: "u", dimension: "COUNT" } as any);
+			mockTx.unidadConversion.findFirst.mockResolvedValue({
+				tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-pack",
+				factorAStock: new Prisma.Decimal("3"),
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [{ productoId: "prod-1", unidadId: "unit-pack", precioCosto: 100, cantidad: 3 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error.message).toContain("no se puede representar exactamente");
+			expect(mockTx.compraDocumento.create).not.toHaveBeenCalled();
+			expect(mockTx.compraDocumentoItem.create).not.toHaveBeenCalled();
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		});
+
+		it("rejects an inexact aggregate expense unit cost before purchase writes", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", unidadId: "unit-each", tenantId: "tenant-test" });
+			mockTx.producto.findFirst.mockResolvedValue({ ...mockProductRow, unidadId: "unit-each" });
+			mockTx.unidad.findFirst
+				.mockResolvedValueOnce({ unidadId: "unit-each", tenantId: "tenant-test", nombre: "Unidad", simbolo: "u", dimension: "COUNT" } as any)
+				.mockResolvedValueOnce({ unidadId: "unit-box", tenantId: "tenant-test", nombre: "Caja", simbolo: "cj", dimension: "COUNT" } as any);
+			mockTx.unidadConversion.findFirst.mockResolvedValue({
+				tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-box",
+				factorAStock: new Prisma.Decimal("1"),
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1", formaPago: "PAGO_COMPLETO", estado: "PAGADA",
+				items: [
+					{ productoId: "prod-1", unidadId: "unit-each", precioCosto: 1, cantidad: 1 },
+					{ productoId: "prod-1", unidadId: "unit-box", precioCosto: 2, cantidad: 1 },
+				],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error.message).toContain("costo promedio");
+			expect(mockTx.compraDocumento.create).not.toHaveBeenCalled();
+			expect(mockTx.compraDocumentoItem.create).not.toHaveBeenCalled();
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		});
 
 		it("rechaza si proveedor no existe", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);

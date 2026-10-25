@@ -32,18 +32,30 @@ model Categoria {
 }
 
 model Unidad {
-  unidadId  String     @id @default(cuid())
-  nombre    String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  simbolo   String
-  tenantId  String
-  productos Producto[]
-  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId])
+  unidadId               String          @id @default(cuid())
+  nombre                 String
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  simbolo                String
+  tenantId               String
+  dimension              UnidadDimension @default(UNKNOWN)
+  productos              Producto[]
+  conversionesComoOrigen UnidadConversion[]
+  tenant                 Tenant          @relation(fields: [tenantId], references: [tenantId])
 
   @@unique([tenantId, nombre])
   @@unique([tenantId, simbolo])
+  @@unique([tenantId, unidadId])
   @@index([tenantId])
+}
+
+enum UnidadDimension {
+  COUNT
+  MASS
+  VOLUME
+  LENGTH
+  AREA
+  UNKNOWN
 }
 
 model Vendor {
@@ -551,6 +563,7 @@ model Producto {
   unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Restrict)
   vendor               Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Restrict)
   costHistory          ProductoCostHistory[]
+  unidadesConversion  UnidadConversion[]
   Receta               Receta[]
   RecetaIngrediente    RecetaIngrediente[]
   stockUbicaciones     StockUbicacion[]
@@ -563,10 +576,27 @@ model Producto {
   @@unique([tenantId, codigoInterno])
   @@unique([tenantId, codigoNegocio])
   @@unique([tenantId, id])
+  @@unique([tenantId, id, unidadId])
   @@index([tenantId])
   @@index([tenantId, categoriaId])
   @@index([tenantId, vendorId])
   @@index([tenantId, subcategoriaId])
+}
+
+model UnidadConversion {
+  id              String   @id @default(cuid())
+  tenantId        String
+  productoId      String
+  baseUnidadId    String
+  unidadId        String
+  factorAStock    Decimal  @db.Decimal(18, 8)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  producto        Producto @relation(fields: [tenantId, productoId, baseUnidadId], references: [tenantId, id, unidadId], onDelete: Cascade, onUpdate: Restrict)
+  unidad          Unidad   @relation(fields: [tenantId, unidadId], references: [tenantId, unidadId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, productoId, unidadId])
+  @@index([tenantId, productoId, baseUnidadId])
 }
 
 model StockUbicacion {
@@ -1458,6 +1488,15 @@ model CompraDocumentoItem {
   cantidad              Int
   precioUnitario        Int
   totalLinea            Int
+  unidadOrigenId        String?
+  unidadOrigenNombre    String?
+  unidadOrigenSimbolo   String?
+  cantidadOrigen        Int?
+  precioUnitarioOrigen  Int?
+  factorAStockAplicado   Decimal?             @db.Decimal(18, 8)
+  unidadBaseIdSnapshot   String?
+  unidadBaseNombreSnapshot String?
+  unidadBaseSimboloSnapshot String?
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   compraDocumento       CompraDocumento      @relation(fields: [compraDocumentoId], references: [compraDocumentoId], onDelete: Cascade)
