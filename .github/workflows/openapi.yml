@@ -42,7 +42,7 @@ jobs:
       OPENAPI_GENERATOR_JAR: ${{ github.workspace }}/.cache/openapi-generator/openapi-generator-cli-7.17.0.jar
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Read Node.js version
         id: node-version
