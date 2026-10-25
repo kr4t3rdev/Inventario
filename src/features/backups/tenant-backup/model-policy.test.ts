@@ -15,7 +15,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(155);
+    expect(schemaModelNames).toHaveLength(156);
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
     expect(coverage.unknownModels).toEqual([]);
@@ -27,7 +27,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 93,
+      'tenant-direct': 94,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -42,8 +42,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(109);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(109);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(110);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(110);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -64,9 +64,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(109);
+      .ineligibleBusinessModels).toHaveLength(110);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(109);
+      .missingBusinessModels).toHaveLength(110);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 
@@ -77,6 +77,21 @@ describe('tenant backup model policy contract', () => {
     expect(entry?.disposition).toBe('candidate');
     expect(policy?.kind).toBe('tenant-direct');
     expect(policy?.ownerPath).toContain('exclude legacy NULL rows');
+  });
+
+  it('records unit conversions as tenant-owned backup candidates without enabling restore', () => {
+    const entry = TENANT_BACKUP_BUSINESS_MANIFEST.find(({ model }) => model === 'UnidadConversion');
+    const policy = getModelPolicy('UnidadConversion');
+
+    expect(entry?.disposition).toBe('candidate');
+    expect(entry?.rationale).toContain('UnidadConversion');
+    expect(entry?.rationale).toContain('only after relation and field validation');
+    expect(entry?.productImpact).toContain('restore');
+    expect(policy?.kind).toBe('tenant-direct');
+    expect(policy?.ownerPath).toContain('tenantId');
+    expect(policy?.rationale).toContain('tenantId');
+    expect(policy?.rationale).toContain('Producto');
+    expect(policy?.rationale).toContain('Unidad');
   });
 
   it('classifies contract configuration as business data and records complete child paths', () => {
