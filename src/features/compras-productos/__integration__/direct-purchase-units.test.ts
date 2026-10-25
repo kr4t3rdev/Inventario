@@ -358,4 +358,105 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
       .toEqual({ quantity: 3, unitPrice: 400, total: 1200 });
   });
 
+  it('rejects another tenant unit and leaves no purchase side effects', async () => {
+    const product = await createProduct('foreign-unit');
+    const invoice = `${prefix}-foreign-unit`;
+    const before = await captureEffects(product.id, invoice);
+
+    const result = await submitPurchase({
+      productId: product.id,
+      invoice,
+      quantity: 1,
+      unitPrice: 1200,
+      sourceUnitId: foreignUnitId,
+    });
+
+    expect(result.success).toBe(false);
+    expect(await captureEffects(product.id, invoice)).toBe(before);
   });
+
+  it('rejects a same-tenant unit without a product conversion and leaves no writes', async () => {
+    const product = await createProduct('missing-conversion');
+    const unit = await prisma.unidad.create({ data: {
+      tenantId,
+      nombre: `${prefix}-missing`,
+      simbolo: `${prefix}-mi`,
+      dimension: 'COUNT',
+    } });
+    unitIds.add(unit.unidadId);
+    const invoice = `${prefix}-missing-conversion`;
+    const before = await captureEffects(product.id, invoice);
+
+    const result = await submitPurchase({
+      productId: product.id,
+      invoice,
+      quantity: 1,
+      unitPrice: 1200,
+      sourceUnitId: unit.unidadId,
+    });
+
+    expect(result.success).toBe(false);
+    expect(await captureEffects(product.id, invoice)).toBe(before);
+  });
+
+  it('rejects fractional converted unit cost and leaves no writes', async () => {
+    const product = await createProduct('fractional-cost');
+    const unit = await prisma.unidad.create({ data: {
+      tenantId,
+      nombre: `${prefix}-fractional`,
+      simbolo: `${prefix}-fr`,
+      dimension: 'COUNT',
+    } });
+    unitIds.add(unit.unidadId);
+    await prisma.unidadConversion.create({ data: {
+      tenantId,
+      productoId: product.id,
+      baseUnidadId: baseUnitId,
+      unidadId: unit.unidadId,
+      factorAStock: '1.5',
+    } });
+    const invoice = `${prefix}-fractional-cost`;
+    const before = await captureEffects(product.id, invoice);
+
+    const result = await submitPurchase({
+      productId: product.id,
+      invoice,
+      quantity: 2,
+      unitPrice: 1,
+      sourceUnitId: unit.unidadId,
+    });
+
+    expect(result.success).toBe(false);
+    expect(await captureEffects(product.id, invoice)).toBe(before);
+  });
+
+  it('rolls back document, cost, stock, Kardex and expense when late expense insert fails', async () => {
+    const product = await createProduct('rollback');
+    await prisma.unidadConversion.create({ data: {
+      tenantId,
+      productoId: product.id,
+      baseUnidadId: baseUnitId,
+      unidadId: sourceUnitId,
+      factorAStock: '12',
+    } });
+    const invoice = `${prefix}-rollback`;
+    const before = await captureEffects(product.id, invoice);
+    const failpoint = `f1fail${randomUUID().replaceAll('-', '')}`;
+    await toggleExpenseFailpoint(true, failpoint);
+
+    try {
+      const result = await submitPurchase({
+        productId: product.id,
+        invoice,
+        quantity: 1,
+        unitPrice: 1236,
+        sourceUnitId,
+      });
+
+      expect(result.success).toBe(false);
+      expect(await captureEffects(product.id, invoice)).toBe(before);
+    } finally {
+      await toggleExpenseFailpoint(false, failpoint);
+    }
+  });
+});
