@@ -17,6 +17,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-A'),
   requireFeature: vi.fn(),
+  requirePermission: vi.fn(),
 }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {

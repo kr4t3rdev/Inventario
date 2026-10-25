@@ -13,19 +13,29 @@ describe('first additive cost schema migration contract', () => {
 
     expect(sql).toContain('CREATE TYPE "CostChangeReason" AS ENUM')
     expect(sql).toMatch(/'INITIAL',\s*'RESTOCK',\s*'ADJUSTMENT',\s*'CORRECTION',\s*'IMPORT',\s*'MANUAL_EDIT',\s*'SYSTEM_SYNC'/)
-    expect(sql).toContain('CREATE TABLE "ProductoCostHistory"')
+    expect(sql).toMatch(/CREATE TABLE(?: IF NOT EXISTS)? "ProductoCostHistory"/)
     expect(sql).toContain('"oldPrecioCosto" INTEGER NOT NULL')
     expect(sql).toContain('"changedAt" TIMESTAMP(3) NOT NULL')
-    expect(sql).toContain('CREATE TABLE "VendorCodeSequence"')
+    expect(sql).toMatch(/CREATE TABLE(?: IF NOT EXISTS)? "VendorCodeSequence"/)
     expect(sql).toContain('"id" INTEGER NOT NULL DEFAULT 1')
     expect(sql).toContain('"nextNumber" INTEGER NOT NULL DEFAULT 1')
-    expect(sql).toContain('CREATE TABLE "TipoContratoCustom"')
+    expect(sql).toMatch(/CREATE TABLE(?: IF NOT EXISTS)? "TipoContratoCustom"/)
     expect(sql).toContain('"updatedAt" TIMESTAMP(3) NOT NULL')
     expect(sql).toContain('ProductoCostHistory_productoId_fkey')
     expect(sql).toContain('TipoContratoCustom_creadoPor_fkey')
-    expect(sql).not.toContain('"tenantId"')
+    const createdTables = [...sql.matchAll(/CREATE TABLE(?: IF NOT EXISTS)? "([^"]+)" \(([\s\S]*?)\n\);/g)]
+    expect(createdTables.map(([, tableName]) => tableName)).toEqual([
+      'ProductoCostHistory',
+      'VendorCodeSequence',
+      'TipoContratoCustom',
+    ])
+    expect(createdTables.every(([, , definition]) => !definition.includes('"tenantId"'))).toBe(true)
     expect(sql).not.toMatch(/\b(?:DROP|ALTER)\s+(?:TABLE|TYPE|COLUMN)\b/i)
-    expect(sql).not.toMatch(/\bIF\s+NOT\s+EXISTS\b/i)
+    // The migration is deliberately idempotent: table/index guards must not
+    // obscure its additive-only DDL contract.
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "ProductoCostHistory"')
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "VendorCodeSequence"')
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS "TipoContratoCustom"')
     expect(sql).not.toContain('BackupType')
     expect(sql).not.toContain('BackupStatus')
   })
