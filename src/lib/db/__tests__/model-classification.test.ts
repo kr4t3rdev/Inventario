@@ -51,6 +51,26 @@ describe('AS-01 contrato de clasificación de modelos', () => {
     expect(offenders, `Marcados scoped sin columna tenantId:\n${offenders.join('\n')}`).toEqual([]);
   });
 
+  it('clasifica las conversiones de unidad como datos scoped del tenant', () => {
+    const conversion = Prisma.dmmf.datamodel.models.find(
+      (model) => model.name === 'UnidadConversion',
+    );
+
+    expect(conversion?.fields.map((field) => field.name)).toEqual(
+      expect.arrayContaining(['tenantId', 'productoId', 'baseUnidadId', 'unidadId']),
+    );
+    const relationFields = Object.fromEntries(
+      conversion?.fields
+        .filter((field) => field.kind === 'object')
+        .map((field) => [field.name, field.relationFromFields]) ?? [],
+    );
+
+    expect(relationFields.producto).toEqual(['tenantId', 'productoId', 'baseUnidadId']);
+    expect(relationFields.unidad).toEqual(['tenantId', 'unidadId']);
+    expect(getModelScope('UnidadConversion')).toBe('scoped');
+    expect(MODEL_CLASSIFICATION.UnidadConversion.reason).toContain('mismo tenant');
+  });
+
   it('los modelos child declaran padre y campo de resolución', () => {
     for (const [model, entry] of Object.entries(MODEL_CLASSIFICATION)) {
       if (entry.scope !== 'child') continue;
