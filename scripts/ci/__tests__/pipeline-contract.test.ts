@@ -2,24 +2,48 @@ import { expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 const read = (path: string) => readFileSync(path, 'utf8');
 
+const workflowJob = (workflow: string, jobName: string) => {
+  const lines = workflow.split('\n');
+  const start = lines.findIndex(line => line === `  ${jobName}:`);
+  expect(start, `expected ${jobName} job to exist`).toBeGreaterThanOrEqual(0);
+  const end = lines.findIndex(
+    (line, index) => index > start && /^  [\w-]+:$/.test(line),
+  );
+  return lines.slice(start, end === -1 ? undefined : end).join('\n');
+};
+
 it('runs independent checks, gates build and rejects skipped dependencies', () => {
   const ci = read('.github/workflows/ci.yml');
   expect(ci).toContain("branches: [main, 'codex/**']");
   expect(ci).not.toContain('needs: [lint, typecheck]');
   expect(ci).toContain('uses: ./.github/workflows/integration.yml');
   expect(ci).toContain(
-    'needs: [lint, typecheck, test, coverage, integration, build, post-deploy-smoke]',
+    'needs: [lint, typecheck, test, coverage, integration, build]',
   );
   expect(ci).toContain('required-checks:');
   expect(ci).toContain('if: always()');
   expect(ci).toContain('node scripts/ci/required-checks.mjs');
-  expect(ci).toContain(
-    "if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.result == 'success'",
-  );
-  expect(ci).toContain(
-    "REQUIRE_POST_DEPLOY_SMOKE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}",
-  );
+  expect(ci).not.toContain('post-deploy-smoke:');
+  expect(ci).not.toContain('REQUIRE_POST_DEPLOY_SMOKE:');
   expect(ci).not.toMatch(/secrets\.|pull_request_target/);
+});
+it('keeps exact-deployment smoke manual, pinned and strict', () => {
+  const smoke = read('.github/workflows/e2e-prod.yml');
+  const trigger = smoke.split('\n\npermissions:')[0];
+  const job = workflowJob(smoke, 'e2e-prod');
+  const productionTest = read('tests/smoke/production.spec.ts');
+  const triggerNames = trigger.match(/^  [\w-]+:\s*$/gm) ?? [];
+
+  expect(triggerNames).toEqual(['  workflow_dispatch:']);
+  expect(job).toContain('runs-on: ubuntu-24.04');
+  expect(smoke).toContain("default: 'https://financemdm.kr4t3rdev.xyz'");
+  expect(smoke).toContain('expected_sha:');
+  expect(smoke).toContain('required: true');
+  expect(smoke).toContain('EXPECTED_DEPLOYMENT_ENVIRONMENT: ${{ inputs.target_environment }}');
+  expect(smoke).toContain('EXPECTED_DEPLOYMENT_SHA: ${{ inputs.expected_sha }}');
+  expect(productionTest).toContain('EXPECTED_DEPLOYMENT_ENVIRONMENT y EXPECTED_DEPLOYMENT_SHA son obligatorios.');
+  expect(productionTest).toContain('body.deploymentEnvironment).toBe(expectedDeploymentEnvironment)');
+  expect(productionTest).toContain('body.deploymentSha).toBe(expectedDeploymentSha)');
 });
 it('keeps database mutations out of Vercel builds and scopes mobile CI to mobile files', () => {
   const vercel = JSON.parse(read('vercel.json')) as { buildCommand: string };

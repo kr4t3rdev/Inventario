@@ -12,7 +12,7 @@ on:
       base_url:
         description: 'Host a validar (default: producción Railway)'
         required: false
-        default: 'https://kr4t3rdev.xyz'
+        default: 'https://financemdm.kr4t3rdev.xyz'
         type: string
       target_environment:
         description: 'GitHub Environment y entorno esperado en /api/health'
@@ -42,7 +42,7 @@ jobs:
   e2e-prod:
     name: E2E Playwright contra ${{ inputs.target_environment }}
     environment: ${{ format('FinanceMDM / {0}', inputs.target_environment) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
