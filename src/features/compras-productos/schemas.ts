@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
+  unidadId: z.string().min(1).optional(),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
   cantidad: z.coerce.number().int('Debe ser un entero').positive('Debe ser mayor a 0'),
 });
