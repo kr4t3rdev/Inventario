@@ -20,6 +20,8 @@ Este módulo define cómo se expresa cantidad dentro del sistema: piezas, cajas,
 - El sistema hace pre-check de unicidad y también protege contra race conditions.
 - No se puede eliminar una unidad si todavía está en uso por productos.
 - Por defecto, las unidades nuevas quedan como `UNKNOWN`.
+- Se permite clasificar una unidad `UNKNOWN` ya referenciada solo si todas sus conversiones usan una dimensión compatible; no se recalculan existencias ni registros históricos.
+- Una unidad conocida no puede cambiar de dimensión mientras tenga productos o conversiones asociadas.
 
 ## Qué conviene cuidar
 

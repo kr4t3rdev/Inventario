@@ -185,6 +185,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'No accede a tablas ni acepta identificadores o SQL dinámico; opera solo sobre el TransactionClient de un writer tenant-scoped.',
   },
   {
+    file: 'src/features/unidades/actions.ts',
+    occurrences: 2,
+    reason: 'Bloquea primero la unidad tenant-scoped para serializar cambios de dimensión y consulta solo indicadores booleanos de referencias globales de productos.',
+    tenantGuarantee: 'El lock filtra por unidad y tenant autenticados; la comprobación global usa el ID único de unidad y distingue referencias ajenas con tenantId IS DISTINCT FROM sin devolver filas ni IDs.',
+  },
+  {
     file: 'src/features/venta-servicios/actions.ts',
     occurrences: 1,
     reason: 'Lock advisory transaccional para serializar la clave idempotente de venta de servicios.',

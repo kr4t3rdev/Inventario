@@ -32,6 +32,7 @@ export const unidadUpdateSchema = z.object({
     .min(1, 'El símbolo es requerido')
     .max(20, 'El símbolo no puede exceder 20 caracteres')
     .optional(),
+  dimension: unidadDimensionSchema.optional(),
 });
 
 export type UnidadInput = z.infer<typeof unidadSchema>;

@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import type { UnidadDimension } from '@/generated/prisma';
+import type { Prisma, UnidadDimension } from '@/generated/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { unidadSchema, unidadUpdateSchema } from './schemas';
 import { checkUnidadUniqueness } from './validators';
@@ -78,6 +78,94 @@ function rethrowP2002(error: unknown, existing?: { nombre?: string; simbolo?: st
     throw new ActionError('Ya existe una unidad con esos valores', 'CONFLICT');
   }
   throw error;
+}
+
+/**
+ * @description Valida las referencias actuales antes de cambiar la dimensión de una unidad.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
+ * @param {string} tenantId - Tenant propietario de la unidad.
+ * @param {string} unidadId - Unidad cuya dimensión cambiará.
+ * @param {UnidadDimension} currentDimension - Dimensión vigente leída dentro de la transacción.
+ * @param {UnidadDimension} nextDimension - Dimensión solicitada.
+ * @returns {Promise<void>} No retorna valor; lanza CONFLICT si hay referencias incompatibles.
+ */
+async function validateDimensionTransition(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  unidadId: string,
+  currentDimension: UnidadDimension,
+  nextDimension: UnidadDimension,
+  hasProductReference: boolean
+): Promise<void> {
+  const conversions = await tx.unidadConversion.findMany({
+    where: { tenantId, OR: [{ unidadId }, { baseUnidadId: unidadId }] },
+    select: { unidadId: true, baseUnidadId: true },
+  });
+
+  const isInUse = hasProductReference || conversions.length > 0;
+  if (currentDimension !== 'UNKNOWN' && currentDimension !== nextDimension && isInUse) {
+    throw new ActionError(
+      'No se puede cambiar la dimensión de una unidad conocida mientras esté en uso',
+      'CONFLICT'
+    );
+  }
+
+  if (currentDimension !== 'UNKNOWN' || nextDimension === 'UNKNOWN') return;
+
+  const otherUnitIds = [...new Set(conversions.flatMap(({ unidadId: sourceId, baseUnidadId }) =>
+    sourceId === unidadId ? baseUnidadId : sourceId
+  ).filter((id) => id !== unidadId))];
+  if (otherUnitIds.length === 0) return;
+
+  const otherUnits = await tx.unidad.findMany({
+    where: { tenantId, unidadId: { in: otherUnitIds } },
+    select: { unidadId: true, dimension: true },
+  });
+  const dimensionsByUnitId = new Map(otherUnits.map((unit) => [unit.unidadId, unit.dimension]));
+  const hasIncompatibleMapping = conversions.some(({ unidadId: sourceId, baseUnidadId }) => {
+    if (sourceId === baseUnidadId) return false;
+    const otherUnitId = sourceId === unidadId ? baseUnidadId : sourceId;
+    return dimensionsByUnitId.get(otherUnitId) !== nextDimension;
+  });
+
+  if (hasIncompatibleMapping) {
+    throw new ActionError(
+      'No se puede clasificar la unidad: tiene conversiones con dimensiones desconocidas o incompatibles',
+      'CONFLICT'
+    );
+  }
+}
+
+/**
+ * @description Obtiene solo indicadores de referencias globales a la unidad.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional.
+ * @param {string} tenantId - Tenant propietario.
+ * @param {string} unidadId - Identificador global de la unidad.
+ * @returns {Promise<{ hasProductReference: boolean; hasForeignProductReference: boolean }>} Estado agregado.
+ */
+async function getProductReferenceState(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  unidadId: string
+): Promise<{ hasProductReference: boolean; hasForeignProductReference: boolean }> {
+  const rows = await tx.$queryRaw<Array<{
+    hasProductReference: boolean;
+    hasForeignProductReference: boolean;
+  }>>`
+    SELECT
+      EXISTS (SELECT 1 FROM "Producto" WHERE "unidadId" = ${unidadId}) AS "hasProductReference",
+      EXISTS (
+        SELECT 1 FROM "Producto"
+        WHERE "unidadId" = ${unidadId}
+          AND "tenantId" IS DISTINCT FROM ${tenantId}
+      ) AS "hasForeignProductReference"
+  `;
+  const state = rows[0];
+  if (!state || typeof state.hasProductReference !== 'boolean' ||
+      typeof state.hasForeignProductReference !== 'boolean') {
+    throw new ActionError('No se pudo validar el uso de la unidad', 'CONFLICT');
+  }
+  return state;
 }
 
 // ─── Server Actions ───────────────────────────────────────
@@ -172,7 +260,7 @@ export const updateUnidadAction = withAction(async (
 
   const existing = await prisma.unidad.findUnique({
     where: { unidadId },
-    select: { unidadId: true, tenantId: true, nombre: true, simbolo: true },
+    select: { unidadId: true, tenantId: true, nombre: true, simbolo: true, dimension: true },
   });
 
   if (!existing || existing.tenantId !== tenantId) {
@@ -188,14 +276,55 @@ export const updateUnidadAction = withAction(async (
   });
 
   try {
-    const unidad = await prisma.unidad.update({
-      where: { unidadId },
-      data: {
-        ...(updateData.nombre !== undefined && { nombre: updateData.nombre }),
-        ...(updateData.simbolo !== undefined && { simbolo: updateData.simbolo }),
-      },
-      select: UNIDAD_SELECT,
-    });
+    const requestedDimension = updateData.dimension;
+    const fieldsToUpdate = {
+      ...(updateData.nombre !== undefined && { nombre: updateData.nombre }),
+      ...(updateData.simbolo !== undefined && { simbolo: updateData.simbolo }),
+      ...(updateData.dimension !== undefined && { dimension: updateData.dimension }),
+    };
+    const unidad = requestedDimension !== undefined
+      ? await prisma.$transaction(async (tx) => {
+          const locked = await tx.$queryRaw<Array<{ unidadId: string }>>`
+            SELECT "unidadId" FROM "Unidad"
+            WHERE "unidadId" = ${unidadId} AND "tenantId" = ${tenantId}
+            FOR UPDATE
+          `;
+          if (!locked.some((row) => row.unidadId === unidadId)) {
+            throw new ActionError('Unidad no encontrada', 'NOT_FOUND');
+          }
+
+          const current = await tx.unidad.findUnique({
+            where: { tenantId_unidadId: { tenantId, unidadId } },
+            select: { unidadId: true, dimension: true },
+          });
+          if (!current) throw new ActionError('Unidad no encontrada', 'NOT_FOUND');
+
+          if (current.dimension !== requestedDimension) {
+            const productReferences = await getProductReferenceState(tx, tenantId, unidadId);
+            if (productReferences.hasForeignProductReference) {
+              throw new ActionError('No se puede cambiar la dimensión de la unidad', 'CONFLICT');
+            }
+            await validateDimensionTransition(
+              tx,
+              tenantId,
+              unidadId,
+              current.dimension,
+              requestedDimension,
+              productReferences.hasProductReference
+            );
+          }
+
+          return tx.unidad.update({
+            where: { tenantId_unidadId: { tenantId, unidadId } },
+            data: fieldsToUpdate,
+            select: UNIDAD_SELECT,
+          });
+        }, { isolationLevel: 'ReadCommitted' })
+      : await prisma.unidad.update({
+          where: { tenantId_unidadId: { tenantId, unidadId } },
+          data: fieldsToUpdate,
+          select: UNIDAD_SELECT,
+        });
 
     revalidatePath('/busy/unidad');
     return serializeUnidad(unidad);
