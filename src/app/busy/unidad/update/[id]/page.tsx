@@ -22,7 +22,12 @@ export default async function UpdateUnidadPage({
   const { id } = await params
   const result = await getUnidadByIdAction(id)
   const unidad = result.success
-    ? { unidadId: result.data!.unidadId, nombre: result.data!.nombre, simbolo: result.data!.simbolo }
+    ? {
+        unidadId: result.data!.unidadId,
+        nombre: result.data!.nombre,
+        simbolo: result.data!.simbolo,
+        dimension: result.data!.dimension,
+      }
     : null
 
   return <EditarUnidadPageClient unidad={unidad} />
