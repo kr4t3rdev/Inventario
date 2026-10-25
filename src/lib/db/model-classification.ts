@@ -165,6 +165,9 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Transferencia: SCOPED(),
   TransferenciaBancaria: SCOPED(),
   TurnoPuntoVenta: SCOPED(),
+  UnidadConversion: SCOPED(
+    'Conversión por tenant con FKs compuestas a Producto y Unidad del mismo tenant.',
+  ),
   Unidad: SCOPED(),
   ValeSalida: SCOPED(),
   ValeSalidaItem: SCOPED('Ítem con tenantId propio denormalizado.'),
