@@ -1,0 +1,47 @@
+change: unit-dimension-configuration
+artifact_store: openspec
+recorded_on: '2026-10-25'
+status: in_progress
+phase: verify
+base_commit: f7268390eae45c631c92660347b7751f66507b6d
+branch: codex/unit-dimension-configuration
+policy_approved: true
+implementation: reviewed_local_source
+source_worktree_state: uncommitted_preserved
+verification: partial
+postgresql_verification: passed
+postgresql_version: '17.11'
+postgresql_tests_per_run: 10
+postgresql_strict_runs: 2
+postgresql_cleanup: complete
+default_build: blocked_by_worktree_dependency_symlink
+alternate_webpack_build: failed_worker_sigkill
+full_unit_regression: interrupted_sigkill
+application_typecheck: passed
+focused_action_and_form_tests: 49/49
+raw_sql_allowlist_tests: 3/3
+transition_strategy: owned_unit_for_update_then_read_committed_checks
+create_read_slice_typecheck: passed
+create_read_slice_action_tests: 30/30
+guarded_update_slice_validation: ci_pending
+integration_test_typecheck: excluded_by_project_config
+integration_test_lint: passed
+publication_authorized: true
+issue: 32
+issue_status: approved
+publication_gate: verify_exact_reviewed_snapshots_before_push
+source_review: passed
+technical_partition_review: passed
+chain_strategy: feature_branch_chain
+child_count: 5
+merge_authorized: false
+deployed: false
+archived: false
+pending:
+  - openspec_cli_validation_when_available
+  - build_and_release_regression_checks
+  - create_draft_no_merge_tracker_pr_to_main
+  - publish_create_read_contract_and_guarded_update_children
+  - publish_ui_and_component_test_child
+  - publish_unit_transition_and_product_reference_postgresql_children
+  - await_ci_and_review_for_all_prs

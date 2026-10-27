@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm run verify:staging"
+  "buildCommand": "DATABASE_URL=postgresql://test:test@127.0.0.1:5114/tcp_test_ci DIRECT_URL=postgresql://test:test@127.0.0.1:5114/tcp_test_ci DATABASE_URL_TEST=postgresql://test:test@127.0.0.1:5114/tcp_test_ci pnpm run build"
 }
