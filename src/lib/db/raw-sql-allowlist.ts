@@ -191,6 +191,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'El lock filtra por unidad y tenant autenticados; la comprobación global usa el ID único de unidad y distingue referencias ajenas con tenantId IS DISTINCT FROM sin devolver filas ni IDs.',
   },
   {
+    file: 'src/features/productos/actions-unidad-conversiones.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE del producto antes de leer o mutar conversiones para evitar carreras con cambios de unidad base.',
+    tenantGuarantee: 'La consulta parametrizada filtra por productoId y tenantId obtenido con requireTenant.',
+  },
+  {
     file: 'src/features/venta-servicios/actions.ts',
     occurrences: 1,
     reason: 'Lock advisory transaccional para serializar la clave idempotente de venta de servicios.',
