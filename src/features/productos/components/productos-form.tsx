@@ -60,6 +60,7 @@ import {
 } from "@/lib/product-business-code";
 import { buildPreciosPayload } from "./precios-payload";
 import { ProductPhotoUpload } from "./product-photo-upload";
+import { ProductUnitConversions } from "./product-unit-conversions";
 import { ClasificadorInfoNote } from "./clasificador-info-note";
 import {
 	buildProductosSchema,
@@ -1134,6 +1135,10 @@ export function ProductoForm({
 										</p>
 									</div>
 								</motion.div>
+
+								{initialData?.id && hasPlanFeature(planFeatures ? { planFeatures } : user, "unidades") && (
+									<ProductUnitConversions productId={initialData.id} />
+								)}
 
 								{listasPrecios && listasPrecios.length > 0 && (
 									<ProductosPriceListsSection

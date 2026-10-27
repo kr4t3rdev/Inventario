@@ -21,13 +21,17 @@ import { ProductPhotoUpload } from '@/features/productos/components/product-phot
 import type { Producto, Vendor } from '@/app/models/model'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
+import { useAuth } from '@/contexts/auth-context'
 import { createCompraProductoAction } from '@/features/compras-productos/actions'
+import { getDirectPurchaseUnitsAction } from '@/features/productos/actions'
 import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
+import { buildPurchaseUnitPayload } from '@/features/compras-productos/unit-selection-payload'
 
 const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
+  unidadId: z.string().optional(),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
   cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
 })
@@ -83,6 +87,9 @@ interface CompraProductoFormProps {
 export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [unitOptionsByProduct, setUnitOptionsByProduct] = useState<Record<string, Array<{ unidadId: string; nombre: string; simbolo: string }>>>({})
+  const [unitOptionsLoading, setUnitOptionsLoading] = useState<Record<string, boolean>>({})
+  const [unitOptionsError, setUnitOptionsError] = useState<Record<string, string>>({})
   const submittingRef = useRef(false)
   const [claveIdempotencia] = useState(() =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -91,6 +98,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   )
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
+  const { user } = useAuth()
+  const unitConversionsEnabled = user?.role === 'admin' || user?.planFeatures?.unidades === true
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
   const { vendors, isLoading: isLoadingVendors } = useVendors()
   const form = useForm<CompraDocumentoFormValues>({
@@ -116,6 +125,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   })
 
   const formaPagoSeleccionada = form.watch('formaPago')
+  const ordenCompraSeleccionada = form.watch('ordenCompraId')
   const proveedorSeleccionado = form.watch('proveedorId')
   const items = useWatch({ control: form.control, name: 'items' }) ?? []
 
@@ -219,6 +229,30 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     const producto = productoLookup.get(productoId)
     if (!producto) return
 
+    // Clear the previous product's choice before loading its tenant-scoped units.
+    form.setValue(`items.${index}.unidadId`, producto.unidadId ?? undefined, { shouldValidate: true })
+    setUnitOptionsByProduct((current) => ({ ...current, [productoId]: [] }))
+    if (!form.getValues('ordenCompraId') && unitConversionsEnabled) {
+      setUnitOptionsError((current) => ({ ...current, [productoId]: '' }))
+      setUnitOptionsLoading((current) => ({ ...current, [productoId]: true }))
+      getDirectPurchaseUnitsAction(productoId)
+        .then((result) => {
+          if (result.success && result.data) {
+            setUnitOptionsByProduct((current) => ({ ...current, [productoId]: result.data! }))
+          } else if (!result.success) {
+            const message = result.error?.message || 'No se pudieron cargar las unidades de compra.'
+            setUnitOptionsError((current) => ({ ...current, [productoId]: message }))
+            sileo.error({ title: message })
+          }
+        })
+        .catch(() => {
+          const message = 'No se pudieron cargar las unidades de compra.'
+          setUnitOptionsError((current) => ({ ...current, [productoId]: message }))
+          sileo.error({ title: message })
+        })
+        .finally(() => setUnitOptionsLoading((current) => ({ ...current, [productoId]: false })))
+    }
+
     // Auto-fill proveedor si está vacío o si todos los items son del mismo proveedor
     const selectedVendorId = typeof producto.vendorId === 'string' ? producto.vendorId : ''
     if (selectedVendorId) {
@@ -233,7 +267,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     if (selectedPrecioCosto > 0) {
       form.setValue(`items.${index}.precioCosto`, selectedPrecioCosto, { shouldValidate: true })
     }
-  }, [productoLookup, form])
+  }, [productoLookup, form, unitConversionsEnabled])
 
   function handleOrdenCompraChange(ordenCompraId: string) {
     if (ordenCompraId === 'directa') {
@@ -293,6 +327,11 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
       const actionResult = await createCompraProductoAction({
         ...data,
+        items: buildPurchaseUnitPayload(
+          data.items,
+          new Map([...productoLookup].map(([id, product]) => [id, product.unidadId])),
+          !data.ordenCompraId,
+        ),
         numeroFactura: data.numeroFactura ?? '',
         facturaUrl: data.facturaUrl ?? '',
         estado:
@@ -654,6 +693,29 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                                 </FormItem>
                               )}
                             />
+
+                            {unitOptionsLoading[items[index]?.productoId] ? (
+                              <p role='status' className='self-center text-xs text-muted-foreground'>Cargando unidades…</p>
+                            ) : null}
+                            {unitOptionsError[items[index]?.productoId] ? (
+                              <p role='alert' className='self-center text-xs text-destructive'>{unitOptionsError[items[index]?.productoId]}</p>
+                            ) : null}
+
+                            {!ordenCompraSeleccionada && unitOptionsByProduct[items[index]?.productoId]?.length > 1 ? (
+                              <FormItem>
+                                <FormLabel className='text-xs'>Unidad de compra</FormLabel>
+                                <Select
+                                  value={items[index]?.unidadId || ''}
+                                  onValueChange={(value) => form.setValue(`items.${index}.unidadId`, value, { shouldValidate: true })}
+                                  disabled={Boolean(unitOptionsLoading[items[index]?.productoId])}
+                                >
+                                  <FormControl><SelectTrigger aria-label='Unidad de compra'><SelectValue placeholder='Seleccione una unidad' /></SelectTrigger></FormControl>
+                                  <SelectContent>{unitOptionsByProduct[items[index]?.productoId].map((unit) => (
+                                    <SelectItem key={unit.unidadId} value={unit.unidadId}>{unit.nombre} ({unit.simbolo})</SelectItem>
+                                  ))}</SelectContent>
+                                </Select>
+                              </FormItem>
+                            ) : null}
 
                             <FormField
                               control={form.control}
