@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createUnidadAction, updateUnidadAction } from "@/features/unidades/actions"
-import { unidadSchema } from "@/features/unidades/schemas"
-import type { UnidadFormInput, UnidadInput } from "@/features/unidades/schemas"
+import { UNIDAD_DIMENSIONS, unidadSchema } from "@/features/unidades/schemas"
+import type { UnidadDimension, UnidadFormInput, UnidadInput } from "@/features/unidades/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, ArrowLeft, Loader2 } from "lucide-react"
 
@@ -23,6 +23,7 @@ interface UnidadFormProps {
     unidadId: string
     nombre: string
     simbolo: string
+    dimension: UnidadDimension
   }
 }
 
@@ -42,7 +43,8 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     resolver: zodResolver(unidadSchema),
     defaultValues: {
       nombre: initialData?.nombre || "",
-      simbolo: initialData?.simbolo || ""
+      simbolo: initialData?.simbolo || "",
+      dimension: initialData?.dimension ?? 'UNKNOWN',
     },
   })
 
@@ -54,6 +56,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
           unidadId: initialData.unidadId,
           nombre: data.nombre,
           simbolo: data.simbolo,
+          dimension: data.dimension,
         })
         if (!result.success) {
           throw new Error(result.error?.message || 'Error al actualizar la unidad')
@@ -63,6 +66,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
         const result = await createUnidadAction({
           nombre: data.nombre,
           simbolo: data.simbolo,
+          dimension: data.dimension,
         })
         if (!result.success) {
           throw new Error(result.error?.message || 'Error al crear la unidad')
@@ -183,12 +187,53 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
                 />
               </motion.div>
 
+              {/* Dimension Field */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="dimension"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dimensión</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          disabled={isLoading}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          {UNIDAD_DIMENSIONS.map((dimension) => (
+                            <option key={dimension} value={dimension}>
+                              {{
+                                COUNT: 'Conteo',
+                                MASS: 'Masa',
+                                VOLUME: 'Volumen',
+                                LENGTH: 'Longitud',
+                                AREA: 'Área',
+                                UNKNOWN: 'Sin clasificar',
+                              }[dimension]}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>
+                        Las unidades existentes comienzan sin clasificar. Las conversiones deben usar dimensiones compatibles.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
               {/* Actions */}
               <motion.div 
                 className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.5 }}
               >
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 

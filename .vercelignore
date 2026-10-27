@@ -1,7 +1,7 @@
 node_modules
 .next
 .git
-mobile
+/mobile/
 src/generated
 openspec
 .graphify-out

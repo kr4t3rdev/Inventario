@@ -45,12 +45,21 @@ it('keeps exact-deployment smoke manual, pinned and strict', () => {
   expect(productionTest).toContain('body.deploymentEnvironment).toBe(expectedDeploymentEnvironment)');
   expect(productionTest).toContain('body.deploymentSha).toBe(expectedDeploymentSha)');
 });
-it('keeps database mutations out of Vercel builds and scopes mobile CI to mobile files', () => {
-  const vercel = JSON.parse(read('vercel.json')) as { buildCommand: string };
+it('keeps Vercel builds isolated from staging preflight and production database credentials', () => {
+  const vercel = JSON.parse(read('vercel.json')) as Record<string, unknown> & { buildCommand: string };
+  const localDatabaseUrl = 'postgresql://test:test@127.0.0.1:5114/tcp_test_ci';
+
+  expect(vercel.buildCommand).not.toContain('verify:staging');
+  expect(vercel.buildCommand).toBe(
+    `DATABASE_URL=${localDatabaseUrl} DIRECT_URL=${localDatabaseUrl} DATABASE_URL_TEST=${localDatabaseUrl} pnpm run build`,
+  );
+  expect(vercel).not.toHaveProperty('env');
+  expect(vercel).not.toHaveProperty('build.env');
   const mobile = read('.github/workflows/mobile.yml');
 
   expect(vercel.buildCommand).not.toContain('run-prisma-schema-sync.sh');
   expect(vercel.buildCommand).not.toContain('db push');
+  expect(vercel.buildCommand).not.toContain('bootstrap-test-db.mjs');
   expect(mobile).toContain("      - 'mobile/**'");
   expect(mobile).not.toContain("      - '.github/workflows/mobile.yml'");
 });
