@@ -6,6 +6,13 @@ export {
   deleteProductoAction,
 } from './actions-crud'
 export {
+  getProductUnitConversionsAction,
+  getDirectPurchaseUnitsAction,
+  createProductUnitConversionAction,
+  updateProductUnitConversionAction,
+  deleteProductUnitConversionAction,
+} from './actions-unidad-conversiones'
+export {
   getStockPorUbicacionAction,
   bulkUpdateStockMinimoAction,
   getRestockHistoryAction,
