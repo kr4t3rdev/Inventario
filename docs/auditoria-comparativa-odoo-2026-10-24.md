@@ -52,7 +52,7 @@ La rama fuente `feat/sesion-f-brechas-odoo` está divergida de `origin/main`. El
 
 | Capacidad F | Estado de `origin/main` observado | Precisión |
 |---|---|---|
-| F-1 UdM con factor | Parcial/no | Existen unidades generales; falta la conversión fail-closed a unidad de stock de la rama. |
+| F-1 UdM con factor | **Integrado** (revisión 2026-10-26/27: PRs #21-#38 y #33-#38 en `origin/main` `f7268390`→`e15017d1`; conversión de unidades, trazabilidad de unidad en compras, dimensiones de producto) | Actualización: estaba "Parcial/no" al corte del 2026-10-24. |
 | F-2 devolución a proveedor | No localizada | No generalizar a ausencia de gestión de proveedor. |
 | F-3 pricelist/proveedor 360 | Parcial | Hay proveedor, compras e historial; no el flujo F de precio preferente/sync/autocompletado. |
 | F-4 recurrencias, adjuntos y viáticos | Parcial | Gastos/viáticos básicos existen; no el workflow F completo. |
