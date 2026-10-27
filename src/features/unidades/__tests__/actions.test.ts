@@ -50,10 +50,41 @@ import {
   deleteUnidadAction,
 } from '@/features/unidades/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import type { UnidadDimension } from '@/features/unidades/schemas';
 
 const TENANT_A = 'tenant-a';
 const TENANT_B = 'tenant-b';
 const dimensionTransactionOrder: string[] = [];
+
+function mockProductReferenceState(hasProductReference: boolean, hasForeignProductReference = false) {
+  vi.mocked(prisma.$queryRaw).mockImplementation(async (query) => {
+    const sql = Array.isArray(query)
+      ? query.join('')
+      : typeof query === 'object' && query !== null && 'sql' in query
+        ? String(query.sql)
+        : '';
+    if (sql.includes('FOR UPDATE')) return [{ unidadId: 'uni-1' }] as never;
+    return [{ hasProductReference, hasForeignProductReference }] as never;
+  });
+}
+
+function mockCurrentUnitDimension(dimension: UnidadDimension) {
+  vi.mocked(prisma.unidad.findUnique).mockResolvedValue({ ...mockUnidadRow, dimension });
+}
+
+function expectDimensionConflict(result: Awaited<ReturnType<typeof updateUnidadAction>>) {
+  expect(result.success).toBe(false);
+  expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+  expect(prisma.unidad.update).not.toHaveBeenCalled();
+}
+
+function mockUnitConversions(
+  conversions: Array<{ unidadId: string; baseUnidadId: string; productoId: string; tenantId: string }>,
+  otherUnits: Array<{ unidadId: string; dimension: UnidadDimension }> = []
+) {
+  vi.mocked(prisma.unidadConversion.findMany).mockResolvedValue(conversions as never);
+  vi.mocked(prisma.unidad.findMany).mockResolvedValue(otherUnits as never);
+}
 
 const mockUserA: AuthenticatedUser = {
   userId: 'user-a',
@@ -359,6 +390,210 @@ describe('Unidades Server Actions (tenant-scoped v2)', () => {
       expect(result.success).toBe(true);
       expect(prisma.unidad.update).toHaveBeenCalled();
       expect(typeof expectActionSuccess(result).data!.createdAt).toBe('string');
+    });
+
+    it('preserves the current dimension for legacy updates that omit it', async () => {
+      vi.mocked(prisma.unidad.findUnique).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'MASS',
+      });
+      vi.mocked(prisma.unidad.update).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'MASS',
+        nombre: 'Kilogramo Actualizado',
+      });
+
+      const result = await updateUnidadAction({
+        unidadId: 'uni-1',
+        nombre: 'Kilogramo Actualizado',
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.unidad.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.not.objectContaining({ dimension: expect.anything() }),
+      }));
+    });
+
+    it('rechecks an explicit no-op dimension inside the transaction before updating', async () => {
+      vi.mocked(prisma.unidad.findUnique)
+        .mockResolvedValueOnce({ ...mockUnidadRow, dimension: 'UNKNOWN' })
+        .mockResolvedValueOnce({ unidadId: 'uni-1', dimension: 'UNKNOWN' });
+      vi.mocked(prisma.unidad.update).mockResolvedValue({ ...mockUnidadRow, dimension: 'UNKNOWN' });
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'UNKNOWN' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: 'ReadCommitted',
+      });
+      expect(prisma.producto.findMany).not.toHaveBeenCalled();
+    });
+
+    it('blocks a stale explicit UNKNOWN write after a concurrent classification', async () => {
+      vi.mocked(prisma.unidad.findUnique)
+        .mockResolvedValueOnce({ ...mockUnidadRow, dimension: 'UNKNOWN' })
+        .mockResolvedValueOnce({ unidadId: 'uni-1', dimension: 'COUNT' });
+      mockProductReferenceState(true);
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'UNKNOWN' });
+
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: 'ReadCommitted',
+      });
+      expect(prisma.unidad.update).not.toHaveBeenCalled();
+    });
+
+    it('locks the tenant-owned unit before the transaction rereads it', async () => {
+      vi.mocked(prisma.unidad.findUnique).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'UNKNOWN',
+      });
+      let findUniqueCalls = 0;
+      vi.mocked(prisma.unidad.findUnique).mockImplementation(async () => {
+        const callNumber = findUniqueCalls++;
+        dimensionTransactionOrder.push('unit-reread');
+        return callNumber === 0
+          ? { ...mockUnidadRow, dimension: 'UNKNOWN' }
+          : { unidadId: 'uni-1', dimension: 'UNKNOWN' } as never;
+      });
+      vi.mocked(prisma.unidad.update).mockResolvedValue({ ...mockUnidadRow, dimension: 'MASS' });
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'MASS' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: 'ReadCommitted',
+      });
+      expect(dimensionTransactionOrder.slice(0, 2)).toEqual(['unit-lock', 'unit-reread']);
+    });
+
+    it('fails closed for a foreign-tenant product reference without exposing its identity', async () => {
+      mockCurrentUnitDimension('UNKNOWN');
+      vi.mocked(prisma.unidad.update).mockResolvedValue({ ...mockUnidadRow, dimension: 'MASS' });
+      vi.mocked(prisma.$queryRaw)
+        .mockResolvedValueOnce([{ unidadId: 'uni-1' }] as never)
+        .mockResolvedValueOnce([{
+          hasProductReference: true,
+          hasForeignProductReference: true,
+        }] as never);
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'MASS' });
+
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error!.code).toBe('CONFLICT');
+      expect(expectActionFailure(result).error!.message).not.toContain('prod-foreign');
+      expect(prisma.unidad.update).not.toHaveBeenCalled();
+    });
+
+    it('allows UNKNOWN-to-known classification when every referenced conversion is compatible', async () => {
+      mockCurrentUnitDimension('UNKNOWN');
+      mockProductReferenceState(true);
+      mockUnitConversions(
+        [{ unidadId: 'uni-1', baseUnidadId: 'unit-base', productoId: 'prod-1', tenantId: TENANT_A }],
+        [{ unidadId: 'unit-base', dimension: 'MASS' }]
+      );
+      vi.mocked(prisma.unidad.update).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'MASS',
+      });
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'MASS' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: 'ReadCommitted',
+      });
+      expect(prisma.unidadConversion.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ tenantId: TENANT_A }),
+      }));
+      expect(prisma.unidad.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ dimension: 'MASS' }),
+      }));
+    });
+
+    it.each([
+      ['known-to-known', 'MASS', 'VOLUME'],
+      ['known-to-unknown', 'MASS', 'UNKNOWN'],
+    ])('blocks %s reclassification while a product uses the unit', async (_label, current, next) => {
+      vi.mocked(prisma.unidad.findUnique).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: current,
+      });
+      mockProductReferenceState(true);
+
+      const result = await updateUnidadAction({
+        unidadId: 'uni-1',
+        dimension: next as 'MASS' | 'VOLUME' | 'UNKNOWN',
+      });
+
+      expectDimensionConflict(result);
+    });
+
+    it.each([
+      ['source', 'uni-1', 'unit-base', 'unit-base'],
+      ['base', 'unit-source', 'uni-1', 'unit-source'],
+    ])('rejects an incompatible %s conversion endpoint when classifying UNKNOWN', async (
+      _position,
+      sourceUnitId,
+      baseUnitId,
+      otherUnitId
+    ) => {
+      mockCurrentUnitDimension('UNKNOWN');
+      mockUnitConversions(
+        [{ unidadId: sourceUnitId, baseUnidadId: baseUnitId, productoId: 'prod-1', tenantId: TENANT_A }],
+        [{ unidadId: otherUnitId, dimension: 'VOLUME' }]
+      );
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'MASS' });
+
+      expectDimensionConflict(result);
+    });
+
+    it('allows an identity conversion while classifying an UNKNOWN unit', async () => {
+      mockCurrentUnitDimension('UNKNOWN');
+      mockUnitConversions([
+        { unidadId: 'uni-1', baseUnidadId: 'uni-1', productoId: 'prod-1', tenantId: TENANT_A },
+      ]);
+      vi.mocked(prisma.unidad.update).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'COUNT',
+      });
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'COUNT' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.unidad.findMany).not.toHaveBeenCalled();
+    });
+
+    it('blocks a dimension change when the unit is used as a conversion base', async () => {
+      mockCurrentUnitDimension('MASS');
+      mockUnitConversions([
+        { unidadId: 'unit-source', baseUnidadId: 'uni-1', productoId: 'prod-1', tenantId: TENANT_A },
+      ]);
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'VOLUME' });
+
+      expectDimensionConflict(result);
+    });
+
+    it('allows a known-to-known dimension change when the unit is unused', async () => {
+      vi.mocked(prisma.unidad.findUnique).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'MASS',
+      });
+      vi.mocked(prisma.unidad.update).mockResolvedValue({
+        ...mockUnidadRow,
+        dimension: 'VOLUME',
+      });
+
+      const result = await updateUnidadAction({ unidadId: 'uni-1', dimension: 'VOLUME' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.unidad.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ dimension: 'VOLUME' }),
+      }));
     });
 
     it('retorna NOT_FOUND si no existe', async () => {
