@@ -27,10 +27,33 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // Incluir archivos del engine de Prisma en el output standalone de Next.js.
-  outputFileTracingIncludes: {
-    "/**": ["./src/generated/prisma/**"],
-  },
+  // Preserve Prisma runtime files while avoiding platform engines and types on Vercel.
+  outputFileTracingIncludes:
+    process.env.VERCEL === "1"
+      ? {
+          "/**": [
+            "./src/generated/prisma/**/*.so.node",
+            "./src/generated/prisma/**/*.wasm",
+            "./src/generated/prisma/**/*.js",
+            "./src/generated/prisma/**/*.mjs",
+            "./src/generated/prisma/**/*.cjs",
+            "./src/generated/prisma/**/*.json",
+            "./src/generated/prisma/**/*.prisma",
+          ],
+        }
+      : {
+          "/**": ["./src/generated/prisma/**"],
+        },
+  ...(process.env.VERCEL === "1"
+    ? {
+        outputFileTracingExcludes: {
+          "/**": [
+            "./src/generated/prisma/**/*.d.ts",
+            "./src/generated/prisma/**/*.dylib.node",
+          ],
+        },
+      }
+    : {}),
 
   // Packages that should not be bundled by the server runtime.
   serverExternalPackages: ["@vercel/blob", "@prisma/client"],
