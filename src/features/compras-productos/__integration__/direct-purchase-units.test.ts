@@ -17,6 +17,11 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 const { createCompraProductoAction } = await import('@/features/compras-productos/actions');
+const {
+  createProductUnitConversionAction,
+  updateProductUnitConversionAction,
+  deleteProductUnitConversionAction,
+} = await import('@/features/productos/actions');
 
 const prefix = `f1-direct-${randomUUID().replaceAll('-', '')}`;
 let tenantId = '';
@@ -264,6 +269,129 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
     if (cleanupErrors.length > 0) {
       throw new AggregateError(cleanupErrors, 'Direct-purchase integration cleanup was incomplete');
     }
+  });
+
+  it('creates a product conversion through the server action and applies its exact factor to a direct purchase', async () => {
+    const product = await createProduct('configured-action');
+    const factor = '12.12500000';
+    const configuration = await createProductUnitConversionAction({
+      productoId: product.id,
+      unidadId: sourceUnitId,
+      factorAStock: factor,
+    });
+
+    expect(configuration.success).toBe(true);
+    const conversion = await prisma.unidadConversion.findFirst({
+      where: { tenantId, productoId: product.id, baseUnidadId: baseUnitId, unidadId: sourceUnitId },
+    });
+    expect(conversion?.factorAStock.toFixed(8)).toBe(factor);
+
+    const invoice = `${prefix}-configured-action`;
+    const result = await submitPurchase({
+      productId: product.id,
+      invoice,
+      quantity: 8,
+      unitPrice: 9700,
+      sourceUnitId,
+    });
+
+    expect(result.success).toBe(true);
+    const document = await prisma.compraDocumento.findFirst({
+      where: { tenantId, numeroFactura: invoice },
+      include: { items: true },
+    });
+    expect(document?.items[0]).toMatchObject({
+      cantidad: 97,
+      precioUnitario: 800,
+      totalLinea: 77600,
+      unidadOrigenId: sourceUnitId,
+      cantidadOrigen: 8,
+      precioUnitarioOrigen: 9700,
+      unidadBaseIdSnapshot: baseUnitId,
+    });
+    expect(document?.items[0].factorAStockAplicado?.toFixed(8)).toBe(factor);
+    expect(await prisma.stockUbicacion.findFirst({ where: { tenantId, productoId: product.id } }))
+      .toMatchObject({ cantidad: 97, cantidadDisponible: 97 });
+  });
+
+  it('updates and deletes only its conversion while preserving historical purchase snapshots', async () => {
+    const product = await createProduct('edit-delete-action');
+    const created = await createProductUnitConversionAction({
+      productoId: product.id,
+      unidadId: sourceUnitId,
+      factorAStock: '12.12500000',
+    });
+    expect(created.success).toBe(true);
+    if (!created.success) return;
+
+    const updated = await updateProductUnitConversionAction({
+      id: created.data.id,
+      productoId: product.id,
+      unidadId: sourceUnitId,
+      factorAStock: '10.25000000',
+    });
+    expect(updated.success).toBe(true);
+    const stored = await prisma.unidadConversion.findFirst({
+      where: { id: created.data.id, tenantId, productoId: product.id },
+    });
+    expect(stored?.factorAStock.toFixed(8)).toBe('10.25000000');
+
+    const historicalInvoice = `${prefix}-edit-delete-history`;
+    const purchase = await submitPurchase({
+      productId: product.id,
+      invoice: historicalInvoice,
+      quantity: 4,
+      unitPrice: 2050,
+      sourceUnitId,
+    });
+    expect(purchase.success).toBe(true);
+    const historicalLine = await prisma.compraDocumentoItem.findFirst({
+      where: { tenantId, productoId: product.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(historicalLine).toMatchObject({
+      cantidad: 41,
+      precioUnitario: 200,
+      totalLinea: 8200,
+      cantidadOrigen: 4,
+      precioUnitarioOrigen: 2050,
+      unidadOrigenId: sourceUnitId,
+      unidadBaseIdSnapshot: baseUnitId,
+    });
+    expect(historicalLine?.factorAStockAplicado?.toFixed(8)).toBe('10.25000000');
+
+    const deleted = await deleteProductUnitConversionAction({ id: created.data.id, productoId: product.id });
+    expect(deleted.success).toBe(true);
+    expect(await prisma.unidadConversion.findFirst({
+      where: { id: created.data.id, tenantId, productoId: product.id },
+    })).toBeNull();
+    const preservedLine = await prisma.compraDocumentoItem.findFirst({
+      where: { tenantId, productoId: product.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(preservedLine).toMatchObject({
+      compraDocumentoItemId: historicalLine?.compraDocumentoItemId,
+      cantidad: 41,
+      unidadOrigenId: sourceUnitId,
+      cantidadOrigen: 4,
+      unidadBaseIdSnapshot: baseUnitId,
+    });
+    expect(preservedLine?.factorAStockAplicado?.toFixed(8)).toBe('10.25000000');
+
+    const rejectedInvoice = `${prefix}-edit-delete-rejected`;
+    const before = await captureEffects(product.id, rejectedInvoice);
+    const rejected = await submitPurchase({
+      productId: product.id,
+      invoice: rejectedInvoice,
+      quantity: 1,
+      unitPrice: 2050,
+      sourceUnitId,
+    });
+    expect(rejected.success).toBe(false);
+    expect(await captureEffects(product.id, rejectedInvoice)).toBe(before);
+    expect(await prisma.compraDocumentoItem.findUnique({
+      where: { compraDocumentoItemId: historicalLine!.compraDocumentoItemId },
+    })).toMatchObject({ cantidad: 41, factorAStockAplicado: expect.anything() });
   });
 
   it('persists normalized stock economics and all source snapshots for two boxes at 12 each', async () => {
