@@ -65,6 +65,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'WHERE incluye id y tenantId obtenido con requireTenant.',
   },
   {
+    file: 'src/features/compras-productos/actions.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE del producto antes de resolver unidad/factor y crear compra directa.',
+    tenantGuarantee: 'El lock filtra por productoId y tenantId de requireTenant antes de leer conversiones.',
+  },
+  {
     file: 'src/features/contabilidad/actions-reconciliacion.ts',
     occurrences: 9,
     reason: 'Agregados de saldos y locks FOR UPDATE transaccionales.',
