@@ -129,6 +129,14 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
 
   try {
     const resultado = await prisma.$transaction(async (tx: any) => {
+      // Serialize conversion reads against product-unit edits; stable lock ordering avoids deadlocks.
+      const productosConUnidad = [...new Set(
+        parsed.items.filter((item) => item.unidadId).map((item) => item.productoId),
+      )].sort();
+      for (const productoId of productosConUnidad) {
+        await tx.$queryRaw`SELECT "id" FROM "Producto" WHERE "id" = ${productoId} AND "tenantId" = ${tenantId} FOR UPDATE`;
+      }
+
       const unidades = new Map<string, any>();
       const leerUnidad = async (unidadId: string) => {
         if (!unidades.has(unidadId)) {

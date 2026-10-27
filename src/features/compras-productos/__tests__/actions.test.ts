@@ -30,6 +30,7 @@ vi.mock("@/lib/services/anticipos-guards", () => ({
 }));
 
 const mockTx = {
+	$queryRaw: vi.fn(),
 	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
 	compraDocumentoItem: { create: vi.fn() },
 	ordenCompra: { findFirst: vi.fn(), updateMany: vi.fn() },
@@ -367,6 +368,10 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+			expect(mockTx.$queryRaw).toHaveBeenCalled();
+			expect(mockTx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+				mockTx.producto.findFirst.mock.invocationCallOrder[0],
+			);
 			expect(mockTx.compraDocumento.create).toHaveBeenCalledWith(expect.objectContaining({
 				data: expect.objectContaining({ total: 12000 }),
 			}));
