@@ -7,12 +7,14 @@ import { Scale, AlertCircle, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import type { UnidadDimension } from "@/features/unidades/schemas"
 
 interface UnidadEditPageClientProps {
   unidad: {
     unidadId: string
     nombre: string
     simbolo: string
+    dimension: UnidadDimension
   } | null
 }
 
