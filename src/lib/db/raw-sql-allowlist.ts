@@ -65,6 +65,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'WHERE incluye id y tenantId obtenido con requireTenant.',
   },
   {
+    file: 'src/features/compras-productos/actions.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE del producto antes de resolver unidad/factor y crear compra directa.',
+    tenantGuarantee: 'El lock filtra por productoId y tenantId de requireTenant antes de leer conversiones.',
+  },
+  {
     file: 'src/features/contabilidad/actions-reconciliacion.ts',
     occurrences: 9,
     reason: 'Agregados de saldos y locks FOR UPDATE transaccionales.',
@@ -189,6 +195,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     occurrences: 2,
     reason: 'Bloquea primero la unidad tenant-scoped para serializar cambios de dimensión y consulta solo indicadores booleanos de referencias globales de productos.',
     tenantGuarantee: 'El lock filtra por unidad y tenant autenticados; la comprobación global usa el ID único de unidad y distingue referencias ajenas con tenantId IS DISTINCT FROM sin devolver filas ni IDs.',
+  },
+  {
+    file: 'src/features/productos/actions-unidad-conversiones.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE del producto antes de leer o mutar conversiones para evitar carreras con cambios de unidad base.',
+    tenantGuarantee: 'La consulta parametrizada filtra por productoId y tenantId obtenido con requireTenant.',
   },
   {
     file: 'src/features/venta-servicios/actions.ts',
