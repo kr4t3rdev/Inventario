@@ -274,6 +274,12 @@ const DEFINICION_CUENTAS: DefinicionCuenta[] = [
 		tipo: 'INGRESO',
 		rol: 'DIFERENCIA_CAMBIARIA_INGRESO',
 	},
+	{
+		codigo: '4.6',
+		nombre: 'Intereses moratorios ganados',
+		tipo: 'INGRESO',
+		rol: 'INTERESES_MORATORIOS_GANADOS',
+	},
 	// 5 COSTOS
 	{ codigo: '5', nombre: 'Costos', tipo: 'COSTO' },
 	{ codigo: '5.1', nombre: 'Costo de ventas', tipo: 'COSTO', rol: 'COSTO_VENTAS' },
@@ -288,6 +294,12 @@ const DEFINICION_CUENTAS: DefinicionCuenta[] = [
 		nombre: 'Diferencia cambiaria (gasto)',
 		tipo: 'GASTO',
 		rol: 'DIFERENCIA_CAMBIARIA_GASTO',
+	},
+	{
+		codigo: '6.6',
+		nombre: 'Gastos por intereses moratorios',
+		tipo: 'GASTO',
+		rol: 'GASTOS_MORATORIOS',
 	},
 ];
 
@@ -312,7 +324,7 @@ export const CUENTAS_PLAN_DEFAULT: CuentaPlanDefault[] = DEFINICION_CUENTAS.map(
 );
 
 /**
- * @description Rol semántico → código de cuenta del plan por defecto (23 hojas).
+ * @description Rol semántico → código de cuenta del plan por defecto.
  */
 export const ROLES_CUENTA_DEFAULT: Partial<Record<RolCuentaClave, string>> = Object.fromEntries(
 	DEFINICION_CUENTAS.filter((cuenta) => cuenta.rol !== undefined).map((cuenta) => [

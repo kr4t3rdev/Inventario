@@ -841,22 +841,7 @@ describe('postEvento — generación de líneas', () => {
 		expect(String(lineas.find((l) => l.cuentaId === 'cta-4.4')?.haber)).toBe('200');
 	});
 
-	it('cobro de préstamo descompone capital, interés ordinario y moratorio por rol explícito', async () => {
-		const roleResolver = fixture.tx.cuentaRolTenant.findMany as unknown as ReturnType<typeof vi.fn>;
-		roleResolver.mockResolvedValue([
-			...Object.entries(ROLES_CUENTA_DEFAULT).map(([rol, codigo]) => ({
-				rol,
-				cuenta: {
-					cuentaContableId: `cta-${codigo}`,
-					aceptaMovimiento: true,
-					activa: true,
-				},
-			})),
-			{
-				rol: 'INTERESES_MORATORIOS_GANADOS',
-				cuenta: { cuentaContableId: 'cta-mora-ingreso', aceptaMovimiento: true, activa: true },
-			},
-		]);
+	it('cobro de préstamo descompone capital, interés ordinario y mora con el plan default', async () => {
 		await postEvento(
 			fixture.tx,
 			{ tenantId: TENANT, userId: 'u1' },
@@ -870,7 +855,19 @@ describe('postEvento — generación de líneas', () => {
 		const lineas = lineasDe(fixture.crearAsiento);
 		expect(String(lineas.find((l) => l.cuentaId === 'cta-1.2.02')?.haber)).toBe('1050');
 		expect(String(lineas.find((l) => l.cuentaId === 'cta-4.4')?.haber)).toBe('100');
-		expect(String(lineas.find((l) => l.cuentaId === 'cta-mora-ingreso')?.haber)).toBe('50');
+		expect(String(lineas.find((l) => l.cuentaId === 'cta-4.6')?.haber)).toBe('50');
+	});
+
+	it('pago de deuda descompone capital, interés ordinario y mora con el plan default', async () => {
+		await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'PAGO_DEUDA', montoFuncional: 1200, monto: 1200,
+			auxiliares: { intereses: 100, interesesMoratorios: 50 },
+		}));
+		const lineas = lineasDe(fixture.crearAsiento);
+		expect(String(lineas.find((l) => l.cuentaId === 'cta-2.1.02')?.debe)).toBe('1050');
+		expect(String(lineas.find((l) => l.cuentaId === 'cta-6.3')?.debe)).toBe('100');
+		expect(String(lineas.find((l) => l.cuentaId === 'cta-6.6')?.debe)).toBe('50');
+		expect(String(lineas.find((l) => l.cuentaId === 'cta-1.1.01')?.haber)).toBe('1200');
 	});
 
 	it('el costo FIFO se omite cuando el evento no lo trae (devolución sin costo)', async () => {
