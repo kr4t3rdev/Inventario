@@ -46,6 +46,12 @@ export interface VentaVsReconciliadoItem {
 	montoReconciliado: number | null;
 	diferencia: number;
 	fechaReconciliacion: Date | null;
+	clasificacion?:
+		| "RECONCILIADA"
+		| "CUENTA_POR_COBRAR"
+		| "CUENTA_POR_PAGAR"
+		| "NO_CLASIFICADA";
+	estadoCuenta?: string | null;
 }
 
 export interface VentasVsReconciliadoData {
@@ -304,6 +310,12 @@ export async function obtenerVentasVsReconciliado(
 		prisma.venta.findMany({
 			where: filtroVenta,
 			include: {
+				VentaServicios: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
+				factura: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -327,6 +339,10 @@ export async function obtenerVentasVsReconciliado(
 		prisma.ventaServicios.findMany({
 			where: filtroServicio,
 			include: {
+				cuentaPorCobrar: { select: { estado: true } },
+				factura: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -430,6 +446,7 @@ export async function obtenerVentasVsReconciliado(
 		prisma.gastosDE.findMany({
 			where: filtroGastosDE,
 			include: {
+				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -451,6 +468,7 @@ export async function obtenerVentasVsReconciliado(
 		prisma.gastoCompra.findMany({
 			where: filtroGastoCompra,
 			include: {
+				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -469,6 +487,11 @@ export async function obtenerVentasVsReconciliado(
 	// Mapear a tipo unificado
 	const mapVenta = (v: (typeof ventas)[number]): VentaVsReconciliadoItem => {
 		const rec = v.reconciliaciones[0];
+		const estadoCuenta =
+			v.factura?.cuentaPorCobrar?.estado ??
+			v.VentaServicios?.find((servicio) => servicio.cuentaPorCobrar?.estado)
+				?.cuentaPorCobrar?.estado ??
+			null;
 		const monto = Number(v.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -484,6 +507,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_COBRAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -491,6 +520,8 @@ export async function obtenerVentasVsReconciliado(
 		vs: (typeof ventasServicios)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = vs.reconciliaciones[0];
+		const estadoCuenta =
+			vs.cuentaPorCobrar?.estado ?? vs.factura?.cuentaPorCobrar?.estado ?? null;
 		const monto = Number(vs.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -506,6 +537,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_COBRAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -513,6 +550,7 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof gastosDE)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = g.reconciliaciones[0];
+		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
 		const monto = Number(g.monto ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -528,6 +566,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_PAGAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -535,6 +579,7 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof gastosCompra)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = g.reconciliaciones[0];
+		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
 		const monto = Number(g.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -550,6 +595,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_PAGAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -639,6 +690,12 @@ export async function obtenerVentasVsReconciliado(
 				reconciliaciones: { none: {} },
 			},
 			include: {
+				VentaServicios: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
+				factura: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -658,6 +715,10 @@ export async function obtenerVentasVsReconciliado(
 				reconciliaciones: { none: {} },
 			},
 			include: {
+				cuentaPorCobrar: { select: { estado: true } },
+				factura: {
+					select: { cuentaPorCobrar: { select: { estado: true } } },
+				},
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -678,6 +739,7 @@ export async function obtenerVentasVsReconciliado(
 				reconciliaciones: { none: {} },
 			},
 			include: {
+				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -698,6 +760,7 @@ export async function obtenerVentasVsReconciliado(
 				reconciliaciones: { none: {} },
 			},
 			include: {
+				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
 					select: {
 						monto: true,
@@ -741,6 +804,11 @@ export async function obtenerVentasVsReconciliado(
 		v: (typeof ventasAntiguas)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = v.reconciliaciones[0];
+		const estadoCuenta =
+			v.factura?.cuentaPorCobrar?.estado ??
+			v.VentaServicios?.find((servicio) => servicio.cuentaPorCobrar?.estado)
+				?.cuentaPorCobrar?.estado ??
+			null;
 		const monto = Number(v.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -756,6 +824,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_COBRAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -763,6 +837,8 @@ export async function obtenerVentasVsReconciliado(
 		vs: (typeof serviciosAntiguos)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = vs.reconciliaciones[0];
+		const estadoCuenta =
+			vs.cuentaPorCobrar?.estado ?? vs.factura?.cuentaPorCobrar?.estado ?? null;
 		const monto = Number(vs.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -778,6 +854,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_COBRAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -785,6 +867,7 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof gastosDEAntiguos)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = g.reconciliaciones[0];
+		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
 		const monto = Number(g.monto ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -800,6 +883,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_PAGAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
@@ -807,6 +896,7 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof gastosCompraAntiguos)[number],
 	): VentaVsReconciliadoItem => {
 		const rec = g.reconciliaciones[0];
+		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
 		const monto = Number(g.total ?? 0);
 		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
 		return {
@@ -822,6 +912,12 @@ export async function obtenerVentasVsReconciliado(
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+			clasificacion: estadoCuenta
+				? "CUENTA_POR_PAGAR"
+				: rec
+					? "RECONCILIADA"
+					: "NO_CLASIFICADA",
+			estadoCuenta,
 		};
 	};
 
