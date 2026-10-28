@@ -108,6 +108,27 @@ esas rutas completas: preservar el contrato de reintentos y errores vigente y
 contrastar los tests y servicios relacionados. Quedan pendientes las demás rutas
 móviles y la comparación con el complemento `dd302bf7`.
 
+La comparación de `dd302bf7` con `2c86bde1` para pagos móviles de deuda y
+préstamo añade validación de fechas, lectura de `Idempotency-Key` y comprobación
+de replay después del control de período; también elimina en las rutas la llamada
+`requireFeature` existente y acepta fechas de operación del payload. Decisión:
+no copiar las rutas completas. Evaluar las mejoras de validación y cabecera sin
+eliminar el control de plan ni cambiar la fecha de negocio o el comportamiento de
+intereses sin pruebas y decisión explícita. La comparación de los 25 archivos
+móviles afectados rebasa las 99 rutas históricas y requiere revisión por endpoint.
+
+### Revisión semántica parcial de S4
+
+En `venta-mutation-service.ts` la fuente formal añade invocaciones a `postEvento`,
+pero el diff frente a `2c86bde1` también elimina la consulta a la lista de precios
+default del tenant introducida por LP-1.2. Conservar la resolución vigente de
+precios y trasladar únicamente los puntos de posteo tras revisar valoración,
+transacción y pruebas. En `mermas/actions.ts` la fuente añade posteo y guardas
+para impedir editar o eliminar mermas con evidencia contable, pero modifica el
+flujo de stock existente. Integrar selectivamente sobre el flujo actual y verificar
+la atomicidad y los reintentos. La comparación de `venta-lifecycle-service.ts`
+incluye cambios de crédito y concurrencia; falta revisar sus ramas individualmente.
+
 ## Lista mínima S1 acordada
 
 **Base canónica:** el núcleo de `c860c867`, no una sustitución por archivos completos de la rama formal. S1 mantiene el modo por defecto `off` y no modifica registro de planes ni habilita replay.
