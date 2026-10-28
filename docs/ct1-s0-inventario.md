@@ -129,6 +129,44 @@ flujo de stock existente. Integrar selectivamente sobre el flujo actual y verifi
 la atomicidad y los reintentos. La comparación de `venta-lifecycle-service.ts`
 incluye cambios de crédito y concurrencia; falta revisar sus ramas individualmente.
 
+### Hallazgos adicionales para S2, S5–S10
+
+- **S2 — migración complementaria:** la migración de hardening de `dd302bf7`
+  comprueba propietarios ausentes o contradictorios, completa `tenantId` cuando
+  puede resolverlo y establece `NOT NULL`, índices y claves foráneas en
+  `CierreContable`, `Servicios`, `PagoCuentaPorPagar`, `CompraServicio` y
+  `GastoCompra`. Su aplicación y compatibilidad con el historial de cada entorno
+  siguen pendientes de S2. No copiar el esquema completo ni renombrar migraciones
+  sin verificar ese historial.
+- **S5 — libros:** la fuente complementaria contiene acciones y servicios nuevos
+  para diario, mayor, balance y conciliación. Las acciones observadas exigen
+  tenant, y algunas también feature y permisos. Seleccionar los archivos y
+  probar autorización, paginación y aislamiento con el esquema de main; no
+  considerar su existencia evidencia de compatibilidad.
+- **S6 — cierre y apertura:** el servicio de la fuente filtra asientos por tenant
+  y período, valida el tenant del período y comprueba asientos de origen. Revisar
+  junto a las acciones de períodos vigentes, el orden transaccional y las pruebas
+  de cierre y apertura antes de integrarlo.
+- **S7 — reversa y replay:** existen servicios y acciones de replay con preflight,
+  aprobación y permisos en la fuente. Su presencia no autoriza ejecución ni
+  activación; CT-1 mantiene replay desactivado. La reversa y sus dependencias se
+  revisarán contra el contrato del motor y la cadena de hash vigente.
+- **S8 — anticipos y conciliación móvil:** en `dd302bf7`, ejecutar y revertir
+  anticipos cambia desde operaciones efectivas a respuestas que remiten al
+  documento relacionado; también agrega controles de tenant, plan y permisos.
+  La conciliación de servicios agrega cabecera de idempotencia y la de gastos
+  mapea errores de acción. Conservar los flujos de main mientras se deciden y
+  prueban por separado los controles y cambios de contrato.
+- **S9–S10 — infraestructura:** el diff incluye cambios de permisos, clasificación
+  tenant, SQL y CI, pero también archivos `__pycache__` y eliminación de una
+  prueba de idempotencia. Seleccionar dependencias concretas por slice, preservar
+  pruebas vigentes y excluir artefactos generados; Graphify se regenera al final.
+
+Estos hallazgos son una revisión orientativa de rutas representativas, no una
+revisión exhaustiva de cada archivo ni una autorización de integración. Los
+detalles de las 99 rutas y las diferencias fuera de esa lista deben completarse
+en cada slice, con pruebas sobre su propio SHA.
+
 ## Lista mínima S1 acordada
 
 **Base canónica:** el núcleo de `c860c867`, no una sustitución por archivos completos de la rama formal. S1 mantiene el modo por defecto `off` y no modifica registro de planes ni habilita replay.
