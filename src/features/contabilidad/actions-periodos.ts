@@ -890,6 +890,13 @@ export const integrarArqueosEnPeriodoAction = withAction(
 			return { arqueosIntegrados: 0 };
 		}
 
+		if (!periodo.apertura) {
+			throw new ActionError(
+				"No se pueden integrar arqueos sin una apertura contable existente y verificable. Revise los saldos iniciales antes de reintentar.",
+				"APERTURA_SALDOS_NO_VERIFICABLES",
+			);
+		}
+
 		// Calcular agregados
 		const detalle = {
 			arqueos: arqueos.map((a) => ({
@@ -923,17 +930,9 @@ export const integrarArqueosEnPeriodoAction = withAction(
 		}
 
 		// Actualizar AperturaPeriodo.detalleJson
-		await prisma.aperturaPeriodo.upsert({
+		await prisma.aperturaPeriodo.update({
 			where: { periodoId },
-			create: {
-				periodoId,
-				tenantId,
-				saldoCajaInicial: 0,
-				detalleJson: detalle as unknown as Prisma.InputJsonValue,
-			},
-			update: {
-				detalleJson: detalle as unknown as Prisma.InputJsonValue,
-			},
+			data: { detalleJson: detalle as unknown as Prisma.InputJsonValue },
 		});
 
 		// Marcar arqueos como contabilizados

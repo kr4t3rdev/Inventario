@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { expectActionFailure, expectActionSuccess } from '@/test/action-response';
+import { expectActionFailure } from '@/test/action-response';
 import {
   assertDisposableDatabase,
   assertDisposableDatabaseIdentity,
@@ -15,12 +15,13 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 let prisma!: typeof import('@/lib/prisma').prisma;
 let abrirPeriodoAction!: typeof import('@/features/contabilidad/actions-periodos').abrirPeriodoAction;
+let aperturaPeriodoService!: typeof import('@/lib/services/apertura-periodo-service').AperturaPeriodoService;
 let tenantId = '';
 let planId = '';
 let tenantLicenseId = '';
 let userId = '';
-let successPeriodId = '';
 let triggerInstalled = false;
+let accountingEnabled = true;
 const unique = crypto.randomUUID().replaceAll('-', '');
 const tenantName = `period-open-audit-${unique}`;
 const email = `${tenantName}@test.local`;
@@ -36,7 +37,7 @@ function currentUser(): AuthenticatedUser {
     isActive: true,
     tenantId,
     tenantRole: 'manager',
-    planFeatures: { contabilidad: true },
+    planFeatures: { contabilidad: accountingEnabled },
   };
 }
 
@@ -46,6 +47,9 @@ describe('period open strict audit — PostgreSQL', { timeout: 90_000 }, () => {
       import('@/lib/prisma'),
       import('@/features/contabilidad/actions-periodos'),
     ]);
+    ({ AperturaPeriodoService: aperturaPeriodoService } = await import(
+      '@/lib/services/apertura-periodo-service'
+    ));
     prisma = prismaModule.prisma;
     abrirPeriodoAction = actionModule.abrirPeriodoAction;
 
@@ -81,10 +85,6 @@ describe('period open strict audit — PostgreSQL', { timeout: 90_000 }, () => {
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
     }
     if (userId) await prisma.auditLog.deleteMany({ where: { usuarioId: userId } });
-    if (successPeriodId) {
-      await prisma.aperturaPeriodo.deleteMany({ where: { periodoId: successPeriodId } });
-      await prisma.periodoContable.deleteMany({ where: { periodoId: successPeriodId } });
-    }
     if (tenantId) {
       await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
       await prisma.periodoContable.deleteMany({ where: { tenantId } });
@@ -96,24 +96,55 @@ describe('period open strict audit — PostgreSQL', { timeout: 90_000 }, () => {
     await prisma.$disconnect();
   });
 
-  it('commits the period and actor-linked audit on success, and rolls back period/opening on audit failure', async () => {
-    const positive = await abrirPeriodoAction({
+  it('blocks unverifiable openings atomically, retains strict audit guarantees, and enforces feature access', async () => {
+    const beforePeriods = await prisma.periodoContable.count({ where: { tenantId } });
+    const beforeOpenings = await prisma.aperturaPeriodo.count({ where: { tenantId } });
+    const beforeAudits = await prisma.auditLog.count({ where: { usuarioId: userId } });
+
+    const blocked = await abrirPeriodoAction({
       tipo: TipoPeriodo.MENSUAL,
       fechaInicio: '2098-01-01T00:00:00.000Z',
       fechaFin: '2098-01-31T23:59:59.000Z',
     });
-    expect(positive.success, JSON.stringify(positive)).toBe(true);
-    successPeriodId = (expectActionSuccess(positive).data as { periodo: { periodoId: string } }).periodo.periodoId;
+    expect(blocked.success).toBe(false);
+    expect(expectActionFailure(blocked).error?.code).toBe('APERTURA_SALDOS_NO_VERIFICABLES');
+    expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(beforePeriods);
+    expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(beforeOpenings);
+    expect(await prisma.auditLog.count({ where: { usuarioId: userId } })).toBe(beforeAudits);
+
+    // Simulate verified evidence only in this integration test while still writing
+    // the opening row through the real transaction-scoped PostgreSQL client.
+    vi.spyOn(aperturaPeriodoService, 'createAperturaPeriodo').mockImplementation(
+      async (periodoId, openingTenantId, _actor, tx) => {
+        if (!tx) throw new Error('Expected transaction-scoped client');
+        return tx.aperturaPeriodo.create({
+          data: {
+            periodoId,
+            tenantId: openingTenantId,
+            saldoCajaInicial: 125,
+            detalleJson: { evidencia: 'verified-test-fixture', moneda: 'CUP' },
+          },
+        });
+      },
+    );
+    const successful = await abrirPeriodoAction({
+      tipo: TipoPeriodo.MENSUAL,
+      fechaInicio: '2098-02-01T00:00:00.000Z',
+      fechaFin: '2098-02-28T23:59:59.000Z',
+    });
+    expect(successful.success, JSON.stringify(successful)).toBe(true);
+    const successfulPeriodId = (successful as {
+      data: { periodo: { periodoId: string } };
+    }).data.periodo.periodoId;
     const audit = await prisma.auditLog.findFirst({
-      where: { entidad: 'CIERRE_CONTABLE', entidadId: successPeriodId, usuarioId: userId },
+      where: { entidad: 'CIERRE_CONTABLE', entidadId: successfulPeriodId, usuarioId: userId },
     });
     expect(audit).not.toBeNull();
-
-    const beforePeriods = await prisma.periodoContable.count({ where: { tenantId } });
-    const beforeOpenings = await prisma.aperturaPeriodo.count({ where: { tenantId } });
-    const beforeAudits = await prisma.auditLog.count({
-      where: { entidad: 'CIERRE_CONTABLE', usuarioId: userId },
+    const successfulOpening = await prisma.aperturaPeriodo.findUnique({
+      where: { periodoId: successfulPeriodId },
     });
+    expect(successfulOpening?.saldoCajaInicial.toString()).toBe('125');
+
     await prisma.$executeRawUnsafe(`
       CREATE FUNCTION "${functionName}"() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN
@@ -130,16 +161,30 @@ describe('period open strict audit — PostgreSQL', { timeout: 90_000 }, () => {
     `);
     triggerInstalled = true;
 
-    const rejected = await abrirPeriodoAction({
+    const beforeFailedOpenings = await prisma.aperturaPeriodo.count({ where: { tenantId } });
+    const beforeFailedPeriods = await prisma.periodoContable.count({ where: { tenantId } });
+    const beforeFailedAudits = await prisma.auditLog.count({ where: { usuarioId: userId } });
+    const auditRejectedOpening = await abrirPeriodoAction({
       tipo: TipoPeriodo.MENSUAL,
-      fechaInicio: '2098-02-01T00:00:00.000Z',
-      fechaFin: '2098-02-28T23:59:59.000Z',
+      fechaInicio: '2098-03-01T00:00:00.000Z',
+      fechaFin: '2098-03-31T23:59:59.000Z',
     });
-    expect(rejected.success).toBe(false);
-    expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(beforePeriods);
-    expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(beforeOpenings);
-    expect(await prisma.auditLog.count({
-      where: { entidad: 'CIERRE_CONTABLE', usuarioId: userId },
-    })).toBe(beforeAudits);
+    expect(auditRejectedOpening.success).toBe(false);
+    expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(beforeFailedOpenings);
+    expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(beforeFailedPeriods);
+    expect(await prisma.auditLog.count({ where: { usuarioId: userId } })).toBe(beforeFailedAudits);
+
+    const beforeDeniedPeriods = await prisma.periodoContable.count({ where: { tenantId } });
+    const beforeDeniedOpenings = await prisma.aperturaPeriodo.count({ where: { tenantId } });
+    accountingEnabled = false;
+    const denied = await abrirPeriodoAction({
+      tipo: TipoPeriodo.MENSUAL,
+      fechaInicio: '2098-04-01T00:00:00.000Z',
+      fechaFin: '2098-04-30T23:59:59.000Z',
+    });
+    expect(denied.success).toBe(false);
+    expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(beforeDeniedPeriods);
+    expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(beforeDeniedOpenings);
+    vi.restoreAllMocks();
   });
 });
