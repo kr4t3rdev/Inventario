@@ -6,8 +6,9 @@
 Las comparaciones históricas de este documento conservan su destino original `c860c867`;
 las decisiones de los próximos slices deben contrastarse también con el `origin/main` vigente.
 
-**Decisión posterior del usuario:** S2 y S5 quedaron descartados. Sus referencias
-en este documento se conservan como evidencia histórica, no como tareas activas.
+**Decisión posterior del usuario:** S2 y S5 quedaron descartados. También se
+descartaron S3, S4 y S6–S10 al no cerrarse en la iteración solicitada. Sus
+referencias en este documento son evidencia histórica, no tareas activas.
 
 ## Referencias fijadas
 
