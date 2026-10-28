@@ -223,38 +223,14 @@ describe('cash debt payment formal posting on isolated PostgreSQL', () => {
     await prisma.tenantAccountingPolicy.create({
       data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId },
     });
-    await seedPlanContable(prisma as never, tenantId);
+    await prisma.$transaction((tx) => seedPlanContable(tx as never, tenantId));
     await seedPlantillasGlobales(prisma as never);
     const [moratoryIncome, moratoryExpense] = await Promise.all([
-      prisma.cuentaContable.create({
-        data: {
-          tenantId,
-          codigo: `TEST-MORA-INC-${suffix}`,
-          nombre: 'Integration-only moratory income',
-          tipo: 'INGRESO',
-          naturaleza: 'ACREEDORA',
-          nivel: 1,
-          aceptaMovimiento: true,
-        },
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '4.6' } },
       }),
-      prisma.cuentaContable.create({
-        data: {
-          tenantId,
-          codigo: `TEST-MORA-EXP-${suffix}`,
-          nombre: 'Integration-only moratory expense',
-          tipo: 'GASTO',
-          naturaleza: 'DEUDORA',
-          nivel: 1,
-          aceptaMovimiento: true,
-        },
-      }),
-    ]);
-    await Promise.all([
-      prisma.cuentaRolTenant.create({
-        data: { tenantId, rol: 'INTERESES_MORATORIOS_GANADOS', cuentaId: moratoryIncome.cuentaContableId },
-      }),
-      prisma.cuentaRolTenant.create({
-        data: { tenantId, rol: 'GASTOS_MORATORIOS', cuentaId: moratoryExpense.cuentaContableId },
+      prisma.cuentaContable.findUniqueOrThrow({
+        where: { tenantId_codigo: { tenantId, codigo: '6.6' } },
       }),
     ]);
     await prisma.tenantLicense.create({
@@ -401,6 +377,64 @@ describe('cash debt payment formal posting on isolated PostgreSQL', () => {
     await prisma.$executeRawUnsafe("DROP FUNCTION IF EXISTS public.\"" + allocationFailureFunction + "\"()");
     if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
     else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
+  });
+
+  it('revierte los cambios del seed cuando existe una colisión sin rol asignado', async () => {
+    const role = { tenantId, rol: 'INTERESES_MORATORIOS_GANADOS' };
+    const diariesBefore = await prisma.diario.count({ where: { tenantId } });
+    await expect(prisma.$transaction(async (tx) => {
+      await tx.cuentaRolTenant.delete({ where: { tenantId_rol: role } });
+      await tx.cuentaContable.update({
+        where: { cuentaContableId: fixture.moratoryIncomeAccountId },
+        data: { esDeSistema: false },
+      });
+      await tx.diario.deleteMany({ where: { tenantId } });
+      await seedPlanContable(tx as never, tenantId);
+    })).rejects.toThrow('4.6');
+    expect(await prisma.diario.count({ where: { tenantId } })).toBe(diariesBefore);
+    expect(await prisma.cuentaRolTenant.findUnique({ where: { tenantId_rol: role } })).not.toBeNull();
+  });
+
+  it('preserva la asignación personalizada cuando el código predeterminado está ocupado', async () => {
+    const rollback = new Error('rollback seed collision review');
+    await expect(prisma.$transaction(async (tx) => {
+      const role = { tenantId, rol: 'INTERESES_MORATORIOS_GANADOS' };
+      await tx.cuentaRolTenant.update({
+        where: { tenantId_rol: role }, data: { cuentaId: fixture.moratoryExpenseAccountId },
+      });
+      await tx.cuentaContable.update({
+        where: { cuentaContableId: fixture.moratoryIncomeAccountId }, data: { esDeSistema: false },
+      });
+      await seedPlanContable(tx as never, tenantId);
+      const mapping = await tx.cuentaRolTenant.findUniqueOrThrow({ where: { tenantId_rol: role } });
+      expect(mapping.cuentaId).toBe(fixture.moratoryExpenseAccountId);
+      throw rollback;
+    })).rejects.toBe(rollback);
+  });
+
+  it('preserva la asignación y el nombre personalizados al resembrar', async () => {
+    const rollback = new Error('rollback seed review');
+    await expect(prisma.$transaction(async (tx) => {
+      const role = { tenantId, rol: 'INTERESES_MORATORIOS_GANADOS' };
+      await tx.cuentaRolTenant.update({
+        where: { tenantId_rol: role },
+        data: { cuentaId: fixture.moratoryExpenseAccountId },
+      });
+      await tx.cuentaContable.update({
+        where: { cuentaContableId: fixture.moratoryIncomeAccountId },
+        data: { nombre: 'Nombre personalizado' },
+      });
+      await seedPlanContable(tx as never, tenantId);
+      const [mapping, account] = await Promise.all([
+        tx.cuentaRolTenant.findUniqueOrThrow({ where: { tenantId_rol: role } }),
+        tx.cuentaContable.findUniqueOrThrow({
+          where: { cuentaContableId: fixture.moratoryIncomeAccountId },
+        }),
+      ]);
+      expect(mapping.cuentaId).toBe(fixture.moratoryExpenseAccountId);
+      expect(account.nombre).toBe('Nombre personalizado');
+      throw rollback;
+    })).rejects.toBe(rollback);
   });
 
   it('posts exactly one balanced, FX-evidenced journal with the cash payment and reuses it on idempotent replay', async () => {

@@ -56,10 +56,18 @@ function crearTxMock(): {
 		cuentaContable: {
 			upsert: vi.fn(async (args: UpsertCall) => {
 				llamadasCuentas.push(args);
-				return { cuentaContableId: `cta-${(args.create as { codigo: string }).codigo}` };
+				return {
+					cuentaContableId: `cta-${(args.create as { codigo: string }).codigo}`,
+					esDeSistema: true,
+					tipo: args.create.tipo as string,
+					naturaleza: args.create.naturaleza as string,
+					aceptaMovimiento: args.create.aceptaMovimiento as boolean,
+					activa: true,
+				};
 			}),
 		},
 		cuentaRolTenant: {
+			findUnique: vi.fn(async () => null),
 			upsert: vi.fn(async (args: UpsertCall) => {
 				llamadasRoles.push(args);
 				return { cuentaRolId: `rol-${(args.create as { rol: string }).rol}` };
@@ -77,6 +85,23 @@ function crearTxMock(): {
 }
 
 describe('seedPlanContable', () => {
+	it('rechaza un cliente Prisma fuera de una transacción antes de escribir', async () => {
+		const { tx, llamadasDiarios } = crearTxMock();
+		await expect(seedPlanContable(Object.assign(tx, { $transaction: () => {} }), TENANT_ID))
+			.rejects.toThrow('transacción');
+		expect(llamadasDiarios).toHaveLength(0);
+	});
+
+	it('permite una cuenta predeterminada incompatible si el rol ya está asignado', async () => {
+		const { tx } = crearTxMock();
+		tx.cuentaRolTenant.findUnique = vi.fn(async () => ({ cuentaRolId: 'rol-existente' }));
+		const upsert = tx.cuentaContable.upsert;
+		tx.cuentaContable.upsert = vi.fn(async (args) => {
+			const cuenta = await upsert(args);
+			return args.create.codigo === '4.6' ? { ...cuenta, esDeSistema: false } : cuenta;
+		});
+		await expect(seedPlanContable(tx, TENANT_ID)).resolves.toBeDefined();
+	});
 	it('rechaza tenant vacío antes de tocar la base de datos', async () => {
 		const { tx, llamadasCuentas } = crearTxMock();
 		await expect(seedPlanContable(tx, '')).rejects.toThrow();
@@ -130,11 +155,18 @@ describe('seedPlanContable', () => {
 		}
 	});
 
-	it('mapea los 23 roles a las cuentas hoja resueltas', async () => {
+	it('mapea todos los roles, incluidos los intereses moratorios, a cuentas hoja', async () => {
 		const { tx, llamadasRoles } = crearTxMock();
 		const resultado = await seedPlanContable(tx, TENANT_ID);
-		expect(resultado.roles).toBe(23);
-		expect(llamadasRoles).toHaveLength(23);
+		expect(resultado.roles).toBe(25);
+		expect(llamadasRoles).toHaveLength(25);
+		for (const rol of ['INTERESES_MORATORIOS_GANADOS', 'GASTOS_MORATORIOS']) {
+			const mapping = llamadasRoles.find((llamada) => llamada.create.rol === rol);
+			expect(mapping, `falta el rol ${rol}`).toBeDefined();
+			const codigo = ROLES_CUENTA_DEFAULT[rol as keyof typeof ROLES_CUENTA_DEFAULT];
+			const cuenta = CUENTAS_PLAN_DEFAULT.find((item) => item.codigo === codigo);
+			expect(cuenta?.aceptaMovimiento).toBe(true);
+		}
 		for (const llamada of llamadasRoles) {
 			const create = llamada.create as { rol: string; cuentaId: string; tenantId: string };
 			expect(create.tenantId).toBe(TENANT_ID);
@@ -156,6 +188,16 @@ describe('seedPlanContable', () => {
 				.map((llamada) => JSON.stringify(llamada.where)),
 		);
 		expect(unicosPrimera.size).toBe(CUENTAS_PLAN_DEFAULT.length);
+	});
+
+	it('rechaza una cuenta moratoria preexistente que no pertenece al plan de sistema', async () => {
+		const { tx } = crearTxMock();
+		const upsert = tx.cuentaContable.upsert;
+		tx.cuentaContable.upsert = vi.fn(async (args) => {
+			const cuenta = await upsert(args);
+			return args.create.codigo === '4.6' ? { ...cuenta, esDeSistema: false } : cuenta;
+		});
+		await expect(seedPlanContable(tx, TENANT_ID)).rejects.toThrow('4.6');
 	});
 });
 

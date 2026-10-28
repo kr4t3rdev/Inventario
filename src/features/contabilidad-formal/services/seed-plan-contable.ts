@@ -29,9 +29,18 @@ export interface SeedUpsertArgs {
 export interface SeedTx {
 	diario: { upsert(args: SeedUpsertArgs): Promise<{ diarioId: string }> };
 	cuentaContable: {
-		upsert(args: SeedUpsertArgs): Promise<{ cuentaContableId: string }>;
+		upsert(args: SeedUpsertArgs): Promise<{
+			cuentaContableId: string;
+			esDeSistema: boolean;
+			tipo: string;
+			naturaleza: string;
+			aceptaMovimiento: boolean;
+			activa: boolean;
+		}>;
 	};
 	cuentaRolTenant: {
+		findUnique(args: { where: { tenantId_rol: { tenantId: string; rol: string } } }):
+			Promise<{ cuentaRolId: string } | null>;
 		upsert(args: SeedUpsertArgs): Promise<{ cuentaRolId: string }>;
 	};
 	plantillaAsiento: {
@@ -66,6 +75,9 @@ export async function seedPlanContable(
 	if (!tenantId || !tenantId.trim()) {
 		throw new Error('tenantId requerido para sembrar el plan de cuentas');
 	}
+	if ('$transaction' in tx) {
+		throw new Error('El seed requiere una transacción Prisma');
+	}
 
 	for (const diario of DIARIOS_DEFAULT) {
 		await tx.diario.upsert({
@@ -76,7 +88,7 @@ export async function seedPlanContable(
 				codigo: diario.codigo,
 				nombre: diario.nombre,
 			},
-			update: { nombre: diario.nombre, tipo: diario.tipo, activo: true },
+			update: {},
 		});
 	}
 
@@ -100,14 +112,22 @@ export async function seedPlanContable(
 				esDeSistema: true,
 				...(padreId ? { padreId } : {}),
 			},
-			update: {
-				nombre: cuenta.nombre,
-				tipo: cuenta.tipo,
-				naturaleza: cuenta.naturaleza,
-				nivel: cuenta.nivel,
-				aceptaMovimiento: cuenta.aceptaMovimiento,
-			},
+			update: {},
 		});
+		const rolMoratorio = cuenta.codigo === '4.6' ? 'INTERESES_MORATORIOS_GANADOS'
+			: cuenta.codigo === '6.6' ? 'GASTOS_MORATORIOS' : null;
+		if (rolMoratorio && (
+			!resultado.esDeSistema || resultado.tipo !== cuenta.tipo ||
+			resultado.naturaleza !== cuenta.naturaleza || !resultado.aceptaMovimiento ||
+			!resultado.activa
+		)) {
+			const rolExistente = await tx.cuentaRolTenant.findUnique({
+				where: { tenantId_rol: { tenantId, rol: rolMoratorio } },
+			});
+			if (!rolExistente) {
+				throw new Error(`La cuenta ${cuenta.codigo} no es compatible con el plan predeterminado`);
+			}
+		}
 		idPorCodigo.set(cuenta.codigo, resultado.cuentaContableId);
 	}
 
@@ -122,7 +142,7 @@ export async function seedPlanContable(
 		await tx.cuentaRolTenant.upsert({
 			where: { tenantId_rol: { tenantId, rol } },
 			create: { tenantId, rol, cuentaId },
-			update: { cuentaId },
+			update: {},
 		});
 		roles += 1;
 	}
