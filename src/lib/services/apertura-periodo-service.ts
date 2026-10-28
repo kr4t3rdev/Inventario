@@ -83,33 +83,12 @@ export class AperturaPeriodoService {
 			);
 		}
 
-		const saldos = await this.deriveOpeningBalances(
+		void actor;
+		return this.deriveOpeningBalances(
 			tenantId,
 			periodo.tipo as TipoPeriodo,
 			periodo.fechaInicio,
 			client,
 		);
-
-		const apertura = await db.aperturaPeriodo.create({
-			data: {
-				periodoId,
-				tenantId,
-				origenPeriodoId: saldos.origenPeriodoId,
-				saldoCajaInicial: saldos.saldoCajaInicial,
-				saldoBancoInicial: saldos.saldoBancoInicial,
-				saldoCuentasCobrarInicial: saldos.saldoCuentasCobrarInicial,
-				saldoCuentasPagarInicial: saldos.saldoCuentasPagarInicial,
-				saldoInventarioInicial: saldos.saldoInventarioInicial,
-				saldoCapitalInicial: saldos.saldoCapitalInicial,
-				saldoResultadoAcumInicial: saldos.saldoResultadoAcumInicial,
-				detalleJson: {
-					...saldos.detalle,
-					generadoPor: actor,
-					generadoEn: new Date().toISOString(),
-				},
-			},
-		});
-
-		return apertura;
 	}
 }
