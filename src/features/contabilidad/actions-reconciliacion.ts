@@ -125,10 +125,17 @@ export const getVentasPendientesAction = withAction(
 
 		// Count total pending for pagination
 		const totalRows = await prisma.$queryRaw<
-			Array<{ total: bigint }>
+			Array<{ total: bigint; saldoPendiente: number }>
 		>(Prisma.sql`
-    SELECT COUNT(*)::bigint AS total FROM (
-      SELECT v."ventaId"
+    SELECT COUNT(*)::bigint AS total,
+      COALESCE(SUM(pendientes.saldo), 0)::double precision AS "saldoPendiente" FROM (
+      SELECT v."ventaId", COALESCE(v."total", 0) - COALESCE(SUM(
+        CASE
+          WHEN rv."moneda" = 'CUP' THEN rv."monto"
+          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
+          ELSE rv."monto"
+        END
+      ), 0) AS saldo
       FROM "Venta" v
       LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
       ${whereSql}
@@ -144,11 +151,13 @@ export const getVentasPendientesAction = withAction(
   `);
 
 		const total = Number(totalRows[0]?.total || 0);
+		const saldoPendienteTotal = Number(totalRows[0]?.saldoPendiente || 0);
 		const ventaIds = pendingRows.map((r) => r.ventaId);
 
 		if (ventaIds.length === 0) {
 			return {
 				ventas: [],
+				saldoPendienteTotal,
 				pagination: {
 					page,
 					limit,
@@ -190,6 +199,7 @@ export const getVentasPendientesAction = withAction(
 
 		return {
 			ventas,
+			saldoPendienteTotal,
 			pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
 		};
 	},
