@@ -65,6 +65,9 @@ const METODO_PAGO_COLORS: Record<string, string> = {
 
 /** @description Fila de operación */
 function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
+	const clasificacion =
+		item.clasificacion ??
+		(item.estaReconciliado ? "RECONCILIADA" : "NO_CLASIFICADA");
 	const rowClass = cn(
 		"border-b border-border/70 transition-colors hover:bg-accent/40",
 		item.diferencia !== 0 && item.estaReconciliado && "bg-amber-50/50",
@@ -125,9 +128,20 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 						className="bg-red-50 text-red-700 border-red-200"
 					>
 						<XCircle className="h-3 w-3 mr-1" />
-						Pendiente
+						Sin reconciliar
 					</Badge>
 				)}
+			</TableCell>
+			<TableCell>
+				<Badge variant="outline" className="text-xs">
+					{clasificacion === "CUENTA_POR_COBRAR"
+						? `Cuenta por cobrar${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
+						: clasificacion === "CUENTA_POR_PAGAR"
+							? `Cuenta por pagar${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
+							: clasificacion === "RECONCILIADA"
+								? "Reconciliada"
+								: "Elegibilidad no determinada"}
+				</Badge>
 			</TableCell>
 			<TableCell>
 				{item.montoReconciliado !== null
@@ -173,6 +187,7 @@ function OperacionesTable({
 								<TableHead>Monto</TableHead>
 								<TableHead>Método Pago</TableHead>
 								<TableHead>Estado</TableHead>
+								<TableHead>Clasificación</TableHead>
 								<TableHead>Monto Reconc.</TableHead>
 								<TableHead className="text-right">Diferencia</TableHead>
 							</TableRow>
@@ -181,7 +196,7 @@ function OperacionesTable({
 							{items.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={9}
+										colSpan={10}
 										className="text-center text-muted-foreground py-8"
 									>
 										{emptyMessage}
@@ -292,7 +307,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Pendientes
+								Sin reconciliar
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -303,12 +318,16 @@ export function VentasVsReconciliadoTab({
 								</span>
 							</div>
 							<p className="text-xs text-muted-foreground mt-1">
-								sin reconciliar
+								Incluye casos sin clasificar y cuentas por cobrar/pagar
 							</p>
 						</CardContent>
 					</Card>
 				</motion.div>
 			</motion.div>
+			<p className="text-xs text-muted-foreground">
+				“Sin reconciliar” no confirma elegibilidad para conciliación. CxC y CxP se muestran
+				cuando existe una relación conocida; los demás casos quedan sin clasificar.
+			</p>
 
 			{/* Card de Gastos */}
 			<motion.div

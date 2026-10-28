@@ -75,4 +75,143 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       .reduce((sum, item) => sum + item.monto, 0);
     expect(totalIngresos).toBe(300);
   });
+
+  it('identifica como CxC una venta enlazada, sin inferir que es conciliable', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.venta.findMany.mockResolvedValueOnce([
+      {
+        ventaId: 'venta-cxc', total: 4300, createdAt: new Date('2026-01-15'),
+        metodoPago: null, reconciliaciones: [],
+        factura: { cuentaPorCobrar: { estado: 'PENDIENTE' } },
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'venta-cxc')).toMatchObject({
+      clasificacion: 'CUENTA_POR_COBRAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(result.totales.cantidadPendientes).toBe(1);
+    expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.include?.factura).toEqual({
+      select: { cuentaPorCobrar: { select: { estado: true } } },
+    });
+  });
+
+  it('identifica CxC vinculada directamente a una venta de servicio', async () => {
+    const service = {
+      ventaServicioId: 'servicio-cxc', total: 250,
+      createdAt: new Date('2026-01-15'), reconciliaciones: [],
+      cuentaPorCobrar: { estado: 'PENDIENTE' }, factura: null,
+    };
+    mockPrisma.ventaServicios.findMany.mockImplementation((args: { where?: { ventaId?: null } }) =>
+      Promise.resolve(args?.where?.ventaId === null ? [service] : []),
+    );
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'servicio-cxc')).toMatchObject({
+      clasificacion: 'CUENTA_POR_COBRAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(mockPrisma.ventaServicios.findMany.mock.calls[0]?.[0]?.include?.cuentaPorCobrar)
+      .toEqual({ select: { estado: true } });
+  });
+
+  it('identifica una compra enlazada a CxP con el estado real de la cuenta', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.gastosDE.findMany.mockResolvedValueOnce([
+      {
+        gastosDEId: 'gasto-cxp', numeroFactura: 'QA-FAC-2026-001', monto: 1100,
+        proveedor: 'Proveedor de prueba', createdAt: new Date('2026-01-15'),
+        reconciliaciones: [], cuentaPorPagar: { estado: 'PENDIENTE' },
+      },
+    ]);
+    mockPrisma.gastoCompra.findMany.mockResolvedValueOnce([
+      {
+        gastoCompraId: 'compra-cxp', numeroFactura: 'QA-FAC-2026-002',
+        total: 1200, createdAt: new Date('2026-01-15'), reconciliaciones: [],
+        cuentaPorPagar: { estado: 'PARCIAL' },
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'compra-cxp')).toMatchObject({
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PARCIAL',
+    });
+    expect(result.items.find((item) => item.id === 'gasto-cxp')).toMatchObject({
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(result.totales.cantidadGastosPendientes).toBe(2);
+    expect(mockPrisma.gastosDE.findMany.mock.calls[0]?.[0]?.include?.cuentaPorPagar).toEqual({
+      select: { estado: true },
+    });
+  });
+
+  it('deja sin clasificar una compra sin relación CxP conocida', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.gastoCompra.findMany.mockResolvedValueOnce([
+      {
+        gastoCompraId: 'compra-sin-cxp', numeroFactura: 'QA-FAC-2026-003',
+        total: 700, createdAt: new Date('2026-01-15'), reconciliaciones: [],
+        cuentaPorPagar: null,
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'compra-sin-cxp')).toMatchObject({
+      clasificacion: 'NO_CLASIFICADA',
+      estadoCuenta: null,
+    });
+  });
+
+  it('clasifica vínculos CxC/CxP en operaciones históricas con estado conocido', async () => {
+    mockPrisma.venta.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ventaId: 'venta-historica-cxc', total: 900,
+          createdAt: new Date('2025-12-15'), metodoPago: null, reconciliaciones: [],
+          factura: { cuentaPorCobrar: { estado: 'PARCIAL' } },
+          VentaServicios: [],
+        },
+      ]);
+    mockPrisma.gastoCompra.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          gastoCompraId: 'compra-historica-cxp', numeroFactura: 'OLD-FAC-1',
+          total: 500, createdAt: new Date('2025-12-15'), reconciliaciones: [],
+          cuentaPorPagar: { estado: 'PENDIENTE' },
+        },
+      ]);
+    mockPrisma.gastosDE.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          gastosDEId: 'gasto-historico-cxp', numeroFactura: 'OLD-FAC-2', monto: 300,
+          proveedor: 'Proveedor histórico', createdAt: new Date('2025-12-15'),
+          reconciliaciones: [], cuentaPorPagar: { estado: 'PARCIAL' },
+        },
+      ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.itemsAntiguos.find((item) => item.id === 'venta-historica-cxc')).toMatchObject({
+      clasificacion: 'CUENTA_POR_COBRAR',
+      estadoCuenta: 'PARCIAL',
+    });
+    expect(result.itemsAntiguos.find((item) => item.id === 'compra-historica-cxp')).toMatchObject({
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(result.itemsAntiguos.find((item) => item.id === 'gasto-historico-cxp')).toMatchObject({
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PARCIAL',
+    });
+  });
 });
