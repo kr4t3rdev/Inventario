@@ -508,37 +508,13 @@ describe("obtenerTimelineAction", () => {
 // ── Tests: abrirPeriodoAction ─────────────────────────────────────────────
 
 describe("abrirPeriodoAction", () => {
-	it("persiste la auditoría de apertura dentro de la transacción", async () => {
+	it("bloquea la apertura no verificable y mantiene la operación atómica", async () => {
 		mockPrisma.periodoContable.count.mockResolvedValue(0);
 		mockPrisma.periodoContable.create.mockResolvedValue(
 			makePeriodo({ tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
 		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
 		mockAperturaService();
 		const { AuditLogService } = await import("@/lib/services/audit-log-service");
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.MENSUAL,
-			fechaInicio: "2026-03-01T00:00:00Z",
-			fechaFin: "2026-03-31T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(AuditLogService.logStrict).toHaveBeenCalledWith(
-			expect.objectContaining({ accion: "CREATE", entidad: "CIERRE_CONTABLE", usuarioId: ACTOR }),
-			mockPrisma,
-		);
-	});
-
-	it("propaga el fallo de auditoría y no completa la apertura", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0);
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({ tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-		const { AuditLogService } = await import("@/lib/services/audit-log-service");
-		vi.mocked(AuditLogService.logStrict).mockRejectedValueOnce(new Error("audit unavailable"));
 
 		const result = await abrirPeriodoAction({
 			tipo: TipoPeriodo.MENSUAL,
@@ -547,78 +523,11 @@ describe("abrirPeriodoAction", () => {
 		});
 
 		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(expectActionFailure(result).error?.message).toContain("revisión contable");
+		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
+		expect(AuditLogService.logStrict).not.toHaveBeenCalled();
 		expect(revalidatePath).not.toHaveBeenCalled();
-	});
-
-	it("abre un período mensual exitosamente", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0); // sin solapamiento
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({
-				tipo: TipoPeriodo.MENSUAL,
-				estado: EstadoPeriodo.ABIERTO,
-				fechaInicio: new Date("2026-03-01"),
-				fechaFin: new Date("2026-03-31"),
-			}),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.MENSUAL,
-			fechaInicio: "2026-03-01T00:00:00Z",
-			fechaFin: "2026-03-31T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.ABIERTO);
-		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.MENSUAL);
-		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
-	});
-
-	it("abre un período diario exitosamente", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0);
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({
-				tipo: TipoPeriodo.DIARIO,
-				estado: EstadoPeriodo.ABIERTO,
-				fechaInicio: new Date("2026-03-15"),
-				fechaFin: new Date("2026-03-15"),
-			}),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.DIARIO,
-			fechaInicio: "2026-03-15T00:00:00Z",
-			fechaFin: "2026-03-15T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.DIARIO);
-	});
-
-	it("abre un período anual exitosamente", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0);
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({
-				tipo: TipoPeriodo.ANUAL,
-				estado: EstadoPeriodo.ABIERTO,
-				fechaInicio: new Date("2026-01-01"),
-				fechaFin: new Date("2026-12-31"),
-			}),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.ANUAL,
-			fechaInicio: "2026-01-01T00:00:00Z",
-			fechaFin: "2026-12-31T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.ANUAL);
 	});
 
 	it("falla con fechas inválidas (inicio posterior a fin)", async () => {
@@ -669,68 +578,28 @@ describe("abrirPeriodoAction", () => {
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 	});
 
-	it("invalida el caché del guard después de abrir", async () => {
+	it.each([
+		TipoPeriodo.DIARIO,
+		TipoPeriodo.MENSUAL,
+		TipoPeriodo.TRIMESTRAL,
+		TipoPeriodo.SEMESTRAL,
+		TipoPeriodo.ANUAL,
+	])("bloquea períodos %s hasta contar con saldos iniciales verificables", async (tipo) => {
 		mockPrisma.periodoContable.count.mockResolvedValue(0);
 		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({ estado: EstadoPeriodo.ABIERTO }),
+			makePeriodo({ tipo, estado: EstadoPeriodo.ABIERTO }),
 		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
 		mockAperturaService();
 
-		await abrirPeriodoAction({
-			tipo: TipoPeriodo.MENSUAL,
+		const result = await abrirPeriodoAction({
+			tipo,
 			fechaInicio: "2026-03-01T00:00:00Z",
 			fechaFin: "2026-03-31T23:59:59Z",
 		});
 
-		// invalidateCache se llama internamente; verificamos revalidatePath
-		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
-	});
-
-	it("abre un período trimestral exitosamente", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0);
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({
-				tipo: TipoPeriodo.TRIMESTRAL,
-				estado: EstadoPeriodo.ABIERTO,
-				fechaInicio: new Date("2026-01-01"),
-				fechaFin: new Date("2026-03-31"),
-			}),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.TRIMESTRAL,
-			fechaInicio: "2026-01-01T00:00:00Z",
-			fechaFin: "2026-03-31T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.TRIMESTRAL);
-	});
-
-	it("abre un período semestral exitosamente", async () => {
-		mockPrisma.periodoContable.count.mockResolvedValue(0);
-		mockPrisma.periodoContable.create.mockResolvedValue(
-			makePeriodo({
-				tipo: TipoPeriodo.SEMESTRAL,
-				estado: EstadoPeriodo.ABIERTO,
-				fechaInicio: new Date("2026-01-01"),
-				fechaFin: new Date("2026-06-30"),
-			}),
-		);
-		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
-		mockAperturaService();
-
-		const result = await abrirPeriodoAction({
-			tipo: TipoPeriodo.SEMESTRAL,
-			fechaInicio: "2026-01-01T00:00:00Z",
-			fechaFin: "2026-06-30T23:59:59Z",
-		});
-
-		expect(result.success).toBe(true);
-		expect(expectActionSuccess(result).data?.periodo.tipo).toBe(TipoPeriodo.SEMESTRAL);
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
 	});
 });
 

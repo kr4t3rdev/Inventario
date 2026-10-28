@@ -16,7 +16,7 @@ const mockPrisma = vi.hoisted(() => ({
     findMany: vi.fn(),
   },
   aperturaPeriodo: {
-    upsert: vi.fn(),
+    update: vi.fn(),
   },
 }));
 
@@ -55,7 +55,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
       tenantId: 'tenant-mock-1',
       fechaInicio: new Date('2026-01-01'),
       fechaFin: new Date('2026-01-31'),
-      apertura: null,
+      apertura: { aperturaId: 'ap-1' },
     });
 
     mockPrisma.arqueoCaja.findMany.mockResolvedValue([
@@ -86,11 +86,10 @@ describe('integrarArqueosEnPeriodoAction', () => {
     }
 
     // Verificar que se actualizó detalleJson
-    expect(mockPrisma.aperturaPeriodo.upsert).toHaveBeenCalledWith(
+    expect(mockPrisma.aperturaPeriodo.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { periodoId: 'periodo-1' },
-        create: expect.objectContaining({
-          periodoId: 'periodo-1',
+        data: expect.objectContaining({
           detalleJson: expect.objectContaining({
             ventasPorMetodoPago: expect.objectContaining({
               efectivo: 100000,
@@ -108,6 +107,23 @@ describe('integrarArqueosEnPeriodoAction', () => {
         data: { contabilizado: true },
       }),
     );
+  });
+
+  it('must not manufacture a zero-balance opening when integrating without one', async () => {
+    mockPrisma.periodoContable.findFirst.mockResolvedValue({
+      periodoId: 'periodo-1',
+      tenantId: 'tenant-mock-1',
+      fechaInicio: new Date('2026-01-01'),
+      fechaFin: new Date('2026-01-31'),
+      apertura: null,
+    });
+    mockPrisma.arqueoCaja.findMany.mockResolvedValue([{ id: 'arqueo-1' }]);
+
+    const result = await integrarArqueosEnPeriodoAction('periodo-1');
+
+    expect(result.success).toBe(false);
+    expect(mockPrisma.aperturaPeriodo.update).not.toHaveBeenCalled();
+    expect(mockPrisma.arqueoCaja.updateMany).not.toHaveBeenCalled();
   });
 
   it('should return 0 when no arqueos to integrate', async () => {
@@ -129,7 +145,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
     }
 
     // No debe llamar upsert ni updateMany si no hay arqueos
-    expect(mockPrisma.aperturaPeriodo.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.aperturaPeriodo.update).not.toHaveBeenCalled();
     expect(mockPrisma.arqueoCaja.updateMany).not.toHaveBeenCalled();
   });
 
@@ -139,7 +155,7 @@ describe('integrarArqueosEnPeriodoAction', () => {
       tenantId: 'tenant-mock-1',
       fechaInicio: new Date('2026-01-01'),
       fechaFin: new Date('2026-01-31'),
-      apertura: null,
+      apertura: { aperturaId: 'ap-1' },
     });
 
     // Primera integración: 1 arqueo
