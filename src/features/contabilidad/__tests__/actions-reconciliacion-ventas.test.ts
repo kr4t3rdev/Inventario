@@ -113,6 +113,28 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		expect(result.data.saldoPendienteTotal).toBe(1234.5);
 	});
 
+	it('aplica los mismos filtros de fecha y punto de venta al listado y al total', async () => {
+		prismaMock.$queryRaw
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([{ total: BigInt(0), saldoPendiente: 0 }]);
+
+		await getVentasPendientesAction({
+			fechaInicio: '2026-01-01',
+			fechaFin: '2026-01-31',
+			puntoDeVentaId: 'pv-1',
+		});
+
+		for (const [query] of prismaMock.$queryRaw.mock.calls.slice(0, 2)) {
+			expect(query.sql).toContain('v."createdAt" >=');
+			expect(query.sql).toContain('v."createdAt" <=');
+			expect(query.sql).toContain('v."puntoDeVentaId" =');
+			expect(query.values).toEqual(expect.arrayContaining([
+				'tenant-1', 'pv-1', new Date('2026-01-01T00:00:00.000Z'),
+				new Date('2026-01-31T23:59:59.999Z'),
+			]));
+		}
+	});
+
 	it('excluye de pendientes las ventas administradas por CxC activa', async () => {
 		prismaMock.$queryRaw
 			.mockResolvedValueOnce([])
