@@ -19,8 +19,8 @@ import {
 	ArrowLeft,
 	Lock,
 } from "lucide-react";
-import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatCivilDate } from "@/features/contabilidad/lib/format-civil-date";
 
 import { BalanceTab } from "../periodos/balance-tab";
 import { VentasVsReconciliadoTab } from "../periodos/ventas-vs-reconciliado-tab";
@@ -290,13 +290,9 @@ export function CuadrePeriodoPageClient({
 								<Badge variant="outline" className="text-xs">
 									{TIPO_LABELS[initialPeriodo.tipo] ?? initialPeriodo.tipo}
 								</Badge>{" "}
-								{format(new Date(initialPeriodo.fechaInicio), "d MMM yyyy", {
-									locale: es,
-								})}{" "}
+								{formatCivilDate(initialPeriodo.fechaInicio, "d MMM yyyy", es)}{" "}
 								—{" "}
-								{format(new Date(initialPeriodo.fechaFin), "d MMM yyyy", {
-									locale: es,
-								})}
+								{formatCivilDate(initialPeriodo.fechaFin, "d MMM yyyy", es)}
 							</p>
 						</div>
 					</div>

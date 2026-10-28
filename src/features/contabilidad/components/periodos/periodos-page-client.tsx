@@ -54,7 +54,7 @@ import {
 	AlertCircle,
 	Info,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatCivilDate } from "@/features/contabilidad/lib/format-civil-date";
 import { PeriodoTimeline } from "./periodo-timeline";
 import { PeriodosDashboard } from "./periodos-dashboard";
 import { PeriodoBadge } from "./periodo-badge";
@@ -436,12 +436,9 @@ export function PeriodosPageClient({
 													</TableCell>
 													<TableCell>
 														<div className="text-sm">
-															{format(
-																new Date(periodo.fechaInicio),
-																"dd/MM/yyyy",
-															)}
+															{formatCivilDate(periodo.fechaInicio, "dd/MM/yyyy")}
 															<span className="text-muted-foreground"> — </span>
-															{format(new Date(periodo.fechaFin), "dd/MM/yyyy")}
+															{formatCivilDate(periodo.fechaFin, "dd/MM/yyyy")}
 														</div>
 													</TableCell>
 													<TableCell>
