@@ -167,6 +167,46 @@ revisión exhaustiva de cada archivo ni una autorización de integración. Los
 detalles de las 99 rutas y las diferencias fuera de esa lista deben completarse
 en cada slice, con pruebas sobre su propio SHA.
 
+### Dependencias y bloqueos verificados
+
+**S2.** `main` ya contiene `20261014220000_servicios_tenant_ownership`, que
+resuelve propietarios de `Servicios` a partir del propietario existente, vendor
+y ventas, y `20261014180000_accounting_obligation_tenant_ownership`, que endurece
+propiedad de compras y cuentas por pagar. Existe solapamiento con el hardening
+complementario: no se puede adoptar ese SQL entero por comparación de nombres.
+La base desechable local `tcp_test_ct1_s1_20261027` no registra como aplicadas
+las migraciones `20261012090000_align_formal_schema_baseline` ni
+`20261012100000_accounting_tenant_id_hardening`. Esto solo acredita ese entorno
+local. La prueba complementaria `preflight-accounting-tenant-hardening-real.test.ts`
+está fijada a una base, usuario, puerto y conteo de 148 migraciones concretos;
+debe adaptarse a guards de base desechable e identidad verificable antes de ser
+portable. El preflight examina datos sintéticos; no demuestra por sí solo que la
+migración se aplique correctamente en el esquema vigente. Falta contrastar los
+objetos SQL y el historial de los entornos reales antes de elegir una migración.
+
+**S5–S7.** Las pruebas candidatas de la fuente incluyen
+`libros-aislamiento.test.ts`, `conciliacion-cruzada.test.ts`,
+`cierre-formal.test.ts`, `cierre-apertura-positiva.test.ts`,
+`apertura-revision-approval.test.ts` y `backfill.test.ts` bajo
+`src/features/contabilidad-formal/__integration__/`. Libros dependen de acciones,
+servicios y permisos; cierre/apertura dependen de períodos, plan y asientos;
+backfill además requiere controles de autorización y evidencia. Son candidatos
+de prueba, no pruebas ejecutadas en main. Replay sigue desactivado y no debe
+ejecutarse ni habilitarse durante CT-1.
+
+**S8.** Conservar ejecución y reversión de anticipos móviles de main hasta que
+se acuerde expresamente el cambio de contrato; evaluar controles de tenant,
+feature y permisos separadamente, con pruebas de operación y errores. Para pagos
+de caja, conservar la fecha y el desglose vigentes; validar por separado las
+cabeceras, los reintentos y la compatibilidad del cliente móvil.
+
+**S9–S10.** Mantener los archivos de permisos, clasificación y CI de main como
+base. Seleccionar solo las entradas necesarias para cada funcionalidad, junto
+con sus pruebas de paridad, aislamiento y contratos. Excluir `__pycache__` y
+Graphify de los commits del slice; no sustituir pruebas existentes por el árbol
+histórico. La selección definitiva depende de los archivos incorporados en cada
+slice y todavía no está completada.
+
 ## Lista mínima S1 acordada
 
 **Base canónica:** el núcleo de `c860c867`, no una sustitución por archivos completos de la rama formal. S1 mantiene el modo por defecto `off` y no modifica registro de planes ni habilita replay.
