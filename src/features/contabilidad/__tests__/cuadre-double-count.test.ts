@@ -98,6 +98,52 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     });
   });
 
+  it('suma conciliaciones múltiples y distingue operaciones abiertas, parciales y saldadas', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.venta.findMany.mockResolvedValueOnce([
+      {
+        ventaId: 'sale-open', total: 100, createdAt: new Date('2026-01-15'), metodoPago: null,
+        factura: null, VentaServicios: [], reconciliaciones: [],
+      },
+      {
+        ventaId: 'sale-partial', total: 100, createdAt: new Date('2026-01-16'), metodoPago: null,
+        factura: null, VentaServicios: [],
+        reconciliaciones: [
+          { monto: 30, montoConvertido: 30, fechaReconciliacion: new Date('2026-01-16') },
+          { monto: 20, montoConvertido: 20, fechaReconciliacion: new Date('2026-01-17') },
+        ],
+      },
+      {
+        ventaId: 'sale-cxc-partial', total: 100, createdAt: new Date('2026-01-18'), metodoPago: null,
+        factura: { cuentaPorCobrar: { estado: 'PARCIAL' } }, VentaServicios: [],
+        reconciliaciones: [{ monto: 25, montoConvertido: 25, fechaReconciliacion: new Date('2026-01-18') }],
+      },
+      {
+        ventaId: 'sale-paid', total: 100, createdAt: new Date('2026-01-19'), metodoPago: null,
+        factura: { cuentaPorCobrar: { estado: 'PAGADA' } }, VentaServicios: [],
+        reconciliaciones: [{ monto: 100, montoConvertido: 100, fechaReconciliacion: new Date('2026-01-19') }],
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'sale-open')).toMatchObject({
+      estaReconciliado: false, clasificacion: 'CONCILIABLE', montoReconciliado: null, diferencia: 100,
+    });
+    expect(result.items.find((item) => item.id === 'sale-partial')).toMatchObject({
+      estaReconciliado: false, clasificacion: 'RECONCILIADA_PARCIALMENTE', montoReconciliado: 50, diferencia: 50,
+    });
+    expect(result.items.find((item) => item.id === 'sale-cxc-partial')).toMatchObject({
+      estaReconciliado: false, clasificacion: 'CUENTA_POR_COBRAR', estadoCuenta: 'PARCIAL',
+      montoReconciliado: 25, diferencia: 75,
+    });
+    expect(result.items.find((item) => item.id === 'sale-paid')).toMatchObject({
+      estaReconciliado: true, clasificacion: 'RECONCILIADA', estadoCuenta: 'PAGADA',
+      montoReconciliado: 100, diferencia: 0,
+    });
+    expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.include?.reconciliaciones).not.toHaveProperty('take');
+  });
+
   it('identifica CxC vinculada directamente a una venta de servicio', async () => {
     const service = {
       ventaServicioId: 'servicio-cxc', total: 250,
