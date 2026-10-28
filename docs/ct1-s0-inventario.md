@@ -6,6 +6,9 @@
 Las comparaciones históricas de este documento conservan su destino original `c860c867`;
 las decisiones de los próximos slices deben contrastarse también con el `origin/main` vigente.
 
+**Decisión posterior del usuario:** S2 y S5 quedaron descartados. Sus referencias
+en este documento se conservan como evidencia histórica, no como tareas activas.
+
 ## Referencias fijadas
 
 - Destino: `origin/main` `c860c8679895797f67d33d2a0388336dbb7857f2`.
