@@ -35,7 +35,8 @@ describe('gastos pendientes en PostgreSQL', () => {
         databaseName: string; roleName: string; serverPort: number;
       }>>('SELECT current_database() AS "databaseName", current_user AS "roleName", inet_server_port() AS "serverPort"');
       assertDisposableDatabaseIdentity(identity, process.env);
-      await expect(client.$transaction(async (tx) => {
+      try {
+        await client.$transaction(async (tx) => {
         context.tx = tx;
         context.tenantId = tenantId;
         await tx.tenant.create({ data: { tenantId, nombre: 'Prueba conciliación' } });
@@ -78,7 +79,10 @@ describe('gastos pendientes en PostgreSQL', () => {
         expect(result.pagination.total).toBe(2);
         expect(result.gastos.map((gasto) => gasto.tipo).sort()).toEqual(['compra', 'gastoDE']);
         throw rollback;
-      })).rejects.toBe(rollback);
+        });
+      } catch (error) {
+        if (error !== rollback) throw error;
+      }
     } finally {
       context.tx = null;
       await client.$disconnect();
