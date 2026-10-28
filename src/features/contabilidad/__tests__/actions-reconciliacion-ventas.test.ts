@@ -16,11 +16,12 @@ const prismaMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$transaction: vi.fn((callback: (tx: typeof txMock) => unknown) => callback(txMock)),
 	venta: { findMany: vi.fn() },
-	ventaServicios: { count: vi.fn() },
-	gastosDE: { count: vi.fn() },
-	 pagosalario: { count: vi.fn() },
+	ventaServicios: { count: vi.fn(), findMany: vi.fn() },
+	gastosDE: { count: vi.fn(), findMany: vi.fn() },
+	gastoCompra: { findMany: vi.fn() },
+	 pagosalario: { count: vi.fn(), findMany: vi.fn() },
 	reconciliacionGasto: { findMany: vi.fn(), count: vi.fn() },
-	compraServicio: { count: vi.fn() },
+	compraServicio: { count: vi.fn(), findMany: vi.fn() },
 	reconciliacionVenta: { count: vi.fn(), aggregate: vi.fn(), findMany: vi.fn() },
 	reconciliacionServicio: { count: vi.fn() },
 }));
@@ -51,6 +52,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import {
 	getReconciliacionStatsAction,
+	getGastosPendientesAction,
 	getVentasPendientesAction,
 	reconciliarGastoAction,
 	reconciliarVentaAction,
@@ -98,6 +100,24 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		const totalQuery = prismaMock.$queryRaw.mock.calls[1]?.[0];
 		expect(pendingQuery.sql).toContain('v."deletedAt" IS NULL');
 		expect(totalQuery.sql).toContain('v."deletedAt" IS NULL');
+	});
+
+	it('excluye cuentas por pagar activas del mismo tenant en gastos y compras', async () => {
+		prismaMock.gastosDE.findMany.mockResolvedValue([]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
+		expect(result.success).toBe(true);
+		for (const delegate of [prismaMock.gastosDE, prismaMock.gastoCompra]) {
+			expect(delegate.findMany.mock.calls[0][0].where.NOT).toEqual({
+				cuentaPorPagar: {
+					is: { tenantId: 'tenant-1', deletedAt: null, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+				},
+			});
+		}
 	});
 
 	it('devuelve el total y saldo completo aun cuando la página está vacía', async () => {

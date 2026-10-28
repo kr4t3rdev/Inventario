@@ -728,7 +728,12 @@ export const getGastosPendientesAction = withAction(
 		const tenantId = requireTenant(user);
 
 		// ── Query GastosDE ──
-		const whereDE: any = { tenantId };
+		const exclusionCxP = {
+			cuentaPorPagar: {
+				is: { tenantId, deletedAt: null, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+			},
+		};
+		const whereDE: any = { tenantId, NOT: exclusionCxP };
 		if (params.soloNoReconciliados) whereDE.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereDE.createdAt = {};
@@ -742,11 +747,7 @@ export const getGastosPendientesAction = withAction(
 		const whereGC: any = {
 			tenantId,
 			deletedAt: null,
-			NOT: {
-				cuentaPorPagar: {
-					is: { estado: { in: ['PENDIENTE', 'PARCIAL'] } },
-				},
-			},
+			NOT: exclusionCxP,
 		};
 		if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
