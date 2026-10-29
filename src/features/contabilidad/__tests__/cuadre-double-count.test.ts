@@ -507,4 +507,34 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       estadoCuenta: 'PARCIAL',
     });
   });
+
+  it('explica exclusiones por estado y cuenta observada, sin contarlas como universo completo', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.venta.findMany.mockResolvedValueOnce([
+      {
+        ventaId: 'venta-anulada', total: 125, createdAt: new Date('2026-01-15'),
+        metodoPago: null, reconciliaciones: [],
+        factura: { cuentaPorCobrar: { estado: 'ANULADA' } },
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'venta-anulada')).toMatchObject({
+      clasificacion: 'EXCLUIDA',
+      estadoCuenta: 'ANULADA',
+      motivoExclusion: 'Cuenta por cobrar en estado ANULADA.',
+    });
+    expect(result.exclusionesObservadas).toMatchObject({
+      cantidadPeriodo: 1,
+      cantidadHistoricas: 0,
+      cobertura: 'Registros activos consultados; no incluye eliminados, fuera de rango ni históricos truncados.',
+    });
+    expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.where).toEqual({
+      tenantId: 'tenant-1', createdAt: rango, deletedAt: null,
+    });
+    expect(mockPrisma.venta.findMany.mock.calls[1]?.[0]?.where).toMatchObject({
+      tenantId: 'tenant-1', createdAt: { lt: rango.gte }, deletedAt: null,
+    });
+  });
 });

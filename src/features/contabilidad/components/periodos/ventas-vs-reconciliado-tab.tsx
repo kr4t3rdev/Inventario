@@ -150,7 +150,7 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 									: clasificacion === "CONCILIABLE"
 										? "Conciliable"
 										: clasificacion === "EXCLUIDA"
-											? `Excluida${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
+										? item.motivoExclusion ?? "Excluida; causa no determinada"
 											: "Elegibilidad no determinada"}
 				</Badge>
 			</TableCell>
@@ -231,7 +231,7 @@ export function VentasVsReconciliadoTab({
 	onPageChange,
 	isLoading = false,
 }: VentasVsReconciliadoTabProps) {
-	const { items, itemsAntiguos, totales, totalPages, page } = data;
+	const { items, itemsAntiguos, totales, totalPages, page, exclusionesObservadas } = data;
 
 	return (
 		<div className="space-y-4">
@@ -338,6 +338,11 @@ export function VentasVsReconciliadoTab({
 			<p className="text-xs text-muted-foreground">
 				“Sin reconciliar” no confirma elegibilidad para conciliación. CxC y CxP se muestran
 				cuando existe una relación conocida; los demás casos quedan sin clasificar.
+			</p>
+			<p className="text-xs text-muted-foreground">
+				Exclusiones observadas: {exclusionesObservadas.cantidadPeriodo} en las operaciones consultadas
+				del período; {exclusionesObservadas.cantidadHistoricas} entre las operaciones históricas sin
+				reconciliar. {exclusionesObservadas.cobertura}
 			</p>
 
 			{/* Card de Gastos */}

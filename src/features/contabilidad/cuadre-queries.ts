@@ -65,6 +65,7 @@ export interface VentaVsReconciliadoItem {
 		| "EXCLUIDA"
 		| "NO_CLASIFICADA";
 	estadoCuenta?: string | null;
+	motivoExclusion?: string | null;
 }
 
 interface ReconciliationAmount {
@@ -188,12 +189,20 @@ function classifyReconciliation(
 		montoReconciliado: reconciledAmount > 0 ? reconciledAmount : null,
 		diferencia: difference,
 		clasificacion: classification as VentaVsReconciliadoItem["clasificacion"],
+		motivoExclusion: classification === "EXCLUIDA" && normalizedState
+			? `${accountType === "CUENTA_POR_COBRAR" ? "Cuenta por cobrar" : "Cuenta por pagar"} en estado ${normalizedState}.`
+			: null,
 	};
 }
 
 export interface VentasVsReconciliadoData {
 	items: VentaVsReconciliadoItem[];
 	itemsAntiguos: VentaVsReconciliadoItem[];
+	exclusionesObservadas: {
+		cantidadPeriodo: number;
+		cantidadHistoricas: number;
+		cobertura: string;
+	};
 	totales: {
 		totalVentas: number;
 		totalReconciliado: number;
@@ -1363,10 +1372,21 @@ const LIMITE_ANTIGUOS = 100;
 		...ventasServicioCostoAntiguos.map(mapVentaServicioCostoAntiguo),
 	].filter((item) => !item.estaReconciliado)
 		.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+	const cantidadExclusionesPeriodo = allItems.filter(
+		(item) => item.clasificacion === "EXCLUIDA",
+	).length;
+	const cantidadExclusionesHistoricas = itemsAntiguos.filter(
+		(item) => item.clasificacion === "EXCLUIDA",
+	).length;
 
 	return {
 		items,
 		itemsAntiguos,
+		exclusionesObservadas: {
+			cantidadPeriodo: cantidadExclusionesPeriodo,
+			cantidadHistoricas: cantidadExclusionesHistoricas,
+			cobertura: "Registros activos consultados; no incluye eliminados, fuera de rango ni históricos truncados.",
+		},
 		totales: {
 			totalVentas: round2(items.reduce((s, i) => s + i.monto, 0)),
 			totalReconciliado: round2(
