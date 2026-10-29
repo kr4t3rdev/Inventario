@@ -712,6 +712,23 @@ export const reconciliarServicioAction = withAction(
 
 // ─── Gastos ────────────────────────────────────────────────
 
+/**
+ * @description Calculates an expense's open balance from all persisted reconciliation rows.
+ * @param {number} grossAmount - Original expense amount.
+ * @param {Array<{ monto: unknown; montoConvertido?: unknown }>} reconciliations - Applied payments.
+ * @returns {number} Non-negative open balance rounded to cents.
+ */
+function calculateOpenExpenseBalance(
+	grossAmount: number,
+	reconciliations: Array<{ monto: unknown; montoConvertido?: unknown }>,
+): number {
+	const applied = reconciliations.reduce(
+		(sum, row) => sum + Number(row.montoConvertido ?? row.monto ?? 0),
+		0,
+	);
+	return Math.max(0, Math.round((grossAmount - applied) * 100) / 100);
+}
+
 export const getGastosPendientesAction = withAction(
 	async (
 		params: {
@@ -734,7 +751,6 @@ export const getGastosPendientesAction = withAction(
 			},
 		};
 		const whereDE: any = { tenantId, NOT: exclusionCxP };
-		if (params.soloNoReconciliados) whereDE.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereDE.createdAt = {};
 			if (params.fechaDesde)
@@ -749,7 +765,6 @@ export const getGastosPendientesAction = withAction(
 			deletedAt: null,
 			NOT: exclusionCxP,
 		};
-		if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereGC.fechaCompra = {};
 			if (params.fechaDesde)
@@ -760,7 +775,6 @@ export const getGastosPendientesAction = withAction(
 
 		// ── Query PagoSalario (salarios de empleados) ──
 		const wherePS: any = { tenantId };
-		if (params.soloNoReconciliados) wherePS.ReconciliacionGasto = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			wherePS.createdAt = {};
 			if (params.fechaDesde)
@@ -805,13 +819,13 @@ export const getGastosPendientesAction = withAction(
 			prisma.gastosDE.findMany({
 				where: whereDE,
 				orderBy: { createdAt: "desc" },
-				include: { reconciliaciones: { select: { reconciliacionId: true } } },
+				include: { reconciliaciones: { select: { monto: true, montoConvertido: true } } },
 			}),
 			prisma.gastoCompra.findMany({
 				where: whereGC,
 				orderBy: { fechaCompra: "desc" },
 				include: {
-					reconciliaciones: { select: { reconciliacionId: true } },
+					reconciliaciones: { select: { monto: true, montoConvertido: true } },
 					vendor: { select: { nombre: true } },
 					producto: { select: { nombre: true } },
 				},
@@ -820,7 +834,7 @@ export const getGastosPendientesAction = withAction(
 				where: wherePS,
 				orderBy: { createdAt: "desc" },
 				include: {
-					ReconciliacionGasto: { select: { reconciliacionId: true } },
+					ReconciliacionGasto: { select: { monto: true, montoConvertido: true } },
 					empleado: { select: { nombre: true, apellido: true, cargo: true } },
 				},
 			}),
@@ -844,35 +858,48 @@ export const getGastosPendientesAction = withAction(
 				? prisma.reconciliacionGasto
 						.findMany({
 							where: { tenantId, tipoGasto: "servicio" },
-							select: { referenciaId: true },
-							distinct: ["referenciaId"],
+							select: { referenciaId: true, monto: true, montoConvertido: true },
 						})
-						.then((r) => r.map((x) => x.referenciaId))
-				: Promise.resolve([] as string[]),
+						.then((rows) => rows)
+				: Promise.resolve([]),
 			params.soloNoReconciliados
 				? prisma.reconciliacionGasto
 						.findMany({
 							where: { tenantId, tipoGasto: "venta_servicio" },
-							select: { referenciaId: true },
-							distinct: ["referenciaId"],
+							select: { referenciaId: true, monto: true, montoConvertido: true },
 						})
-						.then((r) => r.map((x) => x.referenciaId))
-				: Promise.resolve([] as string[]),
+						.then((rows) => rows)
+				: Promise.resolve([]),
 		]);
 
-		// Filtrar servicios ya reconciliados si se solicitó
-		const comprasServicioFiltradas = params.soloNoReconciliados
-			? comprasServicio.filter(
-					(g: any) => !reconciliadosServicioIds.includes(g.compraServicioId),
-				)
-			: comprasServicio;
-
-		const ventasServicioFiltradas = params.soloNoReconciliados
-			? ventasServicio.filter(
-					(g: any) =>
-						!reconciliadosVentaServicioIds.includes(g.ventaServicioId),
-				)
-			: ventasServicio;
+		const buildAppliedByReference = (
+			rows: Array<{ referenciaId: string | null; monto: unknown; montoConvertido: unknown }>,
+		) => {
+			const amounts = new Map<string, number>();
+			for (const row of rows) {
+				if (!row.referenciaId) continue;
+				amounts.set(
+					row.referenciaId,
+					(amounts.get(row.referenciaId) ?? 0) + Number(row.montoConvertido ?? row.monto ?? 0),
+				);
+			}
+			return amounts;
+		};
+		const appliedByService = buildAppliedByReference(reconciliadosServicioIds);
+		const appliedBySaleService = buildAppliedByReference(reconciliadosVentaServicioIds);
+		const comprasServicioFiltradas = comprasServicio.filter((g: any) => {
+			const balance = calculateOpenExpenseBalance(Number(g.total ?? 0), [
+				{ monto: appliedByService.get(g.compraServicioId) ?? 0 },
+			]);
+			return !params.soloNoReconciliados || balance > 0.1;
+		});
+		const ventasServicioFiltradas = ventasServicio.filter((g: any) => {
+			const balance = calculateOpenExpenseBalance(
+				Number(g.costo ?? 0) * Number(g.cantidad ?? 1),
+				[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
+			);
+			return !params.soloNoReconciliados || balance > 0.1;
+		});
 
 		// Mapear a GastoPendiente
 		const gastos = [
@@ -880,7 +907,7 @@ export const getGastosPendientesAction = withAction(
 				tipo: "gastoDE" as const,
 				referenciaId: g.gastosDEId,
 				descripcion: g.descripcion || `Gasto DE #${g.gastosDEId.slice(0, 8)}`,
-				monto: Number(g.monto || g.total || 0),
+				monto: calculateOpenExpenseBalance(Number(g.monto || g.total || 0), g.reconciliaciones),
 				periodo: g.periodo || undefined,
 				detalles: {
 					proveedor: g.proveedor || undefined,
@@ -894,7 +921,7 @@ export const getGastosPendientesAction = withAction(
 				tipo: "compra" as const,
 				referenciaId: g.gastoCompraId,
 				descripcion: g.descripcion || `Compra #${g.gastoCompraId.slice(0, 8)}`,
-				monto: Number(g.total || 0),
+				monto: calculateOpenExpenseBalance(Number(g.total || 0), g.reconciliaciones),
 				periodo: g.periodo || undefined,
 				detalles: {
 					vendor: (g as any).vendor?.nombre || undefined,
@@ -912,12 +939,12 @@ export const getGastosPendientesAction = withAction(
 				descripcion:
 					`Salario de ${g.empleado?.nombre || ""} ${g.empleado?.apellido || ""}`.trim() ||
 					`Pago #${g.pgId.slice(0, 8)}`,
-				monto: getPayrollPaymentAmount({
+				monto: calculateOpenExpenseBalance(getPayrollPaymentAmount({
 					salario: Number(g.salario || 0),
 					bonificaciones: Number(g.bonificaciones || 0),
 					deducciones: Number(g.deducciones || 0),
 					montoHorasExtras: Number(g.montoHorasExtras || 0),
-				}),
+				}), g.ReconciliacionGasto),
 				periodo: g.periodo || undefined,
 				detalles: {
 					empleado: g.empleado
@@ -940,7 +967,9 @@ export const getGastosPendientesAction = withAction(
 				tipo: "servicio" as const,
 				referenciaId: g.compraServicioId,
 				descripcion: `${g.servicio?.nombre || "Servicio"} - ${g.proveedor?.nombre || "Sin proveedor"}`,
-				monto: Number(g.total || 0),
+				monto: calculateOpenExpenseBalance(Number(g.total || 0), [
+					{ monto: appliedByService.get(g.compraServicioId) ?? 0 },
+				]),
 				periodo: undefined,
 				detalles: {
 					servicio: g.servicio?.nombre || undefined,
@@ -959,7 +988,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "venta_servicio" as const,
 				referenciaId: g.ventaServicioId,
 				descripcion: `Costo: ${g.servicio?.nombre || "Servicio"} - ${g.cliente?.nombre || "Sin cliente"}`,
-				monto: Number(g.costo * g.cantidad || 0),
+				monto: calculateOpenExpenseBalance(
+					Number(g.costo * g.cantidad || 0),
+					[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
+				),
 				periodo: g.createdAt?.toISOString?.()?.slice(0, 7) || undefined,
 				detalles: {
 					servicio: g.servicio?.nombre || undefined,
@@ -978,8 +1010,11 @@ export const getGastosPendientesAction = withAction(
 				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 		);
 
-		const total = gastos.length;
-		const paginated = gastos.slice((page - 1) * limit, page * limit);
+		const gastosPendientes = params.soloNoReconciliados
+			? gastos.filter((gasto) => gasto.monto > 0.1)
+			: gastos;
+		const total = gastosPendientes.length;
+		const paginated = gastosPendientes.slice((page - 1) * limit, page * limit);
 
 		return {
 			gastos: paginated,

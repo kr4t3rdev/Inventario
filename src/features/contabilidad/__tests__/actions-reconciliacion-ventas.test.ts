@@ -120,6 +120,29 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		}
 	});
 
+	it('mantiene gastos con anticipos parciales mostrando solo el saldo abierto', async () => {
+		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.gastosDE.findMany.mockResolvedValue([{
+			gastosDEId: 'expense-partial', monto: 100, descripcion: 'Servicio', periodo: '2026-01',
+			createdAt: now, updatedAt: now,
+			reconciliaciones: [{ monto: 40, montoConvertido: 40 }],
+		}]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([]);
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.gastos).toEqual([
+			expect.objectContaining({ referenciaId: 'expense-partial', monto: 60 }),
+		]);
+		expect(prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.where.reconciliaciones)
+			.toBeUndefined();
+	});
+
 	it('devuelve el total y saldo completo aun cuando la página está vacía', async () => {
 		prismaMock.$queryRaw
 			.mockResolvedValueOnce([])
