@@ -246,7 +246,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Total Ventas
+								Total ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -267,7 +267,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Total Reconciliado
+								Reconciliado · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -288,7 +288,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Diferencia
+								Diferencia · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -318,7 +318,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Sin reconciliar
+								Sin reconciliar · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -329,7 +329,7 @@ export function VentasVsReconciliadoTab({
 								</span>
 							</div>
 							<p className="text-xs text-muted-foreground mt-1">
-								Incluye casos sin clasificar y cuentas por cobrar/pagar
+								Incluye casos sin clasificar y cuentas por cobrar. Gastos se resumen aparte.
 							</p>
 						</CardContent>
 					</Card>

@@ -909,7 +909,8 @@ export async function obtenerVentasVsReconciliado(
 	const totalCount = allItems.length;
 	const items = allItems.slice(skip, skip + pageSize);
 
-	const reconciliadas = allItems.filter((i) => i.estaReconciliado).length;
+	const ventasItems = allItems.filter((item) => item.tipo === "VENTA" || item.tipo === "SERVICIO");
+	const reconciliadas = ventasItems.filter((item) => item.estaReconciliado).length;
 
 	const gastosItems = allItems.filter((i) => i.tipo === "GASTO");
 	const gastosReconciliados = gastosItems.filter(
@@ -1388,16 +1389,16 @@ const LIMITE_ANTIGUOS = 100;
 			cobertura: "Registros activos consultados; no incluye eliminados, fuera de rango ni históricos truncados.",
 		},
 		totales: {
-			totalVentas: round2(allItems.reduce((s, i) => s + i.monto, 0)),
+			totalVentas: round2(ventasItems.reduce((s, i) => s + i.monto, 0)),
 			totalReconciliado: round2(
-				allItems.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
+				ventasItems.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
 			),
 			diferencia: round2(
-				allItems.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
+				ventasItems.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
 			),
-			cantidadVentas: totalCount,
+			cantidadVentas: ventasItems.length,
 			cantidadReconciliadas: reconciliadas,
-			cantidadPendientes: totalCount - reconciliadas,
+			cantidadPendientes: ventasItems.length - reconciliadas,
 			totalGastos: round2(gastosItems.reduce((s, i) => s + i.monto, 0)),
 			cantidadGastos: gastosItems.length,
 			cantidadGastosReconciliados: gastosReconciliados,

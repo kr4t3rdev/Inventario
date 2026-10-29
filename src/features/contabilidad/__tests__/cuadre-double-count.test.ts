@@ -571,11 +571,16 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     expect(secondPage.items).toHaveLength(1);
     for (const result of [firstPage, secondPage]) {
       expect(result.totales).toMatchObject({
-        totalVentas: 140,
-        totalReconciliado: 45,
-        diferencia: 95,
-        cantidadVentas: 3,
+        totalVentas: 110,
+        totalReconciliado: 35,
+        diferencia: 75,
+        cantidadVentas: 2,
+        cantidadReconciliadas: 1,
+        cantidadPendientes: 1,
         totalGastos: 30,
+        cantidadGastos: 1,
+        cantidadGastosReconciliados: 0,
+        cantidadGastosPendientes: 1,
       });
     }
   });
