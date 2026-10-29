@@ -15,7 +15,8 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(156);
+    expect(schemaModelNames).toHaveLength(157);
+    expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
     expect(coverage.unknownModels).toEqual([]);
@@ -27,7 +28,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 94,
+      'tenant-direct': 95,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -42,8 +43,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(110);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(110);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(111);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(111);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -52,6 +53,9 @@ describe('tenant backup model policy contract', () => {
       expect(['tenant-direct', 'tenant-child']).toContain(policy?.kind);
       expect(entry.disposition).toBe('candidate');
     }
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST.some(
+      ({ model }) => model === 'AperturaPeriodoSolicitud',
+    )).toBe(true);
   });
 
   it('rejects an all-excluded policy for business models and denies unknown model lookups', () => {
@@ -64,9 +68,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(110);
+      .ineligibleBusinessModels).toHaveLength(111);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(110);
+      .missingBusinessModels).toHaveLength(111);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 
@@ -111,6 +115,7 @@ describe('tenant backup model policy contract', () => {
     expect(getModelPolicy('ReferralPerkCatalog')?.kind).toBe('reference-only');
     expect(getModelPolicy('StockMoveLine')?.protectedEvidenceCandidate).toBe(true);
     expect(getModelPolicy('FinancialAuxiliaryCheckpoint')?.protectedEvidenceCandidate).toBe(true);
+    expect(getModelPolicy('AperturaPeriodoSolicitud')?.protectedEvidenceCandidate).toBe(true);
   });
 
   it('requires an explicit owner path for child-owned models', () => {

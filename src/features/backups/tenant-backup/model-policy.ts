@@ -47,7 +47,7 @@ const DIRECT_TENANT_MODELS = [
   'ValeSalidaItem', 'ListaPrecio', 'Anticipo', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
 ] as const;
@@ -93,7 +93,7 @@ const BUSINESS_MODEL_NAMES = [
   'Anticipo', 'AnticipoMovimiento', 'DevolucionVenta', 'DevolucionVentaItem',
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
 ] as const;
 const CHILD_OWNER_PATHS = {
@@ -120,7 +120,7 @@ const PROTECTED_EVIDENCE_CANDIDATES = [
   'SalesAgentCommissionLedger', 'TenantLicensePayment', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'CashPaymentInterestAllocation',
-  'Asiento', 'AsientoLinea', 'SnapshotPeriodo',
+  'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud',
 ] as const;
 const PROTECTED_EVIDENCE_MODEL_SET: ReadonlySet<string> = new Set(PROTECTED_EVIDENCE_CANDIDATES);
 

@@ -289,9 +289,33 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			{error && <p className="text-sm text-destructive">{error}</p>}
 			<DialogFooter>
 				<Button type="button" variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cancelar</Button>
-				{estado === "NUEVA" && <Button type="button" onClick={() => runAction("solicitar")} disabled={loading || !functionalCurrencyCode || !fechaInicio || !fechaFin || lineas.some((line) => !line.moneda)}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enviar para aprobación</Button>}
-				{estado === "PENDIENTE" && <Button type="button" onClick={() => runAction("aprobar")} disabled={loading || lineasValuadas.length !== lineas.length}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Aprobar cuadre</Button>}
-				{estado === "APROBADA" && <Button type="button" onClick={() => runAction("abrir")} disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Abrir período aprobado</Button>}
+				{estado === "NUEVA" && <Button
+					type="button"
+					className="min-h-11"
+					onClick={() => runAction("solicitar")}
+					disabled={loading || !functionalCurrencyCode || !fechaInicio || !fechaFin || lineas.some((line) => !line.moneda)}
+				>
+					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+					Enviar para aprobación
+				</Button>}
+				{estado === "PENDIENTE" && <Button
+					type="button"
+					className="min-h-11"
+					onClick={() => runAction("aprobar")}
+					disabled={loading || lineasValuadas.length !== lineas.length}
+				>
+					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+					Aprobar cuadre
+				</Button>}
+				{estado === "APROBADA" && <Button
+					type="button"
+					className="min-h-11"
+					onClick={() => runAction("abrir")}
+					disabled={loading}
+				>
+					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+					Abrir período aprobado
+				</Button>}
 			</DialogFooter>
 		</DialogContent>
 	</Dialog>;
