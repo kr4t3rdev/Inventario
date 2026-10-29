@@ -476,6 +476,59 @@ export async function obtenerVentasVsReconciliado(
 		prisma.gastoCompra.count({ where: filtroGastoCompra }),
 	]);
 
+	const [reconciliadosCompraServicio, reconciliadosVentaServicio] = await Promise.all([
+		prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "servicio",
+				referenciaId: { in: comprasServicio.map((row) => row.compraServicioId) },
+			},
+			select: {
+				referenciaId: true,
+				monto: true,
+				montoConvertido: true,
+				fechaReconciliacion: true,
+			},
+			orderBy: { fechaReconciliacion: "desc" },
+		}),
+		prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "venta_servicio",
+				referenciaId: { in: ventasServicioCosto.map((row) => row.ventaServicioId) },
+			},
+			select: {
+				referenciaId: true,
+				monto: true,
+				montoConvertido: true,
+				fechaReconciliacion: true,
+			},
+			orderBy: { fechaReconciliacion: "desc" },
+		}),
+	]);
+	const montoReconciliadoCS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const reconciliation of reconciliadosCompraServicio) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoCS.get(reconciliation.referenciaId);
+		montoReconciliadoCS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				Number(reconciliation.montoConvertido ?? reconciliation.monto ?? 0),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
+	const montoReconciliadoVS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const reconciliation of reconciliadosVentaServicio) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoVS.get(reconciliation.referenciaId);
+		montoReconciliadoVS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				Number(reconciliation.montoConvertido ?? reconciliation.monto ?? 0),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
+
 	// Mapear a tipo unificado
 	const mapVenta = (v: (typeof ventas)[number]): VentaVsReconciliadoItem => {
 		const estadoCuenta =
@@ -765,42 +818,42 @@ export async function obtenerVentasVsReconciliado(
 		}),
 	]);
 
-	const compraServicioIds = [
-		...comprasServicio.map((row) => row.compraServicioId),
-		...comprasServicioAntiguos.map((row) => row.compraServicioId),
-	];
-	const ventaServicioCostoIds = [
-		...ventasServicioCosto.map((row) => row.ventaServicioId),
-		...ventasServicioCostoAntiguos.map((row) => row.ventaServicioId),
-	];
-	const [reconciliadosCompraServicio, reconciliadosVentaServicio] = await Promise.all([
-		prisma.reconciliacionGasto.findMany({
-			where: { tenantId, tipoGasto: "servicio", referenciaId: { in: compraServicioIds } },
-			select: {
-				referenciaId: true,
-				monto: true,
-				montoConvertido: true,
-				fechaReconciliacion: true,
-			},
-			orderBy: { fechaReconciliacion: "desc" },
-		}),
-		prisma.reconciliacionGasto.findMany({
-			where: {
-				tenantId,
-				tipoGasto: "venta_servicio",
-				referenciaId: { in: ventaServicioCostoIds },
-			},
-			select: {
-				referenciaId: true,
-				monto: true,
-				montoConvertido: true,
-				fechaReconciliacion: true,
-			},
-			orderBy: { fechaReconciliacion: "desc" },
-		}),
-	]);
-	const montoReconciliadoCS = new Map<string, { monto: number; fecha: Date | null }>();
-	for (const reconciliation of reconciliadosCompraServicio) {
+	const [reconciliadosCompraServicioAntiguos, reconciliadosVentaServicioAntiguos] =
+		await Promise.all([
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "servicio",
+					referenciaId: {
+						in: comprasServicioAntiguos.map((row) => row.compraServicioId),
+					},
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					fechaReconciliacion: true,
+				},
+				orderBy: { fechaReconciliacion: "desc" },
+			}),
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "venta_servicio",
+					referenciaId: {
+						in: ventasServicioCostoAntiguos.map((row) => row.ventaServicioId),
+					},
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					fechaReconciliacion: true,
+				},
+				orderBy: { fechaReconciliacion: "desc" },
+			}),
+		]);
+	for (const reconciliation of reconciliadosCompraServicioAntiguos) {
 		if (!reconciliation.referenciaId) continue;
 		const previous = montoReconciliadoCS.get(reconciliation.referenciaId);
 		montoReconciliadoCS.set(reconciliation.referenciaId, {
@@ -810,8 +863,7 @@ export async function obtenerVentasVsReconciliado(
 			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
 		});
 	}
-	const montoReconciliadoVS = new Map<string, { monto: number; fecha: Date | null }>();
-	for (const reconciliation of reconciliadosVentaServicio) {
+	for (const reconciliation of reconciliadosVentaServicioAntiguos) {
 		if (!reconciliation.referenciaId) continue;
 		const previous = montoReconciliadoVS.get(reconciliation.referenciaId);
 		montoReconciliadoVS.set(reconciliation.referenciaId, {
