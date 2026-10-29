@@ -210,7 +210,7 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
 
     expect(result.items.find((item) => item.id === 'compra-sin-cxp')).toMatchObject({
-      clasificacion: 'NO_CLASIFICADA',
+		clasificacion: 'CONCILIABLE',
       estadoCuenta: null,
     });
   });

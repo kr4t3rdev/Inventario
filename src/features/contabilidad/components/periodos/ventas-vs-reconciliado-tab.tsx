@@ -122,6 +122,11 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 						<CheckCircle2 className="h-3 w-3 mr-1" />
 						Reconciliada
 					</Badge>
+				) : clasificacion === "RECONCILIADA_PARCIALMENTE" ? (
+					<Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+						<AlertTriangle className="mr-1 h-3 w-3" />
+						Conciliada parcialmente
+					</Badge>
 				) : (
 					<Badge
 						variant="outline"
@@ -140,7 +145,13 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 							? `Cuenta por pagar${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
 							: clasificacion === "RECONCILIADA"
 								? "Reconciliada"
-								: "Elegibilidad no determinada"}
+								: clasificacion === "RECONCILIADA_PARCIALMENTE"
+									? "Saldo pendiente de conciliar"
+									: clasificacion === "CONCILIABLE"
+										? "Conciliable"
+										: clasificacion === "EXCLUIDA"
+											? `Excluida${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
+											: "Elegibilidad no determinada"}
 				</Badge>
 			</TableCell>
 			<TableCell>
