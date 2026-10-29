@@ -158,9 +158,13 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
       const monedaServicio = servicio.moneda.trim().toUpperCase();
       const tasaServicio = await getTasaFuncional(monedaServicio, fechaServicio);
       const totalFuncional = total * (tasaServicio?.tasa ?? 1);
+      type AnticipoAllocationSource = Pick<
+        NonNullable<Awaited<ReturnType<typeof tx.anticipo.findUnique>>>,
+        'tipo' | 'moneda' | 'cuentaOrigenId' | 'tipoPagoOrigenId' | 'proveedorId'
+      >;
       const allocationsPreparadas: Array<{
         alloc: (typeof allocationsResult)[number];
-        anticipo: Awaited<ReturnType<typeof tx.anticipo.findUnique>>;
+        anticipo: AnticipoAllocationSource | null;
         monedaAnticipo: string;
         tasa: { tasaId: string; tasa: number; fechaVigencia: Date } | null;
       }> = [];

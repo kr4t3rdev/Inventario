@@ -94,10 +94,15 @@ interface LegacyExpenseAmountFindManyArgs {
   select: { monto: true; tasaCambio: true };
 }
 
+interface LegacyExpenseAmountRow {
+  monto: NumericValue;
+  tasaCambio: NumericValue;
+}
+
 interface ReconciliationGastoDelegate extends CountDelegate, AggregateDelegate {
-  findMany(
-    args: ExpenseReferenceFindManyArgs | LegacyExpenseAmountFindManyArgs | RecentFindManyArgs,
-  ): Promise<ReconciledExpenseReference[] | ReconciliationGastoActivityRow[]>;
+  findMany(args: ExpenseReferenceFindManyArgs): Promise<ReconciledExpenseReference[]>;
+  findMany(args: LegacyExpenseAmountFindManyArgs): Promise<LegacyExpenseAmountRow[]>;
+  findMany(args: RecentFindManyArgs): Promise<ReconciliationGastoActivityRow[]>;
 }
 
 interface ReconciliationVentaDelegate extends CountDelegate, AggregateDelegate {
@@ -623,14 +628,11 @@ export async function getReconciliationStats({
       normalizeAmount(ventasAggregate._sum.montoConvertido) +
       normalizeAmount(serviciosAggregate._sum.montoConvertido) +
       normalizeAmount(gastosAggregate._sum.montoConvertido) +
-      (lastGastosLegacyAmounts as Array<{ monto: NumericValue; tasaCambio: NumericValue }>).reduce(
-        (total, row) => {
-          const amount = normalizeAmount(row.monto);
-          const rate = normalizeAmount(row.tasaCambio);
-          return total + (rate > 0 ? amount * rate : amount);
-        },
-        0,
-      ),
+      lastGastosLegacyAmounts.reduce((total, row) => {
+        const amount = normalizeAmount(row.monto);
+        const rate = normalizeAmount(row.tasaCambio);
+        return total + (rate > 0 ? amount * rate : amount);
+      }, 0),
     recentActivity,
   });
 }
