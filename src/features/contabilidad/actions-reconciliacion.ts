@@ -854,22 +854,14 @@ export const getGastosPendientesAction = withAction(
 					cliente: { select: { nombre: true } },
 				},
 			}),
-			params.soloNoReconciliados
-				? prisma.reconciliacionGasto
-						.findMany({
-							where: { tenantId, tipoGasto: "servicio" },
-							select: { referenciaId: true, monto: true, montoConvertido: true },
-						})
-						.then((rows) => rows)
-				: Promise.resolve([]),
-			params.soloNoReconciliados
-				? prisma.reconciliacionGasto
-						.findMany({
-							where: { tenantId, tipoGasto: "venta_servicio" },
-							select: { referenciaId: true, monto: true, montoConvertido: true },
-						})
-						.then((rows) => rows)
-				: Promise.resolve([]),
+			prisma.reconciliacionGasto.findMany({
+				where: { tenantId, tipoGasto: "servicio" },
+				select: { referenciaId: true, monto: true, montoConvertido: true },
+			}),
+			prisma.reconciliacionGasto.findMany({
+				where: { tenantId, tipoGasto: "venta_servicio" },
+				select: { referenciaId: true, monto: true, montoConvertido: true },
+			}),
 		]);
 
 		const buildAppliedByReference = (

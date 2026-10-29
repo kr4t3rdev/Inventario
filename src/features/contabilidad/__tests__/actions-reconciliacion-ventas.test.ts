@@ -143,6 +143,53 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 			.toBeUndefined();
 	});
 
+	it('calcula el saldo parcial de servicios aunque no se solicite filtrar pendientes', async () => {
+		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.compraServicio.findMany.mockResolvedValue([{
+			compraServicioId: 'service-partial', total: 100, fechaServicio: now,
+			updatedAt: now, servicio: { nombre: 'Servicio' }, proveedor: { nombre: 'Proveedor' },
+		}]);
+		prismaMock.reconciliacionGasto.findMany
+			.mockResolvedValueOnce([{ referenciaId: 'service-partial', monto: 40, montoConvertido: 40 }])
+			.mockResolvedValueOnce([]);
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: false });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.gastos).toEqual([
+			expect.objectContaining({ referenciaId: 'service-partial', monto: 60 }),
+		]);
+		expect(prismaMock.reconciliacionGasto.findMany).toHaveBeenCalledTimes(2);
+	});
+
+	it('aplica rangos de fecha sobre la fecha del movimiento de cada gasto', async () => {
+		prismaMock.gastosDE.findMany.mockResolvedValue([]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+
+		await getGastosPendientesAction({ fechaDesde: '2026-01-01', fechaHasta: '2026-01-31' });
+
+		expect(prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.where.createdAt).toBeDefined();
+		expect(prismaMock.gastoCompra.findMany.mock.calls[0]?.[0]?.where.fechaCompra).toBeDefined();
+		expect(prismaMock.pagosalario.findMany.mock.calls[0]?.[0]?.where.createdAt).toBeDefined();
+		expect(prismaMock.compraServicio.findMany.mock.calls[0]?.[0]?.where.fechaServicio).toBeDefined();
+		expect(prismaMock.ventaServicios.findMany.mock.calls[0]?.[0]?.where.createdAt).toBeDefined();
+		for (const delegate of [
+			prismaMock.gastosDE,
+			prismaMock.gastoCompra,
+			prismaMock.pagosalario,
+			prismaMock.compraServicio,
+			prismaMock.ventaServicios,
+		]) {
+			const args = delegate.findMany.mock.calls[0]?.[0]?.where;
+			const dateFilter = args?.createdAt ?? args?.fechaCompra ?? args?.fechaServicio;
+			expect(dateFilter?.gte).toEqual(new Date('2026-01-01'));
+			expect(dateFilter?.lte).toBeInstanceOf(Date);
+		}
+	});
+
 	it('devuelve el total y saldo completo aun cuando la página está vacía', async () => {
 		prismaMock.$queryRaw
 			.mockResolvedValueOnce([])

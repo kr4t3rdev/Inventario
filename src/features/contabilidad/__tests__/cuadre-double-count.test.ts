@@ -74,6 +74,12 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       .filter((i) => i.tipo === 'VENTA' || i.tipo === 'SERVICIO')
       .reduce((sum, item) => sum + item.monto, 0);
     expect(totalIngresos).toBe(300);
+    expect(mockPrisma.gastoCompra.findMany.mock.calls[0]?.[0]?.where).toMatchObject({
+      tenantId: 'tenant-1', fechaCompra: rango, deletedAt: null,
+    });
+    expect(mockPrisma.compraServicio.findMany.mock.calls[0]?.[0]?.where).toEqual({
+      tenantId: 'tenant-1', fechaServicio: rango,
+    });
   });
 
   it('identifica como CxC una venta enlazada, sin inferir que es conciliable', async () => {
@@ -142,6 +148,61 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       montoReconciliado: 100, diferencia: 0,
     });
     expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.include?.reconciliaciones).not.toHaveProperty('take');
+  });
+
+  it('clasifica anticipos de servicios con pagos parciales aplicados fuera del período', async () => {
+    mockPrisma.venta.findMany.mockResolvedValue([]);
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.compraServicio.findMany.mockResolvedValueOnce([
+      {
+        compraServicioId: 'service-advance', total: 100, estado: 'PENDIENTE',
+        createdAt: new Date('2026-01-15'), numeroFactura: 'ADV-1',
+      },
+    ]);
+    mockPrisma.reconciliacionGasto.findMany
+      .mockResolvedValueOnce([
+        { referenciaId: 'service-advance', monto: 25, montoConvertido: 25,
+          fechaReconciliacion: new Date('2025-12-20') },
+        { referenciaId: 'service-advance', monto: 15, montoConvertido: 15,
+          fechaReconciliacion: new Date('2026-01-20') },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+    const item = result.items.find((entry) => entry.id === 'service-advance');
+
+    expect(item).toMatchObject({
+      monto: 100,
+      montoReconciliado: 40,
+      diferencia: 60,
+      estaReconciliado: false,
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(mockPrisma.reconciliacionGasto.findMany.mock.calls[0]?.[0]?.where).toEqual({
+      tenantId: 'tenant-1',
+      tipoGasto: 'servicio',
+      referenciaId: { in: ['service-advance'] },
+    });
+  });
+
+  it('usa costo por cantidad una sola vez para los gastos de servicios vendidos', async () => {
+    mockPrisma.venta.findMany.mockResolvedValue([]);
+    mockPrisma.ventaServicios.findMany.mockImplementation((args: { where?: { ventaId?: null; costo?: unknown } }) =>
+      Promise.resolve(args?.where?.costo ? [{
+        ventaServicioId: 'service-cost', costo: 15, cantidad: 4,
+        createdAt: new Date('2026-01-15'),
+      }] : []),
+    );
+    mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((entry) => entry.id === 'costo-service-cost')).toMatchObject({
+      monto: 60,
+      diferencia: 60,
+      clasificacion: 'CONCILIABLE',
+    });
   });
 
   it('identifica CxC vinculada directamente a una venta de servicio', async () => {
