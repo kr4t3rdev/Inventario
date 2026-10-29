@@ -264,6 +264,7 @@ model Tenant {
   fiscalDocuments                FiscalDocument[]
   fiscalEmisionEvents            FiscalEmisionEvent[]
   aperturaPeriodos               AperturaPeriodo[]
+  aperturaPeriodoSolicitudes    AperturaPeriodoSolicitud[]
   arqueosCaja                    ArqueoCaja[]
   auditoriaPeriodos              AuditoriaPeriodo[]
   backupLogs                     BackupLog[]
@@ -3611,13 +3612,13 @@ model AperturaPeriodo {
   periodoId                 String          @unique
   tenantId                  String
   origenPeriodoId           String?
-  saldoCajaInicial          Decimal         @default(0)
-  saldoBancoInicial         Decimal         @default(0)
-  saldoCuentasCobrarInicial Decimal         @default(0)
-  saldoCuentasPagarInicial  Decimal         @default(0)
-  saldoInventarioInicial    Decimal         @default(0)
-  saldoCapitalInicial       Decimal         @default(0)
-  saldoResultadoAcumInicial Decimal         @default(0)
+  saldoCajaInicial          Decimal?
+  saldoBancoInicial         Decimal?
+  saldoCuentasCobrarInicial Decimal?
+  saldoCuentasPagarInicial  Decimal?
+  saldoInventarioInicial    Decimal?
+  saldoCapitalInicial       Decimal?
+  saldoResultadoAcumInicial Decimal?
   detalleJson               Json?
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
@@ -3627,6 +3628,36 @@ model AperturaPeriodo {
   @@index([tenantId])
   @@index([origenPeriodoId])
   @@map("apertura_periodos")
+}
+
+/// Solicitud previa de apertura manual; solo una aprobación explícita puede consumirla.
+model AperturaPeriodoSolicitud {
+  solicitudId            String         @id @default(cuid())
+  tenantId               String
+  tipo                   TipoPeriodo
+  fechaInicio            DateTime
+  fechaFin               DateTime
+  observaciones          String?
+  categoria              CategoriaPeriodo @default(ORDINARIO)
+  modoContable           ModoContable    @default(CAJA)
+  functionalCurrencyCode String
+  lineas                 Json
+  idempotencyKey         String?
+  idempotencyPayloadHash String?
+  estado                 String          @default("PENDIENTE")
+  solicitadaPor          String
+  aprobadaPor            String?
+  hashAprobacion         String?
+  aprobadaAt             DateTime?
+  consumidaAt            DateTime?
+  periodoId              String?         @unique
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  tenant                 Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@index([tenantId, estado, createdAt])
+  @@unique([tenantId, solicitadaPor, idempotencyKey])
+  @@map("apertura_periodo_solicitudes")
 }
 
 model SaldoSnapshot {
