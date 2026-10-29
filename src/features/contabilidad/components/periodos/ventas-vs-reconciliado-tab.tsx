@@ -122,6 +122,11 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 						<CheckCircle2 className="h-3 w-3 mr-1" />
 						Reconciliada
 					</Badge>
+				) : clasificacion === "RECONCILIADA_PARCIALMENTE" ? (
+					<Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+						<AlertTriangle className="mr-1 h-3 w-3" />
+						Conciliada parcialmente
+					</Badge>
 				) : (
 					<Badge
 						variant="outline"
@@ -140,7 +145,13 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 							? `Cuenta por pagar${item.estadoCuenta ? ` · ${item.estadoCuenta}` : ""}`
 							: clasificacion === "RECONCILIADA"
 								? "Reconciliada"
-								: "Elegibilidad no determinada"}
+								: clasificacion === "RECONCILIADA_PARCIALMENTE"
+									? "Saldo pendiente de conciliar"
+									: clasificacion === "CONCILIABLE"
+										? "Conciliable"
+										: clasificacion === "EXCLUIDA"
+										? item.motivoExclusion ?? "Excluida; causa no determinada"
+											: "Elegibilidad no determinada"}
 				</Badge>
 			</TableCell>
 			<TableCell>
@@ -220,7 +231,7 @@ export function VentasVsReconciliadoTab({
 	onPageChange,
 	isLoading = false,
 }: VentasVsReconciliadoTabProps) {
-	const { items, itemsAntiguos, totales, totalPages, page } = data;
+	const { items, itemsAntiguos, totales, totalPages, page, exclusionesObservadas } = data;
 
 	return (
 		<div className="space-y-4">
@@ -235,7 +246,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Total Ventas
+								Total ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -256,7 +267,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Total Reconciliado
+								Reconciliado · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -277,7 +288,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Diferencia
+								Diferencia · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -307,7 +318,7 @@ export function VentasVsReconciliadoTab({
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-xs font-medium text-muted-foreground">
-								Sin reconciliar
+								Sin reconciliar · ventas y servicios
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -318,7 +329,7 @@ export function VentasVsReconciliadoTab({
 								</span>
 							</div>
 							<p className="text-xs text-muted-foreground mt-1">
-								Incluye casos sin clasificar y cuentas por cobrar/pagar
+								Incluye casos sin clasificar y cuentas por cobrar. Gastos se resumen aparte.
 							</p>
 						</CardContent>
 					</Card>
@@ -327,6 +338,11 @@ export function VentasVsReconciliadoTab({
 			<p className="text-xs text-muted-foreground">
 				“Sin reconciliar” no confirma elegibilidad para conciliación. CxC y CxP se muestran
 				cuando existe una relación conocida; los demás casos quedan sin clasificar.
+			</p>
+			<p className="text-xs text-muted-foreground">
+				Exclusiones observadas: {exclusionesObservadas.cantidadPeriodo} en las operaciones consultadas
+				del período; {exclusionesObservadas.cantidadHistoricas} entre las operaciones históricas sin
+				reconciliar. {exclusionesObservadas.cobertura}
 			</p>
 
 			{/* Card de Gastos */}

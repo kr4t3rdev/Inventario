@@ -125,3 +125,67 @@ export function buildAppliedFxEvidence(input: BuildEvidenceInput): AppliedFxEvid
     fxEvidenceVersion: 1,
   };
 }
+
+interface VerifyAppliedFxEvidenceInput {
+  originalAmount: number;
+  originalCurrency: string;
+  functionalCurrency: string;
+  convertedAmount: number;
+  exchangeRate?: number | null;
+  rateEffectiveAt?: Date | string | null;
+  fxProvenanceKind?: string | null;
+  fxProvenanceSource?: string | null;
+  fxCatalogRateId?: string | null;
+  fxEvidenceFingerprint?: string | null;
+  fxEvidenceVersion?: number | null;
+}
+
+/**
+ * @description Verifies persisted conversion fields against canonical provenance and fingerprint rules.
+ * @param {VerifyAppliedFxEvidenceInput} input - Stored amount, currency, rate and evidence fields.
+ * @returns {boolean} True only when every field matches a canonical evidence record.
+ */
+export function verifyAppliedFxEvidence(input: VerifyAppliedFxEvidenceInput): boolean {
+  if (input.fxEvidenceVersion !== 1 || !input.fxEvidenceFingerprint) return false;
+  if (!input.fxProvenanceKind || !input.fxProvenanceSource) return false;
+  if (!Number.isFinite(input.convertedAmount) || input.convertedAmount <= 0) return false;
+
+  const originalCurrency = input.originalCurrency.trim().toUpperCase();
+  const functionalCurrency = input.functionalCurrency.trim().toUpperCase();
+  if (!originalCurrency || !functionalCurrency) return false;
+
+  const sameCurrency = originalCurrency === functionalCurrency;
+  if (sameCurrency) {
+    if (input.fxProvenanceKind !== 'SAME_CURRENCY') return false;
+    if (Math.abs(input.convertedAmount - input.originalAmount) > 0.01) return false;
+    if (input.exchangeRate != null && Number(input.exchangeRate) !== 1) return false;
+  } else if (input.fxProvenanceKind !== 'MANUAL_GOVERNED') {
+    return false;
+  }
+
+  try {
+    const effectiveAt = input.rateEffectiveAt == null
+      ? null
+      : new Date(input.rateEffectiveAt);
+    const expected = buildAppliedFxEvidence({
+      originalAmount: input.originalAmount,
+      originalCurrency,
+      functionalCurrency,
+      exchangeRate: input.exchangeRate,
+      convertedAmount: input.convertedAmount,
+      rateEffectiveAt: effectiveAt,
+      source: input.fxProvenanceSource,
+      fxCatalogRateId: input.fxCatalogRateId,
+    });
+
+    return expected.fxProvenanceKind === input.fxProvenanceKind &&
+      expected.functionalCurrency === functionalCurrency &&
+      expected.fxProvenanceSource === input.fxProvenanceSource &&
+      expected.fxCatalogRateId === (input.fxCatalogRateId ?? null) &&
+      expected.fxEvidenceFingerprint === input.fxEvidenceFingerprint &&
+      expected.fxEvidenceVersion === input.fxEvidenceVersion &&
+      (sameCurrency || expected.rateEffectiveAt === effectiveAt?.toISOString());
+  } catch {
+    return false;
+  }
+}

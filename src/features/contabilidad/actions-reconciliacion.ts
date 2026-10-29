@@ -30,6 +30,24 @@ import {
 } from "@/features/contabilidad/services/reconciliation-stats-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
+import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
+
+const RECONCILIATION_EVIDENCE_PAGE_SIZE = 500;
+
+interface ReconciliationEvidenceRow {
+	reconciliacionId: string;
+	monto: unknown;
+	montoConvertido: unknown;
+	moneda: string | null;
+	functionalCurrency: string | null;
+	tasaCambio: unknown;
+	rateEffectiveAt: Date | null;
+	fxProvenanceKind: string | null;
+	fxProvenanceSource: string | null;
+	fxCatalogRateId: string | null;
+	fxEvidenceFingerprint: string | null;
+	fxEvidenceVersion: number | null;
+}
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -94,61 +112,123 @@ export const getVentasPendientesAction = withAction(
 			whereParts.length > 0
 				? Prisma.sql`WHERE ${Prisma.join(whereParts, " AND ")}`
 				: Prisma.sql``;
+		const appliedAmountSql = Prisma.sql`
+      CASE
+        WHEN rv."montoConvertido" IS NOT NULL
+          AND rv."fxEvidenceVersion" = 1
+          AND rv."fxEvidenceFingerprint" ~ '^[0-9a-f]{64}$'
+          AND NULLIF(BTRIM(rv."fxProvenanceSource"), '') IS NOT NULL
+          AND (
+            (
+              rv."moneda" IS NOT NULL
+              AND rv."functionalCurrency" IS NOT NULL
+              AND rv."moneda" = rv."functionalCurrency"
+              AND rv."fxProvenanceKind" = 'SAME_CURRENCY'
+              AND ABS(rv."montoConvertido" - rv."monto") <= 0.01
+              AND (rv."tasaCambio" IS NULL OR rv."tasaCambio" = 1)
+            )
+            OR (
+              rv."moneda" IS NOT NULL
+              AND rv."functionalCurrency" IS NOT NULL
+              AND rv."moneda" IS DISTINCT FROM rv."functionalCurrency"
+              AND rv."fxProvenanceKind" = 'MANUAL_GOVERNED'
+              AND rv."rateEffectiveAt" IS NOT NULL
+              AND rv."tasaCambio" > 0
+              AND ABS(rv."montoConvertido" - rv."monto" * rv."tasaCambio")
+                <= GREATEST(0.01, ABS(rv."monto" * rv."tasaCambio") * 0.000001)
+            )
+          )
+        THEN rv."montoConvertido"
+        ELSE NULL
+      END`;
+
+		const { pendingRows, totalRows } = await prisma.$transaction(async (tx) => {
+			let cursor: string | null = null;
+			while (true) {
+				const cursorSql: Prisma.Sql = cursor
+					? Prisma.sql`AND rv."reconciliacionId" > ${cursor}`
+					: Prisma.empty;
+				const reconciliationEvidenceRows: ReconciliationEvidenceRow[] =
+					await tx.$queryRaw<ReconciliationEvidenceRow[]>(Prisma.sql`
+					SELECT rv."reconciliacionId", rv."monto", rv."montoConvertido",
+						rv."moneda", rv."functionalCurrency", rv."tasaCambio",
+						rv."rateEffectiveAt", rv."fxProvenanceKind", rv."fxProvenanceSource",
+						rv."fxCatalogRateId", rv."fxEvidenceFingerprint", rv."fxEvidenceVersion"
+					FROM "Venta" v
+					JOIN "ReconciliacionVenta" rv
+						ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
+					${whereSql}
+					${cursorSql}
+					ORDER BY rv."reconciliacionId"
+					LIMIT ${RECONCILIATION_EVIDENCE_PAGE_SIZE}
+			`);
+				if (reconciliationEvidenceRows.some(
+					(row) => resolveAppliedReconciliationAmount(row) == null,
+				)) {
+					throw new ActionError(
+						'No se puede calcular la conciliación: existe un pago sin evidencia FX verificable.',
+						'FX_EVIDENCE_MISSING',
+					);
+				}
+				if (reconciliationEvidenceRows.length < RECONCILIATION_EVIDENCE_PAGE_SIZE) break;
+				cursor = reconciliationEvidenceRows.at(-1)!.reconciliacionId;
+			}
 
 		// Step 1: Get ventaIds that still have pending balance using raw SQL
 		// (LEFT JOIN with ReconciliacionVenta, HAVING total - totalPagado > 0.1)
-		const pendingRows = await prisma.$queryRaw<
+		const pendingRows = await tx.$queryRaw<
 			Array<{ ventaId: string; totalPagado: number }>
 		>(Prisma.sql`
     SELECT v."ventaId",
       COALESCE(SUM(
-        CASE
-          WHEN rv."moneda" = 'CUP' THEN rv."monto"
-          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-          ELSE rv."monto"
-        END
+        ${appliedAmountSql}
       ), 0)::double precision AS "totalPagado"
     FROM "Venta" v
-    LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+    LEFT JOIN "ReconciliacionVenta" rv
+      ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
     ${whereSql}
     GROUP BY v."ventaId", v."total", v."createdAt"
     HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
-      CASE
-        WHEN rv."moneda" = 'CUP' THEN rv."monto"
-        WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-        ELSE rv."monto"
-      END
+      ${appliedAmountSql}
     ), 0)) > 0.1
     ORDER BY v."createdAt" DESC
     OFFSET ${skip} LIMIT ${limit}
   `);
 
 		// Count total pending for pagination
-		const totalRows = await prisma.$queryRaw<
-			Array<{ total: bigint }>
+		const totalRows = await tx.$queryRaw<
+			Array<{ total: bigint; saldoPendiente: number }>
 		>(Prisma.sql`
-    SELECT COUNT(*)::bigint AS total FROM (
-      SELECT v."ventaId"
+    SELECT COUNT(*)::bigint AS total,
+      COALESCE(SUM(pendientes.saldo), 0)::double precision AS "saldoPendiente"
+      FROM (
+      SELECT v."ventaId", COALESCE(v."total", 0) - COALESCE(SUM(
+        ${appliedAmountSql}
+      ), 0) AS saldo
       FROM "Venta" v
-      LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+      LEFT JOIN "ReconciliacionVenta" rv
+        ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
       ${whereSql}
       GROUP BY v."ventaId", v."total"
       HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
-        CASE
-          WHEN rv."moneda" = 'CUP' THEN rv."monto"
-          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-          ELSE rv."monto"
-        END
+        ${appliedAmountSql}
       ), 0)) > 0.1
     ) AS pendientes
-  `);
+		`);
+			return { pendingRows, totalRows };
+		}, {
+			isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+			timeout: 30_000,
+		});
 
 		const total = Number(totalRows[0]?.total || 0);
+		const saldoPendienteTotal = Number(totalRows[0]?.saldoPendiente || 0);
 		const ventaIds = pendingRows.map((r) => r.ventaId);
 
 		if (ventaIds.length === 0) {
 			return {
 				ventas: [],
+				saldoPendienteTotal,
 				pagination: {
 					page,
 					limit,
@@ -190,6 +270,7 @@ export const getVentasPendientesAction = withAction(
 
 		return {
 			ventas,
+			saldoPendienteTotal,
 			pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
 		};
 	},
@@ -702,6 +783,73 @@ export const reconciliarServicioAction = withAction(
 
 // ─── Gastos ────────────────────────────────────────────────
 
+interface ExpenseReconciliationAmount {
+	monto: unknown;
+	montoConvertido?: unknown;
+	moneda?: string | null;
+	functionalCurrency?: string | null;
+	tasaCambio?: unknown;
+	rateEffectiveAt?: Date | null;
+	fxProvenanceKind?: string | null;
+	fxProvenanceSource?: string | null;
+	fxCatalogRateId?: string | null;
+	fxEvidenceFingerprint?: string | null;
+	fxEvidenceVersion?: number | null;
+}
+
+const APPLIED_EXPENSE_RECONCILIATION_STATES = [
+	'PAGADA',
+	'PAGADO',
+	'POSTED',
+	'PARCIAL',
+] as const;
+
+/**
+ * @description Converts an applied expense payment to the tenant's functional currency.
+ * @param {ExpenseReconciliationAmount} row - Persisted payment and optional legacy FX evidence.
+ * @returns {number} Applied payment amount in the tenant's functional currency.
+ */
+function getAppliedExpenseAmount(row: ExpenseReconciliationAmount): number {
+	const amount = resolveAppliedReconciliationAmount(row);
+	if (amount == null) {
+		throw new ActionError(
+			'No se puede calcular el saldo: existe un gasto pagado sin evidencia de conversión.',
+			'FX_EVIDENCE_MISSING',
+		);
+	}
+	return amount;
+}
+
+/**
+ * @description Calculates an expense's open balance from all persisted reconciliation rows.
+ * @param {number} grossAmount - Original expense amount.
+ * @param {ExpenseReconciliationAmount[]} reconciliations - Applied payments.
+ * @returns {number} Non-negative open balance rounded to cents.
+ */
+function calculateOpenExpenseBalance(
+	grossAmount: number,
+	reconciliations: ExpenseReconciliationAmount[],
+): number {
+	const applied = reconciliations.reduce(
+		(sum, row) => sum + getAppliedExpenseAmount(row),
+		0,
+	);
+	return Math.max(0, Math.round((grossAmount - applied) * 100) / 100);
+}
+
+/**
+ * @description Calculates an open balance from an already-verified functional payment total.
+ * @param {number} grossAmount - Gross amount in functional currency.
+ * @param {number} appliedAmount - Previously validated payment total in functional currency.
+ * @returns {number} Non-negative open balance rounded to cents.
+ */
+function calculateOpenExpenseBalanceFromAppliedAmount(
+	grossAmount: number,
+	appliedAmount: number,
+): number {
+	return Math.max(0, Math.round((grossAmount - appliedAmount) * 100) / 100);
+}
+
 export const getGastosPendientesAction = withAction(
 	async (
 		params: {
@@ -718,8 +866,12 @@ export const getGastosPendientesAction = withAction(
 		const tenantId = requireTenant(user);
 
 		// ── Query GastosDE ──
-		const whereDE: any = { tenantId };
-		if (params.soloNoReconciliados) whereDE.reconciliaciones = { none: {} };
+		const exclusionCxP = {
+			cuentaPorPagar: {
+				is: { tenantId, deletedAt: null, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+			},
+		};
+		const whereDE: any = { tenantId, NOT: exclusionCxP };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereDE.createdAt = {};
 			if (params.fechaDesde)
@@ -732,13 +884,8 @@ export const getGastosPendientesAction = withAction(
 		const whereGC: any = {
 			tenantId,
 			deletedAt: null,
-			NOT: {
-				cuentaPorPagar: {
-					is: { estado: { in: ['PENDIENTE', 'PARCIAL'] } },
-				},
-			},
+			NOT: exclusionCxP,
 		};
-		if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereGC.fechaCompra = {};
 			if (params.fechaDesde)
@@ -749,7 +896,6 @@ export const getGastosPendientesAction = withAction(
 
 		// ── Query PagoSalario (salarios de empleados) ──
 		const wherePS: any = { tenantId };
-		if (params.soloNoReconciliados) wherePS.ReconciliacionGasto = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			wherePS.createdAt = {};
 			if (params.fechaDesde)
@@ -794,13 +940,52 @@ export const getGastosPendientesAction = withAction(
 			prisma.gastosDE.findMany({
 				where: whereDE,
 				orderBy: { createdAt: "desc" },
-				include: { reconciliaciones: { select: { reconciliacionId: true } } },
+				include: {
+					reconciliaciones: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
+				},
 			}),
 			prisma.gastoCompra.findMany({
 				where: whereGC,
 				orderBy: { fechaCompra: "desc" },
 				include: {
-					reconciliaciones: { select: { reconciliacionId: true } },
+					compraDocumento: { select: { moneda: true } },
+					reconciliaciones: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
 					vendor: { select: { nombre: true } },
 					producto: { select: { nombre: true } },
 				},
@@ -809,7 +994,25 @@ export const getGastosPendientesAction = withAction(
 				where: wherePS,
 				orderBy: { createdAt: "desc" },
 				include: {
-					ReconciliacionGasto: { select: { reconciliacionId: true } },
+					ReconciliacionGasto: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
 					empleado: { select: { nombre: true, apellido: true, cargo: true } },
 				},
 			}),
@@ -829,39 +1032,146 @@ export const getGastosPendientesAction = withAction(
 					cliente: { select: { nombre: true } },
 				},
 			}),
-			params.soloNoReconciliados
-				? prisma.reconciliacionGasto
-						.findMany({
-							where: { tenantId, tipoGasto: "servicio" },
-							select: { referenciaId: true },
-							distinct: ["referenciaId"],
-						})
-						.then((r) => r.map((x) => x.referenciaId))
-				: Promise.resolve([] as string[]),
-			params.soloNoReconciliados
-				? prisma.reconciliacionGasto
-						.findMany({
-							where: { tenantId, tipoGasto: "venta_servicio" },
-							select: { referenciaId: true },
-							distinct: ["referenciaId"],
-						})
-						.then((r) => r.map((x) => x.referenciaId))
-				: Promise.resolve([] as string[]),
+							prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+			}),
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "venta_servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+			}),
 		]);
 
-		// Filtrar servicios ya reconciliados si se solicitó
-		const comprasServicioFiltradas = params.soloNoReconciliados
-			? comprasServicio.filter(
-					(g: any) => !reconciliadosServicioIds.includes(g.compraServicioId),
-				)
-			: comprasServicio;
+		const policy = await prisma.tenantAccountingPolicy.findUnique({
+			where: { tenantId },
+			select: { functionalCurrencyCode: true },
+		});
+		const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+		const tasasPorMoneda = new Map<string, Promise<number>>();
+		const convertGrossToFunctionalCurrency = async (
+			amount: number,
+			currency: string | null | undefined,
+			boundaryAt: Date,
+		): Promise<number> => {
+			const monedaOrigen = currency?.trim().toUpperCase() || monedaFuncional;
+			if (monedaOrigen === monedaFuncional) return amount;
+			const rateKey = `${monedaOrigen}:${boundaryAt.toISOString()}`;
+			let tasaPromise = tasasPorMoneda.get(rateKey);
+			if (!tasaPromise) {
+				tasaPromise = exchangeRateProvider.getRateAsOf({
+					sourceCurrency: monedaOrigen,
+					targetCurrency: monedaFuncional,
+					boundaryAt,
+				}).then((tasaPublicada) => {
+					if (!tasaPublicada) {
+						throw new ActionError(
+							`No hay tasa de cambio publicada para ${monedaOrigen} → ${monedaFuncional}; no se puede calcular el saldo pendiente`,
+							'VALIDATION_ERROR',
+						);
+					}
+					return tasaPublicada.tasa;
+				});
+				tasasPorMoneda.set(rateKey, tasaPromise);
+			}
+			return amount * await tasaPromise;
+		};
+		const [
+			totalFuncionalPorServicio,
+			totalFuncionalPorCompra,
+			costoFuncionalPorVentaServicio,
+		] = await Promise.all([
+			Promise.all(comprasServicio.map(async (row: any) => [
+				row.compraServicioId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.total ?? 0),
+					row.moneda,
+					row.fechaServicio ?? row.createdAt,
+				),
+			] as const)),
+			Promise.all(gastosCompra.map(async (row: any) => [
+				row.gastoCompraId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.total ?? 0),
+					row.compraDocumento?.moneda,
+					row.fechaCompra,
+				),
+			] as const)),
+			Promise.all(ventasServicio.map(async (row: any) => [
+				row.ventaServicioId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.costo ?? 0) * Number(row.cantidad ?? 1),
+					row.moneda,
+					row.createdAt,
+				),
+			] as const)),
+		]);
+		const totalFuncionalByService = new Map(totalFuncionalPorServicio);
+		const totalFuncionalByPurchase = new Map(totalFuncionalPorCompra);
+		const costoFuncionalBySaleService = new Map(costoFuncionalPorVentaServicio);
 
-		const ventasServicioFiltradas = params.soloNoReconciliados
-			? ventasServicio.filter(
-					(g: any) =>
-						!reconciliadosVentaServicioIds.includes(g.ventaServicioId),
-				)
-			: ventasServicio;
+		const buildAppliedByReference = (
+			rows: Array<ExpenseReconciliationAmount & { referenciaId: string | null }>,
+		) => {
+			const amounts = new Map<string, number>();
+			for (const row of rows) {
+				if (!row.referenciaId) continue;
+				amounts.set(
+					row.referenciaId,
+					(amounts.get(row.referenciaId) ?? 0) + getAppliedExpenseAmount(row),
+				);
+			}
+			return amounts;
+		};
+		const appliedByService = buildAppliedByReference(reconciliadosServicioIds);
+		const appliedBySaleService = buildAppliedByReference(reconciliadosVentaServicioIds);
+		const comprasServicioFiltradas = comprasServicio.filter((g: any) => {
+			const balance = calculateOpenExpenseBalanceFromAppliedAmount(
+				totalFuncionalByService.get(g.compraServicioId) ?? 0,
+				appliedByService.get(g.compraServicioId) ?? 0,
+			);
+			return !params.soloNoReconciliados || balance > 0.1;
+		});
+		const ventasServicioFiltradas = ventasServicio.filter((g: any) => {
+			const balance = calculateOpenExpenseBalanceFromAppliedAmount(
+				costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
+				appliedBySaleService.get(g.ventaServicioId) ?? 0,
+			);
+			return !params.soloNoReconciliados || balance > 0.1;
+		});
 
 		// Mapear a GastoPendiente
 		const gastos = [
@@ -869,7 +1179,7 @@ export const getGastosPendientesAction = withAction(
 				tipo: "gastoDE" as const,
 				referenciaId: g.gastosDEId,
 				descripcion: g.descripcion || `Gasto DE #${g.gastosDEId.slice(0, 8)}`,
-				monto: Number(g.monto || g.total || 0),
+				monto: calculateOpenExpenseBalance(Number(g.monto || g.total || 0), g.reconciliaciones),
 				periodo: g.periodo || undefined,
 				detalles: {
 					proveedor: g.proveedor || undefined,
@@ -883,7 +1193,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "compra" as const,
 				referenciaId: g.gastoCompraId,
 				descripcion: g.descripcion || `Compra #${g.gastoCompraId.slice(0, 8)}`,
-				monto: Number(g.total || 0),
+				monto: calculateOpenExpenseBalance(
+					totalFuncionalByPurchase.get(g.gastoCompraId) ?? 0,
+					g.reconciliaciones,
+				),
 				periodo: g.periodo || undefined,
 				detalles: {
 					vendor: (g as any).vendor?.nombre || undefined,
@@ -901,12 +1214,12 @@ export const getGastosPendientesAction = withAction(
 				descripcion:
 					`Salario de ${g.empleado?.nombre || ""} ${g.empleado?.apellido || ""}`.trim() ||
 					`Pago #${g.pgId.slice(0, 8)}`,
-				monto: getPayrollPaymentAmount({
+				monto: calculateOpenExpenseBalance(getPayrollPaymentAmount({
 					salario: Number(g.salario || 0),
 					bonificaciones: Number(g.bonificaciones || 0),
 					deducciones: Number(g.deducciones || 0),
 					montoHorasExtras: Number(g.montoHorasExtras || 0),
-				}),
+				}), g.ReconciliacionGasto),
 				periodo: g.periodo || undefined,
 				detalles: {
 					empleado: g.empleado
@@ -929,7 +1242,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "servicio" as const,
 				referenciaId: g.compraServicioId,
 				descripcion: `${g.servicio?.nombre || "Servicio"} - ${g.proveedor?.nombre || "Sin proveedor"}`,
-				monto: Number(g.total || 0),
+				monto: calculateOpenExpenseBalanceFromAppliedAmount(
+					totalFuncionalByService.get(g.compraServicioId) ?? 0,
+					appliedByService.get(g.compraServicioId) ?? 0,
+				),
 				periodo: undefined,
 				detalles: {
 					servicio: g.servicio?.nombre || undefined,
@@ -948,7 +1264,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "venta_servicio" as const,
 				referenciaId: g.ventaServicioId,
 				descripcion: `Costo: ${g.servicio?.nombre || "Servicio"} - ${g.cliente?.nombre || "Sin cliente"}`,
-				monto: Number(g.costo * g.cantidad || 0),
+				monto: calculateOpenExpenseBalanceFromAppliedAmount(
+					costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
+					appliedBySaleService.get(g.ventaServicioId) ?? 0,
+				),
 				periodo: g.createdAt?.toISOString?.()?.slice(0, 7) || undefined,
 				detalles: {
 					servicio: g.servicio?.nombre || undefined,
@@ -967,8 +1286,11 @@ export const getGastosPendientesAction = withAction(
 				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 		);
 
-		const total = gastos.length;
-		const paginated = gastos.slice((page - 1) * limit, page * limit);
+		const gastosPendientes = params.soloNoReconciliados
+			? gastos.filter((gasto) => gasto.monto > 0.1)
+			: gastos;
+		const total = gastosPendientes.length;
+		const paginated = gastosPendientes.slice((page - 1) * limit, page * limit);
 
 		return {
 			gastos: paginated,

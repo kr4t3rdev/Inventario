@@ -9,6 +9,16 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
+import { ActionError } from "@/lib/server-actions";
+import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
+
+const APPLIED_EXPENSE_RECONCILIATION_STATES = [
+	'PAGADA',
+	'PAGADO',
+	'POSTED',
+	'PARCIAL',
+] as const;
 
 // ── Tipos compartidos ─────────────────────────────────────────────────────
 
@@ -48,15 +58,151 @@ export interface VentaVsReconciliadoItem {
 	fechaReconciliacion: Date | null;
 	clasificacion?:
 		| "RECONCILIADA"
+		| "RECONCILIADA_PARCIALMENTE"
+		| "CONCILIABLE"
 		| "CUENTA_POR_COBRAR"
 		| "CUENTA_POR_PAGAR"
+		| "EXCLUIDA"
 		| "NO_CLASIFICADA";
 	estadoCuenta?: string | null;
+	motivoExclusion?: string | null;
+}
+
+interface ReconciliationAmount {
+	monto: number | { toString(): string };
+	montoConvertido?: number | { toString(): string } | null;
+	moneda?: string | null;
+	functionalCurrency?: string | null;
+	tasaCambio?: number | { toString(): string } | null;
+	rateEffectiveAt?: Date | null;
+	fxProvenanceKind?: string | null;
+	fxProvenanceSource?: string | null;
+	fxCatalogRateId?: string | null;
+	fxEvidenceFingerprint?: string | null;
+	fxEvidenceVersion?: number | null;
+}
+
+/**
+ * @description Converts a persisted reconciliation amount to functional currency for legacy FX
+ * rows.
+ * @param {ReconciliationAmount} row - Applied payment with optional conversion evidence.
+ * @returns {number} Applied amount in the tenant's functional currency.
+ */
+function getAppliedReconciliationAmount(row: ReconciliationAmount): number {
+	const amount = resolveAppliedReconciliationAmount(row);
+	if (amount == null) {
+		throw new ActionError(
+			'No se puede calcular el cuadre: existe una operación pagada sin evidencia de conversión.',
+			'FX_EVIDENCE_MISSING',
+		);
+	}
+	return amount;
+}
+
+/**
+ * @description Creates a cached converter from source currencies to tenant functional currency.
+ * @param {string} tenantId - Tenant whose accounting currency determines the target.
+ * @returns {Promise<{currency: string; convert: (amount: number, sourceCurrency: string | null, boundaryAt: Date) => Promise<number>}>}
+ *   Conversion context.
+ */
+async function createFunctionalCurrencyConverter(tenantId: string): Promise<{
+	currency: string;
+	convert: (
+		amount: number,
+		sourceCurrency: string | null | undefined,
+		boundaryAt: Date,
+	) => Promise<number>;
+}> {
+	const policy = await prisma.tenantAccountingPolicy.findUnique({
+		where: { tenantId },
+		select: { functionalCurrencyCode: true },
+	});
+	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || 'CUP';
+	const rates = new Map<string, Promise<number>>();
+	const convert = async (
+		amount: number,
+		sourceCurrency: string | null | undefined,
+		boundaryAt: Date,
+	) => {
+		const source = sourceCurrency?.trim().toUpperCase() || functionalCurrency;
+		if (source === functionalCurrency) return amount;
+		const rateKey = `${source}:${boundaryAt.toISOString()}`;
+		let ratePromise = rates.get(rateKey);
+		if (!ratePromise) {
+			ratePromise = exchangeRateProvider.getRateAsOf({
+				sourceCurrency: source,
+				targetCurrency: functionalCurrency,
+				boundaryAt,
+			}).then((rate) => {
+				if (!rate) {
+					throw new ActionError(
+						`No hay tasa de cambio publicada para ${source} → ${functionalCurrency}; no se puede calcular el cuadre`,
+						'VALIDATION_ERROR',
+					);
+				}
+				return rate.tasa;
+			});
+			rates.set(rateKey, ratePromise);
+		}
+		return amount * await ratePromise;
+	};
+	return { currency: functionalCurrency, convert };
+}
+
+/**
+ * @description Classifies an operation from its remaining balance and active debt status.
+ * @param {number} total - Operation amount in functional currency.
+ * @param {ReconciliationAmount[]} rows - All reconciliation amounts for the operation.
+ * @param {string | null} accountState - Linked receivable/payable state, when present.
+ * @param {"CUENTA_POR_COBRAR" | "CUENTA_POR_PAGAR"} accountType - Linked debt kind.
+ * @returns {object} Reconciliation amount, balance, state and eligibility classification.
+ */
+function classifyReconciliation(
+	total: number,
+	rowsOrAmount: ReconciliationAmount[] | number,
+	accountState: string | null,
+	accountType: "CUENTA_POR_COBRAR" | "CUENTA_POR_PAGAR",
+) {
+	const reconciledAmount = typeof rowsOrAmount === 'number'
+		? rowsOrAmount
+		: rowsOrAmount.reduce(
+			(sum, row) => sum + getAppliedReconciliationAmount(row),
+			0,
+		);
+	const difference = total - reconciledAmount;
+	const normalizedState = accountState?.toUpperCase() ?? null;
+	const activeDebt = normalizedState === "PENDIENTE" || normalizedState === "PARCIAL";
+	const fullyReconciled = reconciledAmount > 0 && difference <= 0.1;
+	const partiallyReconciled = reconciledAmount > 0.1 && difference > 0.1;
+	const classification = activeDebt
+		? accountType
+		: fullyReconciled
+			? "RECONCILIADA"
+			: partiallyReconciled
+				? "RECONCILIADA_PARCIALMENTE"
+				: normalizedState && normalizedState !== "PAGADA"
+					? "EXCLUIDA"
+					: "CONCILIABLE";
+
+	return {
+		estaReconciliado: fullyReconciled,
+		montoReconciliado: reconciledAmount > 0 ? reconciledAmount : null,
+		diferencia: difference,
+		clasificacion: classification as VentaVsReconciliadoItem["clasificacion"],
+		motivoExclusion: classification === "EXCLUIDA" && normalizedState
+			? `${accountType === "CUENTA_POR_COBRAR" ? "Cuenta por cobrar" : "Cuenta por pagar"} en estado ${normalizedState}.`
+			: null,
+	};
 }
 
 export interface VentasVsReconciliadoData {
 	items: VentaVsReconciliadoItem[];
 	itemsAntiguos: VentaVsReconciliadoItem[];
+	exclusionesObservadas: {
+		cantidadPeriodo: number;
+		cantidadHistoricas: number;
+		cobertura: string;
+	};
 	totales: {
 		totalVentas: number;
 		totalReconciliado: number;
@@ -317,13 +463,22 @@ export async function obtenerVentasVsReconciliado(
 					select: { cuentaPorCobrar: { select: { estado: true } } },
 				},
 				reconciliaciones: {
+					where: { tenantId },
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -344,13 +499,22 @@ export async function obtenerVentasVsReconciliado(
 					select: { cuentaPorCobrar: { select: { estado: true } } },
 				},
 				reconciliaciones: {
+					where: { tenantId },
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -358,69 +522,12 @@ export async function obtenerVentasVsReconciliado(
 		prisma.ventaServicios.count({ where: filtroServicio }),
 	]);
 
-	// ── IDs reconciliados de CompraServicio y VentaServicios.costo (con monto) ──
-	const [reconciliadosCompraServicio, reconciliadosVentaServicio] =
-		await Promise.all([
-			prisma.reconciliacionGasto.findMany({
-				where: { tenantId, tipoGasto: "servicio", fechaReconciliacion: rango },
-				select: {
-					referenciaId: true,
-					monto: true,
-					montoConvertido: true,
-					fechaReconciliacion: true,
-				},
-				distinct: ["referenciaId"],
-			}),
-			prisma.reconciliacionGasto.findMany({
-				where: {
-					tenantId,
-					tipoGasto: "venta_servicio",
-					fechaReconciliacion: rango,
-				},
-				select: {
-					referenciaId: true,
-					monto: true,
-					montoConvertido: true,
-					fechaReconciliacion: true,
-				},
-				distinct: ["referenciaId"],
-			}),
-		]);
-
-	const idsReconciliadosCS = new Set(
-		reconciliadosCompraServicio.map((r) => r.referenciaId).filter(Boolean),
-	);
-	const idsReconciliadosVS = new Set(
-		reconciliadosVentaServicio.map((r) => r.referenciaId).filter(Boolean),
-	);
-	// Mapas id -> datos de reconciliación (para obtener el monto reconciliado real)
-	const montoReconciliadoCS = new Map<string, { monto: number; fecha: Date | null }>();
-	for (const r of reconciliadosCompraServicio) {
-		if (!r.referenciaId) continue;
-		montoReconciliadoCS.set(r.referenciaId, {
-			monto: Number(r.montoConvertido ?? r.monto ?? 0),
-			fecha: r.fechaReconciliacion ?? null,
-		});
-	}
-	const montoReconciliadoVS = new Map<string, { monto: number; fecha: Date | null }>();
-	for (const r of reconciliadosVentaServicio) {
-		if (!r.referenciaId) continue;
-		montoReconciliadoVS.set(r.referenciaId, {
-			monto: Number(r.montoConvertido ?? r.monto ?? 0),
-			fecha: r.fechaReconciliacion ?? null,
-		});
-	}
-
-	// Arrays para usar con Prisma notIn (los Set no son arrays)
-	const idsReconciliadosCSArr = [...idsReconciliadosCS];
-	const idsReconciliadosVSArr = [...idsReconciliadosVS];
-
 	// ── Servicios contratados (CompraServicio) ──
-	const filtroCompraServicio = { tenantId, createdAt: rango };
+	const filtroCompraServicio = { tenantId, fechaServicio: rango };
 	const [comprasServicio, totalCompraServicio] = await Promise.all([
 		prisma.compraServicio.findMany({
 			where: filtroCompraServicio,
-			orderBy: { createdAt: "desc" },
+			orderBy: { fechaServicio: "desc" },
 		}),
 		prisma.compraServicio.count({ where: filtroCompraServicio }),
 	]);
@@ -448,13 +555,25 @@ export async function obtenerVentasVsReconciliado(
 			include: {
 				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
+					where: {
+						tenantId,
+						estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					},
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -463,55 +582,192 @@ export async function obtenerVentasVsReconciliado(
 	]);
 
 	// ── Gastos de compras (GastoCompra) ──
-	const filtroGastoCompra = { tenantId, createdAt: rango, deletedAt: null };
+	const filtroGastoCompra = { tenantId, fechaCompra: rango, deletedAt: null };
 	const [gastosCompra, totalGastosCompra] = await Promise.all([
 		prisma.gastoCompra.findMany({
 			where: filtroGastoCompra,
 			include: {
 				cuentaPorPagar: { select: { estado: true } },
+				compraDocumento: { select: { moneda: true } },
 				reconciliaciones: {
+					where: {
+						tenantId,
+						estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					},
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
-			orderBy: { createdAt: "desc" },
+			orderBy: { fechaCompra: "desc" },
 		}),
 		prisma.gastoCompra.count({ where: filtroGastoCompra }),
 	]);
 
+	const [reconciliadosCompraServicio, reconciliadosVentaServicio] = await Promise.all([
+		prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "servicio",
+				estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				referenciaId: { in: comprasServicio.map((row) => row.compraServicioId) },
+			},
+			select: {
+				referenciaId: true,
+				monto: true,
+				montoConvertido: true,
+				functionalCurrency: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceFingerprint: true,
+				fxEvidenceVersion: true,
+				fechaReconciliacion: true,
+				moneda: true,
+				tasaCambio: true,
+			},
+			orderBy: { fechaReconciliacion: "desc" },
+		}),
+		prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "venta_servicio",
+				estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				referenciaId: { in: ventasServicioCosto.map((row) => row.ventaServicioId) },
+			},
+			select: {
+				referenciaId: true,
+				monto: true,
+				montoConvertido: true,
+				functionalCurrency: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceFingerprint: true,
+				fxEvidenceVersion: true,
+				fechaReconciliacion: true,
+				moneda: true,
+				tasaCambio: true,
+			},
+			orderBy: { fechaReconciliacion: "desc" },
+		}),
+	]);
+	const functionalCurrencyConverter = await createFunctionalCurrencyConverter(tenantId);
+	const [
+		ventaTotals,
+		gastosDETotals,
+		servicioTotals,
+		compraServicioTotals,
+		gastoCompraTotals,
+		ventaServicioCosts,
+	] = await Promise.all([
+		Promise.all(ventas.map(async (row) => [
+			row.ventaId,
+			await functionalCurrencyConverter.convert(Number(row.total ?? 0), 'CUP', row.createdAt),
+		] as const)),
+		Promise.all(gastosDE.map(async (row) => [
+			row.gastosDEId,
+			await functionalCurrencyConverter.convert(Number(row.monto ?? 0), 'CUP', row.createdAt),
+		] as const)),
+		Promise.all(ventasServicios.map(async (row) => [
+			row.ventaServicioId,
+			await functionalCurrencyConverter.convert(
+				Number(row.total ?? 0),
+				row.moneda,
+				row.createdAt,
+			),
+		] as const)),
+		Promise.all(comprasServicio.map(async (row) => [
+			row.compraServicioId,
+			await functionalCurrencyConverter.convert(
+				Number(row.total ?? 0),
+				row.moneda,
+				row.fechaServicio ?? row.createdAt,
+			),
+		] as const)),
+		Promise.all(gastosCompra.map(async (row) => [
+			row.gastoCompraId,
+			await functionalCurrencyConverter.convert(
+				Number(row.total ?? 0),
+				row.compraDocumento?.moneda,
+				row.fechaCompra,
+			),
+		] as const)),
+		Promise.all(ventasServicioCosto.map(async (row) => [
+			row.ventaServicioId,
+			await functionalCurrencyConverter.convert(
+				Number(row.costo ?? 0) * Number(row.cantidad ?? 1),
+				row.moneda,
+				row.createdAt,
+			),
+		] as const)),
+	]);
+	const ventaTotalFuncional = new Map(ventaTotals);
+	const gastoDETotalFuncional = new Map(gastosDETotals);
+	const servicioTotalFuncional = new Map(servicioTotals);
+	const compraServicioTotalFuncional = new Map(compraServicioTotals);
+	const gastoCompraTotalFuncional = new Map(gastoCompraTotals);
+	const ventaServicioCostoFuncional = new Map(ventaServicioCosts);
+	const montoReconciliadoCS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const reconciliation of reconciliadosCompraServicio) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoCS.get(reconciliation.referenciaId);
+		montoReconciliadoCS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				getAppliedReconciliationAmount(reconciliation),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
+	const montoReconciliadoVS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const reconciliation of reconciliadosVentaServicio) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoVS.get(reconciliation.referenciaId);
+		montoReconciliadoVS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				getAppliedReconciliationAmount(reconciliation),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
+
 	// Mapear a tipo unificado
 	const mapVenta = (v: (typeof ventas)[number]): VentaVsReconciliadoItem => {
-		const rec = v.reconciliaciones[0];
 		const estadoCuenta =
 			v.factura?.cuentaPorCobrar?.estado ??
 			v.VentaServicios?.find((servicio) => servicio.cuentaPorCobrar?.estado)
 				?.cuentaPorCobrar?.estado ??
 			null;
-		const monto = Number(v.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = ventaTotalFuncional.get(v.ventaId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, v.reconciliaciones, estadoCuenta, "CUENTA_POR_COBRAR",
+		);
+		const rec = v.reconciliaciones[0];
 		return {
 			id: v.ventaId,
 			tipo: "VENTA",
 			folio: v.ventaId.slice(0, 8),
 			fecha: v.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: v.metodoPago,
 			origen: null,
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_COBRAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -519,29 +775,24 @@ export async function obtenerVentasVsReconciliado(
 	const mapServicio = (
 		vs: (typeof ventasServicios)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = vs.reconciliaciones[0];
 		const estadoCuenta =
 			vs.cuentaPorCobrar?.estado ?? vs.factura?.cuentaPorCobrar?.estado ?? null;
-		const monto = Number(vs.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = servicioTotalFuncional.get(vs.ventaServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, vs.reconciliaciones, estadoCuenta, "CUENTA_POR_COBRAR",
+		);
+		const rec = vs.reconciliaciones[0];
 		return {
 			id: vs.ventaServicioId,
 			tipo: "SERVICIO",
 			folio: vs.ventaServicioId.slice(0, 8),
 			fecha: vs.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: null,
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_COBRAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -549,28 +800,23 @@ export async function obtenerVentasVsReconciliado(
 	const mapGastoDE = (
 		g: (typeof gastosDE)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = g.reconciliaciones[0];
 		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
-		const monto = Number(g.monto ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = gastoDETotalFuncional.get(g.gastosDEId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, g.reconciliaciones, estadoCuenta, "CUENTA_POR_PAGAR",
+		);
+		const rec = g.reconciliaciones[0];
 		return {
 			id: g.gastosDEId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.gastosDEId.slice(0, 8),
 			fecha: g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: g.proveedor ?? "Gasto DE",
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_PAGAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -578,28 +824,23 @@ export async function obtenerVentasVsReconciliado(
 	const mapGastoCompra = (
 		g: (typeof gastosCompra)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = g.reconciliaciones[0];
 		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
-		const monto = Number(g.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = gastoCompraTotalFuncional.get(g.gastoCompraId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, g.reconciliaciones, estadoCuenta, "CUENTA_POR_PAGAR",
+		);
+		const rec = g.reconciliaciones[0];
 		return {
 			id: g.gastoCompraId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.gastoCompraId.slice(0, 8),
-			fecha: g.createdAt,
+			fecha: g.fechaCompra ?? g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Compra",
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_PAGAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -608,22 +849,25 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof comprasServicio)[number],
 	): VentaVsReconciliadoItem => {
 		const recData = montoReconciliadoCS.get(g.compraServicioId);
-		const estaReconciliado = !!recData;
-		const monto = Number(g.total ?? 0);
-		const montoRec = recData?.monto ?? 0;
+		const monto = compraServicioTotalFuncional.get(g.compraServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto,
+			recData?.monto ?? 0,
+			g.estado ?? null,
+			"CUENTA_POR_PAGAR",
+		);
 		return {
 			id: g.compraServicioId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.compraServicioId.slice(0, 8),
-			fecha: g.createdAt,
+			fecha: g.fechaServicio ?? g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Servicio Contratado",
-			estaReconciliado,
-			montoReconciliado: estaReconciliado ? montoRec : null,
-			diferencia: estaReconciliado ? monto - montoRec : monto,
+			...reconciliacion,
 			fechaReconciliacion: recData?.fecha ?? null,
+			estadoCuenta: g.estado ?? null,
 		};
 	};
 
@@ -631,21 +875,23 @@ export async function obtenerVentasVsReconciliado(
 		vs: (typeof ventasServicioCosto)[number],
 	): VentaVsReconciliadoItem => {
 		const recData = montoReconciliadoVS.get(vs.ventaServicioId);
-		const estaReconciliado = !!recData;
-		const monto = Number(vs.costo ?? 0);
-		const montoRec = recData?.monto ?? 0;
+		const monto = ventaServicioCostoFuncional.get(vs.ventaServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto,
+			recData?.monto ?? 0,
+			null,
+			"CUENTA_POR_PAGAR",
+		);
 		return {
 			id: `costo-${vs.ventaServicioId}`,
 			tipo: "GASTO",
 			folio: vs.ventaServicioId.slice(0, 8),
 			fecha: vs.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Costo de Servicio Vendido",
-			estaReconciliado,
-			montoReconciliado: estaReconciliado ? montoRec : null,
-			diferencia: estaReconciliado ? monto - montoRec : monto,
+			...reconciliacion,
 			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
@@ -663,7 +909,8 @@ export async function obtenerVentasVsReconciliado(
 	const totalCount = allItems.length;
 	const items = allItems.slice(skip, skip + pageSize);
 
-	const reconciliadas = allItems.filter((i) => i.estaReconciliado).length;
+	const ventasItems = allItems.filter((item) => item.tipo === "VENTA" || item.tipo === "SERVICIO");
+	const reconciliadas = ventasItems.filter((item) => item.estaReconciliado).length;
 
 	const gastosItems = allItems.filter((i) => i.tipo === "GASTO");
 	const gastosReconciliados = gastosItems.filter(
@@ -671,7 +918,7 @@ export async function obtenerVentasVsReconciliado(
 	).length;
 
 	// ── Items antiguos sin reconciliar (períodos anteriores) ──
-	const LIMITE_ANTIGUOS = 100;
+const LIMITE_ANTIGUOS = 100;
 	const rangoAntiguos = { lt: rango.gte };
 
 	const [
@@ -687,7 +934,6 @@ export async function obtenerVentasVsReconciliado(
 				tenantId,
 				createdAt: rangoAntiguos,
 				deletedAt: null,
-				reconciliaciones: { none: {} },
 			},
 			include: {
 				VentaServicios: {
@@ -697,12 +943,22 @@ export async function obtenerVentasVsReconciliado(
 					select: { cuentaPorCobrar: { select: { estado: true } } },
 				},
 				reconciliaciones: {
+					where: { tenantId },
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
+						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -712,7 +968,7 @@ export async function obtenerVentasVsReconciliado(
 			where: {
 				tenantId,
 				createdAt: rangoAntiguos,
-				reconciliaciones: { none: {} },
+				ventaId: null,
 			},
 			include: {
 				cuentaPorCobrar: { select: { estado: true } },
@@ -720,12 +976,22 @@ export async function obtenerVentasVsReconciliado(
 					select: { cuentaPorCobrar: { select: { estado: true } } },
 				},
 				reconciliaciones: {
+					where: { tenantId },
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
+						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -736,17 +1002,29 @@ export async function obtenerVentasVsReconciliado(
 				tenantId,
 				createdAt: rangoAntiguos,
 				estado: 'APROBADO', // B-04
-				reconciliaciones: { none: {} },
 			},
 			include: {
 				cuentaPorPagar: { select: { estado: true } },
 				reconciliaciones: {
+					where: {
+						tenantId,
+						estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					},
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
+						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
 			orderBy: { createdAt: "desc" },
@@ -755,34 +1033,43 @@ export async function obtenerVentasVsReconciliado(
 		prisma.gastoCompra.findMany({
 			where: {
 				tenantId,
-				createdAt: rangoAntiguos,
+				fechaCompra: rangoAntiguos,
 				deletedAt: null,
-				reconciliaciones: { none: {} },
 			},
 			include: {
 				cuentaPorPagar: { select: { estado: true } },
+				compraDocumento: { select: { moneda: true } },
 				reconciliaciones: {
+					where: {
+						tenantId,
+						estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					},
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
+						moneda: true,
+						tasaCambio: true,
 					},
-					take: 1,
+						orderBy: { fechaReconciliacion: "desc" },
 				},
 			},
-			orderBy: { createdAt: "desc" },
+			orderBy: { fechaCompra: "desc" },
 			take: LIMITE_ANTIGUOS,
 		}),
 		prisma.compraServicio.findMany({
 			where: {
 				tenantId,
-				createdAt: rangoAntiguos,
-				compraServicioId:
-					idsReconciliadosCSArr.length > 0
-						? { notIn: idsReconciliadosCSArr }
-						: undefined,
+				fechaServicio: rangoAntiguos,
 			},
-			orderBy: { createdAt: "desc" },
+			orderBy: { fechaServicio: "desc" },
 			take: LIMITE_ANTIGUOS,
 		}),
 		prisma.ventaServicios.findMany({
@@ -790,45 +1077,168 @@ export async function obtenerVentasVsReconciliado(
 				tenantId,
 				createdAt: rangoAntiguos,
 				costo: { gt: 0 },
-				ventaServicioId:
-					idsReconciliadosVSArr.length > 0
-						? { notIn: idsReconciliadosVSArr }
-						: undefined,
 			},
 			orderBy: { createdAt: "desc" },
 			take: LIMITE_ANTIGUOS,
 		}),
 	]);
+	const [
+		ventasAntiguasTotals,
+		gastosDEAntiguosTotals,
+		serviciosAntiguosTotals,
+		comprasServicioAntiguosTotals,
+		gastosCompraAntiguosTotals,
+		ventaServicioCostoAntiguosCosts,
+	] =
+		await Promise.all([
+			Promise.all(ventasAntiguas.map(async (row) => [
+				row.ventaId,
+				await functionalCurrencyConverter.convert(Number(row.total ?? 0), 'CUP', row.createdAt),
+			] as const)),
+			Promise.all(gastosDEAntiguos.map(async (row) => [
+				row.gastosDEId,
+				await functionalCurrencyConverter.convert(Number(row.monto ?? 0), 'CUP', row.createdAt),
+			] as const)),
+			Promise.all(serviciosAntiguos.map(async (row) => [
+				row.ventaServicioId,
+				await functionalCurrencyConverter.convert(
+					Number(row.total ?? 0),
+					row.moneda,
+					row.createdAt,
+				),
+			] as const)),
+			Promise.all(comprasServicioAntiguos.map(async (row) => [
+				row.compraServicioId,
+				await functionalCurrencyConverter.convert(
+					Number(row.total ?? 0),
+					row.moneda,
+					row.fechaServicio ?? row.createdAt,
+				),
+			] as const)),
+			Promise.all(gastosCompraAntiguos.map(async (row) => [
+				row.gastoCompraId,
+				await functionalCurrencyConverter.convert(
+					Number(row.total ?? 0),
+					row.compraDocumento?.moneda,
+					row.fechaCompra,
+				),
+			] as const)),
+			Promise.all(ventasServicioCostoAntiguos.map(async (row) => [
+				row.ventaServicioId,
+				await functionalCurrencyConverter.convert(
+					Number(row.costo ?? 0) * Number(row.cantidad ?? 1),
+					row.moneda,
+					row.createdAt,
+				),
+			] as const)),
+		]);
+	const ventaAntiguaTotalFuncional = new Map(ventasAntiguasTotals);
+	const gastoDEAntiguoTotalFuncional = new Map(gastosDEAntiguosTotals);
+	const servicioAntiguoTotalFuncional = new Map(serviciosAntiguosTotals);
+	const compraServicioAntiguoTotalFuncional = new Map(comprasServicioAntiguosTotals);
+	const gastoCompraAntiguoTotalFuncional = new Map(gastosCompraAntiguosTotals);
+	const ventaServicioCostoAntiguoFuncional = new Map(ventaServicioCostoAntiguosCosts);
+
+	const [reconciliadosCompraServicioAntiguos, reconciliadosVentaServicioAntiguos] =
+		await Promise.all([
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					referenciaId: {
+						in: comprasServicioAntiguos.map((row) => row.compraServicioId),
+					},
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
+					fechaReconciliacion: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+				orderBy: { fechaReconciliacion: "desc" },
+			}),
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "venta_servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+					referenciaId: {
+						in: ventasServicioCostoAntiguos.map((row) => row.ventaServicioId),
+					},
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
+					fechaReconciliacion: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+				orderBy: { fechaReconciliacion: "desc" },
+			}),
+		]);
+	for (const reconciliation of reconciliadosCompraServicioAntiguos) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoCS.get(reconciliation.referenciaId);
+		montoReconciliadoCS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				getAppliedReconciliationAmount(reconciliation),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
+	for (const reconciliation of reconciliadosVentaServicioAntiguos) {
+		if (!reconciliation.referenciaId) continue;
+		const previous = montoReconciliadoVS.get(reconciliation.referenciaId);
+		montoReconciliadoVS.set(reconciliation.referenciaId, {
+			monto:
+				(previous?.monto ?? 0) +
+				getAppliedReconciliationAmount(reconciliation),
+			fecha: previous?.fecha ?? reconciliation.fechaReconciliacion ?? null,
+		});
+	}
 
 	const mapVentaAntigua = (
 		v: (typeof ventasAntiguas)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = v.reconciliaciones[0];
 		const estadoCuenta =
 			v.factura?.cuentaPorCobrar?.estado ??
 			v.VentaServicios?.find((servicio) => servicio.cuentaPorCobrar?.estado)
 				?.cuentaPorCobrar?.estado ??
 			null;
-		const monto = Number(v.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = ventaAntiguaTotalFuncional.get(v.ventaId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, v.reconciliaciones, estadoCuenta, "CUENTA_POR_COBRAR",
+		);
+		const rec = v.reconciliaciones[0];
 		return {
 			id: v.ventaId,
 			tipo: "VENTA",
 			folio: v.ventaId.slice(0, 8),
 			fecha: v.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: v.metodoPago,
 			origen: null,
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_COBRAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -836,29 +1246,24 @@ export async function obtenerVentasVsReconciliado(
 	const mapServicioAntiguo = (
 		vs: (typeof serviciosAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = vs.reconciliaciones[0];
 		const estadoCuenta =
 			vs.cuentaPorCobrar?.estado ?? vs.factura?.cuentaPorCobrar?.estado ?? null;
-		const monto = Number(vs.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = servicioAntiguoTotalFuncional.get(vs.ventaServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, vs.reconciliaciones, estadoCuenta, "CUENTA_POR_COBRAR",
+		);
+		const rec = vs.reconciliaciones[0];
 		return {
 			id: vs.ventaServicioId,
 			tipo: "SERVICIO",
 			folio: vs.ventaServicioId.slice(0, 8),
 			fecha: vs.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: null,
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_COBRAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -866,28 +1271,23 @@ export async function obtenerVentasVsReconciliado(
 	const mapGastoDEAntiguo = (
 		g: (typeof gastosDEAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = g.reconciliaciones[0];
 		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
-		const monto = Number(g.monto ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = gastoDEAntiguoTotalFuncional.get(g.gastosDEId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, g.reconciliaciones, estadoCuenta, "CUENTA_POR_PAGAR",
+		);
+		const rec = g.reconciliaciones[0];
 		return {
 			id: g.gastosDEId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.gastosDEId.slice(0, 8),
 			fecha: g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: g.proveedor ?? "Gasto DE",
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_PAGAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -895,28 +1295,23 @@ export async function obtenerVentasVsReconciliado(
 	const mapGastoCompraAntiguo = (
 		g: (typeof gastosCompraAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const rec = g.reconciliaciones[0];
 		const estadoCuenta = g.cuentaPorPagar?.estado ?? null;
-		const monto = Number(g.total ?? 0);
-		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		const monto = gastoCompraAntiguoTotalFuncional.get(g.gastoCompraId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, g.reconciliaciones, estadoCuenta, "CUENTA_POR_PAGAR",
+		);
+		const rec = g.reconciliaciones[0];
 		return {
 			id: g.gastoCompraId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.gastoCompraId.slice(0, 8),
-			fecha: g.createdAt,
+			fecha: g.fechaCompra ?? g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Compra",
-			estaReconciliado: !!rec,
-			montoReconciliado: rec ? montoRec : null,
-			diferencia: monto - montoRec,
+			...reconciliacion,
 			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
-			clasificacion: estadoCuenta
-				? "CUENTA_POR_PAGAR"
-				: rec
-					? "RECONCILIADA"
-					: "NO_CLASIFICADA",
 			estadoCuenta,
 		};
 	};
@@ -925,22 +1320,22 @@ export async function obtenerVentasVsReconciliado(
 		g: (typeof comprasServicioAntiguos)[number],
 	): VentaVsReconciliadoItem => {
 		const recData = montoReconciliadoCS.get(g.compraServicioId);
-		const estaReconciliado = !!recData;
-		const monto = Number(g.total ?? 0);
-		const montoRec = recData?.monto ?? 0;
+		const monto = compraServicioAntiguoTotalFuncional.get(g.compraServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto, recData?.monto ?? 0, g.estado ?? null, "CUENTA_POR_PAGAR",
+		);
 		return {
 			id: g.compraServicioId,
 			tipo: "GASTO",
 			folio: g.numeroFactura ?? g.compraServicioId.slice(0, 8),
-			fecha: g.createdAt,
+			fecha: g.fechaServicio ?? g.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Servicio Contratado",
-			estaReconciliado,
-			montoReconciliado: estaReconciliado ? montoRec : null,
-			diferencia: estaReconciliado ? monto - montoRec : monto,
+			...reconciliacion,
 			fechaReconciliacion: recData?.fecha ?? null,
+			estadoCuenta: g.estado ?? null,
 		};
 	};
 
@@ -948,21 +1343,23 @@ export async function obtenerVentasVsReconciliado(
 		vs: (typeof ventasServicioCostoAntiguos)[number],
 	): VentaVsReconciliadoItem => {
 		const recData = montoReconciliadoVS.get(vs.ventaServicioId);
-		const estaReconciliado = !!recData;
-		const monto = Number(vs.costo ?? 0);
-		const montoRec = recData?.monto ?? 0;
+		const monto = ventaServicioCostoAntiguoFuncional.get(vs.ventaServicioId) ?? 0;
+		const reconciliacion = classifyReconciliation(
+			monto,
+			recData?.monto ?? 0,
+			null,
+			"CUENTA_POR_PAGAR",
+		);
 		return {
 			id: `costo-${vs.ventaServicioId}`,
 			tipo: "GASTO",
 			folio: vs.ventaServicioId.slice(0, 8),
 			fecha: vs.createdAt,
 			monto,
-			moneda: "CUP",
+			moneda: functionalCurrencyConverter.currency,
 			metodoPago: null,
 			origen: "Costo de Servicio Vendido",
-			estaReconciliado,
-			montoReconciliado: estaReconciliado ? montoRec : null,
-			diferencia: estaReconciliado ? monto - montoRec : monto,
+			...reconciliacion,
 			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
@@ -974,22 +1371,34 @@ export async function obtenerVentasVsReconciliado(
 		...gastosCompraAntiguos.map(mapGastoCompraAntiguo),
 		...comprasServicioAntiguos.map(mapCompraServicioAntiguo),
 		...ventasServicioCostoAntiguos.map(mapVentaServicioCostoAntiguo),
-	].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+	].filter((item) => !item.estaReconciliado)
+		.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+	const cantidadExclusionesPeriodo = allItems.filter(
+		(item) => item.clasificacion === "EXCLUIDA",
+	).length;
+	const cantidadExclusionesHistoricas = itemsAntiguos.filter(
+		(item) => item.clasificacion === "EXCLUIDA",
+	).length;
 
 	return {
 		items,
 		itemsAntiguos,
+		exclusionesObservadas: {
+			cantidadPeriodo: cantidadExclusionesPeriodo,
+			cantidadHistoricas: cantidadExclusionesHistoricas,
+			cobertura: "Registros activos consultados; no incluye eliminados, fuera de rango ni históricos truncados.",
+		},
 		totales: {
-			totalVentas: round2(items.reduce((s, i) => s + i.monto, 0)),
+			totalVentas: round2(ventasItems.reduce((s, i) => s + i.monto, 0)),
 			totalReconciliado: round2(
-				items.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
+				ventasItems.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
 			),
 			diferencia: round2(
-				items.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
+				ventasItems.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
 			),
-			cantidadVentas: totalCount,
+			cantidadVentas: ventasItems.length,
 			cantidadReconciliadas: reconciliadas,
-			cantidadPendientes: totalCount - reconciliadas,
+			cantidadPendientes: ventasItems.length - reconciliadas,
 			totalGastos: round2(gastosItems.reduce((s, i) => s + i.monto, 0)),
 			cantidadGastos: gastosItems.length,
 			cantidadGastosReconciliados: gastosReconciliados,
@@ -1233,6 +1642,13 @@ export async function obtenerOperacionesPeriodo(
 						reconciliacionId: true,
 						[gf]: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						moneda: true,
 						descripcion: true,
 						tipoGasto: true,

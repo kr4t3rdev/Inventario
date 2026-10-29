@@ -250,8 +250,111 @@ describe("ComprasServicios Server Actions", () => {
 			expect(result.success).toBe(true);
 			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: expect.objectContaining({ moneda: "USD" }),
+					data: expect.objectContaining({ moneda: "USD", estado: "PAGADA" }),
 				}),
+			);
+		});
+
+		it("compara anticipos en moneda funcional antes de marcar el servicio como pagado", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue({
+				...mockServicio,
+				moneda: "USD",
+			} as any);
+			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 500 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "PAGO",
+				moneda: "CUP",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-usd-cup",
+				tasa: 25,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createCompraServicioAction({
+				servicioId: "sv-1",
+				costoUnitario: 100,
+				cantidad: 1,
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				anticipos: [{ anticipoId: "a1", montoAplicado: 500 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "CUP", estado: "PARCIAL" }),
+				}),
+			);
+			expect(mockTx.compraServicio.updateMany).toHaveBeenCalledWith({
+				where: { compraServicioId: "cs-1", tenantId: "tenant-test" },
+				data: { estado: "PARCIAL" },
+			});
+			expect(result.data?.compraServicio.estado).toBe("PARCIAL");
+		});
+
+		it("valora el servicio extranjero con la tasa de su fecha de operación", async () => {
+			const fechaServicio = new Date("2025-12-15T12:00:00.000Z");
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue({
+				...mockServicio,
+				moneda: "USD",
+			} as any);
+			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 2000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "PAGO",
+				moneda: "CUP",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "usd-cup-historical",
+				tasa: 20,
+				fechaVigencia: fechaServicio,
+			});
+
+			const result = await createCompraServicioAction({
+				servicioId: "sv-1",
+				costoUnitario: 100,
+				cantidad: 1,
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				fechaServicio: fechaServicio.toISOString(),
+				anticipos: [{ anticipoId: "a1", montoAplicado: 2000 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.data?.compraServicio.estado).toBe("PAGADA");
+			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ estado: "PAGADA", montoConvertido: 2000 }),
+				}),
+			);
+			expect(exchangeRateProvider.getRateAsOf).toHaveBeenCalledWith(
+				expect.objectContaining({ sourceCurrency: "USD", boundaryAt: fechaServicio }),
 			);
 		});
 

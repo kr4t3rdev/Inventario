@@ -72,8 +72,8 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'src/features/contabilidad/actions-reconciliacion.ts',
-    occurrences: 9,
-    reason: 'Agregados de saldos y locks FOR UPDATE transaccionales.',
+    occurrences: 10,
+    reason: 'Preflight de evidencia FX paginado, agregados de saldos y locks FOR UPDATE transaccionales.',
     tenantGuarantee: 'CTE/whereParts y locks incluyen tenantId de requireTenant.',
   },
   {

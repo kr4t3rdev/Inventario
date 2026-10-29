@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -72,7 +72,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     setFechaInicio(weekAgo.toISOString().split('T')[0])
   })
 
-  const [ventasData, setVentasData] = useState({ ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } })
+  const [ventasData, setVentasData] = useState({ ventas: [], saldoPendienteTotal: 0, pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } })
   const [historial_ventas_data, setHistorialVentasData] = useState({ reconciliaciones: [], estadisticas: { porMoneda: [], porTipoDePago: [], montoConvertidoTotal: 0, montoTotal: 0 }, pagination: {} })
   const [refetchTrigger, setRefetchTrigger] = useState(0)
   const ventasReconciliadas: ReconciliacionVenta[] = historial_ventas_data.reconciliaciones || []
@@ -98,48 +98,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     }).catch(() => {})
   }, [refetchTrigger])
 
-  const [allVentasData, setAllVentasData] = useState({ pagination: {}, ventas: [] })
-
-  useEffect(() => {
-    getVentasPendientesAction({ fechaInicio, fechaFin, page: 1, limit: 10000 }).then(r => {
-      if (r.success) setAllVentasData(r.data as any)
-    })
-  }, [fechaInicio, fechaFin, refetchTrigger])
-
-  const { ventas, pagination } = ventasData
-   
-  const allVentasMerged = useMemo(() => {
-    const apiVentas = Array.isArray(allVentasData?.ventas) ? allVentasData.ventas : [];
-    // API now returns saldoPendiente calculated server-side
-    const apiVentaKeys = new Set(apiVentas.map((v: any) => v.ordenId || v.ventaId));
-
-    const arVentas = cuentasPorCobrar
-      .filter(cuenta => {
-        if (cuenta.estado === "PAGADA") return false;
-        const key = cuenta.numeroFactura || cuenta.facturaId || cuenta.id;
-        return !apiVentaKeys.has(key);
-      })
-      .map(cuenta => {
-        const totalCuenta = cuenta.totalFactura ?? cuenta.totalVenta ?? cuenta.montoDeuda;
-        const saldoPendiente = Number.isFinite(Number(cuenta.saldoFactura))
-          ? Number(cuenta.saldoFactura)
-          : (cuenta.montoDeuda - cuenta.montoPagado);
-        return {
-          ventaId: cuenta.factura?.ventaId || cuenta.facturaId || cuenta.id,
-          ordenId: cuenta.numeroFactura || cuenta.facturaId,
-          cliente: cuenta.cliente,
-          createdAt: cuenta.createdAt,
-          total: totalCuenta,
-          montoTotal: totalCuenta,
-          reconciliada: false,
-          saldoPendiente,
-        } as VentaPendiente;
-      });
-
-    return [...apiVentas, ...arVentas];
-  }, [allVentasData, cuentasPorCobrar]);
-
-  const allVentasArray = allVentasMerged
+  const { pagination, saldoPendienteTotal } = ventasData
 
 
   const cuentasPendientes = cuentasPorCobrar.filter((cuenta) => cuenta.estado !== "PAGADA")
@@ -198,20 +157,6 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     setCurrentPage(1)
   }
  
-  const ventasPendientes = allVentasArray.filter((v: VentaPendiente) => (v.saldoPendiente || 0) > 0.01)
-
-  const totalPendiente = ventasPendientes.reduce((sum: number, venta: VentaPendiente) => {
-    if (venta.saldoPendiente !== undefined) {
-      return sum + venta.saldoPendiente
-    }
-    const key = venta.ordenId || venta.ventaId
-    const saldo = saldosPorFactura[key]
-    const monto = typeof saldo === "number"
-      ? saldo
-      : Number(venta?.total ?? (venta?.cantidad ? venta.cantidad * (venta?.producto?.precioVenta ?? 0) : 0))
-    return sum + (isNaN(monto) ? 0 : monto)
-  }, 0)
-
   const totalReconciliado = ventasReconciliadas.reduce((sum: number, venta: ReconciliacionVenta) => {
     const monto = Number(venta?.monto ?? 0)
     if (!Number.isFinite(monto)) {
@@ -233,22 +178,6 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
 
   const montoReconCUP = (ventasReconciliadas.filter((s: ReconciliacionVenta) => s?.cuentaBancaria?.moneda === 'CUP') ?? 0).
   reduce((sum: number, venta: ReconciliacionVenta) => (sum + Number(venta.montoConvertido ?? 0)), 0)
-
-  const pendientesPorMoneda = ventasPendientes.reduce((acc: Record<string, number>, venta: VentaPendiente) => {
-    const moneda = "CUP"
-    if (!acc[moneda]) acc[moneda] = 0
-    if (venta.saldoPendiente !== undefined) {
-      acc[moneda] += venta.saldoPendiente
-    } else {
-      const key = venta.ordenId || venta.ventaId
-      const saldo = saldosPorFactura[key]
-      const monto = typeof saldo === "number"
-        ? saldo
-        : Number(venta?.total ?? (venta?.cantidad ? venta.cantidad * (venta?.producto?.precioVenta ?? 0) : 0))
-      acc[moneda] += isNaN(monto) ? 0 : monto
-    }
-    return acc
-  }, {} as Record<string, number>)
 
 
   const reconciliadasPorMoneda = ventasReconciliadas.reduce((acc: Record<string, number>, venta: ReconciliacionVenta) => {
@@ -370,9 +299,9 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-lg font-semibold">Quedan {ventasPendientes.length} ventas</div>
+                <div className="text-lg font-semibold">Quedan {pagination.total} ventas conciliables</div>
                 <Badge variant="outline" className="mt-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
-                  {formatCurrency(totalPendiente)}
+                  {formatCurrency(saldoPendienteTotal)}
                 </Badge>
               </CardContent>
             </Card>

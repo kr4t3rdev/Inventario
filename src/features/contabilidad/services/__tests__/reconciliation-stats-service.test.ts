@@ -15,6 +15,7 @@ interface MockDbResult {
     pagosalario: ReturnType<typeof vi.fn>;
     compraServicio: ReturnType<typeof vi.fn>;
     reconciliacionGasto: ReturnType<typeof vi.fn>;
+    reconciliacionGastoLegacyAmounts: ReturnType<typeof vi.fn>;
     reconciliacionGastoCount: ReturnType<typeof vi.fn>;
     reconciliacionGastoAggregate: ReturnType<typeof vi.fn>;
     reconciliacionGastoRecent: ReturnType<typeof vi.fn>;
@@ -42,6 +43,7 @@ function makeDb(salesPending: number | bigint = 0): MockDbResult {
     pagosalario: vi.fn(),
     compraServicio: vi.fn(),
     reconciliacionGasto: vi.fn(),
+    reconciliacionGastoLegacyAmounts: vi.fn(),
     reconciliacionGastoCount: vi.fn(),
     reconciliacionGastoAggregate: vi.fn(),
     reconciliacionGastoRecent: vi.fn(),
@@ -61,6 +63,7 @@ function makeDb(salesPending: number | bigint = 0): MockDbResult {
   calls.pagosalario.mockResolvedValue(0);
   calls.compraServicio.mockResolvedValue(0);
   calls.reconciliacionGasto.mockResolvedValue([]);
+  calls.reconciliacionGastoLegacyAmounts.mockResolvedValue([]);
   calls.reconciliacionGastoCount.mockResolvedValue(0);
   calls.reconciliacionGastoAggregate.mockResolvedValue({
     _sum: { montoConvertido: null },
@@ -88,10 +91,14 @@ function makeDb(salesPending: number | bigint = 0): MockDbResult {
       reconciliacionGasto: {
         count: calls.reconciliacionGastoCount,
         aggregate: calls.reconciliacionGastoAggregate,
-        findMany: (args) =>
-          'select' in args
+        findMany: (args) => {
+          if ('select' in args && 'monto' in args.select) {
+            return calls.reconciliacionGastoLegacyAmounts(args);
+          }
+          return 'select' in args
             ? calls.reconciliacionGasto(args)
-            : calls.reconciliacionGastoRecent(args),
+            : calls.reconciliacionGastoRecent(args);
+        },
       },
       reconciliacionVenta: {
         count: calls.reconciliacionVentaCount,
@@ -189,7 +196,12 @@ describe('getReconciliationStats', () => {
     expect(calls.pagosalario).toHaveBeenCalledWith({
       where: {
         tenantId: 'tenant-a',
-        ReconciliacionGasto: { none: { tenantId: 'tenant-a' } },
+        ReconciliacionGasto: {
+          none: {
+            tenantId: 'tenant-a',
+            estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] },
+          },
+        },
       },
     });
     expect(calls.compraServicio).toHaveBeenCalledWith({
@@ -202,6 +214,7 @@ describe('getReconciliationStats', () => {
       where: {
         tenantId: 'tenant-a',
         tipoGasto: { in: ['servicio', 'venta_servicio'] },
+        estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] },
       },
       select: { referenciaId: true, tipoGasto: true },
       distinct: ['referenciaId', 'tipoGasto'],
@@ -214,13 +227,19 @@ describe('getReconciliationStats', () => {
     await getReconciliationStats({ tenantId: 'tenant-a', db });
 
     expect(calls.gastosDE.mock.calls[0][0].where).toMatchObject({
-      reconciliaciones: { none: { tenantId: 'tenant-a' } },
+      reconciliaciones: {
+        none: { tenantId: 'tenant-a', estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] } },
+      },
     });
     expect(calls.gastoCompra.mock.calls[0][0].where).toMatchObject({
-      reconciliaciones: { none: { tenantId: 'tenant-a' } },
+      reconciliaciones: {
+        none: { tenantId: 'tenant-a', estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] } },
+      },
     });
     expect(calls.pagosalario.mock.calls[0][0].where).toMatchObject({
-      ReconciliacionGasto: { none: { tenantId: 'tenant-a' } },
+      ReconciliacionGasto: {
+        none: { tenantId: 'tenant-a', estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] } },
+      },
     });
   });
 
@@ -241,7 +260,9 @@ describe('getReconciliationStats', () => {
 
     expect(gastosDEWhere).toMatchObject({
       tenantId: 'tenant-a',
-      reconciliaciones: { none: { tenantId: 'tenant-a' } },
+      reconciliaciones: {
+        none: { tenantId: 'tenant-a', estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] } },
+      },
       NOT: {
         cuentaPorPagar: {
           is: {
@@ -254,7 +275,9 @@ describe('getReconciliationStats', () => {
     expect(gastosDEWhere).not.toHaveProperty('deletedAt');
     expect(gastoCompraWhere).toMatchObject({
       tenantId: 'tenant-a',
-      reconciliaciones: { none: { tenantId: 'tenant-a' } },
+      reconciliaciones: {
+        none: { tenantId: 'tenant-a', estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] } },
+      },
       NOT: { cuentaPorPagar: expectedNotActiveCxP },
     });
     expect(gastoCompraWhere).toHaveProperty('deletedAt', null);
@@ -284,6 +307,10 @@ describe('getReconciliationStats', () => {
     await getReconciliationStats({ tenantId: 'tenant-a', db });
 
     expect(calls.reconciliacionGasto).toHaveBeenCalledTimes(1);
+    expect(calls.reconciliacionGasto.mock.calls[0][0].where).toMatchObject({
+      tenantId: 'tenant-a',
+      estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] },
+    });
     expect(calls.compraServicio).toHaveBeenCalledTimes(1);
     expect(calls.ventaServicios).toHaveBeenCalledTimes(2);
   });
@@ -380,7 +407,7 @@ describe('getReconciliationStats', () => {
       where: {
         tenantId: 'tenant-a',
         fechaReconciliacion: expectedRange,
-        estado: { in: ['PAGADA', 'PAGADO', 'POSTED'] },
+        estado: { in: ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'] },
       },
       _sum: { montoConvertido: true },
     });
@@ -558,6 +585,17 @@ describe('getReconciliationStats', () => {
         cuentaBancaria: { nombreBanco: 'Expense bank' },
       },
       {
+        reconciliacionId: 'partial-expense',
+        estado: 'PARCIAL',
+        monto: 20,
+        montoConvertido: 20,
+        fechaReconciliacion: new Date(2026, 8, 4, 11, 0, 0),
+        createdAt: new Date(2026, 8, 4, 11, 0, 0),
+        observaciones: null,
+        descripcion: 'Partial expense payment',
+        cuentaBancaria: { nombreBanco: 'Expense bank' },
+      },
+      {
         reconciliacionId: 'voided-expense',
         estado: 'ANULADA',
         monto: 30,
@@ -580,11 +618,14 @@ describe('getReconciliationStats', () => {
         cuentaBancaria: { nombreBanco: 'Expense bank' },
       },
     ];
-    const postedStates = ['PAGADA', 'PAGADO', 'POSTED'];
-    const getRowsForWhere = (where: Record<string, unknown>) =>
-      'estado' in where
-        ? expenseRows.filter((row) => postedStates.includes(row.estado))
+    const appliedStates = ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'];
+    const settledStates = ['PAGADA', 'PAGADO', 'POSTED'];
+    const getRowsForWhere = (where: Record<string, unknown>) => {
+      const stateFilter = where.estado as { in?: string[] } | undefined;
+      return stateFilter
+        ? expenseRows.filter((row) => stateFilter.in?.includes(row.estado))
         : expenseRows;
+    };
 
     calls.reconciliacionGastoCount.mockImplementation(({ where }) =>
       Promise.resolve(getRowsForWhere(where).length),
@@ -606,10 +647,13 @@ describe('getReconciliationStats', () => {
     const snapshot = await getReconciliationStats({ tenantId: 'tenant-a', now: today, db });
 
     expect(snapshot.modules.gastos.completedToday).toBe(1);
-    expect(snapshot.stats.reconciledAmount).toBe(10);
-    expect(snapshot.recentActivity).toEqual([
-      expect.objectContaining({ id: 'posted-expense', type: 'gasto', amount: 10 }),
-    ]);
+    expect(snapshot.stats.reconciledAmount).toBe(30);
+    expect(snapshot.recentActivity).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'posted-expense', type: 'gasto', amount: 10 }),
+        expect.objectContaining({ id: 'partial-expense', type: 'gasto', amount: 20 }),
+      ]),
+    );
 
     const expectedWhere = {
       tenantId: 'tenant-a',
@@ -617,16 +661,16 @@ describe('getReconciliationStats', () => {
         gte: new Date(2026, 8, 4, 0, 0, 0),
         lt: new Date(2026, 8, 5, 0, 0, 0),
       },
-      estado: { in: postedStates },
+      estado: { in: settledStates },
     };
     expect(calls.reconciliacionGastoCount).toHaveBeenCalledWith({ where: expectedWhere });
     expect(calls.reconciliacionGastoAggregate).toHaveBeenCalledWith({
-      where: expectedWhere,
+      where: { ...expectedWhere, estado: { in: appliedStates } },
       _sum: { montoConvertido: true },
     });
     expect(calls.reconciliacionGastoRecent).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { tenantId: 'tenant-a', estado: { in: postedStates } },
+        where: { tenantId: 'tenant-a', estado: { in: appliedStates } },
       }),
     );
   });
@@ -668,6 +712,33 @@ describe('getReconciliationStats', () => {
         expect.objectContaining({ id: 'legacy-sale', amount: 80 }),
       ]),
     );
+  });
+
+  it('includes legacy expense FX amounts when montoConvertido is null', async () => {
+    const { db, calls } = makeDb();
+    calls.reconciliacionGastoAggregate.mockResolvedValueOnce({
+      _sum: { montoConvertido: 30 },
+    });
+    calls.reconciliacionGastoLegacyAmounts.mockResolvedValueOnce([
+      { monto: 10, tasaCambio: 24.5 },
+      { monto: 5, tasaCambio: null },
+    ]);
+
+    const snapshot = await getReconciliationStats({ tenantId: 'tenant-a', db });
+
+    expect(snapshot.stats.reconciledAmount).toBe(280);
+    expect(calls.reconciliacionGastoLegacyAmounts).toHaveBeenCalledWith({
+      where: {
+        tenantId: 'tenant-a',
+        fechaReconciliacion: {
+          gte: expect.any(Date),
+          lt: expect.any(Date),
+        },
+        estado: { in: ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'] },
+        montoConvertido: null,
+      },
+      select: { monto: true, tasaCambio: true },
+    });
   });
 
   it('counts and classifies only ReconciliacionVenta rows linked to a genuine sale', async () => {
