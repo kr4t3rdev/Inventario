@@ -57,6 +57,23 @@ describe('resolveAppliedReconciliationAmount', () => {
 		})).toBe(20);
 	});
 
+	it('accepts canonical same-currency evidence when the persisted rate is NULL', () => {
+		expect(resolveAppliedReconciliationAmount({
+			monto: 0.01,
+			montoConvertido: 0.01,
+			moneda: 'CUP',
+			functionalCurrency: 'CUP',
+			tasaCambio: null,
+			rateEffectiveAt: null,
+			...buildAppliedFxEvidence({
+				originalAmount: 0.01,
+				originalCurrency: 'CUP',
+				functionalCurrency: 'CUP',
+				source: 'test',
+			}),
+		})).toBe(0.01);
+	});
+
 	it('returns unknown instead of using nominal FX without conversion evidence', () => {
 		expect(resolveAppliedReconciliationAmount({
 			monto: 20,

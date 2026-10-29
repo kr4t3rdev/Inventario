@@ -34,6 +34,21 @@ import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/doma
 
 const RECONCILIATION_EVIDENCE_PAGE_SIZE = 500;
 
+interface ReconciliationEvidenceRow {
+	reconciliacionId: string;
+	monto: unknown;
+	montoConvertido: unknown;
+	moneda: string | null;
+	functionalCurrency: string | null;
+	tasaCambio: unknown;
+	rateEffectiveAt: Date | null;
+	fxProvenanceKind: string | null;
+	fxProvenanceSource: string | null;
+	fxCatalogRateId: string | null;
+	fxEvidenceFingerprint: string | null;
+	fxEvidenceVersion: number | null;
+}
+
 // ─── Stats Hub ────────────────────────────────────────────
 
 export const getReconciliacionStatsAction = withAction(
@@ -130,23 +145,11 @@ export const getVentasPendientesAction = withAction(
 		const { pendingRows, totalRows } = await prisma.$transaction(async (tx) => {
 			let cursor: string | null = null;
 			while (true) {
-				const cursorSql = cursor
+				const cursorSql: Prisma.Sql = cursor
 					? Prisma.sql`AND rv."reconciliacionId" > ${cursor}`
 					: Prisma.empty;
-				const reconciliationEvidenceRows = await tx.$queryRaw<Array<{
-					reconciliacionId: string;
-					monto: unknown;
-					montoConvertido: unknown;
-					moneda: string | null;
-					functionalCurrency: string | null;
-					tasaCambio: unknown;
-					rateEffectiveAt: Date | null;
-					fxProvenanceKind: string | null;
-					fxProvenanceSource: string | null;
-					fxCatalogRateId: string | null;
-					fxEvidenceFingerprint: string | null;
-					fxEvidenceVersion: number | null;
-				}>>(Prisma.sql`
+				const reconciliationEvidenceRows: ReconciliationEvidenceRow[] =
+					await tx.$queryRaw<ReconciliationEvidenceRow[]>(Prisma.sql`
 					SELECT rv."reconciliacionId", rv."monto", rv."montoConvertido",
 						rv."moneda", rv."functionalCurrency", rv."tasaCambio",
 						rv."rateEffectiveAt", rv."fxProvenanceKind", rv."fxProvenanceSource",

@@ -29,14 +29,14 @@ export function resolveAppliedReconciliationAmount(
 	}
 	const currency = row.moneda?.trim().toUpperCase();
 	const functionalCurrency = row.functionalCurrency?.trim().toUpperCase();
-	const rate = Number(row.tasaCambio);
+	const rate = row.tasaCambio == null ? null : Number(row.tasaCambio);
 	if (!currency || !functionalCurrency) return null;
 	return verifyAppliedFxEvidence({
 		originalAmount: amount,
 		originalCurrency: currency,
 		functionalCurrency,
 		convertedAmount: converted,
-		exchangeRate: Number.isFinite(rate) ? rate : null,
+		exchangeRate: rate != null && Number.isFinite(rate) ? rate : null,
 		rateEffectiveAt: row.rateEffectiveAt,
 		fxProvenanceKind: row.fxProvenanceKind,
 		fxProvenanceSource: row.fxProvenanceSource,
