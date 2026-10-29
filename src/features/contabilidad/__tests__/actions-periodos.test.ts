@@ -73,6 +73,13 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 			findUnique: vi.fn(),
 			create: vi.fn(),
 		},
+		aperturaPeriodoSolicitud: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+		cuentaContable: { findMany: vi.fn() },
+		fxEvidence: { findFirst: vi.fn(), create: vi.fn() },
+		tasaCambio: { findUnique: vi.fn() },
+		tenantAccountingPolicy: { findUnique: vi.fn() },
+		diario: { findFirst: vi.fn() },
+		asiento: { findUnique: vi.fn(), aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() },
 		snapshotPeriodo: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -109,6 +116,8 @@ const financialSnapshotV3Mocks = vi.hoisted(() => ({
 	approveFinancialSnapshotV3: vi.fn(),
 }));
 
+const exchangeRateMocks = vi.hoisted(() => ({ getRateAsOf: vi.fn() }));
+
 vi.mock("@/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
@@ -125,6 +134,7 @@ vi.mock(
 	"@/features/contabilidad/services/financial-snapshot-v3-service",
 	() => financialSnapshotV3Mocks,
 );
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({ exchangeRateProvider: exchangeRateMocks }));
 
 // ── Imports bajo test ─────────────────────────────────────────────────────
 
@@ -139,6 +149,11 @@ import {
 	cerrarPeriodoAction,
 	reabrirPeriodoAction,
 	aprobarPeriodoAction,
+	solicitarAperturaManualAction,
+	aprobarAperturaManualAction,
+	abrirPeriodoManualAprobadoAction,
+	listarSolicitudesAperturaManualAction,
+	obtenerSolicitudAperturaManualAction,
 } from "@/features/contabilidad/actions-periodos";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import {
@@ -148,6 +163,8 @@ import {
 	generarLabelPeriodo,
 } from "@/lib/services/periodo-contable-types";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
+import { Prisma } from "@/generated/prisma";
+import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
 import type { ActionResponse } from "@/lib/server-actions/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -264,6 +281,9 @@ beforeEach(() => {
 		capital: [],
 	});
 	vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+	mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(null);
+	mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "request-1", estado: "PENDIENTE" });
+	mockPrisma.aperturaPeriodoSolicitud.updateMany.mockResolvedValue({ count: 1 });
 	checkpointMocks.captureFinancialAuxiliaryCheckpoint.mockImplementation(
 		async (params: {
 			collectEvidence: (
@@ -1384,6 +1404,550 @@ describe("jerarquía de períodos", () => {
 				where: expect.objectContaining({ tipo: TipoPeriodo.ANUAL }),
 			}),
 		);
+	});
+});
+
+describe("apertura manual verificable", () => {
+	it("returns server-verified FX conversion provenance to the tenant approver", async () => {
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "request-preview", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: "creator",
+			lineas: [{ lineId: "line-1", cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "fx-1" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" }],
+		});
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		exchangeRateMocks.getRateAsOf.mockResolvedValue({ tasaId: "rate-1", tasa: 2, fechaVigencia: new Date("2026-03-31T00:00:00.000Z") });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "301", cuentaContableId: "a2" },
+		]);
+		const canonical = buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" });
+		mockPrisma.tasaCambio.findUnique.mockResolvedValue({ monedaOrigenId: "USD", monedaDestino: "CUP", tasa: new Prisma.Decimal("2"), fechaVigencia: new Date("2026-03-31T00:00:00.000Z") });
+		exchangeRateMocks.getRateAsOf.mockResolvedValue({ tasaId: "rate-1", tasa: 2, fechaVigencia: new Date("2026-03-31T00:00:00.000Z") });
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			sourceType: "MANUAL_OPENING_LINE", sourceId: "request-preview:line-1:a1",
+			originalAmount: new Prisma.Decimal("10"), originalCurrency: "USD",
+			functionalAmount: new Prisma.Decimal("20"), functionalCurrency: "CUP",
+			exchangeRate: new Prisma.Decimal("2"), rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"),
+			cutoffAt: new Date("2026-04-01T00:00:00.000Z"), fxCatalogRateId: "rate-1",
+			provenance: canonical.fxProvenanceKind, source: canonical.fxProvenanceSource,
+			evidence: { ...canonical, solicitudId: "request-preview", lineId: "line-1", cuentaContableId: "a1", cutoffAt: "2026-04-01T00:00:00.000Z", originalAmount: "10", functionalAmount: "20", exchangeRate: "2" }, evidenceFingerprint: canonical.fxEvidenceFingerprint, evidenceVersion: canonical.fxEvidenceVersion,
+		});
+
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: "request-preview" });
+
+		expect(result.success, JSON.stringify(result)).toBe(true);
+		expectActionSuccess(result);
+		if (!result.success) return;
+		expect(result.data.solicitud.lineasValuadas[0]).toMatchObject({
+			debitoFuncional: "20", monedaFuncional: "CUP", tasaCambio: "2",
+			fxEvidence: {
+				rateEffectiveAt: "2026-03-31T00:00:00.000Z", cutoffAt: "2026-04-01T00:00:00.000Z",
+				provenance: "MANUAL_GOVERNED", source: "TasaCambio catalog", fxCatalogRateId: "rate-1",
+				evidenceFingerprint: canonical.fxEvidenceFingerprint,
+			},
+		});
+		expect(JSON.stringify(result)).not.toContain('"verified":true');
+	});
+
+	it("rejects FX evidence whose conversion or canonical fingerprint does not verify", async () => {
+		const request = {
+			solicitudId: "request-bad-fx", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: "creator",
+			lineas: [{ lineId: "line-1", cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "fx-bad" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" }],
+		};
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(request);
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "301", cuentaContableId: "a2" },
+		]);
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			originalAmount: new Prisma.Decimal("10"), originalCurrency: "USD",
+			functionalAmount: new Prisma.Decimal("19"), functionalCurrency: "CUP",
+			exchangeRate: new Prisma.Decimal("2"), rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"),
+			cutoffAt: new Date("2026-03-31T23:59:59.000Z"), fxCatalogRateId: null,
+			provenance: "MANUAL_GOVERNED", source: "rate capture", evidence: {},
+			evidenceFingerprint: "forged", evidenceVersion: 1,
+		});
+
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: request.solicitudId });
+
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+	});
+
+	it("rejects a forged fingerprint even when FX amounts balance", async () => {
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "request-forged-fingerprint", tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: "creator",
+			lineas: [{ lineId: "line-1", cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "fx-forged" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" }],
+		});
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "301", cuentaContableId: "a2" },
+		]);
+		const canonical = buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" });
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			originalAmount: new Prisma.Decimal("10"), originalCurrency: "USD",
+			functionalAmount: new Prisma.Decimal("20"), functionalCurrency: "CUP",
+			exchangeRate: new Prisma.Decimal("2"), rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"),
+			cutoffAt: new Date("2026-03-31T23:59:59.000Z"), fxCatalogRateId: null,
+			provenance: canonical.fxProvenanceKind, source: canonical.fxProvenanceSource,
+			evidence: canonical, evidenceFingerprint: "f".repeat(64), evidenceVersion: canonical.fxEvidenceVersion,
+		});
+
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: "request-forged-fingerprint" });
+
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+	});
+
+	it("rejects two opening lines that reuse the same FX source evidence", async () => {
+		const request = {
+			solicitudId: "request-duplicate-fx", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: "creator",
+			lineas: [
+				{ lineId: "line-1", cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "same-fx" },
+				{ cuentaCodigo: "102", moneda: "USD", debito: "0", credito: "10", fxEvidenceId: "same-fx" },
+			],
+		};
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(request);
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "102", cuentaContableId: "a2" },
+		]);
+		const canonical = buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" });
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			originalAmount: new Prisma.Decimal("10"), originalCurrency: "USD",
+			functionalAmount: new Prisma.Decimal("20"), functionalCurrency: "CUP",
+			exchangeRate: new Prisma.Decimal("2"), rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"),
+			cutoffAt: new Date("2026-03-31T23:59:59.000Z"), fxCatalogRateId: null,
+			provenance: canonical.fxProvenanceKind, source: canonical.fxProvenanceSource,
+			evidence: canonical, evidenceFingerprint: canonical.fxEvidenceFingerprint, evidenceVersion: canonical.fxEvidenceVersion,
+		});
+
+		const result = await aprobarAperturaManualAction({ solicitudId: request.solicitudId });
+
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.fxEvidence.findFirst).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.aperturaPeriodoSolicitud.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("lists persisted requests with tenant and approver permission scope", async () => {
+		mockPrisma.aperturaPeriodoSolicitud.findMany.mockResolvedValue([{ solicitudId: "own-request" }]);
+		const result = await listarSolicitudesAperturaManualAction({});
+		expectActionSuccess(result);
+		expect(mockPrisma.aperturaPeriodoSolicitud.findMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: { tenantId: TENANT, estado: { in: ["PENDIENTE", "APROBADA"] } },
+			take: 50,
+		}));
+	});
+
+	it("lists only the authenticated requester's rows when the user cannot approve", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser, role: "user", tenantRole: "dependiente", permissions: new Set(),
+			planFeatures: { contabilidad: true },
+		});
+		mockPrisma.aperturaPeriodoSolicitud.findMany.mockResolvedValue([{ solicitudId: "mine" }]);
+
+		const result = await listarSolicitudesAperturaManualAction({});
+
+		expectActionSuccess(result);
+		expect(mockPrisma.aperturaPeriodoSolicitud.findMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: { tenantId: TENANT, solicitadaPor: mockUser.userId, estado: { in: ["PENDIENTE", "APROBADA"] } },
+		}));
+	});
+
+	it("does not disclose another tenant's persisted request on detail read", async () => {
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: "foreign-request" });
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
+		expect(mockPrisma.aperturaPeriodoSolicitud.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+			where: { solicitudId: "foreign-request", tenantId: TENANT, estado: { in: ["PENDIENTE", "APROBADA"] } },
+		}));
+	});
+
+	it("allows a non-approver to read only their own just-submitted request", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser, role: "user", tenantRole: "dependiente", permissions: new Set(),
+			planFeatures: { contabilidad: true },
+		});
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "my-request", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: mockUser.userId,
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "CUP", debito: "10", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "10" },
+			],
+		});
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "301", cuentaContableId: "a2" },
+		]);
+
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: "my-request" });
+
+		expectActionSuccess(result);
+		expect(mockPrisma.aperturaPeriodoSolicitud.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+			where: { solicitudId: "my-request", tenantId: TENANT, estado: { in: ["PENDIENTE", "APROBADA"] } },
+		}));
+	});
+
+	it("hides another user's request from non-approvers in the same tenant", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser, role: "user", tenantRole: "dependiente", permissions: new Set(),
+			planFeatures: { contabilidad: true },
+		});
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "other-request", solicitadaPor: "different-user", estado: "PENDIENTE",
+		});
+
+		const result = await obtenerSolicitudAperturaManualAction({ solicitudId: "other-request" });
+
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
+		expect(mockPrisma.tenantAccountingPolicy.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("rechaza propuestas sin líneas explícitas antes de consultar política o persistir", async () => {
+		const result = await solicitarAperturaManualAction({
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [],
+		});
+		expect(result.success).toBe(false);
+		expect(mockPrisma.aperturaPeriodoSolicitud.create).not.toHaveBeenCalled();
+	});
+
+	it("scopes approval lookup to the authenticated tenant", async () => {
+		const result = await aprobarAperturaManualAction({ solicitudId: "request-foreign" });
+		expect(expectActionFailure(result).error?.code).toBe("NOT_FOUND");
+		expect(mockPrisma.aperturaPeriodoSolicitud.findFirst).toHaveBeenCalledWith({
+			where: { solicitudId: "request-foreign", tenantId: TENANT, estado: "PENDIENTE" },
+		});
+		expect(mockPrisma.cuentaContable.findMany).not.toHaveBeenCalled();
+	});
+
+	it("requires the dedicated approval permission", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			role: "user",
+			tenantRole: "dependiente",
+			permissions: new Set(),
+			planFeatures: { contabilidad: true },
+		});
+		const result = await aprobarAperturaManualAction({ solicitudId: "request-1" });
+		expect(expectActionFailure(result).error?.code).toBe("FORBIDDEN");
+		expect(mockPrisma.aperturaPeriodoSolicitud.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("rejects approval when canonical FX evidence is absent", async () => {
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "request-fx", fechaInicio: new Date("2026-04-01T00:00:00Z"),
+			functionalCurrencyCode: "CUP", lineas: [
+				{ cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "missing" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" },
+			],
+		});
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "a1" }, { codigo: "301", cuentaContableId: "a2" },
+		]);
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue(null);
+		const result = await aprobarAperturaManualAction({ solicitudId: "request-fx" });
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.aperturaPeriodoSolicitud.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("rejects a BANK_ACCOUNT evidence row even when amount and currency happen to match", async () => {
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "request-source-mismatch", fechaInicio: new Date("2026-04-01T00:00:00Z"),
+			functionalCurrencyCode: "CUP", lineas: [
+				{ lineId: "line-1", cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "fx-bank" },
+				{ lineId: "line-2", cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" },
+			],
+		});
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "account-101" }, { codigo: "301", cuentaContableId: "account-301" },
+		]);
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			fxEvidenceId: "fx-bank", sourceType: "BANK_ACCOUNT", sourceId: "some-bank",
+		});
+
+		const result = await aprobarAperturaManualAction({ solicitudId: "request-source-mismatch" });
+
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.fxEvidence.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+			where: expect.objectContaining({
+				sourceType: "MANUAL_OPENING_LINE",
+				sourceId: "request-source-mismatch:line-1:account-101",
+			}),
+		}));
+		expect(mockPrisma.aperturaPeriodoSolicitud.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("fails closed without a catalog rate and does not persist an FX row", async () => {
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(null);
+		mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "no-rate-request", estado: "PENDIENTE" });
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "account-101" }, { codigo: "301", cuentaContableId: "account-301" },
+		]);
+		exchangeRateMocks.getRateAsOf.mockResolvedValue(null);
+
+		const result = await solicitarAperturaManualAction({
+			idempotencyKey: "no-rate-request-key", tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z", fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "EUR", debito: "10", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "10" },
+			],
+		});
+
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.fxEvidence.create).not.toHaveBeenCalled();
+		const { AuditLogService } = await import("@/lib/services/audit-log-service");
+		expect(AuditLogService.logStrict).not.toHaveBeenCalled();
+	});
+
+	it("does not open a request without prior approval", async () => {
+		const result = await abrirPeriodoManualAprobadoAction({ solicitudId: "request-pending" });
+		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
+	});
+
+	it("requires the approval permission before consuming an approved opening", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser, role: "user", tenantRole: "dependiente", permissions: new Set(),
+			planFeatures: { contabilidad: true },
+		});
+
+		const result = await abrirPeriodoManualAprobadoAction({ solicitudId: "approved-request" });
+
+		expect(expectActionFailure(result).error?.code).toBe("FORBIDDEN");
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.aperturaPeriodoSolicitud.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("submits, approves, and consumes one balanced opening into exact formal journal lines", async () => {
+		const request = {
+			solicitudId: "manual-1", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"),
+			fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			observaciones: null, categoria: "ORDINARIO", modoContable: "CAJA",
+			functionalCurrencyCode: "CUP", estado: "PENDIENTE", solicitadaPor: ACTOR,
+			aprobadaPor: null, aprobadaAt: null, hashAprobacion: null,
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "USD", debito: "10.00", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20.00" },
+			],
+		};
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue(request);
+		mockPrisma.aperturaPeriodoSolicitud.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.aperturaPeriodoSolicitud.update.mockResolvedValue({});
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "account-cash" },
+			{ codigo: "301", cuentaContableId: "account-equity" },
+		]);
+		const canonical = buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" });
+		exchangeRateMocks.getRateAsOf.mockResolvedValue({ tasaId: "rate-1", tasa: 2, fechaVigencia: new Date("2026-03-31T00:00:00.000Z") });
+		mockPrisma.fxEvidence.create.mockResolvedValue({ fxEvidenceId: "fx-1" });
+		mockPrisma.fxEvidence.findFirst.mockResolvedValue({
+			sourceType: "MANUAL_OPENING_LINE", sourceId: "manual-1:line-1:account-cash",
+			functionalAmount: new Prisma.Decimal("20.00"),
+			exchangeRate: new Prisma.Decimal("2.0000000000"),
+			originalAmount: new Prisma.Decimal("10"), originalCurrency: "USD", functionalCurrency: "CUP",
+			rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), cutoffAt: new Date("2026-04-01T00:00:00.000Z"),
+			fxCatalogRateId: "rate-1", provenance: canonical.fxProvenanceKind, source: "TasaCambio catalog",
+			evidence: { ...buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" }), solicitudId: "manual-1", lineId: "line-1", cuentaContableId: "account-cash", originalAmount: "10", functionalAmount: "20", exchangeRate: "2", cutoffAt: "2026-04-01T00:00:00.000Z" }, evidenceFingerprint: buildAppliedFxEvidence({ originalAmount: 10, originalCurrency: "USD", functionalCurrency: "CUP", exchangeRate: 2, convertedAmount: 20, rateEffectiveAt: new Date("2026-03-31T00:00:00.000Z"), source: "TasaCambio catalog", fxCatalogRateId: "rate-1" }).fxEvidenceFingerprint, evidenceVersion: canonical.fxEvidenceVersion,
+		});
+		mockPrisma.tasaCambio.findUnique.mockResolvedValue({ monedaOrigenId: "USD", monedaDestino: "CUP", tasa: new Prisma.Decimal("2"), fechaVigencia: new Date("2026-03-31T00:00:00.000Z") });
+		mockPrisma.periodoContable.findFirst.mockImplementation(async (args: { where?: { periodoId?: string } }) =>
+			args.where?.periodoId ? makePeriodo({ periodoId: "p-manual", tenantId: TENANT }) : null);
+		mockPrisma.periodoContable.count.mockResolvedValue(0);
+		mockPrisma.periodoContable.create.mockResolvedValue(makePeriodo({ periodoId: "p-manual", estado: EstadoPeriodo.ABIERTO }));
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.diario.findFirst.mockResolvedValue({ diarioId: "journal-opening" });
+		mockPrisma.asiento.findUnique.mockResolvedValue(null);
+		mockPrisma.asiento.aggregate.mockResolvedValue({ _max: { numero: null } });
+		mockPrisma.asiento.findMany.mockResolvedValue([]);
+		mockPrisma.asiento.create.mockResolvedValue({ asientoId: "journal-entry-1" });
+		mockPrisma.aperturaPeriodo.findUnique.mockResolvedValue(null);
+		mockPrisma.aperturaPeriodo.create.mockResolvedValue({ aperturaId: "opening-1" });
+
+		const submitted = await solicitarAperturaManualAction({
+			idempotencyKey: "manual-opening-request-1",
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: request.lineas,
+		});
+		if (!submitted.success) throw new Error(JSON.stringify(submitted.error));
+		expectActionSuccess(submitted);
+		request.lineas = mockPrisma.aperturaPeriodoSolicitud.update.mock.calls[0][0].data.lineas as typeof request.lineas;
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(request);
+		const approved = await aprobarAperturaManualAction({ solicitudId: "manual-1" });
+		expectActionSuccess(approved);
+		request.estado = "APROBADA";
+		request.aprobadaPor = ACTOR;
+		request.aprobadaAt = mockPrisma.aperturaPeriodoSolicitud.updateMany.mock.calls[0][0].data.aprobadaAt;
+		request.hashAprobacion = "";
+		// Use the digest returned by the approval action as the immutable approval token.
+		if (approved.success) request.hashAprobacion = approved.data.hashAprobacion;
+		const opened = await abrirPeriodoManualAprobadoAction({ solicitudId: "manual-1" });
+		if (!opened.success) throw new Error(JSON.stringify(opened.error));
+		expectActionSuccess(opened);
+		expect(mockPrisma.asiento.create).toHaveBeenCalledTimes(1);
+		const storedLines = mockPrisma.asiento.create.mock.calls[0][0].data.lineas.create;
+		expect(storedLines).toHaveLength(2);
+		expect(storedLines.map((line: { cuenta?: { connect: { tenantId_cuentaContableId: { cuentaContableId: string } } } }) => line.cuenta?.connect.tenantId_cuentaContableId.cuentaContableId)).toEqual(["account-cash", "account-equity"]);
+		expect(storedLines.map((line: { debe: unknown; haber: unknown }) => [String(line.debe), String(line.haber)])).toEqual([["20", "0"], ["0", "20"]]);
+		expect(storedLines[0].fxEvidenceFingerprint).toBe(canonical.fxEvidenceFingerprint);
+		expect(storedLines[0].montoOriginal.toString()).toBe("10");
+	});
+
+	it("replays a request retry with the same key and payload without creating another row", async () => {
+		const payload = {
+			idempotencyKey: "manual-opening-retry",
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "CUP", debito: "10", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "10" },
+			],
+		};
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValueOnce(null);
+		mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "existing-request", estado: "PENDIENTE" });
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+
+		const first = await solicitarAperturaManualAction(payload);
+		const requestHash = mockPrisma.aperturaPeriodoSolicitud.create.mock.calls[0]?.[0]?.data?.idempotencyPayloadHash;
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "existing-request", estado: "PENDIENTE", idempotencyPayloadHash: requestHash, tenantId: TENANT,
+		});
+		const second = await solicitarAperturaManualAction(payload);
+
+		expectActionSuccess(first);
+		expectActionSuccess(second);
+		if (first.success && second.success) expect(second.data).toMatchObject({ solicitudId: first.data.solicitudId, replayed: true });
+		expect(mockPrisma.aperturaPeriodoSolicitud.create).toHaveBeenCalledTimes(1);
+	});
+
+	it("rejects reuse of an idempotency key with a different payload", async () => {
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "existing-request", estado: "PENDIENTE", idempotencyPayloadHash: "different-payload-hash",
+		});
+		const result = await solicitarAperturaManualAction({
+			idempotencyKey: "manual-opening-retry",
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "CUP", debito: "11", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "11" },
+			],
+		});
+		expect(expectActionFailure(result).error?.code).toBe("IDEMPOTENCY_CONFLICT");
+		expect(mockPrisma.aperturaPeriodoSolicitud.create).not.toHaveBeenCalled();
+	});
+
+	it("rejects a submission that reuses an FX evidence id across two lines", async () => {
+		const result = await solicitarAperturaManualAction({
+			idempotencyKey: "duplicate-source-evidence",
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0", fxEvidenceId: "same-fx" },
+				{ cuentaCodigo: "102", moneda: "USD", debito: "0", credito: "10", fxEvidenceId: "same-fx" },
+			],
+		});
+		expect(expectActionFailure(result).error?.code).toBe("VALIDATION_ERROR");
+		expect(mockPrisma.aperturaPeriodoSolicitud.create).not.toHaveBeenCalled();
+	});
+
+	it("creates immutable FX evidence bound to the generated request, line, and tenant account", async () => {
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(null);
+		mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "manual-fx-1", estado: "PENDIENTE" });
+		mockPrisma.aperturaPeriodoSolicitud.update.mockResolvedValue({});
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "account-101" },
+			{ codigo: "301", cuentaContableId: "account-301" },
+		]);
+		mockPrisma.fxEvidence.create.mockResolvedValue({ fxEvidenceId: "created-fx-1" });
+		exchangeRateMocks.getRateAsOf.mockResolvedValue({
+			tasaId: "rate-1", tasa: 2, fechaVigencia: new Date("2026-03-31T00:00:00.000Z"),
+		});
+
+		const result = await solicitarAperturaManualAction({
+			idempotencyKey: "manual-fx-source-1",
+			tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z",
+			fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0" },
+				{ cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "20" },
+			],
+		});
+
+		expect(result.success, JSON.stringify(result)).toBe(true);
+		expectActionSuccess(result);
+		expect(exchangeRateMocks.getRateAsOf).toHaveBeenCalledWith(expect.objectContaining({
+			sourceCurrency: "USD", targetCurrency: "CUP", boundaryAt: new Date("2026-04-01T00:00:00.000Z"),
+		}));
+		expect(mockPrisma.fxEvidence.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				tenantId: TENANT, sourceType: "MANUAL_OPENING_LINE",
+				sourceId: "manual-fx-1:line-1:account-101", originalAmount: expect.anything(),
+				originalCurrency: "USD", functionalCurrency: "CUP", fxCatalogRateId: "rate-1",
+			}),
+		}));
+		expect(mockPrisma.aperturaPeriodoSolicitud.update).toHaveBeenCalledWith(expect.objectContaining({
+			where: { solicitudId: "manual-fx-1", tenantId: TENANT },
+			data: { lineas: expect.arrayContaining([expect.objectContaining({
+				lineId: "line-1", fxEvidenceId: "created-fx-1",
+			})]) },
+		}));
+	});
+
+	it("uses one FX cutoff and one catalog quote for same-currency lines in a request", async () => {
+		mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ tenantId: TENANT, functionalCurrencyCode: "CUP" });
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(null);
+		mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "same-currency-fx", estado: "PENDIENTE" });
+		mockPrisma.aperturaPeriodoSolicitud.update.mockResolvedValue({});
+		mockPrisma.cuentaContable.findMany.mockResolvedValue([
+			{ codigo: "101", cuentaContableId: "account-101" }, { codigo: "102", cuentaContableId: "account-102" },
+		]);
+		mockPrisma.fxEvidence.create.mockResolvedValueOnce({ fxEvidenceId: "fx-line-1" }).mockResolvedValueOnce({ fxEvidenceId: "fx-line-2" });
+		exchangeRateMocks.getRateAsOf.mockResolvedValueOnce({
+			tasaId: "rate-stable", tasa: 2, fechaVigencia: new Date("2026-03-31T00:00:00.000Z"),
+		}).mockResolvedValueOnce({
+			tasaId: "rate-changed", tasa: 3, fechaVigencia: new Date("2026-03-31T00:00:00.000Z"),
+		});
+
+		const result = await solicitarAperturaManualAction({
+			idempotencyKey: "same-currency-fx-key", tipo: TipoPeriodo.MENSUAL,
+			fechaInicio: "2026-04-01T00:00:00.000Z", fechaFin: "2026-04-30T23:59:59.000Z",
+			lineas: [
+				{ cuentaCodigo: "101", moneda: "USD", debito: "10", credito: "0" },
+				{ cuentaCodigo: "102", moneda: "USD", debito: "0", credito: "10" },
+			],
+		});
+
+		expectActionSuccess(result);
+		expect(exchangeRateMocks.getRateAsOf).toHaveBeenCalledTimes(1);
+		const [firstEvidence, secondEvidence] = mockPrisma.fxEvidence.create.mock.calls.map(([call]) => call.data);
+		expect(firstEvidence.cutoffAt).toEqual(secondEvidence.cutoffAt);
+		expect(firstEvidence.fxCatalogRateId).toBe("rate-stable");
+		expect(secondEvidence.fxCatalogRateId).toBe("rate-stable");
 	});
 });
 

@@ -543,6 +543,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager', 'economico'],
 	},
 	{
+		key: 'financiero.apertura.aprobar',
+		label: 'Aprobar apertura contable',
+		description: 'Aprobar un cuadre manual de apertura antes de abrir el período.',
+		category: 'financiero',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'financiero.gastos.acceder',
 		label: 'Acceder a gastos de explotación',
 		description: 'Acceder al módulo de gastos de explotación.',

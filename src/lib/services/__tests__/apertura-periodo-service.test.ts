@@ -55,4 +55,34 @@ describe("AperturaPeriodoService", () => {
 
 		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
 	});
+
+	it("rejects a V3-shaped balance that does not explicitly split opening rubrics", async () => {
+		mockPrisma.periodoContable.findFirst.mockResolvedValue({
+			periodoId: "periodo-anterior",
+			codigo: "2026-03",
+			estado: "CERRADO",
+			resumenJson: {
+				version: 3,
+				tenantId: "tenant-1",
+				cutoffAt: "2026-04-01T00:00:00.000Z",
+				functionalCurrency: "CUP",
+				approvedAt: "2026-04-01T00:00:02.000Z",
+				balance: {
+					assets: {
+						cashAndBanks: 100,
+						inventory: { total: 50 },
+						receivables: 20,
+					},
+					liabilities: { payables: 15, externalDebt: 10 },
+					equity: { capital: 100, retainedEarnings: 30, currentResult: 15 },
+				},
+			},
+		});
+
+		await expect(
+			AperturaPeriodoService.createAperturaPeriodo("periodo-nuevo", "tenant-1", "user-1"),
+		).rejects.toMatchObject({ code: "APERTURA_SALDOS_NO_VERIFICABLES" });
+
+		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
+	});
 });

@@ -13,7 +13,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
-import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { hasPermission, requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { AperturaPeriodoService } from "@/lib/services/apertura-periodo-service";
@@ -28,7 +28,7 @@ import {
 import { getAccountingYear } from "@/lib/services/fecha-operacion-registry";
 import { isTenantAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@/generated/prisma";
+import { Prisma, type Prisma as PrismaTypes } from "@/generated/prisma";
 import { getCurrentBalance } from "@/features/contabilidad/services/current-balance-service";
 import { getReconciledResultForYear } from "@/features/contabilidad/services/reconciled-result-service";
 import {
@@ -42,7 +42,11 @@ import {
 	captureFinancialSnapshotV3,
 } from "@/features/contabilidad/services/financial-snapshot-v3-service";
 import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services/immutable-financial-evidence";
+import { buildAppliedFxEvidence, verifyAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
+import { insertarAsientoConNumeracion } from "@/features/contabilidad-formal/services/posting-engine";
 import { isFinancialV3CaptureEnabled } from "@/features/contabilidad/config/financial-v3-capture";
+import { getRequiredTenantAccountingPolicy } from "@/features/contabilidad/services/tenant-accounting-policy-service";
 import {
 	obtenerBalanceConVariacion,
 	obtenerVentasVsReconciliado,
@@ -108,7 +112,7 @@ export const checkPeriodLockAction = withAction(
  * Valida tipo, fechas ISO y observaciones opcionales.
  */
 const abrirPeriodoSchema = z.object({
-	tipo: z.nativeEnum(TipoPeriodo),
+	tipo: z.enum(["DIARIO", "MENSUAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"]),
 	fechaInicio: z
 		.string()
 		.datetime({ message: "La fecha de inicio debe ser una fecha válida" }),
@@ -116,9 +120,539 @@ const abrirPeriodoSchema = z.object({
 		.string()
 		.datetime({ message: "La fecha de fin debe ser una fecha válida" }),
 	observaciones: z.string().max(500).optional(),
-	categoria: z.nativeEnum(CategoriaPeriodo).optional(),
+	categoria: z.enum(["ORDINARIO", "EXTRAORDINARIO", "RECTIFICATIVO"]).optional(),
 	modoContable: z.nativeEnum(ModoContable).optional(),
 });
+
+const manualOpeningLineFields = {
+	cuentaCodigo: z.string().trim().min(1).max(32),
+	moneda: z.string().trim().regex(/^[A-Z]{3,8}$/),
+	debito: z.string().regex(/^\d+(\.\d{1,4})?$/),
+	credito: z.string().regex(/^\d+(\.\d{1,4})?$/),
+	lineId: z.string().min(1).optional(),
+	fxEvidenceId: z.string().trim().min(1).optional(),
+};
+const validateManualOpeningLine = (line: { debito: string; credito: string }, ctx: z.RefinementCtx) => {
+	if ((Number(line.debito) > 0) === (Number(line.credito) > 0)) {
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Indique débito o crédito, no ambos" });
+	}
+};
+const manualOpeningLineSchema = z.object(manualOpeningLineFields).superRefine(validateManualOpeningLine);
+
+const manualOpeningLineInputSchema = z.object({
+	cuentaCodigo: manualOpeningLineFields.cuentaCodigo,
+	moneda: manualOpeningLineFields.moneda,
+	debito: manualOpeningLineFields.debito,
+	credito: manualOpeningLineFields.credito,
+}).strict().superRefine(validateManualOpeningLine);
+
+const solicitudAperturaSchema = abrirPeriodoSchema.extend({
+	idempotencyKey: z.string().trim().min(1).max(64),
+	lineas: z.array(manualOpeningLineInputSchema).min(2).max(500),
+});
+
+const solicitudIdSchema = z.object({ solicitudId: z.string().min(1) });
+
+/** @description Lista solicitudes persistidas para el responsable contable. */
+export const listarSolicitudesAperturaManualAction = withAction(
+	async (_input: Record<string, never> = {}, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, "consultar solicitudes de apertura manual");
+		const canReviewAll = hasPermission(user, "financiero.apertura.aprobar");
+		const solicitudes = await prisma.aperturaPeriodoSolicitud.findMany({
+			where: {
+				tenantId,
+				...(!canReviewAll ? { solicitadaPor: user.userId } : {}),
+				estado: { in: ["PENDIENTE", "APROBADA"] },
+			},
+			orderBy: { createdAt: "desc" },
+			take: 50,
+			select: {
+				solicitudId: true,
+				tipo: true,
+				fechaInicio: true,
+				fechaFin: true,
+				functionalCurrencyCode: true,
+				estado: true,
+				solicitadaPor: true,
+				aprobadaPor: true,
+				createdAt: true,
+			},
+		});
+		return { solicitudes };
+	},
+);
+
+/** @description Lee el detalle persistido de una solicitud aprobable del tenant. */
+export const obtenerSolicitudAperturaManualAction = withAction(
+	async (input: z.infer<typeof solicitudIdSchema>, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, "revisar solicitud de apertura manual");
+		const { solicitudId } = solicitudIdSchema.parse(input);
+		return prisma.$transaction(async (tx) => {
+		const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({
+			where: { solicitudId, tenantId, estado: { in: ["PENDIENTE", "APROBADA"] } },
+			select: {
+				solicitudId: true,
+				tipo: true,
+				fechaInicio: true,
+				fechaFin: true,
+				observaciones: true,
+				categoria: true,
+				modoContable: true,
+				functionalCurrencyCode: true,
+				lineas: true,
+				estado: true,
+				solicitadaPor: true,
+				aprobadaPor: true,
+				aprobadaAt: true,
+				hashAprobacion: true,
+				createdAt: true,
+				tenantId: true,
+			},
+		});
+		if (!solicitud) throw new ActionError("Solicitud no encontrada", "NOT_FOUND");
+		if (!hasPermission(user, "financiero.apertura.aprobar") && solicitud.solicitadaPor !== user.userId) {
+			throw new ActionError("Solicitud no encontrada", "NOT_FOUND");
+		}
+		const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+		if (policy.functionalCurrencyCode !== solicitud.functionalCurrencyCode) {
+			throw new ActionError("La moneda funcional cambió; revise la solicitud", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		const lines = z.array(manualOpeningLineSchema).parse(solicitud.lineas);
+		const verification = await verifyManualOpening(
+			tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines,
+		);
+		const previewHash = hashImmutableFinancialEvidence({
+			solicitudId, tenantId, functionalCurrencyCode: policy.functionalCurrencyCode,
+			fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
+			tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
+			observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+			fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
+		});
+		if (solicitud.estado === "APROBADA") {
+			const approvedHash = hashImmutableFinancialEvidence({
+				solicitudId, tenantId, solicitedBy: solicitud.solicitadaPor,
+				approvedBy: solicitud.aprobadaPor, approvedAt: solicitud.aprobadaAt?.toISOString(),
+				functionalCurrencyCode: policy.functionalCurrencyCode,
+				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
+				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
+				observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+				fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
+			});
+			if (!solicitud.hashAprobacion || approvedHash !== solicitud.hashAprobacion) {
+				throw new ActionError("La evidencia aprobada ya no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+			}
+		}
+		return { solicitud: { ...solicitud, lineasValuadas: verification.valuedLines, previewHash } };
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+	},
+);
+
+async function verifyManualOpening(
+	db: PrismaTypes.TransactionClient | typeof prisma,
+	tenantId: string,
+	functionalCurrencyCode: string,
+	solicitudId: string,
+	fechaInicio: Date,
+	lineas: z.infer<typeof manualOpeningLineSchema>[],
+) {
+	const accounts = await db.cuentaContable.findMany({
+		where: { tenantId, codigo: { in: lineas.map((line) => line.cuentaCodigo) }, activa: true, aceptaMovimiento: true },
+		select: { cuentaContableId: true, codigo: true },
+	});
+	if (new Set(accounts.map((account) => account.codigo)).size !== new Set(lineas.map((line) => line.cuentaCodigo)).size) {
+		throw new ActionError("Una o más cuentas no existen, no pertenecen a la empresa o no aceptan movimientos", "APERTURA_SALDOS_NO_VERIFICABLES");
+	}
+	let debitos = new Prisma.Decimal(0);
+	let creditos = new Prisma.Decimal(0);
+	const valuedLines: Array<{
+		cuentaCodigo: string; cuentaContableId: string; moneda: string; debito: string; credito: string;
+		debitoFuncional: string; creditoFuncional: string; tasaCambio: string | null;
+		fxEvidenceId: string | null; fxEvidenceFingerprint: string | null;
+		monedaFuncional: string; fxEvidence: null | {
+			sourceType: string; sourceId: string; originalAmount: string; originalCurrency: string;
+			functionalAmount: string; functionalCurrency: string; rateEffectiveAt: string;
+			cutoffAt: string; provenance: string; source: string; fxCatalogRateId: string | null;
+			evidenceFingerprint: string; evidenceVersion: number;
+		};
+	}> = [];
+	const accountByCode = new Map(accounts.map((account) => [account.codigo, account.cuentaContableId]));
+	const usedFxEvidenceIds = new Set<string>();
+	for (const line of lineas) {
+		const debit = new Prisma.Decimal(line.debito);
+		const credit = new Prisma.Decimal(line.credito);
+		if (line.moneda === functionalCurrencyCode) {
+			if (line.fxEvidenceId) throw new ActionError("No se admite FX para la moneda funcional", "APERTURA_SALDOS_NO_VERIFICABLES");
+			debitos = debitos.add(debit);
+			creditos = creditos.add(credit);
+			valuedLines.push({
+				cuentaCodigo: line.cuentaCodigo, cuentaContableId: accountByCode.get(line.cuentaCodigo)!,
+				moneda: line.moneda, debito: debit.toString(), credito: credit.toString(),
+				monedaFuncional: functionalCurrencyCode,
+				debitoFuncional: debit.toString(), creditoFuncional: credit.toString(),
+				tasaCambio: null, fxEvidenceId: null, fxEvidenceFingerprint: null, fxEvidence: null,
+			});
+			continue;
+		}
+		if (!line.fxEvidenceId || usedFxEvidenceIds.has(line.fxEvidenceId)) {
+			throw new ActionError("No se admite reutilizar una evidencia FX en varias líneas", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		if (!line.lineId) throw new ActionError("La línea FX no está vinculada a una solicitud verificable", "APERTURA_SALDOS_NO_VERIFICABLES");
+		usedFxEvidenceIds.add(line.fxEvidenceId);
+		const accountId = accountByCode.get(line.cuentaCodigo)!;
+		const expectedSourceId = `${solicitudId}:${line.lineId}:${accountId}`;
+		const fx = await db.fxEvidence.findFirst({
+			where: {
+				fxEvidenceId: line.fxEvidenceId,
+				tenantId,
+				sourceType: "MANUAL_OPENING_LINE",
+				sourceId: expectedSourceId,
+				originalAmount: debit.greaterThan(0) ? debit : credit,
+				originalCurrency: line.moneda,
+				functionalCurrency: functionalCurrencyCode,
+			cutoffAt: { lte: fechaInicio },
+			},
+			select: {
+				fxEvidenceId: true, sourceType: true, sourceId: true, originalAmount: true, originalCurrency: true,
+				functionalAmount: true, functionalCurrency: true, exchangeRate: true, rateEffectiveAt: true,
+				cutoffAt: true, fxCatalogRateId: true, provenance: true, source: true,
+				evidence: true, evidenceFingerprint: true, evidenceVersion: true,
+			},
+		});
+		if (!fx || fx.sourceType !== "MANUAL_OPENING_LINE" || fx.sourceId !== expectedSourceId) {
+			throw new ActionError("La evidencia FX no corresponde a esta solicitud, línea, cuenta, fecha o moneda", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		if (fx.rateEffectiveAt > fx.cutoffAt || fx.rateEffectiveAt > fechaInicio) {
+			throw new ActionError("La fecha efectiva de la tasa no corresponde al corte de la evidencia", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		const verifiedFx = verifyAppliedFxEvidence({
+			originalAmount: Number(fx.originalAmount), originalCurrency: fx.originalCurrency,
+			functionalCurrency: fx.functionalCurrency, convertedAmount: Number(fx.functionalAmount),
+			exchangeRate: Number(fx.exchangeRate), rateEffectiveAt: fx.rateEffectiveAt,
+			fxProvenanceKind: fx.provenance, fxProvenanceSource: fx.source,
+			fxCatalogRateId: fx.fxCatalogRateId, fxEvidenceFingerprint: fx.evidenceFingerprint,
+			fxEvidenceVersion: fx.evidenceVersion,
+		});
+		const embeddedEvidence = fx.evidence as Record<string, unknown>;
+		if (!verifiedFx || embeddedEvidence?.fxEvidenceFingerprint !== fx.evidenceFingerprint ||
+			embeddedEvidence?.fxProvenanceKind !== fx.provenance ||
+			embeddedEvidence?.fxProvenanceSource !== fx.source ||
+			embeddedEvidence?.fxEvidenceVersion !== fx.evidenceVersion ||
+			embeddedEvidence?.solicitudId !== solicitudId ||
+			embeddedEvidence?.lineId !== line.lineId ||
+			embeddedEvidence?.cuentaContableId !== accountId ||
+			embeddedEvidence?.cutoffAt !== fx.cutoffAt.toISOString() ||
+			embeddedEvidence?.originalAmount !== fx.originalAmount.toString() ||
+			embeddedEvidence?.functionalAmount !== fx.functionalAmount.toString() ||
+			embeddedEvidence?.exchangeRate !== fx.exchangeRate.toString()) {
+			throw new ActionError("La evidencia FX no coincide con la conversión y huella canónicas", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		const catalogRate = fx.fxCatalogRateId ? await db.tasaCambio.findUnique({
+			where: { tasaId: fx.fxCatalogRateId },
+			select: { monedaOrigenId: true, monedaDestino: true, tasa: true, fechaVigencia: true },
+		}) : null;
+		if (!catalogRate || catalogRate.monedaOrigenId !== fx.originalCurrency ||
+			catalogRate.monedaDestino !== fx.functionalCurrency ||
+			!catalogRate.tasa.equals(fx.exchangeRate) || catalogRate.fechaVigencia.getTime() !== fx.rateEffectiveAt.getTime() ||
+			catalogRate.fechaVigencia > fechaInicio) {
+			throw new ActionError("La tasa de catálogo ya no coincide con la evidencia FX aprobada", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		const selectedRate = await exchangeRateProvider.getRateAsOf({
+			sourceCurrency: fx.originalCurrency,
+			targetCurrency: fx.functionalCurrency,
+			boundaryAt: fx.cutoffAt,
+			client: db as PrismaTypes.TransactionClient,
+		});
+		if (!selectedRate || selectedRate.tasaId !== fx.fxCatalogRateId ||
+			!new Prisma.Decimal(selectedRate.tasa).equals(fx.exchangeRate) ||
+			selectedRate.fechaVigencia.getTime() !== fx.rateEffectiveAt.getTime()) {
+			throw new ActionError("La evidencia no corresponde a la tasa canónica más reciente al corte", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		if (fx.functionalAmount.decimalPlaces() > 4 || fx.exchangeRate.decimalPlaces() > 10) {
+			throw new ActionError("La evidencia FX excede la precisión admitida por el libro mayor", "APERTURA_SALDOS_NO_VERIFICABLES");
+		}
+		const functionalDebit = debit.greaterThan(0) ? fx.functionalAmount : new Prisma.Decimal(0);
+		const functionalCredit = credit.greaterThan(0) ? fx.functionalAmount : new Prisma.Decimal(0);
+		debitos = debitos.add(functionalDebit);
+		creditos = creditos.add(functionalCredit);
+		valuedLines.push({
+			cuentaCodigo: line.cuentaCodigo, cuentaContableId: accountByCode.get(line.cuentaCodigo)!,
+			moneda: line.moneda, debito: debit.toString(), credito: credit.toString(),
+			monedaFuncional: functionalCurrencyCode,
+			debitoFuncional: functionalDebit.toString(), creditoFuncional: functionalCredit.toString(),
+			tasaCambio: fx.exchangeRate.toString(), fxEvidenceId: line.fxEvidenceId ?? null,
+			fxEvidenceFingerprint: fx.evidenceFingerprint,
+			fxEvidence: {
+				sourceType: fx.sourceType, sourceId: fx.sourceId,
+				originalAmount: fx.originalAmount.toString(), originalCurrency: fx.originalCurrency,
+				functionalAmount: fx.functionalAmount.toString(), functionalCurrency: fx.functionalCurrency,
+				rateEffectiveAt: fx.rateEffectiveAt.toISOString(), cutoffAt: fx.cutoffAt.toISOString(),
+				provenance: fx.provenance, source: fx.source, fxCatalogRateId: fx.fxCatalogRateId,
+				evidenceFingerprint: fx.evidenceFingerprint, evidenceVersion: fx.evidenceVersion,
+			},
+		});
+	}
+	if (!debitos.equals(creditos)) throw new ActionError("El cuadre manual no balancea en moneda funcional", "APERTURA_SALDOS_NO_VERIFICABLES");
+	return {
+		valuedLines,
+		fingerprints: valuedLines.map((line) => line.fxEvidenceFingerprint).filter((value): value is string => value !== null).sort(),
+	};
+}
+
+/** @description Registra líneas manuales de apertura pendientes de aprobación. */
+export const solicitarAperturaManualAction = withAction(
+	async (input: z.infer<typeof solicitudAperturaSchema>, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, "solicitar apertura contable manual");
+		const parsed = solicitudAperturaSchema.parse(input);
+		if (new Date(parsed.fechaInicio) > new Date(parsed.fechaFin)) {
+			throw new ActionError("La fecha de inicio no puede ser posterior a la fecha de fin", "FECHAS_INVALIDAS");
+		}
+		const policy = await getRequiredTenantAccountingPolicy(tenantId);
+		const idempotencyPayloadHash = hashImmutableFinancialEvidence({
+			tenantId, solicitadaPor: user.userId,
+			tipo: parsed.tipo,
+			fechaInicio: new Date(parsed.fechaInicio).toISOString(),
+			fechaFin: new Date(parsed.fechaFin).toISOString(),
+			observaciones: parsed.observaciones ?? null,
+			categoria: parsed.categoria ?? CategoriaPeriodo.ORDINARIO,
+			modoContable: parsed.modoContable ?? ModoContable.CAJA,
+			functionalCurrencyCode: policy.functionalCurrencyCode,
+			lineas: parsed.lineas,
+		});
+		let result: { solicitud: { solicitudId: string; estado: string }; replayed: boolean };
+		try {
+			result = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const existing = await tx.aperturaPeriodoSolicitud.findFirst({
+				where: { tenantId, solicitadaPor: user.userId, idempotencyKey: parsed.idempotencyKey },
+			});
+			if (existing) {
+				if (existing.idempotencyPayloadHash !== idempotencyPayloadHash) {
+					throw new ActionError("La clave de idempotencia ya se usó con otra solicitud", "IDEMPOTENCY_CONFLICT");
+				}
+				return { solicitud: existing, replayed: true };
+			}
+			const initialLines = parsed.lineas.map((line, index) => ({ ...line, lineId: `line-${index + 1}` }));
+			const created = await tx.aperturaPeriodoSolicitud.create({
+				data: {
+				tenantId,
+				tipo: parsed.tipo as never,
+				fechaInicio: new Date(parsed.fechaInicio),
+				fechaFin: new Date(parsed.fechaFin),
+				observaciones: parsed.observaciones,
+				categoria: parsed.categoria as never,
+				modoContable: parsed.modoContable,
+				functionalCurrencyCode: policy.functionalCurrencyCode,
+				lineas: initialLines as unknown as Prisma.InputJsonValue,
+				idempotencyKey: parsed.idempotencyKey,
+				idempotencyPayloadHash,
+				solicitadaPor: user.userId,
+				},
+			});
+			const accounts = await tx.cuentaContable.findMany({
+				where: { tenantId, codigo: { in: parsed.lineas.map((line) => line.cuentaCodigo) }, activa: true, aceptaMovimiento: true },
+				select: { cuentaContableId: true, codigo: true },
+			});
+			const accountByCode = new Map(accounts.map((account) => [account.codigo, account.cuentaContableId]));
+			if (accountByCode.size !== new Set(parsed.lineas.map((line) => line.cuentaCodigo)).size) {
+				throw new ActionError("Una o más cuentas no existen, no pertenecen a la empresa o no aceptan movimientos", "APERTURA_SALDOS_NO_VERIFICABLES");
+			}
+			const openingStart = new Date(parsed.fechaInicio);
+			const captureCutoffAt = new Date(Math.min(openingStart.getTime(), Date.now() - 1_000));
+			const rateByCurrency = new Map<string, ReturnType<typeof exchangeRateProvider.getRateAsOf>>();
+			const getRate = (currency: string) => {
+				let ratePromise = rateByCurrency.get(currency);
+				if (!ratePromise) {
+					ratePromise = exchangeRateProvider.getRateAsOf({
+						sourceCurrency: currency,
+						targetCurrency: policy.functionalCurrencyCode,
+						boundaryAt: captureCutoffAt,
+						client: tx,
+					});
+					rateByCurrency.set(currency, ratePromise);
+				}
+				return ratePromise;
+			};
+			const persistedLines = await Promise.all(initialLines.map(async (line) => {
+				if (line.moneda === policy.functionalCurrencyCode) return line;
+				const accountId = accountByCode.get(line.cuentaCodigo)!;
+				const rate = await getRate(line.moneda);
+				if (!rate || rate.fechaVigencia > captureCutoffAt || rate.fechaVigencia > openingStart) {
+					throw new ActionError("No existe una tasa de cambio canónica vigente para la fecha de apertura", "APERTURA_SALDOS_NO_VERIFICABLES");
+				}
+				const amount = new Prisma.Decimal(line.debito).greaterThan(0)
+					? new Prisma.Decimal(line.debito) : new Prisma.Decimal(line.credito);
+				const rateDecimal = new Prisma.Decimal(rate.tasa).toDecimalPlaces(10);
+				const functionalAmount = amount.mul(rateDecimal).toDecimalPlaces(4);
+				if (!functionalAmount.greaterThan(0)) {
+					throw new ActionError("La conversión FX no produce un importe funcional válido", "APERTURA_SALDOS_NO_VERIFICABLES");
+				}
+				const sourceId = `${created.solicitudId}:${line.lineId}:${accountId}`;
+				const canonical = buildAppliedFxEvidence({
+					originalAmount: amount.toNumber(), originalCurrency: line.moneda,
+					functionalCurrency: policy.functionalCurrencyCode,
+					exchangeRate: rateDecimal.toNumber(), convertedAmount: functionalAmount.toNumber(),
+					rateEffectiveAt: rate.fechaVigencia, source: "TasaCambio catalog",
+					fxCatalogRateId: rate.tasaId,
+				});
+				const evidence = {
+					...canonical, solicitudId: created.solicitudId, lineId: line.lineId,
+					cuentaContableId: accountId, originalAmount: amount.toString(), originalCurrency: line.moneda,
+					functionalAmount: functionalAmount.toString(), functionalCurrency: policy.functionalCurrencyCode,
+					exchangeRate: rateDecimal.toString(), cutoffAt: captureCutoffAt.toISOString(),
+				};
+				const stored = await tx.fxEvidence.create({ data: {
+					tenantId, sourceType: "MANUAL_OPENING_LINE", sourceId,
+					originalAmount: amount, originalCurrency: line.moneda,
+					functionalAmount, functionalCurrency: policy.functionalCurrencyCode,
+					exchangeRate: rateDecimal, rateEffectiveAt: rate.fechaVigencia,
+					cutoffAt: captureCutoffAt, fxCatalogRateId: rate.tasaId,
+					provenance: canonical.fxProvenanceKind, source: canonical.fxProvenanceSource,
+					evidence, evidenceFingerprint: canonical.fxEvidenceFingerprint,
+					evidenceVersion: canonical.fxEvidenceVersion,
+				} });
+				return { ...line, fxEvidenceId: stored.fxEvidenceId };
+			}));
+			await tx.aperturaPeriodoSolicitud.update({
+				where: { solicitudId: created.solicitudId, tenantId },
+				data: { lineas: persistedLines as unknown as Prisma.InputJsonValue },
+			});
+			await AuditLogService.logStrict({ accion: "CREATE", entidad: "CIERRE_CONTABLE", entidadId: created.solicitudId, usuarioId: user.userId, detalles: { accion: "SOLICITAR_APERTURA_MANUAL", functionalCurrencyCode: policy.functionalCurrencyCode } }, tx);
+			return { solicitud: created, replayed: false };
+			}, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+		} catch (error) {
+			if (!(error && typeof error === "object" && "code" in error && error.code === "P2002")) throw error;
+			const concurrentReplay = await prisma.aperturaPeriodoSolicitud.findFirst({
+				where: { tenantId, solicitadaPor: user.userId, idempotencyKey: parsed.idempotencyKey },
+			});
+			if (!concurrentReplay) throw error;
+			if (concurrentReplay.idempotencyPayloadHash !== idempotencyPayloadHash) {
+				throw new ActionError("La clave de idempotencia ya se usó con otra solicitud", "IDEMPOTENCY_CONFLICT");
+			}
+			result = { solicitud: concurrentReplay, replayed: true };
+		}
+		return { solicitudId: result.solicitud.solicitudId, estado: result.solicitud.estado, replayed: result.replayed };
+	},
+);
+
+/** @description Aprueba una solicitud inmutable de apertura; aún no crea el período. */
+export const aprobarAperturaManualAction = withAction(
+	async (input: z.infer<typeof solicitudIdSchema>, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, "aprobar apertura contable manual");
+		requirePermission(user, "financiero.apertura.aprobar", "aprobar aperturas contables");
+		const { solicitudId } = solicitudIdSchema.parse(input);
+		const approval = await prisma.$transaction(async (tx) => {
+			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({
+				where: { solicitudId, tenantId, estado: "PENDIENTE" },
+			});
+			if (!solicitud) throw new ActionError("Solicitud pendiente no encontrada", "NOT_FOUND");
+			const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+			if (policy.functionalCurrencyCode !== solicitud.functionalCurrencyCode) {
+				throw new ActionError("La moneda funcional cambió; revise la solicitud", "APERTURA_SALDOS_NO_VERIFICABLES");
+			}
+			const lines = z.array(manualOpeningLineSchema).parse(solicitud.lineas);
+			const verification = await verifyManualOpening(tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines);
+			const approvedAt = new Date();
+			const approvalHash = hashImmutableFinancialEvidence({
+				solicitudId, tenantId, solicitedBy: solicitud.solicitadaPor, approvedBy: user.userId,
+				approvedAt: approvedAt.toISOString(), functionalCurrencyCode: policy.functionalCurrencyCode,
+				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
+				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
+				observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+				fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
+			});
+			const updated = await tx.aperturaPeriodoSolicitud.updateMany({
+				where: { solicitudId, tenantId, estado: "PENDIENTE", hashAprobacion: null },
+				data: { estado: "APROBADA", aprobadaPor: user.userId, aprobadaAt: approvedAt, hashAprobacion: approvalHash },
+			});
+			if (updated.count !== 1) throw new ActionError("La solicitud cambió durante la aprobación", "APERTURA_SALDOS_NO_VERIFICABLES");
+			await AuditLogService.logStrict({ accion: "CREATE", entidad: "CIERRE_CONTABLE", entidadId: solicitudId, usuarioId: user.userId, detalles: { accion: "APROBAR_SOLICITUD", hashAprobacion: approvalHash, functionalCurrencyCode: policy.functionalCurrencyCode } }, tx);
+			return { hashAprobacion: approvalHash };
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+		return { solicitudId, estado: "APROBADA", hashAprobacion: approval.hashAprobacion };
+	},
+);
+
+/** @description Consume atómicamente una aprobación y abre el período sin asientos automáticos. */
+export const abrirPeriodoManualAprobadoAction = withAction(
+	async (input: z.infer<typeof solicitudIdSchema>, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, "abrir período con cuadre manual aprobado");
+		requirePermission(user, "financiero.apertura.aprobar", "abrir períodos contables manuales");
+		const { solicitudId } = solicitudIdSchema.parse(input);
+		const periodo = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({ where: { solicitudId, tenantId, estado: "APROBADA" } });
+			if (!solicitud || !solicitud.hashAprobacion || !solicitud.aprobadaAt) {
+				throw new ActionError("La solicitud no cuenta con aprobación verificable", "APERTURA_SALDOS_NO_VERIFICABLES");
+			}
+			const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+			const lines = z.array(manualOpeningLineSchema).parse(solicitud.lineas);
+			const verification = await verifyManualOpening(tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines);
+			const expectedHash = hashImmutableFinancialEvidence({
+				solicitudId, tenantId, solicitedBy: solicitud.solicitadaPor,
+				approvedBy: solicitud.aprobadaPor, approvedAt: solicitud.aprobadaAt.toISOString(),
+				functionalCurrencyCode: policy.functionalCurrencyCode,
+				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
+				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
+				observaciones: solicitud.observaciones,
+				lineas: solicitud.lineas, fxFingerprints: verification.fingerprints,
+				lineasValuadas: verification.valuedLines,
+			});
+			if (expectedHash !== solicitud.hashAprobacion) throw new ActionError("La evidencia cambió desde la aprobación", "APERTURA_SALDOS_NO_VERIFICABLES");
+			const p = await PeriodoContableService.abrirPeriodo({
+				tenantId, tipo: solicitud.tipo as unknown as TipoPeriodo, fechaInicio: solicitud.fechaInicio, fechaFin: solicitud.fechaFin,
+				observaciones: solicitud.observaciones ?? undefined, categoria: solicitud.categoria as never, modoContable: solicitud.modoContable,
+			}, user.userId, tx);
+			const diario = await tx.diario.findFirst({
+				where: { tenantId, tipo: "APERTURA_CIERRE", activo: true },
+			});
+			if (!diario) throw new ActionError("No existe un diario de apertura/cierre activo", "DIARIO_NO_ENCONTRADO");
+			const asiento = await insertarAsientoConNumeracion(tx, { tenantId, userId: user.userId }, {
+				diarioId: diario.diarioId,
+				periodoId: p.periodoId,
+				fecha: solicitud.fechaInicio,
+				descripcion: "Asiento de apertura manual aprobado",
+				origenTipo: "apertura_manual",
+				origenId: solicitudId,
+				createdBy: user.userId,
+				lineas: verification.valuedLines.map((line, index) => ({
+					orden: index + 1,
+					cuentaId: line.cuentaContableId,
+					debe: new Prisma.Decimal(line.debitoFuncional),
+					haber: new Prisma.Decimal(line.creditoFuncional),
+					monedaOriginal: line.moneda,
+					montoOriginal: new Prisma.Decimal(line.debito).greaterThan(0)
+						? new Prisma.Decimal(line.debito)
+						: new Prisma.Decimal(line.credito),
+					tasaCambio: line.tasaCambio ? new Prisma.Decimal(line.tasaCambio) : null,
+					fxEvidenceFingerprint: line.fxEvidenceFingerprint,
+					referencia: line.fxEvidenceId ? `FX ${line.fxEvidenceId}` : "Apertura manual",
+				})),
+			});
+			await AperturaPeriodoService.createManualApertura(
+				p.periodoId,
+				tenantId,
+				user.userId,
+				{ ...solicitud, fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines, asientoId: asiento.asientoId },
+				tx,
+			);
+			const consumed = await tx.aperturaPeriodoSolicitud.updateMany({
+				where: { solicitudId, tenantId, estado: "APROBADA", hashAprobacion: solicitud.hashAprobacion },
+				data: { estado: "CONSUMIDA", consumidaAt: new Date(), periodoId: p.periodoId },
+			});
+			if (consumed.count !== 1) throw new ActionError("La aprobación ya fue consumida", "APERTURA_SALDOS_NO_VERIFICABLES");
+			await AuditLogService.logStrict({ accion: "CREATE", entidad: "CIERRE_CONTABLE", entidadId: p.periodoId, usuarioId: user.userId, detalles: { accion: "ABRIR_MANUAL", solicitudId, hashAprobacion: solicitud.hashAprobacion, aprobadaPor: solicitud.aprobadaPor, asientoId: asiento.asientoId } }, tx);
+			return p;
+		});
+		await invalidateCache(tenantId);
+		revalidatePath("/busy/contabilidad/periodos");
+		return { periodo };
+	},
+);
 
 /**
  * Schema para cerrar un período existente.
@@ -371,14 +905,15 @@ export const abrirPeriodoAction = withAction(
 
 		// Transacción: período + apertura se crean juntos o nada
 		const { periodo } = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
 			const p = await PeriodoContableService.abrirPeriodo(
 				{
 					tenantId,
-					tipo: parsed.tipo,
+					tipo: parsed.tipo as unknown as TipoPeriodo,
 					fechaInicio,
 					fechaFin,
 					observaciones: parsed.observaciones,
-					categoria: parsed.categoria,
+					categoria: parsed.categoria as never,
 					modoContable: parsed.modoContable,
 				},
 				user.userId,

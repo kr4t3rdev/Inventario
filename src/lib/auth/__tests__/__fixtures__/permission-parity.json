@@ -12,6 +12,7 @@
     "config.tipos-contrato.crear",
     "config.tipos-contrato.eliminar",
     "config.usuarios.gestionar",
+    "financiero.apertura.aprobar",
     "financiero.auditoria.ver",
     "financiero.avances.gestionar",
     "financiero.bancos.gestionar",

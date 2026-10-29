@@ -71,6 +71,11 @@ describe('AS-01 contrato de clasificación de modelos', () => {
     expect(MODEL_CLASSIFICATION.UnidadConversion.reason).toContain('mismo tenant');
   });
 
+  it('clasifica las solicitudes de apertura manual como datos scoped del tenant', () => {
+    expect(getModelScope('AperturaPeriodoSolicitud')).toBe('scoped');
+    expect(MODEL_CLASSIFICATION.AperturaPeriodoSolicitud.reason).toContain('tenantId');
+  });
+
   it('los modelos child declaran padre y campo de resolución', () => {
     for (const [model, entry] of Object.entries(MODEL_CLASSIFICATION)) {
       if (entry.scope !== 'child') continue;

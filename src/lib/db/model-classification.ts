@@ -64,6 +64,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Asiento: SCOPED('Asiento del mayor con relaciones compuestas tenant-scoped a diario, período y replay.'),
   AsientoLinea: SCOPED('Línea con tenantId propio y claves compuestas tenant-scoped a asiento y cuenta.'),
   Anticipo: SCOPED(),
+  AperturaPeriodoSolicitud: SCOPED('Solicitud de apertura manual con evidencia de aprobación y tenantId propio.'),
   ConfiguracionContratos: SCOPED('Configuración de contratos por tenant (CTF-5): una fila por tenant.'),
   AperturaPeriodo: SCOPED(),
   ArqueoCaja: SCOPED(),
