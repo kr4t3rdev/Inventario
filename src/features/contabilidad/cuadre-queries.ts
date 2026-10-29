@@ -11,6 +11,7 @@
 import { prisma } from "@/lib/prisma";
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { ActionError } from "@/lib/server-actions";
+import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
 
 const APPLIED_EXPENSE_RECONCILIATION_STATES = [
 	'PAGADA',
@@ -70,7 +71,14 @@ interface ReconciliationAmount {
 	monto: number | { toString(): string };
 	montoConvertido?: number | { toString(): string } | null;
 	moneda?: string | null;
+	functionalCurrency?: string | null;
 	tasaCambio?: number | { toString(): string } | null;
+	rateEffectiveAt?: Date | null;
+	fxProvenanceKind?: string | null;
+	fxProvenanceSource?: string | null;
+	fxCatalogRateId?: string | null;
+	fxEvidenceFingerprint?: string | null;
+	fxEvidenceVersion?: number | null;
 }
 
 /**
@@ -80,10 +88,14 @@ interface ReconciliationAmount {
  * @returns {number} Applied amount in the tenant's functional currency.
  */
 function getAppliedReconciliationAmount(row: ReconciliationAmount): number {
-	if (row.montoConvertido != null) return Number(row.montoConvertido);
-	const amount = Number(row.monto ?? 0);
-	const rate = Number(row.tasaCambio ?? 0);
-	return rate > 0 ? amount * rate : amount;
+	const amount = resolveAppliedReconciliationAmount(row);
+	if (amount == null) {
+		throw new ActionError(
+			'No se puede calcular el cuadre: existe una operación pagada sin evidencia de conversión.',
+			'FX_EVIDENCE_MISSING',
+		);
+	}
+	return amount;
 }
 
 /**
@@ -146,14 +158,16 @@ async function createFunctionalCurrencyConverter(tenantId: string): Promise<{
  */
 function classifyReconciliation(
 	total: number,
-	rows: ReconciliationAmount[],
+	rowsOrAmount: ReconciliationAmount[] | number,
 	accountState: string | null,
 	accountType: "CUENTA_POR_COBRAR" | "CUENTA_POR_PAGAR",
 ) {
-	const reconciledAmount = rows.reduce(
-		(sum, row) => sum + getAppliedReconciliationAmount(row),
-		0,
-	);
+	const reconciledAmount = typeof rowsOrAmount === 'number'
+		? rowsOrAmount
+		: rowsOrAmount.reduce(
+			(sum, row) => sum + getAppliedReconciliationAmount(row),
+			0,
+		);
 	const difference = total - reconciledAmount;
 	const normalizedState = accountState?.toUpperCase() ?? null;
 	const activeDebt = normalizedState === "PENDIENTE" || normalizedState === "PARCIAL";
@@ -444,6 +458,13 @@ export async function obtenerVentasVsReconciliado(
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -473,6 +494,13 @@ export async function obtenerVentasVsReconciliado(
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -525,6 +553,13 @@ export async function obtenerVentasVsReconciliado(
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -553,6 +588,13 @@ export async function obtenerVentasVsReconciliado(
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -577,6 +619,13 @@ export async function obtenerVentasVsReconciliado(
 				referenciaId: true,
 				monto: true,
 				montoConvertido: true,
+				functionalCurrency: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceFingerprint: true,
+				fxEvidenceVersion: true,
 				fechaReconciliacion: true,
 				moneda: true,
 				tasaCambio: true,
@@ -594,6 +643,13 @@ export async function obtenerVentasVsReconciliado(
 				referenciaId: true,
 				monto: true,
 				montoConvertido: true,
+				functionalCurrency: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceFingerprint: true,
+				fxEvidenceVersion: true,
 				fechaReconciliacion: true,
 				moneda: true,
 				tasaCambio: true,
@@ -787,7 +843,7 @@ export async function obtenerVentasVsReconciliado(
 		const monto = compraServicioTotalFuncional.get(g.compraServicioId) ?? 0;
 		const reconciliacion = classifyReconciliation(
 			monto,
-			recData ? [{ monto: recData.monto }] : [],
+			recData?.monto ?? 0,
 			g.estado ?? null,
 			"CUENTA_POR_PAGAR",
 		);
@@ -813,7 +869,7 @@ export async function obtenerVentasVsReconciliado(
 		const monto = ventaServicioCostoFuncional.get(vs.ventaServicioId) ?? 0;
 		const reconciliacion = classifyReconciliation(
 			monto,
-			recData ? [{ monto: recData.monto }] : [],
+			recData?.monto ?? 0,
 			null,
 			"CUENTA_POR_PAGAR",
 		);
@@ -881,6 +937,13 @@ const LIMITE_ANTIGUOS = 100;
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -907,6 +970,13 @@ const LIMITE_ANTIGUOS = 100;
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -933,6 +1003,13 @@ const LIMITE_ANTIGUOS = 100;
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -960,6 +1037,13 @@ const LIMITE_ANTIGUOS = 100;
 					select: {
 						monto: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						fechaReconciliacion: true,
 						moneda: true,
 						tasaCambio: true,
@@ -1060,6 +1144,13 @@ const LIMITE_ANTIGUOS = 100;
 					referenciaId: true,
 					monto: true,
 					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
 					fechaReconciliacion: true,
 					moneda: true,
 					tasaCambio: true,
@@ -1079,6 +1170,13 @@ const LIMITE_ANTIGUOS = 100;
 					referenciaId: true,
 					monto: true,
 					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
 					fechaReconciliacion: true,
 					moneda: true,
 					tasaCambio: true,
@@ -1214,7 +1312,7 @@ const LIMITE_ANTIGUOS = 100;
 		const recData = montoReconciliadoCS.get(g.compraServicioId);
 		const monto = compraServicioAntiguoTotalFuncional.get(g.compraServicioId) ?? 0;
 		const reconciliacion = classifyReconciliation(
-			monto, recData ? [{ monto: recData.monto }] : [], g.estado ?? null, "CUENTA_POR_PAGAR",
+			monto, recData?.monto ?? 0, g.estado ?? null, "CUENTA_POR_PAGAR",
 		);
 		return {
 			id: g.compraServicioId,
@@ -1238,7 +1336,7 @@ const LIMITE_ANTIGUOS = 100;
 		const monto = ventaServicioCostoAntiguoFuncional.get(vs.ventaServicioId) ?? 0;
 		const reconciliacion = classifyReconciliation(
 			monto,
-			recData ? [{ monto: recData.monto }] : [],
+			recData?.monto ?? 0,
 			null,
 			"CUENTA_POR_PAGAR",
 		);
@@ -1523,6 +1621,13 @@ export async function obtenerOperacionesPeriodo(
 						reconciliacionId: true,
 						[gf]: true,
 						montoConvertido: true,
+						functionalCurrency: true,
+						rateEffectiveAt: true,
+						fxProvenanceKind: true,
+						fxProvenanceSource: true,
+						fxCatalogRateId: true,
+						fxEvidenceFingerprint: true,
+						fxEvidenceVersion: true,
 						moneda: true,
 						descripcion: true,
 						tipoGasto: true,

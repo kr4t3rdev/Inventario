@@ -26,6 +26,36 @@ vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
 }));
 
 import { obtenerVentasVsReconciliado } from '@/features/contabilidad/cuadre-queries';
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+
+const sameCurrencyReconciliation = (amount: number) => ({
+  monto: amount,
+  montoConvertido: amount,
+  moneda: 'CUP',
+  tasaCambio: 1,
+  ...buildAppliedFxEvidence({
+    originalAmount: amount,
+    originalCurrency: 'CUP',
+    functionalCurrency: 'CUP',
+    source: 'test',
+  }),
+});
+
+const foreignCurrencyReconciliation = (amount: number, rate: number, effectiveAt: Date) => ({
+  monto: amount,
+  montoConvertido: amount * rate,
+  moneda: 'USD',
+  tasaCambio: rate,
+  ...buildAppliedFxEvidence({
+    originalAmount: amount,
+    originalCurrency: 'USD',
+    functionalCurrency: 'CUP',
+    exchangeRate: rate,
+    convertedAmount: amount * rate,
+    rateEffectiveAt: effectiveAt,
+    source: 'test',
+  }),
+});
 
 const rango = { gte: new Date('2026-01-01'), lte: new Date('2026-01-31') };
 
@@ -124,19 +154,19 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
         ventaId: 'sale-partial', total: 100, createdAt: new Date('2026-01-16'), metodoPago: null,
         factura: null, VentaServicios: [],
         reconciliaciones: [
-          { monto: 30, montoConvertido: 30, fechaReconciliacion: new Date('2026-01-16') },
-          { monto: 20, montoConvertido: 20, fechaReconciliacion: new Date('2026-01-17') },
+          { ...sameCurrencyReconciliation(30), fechaReconciliacion: new Date('2026-01-16') },
+          { ...sameCurrencyReconciliation(20), fechaReconciliacion: new Date('2026-01-17') },
         ],
       },
       {
         ventaId: 'sale-cxc-partial', total: 100, createdAt: new Date('2026-01-18'), metodoPago: null,
         factura: { cuentaPorCobrar: { estado: 'PARCIAL' } }, VentaServicios: [],
-        reconciliaciones: [{ monto: 25, montoConvertido: 25, fechaReconciliacion: new Date('2026-01-18') }],
+        reconciliaciones: [{ ...sameCurrencyReconciliation(25), fechaReconciliacion: new Date('2026-01-18') }],
       },
       {
         ventaId: 'sale-paid', total: 100, createdAt: new Date('2026-01-19'), metodoPago: null,
         factura: { cuentaPorCobrar: { estado: 'PAGADA' } }, VentaServicios: [],
-        reconciliaciones: [{ monto: 100, montoConvertido: 100, fechaReconciliacion: new Date('2026-01-19') }],
+        reconciliaciones: [{ ...sameCurrencyReconciliation(100), fechaReconciliacion: new Date('2026-01-19') }],
       },
     ]);
 
@@ -159,7 +189,7 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.include?.reconciliaciones).not.toHaveProperty('take');
   });
 
-  it('convierte conciliaciones históricas con tasa cuando falta montoConvertido', async () => {
+  it('no verifica conciliaciones históricas que solo conservan una tasa aislada', async () => {
     mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
     mockPrisma.venta.findMany.mockResolvedValueOnce([
       {
@@ -172,14 +202,8 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       },
     ]);
 
-    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
-
-    expect(result.items.find((item) => item.id === 'sale-fx-legacy')).toMatchObject({
-      montoReconciliado: 100,
-      diferencia: 0,
-      estaReconciliado: true,
-      clasificacion: 'RECONCILIADA',
-    });
+    await expect(obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50))
+      .rejects.toMatchObject({ code: 'FX_EVIDENCE_MISSING' });
   });
 
   it('clasifica anticipos de servicios con pagos parciales aplicados fuera del período', async () => {
@@ -193,9 +217,9 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     ]);
     mockPrisma.reconciliacionGasto.findMany
       .mockResolvedValueOnce([
-        { referenciaId: 'service-advance', monto: 25, montoConvertido: 25,
+        { referenciaId: 'service-advance', ...sameCurrencyReconciliation(25),
           fechaReconciliacion: new Date('2025-12-20') },
-        { referenciaId: 'service-advance', monto: 15, montoConvertido: 15,
+        { referenciaId: 'service-advance', ...sameCurrencyReconciliation(15),
           fechaReconciliacion: new Date('2026-01-20') },
       ])
       .mockResolvedValueOnce([]);
@@ -257,8 +281,7 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
-        referenciaId: 'old-service-cost', monto: 25, montoConvertido: 25,
-        moneda: 'CUP', tasaCambio: null,
+        referenciaId: 'old-service-cost', ...sameCurrencyReconciliation(25),
         fechaReconciliacion: new Date('2025-12-20'),
       }]);
 
@@ -295,8 +318,9 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     }]);
     mockPrisma.reconciliacionGasto.findMany
       .mockResolvedValueOnce([{
-        referenciaId: 'foreign-service', monto: 40, montoConvertido: 1000,
-        moneda: 'USD', tasaCambio: 25, fechaReconciliacion: new Date('2026-01-16'),
+        referenciaId: 'foreign-service',
+        ...foreignCurrencyReconciliation(40, 25, new Date('2026-01-15')),
+        fechaReconciliacion: new Date('2026-01-16'),
       }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
@@ -338,8 +362,9 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
-        referenciaId: 'old-foreign-service', monto: 40, montoConvertido: 1000,
-        moneda: 'USD', tasaCambio: 25, fechaReconciliacion: new Date('2025-12-20'),
+        referenciaId: 'old-foreign-service',
+        ...foreignCurrencyReconciliation(40, 25, oldServiceDate),
+        fechaReconciliacion: new Date('2025-12-20'),
       }])
       .mockResolvedValueOnce([]);
     exchangeRateMock.getRateAsOf.mockImplementation(({ boundaryAt }: { boundaryAt: Date }) =>

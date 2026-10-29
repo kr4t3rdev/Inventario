@@ -30,6 +30,9 @@ import {
 } from "@/features/contabilidad/services/reconciliation-stats-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
+import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
+
+const RECONCILIATION_EVIDENCE_PAGE_SIZE = 500;
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -94,61 +97,126 @@ export const getVentasPendientesAction = withAction(
 			whereParts.length > 0
 				? Prisma.sql`WHERE ${Prisma.join(whereParts, " AND ")}`
 				: Prisma.sql``;
+		const appliedAmountSql = Prisma.sql`
+      CASE
+        WHEN rv."montoConvertido" IS NOT NULL
+          AND rv."fxEvidenceVersion" = 1
+          AND rv."fxEvidenceFingerprint" ~ '^[0-9a-f]{64}$'
+          AND NULLIF(BTRIM(rv."fxProvenanceSource"), '') IS NOT NULL
+          AND (
+            (
+              rv."moneda" IS NOT NULL
+              AND rv."functionalCurrency" IS NOT NULL
+              AND rv."moneda" = rv."functionalCurrency"
+              AND rv."fxProvenanceKind" = 'SAME_CURRENCY'
+              AND ABS(rv."montoConvertido" - rv."monto") <= 0.01
+              AND (rv."tasaCambio" IS NULL OR rv."tasaCambio" = 1)
+            )
+            OR (
+              rv."moneda" IS NOT NULL
+              AND rv."functionalCurrency" IS NOT NULL
+              AND rv."moneda" IS DISTINCT FROM rv."functionalCurrency"
+              AND rv."fxProvenanceKind" = 'MANUAL_GOVERNED'
+              AND rv."rateEffectiveAt" IS NOT NULL
+              AND rv."tasaCambio" > 0
+              AND ABS(rv."montoConvertido" - rv."monto" * rv."tasaCambio")
+                <= GREATEST(0.01, ABS(rv."monto" * rv."tasaCambio") * 0.000001)
+            )
+          )
+        THEN rv."montoConvertido"
+        ELSE NULL
+      END`;
+
+		const { pendingRows, totalRows } = await prisma.$transaction(async (tx) => {
+			let cursor: string | null = null;
+			while (true) {
+				const cursorSql = cursor
+					? Prisma.sql`AND rv."reconciliacionId" > ${cursor}`
+					: Prisma.empty;
+				const reconciliationEvidenceRows = await tx.$queryRaw<Array<{
+					reconciliacionId: string;
+					monto: unknown;
+					montoConvertido: unknown;
+					moneda: string | null;
+					functionalCurrency: string | null;
+					tasaCambio: unknown;
+					rateEffectiveAt: Date | null;
+					fxProvenanceKind: string | null;
+					fxProvenanceSource: string | null;
+					fxCatalogRateId: string | null;
+					fxEvidenceFingerprint: string | null;
+					fxEvidenceVersion: number | null;
+				}>>(Prisma.sql`
+					SELECT rv."reconciliacionId", rv."monto", rv."montoConvertido",
+						rv."moneda", rv."functionalCurrency", rv."tasaCambio",
+						rv."rateEffectiveAt", rv."fxProvenanceKind", rv."fxProvenanceSource",
+						rv."fxCatalogRateId", rv."fxEvidenceFingerprint", rv."fxEvidenceVersion"
+					FROM "Venta" v
+					JOIN "ReconciliacionVenta" rv
+						ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
+					${whereSql}
+					${cursorSql}
+					ORDER BY rv."reconciliacionId"
+					LIMIT ${RECONCILIATION_EVIDENCE_PAGE_SIZE}
+			`);
+				if (reconciliationEvidenceRows.some(
+					(row) => resolveAppliedReconciliationAmount(row) == null,
+				)) {
+					throw new ActionError(
+						'No se puede calcular la conciliación: existe un pago sin evidencia FX verificable.',
+						'FX_EVIDENCE_MISSING',
+					);
+				}
+				if (reconciliationEvidenceRows.length < RECONCILIATION_EVIDENCE_PAGE_SIZE) break;
+				cursor = reconciliationEvidenceRows.at(-1)!.reconciliacionId;
+			}
 
 		// Step 1: Get ventaIds that still have pending balance using raw SQL
 		// (LEFT JOIN with ReconciliacionVenta, HAVING total - totalPagado > 0.1)
-		const pendingRows = await prisma.$queryRaw<
+		const pendingRows = await tx.$queryRaw<
 			Array<{ ventaId: string; totalPagado: number }>
 		>(Prisma.sql`
     SELECT v."ventaId",
       COALESCE(SUM(
-        CASE
-          WHEN rv."moneda" = 'CUP' THEN rv."monto"
-          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-          ELSE rv."monto"
-        END
+        ${appliedAmountSql}
       ), 0)::double precision AS "totalPagado"
     FROM "Venta" v
-    LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+    LEFT JOIN "ReconciliacionVenta" rv
+      ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
     ${whereSql}
     GROUP BY v."ventaId", v."total", v."createdAt"
     HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
-      CASE
-        WHEN rv."moneda" = 'CUP' THEN rv."monto"
-        WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-        ELSE rv."monto"
-      END
+      ${appliedAmountSql}
     ), 0)) > 0.1
     ORDER BY v."createdAt" DESC
     OFFSET ${skip} LIMIT ${limit}
   `);
 
 		// Count total pending for pagination
-		const totalRows = await prisma.$queryRaw<
+		const totalRows = await tx.$queryRaw<
 			Array<{ total: bigint; saldoPendiente: number }>
 		>(Prisma.sql`
     SELECT COUNT(*)::bigint AS total,
-      COALESCE(SUM(pendientes.saldo), 0)::double precision AS "saldoPendiente" FROM (
+      COALESCE(SUM(pendientes.saldo), 0)::double precision AS "saldoPendiente"
+      FROM (
       SELECT v."ventaId", COALESCE(v."total", 0) - COALESCE(SUM(
-        CASE
-          WHEN rv."moneda" = 'CUP' THEN rv."monto"
-          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-          ELSE rv."monto"
-        END
+        ${appliedAmountSql}
       ), 0) AS saldo
       FROM "Venta" v
-      LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+      LEFT JOIN "ReconciliacionVenta" rv
+        ON rv."ventaId" = v."ventaId" AND rv."tenantId" = v."tenantId"
       ${whereSql}
       GROUP BY v."ventaId", v."total"
       HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
-        CASE
-          WHEN rv."moneda" = 'CUP' THEN rv."monto"
-          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
-          ELSE rv."monto"
-        END
+        ${appliedAmountSql}
       ), 0)) > 0.1
     ) AS pendientes
-  `);
+		`);
+			return { pendingRows, totalRows };
+		}, {
+			isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+			timeout: 30_000,
+		});
 
 		const total = Number(totalRows[0]?.total || 0);
 		const saldoPendienteTotal = Number(totalRows[0]?.saldoPendiente || 0);
@@ -716,7 +784,14 @@ interface ExpenseReconciliationAmount {
 	monto: unknown;
 	montoConvertido?: unknown;
 	moneda?: string | null;
+	functionalCurrency?: string | null;
 	tasaCambio?: unknown;
+	rateEffectiveAt?: Date | null;
+	fxProvenanceKind?: string | null;
+	fxProvenanceSource?: string | null;
+	fxCatalogRateId?: string | null;
+	fxEvidenceFingerprint?: string | null;
+	fxEvidenceVersion?: number | null;
 }
 
 const APPLIED_EXPENSE_RECONCILIATION_STATES = [
@@ -732,10 +807,14 @@ const APPLIED_EXPENSE_RECONCILIATION_STATES = [
  * @returns {number} Applied payment amount in the tenant's functional currency.
  */
 function getAppliedExpenseAmount(row: ExpenseReconciliationAmount): number {
-	if (row.montoConvertido != null) return Number(row.montoConvertido);
-	const amount = Number(row.monto ?? 0);
-	const rate = Number(row.tasaCambio ?? 0);
-	return rate > 0 ? amount * rate : amount;
+	const amount = resolveAppliedReconciliationAmount(row);
+	if (amount == null) {
+		throw new ActionError(
+			'No se puede calcular el saldo: existe un gasto pagado sin evidencia de conversión.',
+			'FX_EVIDENCE_MISSING',
+		);
+	}
+	return amount;
 }
 
 /**
@@ -753,6 +832,19 @@ function calculateOpenExpenseBalance(
 		0,
 	);
 	return Math.max(0, Math.round((grossAmount - applied) * 100) / 100);
+}
+
+/**
+ * @description Calculates an open balance from an already-verified functional payment total.
+ * @param {number} grossAmount - Gross amount in functional currency.
+ * @param {number} appliedAmount - Previously validated payment total in functional currency.
+ * @returns {number} Non-negative open balance rounded to cents.
+ */
+function calculateOpenExpenseBalanceFromAppliedAmount(
+	grossAmount: number,
+	appliedAmount: number,
+): number {
+	return Math.max(0, Math.round((grossAmount - appliedAmount) * 100) / 100);
 }
 
 export const getGastosPendientesAction = withAction(
@@ -854,6 +946,13 @@ export const getGastosPendientesAction = withAction(
 						select: {
 							monto: true,
 							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
 							moneda: true,
 							tasaCambio: true,
 						},
@@ -873,6 +972,13 @@ export const getGastosPendientesAction = withAction(
 						select: {
 							monto: true,
 							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
 							moneda: true,
 							tasaCambio: true,
 						},
@@ -893,6 +999,13 @@ export const getGastosPendientesAction = withAction(
 						select: {
 							monto: true,
 							montoConvertido: true,
+							functionalCurrency: true,
+							rateEffectiveAt: true,
+							fxProvenanceKind: true,
+							fxProvenanceSource: true,
+							fxCatalogRateId: true,
+							fxEvidenceFingerprint: true,
+							fxEvidenceVersion: true,
 							moneda: true,
 							tasaCambio: true,
 						},
@@ -926,6 +1039,13 @@ export const getGastosPendientesAction = withAction(
 					referenciaId: true,
 					monto: true,
 					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
 					moneda: true,
 					tasaCambio: true,
 				},
@@ -940,6 +1060,13 @@ export const getGastosPendientesAction = withAction(
 					referenciaId: true,
 					monto: true,
 					montoConvertido: true,
+					functionalCurrency: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
 					moneda: true,
 					tasaCambio: true,
 				},
@@ -1029,16 +1156,16 @@ export const getGastosPendientesAction = withAction(
 		const appliedByService = buildAppliedByReference(reconciliadosServicioIds);
 		const appliedBySaleService = buildAppliedByReference(reconciliadosVentaServicioIds);
 		const comprasServicioFiltradas = comprasServicio.filter((g: any) => {
-			const balance = calculateOpenExpenseBalance(
+			const balance = calculateOpenExpenseBalanceFromAppliedAmount(
 				totalFuncionalByService.get(g.compraServicioId) ?? 0,
-				[{ monto: appliedByService.get(g.compraServicioId) ?? 0 }],
+				appliedByService.get(g.compraServicioId) ?? 0,
 			);
 			return !params.soloNoReconciliados || balance > 0.1;
 		});
 		const ventasServicioFiltradas = ventasServicio.filter((g: any) => {
-			const balance = calculateOpenExpenseBalance(
+			const balance = calculateOpenExpenseBalanceFromAppliedAmount(
 				costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
-				[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
+				appliedBySaleService.get(g.ventaServicioId) ?? 0,
 			);
 			return !params.soloNoReconciliados || balance > 0.1;
 		});
@@ -1112,9 +1239,9 @@ export const getGastosPendientesAction = withAction(
 				tipo: "servicio" as const,
 				referenciaId: g.compraServicioId,
 				descripcion: `${g.servicio?.nombre || "Servicio"} - ${g.proveedor?.nombre || "Sin proveedor"}`,
-				monto: calculateOpenExpenseBalance(
+				monto: calculateOpenExpenseBalanceFromAppliedAmount(
 					totalFuncionalByService.get(g.compraServicioId) ?? 0,
-					[{ monto: appliedByService.get(g.compraServicioId) ?? 0 }],
+					appliedByService.get(g.compraServicioId) ?? 0,
 				),
 				periodo: undefined,
 				detalles: {
@@ -1134,9 +1261,9 @@ export const getGastosPendientesAction = withAction(
 				tipo: "venta_servicio" as const,
 				referenciaId: g.ventaServicioId,
 				descripcion: `Costo: ${g.servicio?.nombre || "Servicio"} - ${g.cliente?.nombre || "Sin cliente"}`,
-				monto: calculateOpenExpenseBalance(
+				monto: calculateOpenExpenseBalanceFromAppliedAmount(
 					costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
-					[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
+					appliedBySaleService.get(g.ventaServicioId) ?? 0,
 				),
 				periodo: g.createdAt?.toISOString?.()?.slice(0, 7) || undefined,
 				detalles: {

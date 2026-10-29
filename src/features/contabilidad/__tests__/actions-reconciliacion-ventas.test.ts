@@ -5,7 +5,7 @@ const getReconciliationStatsMock = vi.hoisted(() => vi.fn());
 const txMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$executeRaw: vi.fn(),
-	venta: { findUnique: vi.fn() },
+	venta: { findUnique: vi.fn(), findMany: vi.fn() },
 	cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn() },
 	cuentaBancaria: { update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn() },
 	tipoPago: { findFirst: vi.fn() },
@@ -63,6 +63,36 @@ import {
 	reconciliarVentaAction,
 } from '@/features/contabilidad/actions-reconciliacion';
 import { validateSaleReconciliationInput } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+
+const sameCurrencyReconciliation = (amount: number) => ({
+	monto: amount,
+	montoConvertido: amount,
+	moneda: 'CUP',
+	tasaCambio: 1,
+	...buildAppliedFxEvidence({
+		originalAmount: amount,
+		originalCurrency: 'CUP',
+		functionalCurrency: 'CUP',
+		source: 'test',
+	}),
+});
+
+const foreignCurrencyReconciliation = (amount: number, rate: number, effectiveAt: Date) => ({
+	monto: amount,
+	montoConvertido: amount * rate,
+	moneda: 'USD',
+	tasaCambio: rate,
+	...buildAppliedFxEvidence({
+		originalAmount: amount,
+		originalCurrency: 'USD',
+		functionalCurrency: 'CUP',
+		exchangeRate: rate,
+		convertedAmount: amount * rate,
+		rateEffectiveAt: effectiveAt,
+		source: 'test',
+	}),
+});
 
 const user = {
 	userId: 'user-1',
@@ -98,17 +128,104 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	});
 
 	it('excluye ventas eliminadas de la consulta SQL de pendientes', async () => {
-		prismaMock.$queryRaw
+		txMock.$queryRaw
+			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ total: BigInt(0) }]);
 
 		const result = await getVentasPendientesAction();
 
 		expect(result.success).toBe(true);
-		const pendingQuery = prismaMock.$queryRaw.mock.calls[0]?.[0];
-		const totalQuery = prismaMock.$queryRaw.mock.calls[1]?.[0];
-		expect(pendingQuery.sql).toContain('v."deletedAt" IS NULL');
-		expect(totalQuery.sql).toContain('v."deletedAt" IS NULL');
+		for (const [query] of txMock.$queryRaw.mock.calls.slice(0, 3)) {
+			expect(query.sql).toContain('v."deletedAt" IS NULL');
+		}
+	});
+
+	it('aísla pagos por tenant y exige evidencia FX canónica antes de sumar', async () => {
+		txMock.$queryRaw
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([{ total: BigInt(1), saldoPendiente: 100 }]);
+
+		await getVentasPendientesAction();
+
+		for (const [query] of txMock.$queryRaw.mock.calls.slice(1, 3)) {
+			expect(query.sql).toContain('rv."tenantId" = v."tenantId"');
+			expect(query.sql).toContain('rv."fxEvidenceVersion" = 1');
+			expect(query.sql).toContain('rv."fxEvidenceFingerprint" ~');
+			expect(query.sql).toContain('rv."fxProvenanceSource"');
+			expect(query.sql).toContain('rv."rateEffectiveAt" IS NOT NULL');
+			expect(query.sql).not.toContain('THEN rv."monto" * rv."tasaCambio"');
+		}
+		const evidenceQuery = txMock.$queryRaw.mock.calls[0]?.[0];
+		expect(evidenceQuery.sql).toContain('rv."fxEvidenceFingerprint"');
+		expect(evidenceQuery.sql).not.toContain('HAVING');
+	});
+
+	it('falla cerrado si una venta tiene un pago sin evidencia FX canónica', async () => {
+		txMock.$queryRaw
+			.mockResolvedValueOnce([{
+				monto: 4, montoConvertido: null, moneda: 'USD', functionalCurrency: 'CUP',
+				tasaCambio: 25, rateEffectiveAt: new Date('2026-01-01'),
+				fxProvenanceKind: null, fxProvenanceSource: null, fxCatalogRateId: null,
+				fxEvidenceFingerprint: null, fxEvidenceVersion: null,
+			}]);
+
+		const result = await getVentasPendientesAction();
+
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error?.message).toContain('sin evidencia FX verificable');
+	});
+
+	it('detecta pago FX inválido aunque otro pago ya cubra el saldo completo', async () => {
+		txMock.$queryRaw
+			.mockResolvedValueOnce([{
+				monto: 4, montoConvertido: null, moneda: 'USD', functionalCurrency: 'CUP',
+				tasaCambio: 25, rateEffectiveAt: new Date('2026-01-01'),
+				fxProvenanceKind: null, fxProvenanceSource: null, fxCatalogRateId: null,
+				fxEvidenceFingerprint: null, fxEvidenceVersion: null,
+			}]);
+
+		const result = await getVentasPendientesAction();
+
+		expect(result.success).toBe(false);
+		expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
+		const evidenceQuery = txMock.$queryRaw.mock.calls[0]?.[0];
+		expect(evidenceQuery.sql).not.toContain('HAVING');
+	});
+
+	it('valida evidencia FX en páginas bajo el mismo snapshot que los saldos', async () => {
+		const validRows = Array.from({ length: 500 }, (_, index) => ({
+			reconciliacionId: `rv-${String(index).padStart(4, '0')}`,
+			...sameCurrencyReconciliation(1),
+		}));
+		txMock.$queryRaw
+			.mockResolvedValueOnce(validRows)
+			.mockResolvedValueOnce([{
+				reconciliacionId: 'rv-invalid',
+				monto: 4, montoConvertido: null, moneda: 'USD', functionalCurrency: 'CUP',
+				tasaCambio: 25, rateEffectiveAt: new Date('2026-01-01'),
+				fxProvenanceKind: null, fxProvenanceSource: null, fxCatalogRateId: null,
+				fxEvidenceFingerprint: null, fxEvidenceVersion: null,
+			}]);
+
+		const result = await getVentasPendientesAction();
+
+		expect(result.success).toBe(false);
+		expect(txMock.$queryRaw).toHaveBeenCalledTimes(2);
+		const firstPageQuery = txMock.$queryRaw.mock.calls[0]?.[0];
+		const secondPageQuery = txMock.$queryRaw.mock.calls[1]?.[0];
+		expect(firstPageQuery.sql).toContain('ORDER BY rv."reconciliacionId"');
+		expect(firstPageQuery.sql).toContain('rv."tenantId" = v."tenantId"');
+		expect(firstPageQuery.sql).toContain('LIMIT ?');
+		expect(firstPageQuery.values).toContain(500);
+		expect(secondPageQuery.sql).toContain('rv."reconciliacionId" >');
+		expect(secondPageQuery.values).toContain('rv-0499');
+		expect(prismaMock.$transaction.mock.calls[0]?.[1]).toMatchObject({
+			isolationLevel: 'RepeatableRead',
+			timeout: 30_000,
+		});
 	});
 
 	it('excluye cuentas por pagar activas del mismo tenant en gastos y compras', async () => {
@@ -134,7 +251,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		prismaMock.gastosDE.findMany.mockResolvedValue([{
 			gastosDEId: 'expense-partial', monto: 100, descripcion: 'Servicio', periodo: '2026-01',
 			createdAt: now, updatedAt: now,
-			reconciliaciones: [{ monto: 40, montoConvertido: 40 }],
+			reconciliaciones: [sameCurrencyReconciliation(40)],
 		}]);
 		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
 		prismaMock.pagosalario.findMany.mockResolvedValue([]);
@@ -161,8 +278,9 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 			compraServicioId: 'service-partial', total: 100, fechaServicio: now,
 			updatedAt: now, servicio: { nombre: 'Servicio' }, proveedor: { nombre: 'Proveedor' },
 		}]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
 		prismaMock.reconciliacionGasto.findMany
-			.mockResolvedValueOnce([{ referenciaId: 'service-partial', monto: 40, montoConvertido: 40 }])
+			.mockResolvedValueOnce([{ referenciaId: 'service-partial', ...sameCurrencyReconciliation(40) }])
 			.mockResolvedValueOnce([]);
 
 		const result = await getGastosPendientesAction({ soloNoReconciliados: false });
@@ -202,12 +320,12 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		}]);
 		prismaMock.reconciliacionGasto.findMany
 			.mockResolvedValueOnce([{
-				referenciaId: 'foreign-service', monto: 40, montoConvertido: 1000,
-				moneda: 'USD', tasaCambio: 25,
+				referenciaId: 'foreign-service',
+				...foreignCurrencyReconciliation(40, 25, now),
 			}])
 			.mockResolvedValueOnce([{
-				referenciaId: 'foreign-sale-service', monto: 4, montoConvertido: 100,
-				moneda: 'USD', tasaCambio: 25,
+				referenciaId: 'foreign-sale-service',
+				...foreignCurrencyReconciliation(4, 25, now),
 			}]);
 		exchangeRateMock.getRateAsOf.mockResolvedValue({
 			tasaId: 'usd-cup', tasa: 25, fechaVigencia: now,
@@ -228,7 +346,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		expect(exchangeRateMock.getRateAsOf).toHaveBeenCalledTimes(1);
 	});
 
-	it('aplica tasa histórica al calcular el saldo abierto en la lista de gastos', async () => {
+	it('no verifica gastos FX legacy con tasa aislada y sin evidencia canónica', async () => {
 		const now = new Date('2026-01-15T12:00:00.000Z');
 		prismaMock.gastosDE.findMany.mockResolvedValue([{
 			gastosDEId: 'expense-fx', monto: 100, descripcion: 'Gasto en CUP', periodo: '2026-01',
@@ -243,13 +361,32 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 
 		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
 
-		expect(result.success).toBe(true);
-		expect(result.data?.gastos).not.toContainEqual(
-			expect.objectContaining({ referenciaId: 'expense-fx' }),
-		);
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error?.code).toBe('FX_EVIDENCE_MISSING');
 		expect(
 			prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.include.reconciliaciones.select,
-		).toMatchObject({ moneda: true, tasaCambio: true });
+		).toMatchObject({ functionalCurrency: true, moneda: true, tasaCambio: true });
+	});
+
+	it('falla cerrado para gastos FX sin moneda funcional ni tasa de conversión', async () => {
+		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.gastosDE.findMany.mockResolvedValue([{
+			gastosDEId: 'expense-unknown-fx', monto: 100, descripcion: 'Gasto', periodo: '2026-01',
+			createdAt: now, updatedAt: now,
+			reconciliaciones: [{ monto: 4, montoConvertido: null, moneda: 'USD', tasaCambio: null }],
+		}]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([]);
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
+
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error?.code).toBe('FX_EVIDENCE_MISSING');
 	});
 
 	it('aplica rangos de fecha sobre la fecha del movimiento de cada gasto', async () => {
@@ -281,7 +418,8 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	});
 
 	it('devuelve el total y saldo completo aun cuando la página está vacía', async () => {
-		prismaMock.$queryRaw
+		txMock.$queryRaw
+			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ total: BigInt(250), saldoPendiente: 1234.5 }]);
 
@@ -294,7 +432,8 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	});
 
 	it('aplica los mismos filtros de fecha y punto de venta al listado y al total', async () => {
-		prismaMock.$queryRaw
+		txMock.$queryRaw
+			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ total: BigInt(0), saldoPendiente: 0 }]);
 
@@ -304,7 +443,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 			puntoDeVentaId: 'pv-1',
 		});
 
-		for (const [query] of prismaMock.$queryRaw.mock.calls.slice(0, 2)) {
+		for (const [query] of txMock.$queryRaw.mock.calls.slice(1, 3)) {
 			expect(query.sql).toContain('v."createdAt" >=');
 			expect(query.sql).toContain('v."createdAt" <=');
 			expect(query.sql).toContain('v."puntoDeVentaId" =');
@@ -316,13 +455,14 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	});
 
 	it('excluye de pendientes las ventas administradas por CxC activa', async () => {
-		prismaMock.$queryRaw
+		txMock.$queryRaw
+			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ total: BigInt(0) }]);
 
 		await getVentasPendientesAction();
 
-		for (const [query] of prismaMock.$queryRaw.mock.calls.slice(0, 2)) {
+		for (const [query] of txMock.$queryRaw.mock.calls.slice(0, 3)) {
 			expect(query.sql).toContain('NOT EXISTS');
 			expect(query.sql).toContain('"CuentaPorCobrar"');
 			expect(query.sql).toContain('::"EstadoCuentaPorCobrar"');
