@@ -1388,12 +1388,12 @@ const LIMITE_ANTIGUOS = 100;
 			cobertura: "Registros activos consultados; no incluye eliminados, fuera de rango ni históricos truncados.",
 		},
 		totales: {
-			totalVentas: round2(items.reduce((s, i) => s + i.monto, 0)),
+			totalVentas: round2(allItems.reduce((s, i) => s + i.monto, 0)),
 			totalReconciliado: round2(
-				items.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
+				allItems.reduce((s, i) => s + (i.montoReconciliado ?? 0), 0),
 			),
 			diferencia: round2(
-				items.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
+				allItems.reduce((s, i) => s + (i.monto - (i.montoReconciliado ?? 0)), 0),
 			),
 			cantidadVentas: totalCount,
 			cantidadReconciliadas: reconciliadas,

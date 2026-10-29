@@ -537,4 +537,46 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       tenantId: 'tenant-1', createdAt: { lt: rango.gte }, deletedAt: null,
     });
   });
+
+  it('mantiene los totales del período completos e invariantes entre páginas', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.venta.findMany.mockImplementation((args: { where?: { createdAt?: { gte?: Date } } }) =>
+      Promise.resolve(args.where?.createdAt?.gte ? [
+        {
+          ventaId: 'sale-cup', total: 100, createdAt: new Date('2026-01-15'),
+          metodoPago: null, reconciliaciones: [sameCurrencyReconciliation(25)],
+        },
+        {
+          ventaId: 'sale-usd', total: 10, createdAt: new Date('2026-01-14'),
+          metodoPago: null, reconciliaciones: [foreignCurrencyReconciliation(5, 2, new Date('2026-01-14'))],
+        },
+      ] : []),
+    );
+    mockPrisma.venta.count.mockResolvedValue(2);
+    mockPrisma.gastosDE.findMany.mockImplementation((args: { where?: { createdAt?: { gte?: Date } } }) =>
+      Promise.resolve(args.where?.createdAt?.gte ? [
+        {
+          gastosDEId: 'expense-cup', monto: 30, createdAt: new Date('2026-01-13'),
+          reconciliaciones: [sameCurrencyReconciliation(10)],
+        },
+      ] : []),
+    );
+    mockPrisma.gastosDE.count.mockResolvedValue(1);
+    exchangeRateMock.getRateAsOf.mockResolvedValue({ tasa: 2 });
+
+    const firstPage = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 2);
+    const secondPage = await obtenerVentasVsReconciliado('tenant-1', rango, '', 2, 2);
+
+    expect(firstPage.items).toHaveLength(2);
+    expect(secondPage.items).toHaveLength(1);
+    for (const result of [firstPage, secondPage]) {
+      expect(result.totales).toMatchObject({
+        totalVentas: 140,
+        totalReconciliado: 45,
+        diferencia: 95,
+        cantidadVentas: 3,
+        totalGastos: 30,
+      });
+    }
+  });
 });
