@@ -22,10 +22,12 @@ const prismaMock = vi.hoisted(() => ({
 	 pagosalario: { count: vi.fn(), findMany: vi.fn() },
 	reconciliacionGasto: { findMany: vi.fn(), count: vi.fn() },
 	compraServicio: { count: vi.fn(), findMany: vi.fn() },
+	tenantAccountingPolicy: { findUnique: vi.fn() },
 	reconciliacionVenta: { count: vi.fn(), aggregate: vi.fn(), findMany: vi.fn() },
 	reconciliacionServicio: { count: vi.fn() },
 }));
 const workflowMock = vi.hoisted(() => ({ applyPagoGastoWorkflow: vi.fn() }));
+const exchangeRateMock = vi.hoisted(() => ({ getRateAsOf: vi.fn() }));
 
 vi.mock('@/lib/server-actions/get-current-user', () => ({
 	getCurrentUser: getCurrentUserMock,
@@ -40,6 +42,9 @@ vi.mock('@/lib/services/with-period-validation', () => ({
 vi.mock('@/lib/services/pago-gastos-workflow', () => ({
 	applyPagoGastoWorkflow: workflowMock.applyPagoGastoWorkflow,
 	isGastoWorkflowError: vi.fn(() => false),
+}));
+vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
+	exchangeRateProvider: exchangeRateMock,
 }));
 vi.mock('@/lib/services/tenant-scope', () => ({
 	requireFeature: vi.fn(),
@@ -79,6 +84,10 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([]);
 		prismaMock.reconciliacionGasto.count.mockResolvedValue(0);
 		prismaMock.compraServicio.count.mockResolvedValue(0);
+		prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+			functionalCurrencyCode: 'CUP',
+		});
+		exchangeRateMock.getRateAsOf.mockResolvedValue(null);
 		prismaMock.reconciliacionVenta.count.mockResolvedValue(0);
 		prismaMock.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { monto: null } });
 		prismaMock.reconciliacionVenta.findMany.mockResolvedValue([]);
@@ -136,15 +145,18 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.gastos).toEqual([
+		expect(result.data?.gastos).toContainEqual(
 			expect.objectContaining({ referenciaId: 'expense-partial', monto: 60 }),
-		]);
+		);
 		expect(prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.where.reconciliaciones)
 			.toBeUndefined();
 	});
 
 	it('calcula el saldo parcial de servicios aunque no se solicite filtrar pendientes', async () => {
 		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.gastosDE.findMany.mockResolvedValue([]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
 		prismaMock.compraServicio.findMany.mockResolvedValue([{
 			compraServicioId: 'service-partial', total: 100, fechaServicio: now,
 			updatedAt: now, servicio: { nombre: 'Servicio' }, proveedor: { nombre: 'Proveedor' },
@@ -156,10 +168,88 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		const result = await getGastosPendientesAction({ soloNoReconciliados: false });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.gastos).toEqual([
+		expect(result.data?.gastos).toContainEqual(
 			expect.objectContaining({ referenciaId: 'service-partial', monto: 60 }),
-		]);
+		);
 		expect(prismaMock.reconciliacionGasto.findMany).toHaveBeenCalledTimes(2);
+		for (const call of prismaMock.reconciliacionGasto.findMany.mock.calls) {
+			expect(call[0]?.where).toMatchObject({
+				tenantId: 'tenant-1',
+				estado: { in: ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'] },
+			});
+		}
+		expect(prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.include.reconciliaciones.where)
+			.toEqual({
+				tenantId: 'tenant-1',
+				estado: { in: ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'] },
+			});
+	});
+
+	it('convierte el total de servicios extranjeros a moneda funcional antes de restar pagos', async () => {
+		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.gastosDE.findMany.mockResolvedValue([]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([{
+			compraServicioId: 'foreign-service', total: 100, moneda: 'USD', fechaServicio: now,
+			createdAt: now, updatedAt: now,
+			servicio: { nombre: 'Servicio' }, proveedor: null,
+		}]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([{
+			ventaServicioId: 'foreign-sale-service', costo: 10, cantidad: 2, moneda: 'USD',
+			createdAt: now, updatedAt: now,
+			servicio: { nombre: 'Servicio vendido' }, cliente: null,
+		}]);
+		prismaMock.reconciliacionGasto.findMany
+			.mockResolvedValueOnce([{
+				referenciaId: 'foreign-service', monto: 40, montoConvertido: 1000,
+				moneda: 'USD', tasaCambio: 25,
+			}])
+			.mockResolvedValueOnce([{
+				referenciaId: 'foreign-sale-service', monto: 4, montoConvertido: 100,
+				moneda: 'USD', tasaCambio: 25,
+			}]);
+		exchangeRateMock.getRateAsOf.mockResolvedValue({
+			tasaId: 'usd-cup', tasa: 25, fechaVigencia: now,
+		});
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: false });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.gastos).toContainEqual(
+			expect.objectContaining({ referenciaId: 'foreign-service', monto: 1500 }),
+		);
+		expect(result.data?.gastos).toContainEqual(
+			expect.objectContaining({ referenciaId: 'foreign-sale-service', monto: 400 }),
+		);
+		expect(exchangeRateMock.getRateAsOf).toHaveBeenCalledWith(
+			expect.objectContaining({ sourceCurrency: 'USD', targetCurrency: 'CUP' }),
+		);
+		expect(exchangeRateMock.getRateAsOf).toHaveBeenCalledTimes(1);
+	});
+
+	it('aplica tasa histórica al calcular el saldo abierto en la lista de gastos', async () => {
+		const now = new Date('2026-01-15T12:00:00.000Z');
+		prismaMock.gastosDE.findMany.mockResolvedValue([{
+			gastosDEId: 'expense-fx', monto: 100, descripcion: 'Gasto en CUP', periodo: '2026-01',
+			createdAt: now, updatedAt: now,
+			reconciliaciones: [{ monto: 4, montoConvertido: null, moneda: 'USD', tasaCambio: 25 }],
+		}]);
+		prismaMock.gastoCompra.findMany.mockResolvedValue([]);
+		prismaMock.pagosalario.findMany.mockResolvedValue([]);
+		prismaMock.compraServicio.findMany.mockResolvedValue([]);
+		prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([]);
+
+		const result = await getGastosPendientesAction({ soloNoReconciliados: true });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.gastos).not.toContainEqual(
+			expect.objectContaining({ referenciaId: 'expense-fx' }),
+		);
+		expect(
+			prismaMock.gastosDE.findMany.mock.calls[0]?.[0]?.include.reconciliaciones.select,
+		).toMatchObject({ moneda: true, tasaCambio: true });
 	});
 
 	it('aplica rangos de fecha sobre la fecha del movimiento de cada gasto', async () => {

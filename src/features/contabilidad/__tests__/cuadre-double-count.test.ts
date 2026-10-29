@@ -12,12 +12,17 @@ const mockPrisma = vi.hoisted(() => ({
   ventaServicios: { findMany: vi.fn(), count: vi.fn() },
   reconciliacionGasto: { findMany: vi.fn() },
   compraServicio: { findMany: vi.fn(), count: vi.fn() },
+  tenantAccountingPolicy: { findUnique: vi.fn() },
   gastosDE: { findMany: vi.fn(), count: vi.fn() },
   gastoCompra: { findMany: vi.fn(), count: vi.fn() },
 }));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
+}));
+const exchangeRateMock = vi.hoisted(() => ({ getRateAsOf: vi.fn() }));
+vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
+  exchangeRateProvider: exchangeRateMock,
 }));
 
 import { obtenerVentasVsReconciliado } from '@/features/contabilidad/cuadre-queries';
@@ -57,6 +62,10 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     mockPrisma.gastosDE.count.mockResolvedValue(0);
     mockPrisma.gastoCompra.findMany.mockResolvedValue([]);
     mockPrisma.gastoCompra.count.mockResolvedValue(0);
+    mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      functionalCurrencyCode: 'CUP',
+    });
+    exchangeRateMock.getRateAsOf.mockResolvedValue(null);
   });
 
   it('no duplica el ingreso de un servicio que ya está en Venta', async () => {
@@ -150,6 +159,29 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     expect(mockPrisma.venta.findMany.mock.calls[0]?.[0]?.include?.reconciliaciones).not.toHaveProperty('take');
   });
 
+  it('convierte conciliaciones históricas con tasa cuando falta montoConvertido', async () => {
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.venta.findMany.mockResolvedValueOnce([
+      {
+        ventaId: 'sale-fx-legacy', total: 100, createdAt: new Date('2026-01-15'),
+        metodoPago: null, factura: null, VentaServicios: [],
+        reconciliaciones: [{
+          monto: 4, montoConvertido: null, moneda: 'USD', tasaCambio: 25,
+          fechaReconciliacion: new Date('2026-01-15'),
+        }],
+      },
+    ]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'sale-fx-legacy')).toMatchObject({
+      montoReconciliado: 100,
+      diferencia: 0,
+      estaReconciliado: true,
+      clasificacion: 'RECONCILIADA',
+    });
+  });
+
   it('clasifica anticipos de servicios con pagos parciales aplicados fuera del período', async () => {
     mockPrisma.venta.findMany.mockResolvedValue([]);
     mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
@@ -179,9 +211,10 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       clasificacion: 'CUENTA_POR_PAGAR',
       estadoCuenta: 'PENDIENTE',
     });
-    expect(mockPrisma.reconciliacionGasto.findMany.mock.calls[0]?.[0]?.where).toEqual({
+    expect(mockPrisma.reconciliacionGasto.findMany.mock.calls[0]?.[0]?.where).toMatchObject({
       tenantId: 'tenant-1',
       tipoGasto: 'servicio',
+      estado: { in: ['PAGADA', 'PAGADO', 'POSTED', 'PARCIAL'] },
       referenciaId: { in: ['service-advance'] },
     });
   });
@@ -203,6 +236,133 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
       diferencia: 60,
       clasificacion: 'CONCILIABLE',
     });
+  });
+
+  it('aplica el mismo cálculo de costo y cantidad a servicios históricos', async () => {
+    mockPrisma.venta.findMany.mockResolvedValue([]);
+    mockPrisma.ventaServicios.findMany.mockImplementation((args: {
+      where?: { ventaId?: null; createdAt?: { lt?: Date }; costo?: unknown };
+    }) => {
+      if (args?.where?.ventaId === null) return Promise.resolve([]);
+      if (args?.where?.createdAt?.lt) {
+        return Promise.resolve([{
+          ventaServicioId: 'old-service-cost', costo: 10, cantidad: 5,
+          createdAt: new Date('2025-12-15'),
+        }]);
+      }
+      return Promise.resolve([]);
+    });
+    mockPrisma.reconciliacionGasto.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{
+        referenciaId: 'old-service-cost', monto: 25, montoConvertido: 25,
+        moneda: 'CUP', tasaCambio: null,
+        fechaReconciliacion: new Date('2025-12-20'),
+      }]);
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.itemsAntiguos.find((entry) => entry.id === 'costo-old-service-cost'))
+      .toMatchObject({
+        monto: 50,
+        montoReconciliado: 25,
+        diferencia: 25,
+        clasificacion: 'RECONCILIADA_PARCIALMENTE',
+      });
+    expect(mockPrisma.ventaServicios.findMany.mock.calls.find(([args]) =>
+      args?.where?.createdAt?.lt && args?.where?.costo === undefined,
+    )?.[0]?.where).toMatchObject({ ventaId: null });
+  });
+
+  it('normaliza el total de servicios extranjeros a la moneda funcional', async () => {
+    mockPrisma.venta.findMany.mockResolvedValue([]);
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.compraServicio.findMany
+      .mockResolvedValueOnce([{
+        compraServicioId: 'foreign-service', total: 100, moneda: 'USD',
+        estado: 'PENDIENTE', fechaServicio: new Date('2026-01-15'),
+      }])
+      .mockResolvedValueOnce([]);
+    mockPrisma.gastoCompra.findMany.mockResolvedValueOnce([{
+      gastoCompraId: 'foreign-purchase',
+      total: 100,
+      fechaCompra: new Date('2026-01-15'),
+      compraDocumento: { moneda: 'USD' },
+      cuentaPorPagar: { estado: 'PARCIAL' },
+      reconciliaciones: [],
+    }]);
+    mockPrisma.reconciliacionGasto.findMany
+      .mockResolvedValueOnce([{
+        referenciaId: 'foreign-service', monto: 40, montoConvertido: 1000,
+        moneda: 'USD', tasaCambio: 25, fechaReconciliacion: new Date('2026-01-16'),
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    exchangeRateMock.getRateAsOf.mockResolvedValue({
+      tasaId: 'usd-cup', tasa: 25, fechaVigencia: new Date('2026-01-15'),
+    });
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.items.find((item) => item.id === 'foreign-service')).toMatchObject({
+      monto: 2500,
+      montoReconciliado: 1000,
+      diferencia: 1500,
+      moneda: 'CUP',
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PENDIENTE',
+    });
+    expect(result.items.find((item) => item.id === 'foreign-purchase')).toMatchObject({
+      monto: 2500,
+      moneda: 'CUP',
+      clasificacion: 'CUENTA_POR_PAGAR',
+      estadoCuenta: 'PARCIAL',
+    });
+    expect(exchangeRateMock.getRateAsOf).toHaveBeenCalledTimes(1);
+  });
+
+  it('valora servicios históricos con la tasa vigente en la fecha del movimiento', async () => {
+    const oldServiceDate = new Date('2025-12-15T12:00:00.000Z');
+    mockPrisma.venta.findMany.mockResolvedValue([]);
+    mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+    mockPrisma.compraServicio.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{
+        compraServicioId: 'old-foreign-service', total: 100, moneda: 'USD',
+        estado: 'PENDIENTE', fechaServicio: oldServiceDate, createdAt: oldServiceDate,
+      }]);
+    mockPrisma.reconciliacionGasto.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{
+        referenciaId: 'old-foreign-service', monto: 40, montoConvertido: 1000,
+        moneda: 'USD', tasaCambio: 25, fechaReconciliacion: new Date('2025-12-20'),
+      }])
+      .mockResolvedValueOnce([]);
+    exchangeRateMock.getRateAsOf.mockImplementation(({ boundaryAt }: { boundaryAt: Date }) =>
+      Promise.resolve({
+        tasaId: boundaryAt < rango.gte ? 'usd-cup-old' : 'usd-cup-current',
+        tasa: boundaryAt < rango.gte ? 30 : 25,
+        fechaVigencia: boundaryAt,
+      }),
+    );
+
+    const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
+
+    expect(result.itemsAntiguos.find((item) => item.id === 'old-foreign-service'))
+      .toMatchObject({
+        monto: 3000,
+        montoReconciliado: 1000,
+        diferencia: 2000,
+        moneda: 'CUP',
+        clasificacion: 'CUENTA_POR_PAGAR',
+      });
+    expect(exchangeRateMock.getRateAsOf).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceCurrency: 'USD', targetCurrency: 'CUP', boundaryAt: oldServiceDate }),
+    );
   });
 
   it('identifica CxC vinculada directamente a una venta de servicio', async () => {
@@ -245,6 +405,7 @@ describe('obtenerVentasVsReconciliado – prevención de doble conteo', () => {
     const result = await obtenerVentasVsReconciliado('tenant-1', rango, '', 1, 50);
 
     expect(result.items.find((item) => item.id === 'compra-cxp')).toMatchObject({
+      monto: 1200,
       clasificacion: 'CUENTA_POR_PAGAR',
       estadoCuenta: 'PARCIAL',
     });

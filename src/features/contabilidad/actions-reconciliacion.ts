@@ -712,18 +712,44 @@ export const reconciliarServicioAction = withAction(
 
 // ─── Gastos ────────────────────────────────────────────────
 
+interface ExpenseReconciliationAmount {
+	monto: unknown;
+	montoConvertido?: unknown;
+	moneda?: string | null;
+	tasaCambio?: unknown;
+}
+
+const APPLIED_EXPENSE_RECONCILIATION_STATES = [
+	'PAGADA',
+	'PAGADO',
+	'POSTED',
+	'PARCIAL',
+] as const;
+
+/**
+ * @description Converts an applied expense payment to the tenant's functional currency.
+ * @param {ExpenseReconciliationAmount} row - Persisted payment and optional legacy FX evidence.
+ * @returns {number} Applied payment amount in the tenant's functional currency.
+ */
+function getAppliedExpenseAmount(row: ExpenseReconciliationAmount): number {
+	if (row.montoConvertido != null) return Number(row.montoConvertido);
+	const amount = Number(row.monto ?? 0);
+	const rate = Number(row.tasaCambio ?? 0);
+	return rate > 0 ? amount * rate : amount;
+}
+
 /**
  * @description Calculates an expense's open balance from all persisted reconciliation rows.
  * @param {number} grossAmount - Original expense amount.
- * @param {Array<{ monto: unknown; montoConvertido?: unknown }>} reconciliations - Applied payments.
+ * @param {ExpenseReconciliationAmount[]} reconciliations - Applied payments.
  * @returns {number} Non-negative open balance rounded to cents.
  */
 function calculateOpenExpenseBalance(
 	grossAmount: number,
-	reconciliations: Array<{ monto: unknown; montoConvertido?: unknown }>,
+	reconciliations: ExpenseReconciliationAmount[],
 ): number {
 	const applied = reconciliations.reduce(
-		(sum, row) => sum + Number(row.montoConvertido ?? row.monto ?? 0),
+		(sum, row) => sum + getAppliedExpenseAmount(row),
 		0,
 	);
 	return Math.max(0, Math.round((grossAmount - applied) * 100) / 100);
@@ -819,13 +845,38 @@ export const getGastosPendientesAction = withAction(
 			prisma.gastosDE.findMany({
 				where: whereDE,
 				orderBy: { createdAt: "desc" },
-				include: { reconciliaciones: { select: { monto: true, montoConvertido: true } } },
+				include: {
+					reconciliaciones: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
+				},
 			}),
 			prisma.gastoCompra.findMany({
 				where: whereGC,
 				orderBy: { fechaCompra: "desc" },
 				include: {
-					reconciliaciones: { select: { monto: true, montoConvertido: true } },
+					compraDocumento: { select: { moneda: true } },
+					reconciliaciones: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
 					vendor: { select: { nombre: true } },
 					producto: { select: { nombre: true } },
 				},
@@ -834,7 +885,18 @@ export const getGastosPendientesAction = withAction(
 				where: wherePS,
 				orderBy: { createdAt: "desc" },
 				include: {
-					ReconciliacionGasto: { select: { monto: true, montoConvertido: true } },
+					ReconciliacionGasto: {
+						where: {
+							tenantId,
+							estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+						},
+						select: {
+							monto: true,
+							montoConvertido: true,
+							moneda: true,
+							tasaCambio: true,
+						},
+					},
 					empleado: { select: { nombre: true, apellido: true, cargo: true } },
 				},
 			}),
@@ -854,25 +916,112 @@ export const getGastosPendientesAction = withAction(
 					cliente: { select: { nombre: true } },
 				},
 			}),
-			prisma.reconciliacionGasto.findMany({
-				where: { tenantId, tipoGasto: "servicio" },
-				select: { referenciaId: true, monto: true, montoConvertido: true },
+							prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					moneda: true,
+					tasaCambio: true,
+				},
 			}),
 			prisma.reconciliacionGasto.findMany({
-				where: { tenantId, tipoGasto: "venta_servicio" },
-				select: { referenciaId: true, monto: true, montoConvertido: true },
+				where: {
+					tenantId,
+					tipoGasto: "venta_servicio",
+					estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+				},
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					moneda: true,
+					tasaCambio: true,
+				},
 			}),
 		]);
 
+		const policy = await prisma.tenantAccountingPolicy.findUnique({
+			where: { tenantId },
+			select: { functionalCurrencyCode: true },
+		});
+		const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+		const tasasPorMoneda = new Map<string, Promise<number>>();
+		const convertGrossToFunctionalCurrency = async (
+			amount: number,
+			currency: string | null | undefined,
+			boundaryAt: Date,
+		): Promise<number> => {
+			const monedaOrigen = currency?.trim().toUpperCase() || monedaFuncional;
+			if (monedaOrigen === monedaFuncional) return amount;
+			const rateKey = `${monedaOrigen}:${boundaryAt.toISOString()}`;
+			let tasaPromise = tasasPorMoneda.get(rateKey);
+			if (!tasaPromise) {
+				tasaPromise = exchangeRateProvider.getRateAsOf({
+					sourceCurrency: monedaOrigen,
+					targetCurrency: monedaFuncional,
+					boundaryAt,
+				}).then((tasaPublicada) => {
+					if (!tasaPublicada) {
+						throw new ActionError(
+							`No hay tasa de cambio publicada para ${monedaOrigen} → ${monedaFuncional}; no se puede calcular el saldo pendiente`,
+							'VALIDATION_ERROR',
+						);
+					}
+					return tasaPublicada.tasa;
+				});
+				tasasPorMoneda.set(rateKey, tasaPromise);
+			}
+			return amount * await tasaPromise;
+		};
+		const [
+			totalFuncionalPorServicio,
+			totalFuncionalPorCompra,
+			costoFuncionalPorVentaServicio,
+		] = await Promise.all([
+			Promise.all(comprasServicio.map(async (row: any) => [
+				row.compraServicioId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.total ?? 0),
+					row.moneda,
+					row.fechaServicio ?? row.createdAt,
+				),
+			] as const)),
+			Promise.all(gastosCompra.map(async (row: any) => [
+				row.gastoCompraId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.total ?? 0),
+					row.compraDocumento?.moneda,
+					row.fechaCompra,
+				),
+			] as const)),
+			Promise.all(ventasServicio.map(async (row: any) => [
+				row.ventaServicioId,
+				await convertGrossToFunctionalCurrency(
+					Number(row.costo ?? 0) * Number(row.cantidad ?? 1),
+					row.moneda,
+					row.createdAt,
+				),
+			] as const)),
+		]);
+		const totalFuncionalByService = new Map(totalFuncionalPorServicio);
+		const totalFuncionalByPurchase = new Map(totalFuncionalPorCompra);
+		const costoFuncionalBySaleService = new Map(costoFuncionalPorVentaServicio);
+
 		const buildAppliedByReference = (
-			rows: Array<{ referenciaId: string | null; monto: unknown; montoConvertido: unknown }>,
+			rows: Array<ExpenseReconciliationAmount & { referenciaId: string | null }>,
 		) => {
 			const amounts = new Map<string, number>();
 			for (const row of rows) {
 				if (!row.referenciaId) continue;
 				amounts.set(
 					row.referenciaId,
-					(amounts.get(row.referenciaId) ?? 0) + Number(row.montoConvertido ?? row.monto ?? 0),
+					(amounts.get(row.referenciaId) ?? 0) + getAppliedExpenseAmount(row),
 				);
 			}
 			return amounts;
@@ -880,14 +1029,15 @@ export const getGastosPendientesAction = withAction(
 		const appliedByService = buildAppliedByReference(reconciliadosServicioIds);
 		const appliedBySaleService = buildAppliedByReference(reconciliadosVentaServicioIds);
 		const comprasServicioFiltradas = comprasServicio.filter((g: any) => {
-			const balance = calculateOpenExpenseBalance(Number(g.total ?? 0), [
-				{ monto: appliedByService.get(g.compraServicioId) ?? 0 },
-			]);
+			const balance = calculateOpenExpenseBalance(
+				totalFuncionalByService.get(g.compraServicioId) ?? 0,
+				[{ monto: appliedByService.get(g.compraServicioId) ?? 0 }],
+			);
 			return !params.soloNoReconciliados || balance > 0.1;
 		});
 		const ventasServicioFiltradas = ventasServicio.filter((g: any) => {
 			const balance = calculateOpenExpenseBalance(
-				Number(g.costo ?? 0) * Number(g.cantidad ?? 1),
+				costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
 				[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
 			);
 			return !params.soloNoReconciliados || balance > 0.1;
@@ -913,7 +1063,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "compra" as const,
 				referenciaId: g.gastoCompraId,
 				descripcion: g.descripcion || `Compra #${g.gastoCompraId.slice(0, 8)}`,
-				monto: calculateOpenExpenseBalance(Number(g.total || 0), g.reconciliaciones),
+				monto: calculateOpenExpenseBalance(
+					totalFuncionalByPurchase.get(g.gastoCompraId) ?? 0,
+					g.reconciliaciones,
+				),
 				periodo: g.periodo || undefined,
 				detalles: {
 					vendor: (g as any).vendor?.nombre || undefined,
@@ -959,9 +1112,10 @@ export const getGastosPendientesAction = withAction(
 				tipo: "servicio" as const,
 				referenciaId: g.compraServicioId,
 				descripcion: `${g.servicio?.nombre || "Servicio"} - ${g.proveedor?.nombre || "Sin proveedor"}`,
-				monto: calculateOpenExpenseBalance(Number(g.total || 0), [
-					{ monto: appliedByService.get(g.compraServicioId) ?? 0 },
-				]),
+				monto: calculateOpenExpenseBalance(
+					totalFuncionalByService.get(g.compraServicioId) ?? 0,
+					[{ monto: appliedByService.get(g.compraServicioId) ?? 0 }],
+				),
 				periodo: undefined,
 				detalles: {
 					servicio: g.servicio?.nombre || undefined,
@@ -981,7 +1135,7 @@ export const getGastosPendientesAction = withAction(
 				referenciaId: g.ventaServicioId,
 				descripcion: `Costo: ${g.servicio?.nombre || "Servicio"} - ${g.cliente?.nombre || "Sin cliente"}`,
 				monto: calculateOpenExpenseBalance(
-					Number(g.costo * g.cantidad || 0),
+					costoFuncionalBySaleService.get(g.ventaServicioId) ?? 0,
 					[{ monto: appliedBySaleService.get(g.ventaServicioId) ?? 0 }],
 				),
 				periodo: g.createdAt?.toISOString?.()?.slice(0, 7) || undefined,

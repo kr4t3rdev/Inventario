@@ -89,8 +89,10 @@ export async function assertServiceCollectionTargets(
  * nunca fabrica evidencia ausente.
  * @param {number} amount - Importe en la moneda de origen.
  * @param {string} currency - Moneda del importe.
- * @param {number | undefined} exchangeRate - Tasa aplicada hacia CUP.
+ * @param {number | undefined} exchangeRate - Tasa aplicada hacia la moneda funcional.
  * @param {Date | null | undefined} effectiveAt - Fecha en que se aplicó la tasa informada.
+ * @param {string | null | undefined} fxCatalogRateId - ID de la tasa usada, si está catalogada.
+ * @param {string} functionalCurrency - Moneda funcional de destino.
  * @returns {{montoConvertido: number | null; tasaCambio: number | null; fxEvidence: object | null}} Metadatos y evidencia inmutable.
  */
 export function buildPersistedAccountingAmount(
@@ -99,6 +101,7 @@ export function buildPersistedAccountingAmount(
   exchangeRate?: number,
   effectiveAt?: Date | null,
   fxCatalogRateId?: string | null,
+  functionalCurrency = 'CUP',
 ): {
   montoConvertido: number | null;
   tasaCambio: number | null;
@@ -115,12 +118,14 @@ export function buildPersistedAccountingAmount(
     | null;
 } {
   const source = 'accounting-reconciliation-service';
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const normalizedFunctionalCurrency = functionalCurrency.trim().toUpperCase();
 
-  if (currency.trim().toUpperCase() === 'CUP') {
+  if (normalizedCurrency === normalizedFunctionalCurrency) {
     const evidence = buildAppliedFxEvidence({
       originalAmount: amount,
       originalCurrency: currency,
-      functionalCurrency: 'CUP',
+      functionalCurrency: normalizedFunctionalCurrency,
       source,
     });
     return {
@@ -149,7 +154,7 @@ export function buildPersistedAccountingAmount(
     const evidence = buildAppliedFxEvidence({
       originalAmount: amount,
       originalCurrency: currency,
-      functionalCurrency: 'CUP',
+      functionalCurrency: normalizedFunctionalCurrency,
       exchangeRate,
       convertedAmount: amount * exchangeRate,
       rateEffectiveAt: effectiveAt,

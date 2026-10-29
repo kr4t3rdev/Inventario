@@ -56,4 +56,34 @@ describe('buildPersistedAccountingAmount evidencia FX', () => {
     expect(sinFecha.montoConvertido).toBeNull();
     expect(sinFecha.fxEvidence).toBeNull();
   });
+
+  it('usa la moneda funcional configurada para montos del mismo origen y convertidos', () => {
+    const sameCurrency = buildPersistedAccountingAmount(
+      100,
+      'USD',
+      undefined,
+      undefined,
+      undefined,
+      'USD',
+    );
+    const converted = buildPersistedAccountingAmount(
+      100,
+      'CUP',
+      0.04,
+      new Date('2026-08-19T12:00:00.000Z'),
+      'cup-usd-rate',
+      'USD',
+    );
+
+    expect(sameCurrency).toMatchObject({
+      montoConvertido: 100,
+      tasaCambio: 1,
+      fxEvidence: { functionalCurrency: 'USD', fxProvenanceKind: 'SAME_CURRENCY' },
+    });
+    expect(converted).toMatchObject({
+      montoConvertido: 4,
+      tasaCambio: 0.04,
+      fxEvidence: { functionalCurrency: 'USD', fxProvenanceKind: 'MANUAL_GOVERNED' },
+    });
+  });
 });

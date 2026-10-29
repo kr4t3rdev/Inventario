@@ -89,9 +89,14 @@ interface ExpenseReferenceFindManyArgs {
   distinct: string[];
 }
 
+interface LegacyExpenseAmountFindManyArgs {
+  where: Record<string, unknown>;
+  select: { monto: true; tasaCambio: true };
+}
+
 interface ReconciliationGastoDelegate extends CountDelegate, AggregateDelegate {
   findMany(
-    args: ExpenseReferenceFindManyArgs | RecentFindManyArgs,
+    args: ExpenseReferenceFindManyArgs | LegacyExpenseAmountFindManyArgs | RecentFindManyArgs,
   ): Promise<ReconciledExpenseReference[] | ReconciliationGastoActivityRow[]>;
 }
 
@@ -123,7 +128,11 @@ export interface GetReconciliationStatsInput {
 
 const ACTIVE_CXP_STATES = ['PENDIENTE', 'PARCIAL'] as const;
 const EXPENSE_RECONCILIATION_TYPES = ['servicio', 'venta_servicio'] as const;
-const POSTED_EXPENSE_RECONCILIATION_STATES = ['PAGADA', 'PAGADO', 'POSTED'] as const;
+const SETTLED_EXPENSE_RECONCILIATION_STATES = ['PAGADA', 'PAGADO', 'POSTED'] as const;
+const APPLIED_EXPENSE_RECONCILIATION_STATES = [
+  ...SETTLED_EXPENSE_RECONCILIATION_STATES,
+  'PARCIAL',
+] as const;
 
 /**
  * @description Builds the active, tenant-owned CxP relation exclusion for purchases.
@@ -148,7 +157,12 @@ function buildActiveCxPExclusion(tenantId: string): Record<string, unknown> {
 function buildPurchaseExpenseWhere(tenantId: string): Record<string, unknown> {
   return {
     tenantId,
-    reconciliaciones: { none: { tenantId } },
+    reconciliaciones: {
+      none: {
+        tenantId,
+        estado: { in: [...SETTLED_EXPENSE_RECONCILIATION_STATES] },
+      },
+    },
     NOT: { cuentaPorPagar: buildActiveCxPExclusion(tenantId) },
   };
 }
@@ -287,18 +301,18 @@ function buildReconciliationVentaWhere(
 }
 
 /**
- * @description Builds the date-filtered predicate for posted expense reconciliations only.
+ * @description Builds the date-filtered predicate for applied expense reconciliations.
  * @param {string} tenantId - Tenant whose expense reconciliations are eligible.
  * @param {DateRange} todayRange - Existing server-local day range.
- * @returns {Record<string, unknown>} Tenant, business-date, and posted-state filter.
+ * @returns {Record<string, unknown>} Tenant, business-date, and applied-state filter.
  */
-function buildPostedExpenseReconciliationWhere(
+function buildSettledExpenseReconciliationWhere(
   tenantId: string,
   todayRange: DateRange,
 ): Record<string, unknown> {
   return {
     ...buildReconciliationWhere(tenantId, todayRange),
-    estado: { in: [...POSTED_EXPENSE_RECONCILIATION_STATES] },
+    estado: { in: [...SETTLED_EXPENSE_RECONCILIATION_STATES] },
   };
 }
 
@@ -307,10 +321,10 @@ function buildPostedExpenseReconciliationWhere(
  * @param {string | null} estado - Persisted reconciliation status.
  * @returns {boolean} Whether the status is a supported posted legacy value.
  */
-function isPostedExpenseReconciliationState(estado: string | null): boolean {
+function isAppliedExpenseReconciliationState(estado: string | null): boolean {
   return (
     estado !== null &&
-    (POSTED_EXPENSE_RECONCILIATION_STATES as readonly string[]).includes(estado)
+    (APPLIED_EXPENSE_RECONCILIATION_STATES as readonly string[]).includes(estado)
   );
 }
 
@@ -459,10 +473,21 @@ export async function getReconciliationStats({
   assertTenantId(tenantId);
   const todayRange = buildTodayRange(now);
   const salesTodayWhere = buildReconciliationVentaWhere(tenantId, todayRange);
-  const postedExpensesTodayWhere = buildPostedExpenseReconciliationWhere(tenantId, todayRange);
+  const settledExpensesTodayWhere = buildSettledExpenseReconciliationWhere(
+    tenantId,
+    todayRange,
+  );
+  const appliedExpensesTodayWhere = {
+    ...buildReconciliationWhere(tenantId, todayRange),
+    estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] },
+  };
   const database = db ?? (prisma as unknown as ReconciliationStatsDb);
   const reconciledExpenseReferences = (await database.reconciliacionGasto.findMany({
-    where: { tenantId, tipoGasto: { in: [...EXPENSE_RECONCILIATION_TYPES] } },
+    where: {
+      tenantId,
+      tipoGasto: { in: [...EXPENSE_RECONCILIATION_TYPES] },
+      estado: { in: [...SETTLED_EXPENSE_RECONCILIATION_STATES] },
+    },
     select: { referenciaId: true, tipoGasto: true },
     distinct: ['referenciaId', 'tipoGasto'],
   })) as ReconciledExpenseReference[];
@@ -489,6 +514,7 @@ export async function getReconciliationStats({
     ventasAggregate,
     serviciosAggregate,
     gastosAggregate,
+    lastGastosLegacyAmounts,
     lastVentas,
     lastServicios,
     lastGastos,
@@ -504,7 +530,12 @@ export async function getReconciliationStats({
     database.pagosalario.count({
       where: {
         tenantId,
-        ReconciliacionGasto: { none: { tenantId } },
+        ReconciliacionGasto: {
+          none: {
+            tenantId,
+            estado: { in: [...SETTLED_EXPENSE_RECONCILIATION_STATES] },
+          },
+        },
       },
     }),
     database.compraServicio.count({
@@ -527,7 +558,7 @@ export async function getReconciliationStats({
       where: buildReconciliationWhere(tenantId, todayRange),
     }),
     database.reconciliacionGasto.count({
-      where: postedExpensesTodayWhere,
+      where: settledExpensesTodayWhere,
     }),
     database.reconciliacionVenta.aggregate({
       where: salesTodayWhere,
@@ -538,8 +569,15 @@ export async function getReconciliationStats({
       _sum: { montoConvertido: true },
     }),
     database.reconciliacionGasto.aggregate({
-      where: postedExpensesTodayWhere,
+      where: appliedExpensesTodayWhere,
       _sum: { montoConvertido: true },
+    }),
+    database.reconciliacionGasto.findMany({
+      where: {
+        ...appliedExpensesTodayWhere,
+        montoConvertido: null,
+      },
+      select: { monto: true, tasaCambio: true },
     }),
     database.reconciliacionVenta.findMany(
       buildRecentActivityArgs(tenantId, {
@@ -556,7 +594,7 @@ export async function getReconciliationStats({
     database.reconciliacionGasto.findMany(
       buildRecentActivityArgs(tenantId, {
         cuentaBancaria: { select: { nombreBanco: true } },
-      }, { estado: { in: [...POSTED_EXPENSE_RECONCILIATION_STATES] } }),
+      }, { estado: { in: [...APPLIED_EXPENSE_RECONCILIATION_STATES] } }),
     ),
   ]);
 
@@ -566,7 +604,7 @@ export async function getReconciliationStats({
       .map(mapVentaActivity),
     ...lastServicios.map(mapServicioActivity),
     ...(lastGastos as ReconciliationGastoActivityRow[])
-      .filter((row) => isPostedExpenseReconciliationState(row.estado))
+      .filter((row) => isAppliedExpenseReconciliationState(row.estado))
       .map(mapGastoActivity),
   ]);
 
@@ -584,7 +622,15 @@ export async function getReconciliationStats({
     reconciledAmount:
       normalizeAmount(ventasAggregate._sum.montoConvertido) +
       normalizeAmount(serviciosAggregate._sum.montoConvertido) +
-      normalizeAmount(gastosAggregate._sum.montoConvertido),
+      normalizeAmount(gastosAggregate._sum.montoConvertido) +
+      (lastGastosLegacyAmounts as Array<{ monto: NumericValue; tasaCambio: NumericValue }>).reduce(
+        (total, row) => {
+          const amount = normalizeAmount(row.monto);
+          const rate = normalizeAmount(row.tasaCambio);
+          return total + (rate > 0 ? amount * rate : amount);
+        },
+        0,
+      ),
     recentActivity,
   });
 }

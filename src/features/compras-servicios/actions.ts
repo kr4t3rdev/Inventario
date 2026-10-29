@@ -96,8 +96,9 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
       },
       include: COMPRA_SERVICIO_INCLUDE,
     });
+    let compraServicioResultado = compraServicio;
 
-    let allocationsResult: any[] = [];
+    let allocationsResult: Awaited<ReturnType<typeof applyAnticipoAllocations>> = [];
     if (parsed.anticipos && parsed.anticipos.length > 0) {
       const tipoPagoDefault = await tx.tipoPago.findFirst({
         where: { isActive: true, tenantId },
@@ -116,12 +117,89 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         observaciones: `Anticipo aplicado a servicio recibido ${compraServicio.compraServicioId}`,
       });
 
+      const policy = await tx.tenantAccountingPolicy.findUnique({
+        where: { tenantId },
+        select: { functionalCurrencyCode: true },
+      });
+      const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+      const fechaPago = new Date();
+      const tasasCambio = new Map<
+        string,
+        { tasaId: string; tasa: number; fechaVigencia: Date }
+      >();
+
+      /**
+       * @description Retrieves and caches a published conversion rate into the functional currency.
+       * @param {string} monedaOrigen - Currency to convert.
+       * @returns {Promise<{tasaId: string; tasa: number; fechaVigencia: Date} | null>} Rate or null for CUP-equivalent amounts.
+       */
+      const getTasaFuncional = async (monedaOrigen: string, boundaryAt: Date) => {
+        const monedaNormalizada = monedaOrigen.trim().toUpperCase();
+        if (monedaNormalizada === monedaFuncional) return null;
+        const cacheKey = `${monedaNormalizada}:${boundaryAt.toISOString()}`;
+        const tasaExistente = tasasCambio.get(cacheKey);
+        if (tasaExistente) return tasaExistente;
+        const tasa = await exchangeRateProvider.getRateAsOf({
+          sourceCurrency: monedaNormalizada,
+          targetCurrency: monedaFuncional,
+          boundaryAt,
+          client: tx,
+        });
+        if (!tasa) {
+          throw new ActionError(
+            `No hay tasa de cambio publicada para ${monedaNormalizada} → ${monedaFuncional}; no se puede registrar la reconciliación`,
+            'VALIDATION_ERROR',
+          );
+        }
+        tasasCambio.set(cacheKey, tasa);
+        return tasa;
+      };
+
+      const monedaServicio = servicio.moneda.trim().toUpperCase();
+      const tasaServicio = await getTasaFuncional(monedaServicio, fechaServicio);
+      const totalFuncional = total * (tasaServicio?.tasa ?? 1);
+      const allocationsPreparadas: Array<{
+        alloc: (typeof allocationsResult)[number];
+        anticipo: Awaited<ReturnType<typeof tx.anticipo.findUnique>>;
+        monedaAnticipo: string;
+        tasa: { tasaId: string; tasa: number; fechaVigencia: Date } | null;
+      }> = [];
+
       for (const alloc of allocationsResult) {
         const anticipo = await tx.anticipo.findUnique({
           where: { anticipoId: alloc.anticipoId },
           select: { tipo: true, moneda: true, cuentaOrigenId: true, tipoPagoOrigenId: true, proveedorId: true },
         });
 
+        if (
+          (!anticipo?.cuentaOrigenId && !cuentaDefault?.cuentaId) ||
+          (!anticipo?.tipoPagoOrigenId && !tipoPagoDefault?.tipoId)
+        ) {
+          throw new ActionError(
+            'Configura una cuenta bancaria y un tipo de pago antes de aplicar anticipos',
+            'VALIDATION_ERROR',
+          );
+        }
+        const monedaAnticipo = anticipo?.moneda ?? servicio.moneda;
+        const tasa = await getTasaFuncional(monedaAnticipo, fechaPago);
+        allocationsPreparadas.push({ alloc, anticipo, monedaAnticipo, tasa });
+      }
+
+      const anticipoTotalFuncional = allocationsPreparadas.reduce(
+        (sum, allocation) => sum +
+          Number(allocation.alloc.montoAplicado) * (allocation.tasa?.tasa ?? 1),
+        0,
+      );
+      const estadoPagoAplicado: 'PAGADA' | 'PARCIAL' =
+        anticipoTotalFuncional >= totalFuncional - 0.01 ? 'PAGADA' : 'PARCIAL';
+
+      await tx.compraServicio.updateMany({
+        where: { compraServicioId: compraServicio.compraServicioId, tenantId },
+        data: { estado: estadoPagoAplicado },
+      });
+      compraServicioResultado = { ...compraServicio, estado: estadoPagoAplicado };
+
+      for (const { alloc, anticipo, monedaAnticipo, tasa } of allocationsPreparadas) {
         const cuentaId = anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId;
         const tipoPagoId = anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId;
         if (!cuentaId || !tipoPagoId) {
@@ -129,37 +207,6 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             'Configura una cuenta bancaria y un tipo de pago antes de aplicar anticipos',
             'VALIDATION_ERROR',
           );
-        }
-
-        // La fila refleja la moneda real del dinero movido (la del anticipo).
-        const monedaAnticipo = anticipo?.moneda ?? servicio.moneda;
-
-        // Si la moneda difiere de la funcional del tenant, se exige una tasa
-        // publicada; sin ella la fila quedaría invisible para el reporting.
-        const policy = await tx.tenantAccountingPolicy.findUnique({
-          where: { tenantId },
-          select: { functionalCurrencyCode: true },
-        });
-        const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
-
-        let tasaCambio: number | undefined;
-        let tasaEffectiveAt: Date | undefined;
-        let tasaFxCatalogId: string | undefined;
-        if (monedaAnticipo.trim().toUpperCase() !== monedaFuncional) {
-          const tasa = await exchangeRateProvider.getRateAsOf({
-            sourceCurrency: monedaAnticipo.trim().toUpperCase(),
-            targetCurrency: monedaFuncional,
-            boundaryAt: new Date(),
-          });
-          if (!tasa) {
-            throw new ActionError(
-              `No hay tasa de cambio publicada para ${monedaAnticipo} → ${monedaFuncional}; no se puede registrar la reconciliación`,
-              'VALIDATION_ERROR',
-            );
-          }
-          tasaCambio = tasa.tasa;
-          tasaEffectiveAt = tasa.fechaVigencia;
-          tasaFxCatalogId = tasa.tasaId;
         }
 
         await tx.reconciliacionGasto.create({
@@ -170,13 +217,15 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             cuentaId: cuentaId,
             tipoPagoId: tipoPagoId,
             monto: alloc.montoAplicado,
+            estado: estadoPagoAplicado,
             moneda: monedaAnticipo,
             ...buildPersistedAccountingAmount(
               alloc.montoAplicado,
               monedaAnticipo,
-              tasaCambio,
-              tasaEffectiveAt,
-              tasaFxCatalogId,
+              tasa?.tasa,
+              tasa?.fechaVigencia,
+              tasa?.tasaId,
+              monedaFuncional,
             ),
             descripcion: `Pago anticipado de servicio ${compraServicio.compraServicioId}`,
             reconciliadoPor: user.userId || 'system',
@@ -184,7 +233,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         });
 
         // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
-        if (tasaCambio !== undefined) {
+        if (tasa) {
           await tx.transaccionMoneda.create({
             data: {
               tenantId,
@@ -192,15 +241,15 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
               referenciaId: compraServicio.compraServicioId,
               monedaId: monedaAnticipo,
               montoOriginal: alloc.montoAplicado,
-              tasaCambio,
-              montoConvertido: alloc.montoAplicado * tasaCambio,
+              tasaCambio: tasa.tasa,
+              montoConvertido: alloc.montoAplicado * tasa.tasa,
             },
           });
         }
       }
     }
 
-    return { compraServicio, allocationsResult };
+    return { compraServicio: compraServicioResultado, allocationsResult };
   });
 
   revalidatePath('/busy/compras-servicios');
