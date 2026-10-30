@@ -1,4 +1,5 @@
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
@@ -13,6 +14,7 @@ function mapActionErrorStatus(code: string): number {
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'DISABLED':
       return 404;
@@ -29,6 +31,7 @@ export async function GET(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar deudas cash');
     const { id } = await context.params;
     const result = await AccountingCashOperationsService.getCashDebtById({
       tenantId: authResult.user.tenantId ?? '',
@@ -53,6 +56,8 @@ export async function PUT(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'editar deudas cash');
+    requireFeature(authResult.user, 'deudas-cash', 'editar deudas cash');
     const { id } = await context.params;
     const body = await request.json();
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();

@@ -10,14 +10,22 @@ const mocks = vi.hoisted(() => ({
   reconciliationFindUnique: vi.fn(),
   debtCreate: vi.fn(),
   debtFindFirst: vi.fn(),
+  debtFindRoot: vi.fn(),
+  debtUpdateRoot: vi.fn(),
   auditStrict: vi.fn(),
   accountingPolicyFindUnique: vi.fn(),
   lock: vi.fn(),
   transaction: vi.fn(),
   postEvent: vi.fn(),
+  requireFeature: vi.fn(),
 }));
 
-vi.mock('@/lib/prisma', () => ({ prisma: { $transaction: mocks.transaction } }));
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    $transaction: mocks.transaction,
+    deudaCash: { findFirst: mocks.debtFindRoot, update: mocks.debtUpdateRoot },
+  },
+}));
 vi.mock('@/generated/prisma', () => ({
   Prisma: {
     Decimal: class Decimal {
@@ -45,7 +53,10 @@ vi.mock('@/generated/prisma', () => ({
     },
   },
 }));
-vi.mock('@/lib/services/tenant-scope', () => ({ requireTenant: () => 'tenant-1' }));
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: () => 'tenant-1',
+  requireFeature: mocks.requireFeature,
+}));
 vi.mock('@/lib/server-actions', () => ({
   ActionError: class ActionError extends Error {
     constructor(message: string, readonly code?: string) { super(message); }
@@ -109,9 +120,85 @@ describe('cash-debt create tenant safety and idempotency', () => {
     mocks.reconciliationCreate.mockResolvedValue({ reconciliacionId: 'reconciliation-1' });
     mocks.debtCreate.mockResolvedValue({ id: 'debt-1' });
     mocks.debtFindFirst.mockResolvedValue({ id: 'debt-1' });
+    mocks.debtFindRoot.mockResolvedValue({ id: 'debt-1', tenantId: 'tenant-1' });
+    mocks.debtUpdateRoot.mockResolvedValue({ id: 'debt-1', tenantId: 'tenant-1' });
     mocks.auditStrict.mockResolvedValue({ auditId: 'audit-1' });
     mocks.accountingPolicyFindUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
     mocks.postEvent.mockResolvedValue({ asientoId: 'asiento-1' });
+    mocks.requireFeature.mockImplementation(() => undefined);
+  });
+
+  it('scopes cash debt edits to the authenticated tenant', async () => {
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+
+    await service.updateCashDebt({
+      input: { id: 'debt-1', observaciones: 'Updated' },
+      user,
+    } as never);
+
+    expect(mocks.debtFindRoot).toHaveBeenCalledWith({
+      where: { id: 'debt-1', tenantId: 'tenant-1', deletedAt: null },
+    });
+    expect(mocks.debtUpdateRoot).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'debt-1', tenantId: 'tenant-1' } }),
+    );
+  });
+
+  it('fails closed on direct Cash debt creation after downgrade', async () => {
+    mocks.requireFeature.mockImplementation(() => {
+      const error = new Error('feature unavailable') as Error & { code: string };
+      error.code = 'FEATURE_NOT_AVAILABLE';
+      throw error;
+    });
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+
+    await expect(service.createCashDebt({ input, user } as never)).rejects.toMatchObject({
+      code: 'FEATURE_NOT_AVAILABLE',
+    });
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+    expect(mocks.vendorFindFirst).not.toHaveBeenCalled();
+    expect(mocks.debtCreate).not.toHaveBeenCalled();
+  });
+
+  it('replays an existing Cash debt directly through the writer after downgrade', async () => {
+    const { cashCreatePayloadHash } = await import('@/lib/services/cash-create-idempotency');
+    mocks.requireFeature.mockImplementation(() => {
+      const error = new Error('feature unavailable') as Error & { code: string };
+      error.code = 'FEATURE_NOT_AVAILABLE';
+      throw error;
+    });
+    mocks.reconciliationFindUnique.mockResolvedValue({
+      idempotencyPayloadHash: cashCreatePayloadHash({
+        operation: 'CREATE_DEUDA_CASH',
+        proveedorId: input.proveedorId,
+        montoCapital: input.montoCapital,
+        moneda: input.moneda,
+        tasaInteres: input.tasaInteres,
+        tasaInteresMoratorio: input.tasaInteresMoratorio,
+        tasaCambio: null,
+        fechaVencimiento: null,
+        observaciones: input.observaciones,
+        comprobanteUrl: null,
+        comprobanteAsset: null,
+        cuentaBancariaId: input.cuentaBancariaId,
+      }),
+      deudaCashId: 'debt-existing',
+    });
+    mocks.debtFindFirst.mockResolvedValue({ id: 'debt-existing' });
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+
+    await expect(service.createCashDebt({ input, user } as never)).resolves.toMatchObject({
+      id: 'debt-existing',
+    });
+    expect(mocks.requireFeature).not.toHaveBeenCalled();
+    expect(mocks.vendorFindFirst).not.toHaveBeenCalled();
+    expect(mocks.debtCreate).not.toHaveBeenCalled();
   });
 
   it('scopes vendor and bank ownership and records linked retry metadata in one transaction', async () => {

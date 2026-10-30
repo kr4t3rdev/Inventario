@@ -5,6 +5,12 @@ vi.mock('@/lib/auth-middleware', () => ({
   withAuthGet: (handler: any) => handler,
 }))
 
+const hasPermissionMock = vi.hoisted(() => vi.fn(() => true))
+vi.mock('@/lib/services/tenant-scope', () => ({
+  hasPermission: hasPermissionMock,
+  requireTenant: (user: { tenantId?: string }) => user.tenantId,
+}))
+
 vi.mock('@/lib/prisma', () => ({
   default: {
     deudaCash: {
@@ -20,7 +26,20 @@ vi.mock('@/lib/prisma', () => ({
 describe('API contabilidad/deudas-cash/stats', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(hasPermissionMock).mockReturnValue(true)
     vi.stubEnv('NEXT_PUBLIC_ENABLE_DEUDAS_CASH', 'true')
+  })
+
+  it('GET rechaza acceso sin permiso contable antes de consultar la base', async () => {
+    vi.mocked(hasPermissionMock).mockReturnValue(false)
+    const { GET } = await import('../stats/route')
+    const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
+
+    const response = await GET(request, {}, { tenantId: 'tenant-1' } as never)
+
+    expect(response.status).toBe(403)
+    const prisma = (await import('@/lib/prisma')).default as any
+    expect(prisma.deudaCash.count).not.toHaveBeenCalled()
   })
 
   it('GET devuelve 404 si módulo deshabilitado', async () => {
@@ -28,7 +47,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request, {})
+    const response = await GET(request, {}, { tenantId: 'tenant-1' } as never)
     const body = await response.json()
 
     expect(response.status).toBe(404)
@@ -55,10 +74,19 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request, {})
+    const response = await GET(request, {}, { tenantId: 'tenant-1' } as never)
     const body = await response.json()
 
     expect(response.status).toBe(200)
+    expect(prisma.deudaCash.count).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-1' }) }),
+    )
+    expect(prisma.deudaCash.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-1' }) }),
+    )
+    expect(prisma.cuentaPorPagar.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-1' }) }),
+    )
     expect(body.totalActivas).toBe(3)
     expect(body.totalPagadas).toBe(5)
     expect(body.totalVencidas).toBe(1)
@@ -75,7 +103,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    const response = await GET(request, {})
+    const response = await GET(request, {}, { tenantId: 'tenant-1' } as never)
     const body = await response.json()
 
     expect(response.status).toBe(200)
@@ -95,7 +123,7 @@ describe('API contabilidad/deudas-cash/stats', () => {
 
     const { GET } = await import('../stats/route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash/stats')
-    await GET(request, {})
+    await GET(request, {}, { tenantId: 'tenant-1' } as never)
 
     // Verifica que los counts aplican deletedAt: null
     expect(prisma.deudaCash.count).toHaveBeenCalledWith(

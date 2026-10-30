@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset'
@@ -68,7 +68,7 @@ export const getDeudasCashAction = withAction(async (
   input: { estado?: string; proveedorId?: string; moneda?: string; page?: number; limit?: number } = {},
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'deudas-cash', 'gestionar deudas cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar deudas cash');
   const tenantId = requireTenant(user)
   return AccountingCashOperationsService.listCashDebts({
     tenantId,
@@ -81,7 +81,7 @@ export const getDeudasCashAction = withAction(async (
 })
 
 export const getDeudaCashByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
-  requireFeature(user, 'deudas-cash', 'consultar deudas cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar deudas cash');
   const tenantId = requireTenant(user)
   return AccountingCashOperationsService.getCashDebtById({ tenantId, id })
 })
@@ -90,7 +90,7 @@ export const createDeudaCashAction = withAction(async (
   input: z.infer<typeof createSchema>,
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'deudas-cash', 'crear deudas cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'crear deudas cash');
   const body = createSchema.parse(input)
   const tenantId = requireTenant(user)
   const operationDate = new Date()
@@ -99,10 +99,13 @@ export const createDeudaCashAction = withAction(async (
       input: body,
       user,
     }),
-    validatePeriod: () => withPeriodValidation(
-      () => operationDate,
-      async () => undefined,
-    )(undefined, user),
+    validatePeriod: async () => {
+      requireFeature(user, 'deudas-cash', 'crear deudas cash');
+      return withPeriodValidation(
+        () => operationDate,
+        async () => undefined,
+      )(undefined, user);
+    },
     write: () => AccountingCashOperationsMutationService.createCashDebt({
       input: body,
       user,
@@ -135,6 +138,7 @@ export const updateDeudaCashAction = withAction(async (
   user: AuthenticatedUser
 ) => {
   requireFeature(user, 'deudas-cash', 'editar deudas cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'editar deudas cash');
   const { id, ...data } = input
   const parsed = updateSchema.parse(data)
   const deuda = await AccountingCashOperationsMutationService.updateCashDebt({
@@ -149,7 +153,7 @@ export const registrarPagoDeudaAction = withAction(async (
   input: { id: string } & z.infer<typeof pagoSchema>,
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'deudas-cash', 'registrar pagos de deudas cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de deudas cash');
   const { id, ...body } = pagoSchema.parse(input);
   const paymentInput = { id, ...body };
   const resultado = await runCashCreateWithReplay({

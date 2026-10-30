@@ -62,6 +62,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: unknown, u
     }
 
     const tenantId = requireTenant(user);
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar deudas cash');
     const { searchParams } = new URL(request.url)
     const query = querySchema.parse({
       estado: searchParams.get('estado') || undefined,
@@ -132,6 +133,9 @@ export const GET = withAuthGet(async (request: NextRequest, _context: unknown, u
       }
     })
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
@@ -152,7 +156,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const tenantId = requireTenant(user);
-    requireFeature(user, 'deudas-cash', 'crear deudas cash');
     requirePermission(user, 'financiero.contabilidad.acceder', 'crear deudas cash');
     const rawBody = await request.json()
     const body = createSchema.parse(rawBody)
@@ -174,6 +177,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       })
       if (replay) return NextResponse.json({ deuda: replay }, { status: 201 })
     }
+
+    requireFeature(user, 'deudas-cash', 'crear deudas cash');
 
     // Preserve legacy date aliases for requests without replay keys; keyed requests use server time.
     const operationDate = idempotencyKey

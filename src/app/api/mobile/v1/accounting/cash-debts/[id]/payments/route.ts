@@ -1,7 +1,7 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requirePermission } from '@/lib/services/tenant-scope';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 
@@ -30,7 +30,7 @@ export async function POST(
   if ('status' in authResult) return authResult as Response;
 
   try {
-    requireFeature(authResult.user, 'deudas-cash', 'registrar pagos de deudas cash');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'registrar pagos de deudas cash');
     const { id } = await context.params;
     const body = await request.json();
     const input = { id, ...body };

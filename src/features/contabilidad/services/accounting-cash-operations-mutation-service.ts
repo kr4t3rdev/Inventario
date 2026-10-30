@@ -4,7 +4,7 @@ import { buildPersistedAccountingAmount } from '@/features/contabilidad/services
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
@@ -1062,6 +1062,8 @@ export const AccountingCashOperationsMutationService = {
         }
       }
 
+      requireFeature(user, 'deudas-cash', 'crear deudas cash');
+
       const proveedor = await tx.vendor.findFirst({
         where: { vendorId: input.proveedorId, tenantId },
         select: { vendorId: true, nombre: true },
@@ -1226,11 +1228,15 @@ export const AccountingCashOperationsMutationService = {
       throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
     }
 
-    const existing = await prisma.deudaCash.findFirst({ where: { id: input.id, deletedAt: null } });
+    const tenantId = requireTenant(user);
+
+    const existing = await prisma.deudaCash.findFirst({
+      where: { id: input.id, tenantId, deletedAt: null },
+    });
     if (!existing) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
 
     const deuda = await prisma.deudaCash.update({
-      where: { id: input.id },
+      where: { id: input.id, tenantId },
       data: {
         ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
         ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),
