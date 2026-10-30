@@ -200,17 +200,17 @@ export function CuadrePeriodoPageClient({
 				const partes: string[] = [];
 				if (pendientes.ventasSinReconciliar > 0)
 					partes.push(
-						`${pendientes.ventasSinReconciliar} venta(s) sin reconciliar`,
+						`${pendientes.ventasSinReconciliar} venta(s) por validar`,
 					);
 				if (pendientes.serviciosSinReconciliar > 0)
 					partes.push(
-						`${pendientes.serviciosSinReconciliar} servicio(s) sin reconciliar`,
+						`${pendientes.serviciosSinReconciliar} servicio(s) por validar`,
 					);
 				if (pendientes.gastosSinReconciliar > 0)
 					partes.push(
-						`${pendientes.gastosSinReconciliar} gasto(s) sin reconciliar`,
+						`${pendientes.gastosSinReconciliar} gasto(s) por validar`,
 					);
-				return `No se puede cerrar el período. Quedan ${partes.join(", ")}.`;
+				return `No se puede cerrar el período. Quedan ${partes.join(", ")} pendientes de validación. Revise los pagos registrados y los saldos asociados.`;
 			}
 			return null;
 		} catch {

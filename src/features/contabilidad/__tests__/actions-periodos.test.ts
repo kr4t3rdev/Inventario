@@ -34,6 +34,11 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 			create: vi.fn(),
 			update: vi.fn(),
 		},
+		venta: { findMany: vi.fn() },
+		ventaServicios: { findMany: vi.fn(), count: vi.fn() },
+		gastosDE: { findMany: vi.fn() },
+		gastoCompra: { findMany: vi.fn() },
+		compraServicio: { count: vi.fn(), findMany: vi.fn() },
 		auditoriaPeriodo: {
 			findMany: vi.fn(),
 			create: vi.fn(),
@@ -62,6 +67,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 		},
 		reconciliacionGasto: {
 			aggregate: vi.fn(),
+			findMany: vi.fn(),
 		},
 		ajusteBancario: {
 			aggregate: vi.fn(),
@@ -147,6 +153,7 @@ import {
 	obtenerTimelineAction,
 	abrirPeriodoAction,
 	cerrarPeriodoAction,
+	verificarOperacionesPendientesAction,
 	reabrirPeriodoAction,
 	aprobarPeriodoAction,
 	solicitarAperturaManualAction,
@@ -271,6 +278,14 @@ beforeEach(() => {
 	mockPrisma.compraDocumentoItem.findMany.mockResolvedValue([]);
 	mockPrisma.cuentaPorCobrar.findMany.mockResolvedValue([]);
 	mockPrisma.cuentaPorPagar.findMany.mockResolvedValue([]);
+	mockPrisma.venta.findMany.mockResolvedValue([]);
+	mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+	mockPrisma.ventaServicios.count.mockResolvedValue(0);
+	mockPrisma.gastosDE.findMany.mockResolvedValue([]);
+	mockPrisma.gastoCompra.findMany.mockResolvedValue([]);
+	mockPrisma.compraServicio.count.mockResolvedValue(0);
+		mockPrisma.compraServicio.findMany.mockResolvedValue([]);
+	mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([]);
 	mockPrisma.inyeccionCapital.findMany.mockResolvedValue([]);
 	checkpointMocks.collectFinancialAuxiliaryEvidence.mockResolvedValue({
 		bankAccounts: [],
@@ -626,6 +641,72 @@ describe("abrirPeriodoAction", () => {
 // ── Tests: cerrarPeriodoAction ────────────────────────────────────────────
 
 	describe("cerrarPeriodoAction", () => {
+	it("blocks a direct close when a sale has no verified reconciliation or open debt", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.ABIERTO,
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [],
+			factura: null,
+		}] as never);
+
+		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe("PERIOD_RECONCILIATION_PENDING");
+		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
+	});
+
+	it("allows a direct close when an unreconciled sale is fully explained by open CxC", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.ABIERTO,
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.count.mockResolvedValue(0);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [],
+			factura: {
+				idFactura: "invoice-1",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-1",
+					tenantId: TENANT,
+					facturaId: "invoice-1",
+					estado: "PENDIENTE",
+					montoDeuda: 4300,
+					montoPagado: 0,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 0,
+					fechaVencimiento: null,
+				},
+			},
+		}] as never);
+
+		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(result.success).toBe(true);
+		expect(mockPrisma.periodoContable.update).toHaveBeenCalled();
+	});
+
 	it("no invoca fórmulas legacy de agregación al cerrar un período anual", async () => {
 		const periodo = makePeriodo({
 			tipo: TipoPeriodo.ANUAL,
@@ -1185,6 +1266,308 @@ describe("abrirPeriodoAction", () => {
 		expect(result.success).toBe(false);
 		expect(expectActionFailure(result).error?.code).toBe("HIJOS_ABIERTOS");
 		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
+	});
+});
+
+describe("verificarOperacionesPendientesAction", () => {
+	it("keeps service costs blocked when reconciliation references lack amount and FX evidence", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.compraServicio.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			compraServicioId: "purchase-service-1",
+			total: 700,
+			moneda: "CUP",
+			createdAt: periodo.fechaInicio,
+		}] as never);
+		mockPrisma.ventaServicios.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			ventaServicioId: "sale-service-1",
+			costo: 300,
+			cantidad: 2,
+			moneda: "CUP",
+			createdAt: periodo.fechaInicio,
+			reconciliaciones: [],
+		}] as never);
+		mockPrisma.reconciliacionGasto.findMany
+			.mockResolvedValueOnce([{ referenciaId: "purchase-service-1" }] as never)
+			.mockResolvedValueOnce([{ referenciaId: "sale-service-1" }] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data?.gastosSinReconciliar).toBe(2);
+	});
+
+	it("accepts service costs only when reconciled amounts and CUP evidence match exactly", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.compraServicio.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			compraServicioId: "purchase-service-1",
+			total: 700,
+			moneda: "CUP",
+		}] as never);
+		mockPrisma.ventaServicios.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			ventaServicioId: "sale-service-1",
+			costo: 300,
+			cantidad: 2,
+			moneda: "CUP",
+			reconciliaciones: [],
+		}] as never);
+		const evidence = (amount: number) => ({
+			tenantId: TENANT,
+			tipoGasto: "servicio",
+			referenciaId: "purchase-service-1",
+			estado: "POSTED",
+			monto: amount,
+			montoConvertido: amount,
+			moneda: "CUP",
+			functionalCurrency: "CUP",
+			tasaCambio: null,
+			...buildAppliedFxEvidence({
+				originalAmount: amount,
+				originalCurrency: "CUP",
+				functionalCurrency: "CUP",
+				source: `period-close-${amount}`,
+			}),
+		});
+		mockPrisma.reconciliacionGasto.findMany
+			.mockResolvedValueOnce([evidence(700)] as never)
+			.mockResolvedValueOnce([{
+				...evidence(600),
+				tipoGasto: "venta_servicio",
+				referenciaId: "sale-service-1",
+			}] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data?.gastosSinReconciliar).toBe(0);
+	});
+
+	it("does not compare CUP payments to a non-CUP service sale's nominal amount", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		const evidence = buildAppliedFxEvidence({
+			originalAmount: 100,
+			originalCurrency: "CUP",
+			functionalCurrency: "CUP",
+			source: "unit-test-cup-settlement",
+		});
+		mockPrisma.ventaServicios.findMany
+			.mockResolvedValueOnce([{
+				tenantId: TENANT,
+				ventaServicioId: "usd-service-sale",
+				total: 100,
+				moneda: "USD",
+				reconciliaciones: [{
+					monto: 100,
+					montoConvertido: 100,
+					moneda: "CUP",
+					functionalCurrency: "CUP",
+					tasaCambio: null,
+					...evidence,
+				}],
+				cuentaPorCobrar: null,
+				factura: null,
+			}] as never)
+			.mockResolvedValueOnce([]);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data?.serviciosSinReconciliar).toBe(1);
+	});
+
+	it("keeps pending expense reconciliations blocked even when amounts and FX evidence match", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		const makePendingReconciliation = (amount: number, referenceId: string) => ({
+			referenciaId: referenceId,
+			estado: "PENDIENTE",
+			monto: amount,
+			montoConvertido: amount,
+			moneda: "CUP",
+			functionalCurrency: "CUP",
+			tasaCambio: null,
+			...buildAppliedFxEvidence({
+				originalAmount: amount,
+				originalCurrency: "CUP",
+				functionalCurrency: "CUP",
+				source: `pending-expense-${referenceId}`,
+			}),
+		});
+		mockPrisma.gastosDE.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			gastosDEId: "pending-gastos-de",
+			monto: 200,
+			isPagado: "NO",
+			cuentaPorPagar: null,
+			reconciliaciones: [makePendingReconciliation(200, "pending-gastos-de")],
+		}] as never);
+		mockPrisma.gastoCompra.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			gastoCompraId: "pending-gasto-compra",
+			total: 300,
+			deletedAt: null,
+			cuentaPorPagar: null,
+			reconciliaciones: [makePendingReconciliation(300, "pending-gasto-compra")],
+		}] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data?.gastosSinReconciliar).toBe(2);
+	});
+
+	it("permits one unpaid CxC and two fully linked unpaid CxP balances", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [],
+			factura: {
+				idFactura: "invoice-1",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-1",
+					tenantId: TENANT,
+					facturaId: "invoice-1",
+					estado: "PENDIENTE",
+					montoDeuda: 4300,
+					montoPagado: 0,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 0,
+					fechaVencimiento: null,
+				},
+			},
+		}] as never);
+		mockPrisma.gastosDE.findMany.mockResolvedValue([
+			{
+				tenantId: TENANT,
+				gastosDEId: "expense-1200",
+				monto: 1200,
+				isPagado: "NO",
+				reconciliaciones: [],
+				cuentaPorPagar: {
+					cuentaPorPagarId: "payable-1200",
+					tenantId: TENANT,
+					gastosDEId: "expense-1200",
+					estado: "PENDIENTE",
+					montoDeuda: 1200,
+					montoPagado: 0,
+					saldoPendiente: 1200,
+					moneda: "CUP",
+					deletedAt: null,
+				},
+			},
+			{
+				tenantId: TENANT,
+				gastosDEId: "expense-1100",
+				monto: 1100,
+				isPagado: null,
+				reconciliaciones: [],
+				cuentaPorPagar: {
+					cuentaPorPagarId: "payable-1100",
+					tenantId: TENANT,
+					gastosDEId: "expense-1100",
+					estado: "PENDIENTE",
+					montoDeuda: 1100,
+					montoPagado: 0,
+					saldoPendiente: 1100,
+					moneda: "CUP",
+					deletedAt: null,
+				},
+			},
+		] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data).toMatchObject({
+			ventasSinReconciliar: 0,
+			serviciosSinReconciliar: 0,
+			gastosSinReconciliar: 0,
+		});
+	});
+
+	it("does not count a directly linked fully unpaid receivable as a blocker", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [],
+			factura: {
+				idFactura: "invoice-1",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-1",
+					tenantId: TENANT,
+					facturaId: "invoice-1",
+					estado: "PENDIENTE",
+					montoDeuda: 4300,
+					montoPagado: 0,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 0,
+					fechaVencimiento: null,
+				},
+			},
+		}] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data).toMatchObject({
+			ventasSinReconciliar: 0,
+			serviciosSinReconciliar: 0,
+			gastosSinReconciliar: 0,
+		});
+	});
+
+	it("keeps a partially paid receivable blocked when a payment lacks reconciliation", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [],
+			factura: {
+				idFactura: "invoice-1",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-1",
+					tenantId: TENANT,
+					facturaId: "invoice-1",
+					estado: "PARCIAL",
+					montoDeuda: 4300,
+					montoPagado: 500,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 500,
+					fechaVencimiento: null,
+				},
+			},
+		}] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data?.ventasSinReconciliar).toBe(1);
 	});
 });
 

@@ -43,6 +43,11 @@ import {
 } from "@/features/contabilidad/services/financial-snapshot-v3-service";
 import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services/immutable-financial-evidence";
 import { buildAppliedFxEvidence, verifyAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
+import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
+import {
+	isPermittedOpenDebtForClose,
+	isReconciledAmountComplete,
+} from "@/features/contabilidad/services/period-close-reconciliation-guard";
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { insertarAsientoConNumeracion } from "@/features/contabilidad-formal/services/posting-engine";
 import { isFinancialV3CaptureEnabled } from "@/features/contabilidad/config/financial-v3-capture";
@@ -992,6 +997,21 @@ export const cerrarPeriodoAction = withAction(
 		// Managers y admins del tenant auto-aprueban al cerrar.
 			const { cerrado } = await prisma.$transaction(async (tx) => {
 				await acquireAccountingTenantLock(tx, tenantId);
+				const pendingOperations = await getPeriodClosePendingCounts(
+					tx,
+					tenantId,
+					periodo,
+				);
+				if (
+					pendingOperations.ventasSinReconciliar > 0 ||
+					pendingOperations.serviciosSinReconciliar > 0 ||
+					pendingOperations.gastosSinReconciliar > 0
+				) {
+					throw new ActionError(
+						"No se puede cerrar el período: existen operaciones sin reconciliar o cuya evidencia no permite validar su saldo pendiente.",
+						"PERIOD_RECONCILIATION_PENDING",
+					);
+				}
 				let resultadoCierre;
 
 				if (periodo.tipo === TipoPeriodo.ANUAL) {
@@ -1642,15 +1662,536 @@ export const obtenerOperacionesDiaAction = withAction(
 	},
 );
 
+type PeriodCloseReconciliationRow = {
+	estado?: string | null;
+	monto: unknown;
+	montoConvertido: unknown;
+	moneda: string | null;
+	functionalCurrency: string | null;
+	tasaCambio: unknown;
+	rateEffectiveAt: Date | null;
+	fxProvenanceKind: string | null;
+	fxProvenanceSource: string | null;
+	fxCatalogRateId: string | null;
+	fxEvidenceFingerprint: string | null;
+	fxEvidenceVersion: number | null;
+};
+
 /**
- * @description Verifica si quedan operaciones pendientes (sin reconciliar) en el período.
- *
- * Revisa ventas, servicios y gastos dentro del rango de fechas del período
- * que no tienen reconciliación bancaria asociada. Si hay alguna, el período
- * no puede cerrarse.
- *
- * @param {string} periodoId - ID del período contable.
- * @param {AuthenticatedUser} user - Usuario autenticado (inyectado por withAction).
+ * @description Resolves reconciliation rows only when their conversion evidence is valid in CUP.
+ * @param {PeriodCloseReconciliationRow[]} rows - Applied reconciliations for one transaction.
+ * @returns {number | null} Verified amount in CUP, or null if the currency/evidence is ambiguous.
+ */
+function getVerifiedReconciledAmountInCup(
+	rows: PeriodCloseReconciliationRow[],
+): number | null {
+	let total = 0;
+	for (const row of rows) {
+		if (row.functionalCurrency?.trim().toUpperCase() !== "CUP") return null;
+		const amount = resolveAppliedReconciliationAmount(row);
+		if (amount == null || amount <= 0) return null;
+		total += amount;
+	}
+	return total;
+}
+
+/**
+ * @description Determines whether an operation is safe to pass at period close.
+ * @param {Object} input - Operation amount, reconciliation evidence, and directly linked debt.
+ * @returns {boolean} True when the operation is fully reconciled or a verified debt explains it.
+ */
+function isPeriodCloseOperationResolved(input: {
+	tenantId: string;
+	amount: unknown;
+	reconciliations: PeriodCloseReconciliationRow[];
+	debt: {
+		tenantId: string;
+		state: string;
+		amount: unknown;
+		paidAmount: unknown;
+		linkedDirectly: boolean;
+	} | null;
+}): boolean {
+	const reconciledAmount = input.reconciliations.length === 0
+		? 0
+		: getVerifiedReconciledAmountInCup(input.reconciliations);
+	if (
+		reconciledAmount != null &&
+		isReconciledAmountComplete(input.amount, [reconciledAmount])
+	) {
+		return true;
+	}
+	return isPermittedOpenDebtForClose({
+		operationTenantId: input.tenantId,
+		operationAmount: input.amount,
+		debt: input.debt
+			? { ...input.debt, reconciledAmount: reconciledAmount ?? Number.NaN }
+			: null,
+	});
+}
+
+type PeriodCloseClient = Pick<
+	PrismaTypes.TransactionClient,
+	"venta" | "ventaServicios" | "gastosDE" | "gastoCompra" | "reconciliacionGasto" | "compraServicio"
+>;
+
+/**
+ * @description Counts close blockers while allowing only fully evidenced open receivables/payables.
+ * @param {PeriodCloseClient} db - Prisma client or transaction client used for a consistent read.
+ * @param {string} tenantId - Tenant whose period is being closed.
+ * @param {{ fechaInicio: Date; fechaFin: Date }} periodo - Period date range.
+ * @returns {Promise<{ ventasSinReconciliar: number; serviciosSinReconciliar: number; gastosSinReconciliar: number }>}
+ */
+async function getPeriodClosePendingCounts(
+	db: PeriodCloseClient,
+	tenantId: string,
+	periodo: { fechaInicio: Date; fechaFin: Date },
+): Promise<{
+	ventasSinReconciliar: number;
+	serviciosSinReconciliar: number;
+	gastosSinReconciliar: number;
+}> {
+	const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
+	const reconciliationSelect = {
+		monto: true,
+		montoConvertido: true,
+		moneda: true,
+		functionalCurrency: true,
+		tasaCambio: true,
+		rateEffectiveAt: true,
+		fxProvenanceKind: true,
+		fxProvenanceSource: true,
+		fxCatalogRateId: true,
+		fxEvidenceFingerprint: true,
+		fxEvidenceVersion: true,
+	} as const;
+	const gastoReconciliationSelect = { ...reconciliationSelect, estado: true } as const;
+	const [ventas, servicios, gastosDE, gastosCompra] = await Promise.all([
+		db.venta.findMany({
+			where: { tenantId, createdAt: rango, deletedAt: null },
+			select: {
+				tenantId: true,
+				total: true,
+				VentaServicios: {
+					select: {
+						tenantId: true,
+						ventaServicioId: true,
+						total: true,
+						cuentaPorCobrar: {
+							select: {
+								id: true,
+								tenantId: true,
+								ventaServicioId: true,
+								estado: true,
+								montoDeuda: true,
+								montoPagado: true,
+								monedaOriginal: true,
+								monedaFuncional: true,
+								montoDeudaFuncional: true,
+								montoPagadoFuncional: true,
+								fechaVencimiento: true,
+							},
+						},
+					},
+				},
+				reconciliaciones: { where: { tenantId }, select: reconciliationSelect },
+				factura: {
+					select: {
+						idFactura: true,
+						tenantId: true,
+						total: true,
+						cuentaPorCobrar: {
+							select: {
+								id: true,
+							tenantId: true,
+							facturaId: true,
+							estado: true,
+							montoDeuda: true,
+							montoPagado: true,
+							monedaOriginal: true,
+							monedaFuncional: true,
+							montoDeudaFuncional: true,
+							montoPagadoFuncional: true,
+							fechaVencimiento: true,
+						},
+						},
+					},
+				},
+			},
+		}),
+		db.ventaServicios.findMany({
+			where: { tenantId, createdAt: rango },
+			select: {
+				tenantId: true,
+				ventaServicioId: true,
+				total: true,
+				moneda: true,
+				reconciliaciones: { where: { tenantId }, select: reconciliationSelect },
+				cuentaPorCobrar: {
+					select: {
+						id: true,
+						tenantId: true,
+						ventaServicioId: true,
+						estado: true,
+						montoDeuda: true,
+						montoPagado: true,
+						monedaOriginal: true,
+						monedaFuncional: true,
+						montoDeudaFuncional: true,
+						montoPagadoFuncional: true,
+						fechaVencimiento: true,
+					},
+				},
+				factura: {
+					select: {
+						idFactura: true,
+						tenantId: true,
+						total: true,
+						cuentaPorCobrar: {
+							select: {
+								id: true,
+								tenantId: true,
+								facturaId: true,
+								estado: true,
+								montoDeuda: true,
+								montoPagado: true,
+								monedaOriginal: true,
+								monedaFuncional: true,
+								montoDeudaFuncional: true,
+								montoPagadoFuncional: true,
+								fechaVencimiento: true,
+							},
+						},
+					},
+				},
+			},
+		}),
+		db.gastosDE.findMany({
+			where: { tenantId, createdAt: rango },
+			select: {
+				tenantId: true,
+				gastosDEId: true,
+				monto: true,
+				isPagado: true,
+				reconciliaciones: { where: { tenantId }, select: gastoReconciliationSelect },
+				cuentaPorPagar: {
+					select: {
+						cuentaPorPagarId: true,
+						tenantId: true,
+						gastosDEId: true,
+						estado: true,
+						montoDeuda: true,
+						montoPagado: true,
+						saldoPendiente: true,
+						moneda: true,
+						deletedAt: true,
+					},
+				},
+			},
+		}),
+		db.gastoCompra.findMany({
+			where: { tenantId, createdAt: rango, deletedAt: null },
+			select: {
+				tenantId: true,
+				gastoCompraId: true,
+				total: true,
+				reconciliaciones: { where: { tenantId }, select: gastoReconciliationSelect },
+				cuentaPorPagar: {
+					select: {
+						cuentaPorPagarId: true,
+						tenantId: true,
+						gastoCompraId: true,
+						estado: true,
+						montoDeuda: true,
+						montoPagado: true,
+						saldoPendiente: true,
+						moneda: true,
+						deletedAt: true,
+					},
+				},
+			},
+		}),
+	]);
+
+	const isUnresolved = (operation: {
+		tenantId: string;
+		amount: unknown;
+		reconciliations: PeriodCloseReconciliationRow[];
+		sourceCurrency?: unknown;
+		requiresCupSource?: boolean;
+		requiresAppliedReconciliations?: boolean;
+		debt: {
+			tenantId: string;
+			state: string;
+			amount: unknown;
+			paidAmount: unknown;
+			linkedDirectly: boolean;
+		} | null;
+	}) => {
+		const appliedExpenseStates = new Set(["PAGADA", "PAGADO", "POSTED", "PARCIAL"]);
+		if (
+			operation.requiresAppliedReconciliations &&
+			operation.reconciliations.some((row) => !appliedExpenseStates.has(row.estado ?? ""))
+		) return true;
+		if (
+			operation.requiresCupSource &&
+			(typeof operation.sourceCurrency !== "string" ||
+				operation.sourceCurrency.trim().toUpperCase() !== "CUP")
+		) return true;
+		return !isPeriodCloseOperationResolved({
+			tenantId: operation.tenantId,
+			amount: operation.amount,
+			reconciliations: operation.reconciliations,
+			debt: operation.debt,
+		});
+	};
+
+	const ventasSinReconciliar = ventas.filter((venta) => {
+		const factura = venta.factura;
+		const invoiceDebt = factura?.cuentaPorCobrar;
+		const serviceDebts = venta.VentaServicios
+			.map((servicio) => servicio.cuentaPorCobrar)
+			.filter((debt) => debt !== null);
+		const debtCandidates = [
+			...(invoiceDebt ? [invoiceDebt] : []),
+			...serviceDebts,
+		];
+		const cuenta = debtCandidates.length === 1 ? debtCandidates[0] : null;
+		const invoiceLinked = Boolean(
+			cuenta && invoiceDebt && cuenta.id === invoiceDebt.id && factura &&
+			factura.tenantId === tenantId && invoiceDebt.facturaId === factura.idFactura &&
+			Math.abs(Number(factura.total) - Number(venta.total)) <= 0.01,
+		);
+		const serviceLinked = Boolean(
+			cuenta && serviceDebts.length === 1 &&
+			venta.VentaServicios.some((servicio) =>
+				servicio.cuentaPorCobrar?.id === cuenta.id &&
+				servicio.tenantId === tenantId &&
+				servicio.cuentaPorCobrar.tenantId === tenantId &&
+				servicio.cuentaPorCobrar.ventaServicioId === servicio.ventaServicioId &&
+				Math.abs(Number(servicio.total) - Number(venta.total)) <= 0.01,
+			),
+		);
+		const directlyLinked = Boolean(
+			cuenta && cuenta.tenantId === tenantId && (invoiceLinked || serviceLinked) &&
+			(!cuenta.monedaOriginal || cuenta.monedaOriginal.toUpperCase() === "CUP") &&
+			(!cuenta.monedaFuncional || cuenta.monedaFuncional.toUpperCase() === "CUP"),
+		);
+		return isUnresolved({
+			tenantId: venta.tenantId,
+			amount: venta.total,
+			reconciliations: venta.reconciliaciones,
+			debt: cuenta
+				? {
+					tenantId: cuenta.tenantId,
+					state: String(cuenta.estado),
+					amount: cuenta.montoDeuda,
+					paidAmount: cuenta.montoPagado,
+					linkedDirectly: directlyLinked,
+				}
+				: null,
+		});
+	});
+	const serviciosSinReconciliar = servicios.filter((servicio) => {
+		const directDebt = servicio.cuentaPorCobrar;
+		const invoiceDebt = servicio.factura?.cuentaPorCobrar;
+		const cuenta = directDebt ?? invoiceDebt;
+		const factura = servicio.factura;
+		const conflictingDebtLinks = Boolean(
+			directDebt && invoiceDebt && directDebt.id !== invoiceDebt.id,
+		);
+		const directlyLinked = Boolean(
+			cuenta && !conflictingDebtLinks && cuenta.tenantId === tenantId &&
+			((directDebt && directDebt.ventaServicioId === servicio.ventaServicioId) ||
+				(invoiceDebt && factura?.tenantId === tenantId &&
+					invoiceDebt.facturaId === factura.idFactura &&
+					Math.abs(Number(factura.total) - Number(servicio.total)) <= 0.01)) &&
+			(!cuenta.monedaOriginal || cuenta.monedaOriginal.toUpperCase() === "CUP") &&
+			(!cuenta.monedaFuncional || cuenta.monedaFuncional.toUpperCase() === "CUP"),
+		);
+		return isUnresolved({
+			tenantId: servicio.tenantId,
+			amount: servicio.total,
+			reconciliations: servicio.reconciliaciones,
+			sourceCurrency: servicio.moneda,
+			requiresCupSource: true,
+			debt: cuenta
+				? {
+					tenantId: cuenta.tenantId,
+					state: String(cuenta.estado),
+					amount: cuenta.montoDeuda,
+					paidAmount: cuenta.montoPagado,
+					linkedDirectly: directlyLinked,
+				}
+				: null,
+		});
+	});
+	const gastosDESinReconciliar = gastosDE.filter((gasto) => {
+		const cuenta = gasto.cuentaPorPagar;
+		const directlyLinked = Boolean(
+			cuenta && cuenta.tenantId === tenantId && cuenta.gastosDEId === gasto.gastosDEId &&
+			!cuenta.deletedAt && cuenta.moneda.toUpperCase() === "CUP" &&
+			Math.abs(
+				Number(cuenta.saldoPendiente) -
+					(Number(cuenta.montoDeuda) - Number(cuenta.montoPagado)),
+			) <= 0.01 &&
+			(!gasto.isPagado || gasto.isPagado.toUpperCase() === "NO"),
+		);
+		return isUnresolved({
+			tenantId: gasto.tenantId,
+			amount: gasto.monto,
+			reconciliations: gasto.reconciliaciones,
+			requiresAppliedReconciliations: true,
+			debt: cuenta
+				? {
+					tenantId: cuenta.tenantId,
+					state: String(cuenta.estado),
+					amount: cuenta.montoDeuda,
+					paidAmount: cuenta.montoPagado,
+					linkedDirectly: directlyLinked,
+				}
+				: null,
+		});
+	});
+	const gastosCompraSinReconciliar = gastosCompra.filter((gasto) => {
+		const cuenta = gasto.cuentaPorPagar;
+		const directlyLinked = Boolean(
+			cuenta && cuenta.tenantId === tenantId && cuenta.gastoCompraId === gasto.gastoCompraId &&
+			!cuenta.deletedAt && cuenta.moneda.toUpperCase() === "CUP" &&
+			Math.abs(
+				Number(cuenta.saldoPendiente) -
+					(Number(cuenta.montoDeuda) - Number(cuenta.montoPagado)),
+			) <= 0.01,
+		);
+		return isUnresolved({
+			tenantId: gasto.tenantId,
+			amount: gasto.total,
+			reconciliations: gasto.reconciliaciones,
+			requiresAppliedReconciliations: true,
+			debt: cuenta
+				? {
+					tenantId: cuenta.tenantId,
+					state: String(cuenta.estado),
+					amount: cuenta.montoDeuda,
+					paidAmount: cuenta.montoPagado,
+					linkedDirectly: directlyLinked,
+				}
+				: null,
+		});
+	});
+
+	const [comprasServicio, ventasServicioCosto] = await Promise.all([
+		db.compraServicio.findMany({
+			where: { tenantId, createdAt: rango },
+			select: { tenantId: true, compraServicioId: true, total: true, moneda: true },
+		}),
+		db.ventaServicios.findMany({
+			where: { tenantId, createdAt: rango, costo: { gt: 0 } },
+			select: {
+				tenantId: true,
+				ventaServicioId: true,
+				costo: true,
+				cantidad: true,
+				moneda: true,
+			},
+		}),
+	]);
+	const [reconciliacionesCompraServicio, reconciliacionesVentaServicio] = await Promise.all([
+		db.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "servicio",
+				fechaReconciliacion: rango,
+				referenciaId: { in: comprasServicio.map((row) => row.compraServicioId) },
+			},
+			select: {
+				tenantId: true, tipoGasto: true, referenciaId: true, estado: true,
+				...reconciliationSelect,
+			},
+		}),
+		db.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "venta_servicio",
+				fechaReconciliacion: rango,
+				referenciaId: { in: ventasServicioCosto.map((row) => row.ventaServicioId) },
+			},
+			select: {
+				tenantId: true, tipoGasto: true, referenciaId: true, estado: true,
+				...reconciliationSelect,
+			},
+		}),
+	]);
+	const appliedExpenseStates = new Set(["PAGADA", "PAGADO", "POSTED", "PARCIAL"]);
+	/**
+	 * @description Counts service costs not covered by exact, verified same-currency payments.
+	 * @param {Array<{ tenantId: string; id: string; amount: unknown; currency: string | null }>} operations - Costs in the period.
+	 * @param {"servicio" | "venta_servicio"} type - Reconciliation subtype that must match.
+	 * @param {typeof reconciliacionesCompraServicio} rows - Persisted reconciliation evidence.
+	 * @returns {number} Number of costs whose full payment evidence cannot be verified.
+	 */
+	const countUnverifiedCost = (
+		operations: Array<{
+			tenantId: string;
+			id: string;
+			amount: unknown;
+			currency: string | null;
+		}>,
+		type: "servicio" | "venta_servicio",
+		rows: typeof reconciliacionesCompraServicio,
+	) => operations.filter((operation) => {
+		if (operation.tenantId !== tenantId || operation.currency?.toUpperCase() !== "CUP") {
+			return true;
+		}
+		const matched = rows.filter((row) =>
+			row.tenantId === tenantId && row.tipoGasto === type && row.referenciaId === operation.id,
+		);
+		if (matched.length === 0 || matched.some((row) => !appliedExpenseStates.has(row.estado))) {
+			return true;
+		}
+		const amounts = matched.map((row) => {
+			if (row.functionalCurrency?.trim().toUpperCase() !== "CUP") return null;
+			return resolveAppliedReconciliationAmount(row);
+		});
+		return amounts.some((amount) => amount == null || amount <= 0) ||
+			!isReconciledAmountComplete(operation.amount, amounts);
+	});
+	const compraServicioSinReconciliar = countUnverifiedCost(
+		comprasServicio.map((row) => ({
+			tenantId: row.tenantId,
+			id: row.compraServicioId,
+			amount: row.total,
+			currency: row.moneda,
+		})),
+		"servicio",
+		reconciliacionesCompraServicio,
+	).length;
+	const ventaServicioCostoSinReconciliar = countUnverifiedCost(
+		ventasServicioCosto.map((row) => ({
+			tenantId: row.tenantId,
+			id: row.ventaServicioId,
+			amount: Number(row.costo) * Number(row.cantidad),
+			currency: row.moneda,
+		})),
+		"venta_servicio",
+		reconciliacionesVentaServicio,
+	).length;
+
+	return {
+		ventasSinReconciliar: ventasSinReconciliar.length,
+		serviciosSinReconciliar: serviciosSinReconciliar.length,
+		gastosSinReconciliar:
+			gastosDESinReconciliar.length +
+			gastosCompraSinReconciliar.length +
+			compraServicioSinReconciliar +
+			ventaServicioCostoSinReconciliar,
+	};
+}
+
+/**
+ * @description Verifies close blockers, allowing only directly linked open debt with no unverified payment.
+ * @param {string} periodoId - Accounting period ID.
+ * @param {AuthenticatedUser} user - Authenticated user injected by withAction.
  * @returns {Promise<{ ventasSinReconciliar: number; serviciosSinReconciliar: number; gastosSinReconciliar: number }>}
  */
 export const verificarOperacionesPendientesAction = withAction(
@@ -1665,101 +2206,6 @@ export const verificarOperacionesPendientesAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
-		const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
-
-		// Ventas sin reconciliar
-		const ventasSinReconciliar = await prisma.venta.count({
-			where: {
-				tenantId,
-				createdAt: rango,
-				deletedAt: null,
-				reconciliaciones: { none: {} },
-			},
-		});
-
-		// Servicios sin reconciliar
-		const serviciosSinReconciliar = await prisma.ventaServicios.count({
-			where: {
-				tenantId,
-				createdAt: rango,
-				reconciliaciones: { none: {} },
-			},
-		});
-
-		// Gastos sin reconciliar (GastosDE + GastoCompra)
-		const gastosSinReconciliar =
-			(await prisma.gastosDE.count({
-				where: {
-					tenantId,
-					createdAt: rango,
-					reconciliaciones: { none: {} },
-				},
-			})) +
-			(await prisma.gastoCompra.count({
-				where: {
-					tenantId,
-					createdAt: rango,
-					deletedAt: null,
-					reconciliaciones: { none: {} },
-				},
-			}));
-
-		// CompraServicio sin reconciliar (vía ReconciliacionGasto tipoGasto="servicio")
-		const reconciliadosCS = await prisma.reconciliacionGasto.findMany({
-			where: {
-				tenantId,
-				tipoGasto: "servicio",
-				fechaReconciliacion: rango,
-			},
-			select: { referenciaId: true },
-			distinct: ["referenciaId"],
-		});
-		const idsReconciliadosCS = reconciliadosCS
-			.map((r) => r.referenciaId)
-			.filter(Boolean);
-		const compraServicioSinReconciliar = await prisma.compraServicio.count({
-			where: {
-				tenantId,
-				createdAt: rango,
-				compraServicioId:
-					idsReconciliadosCS.length > 0
-						? { notIn: idsReconciliadosCS }
-						: undefined,
-			},
-		});
-
-		// Costo de servicios vendidos sin reconciliar (vía ReconciliacionGasto tipoGasto="venta_servicio")
-		const reconciliadosVSCosto = await prisma.reconciliacionGasto.findMany({
-			where: {
-				tenantId,
-				tipoGasto: "venta_servicio",
-				fechaReconciliacion: rango,
-			},
-			select: { referenciaId: true },
-			distinct: ["referenciaId"],
-		});
-		const idsReconciliadosVSCosto = reconciliadosVSCosto
-			.map((r) => r.referenciaId)
-			.filter(Boolean);
-		const ventaServicioCostoSinReconciliar = await prisma.ventaServicios.count({
-			where: {
-				tenantId,
-				createdAt: rango,
-				costo: { gt: 0 },
-				ventaServicioId:
-					idsReconciliadosVSCosto.length > 0
-						? { notIn: idsReconciliadosVSCosto }
-						: undefined,
-			},
-		});
-
-		return {
-			ventasSinReconciliar,
-			serviciosSinReconciliar,
-			gastosSinReconciliar:
-				gastosSinReconciliar +
-				compraServicioSinReconciliar +
-				ventaServicioCostoSinReconciliar,
-		};
+		return getPeriodClosePendingCounts(prisma, tenantId, periodo);
 	},
 );
