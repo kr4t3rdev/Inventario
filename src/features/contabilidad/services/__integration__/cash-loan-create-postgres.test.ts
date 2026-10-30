@@ -109,6 +109,7 @@ function createDebt(overrides: DebtCreateOverrides) {
     userId: overrides.userId ?? userDebtId,
     tenantId,
     tenantRole: 'manager',
+    planFeatures: { 'deudas-cash': true },
   } as AuthenticatedUser;
 
   return withTestTenant(tenantId, () =>
