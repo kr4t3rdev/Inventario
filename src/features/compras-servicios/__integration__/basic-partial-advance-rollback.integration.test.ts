@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectActionFailure } from '@/test/action-response';
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { verifyAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import {
   assertDisposableDatabase,
   assertDisposableDatabaseIdentity,
@@ -15,6 +16,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 const suffix = crypto.randomUUID().replaceAll('-', '');
 const tenantName = `basic_partial_advance_${suffix}`;
 const email = `${tenantName}@test.local`;
+const fxCurrencyCode = `FX${suffix.slice(0, 6).toUpperCase()}`;
 
 let prisma!: typeof import('@/lib/prisma').prisma;
 let createCompraServicioAction!: typeof import('../actions').createCompraServicioAction;
@@ -24,6 +26,7 @@ let servicioId = '';
 let cuentaId = '';
 let tipoPagoId = '';
 let anticipoId = '';
+let rateId = '';
 
 function basicUser(): AuthenticatedUser {
   return {
@@ -36,6 +39,13 @@ function basicUser(): AuthenticatedUser {
     tenantRole: 'manager',
     planFeatures: { servicios: true, 'cuentas-pagar': false },
     permissions: new Set(['compras.servicios.crear']),
+  };
+}
+
+function proUser(): AuthenticatedUser {
+  return {
+    ...basicUser(),
+    planFeatures: { servicios: true, 'cuentas-pagar': true },
   };
 }
 
@@ -64,8 +74,35 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
       data: { name: 'Basic integration actor', email, password: 'integration-only-placeholder' },
     });
     userId = user.userId;
+    await prisma.moneda.upsert({
+      where: { codigo: 'CUP' },
+      update: {},
+      create: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP', esPrincipal: true },
+    });
+    await prisma.moneda.create({
+      data: { codigo: fxCurrencyCode, nombre: 'Integration FX', simbolo: fxCurrencyCode },
+    });
+    await prisma.tenantAccountingPolicy.create({
+      data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId },
+    });
+    const rateEffectiveAt = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const rate = await prisma.tasaCambio.create({
+      data: {
+        monedaOrigenId: fxCurrencyCode,
+        monedaDestino: 'CUP',
+        tasa: 24,
+        fechaVigencia: rateEffectiveAt,
+      },
+    });
+    rateId = rate.tasaId;
     const servicio = await prisma.servicios.create({
-      data: { tenantId, nombre: 'Servicio de prueba', precio: 100, descripcion: 'Fixture' },
+      data: {
+        tenantId,
+        nombre: 'Servicio de prueba',
+        precio: 100,
+        descripcion: 'Fixture',
+        moneda: fxCurrencyCode,
+      },
     });
     servicioId = servicio.servicioId;
     const cuenta = await prisma.cuentaBancaria.create({
@@ -81,7 +118,7 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
         estado: 'RESERVADO',
         montoOriginal: 100,
         saldoDisponible: 100,
-        moneda: 'CUP',
+        moneda: fxCurrencyCode,
         cuentaOrigenId: cuentaId,
         tipoPagoOrigenId: tipoPagoId,
         createdById: userId,
@@ -94,6 +131,7 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
   afterAll(async () => {
     if (!prisma) return;
     if (tenantId) {
+      await prisma.transaccionMoneda.deleteMany({ where: { tenantId } });
       await prisma.reconciliacionGasto.deleteMany({ where: { tenantId } });
       await prisma.anticipoMovimiento.deleteMany({ where: { anticipoId } });
       await prisma.compraServicio.deleteMany({ where: { tenantId } });
@@ -101,13 +139,17 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
       await prisma.tipoPago.deleteMany({ where: { tenantId } });
       await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
       await prisma.servicios.deleteMany({ where: { tenantId } });
+      await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
       await prisma.tenant.deleteMany({ where: { tenantId } });
     }
     if (userId) await prisma.user.deleteMany({ where: { userId } });
+    if (rateId) await prisma.tasaCambio.deleteMany({ where: { tasaId: rateId } });
+    await prisma.moneda.deleteMany({ where: { codigo: fxCurrencyCode } });
     await prisma.$disconnect();
   });
 
   it('rolls back the service, reconciliation, and advance consumption when Basic cannot carry a balance', async () => {
+    vi.mocked(getCurrentUser).mockImplementation(async () => basicUser());
     const beforeMovementCount = await prisma.anticipoMovimiento.count({ where: { anticipoId } });
 
     const result = await createCompraServicioAction({
@@ -127,5 +169,45 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
     const advance = await prisma.anticipo.findUniqueOrThrow({ where: { anticipoId } });
     expect(Number(advance.saldoDisponible)).toBe(100);
     expect(advance.estado).toBe('RESERVADO');
+  });
+
+  it('persists complete FX evidence for a successful USD advance reconciliation in PostgreSQL', async () => {
+    vi.mocked(getCurrentUser).mockImplementation(async () => proUser());
+
+    const result = await createCompraServicioAction({
+      servicioId,
+      costoUnitario: 100,
+      cantidad: 1,
+      formaPago: 'ANTICIPO_PAGO',
+      estado: 'PAGADA',
+      anticipos: [{ anticipoId, montoAplicado: 100 }],
+    });
+
+    expect(result.success).toBe(true);
+    const purchase = await prisma.compraServicio.findFirstOrThrow({ where: { tenantId } });
+    const reconciliation = await prisma.reconciliacionGasto.findFirstOrThrow({
+      where: { tenantId, referenciaId: purchase.compraServicioId },
+    });
+    expect(reconciliation.moneda).toBe(fxCurrencyCode);
+    expect(reconciliation.functionalCurrency).toBe('CUP');
+    expect(Number(reconciliation.tasaCambio)).toBe(24);
+    expect(Number(reconciliation.montoConvertido)).toBe(2400);
+    expect(reconciliation.rateEffectiveAt).toBeInstanceOf(Date);
+    expect(reconciliation.fxProvenanceKind).toBeTruthy();
+    expect(reconciliation.fxProvenanceSource).toBe('accounting-reconciliation-service');
+    expect(reconciliation.fxEvidenceVersion).toBe(1);
+    expect(verifyAppliedFxEvidence({
+      originalAmount: Number(reconciliation.monto),
+      originalCurrency: reconciliation.moneda,
+      functionalCurrency: reconciliation.functionalCurrency ?? '',
+      convertedAmount: Number(reconciliation.montoConvertido),
+      exchangeRate: Number(reconciliation.tasaCambio),
+      rateEffectiveAt: reconciliation.rateEffectiveAt,
+      fxProvenanceKind: reconciliation.fxProvenanceKind,
+      fxProvenanceSource: reconciliation.fxProvenanceSource,
+      fxCatalogRateId: reconciliation.fxCatalogRateId,
+      fxEvidenceFingerprint: reconciliation.fxEvidenceFingerprint,
+      fxEvidenceVersion: reconciliation.fxEvidenceVersion,
+    })).toBe(true);
   });
 });
