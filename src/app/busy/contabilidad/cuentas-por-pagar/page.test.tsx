@@ -34,7 +34,8 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
     vi.clearAllMocks();
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan no incluye cuentas por pagar', async () => {
+  it('carga la consulta de CxP cuando el plan no permite crear cuentas por pagar', async () => {
+    const { getCuentasPorPagarAction } = await import('@/features/contabilidad');
     useAuthMock.mockReturnValue({
       user: {
         role: 'regularUser',
@@ -46,8 +47,9 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
     render(<CuentasPorPagarPage />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
+      expect(vi.mocked(getCuentasPorPagarAction)).toHaveBeenCalledTimes(1);
     });
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('debounce: teclear 3 letras de búsqueda dispara solo una consulta extra', async () => {
