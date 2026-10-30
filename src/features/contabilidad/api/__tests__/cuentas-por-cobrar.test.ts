@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getCuentasPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
+import {
+  getCuentasPorCobrarAction,
+  getCxcMetricsAction,
+} from '@/features/contabilidad/actions-cuentas'
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
@@ -37,6 +40,65 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
     expect(prismaMock.cuentaPorCobrar.findMany).not.toHaveBeenCalled()
   })
 
+  it('permite a Básico consultar CxC existentes sin habilitar su creación', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-basic',
+      tenantId: 'tenant-1',
+      name: 'Basic user',
+      email: 'basic@test.com',
+      role: 'manager' as const,
+      isActive: true,
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': false },
+    })
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([])
+    prismaMock.cuentaPorCobrar.count.mockResolvedValue(0)
+
+    const result = await getCuentasPorCobrarAction({})
+
+    expect(result.success).toBe(true)
+    expect(prismaMock.cuentaPorCobrar.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-1' }) }),
+    )
+  })
+
+  it('rechaza consultas de CxC sin el permiso de contabilidad', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-basic',
+      tenantId: 'tenant-1',
+      name: 'Basic user',
+      email: 'basic@test.com',
+      role: 'manager' as const,
+      isActive: true,
+      permissions: new Set<string>(),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': false },
+    })
+
+    const result = await getCuentasPorCobrarAction({})
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN')
+    expect(prismaMock.cuentaPorCobrar.findMany).not.toHaveBeenCalled()
+  })
+
+  it('rechaza métricas de CxC sin el permiso de contabilidad', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-basic',
+      tenantId: 'tenant-1',
+      name: 'Basic user',
+      email: 'basic@test.com',
+      role: 'manager' as const,
+      isActive: true,
+      permissions: new Set<string>(),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': false },
+    })
+
+    const result = await getCxcMetricsAction({})
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN')
+  })
+
   it('calcula totalPagadoFactura y saldoFactura normalizando pagos multi-moneda', async () => {
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-123',
@@ -45,7 +107,8 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
-      planFeatures: { 'cuentas-cobrar': true },
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
@@ -99,7 +162,8 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
-      planFeatures: { 'cuentas-cobrar': true },
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
@@ -142,7 +206,8 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
-      planFeatures: { 'cuentas-cobrar': true },
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { contabilidad: true, 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([])

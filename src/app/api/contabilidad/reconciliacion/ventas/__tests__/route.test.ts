@@ -28,7 +28,12 @@ vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
 }));
 
+const hasPermissionMock = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@/lib/services/tenant-scope', () => ({
+  hasFeature: vi.fn((user: { role?: string; planFeatures?: Record<string, boolean> }, feature: string) =>
+    user.role === 'admin' || user.planFeatures?.[feature] === true,
+  ),
+  hasPermission: hasPermissionMock,
   requireTenant: vi.fn((user: { tenantId?: string }) => {
     if (!user.tenantId) {
       throw new Error('Se requiere una membresía de empresa activa para acceder a este recurso');
@@ -50,7 +55,7 @@ vi.mock('@/lib/services/validate-period-write', () => ({
 
 import prisma from '@/lib/prisma';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { hasPermission, requireTenant } from '@/lib/services/tenant-scope';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 import { GET, POST } from '../route';
 
@@ -72,6 +77,21 @@ function getSqlText(query: unknown): string {
 describe('web accounting reconciliation sales route - GET', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(hasPermission).mockReturnValue(true);
+  });
+
+  it('rejects reads when the user lacks accounting permission', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { userId: 'qa-user', tenantId: 'tenant-user' },
+    } as never);
+    vi.mocked(hasPermission).mockReturnValue(false);
+
+    const response = await GET(
+      new NextRequest('http://localhost/api/contabilidad/reconciliacion/ventas'),
+    );
+
+    expect(response.status).toBe(403);
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
   it('filtra ventas pendientes por tenantId del usuario autenticado', async () => {
@@ -143,11 +163,80 @@ describe('web accounting reconciliation sales route - GET', () => {
       }),
     );
   });
+
+  it('prevents creating a new receivable in a plan without accounts receivable', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { userId: 'qa-user', tenantId: 'tenant-user', planFeatures: { 'cuentas-cobrar': false } },
+    } as never);
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never);
+    vi.mocked(prisma.venta.findFirst).mockResolvedValue({
+      ventaId: 'venta-own', tenantId: 'tenant-user', total: 100, clienteId: 'cliente-own',
+      ordenId: 'orden-own', factura: null, cliente: null,
+    } as never);
+    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
+      cuentaId: 'cuenta-own', tenantId: 'tenant-user', isActive: true, moneda: 'CUP', saldo: 0,
+    } as never);
+    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue({
+      tipoId: 'tipo-own', tenantId: 'tenant-user', isActive: true,
+      requiereCuenta: false, cuentaDefecto: null,
+    } as never);
+    const transactionClient = {
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      cuentaBancaria: {
+        findFirst: vi.fn().mockResolvedValue({
+          cuentaId: 'cuenta-own', tenantId: 'tenant-user', isActive: true, moneda: 'CUP', saldo: 0,
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      reconciliacionVenta: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+        create: vi.fn().mockResolvedValue({ reconciliacionId: 'rec-own' }),
+      },
+      cuentaPorCobrar: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(transactionClient as never),
+    );
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/contabilidad/reconciliacion/ventas', {
+        method: 'POST',
+        body: JSON.stringify({ ventaId: 'venta-own', cuentaId: 'cuenta-own', tipoPagoId: 'tipo-own', monto: 20 }),
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(transactionClient.cuentaPorCobrar.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('web accounting reconciliation sales route - POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(hasPermission).mockReturnValue(true);
+  });
+
+  it('rejects payment when the user lacks accounting permission', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { userId: 'qa-user', tenantId: 'tenant-user' },
+    } as never);
+    vi.mocked(hasPermission).mockReturnValue(false);
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/contabilidad/reconciliacion/ventas', {
+        method: 'POST',
+        body: JSON.stringify({
+          ventaId: 'venta-own',
+          cuentaId: 'cuenta-own',
+          tipoPagoId: 'tipo-own',
+          monto: 20,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('scopea todas las lecturas iniciales al tenant autenticado', async () => {

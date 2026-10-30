@@ -10,7 +10,7 @@
 
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
@@ -391,7 +391,8 @@ export const getCuentasPorCobrarAction = withAction(
 		input: GetCuentasPorCobrarInput,
 		user: AuthenticatedUser,
 	): Promise<GetCuentasPorCobrarResult> => {
-		requireFeature(user, 'cuentas-cobrar', 'consultar cuentas por cobrar');
+		requireFeature(user, 'contabilidad', 'consultar las cuentas por cobrar existentes');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar las cuentas por cobrar');
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorCobrarSchema.parse(input);
 
@@ -598,7 +599,8 @@ export const getCxcMetricsAction = withAction(
 		_input: Record<string, never>,
 		user: AuthenticatedUser,
 	): Promise<CxcMetrics> => {
-		requireFeature(user, 'cuentas-cobrar', 'ver métricas de cuentas por cobrar');
+		requireFeature(user, 'contabilidad', 'consultar los saldos de cuentas por cobrar');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar los saldos de cuentas por cobrar');
 		const tenantId = requireTenant(user);
 
 		return AccountingAccountsService.getReceivablesMetrics({ tenantId });
@@ -617,7 +619,8 @@ export const getCuentasPorPagarAction = withAction(
 		input: GetCuentasPorPagarInput,
 		user: AuthenticatedUser,
 	): Promise<GetCuentasPorPagarResult> => {
-		requireFeature(user, 'cuentas-pagar', 'consultar cuentas por pagar');
+		requireFeature(user, 'contabilidad', 'consultar las cuentas por pagar existentes');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar las cuentas por pagar');
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorPagarSchema.parse(input);
 

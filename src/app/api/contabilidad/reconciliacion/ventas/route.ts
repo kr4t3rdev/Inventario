@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { hasFeature, hasPermission, requireTenant } from "@/lib/services/tenant-scope";
 import {
 	validarEscrituraPeriodo,
 	extraerFechaDeBody,
@@ -125,6 +125,12 @@ export async function GET(request: NextRequest) {
 		if ("status" in authResultUser) return authResultUser as Response;
 		const user = authResultUser.user;
 		const tenantId = requireTenant(user);
+		if (!hasPermission(user, "financiero.contabilidad.acceder")) {
+			return NextResponse.json(
+				{ error: "No tienes permiso para acceder a contabilidad", code: "FORBIDDEN" },
+				{ status: 403 },
+			);
+		}
 
 		const { searchParams } = new URL(request.url);
 		const fechaDesde =
@@ -383,6 +389,12 @@ export async function POST(request: NextRequest) {
 		if ("status" in authResultUser) return authResultUser as Response;
 		const user = authResultUser.user;
 		const tenantId = requireTenant(user);
+		if (!hasPermission(user, "financiero.contabilidad.acceder")) {
+			return NextResponse.json(
+				{ error: "No tienes permiso para acceder a contabilidad", code: "FORBIDDEN" },
+				{ status: 403 },
+			);
+		}
 
 		const body = await request.json();
 		const validatedData = reconciliacionVentaSchema.parse(body);
@@ -838,6 +850,13 @@ export async function POST(request: NextRequest) {
 							},
 						});
 					} else if (saldoRestante > 0.01) {
+						if (!hasFeature(user, "cuentas-cobrar")) {
+							throw createReconciliacionError(
+								403,
+								"FEATURE_NOT_AVAILABLE",
+								"El plan actual no permite crear nuevas cuentas por cobrar.",
+							);
+						}
 						// Crear nueva CxC solo si hay deuda pendiente y no existe registro
 						await tx.cuentaPorCobrar.create({
 							data: {
