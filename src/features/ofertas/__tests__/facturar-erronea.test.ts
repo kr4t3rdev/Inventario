@@ -8,7 +8,8 @@ import { expectActionFailure, expectActionSuccess } from "@/test/action-response
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/features/ventas/services/facturacion-workflow', () => ({
+vi.mock('@/features/ventas/services/facturacion-workflow', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/ventas/services/facturacion-workflow')>()),
   applyFacturacionCobroWorkflow: vi.fn(),
 }));
 vi.mock('@/lib/services/anticipos-workflow', () => ({

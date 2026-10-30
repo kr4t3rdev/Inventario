@@ -22,7 +22,8 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
 }));
-vi.mock('@/features/ventas/services/facturacion-workflow', () => ({
+vi.mock('@/features/ventas/services/facturacion-workflow', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/features/ventas/services/facturacion-workflow')>()),
 	applyFacturacionCobroWorkflow: vi.fn(),
 }));
 
