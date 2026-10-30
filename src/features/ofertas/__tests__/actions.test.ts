@@ -6,7 +6,10 @@ import { expectActionFailure, expectActionSuccess } from "@/test/action-response
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/features/ventas/services/facturacion-workflow', () => ({ applyFacturacionCobroWorkflow: vi.fn() }));
+vi.mock('@/features/ventas/services/facturacion-workflow', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/ventas/services/facturacion-workflow')>();
+  return { ...actual, applyFacturacionCobroWorkflow: vi.fn() };
+});
 vi.mock('@/lib/services/anticipos-workflow', () => ({ applyAnticipoAllocations: vi.fn() }));
 vi.mock('@/features/turnos-pos', () => ({ getOrCreateTurnoActivo: vi.fn() }));
 vi.mock('@/lib/services/fifo-allocation', () => ({ allocateFifoForSale: vi.fn() }));
@@ -297,6 +300,61 @@ describe('Ofertas Server Actions', () => {
   });
 
   describe('facturarOfertaAction', () => {
+		it('bloquea facturar oferta a plazo cuando Básico no incluye CxC', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: 'manager',
+				planFeatures: { ofertas: true, 'cuentas-cobrar': false },
+			} as AuthenticatedUser);
+
+			const result = await facturarOfertaAction({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tipoVencimiento: 'plazo',
+				fechaVencimiento: '2026-11-15',
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
+		it('does not gate a workflow alias that normalizes to immediate payment', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: 'manager',
+				planFeatures: { ofertas: true, 'cuentas-cobrar': false },
+			} as AuthenticatedUser);
+
+			const result = await facturarOfertaAction({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tipoVencimiento: 'contraentrega',
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).not.toBe('FEATURE_NOT_AVAILABLE');
+		});
+
+		it('blocks a blank maturity alias when a due date means the invoice is on credit', async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: 'manager',
+				planFeatures: { ofertas: true, 'cuentas-cobrar': false },
+			} as AuthenticatedUser);
+
+			const result = await facturarOfertaAction({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tipoVencimiento: '',
+				fechaVencimiento: '2026-11-15',
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE');
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
     it('factura oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({

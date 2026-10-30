@@ -14,6 +14,7 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
 import { facturarOfertaWorkflow } from './services/facturar-oferta-workflow';
+import { normalizeTipoVencimiento } from '@/features/ventas/services/facturacion-workflow';
 import {
   getOfertaForTenant,
   listOfertasForTenant,
@@ -326,6 +327,12 @@ export const duplicarOfertaAction = withAction(async (ofertaId: string, user: Au
 export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = facturarOfertaSchema.parse(input);
+  const requestedMaturity = normalizeTipoVencimiento(
+    parsed.tipoVencimiento || (parsed.fechaVencimiento ? 'fecha' : undefined),
+  );
+  if (requestedMaturity !== 'contra_pago') {
+    requireFeature(user, 'cuentas-cobrar', 'crear facturas de oferta con saldo pendiente');
+  }
   const tenantId = requireTenant(user);
   await expirarOfertasVencidas(tenantId);
 

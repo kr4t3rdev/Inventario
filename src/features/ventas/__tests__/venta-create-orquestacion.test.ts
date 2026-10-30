@@ -99,6 +99,56 @@ beforeEach(() => {
 });
 
 describe('create como orquestador del ciclo (PVE-T3)', () => {
+	it('blocks a sale that would create a receivable when CxC is not included in the plan', async () => {
+		const basicUser = {
+			...adminUser,
+			role: 'manager',
+			planFeatures: {
+				'ventas-pos': true,
+				facturacion: true,
+				'ventas-factura': true,
+				'cuentas-cobrar': false,
+			},
+		};
+
+		await expect(VentaMutationService.create({
+			input: {
+				puntoDeVentaId: 'pv-1', clienteId: 'c-1', items,
+				metodoPago: 'CREDITO', tipoVencimiento: 'plazo', fechaVencimiento: '2026-11-15',
+			},
+			user: basicUser as AuthenticatedUser,
+		})).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' });
+		expect(prisma.$transaction).not.toHaveBeenCalled();
+	});
+
+	it('does not gate residual credit fields in order mode that does not create an invoice', async () => {
+		const basicUser = {
+			...adminUser,
+			role: 'manager',
+			planFeatures: {
+				'ventas-pos': true,
+				facturacion: true,
+				'ventas-factura': true,
+				'cuentas-cobrar': false,
+			},
+		};
+
+		const result = await VentaMutationService.create({
+			input: {
+				puntoDeVentaId: 'pv-1', clienteId: 'c-1', items,
+				modoPedido: true, metodoPago: 'CREDITO', tipoVencimiento: 'plazo',
+				fechaVencimiento: '2026-11-15',
+			},
+			user: basicUser as AuthenticatedUser,
+		});
+
+		expect(result).toEqual({ ventaId: 'v-1' });
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({ data: expect.objectContaining({ estado: 'PEDIDO', metodoPago: null }) }),
+		);
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+	});
+
 	it('flujo clásico con cliente y plan de facturación termina FACTURADA', async () => {
 		const result = await VentaMutationService.create({
 			input: {

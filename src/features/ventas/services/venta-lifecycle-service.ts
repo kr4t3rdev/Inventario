@@ -265,6 +265,11 @@ export const VentaLifecycleService = {
     requirePermission(user, 'ventas.pedido.gestionar', 'facturar pedidos de venta');
     const tenantId = requireTenant(user);
     const parsed = facturarVentaSchema.parse(input ?? {});
+    const requestedMaturity = parsed.tipoVencimiento
+      ?? (parsed.fechaVencimiento ? 'fecha' : null);
+    if (requestedMaturity && requestedMaturity !== 'contra_pago') {
+      requireFeature(user, 'cuentas-cobrar', 'crear facturas con saldo pendiente');
+    }
 
     const venta = await prisma.venta.findUnique({
       where: { ventaId },
