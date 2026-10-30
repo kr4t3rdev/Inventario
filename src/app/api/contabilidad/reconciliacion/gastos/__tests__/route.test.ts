@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('@/lib/prisma', () => ({
   default: {

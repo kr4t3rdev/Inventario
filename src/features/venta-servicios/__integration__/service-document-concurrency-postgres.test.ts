@@ -190,6 +190,22 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
     }, { timeout: 3000, interval: 20 });
   }
 
+  /**
+   * @description Waits until the expected number of transaction-scoped advisory lock requests exists.
+   * @param {number} count - Minimum number of blocked advisory lock requests.
+   * @returns {Promise<void>} Resolves only after contention is visible.
+   */
+  async function waitForAnyAdvisoryWaiters(count: number): Promise<void> {
+    await vi.waitFor(async () => {
+      const rows = await observer.$queryRaw<Array<{ count: bigint }>>`
+        SELECT count(*) FROM pg_locks
+        WHERE locktype = 'advisory' AND NOT granted
+          AND database = (SELECT oid FROM pg_database WHERE datname = current_database())
+      `;
+      expect(Number(rows[0].count)).toBeGreaterThanOrEqual(count);
+    }, { timeout: 3000, interval: 20 });
+  }
+
   it('invoice and edit wait on the same document and preserve invoice/sale/debt totals', async () => {
     const id = await creditSale();
     await prisma.serieFacturacion.create({ data: {
@@ -254,7 +270,9 @@ describe('service document concurrency — PostgreSQL', { timeout: 90_000 }, () 
         });
         const { updateVentaServicioAction } = await import('@/features/venta-servicios/actions');
         edit = updateVentaServicioAction({ ventaServicioId: id, cantidad: 2 });
-        await waitForWaiters(2, held.holderPid);
+        // The collector waits for the held document; the editor now waits on
+        // the collector's earlier tenant lock instead of taking the row lock.
+        await waitForAnyAdvisoryWaiters(2);
       } finally {
         held.release();
         await held.finished;

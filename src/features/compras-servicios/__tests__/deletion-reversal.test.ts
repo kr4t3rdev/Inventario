@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 const tx = vi.hoisted(() => ({
   compraServicio: { findUnique: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },

@@ -10,6 +10,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { clearCache } from "@/lib/services/periodo-contable-guard";
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.hoisted(() => {});
 
