@@ -26,6 +26,7 @@ Este módulo cubre el lado de egresos del catálogo de servicios. Permite regist
 - Las altas pasan por `withPeriodValidation` usando la fecha del servicio.
 - Si se informa proveedor, debe existir y pertenecer al flujo correcto.
 - Los anticipos pueden crear reconciliaciones de gasto en la misma operación.
+- Para crear un servicio recibido con saldo pendiente o aumentar una obligación existente, el plan debe incluir `cuentas-pagar`.
 - La moneda sale del servicio contratado, no de un campo libre separado.
 
 ## Qué conviene cuidar
