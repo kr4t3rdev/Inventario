@@ -569,6 +569,26 @@ describe("Productos Server Actions", () => {
 			expect(expectActionFailure(result).error!.code).toBe("VALIDATION_ERROR");
 		});
 
+		it("bloquea restock a crédito cuando Basic no puede crear nuevas CxP", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "user",
+				permissions: new Set(["inventario.productos.restock"]),
+				planFeatures: { contabilidad: true, restock: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+
+			const result = await restockProductoAction({
+				...validRestockInput,
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(prisma.producto.findUnique).not.toHaveBeenCalled();
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
 		// ── 3.6: Producto no existe → NOT_FOUND ──
 
 		it("retorna NOT_FOUND si el producto no existe", async () => {

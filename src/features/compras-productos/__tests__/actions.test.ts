@@ -267,6 +267,52 @@ describe("ComprasProductos Server Actions", () => {
 	});
 
 	describe("createCompraProductoAction", () => {
+		it("bloquea una compra a crédito cuando el plan no permite crear CxP", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "user",
+				planFeatures: { contabilidad: true, compras: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(prisma.vendor.findFirst).not.toHaveBeenCalled();
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
+		it("replays an already-created partial purchase after plan downgrade", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "user",
+				planFeatures: { contabilidad: true, compras: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			mockCompraDocumentoResponse({
+				compraDocumentoId: "cd-existing-partial",
+				tenantId: "tenant-test",
+				claveIdempotencia: "partial-key",
+				formaPago: "PAGO_PARCIAL",
+			});
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				claveIdempotencia: "partial-key",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(expectActionSuccess(result).data.compraDocumentoId).toBe("cd-existing-partial");
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
 		it("crea compra exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			mockVendorResponse({
@@ -857,6 +903,30 @@ describe("ComprasProductos Server Actions", () => {
 	});
 
 	describe("updateCompraProductoAction", () => {
+		it("blocks Basic from switching a purchase to partial payment and creating CxP", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "user",
+				planFeatures: { contabilidad: true, compras: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			mockTx.compraDocumento.findFirst.mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				tenantId: "tenant-test",
+				formaPago: "PAGO_COMPLETO",
+				cuentaPorPagarId: null,
+				cuentaPorPagar: null,
+			});
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_PARCIAL",
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(mockTx.cuentaPorPagar.create).not.toHaveBeenCalled();
+		});
+
 		it("usa transacción cuando cambia formaPago", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			mockTx.compraDocumento.findFirst.mockResolvedValue({

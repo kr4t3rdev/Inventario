@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
+import { guardAccountingWriteInTransaction } from '@/features/contabilidad/services/period-close-write-guard';
 vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
   guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
 }));
@@ -22,6 +23,7 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 const mockTx = {
 	compraServicio: {
 		create: vi.fn(),
+		findFirst: vi.fn(),
 		findUnique: vi.fn(),
 		update: vi.fn(),
 		updateMany: vi.fn(),
@@ -110,6 +112,7 @@ describe("ComprasServicios Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		mockTx.compraServicio.findFirst.mockResolvedValue(mockCompraRow as never);
 	});
 
 	describe("getComprasServiciosAction", () => {
@@ -144,6 +147,27 @@ describe("ComprasServicios Server Actions", () => {
 	});
 
 	describe("createCompraServicioAction", () => {
+		it("bloquea crear un costo pendiente como nueva CxP en plan Básico", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "manager",
+				planFeatures: { servicios: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(mockServicio as never);
+
+			const result = await createCompraServicioAction({
+				servicioId: "sv-1",
+				costoUnitario: 100,
+				cantidad: 1,
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
 		const validInput = {
 			servicioId: "sv-1",
 			costoUnitario: 1000,
@@ -412,6 +436,93 @@ describe("ComprasServicios Server Actions", () => {
 	});
 
 	describe("updateCompraServicioAction", () => {
+		it("bloquea convertir una compra existente en saldo pendiente en Básico", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "manager",
+				planFeatures: { servicios: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+
+			const result = await updateCompraServicioAction({
+				compraServicioId: "cs-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(prisma.compraServicio.findFirst).not.toHaveBeenCalled();
+		});
+
+		it("blocks increasing a legacy pending purchase amount without changing its payment fields", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "manager",
+				planFeatures: { servicios: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue({
+				...mockCompraRow,
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+			} as never);
+
+			const result = await updateCompraServicioAction({
+				compraServicioId: "cs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(mockTx.compraServicio.update).not.toHaveBeenCalled();
+		});
+
+		it("blocks increasing an inherited partial advance liability in Basic", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "manager",
+				planFeatures: { servicios: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue({
+				...mockCompraRow,
+				formaPago: "ANTICIPO_PAGO",
+				estado: "PARCIAL",
+			} as never);
+
+			const result = await updateCompraServicioAction({
+				compraServicioId: "cs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(mockTx.compraServicio.update).not.toHaveBeenCalled();
+		});
+
+		it("rechecks liability state under lock before increasing a purchase", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "manager",
+				planFeatures: { servicios: true, "cuentas-pagar": false },
+			} as AuthenticatedUser);
+			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(mockCompraRow as never);
+			mockTx.compraServicio.findFirst.mockResolvedValueOnce({
+				...mockCompraRow,
+				formaPago: "ANTICIPO_PAGO",
+				estado: "PARCIAL",
+			} as never);
+
+			const result = await updateCompraServicioAction({
+				compraServicioId: "cs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
+			expect(mockTx.compraServicio.update).not.toHaveBeenCalled();
+			expect(guardAccountingWriteInTransaction.mock.invocationCallOrder[0])
+				.toBeLessThan(mockTx.$queryRaw.mock.invocationCallOrder[0]);
+		});
+
 		it("actualiza compra exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(

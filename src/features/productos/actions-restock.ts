@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requirePermission } from "@/lib/services/tenant-scope";
+import { requireTenant, requirePermission, requireFeature } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
@@ -80,6 +80,10 @@ export const restockProductoAction = withAction(
 				cuentaId: cuentaIdParam,
 				tipoRestock,
 			} = parsed;
+
+			if (formaPago?.toUpperCase() === "PAGO_PARCIAL") {
+				requireFeature(user, "cuentas-pagar", "crear cuentas por pagar desde restock");
+			}
 
 			const tenantId = requireTenant(user);
 
