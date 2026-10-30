@@ -6,7 +6,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
-import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { guardAccountingWriteInTransaction } from './period-close-write-guard';
 
 interface ServiceCollectionInput {
   ventaServicioId: string;
@@ -470,7 +470,12 @@ export const AccountingReconciliationService = {
     );
 
     return prisma.$transaction(async (tx) => {
-      await acquireAccountingTenantLock(tx, tenantId);
+      await guardAccountingWriteInTransaction({
+        client: tx,
+        tenantId,
+        businessDate: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+        actorId: user.userId,
+      });
       await tx.$queryRaw`
         SELECT "ventaId" FROM "Venta"
         WHERE "ventaId" = ${input.ventaId} AND "tenantId" = ${tenantId}
@@ -683,7 +688,15 @@ export const AccountingReconciliationService = {
     validateServiceCollectionInput(input);
 
     return prisma.$transaction(async (tx) => {
-      await acquireAccountingTenantLock(tx, tenantId);
+      const collectionDate = input.fechaReconciliacion
+        ? new Date(input.fechaReconciliacion)
+        : new Date();
+      await guardAccountingWriteInTransaction({
+        client: tx,
+        tenantId,
+        businessDate: collectionDate,
+        actorId: user.userId,
+      });
       // Orden común: tenant contable → documento → filas de venta y cobro.
       await lockDocumentoServicio(tx, input.ventaServicioId);
       const precioServicio = await assertServiceCollectionTargets(tx, tenantId, input);

@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -20,6 +23,7 @@ const mockTx = {
 	compraServicio: {
 		create: vi.fn(),
 		findUnique: vi.fn(),
+		update: vi.fn(),
 		updateMany: vi.fn(),
 		deleteMany: vi.fn(),
 	},
@@ -413,7 +417,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(
 				mockCompraRow,
 			);
-			vi.mocked(prisma.compraServicio.update).mockResolvedValue(mockCompraRow);
+			mockTx.compraServicio.update.mockResolvedValue(mockCompraRow);
 
 			const result = await updateCompraServicioAction({
 				compraServicioId: "cs-1",
@@ -428,7 +432,7 @@ describe("ComprasServicios Server Actions", () => {
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(
 				mockCompraRow,
 			);
-			vi.mocked(prisma.compraServicio.update).mockResolvedValue(mockCompraRow);
+			mockTx.compraServicio.update.mockResolvedValue(mockCompraRow);
 
 			const result = await updateCompraServicioAction({
 				compraServicioId: "cs-1",
@@ -437,7 +441,7 @@ describe("ComprasServicios Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			// mockCompraRow tiene costoUnitario 1000 → total 3000
-			expect(prisma.compraServicio.update).toHaveBeenCalledWith(
+			expect(mockTx.compraServicio.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ cantidad: 3, total: 3000 }),
 				}),

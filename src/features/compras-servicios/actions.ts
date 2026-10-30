@@ -10,6 +10,7 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
+import { guardAccountingWriteInTransaction } from '@/features/contabilidad/services/period-close-write-guard';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { createCompraServicioSchema, updateCompraServicioSchema } from './schemas';
 import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './schemas';
@@ -78,6 +79,13 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
   }
 
   const resultado = await prisma.$transaction(async (tx) => {
+    const createdAt = new Date();
+    await guardAccountingWriteInTransaction({
+      client: tx,
+      tenantId,
+      businessDate: createdAt,
+      actorId: user.userId,
+    });
     const compraServicio = await tx.compraServicio.create({
       data: {
         tenantId,
@@ -92,6 +100,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         estado: parsed.estado,
         descripcion: parsed.descripcion || null,
         fechaServicio,
+        createdAt,
         fechaVencimiento,
       },
       include: COMPRA_SERVICIO_INCLUDE,
@@ -269,7 +278,7 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
 
   const existing = await prisma.compraServicio.findFirst({
     where: { compraServicioId, tenantId },
-    select: { compraServicioId: true, costoUnitario: true, cantidad: true },
+    select: { compraServicioId: true, costoUnitario: true, cantidad: true, createdAt: true },
   });
   if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
 
@@ -296,10 +305,18 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
     throw new ActionError('No hay campos para actualizar', 'VALIDATION_ERROR');
   }
 
-  const updated = await prisma.compraServicio.update({
-    where: { compraServicioId },
-    data: updateData,
-    include: COMPRA_SERVICIO_INCLUDE,
+  const updated = await prisma.$transaction(async (tx) => {
+    await guardAccountingWriteInTransaction({
+      client: tx,
+      tenantId,
+      businessDate: existing.createdAt,
+      actorId: user.userId,
+    });
+    return tx.compraServicio.update({
+      where: { compraServicioId },
+      data: updateData,
+      include: COMPRA_SERVICIO_INCLUDE,
+    });
   });
 
   revalidatePath('/busy/compras-servicios');
@@ -312,14 +329,20 @@ export const deleteCompraServicioAction = withAction(async (id: string, user: Au
   requirePermission(user, 'compras.servicios.eliminar', 'eliminar servicios recibidos');
 
   await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
     const existing = await tx.compraServicio.findUnique({
       where: { compraServicioId: id },
-      select: { compraServicioId: true, tenantId: true },
+      select: { compraServicioId: true, tenantId: true, createdAt: true },
     });
     if (!existing || existing.tenantId !== tenantId) {
       throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
     }
+    await guardAccountingWriteInTransaction({
+      client: tx,
+      tenantId,
+      businessDate: existing.createdAt,
+      actorId: user.userId,
+    });
+    await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
 
     // `estado` es un campo de estado persistido que provee un claim atómico
     // mientras corre la reversión. La transacción revierte el marcador ante fallo.

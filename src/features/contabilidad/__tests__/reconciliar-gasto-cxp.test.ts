@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconciliacion";
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+	guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
+
 const prismaMock = vi.hoisted(() => ({
 	$transaction: vi.fn(),
 	auditLog: { create: vi.fn() },

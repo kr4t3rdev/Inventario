@@ -8,6 +8,9 @@ import { expectActionFailure, expectActionSuccess } from "@/test/action-response
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('@/lib/services/anticipos-workflow', () => ({ applyAnticipoAllocations: vi.fn() }));
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
   exchangeRateProvider: { getRateAsOf: vi.fn() },
@@ -361,7 +364,10 @@ describe('update coherente con la CxC (C-4)', () => {
       await vi.waitFor(() => expect(mockTx.$executeRaw).toHaveBeenCalled());
       const documentLock = mockTx.$executeRaw.mock.calls[0] as unknown[];
       expect(documentLock[1]).toBe(JSON.stringify(['venta-servicio-doc', 'vs-1']));
-      expect(mockVentaFindFirst).not.toHaveBeenCalled();
+      expect(mockVentaFindFirst).toHaveBeenCalledTimes(1);
+      expect(mockVentaFindFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        select: { createdAt: true },
+      }));
       expect(mockCxcFindFirst).not.toHaveBeenCalled();
       expect(mockFacturaFindFirst).not.toHaveBeenCalled();
       // La otra transacción emite su factura antes de liberar el mismo lock.

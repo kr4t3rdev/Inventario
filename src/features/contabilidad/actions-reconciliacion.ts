@@ -28,7 +28,7 @@ import {
 import {
 	getReconciliationStats,
 } from "@/features/contabilidad/services/reconciliation-stats-service";
-import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import { guardAccountingWriteInTransaction } from "@/features/contabilidad/services/period-close-write-guard";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
 
@@ -389,7 +389,12 @@ export const reconciliarVentaAction = withAction(
 			);
 
 			const result = await prisma.$transaction(async (tx) => {
-				await acquireAccountingTenantLock(tx, tenantId);
+				await guardAccountingWriteInTransaction({
+					client: tx,
+					tenantId,
+					businessDate: fechaReconciliacion,
+					actorId: user.userId,
+				});
 				// Re-read the sale and its receivable while holding the transaction.
 				// Cancellation claims deletedAt atomically, so this prevents a late
 				// reconciliation from reactivating an annulled CxC or bank balance.
@@ -680,7 +685,15 @@ export const reconciliarServicioAction = withAction(
 			validateServiceCollectionInput(input);
 
 			const result = await prisma.$transaction(async (tx) => {
-				await acquireAccountingTenantLock(tx, tenantId);
+				const collectionDate = input.fechaReconciliacion
+					? new Date(input.fechaReconciliacion)
+					: new Date();
+				await guardAccountingWriteInTransaction({
+					client: tx,
+					tenantId,
+					businessDate: collectionDate,
+					actorId: user.userId,
+				});
 				// Orden común: tenant contable → documento → filas de venta y cobro.
 				await lockDocumentoServicio(tx, input.ventaServicioId);
 				const precioServicio = await assertServiceCollectionTargets(tx, tenantId, input);
@@ -1429,7 +1442,12 @@ export const reconciliarGastoAction = withAction(
 
 			try {
 				const result = await prisma.$transaction(async (tx) => {
-					await acquireAccountingTenantLock(tx, tenantId);
+					await guardAccountingWriteInTransaction({
+						client: tx,
+						tenantId,
+						businessDate: fechaPago ? new Date(fechaPago) : new Date(),
+						actorId: user.userId,
+					});
 					if (esServicio) {
 						// Serialize against CompraServicio deletion so a late payment cannot
 						// recreate reconciliation effects after the row is claimed.

@@ -9,11 +9,13 @@ import prisma from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import {
   applyPagoGastoWorkflow,
   isGastoWorkflowError,
 } from '@/lib/services/pago-gastos-workflow'
+import { guardAccountingWriteInTransaction } from '@/features/contabilidad/services/period-close-write-guard'
 
 // ─── Schema compartido ──────────────────────────────────────
 
@@ -243,6 +245,19 @@ export async function reconciliarGastoAdapter(
 
   // ── Workflow transaccional ──
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    try {
+      await guardAccountingWriteInTransaction({
+        client: tx,
+        tenantId,
+        businessDate: fechaPago ? new Date(fechaPago) : new Date(),
+        actorId: user.userId,
+      })
+    } catch (error) {
+      if (error instanceof ActionError && error.code.startsWith('PERIODO_')) {
+        throw Object.assign(new Error(error.message), { status: 409, code: error.code })
+      }
+      throw error
+    }
     return applyPagoGastoWorkflow(tx, {
       tipoGasto: validatedData.tipoGasto,
       referenciaId,

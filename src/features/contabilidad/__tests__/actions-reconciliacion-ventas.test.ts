@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/features/contabilidad/services/period-close-write-guard', () => ({
+  guardAccountingWriteInTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
 const getReconciliationStatsMock = vi.hoisted(() => vi.fn());

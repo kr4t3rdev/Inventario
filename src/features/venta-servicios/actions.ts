@@ -29,6 +29,7 @@ import type {
 } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { buildPersistedAccountingAmount, lockDocumentoServicio } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { guardAccountingWriteInTransaction } from '@/features/contabilidad/services/period-close-write-guard';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { Prisma } from '@/generated/prisma';
 
@@ -260,6 +261,12 @@ const createVentaServicioHandler = async (
         }
       }
 
+      await guardAccountingWriteInTransaction({
+        client: tx,
+        tenantId,
+        businessDate: new Date(),
+        actorId: user.userId,
+      });
       await validateServiceSalePeriod(undefined, user);
 
       // C-2: el tope se evalúa dentro de la transacción con el lock de crédito
@@ -406,6 +413,12 @@ const createVentaServicioHandler = async (
       }
     }
 
+    await guardAccountingWriteInTransaction({
+      client: tx,
+      tenantId,
+      businessDate: new Date(),
+      actorId: user.userId,
+    });
     await validateServiceSalePeriod(undefined, user);
     const ventaTotal = data.cantidad * precioUnitario;
 
@@ -630,9 +643,20 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     await assertClienteDelTenant(tenantId, data.clienteId);
   }
 
-  // El documento se bloquea antes de cualquier lectura para serializar edición
-  // y facturación. Si se evalúa crédito, su lock se toma después del documento.
+  // Lock order: tenant contable → documento → cliente. The immutable period
+  // anchor is read first; the row is then re-read after the document lock.
   const updated = await prisma.$transaction(async (tx) => {
+    const periodAnchor = await tx.ventaServicios.findFirst({
+      where: { ventaServicioId, tenantId },
+      select: { createdAt: true },
+    });
+    if (!periodAnchor) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+    await guardAccountingWriteInTransaction({
+      client: tx,
+      tenantId,
+      businessDate: periodAnchor.createdAt,
+      actorId: user.userId,
+    });
     await lockDocumentoServicio(tx, ventaServicioId);
 
     const existing = await tx.ventaServicios.findFirst({
