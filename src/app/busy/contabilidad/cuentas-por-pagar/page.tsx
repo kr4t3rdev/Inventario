@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { EstadoBadge } from "@/features/contabilidad/components/cxp/estado-badge";
 import { PagosExpandidos } from "@/features/contabilidad/components/cxp/pagos-expandidos";
 import { CxpMetricsCards } from "@/features/contabilidad/components/cxp/cxp-metrics-cards";
@@ -54,7 +53,6 @@ import {
 	m as motion,
 	AnimatePresence,
 } from "framer-motion";
-import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import {
 	PageTransition,
@@ -69,8 +67,6 @@ const surfaceCardClass = cn(
 );
 
 export default function CuentasPorPagarPage() {
-	const router = useRouter();
-	const { user } = useAuth();
 	const [search, setSearch] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const [estado, setEstado] = useState<string>("all");
@@ -89,9 +85,6 @@ export default function CuentasPorPagarPage() {
 	);
 	const [isLoading, setIsLoading] = useState(true);
 	const [fetchError, setFetchError] = useState<unknown>(null);
-	const isBlocked =
-		user?.role !== "admin" &&
-		user?.planFeatures?.["cuentas-pagar"] !== true;
 
 	const loadData = useCallback(
 		async (overrides: {
@@ -175,16 +168,6 @@ export default function CuentasPorPagarPage() {
 				m.totalFacturado > 0 ? (m.totalPagado / m.totalFacturado) * 100 : 0,
 		};
 	}, [dataResult?.metricas]);
-
-	useEffect(() => {
-		if (isBlocked) {
-			router.replace("/busy/contabilidad");
-		}
-	}, [isBlocked, router]);
-
-	if (isBlocked) {
-		return null;
-	}
 
 	const toggleExpanded = (cuentaId: string) => {
 		const newExpanded = new Set(expandedRows);

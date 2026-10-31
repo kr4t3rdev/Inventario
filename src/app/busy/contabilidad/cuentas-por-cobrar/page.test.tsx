@@ -78,7 +78,8 @@ describe('/busy/contabilidad/cuentas-por-cobrar page', () => {
     expect(vi.mocked(getCxcMetricsAction)).toHaveBeenCalledTimes(1);
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan no incluye cuentas por cobrar', async () => {
+  it('carga la consulta de CxC cuando el plan no permite crear cuentas por cobrar', async () => {
+    const { getCuentasPorCobrarAction } = await import('@/features/contabilidad');
     useAuthMock.mockReturnValue({
       user: {
         role: 'user',
@@ -90,7 +91,8 @@ describe('/busy/contabilidad/cuentas-por-cobrar page', () => {
     render(<CuentasPorCobrarPage />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
+      expect(vi.mocked(getCuentasPorCobrarAction)).toHaveBeenCalledTimes(1);
     });
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
