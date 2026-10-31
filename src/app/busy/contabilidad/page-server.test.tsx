@@ -86,4 +86,18 @@ describe('ContabilidadDashboard (server shell)', () => {
       '/busy/contabilidad/prestamos-cash',
     );
   });
+
+  it('mantiene el acceso a deudas existentes en Básico sin habilitar la función', async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...usuario,
+      planName: 'Básico',
+      planFeatures: { contabilidad: true, 'deudas-cash': false },
+    });
+    render(await ContabilidadDashboard());
+
+    expect(screen.getByRole('link', { name: /deudas en efectivo/i })).toHaveAttribute(
+      'href',
+      '/busy/contabilidad/deudas-cash',
+    );
+  });
 });
