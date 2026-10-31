@@ -1491,6 +1491,14 @@ describe("verificarOperacionesPendientesAction", () => {
 		const result = await verificarOperacionesPendientesAction("p-1");
 
 		expect(result.success).toBe(true);
+		expect(mockPrisma.venta.findMany).toHaveBeenCalledWith(expect.objectContaining({
+			select: expect.objectContaining({
+				reconciliaciones: expect.objectContaining({
+					where: { tenantId: TENANT },
+					select: expect.objectContaining({ fechaReconciliacion: true }),
+				}),
+			}),
+		}));
 		expect(expectActionSuccess(result).data).toMatchObject({
 			ventasSinReconciliar: 0,
 			serviciosSinReconciliar: 0,
@@ -1533,6 +1541,172 @@ describe("verificarOperacionesPendientesAction", () => {
 			ventasSinReconciliar: 0,
 			serviciosSinReconciliar: 0,
 			gastosSinReconciliar: 0,
+		});
+	});
+
+	it("treats post-cutoff CxC and CxP payments as still open at the close date", async () => {
+		const periodo = makePeriodo({ tipo: TipoPeriodo.MENSUAL });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		const sameCurrencyEvidence = buildAppliedFxEvidence({
+			originalAmount: 4300,
+			originalCurrency: "CUP",
+			functionalCurrency: "CUP",
+			convertedAmount: 4300,
+			source: "same currency",
+		});
+		const underfundedSameCurrencyEvidence = buildAppliedFxEvidence({
+			originalAmount: 1,
+			originalCurrency: "CUP",
+			functionalCurrency: "CUP",
+			convertedAmount: 1,
+			source: "same currency",
+		});
+		const mismatchedFutureEvidence = buildAppliedFxEvidence({
+			originalAmount: 1000,
+			originalCurrency: "CUP",
+			functionalCurrency: "CUP",
+			convertedAmount: 1000,
+			source: "same currency",
+		});
+		const futureReconciliation = {
+			fechaReconciliacion: new Date(periodo.fechaFin.getTime() + 1),
+			monto: 4300,
+			montoConvertido: 4300,
+			moneda: "CUP",
+			functionalCurrency: "CUP",
+			tasaCambio: null,
+			rateEffectiveAt: null,
+			fxProvenanceKind: sameCurrencyEvidence.fxProvenanceKind,
+			fxProvenanceSource: sameCurrencyEvidence.fxProvenanceSource,
+			fxCatalogRateId: sameCurrencyEvidence.fxCatalogRateId,
+			fxEvidenceFingerprint: sameCurrencyEvidence.fxEvidenceFingerprint,
+			fxEvidenceVersion: sameCurrencyEvidence.fxEvidenceVersion,
+			estado: "PAGADA",
+		};
+		const underfundedFutureReconciliation = {
+			...futureReconciliation,
+			monto: 1,
+			montoConvertido: 1,
+			fxEvidenceFingerprint: underfundedSameCurrencyEvidence.fxEvidenceFingerprint,
+		};
+		const mismatchedFutureReconciliation = {
+			...futureReconciliation,
+			monto: 1000,
+			montoConvertido: 1000,
+			fxEvidenceFingerprint: mismatchedFutureEvidence.fxEvidenceFingerprint,
+		};
+		mockPrisma.venta.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [futureReconciliation],
+			factura: {
+				idFactura: "invoice-paid-after-cutoff",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-paid-after-cutoff",
+					tenantId: TENANT,
+					facturaId: "invoice-paid-after-cutoff",
+					estado: "PAGADA",
+					montoDeuda: 4300,
+					montoPagado: 4300,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 4300,
+					fechaVencimiento: null,
+				},
+			},
+		}, {
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [underfundedFutureReconciliation],
+			factura: {
+				idFactura: "invoice-underfunded-future",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-underfunded-future",
+					tenantId: TENANT,
+					facturaId: "invoice-underfunded-future",
+					estado: "PAGADA",
+					montoDeuda: 4300,
+					montoPagado: 4300,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 4300,
+					fechaVencimiento: null,
+				},
+			},
+		}, {
+			tenantId: TENANT,
+			total: 4300,
+			VentaServicios: [],
+			reconciliaciones: [mismatchedFutureReconciliation],
+			factura: {
+				idFactura: "invoice-mismatched-future",
+				tenantId: TENANT,
+				total: 4300,
+				cuentaPorCobrar: {
+					id: "receivable-mismatched-future",
+					tenantId: TENANT,
+					facturaId: "invoice-mismatched-future",
+					estado: "PARCIAL",
+					montoDeuda: 4300,
+					montoPagado: 500,
+					monedaOriginal: "CUP",
+					monedaFuncional: "CUP",
+					montoDeudaFuncional: 4300,
+					montoPagadoFuncional: 500,
+					fechaVencimiento: null,
+				},
+			},
+		}] as never);
+		mockPrisma.gastosDE.findMany.mockResolvedValue([{
+			tenantId: TENANT,
+			gastosDEId: "expense-paid-after-cutoff",
+			monto: 4300,
+			isPagado: "SI",
+			reconciliaciones: [futureReconciliation],
+			cuentaPorPagar: {
+				cuentaPorPagarId: "payable-paid-after-cutoff",
+				tenantId: TENANT,
+				gastosDEId: "expense-paid-after-cutoff",
+				estado: "PAGADA",
+				montoDeuda: 4300,
+				montoPagado: 4300,
+				saldoPendiente: 0,
+				moneda: "CUP",
+				deletedAt: null,
+			},
+		}, {
+			tenantId: TENANT,
+			gastosDEId: "expense-underfunded-future",
+			monto: 4300,
+			isPagado: "SI",
+			reconciliaciones: [underfundedFutureReconciliation],
+			cuentaPorPagar: {
+				cuentaPorPagarId: "payable-underfunded-future",
+				tenantId: TENANT,
+				gastosDEId: "expense-underfunded-future",
+				estado: "PAGADA",
+				montoDeuda: 4300,
+				montoPagado: 4300,
+				saldoPendiente: 0,
+				moneda: "CUP",
+				deletedAt: null,
+			},
+		}] as never);
+
+		const result = await verificarOperacionesPendientesAction("p-1");
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data).toMatchObject({
+			ventasSinReconciliar: 2,
+			gastosSinReconciliar: 1,
 		});
 	});
 

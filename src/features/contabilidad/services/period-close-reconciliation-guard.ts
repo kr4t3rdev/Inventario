@@ -1,5 +1,31 @@
 const MONEY_TOLERANCE = 0.01;
 
+type DatedPeriodCloseEvidence = { fechaReconciliacion: Date | string };
+
+/**
+ * @description Keeps only reconciliations effective on or before the close cutoff.
+ * @param {T[]} rows - Reconciliations linked to an operation.
+ * @param {Date} cutoff - Inclusive period-end cutoff.
+ * @returns {T[] | null} Evidence effective by cutoff, or null when a date is invalid.
+ */
+export function getPeriodCloseReconciliationsAtCutoff<T extends DatedPeriodCloseEvidence>(
+  rows: readonly T[],
+  cutoff: Date,
+): T[] | null {
+  const cutoffAt = cutoff.getTime();
+  if (!Number.isFinite(cutoffAt)) return null;
+
+  const included: T[] = [];
+  for (const row of rows) {
+    const effectiveAt = row.fechaReconciliacion instanceof Date
+      ? row.fechaReconciliacion.getTime()
+      : new Date(row.fechaReconciliacion).getTime();
+    if (!Number.isFinite(effectiveAt)) return null;
+    if (effectiveAt <= cutoffAt) included.push(row);
+  }
+  return included;
+}
+
 interface OpenDebtEvidence {
   tenantId: string;
   state: string;

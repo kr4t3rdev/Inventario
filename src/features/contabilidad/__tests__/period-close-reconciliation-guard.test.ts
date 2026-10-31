@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getPeriodCloseReconciliationsAtCutoff,
   isPermittedOpenDebtForClose,
   isReconciledAmountComplete,
 } from '@/features/contabilidad/services/period-close-reconciliation-guard';
 
 describe('period close reconciliation guard', () => {
+  it('excludes reconciliations after the period cutoff and rejects invalid dates', () => {
+    const before = { fechaReconciliacion: new Date('2026-08-31T23:59:59.999Z'), monto: 100 }
+    const after = { fechaReconciliacion: new Date('2026-09-01T00:00:00.000Z'), monto: 900 }
+    const cutoff = new Date('2026-08-31T23:59:59.999Z')
+
+    expect(getPeriodCloseReconciliationsAtCutoff([before, after], cutoff)).toEqual([before])
+    expect(getPeriodCloseReconciliationsAtCutoff([
+      { fechaReconciliacion: new Date(Number.NaN), monto: 1 },
+    ], cutoff)).toBeNull()
+  })
+
   it('permits a fully unpaid and directly linked debt only when amounts and tenant match', () => {
     expect(isPermittedOpenDebtForClose({
       operationTenantId: 'tenant-a',

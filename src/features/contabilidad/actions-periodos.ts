@@ -45,6 +45,7 @@ import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services
 import { buildAppliedFxEvidence, verifyAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
 import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
 import {
+  getPeriodCloseReconciliationsAtCutoff,
 	isPermittedOpenDebtForClose,
 	isReconciledAmountComplete,
 } from "@/features/contabilidad/services/period-close-reconciliation-guard";
@@ -1664,6 +1665,7 @@ export const obtenerOperacionesDiaAction = withAction(
 
 type PeriodCloseReconciliationRow = {
 	estado?: string | null;
+	fechaReconciliacion: Date | string;
 	monto: unknown;
 	montoConvertido: unknown;
 	moneda: string | null;
@@ -1753,6 +1755,7 @@ async function getPeriodClosePendingCounts(
 }> {
 	const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
 	const reconciliationSelect = {
+		fechaReconciliacion: true,
 		monto: true,
 		montoConvertido: true,
 		moneda: true,
@@ -1794,7 +1797,10 @@ async function getPeriodClosePendingCounts(
 						},
 					},
 				},
-				reconciliaciones: { where: { tenantId }, select: reconciliationSelect },
+				reconciliaciones: {
+					where: { tenantId },
+					select: reconciliationSelect,
+				},
 				factura: {
 					select: {
 						idFactura: true,
@@ -1826,7 +1832,10 @@ async function getPeriodClosePendingCounts(
 				ventaServicioId: true,
 				total: true,
 				moneda: true,
-				reconciliaciones: { where: { tenantId }, select: reconciliationSelect },
+				reconciliaciones: {
+					where: { tenantId },
+					select: reconciliationSelect,
+				},
 				cuentaPorCobrar: {
 					select: {
 						id: true,
@@ -1873,7 +1882,10 @@ async function getPeriodClosePendingCounts(
 				gastosDEId: true,
 				monto: true,
 				isPagado: true,
-				reconciliaciones: { where: { tenantId }, select: gastoReconciliationSelect },
+				reconciliaciones: {
+					where: { tenantId },
+					select: gastoReconciliationSelect,
+				},
 				cuentaPorPagar: {
 					select: {
 						cuentaPorPagarId: true,
@@ -1895,7 +1907,10 @@ async function getPeriodClosePendingCounts(
 				tenantId: true,
 				gastoCompraId: true,
 				total: true,
-				reconciliaciones: { where: { tenantId }, select: gastoReconciliationSelect },
+				reconciliaciones: {
+					where: { tenantId },
+					select: gastoReconciliationSelect,
+				},
 				cuentaPorPagar: {
 					select: {
 						cuentaPorPagarId: true,
@@ -1913,6 +1928,7 @@ async function getPeriodClosePendingCounts(
 		}),
 	]);
 
+	const closeAppliedExpenseStates = new Set(["PAGADA", "PAGADO", "POSTED", "PARCIAL"]);
 	const isUnresolved = (operation: {
 		tenantId: string;
 		amount: unknown;
@@ -1928,21 +1944,67 @@ async function getPeriodClosePendingCounts(
 			linkedDirectly: boolean;
 		} | null;
 	}) => {
-		const appliedExpenseStates = new Set(["PAGADA", "PAGADO", "POSTED", "PARCIAL"]);
+		const reconciliationsAtCutoff = getPeriodCloseReconciliationsAtCutoff(
+			operation.reconciliations,
+			periodo.fechaFin,
+		);
+		if (!reconciliationsAtCutoff) return true;
 		if (
 			operation.requiresAppliedReconciliations &&
-			operation.reconciliations.some((row) => !appliedExpenseStates.has(row.estado ?? ""))
+			reconciliationsAtCutoff.some((row) => !closeAppliedExpenseStates.has(row.estado ?? ""))
 		) return true;
 		if (
 			operation.requiresCupSource &&
 			(typeof operation.sourceCurrency !== "string" ||
 				operation.sourceCurrency.trim().toUpperCase() !== "CUP")
 		) return true;
+		const futureSettlements = operation.reconciliations.filter((row) => {
+			const date = row.fechaReconciliacion instanceof Date
+				? row.fechaReconciliacion
+				: new Date(row.fechaReconciliacion);
+			return date > periodo.fechaFin &&
+				(!operation.requiresAppliedReconciliations || closeAppliedExpenseStates.has(row.estado ?? ""));
+		});
+		const reconciledAmountAtCutoff = reconciliationsAtCutoff.length === 0
+			? 0
+			: getVerifiedReconciledAmountInCup(reconciliationsAtCutoff);
+		const verifiedFutureSettlementAmount = futureSettlements.length === 0
+			? 0
+			: getVerifiedReconciledAmountInCup(futureSettlements);
+		const currentPaidAmount = Number(operation.debt?.paidAmount);
+		const supportedDebtState = ["PENDIENTE", "PARCIAL", "PAGADA"].includes(
+			operation.debt?.state ?? "",
+		);
+		const amountSnapshotMatchesEvidence = reconciledAmountAtCutoff !== null &&
+			Number.isFinite(currentPaidAmount) &&
+			verifiedFutureSettlementAmount !== null &&
+			Math.abs(
+				currentPaidAmount - reconciledAmountAtCutoff - verifiedFutureSettlementAmount,
+			) <= 0.01;
+		const debtAmount = Number(operation.debt?.amount);
+		const historicalDebt = operation.debt
+			? {
+				...operation.debt,
+				state: !supportedDebtState || operation.debt.state === "ANULADA" ||
+					!Number.isFinite(debtAmount) || debtAmount <= 0 ||
+					reconciledAmountAtCutoff === null || reconciledAmountAtCutoff > debtAmount + 0.01
+					? "UNKNOWN"
+					: reconciledAmountAtCutoff <= 0.01
+						? "PENDIENTE"
+						: reconciledAmountAtCutoff < debtAmount - 0.01
+							? "PARCIAL"
+							: "PAGADA",
+				paidAmount: amountSnapshotMatchesEvidence ? reconciledAmountAtCutoff : Number.NaN,
+				linkedDirectly: operation.debt.linkedDirectly && amountSnapshotMatchesEvidence &&
+					operation.debt.state !== "ANULADA",
+				reconciledAmount: reconciledAmountAtCutoff ?? Number.NaN,
+			}
+			: null;
 		return !isPeriodCloseOperationResolved({
 			tenantId: operation.tenantId,
 			amount: operation.amount,
-			reconciliations: operation.reconciliations,
-			debt: operation.debt,
+			reconciliations: reconciliationsAtCutoff,
+			debt: historicalDebt,
 		});
 	};
 
@@ -2035,7 +2097,13 @@ async function getPeriodClosePendingCounts(
 				Number(cuenta.saldoPendiente) -
 					(Number(cuenta.montoDeuda) - Number(cuenta.montoPagado)),
 			) <= 0.01 &&
-			(!gasto.isPagado || gasto.isPagado.toUpperCase() === "NO"),
+			(!gasto.isPagado || gasto.isPagado.toUpperCase() === "NO" ||
+				gasto.reconciliaciones.some((row) => {
+					const date = row.fechaReconciliacion instanceof Date
+						? row.fechaReconciliacion
+						: new Date(row.fechaReconciliacion);
+					return date > periodo.fechaFin && closeAppliedExpenseStates.has(row.estado ?? "");
+				})),
 		);
 		return isUnresolved({
 			tenantId: gasto.tenantId,
