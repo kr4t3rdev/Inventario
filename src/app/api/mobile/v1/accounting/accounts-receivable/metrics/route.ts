@@ -1,6 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 
@@ -28,7 +28,8 @@ export async function GET(request: Request) {
     if (!tenantId) {
       return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
     }
-    requireFeature(authResult.user, 'cuentas-cobrar', 'ver métricas de cuentas por cobrar');
+    requireFeature(authResult.user, 'contabilidad', 'consultar los saldos de cuentas por cobrar');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar los saldos de cuentas por cobrar');
     const result = await AccountingAccountsService.getReceivablesMetrics({
       tenantId,
     });

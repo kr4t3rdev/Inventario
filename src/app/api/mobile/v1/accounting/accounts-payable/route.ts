@@ -1,8 +1,23 @@
+import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 
 export const dynamic = 'force-dynamic';
+
+function mapActionErrorStatus(code: string): number {
+  switch (code) {
+    case 'FEATURE_NOT_AVAILABLE':
+    case 'FORBIDDEN':
+    case 'TENANT_REQUIRED':
+      return 403;
+    case 'NOT_FOUND':
+      return 404;
+    default:
+      return 400;
+  }
+}
 
 /**
  * @description Convierte un query param a entero positivo con fallback.
@@ -22,6 +37,8 @@ export async function GET(request: Request) {
   }
 
   try {
+    requireFeature(authResult.user, 'contabilidad', 'consultar las cuentas por pagar existentes');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar las cuentas por pagar');
     const { searchParams } = new URL(request.url);
     const result = await AccountingAccountsService.listPayables({
       tenantId: authResult.user.tenantId ?? '',
@@ -38,6 +55,9 @@ export async function GET(request: Request) {
       metricas: result.metricas,
     });
   } catch (error) {
+    if (error instanceof ActionError) {
+      return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
+    }
     console.error('Error en mobile accounts payable route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');
   }
