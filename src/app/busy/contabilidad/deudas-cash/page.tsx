@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -24,7 +23,6 @@ const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== "false"
  * @returns {JSX.Element} Contenido con tabla, form y modal de pago.
  */
 function DeudasCashContent() {
-  const router = useRouter()
   const { user } = useAuth()
   const [openForm, setOpenForm] = useState(false)
   const [openPago, setOpenPago] = useState(false)
@@ -33,9 +31,7 @@ function DeudasCashContent() {
   const [deudas, setDeudas] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
-  const isBlocked =
-    user?.role !== 'admin' &&
-    user?.planFeatures?.['deudas-cash'] !== true
+  const canCreate = user?.role === 'admin' || user?.planFeatures?.['deudas-cash'] === true
 
   const loadDeudas = async () => {
     setIsLoading(true)
@@ -44,12 +40,6 @@ function DeudasCashContent() {
     else setError(r.error)
     setIsLoading(false)
   }
-
-  useEffect(() => {
-    if (isBlocked) {
-      router.replace('/busy/contabilidad')
-    }
-  }, [isBlocked, router])
 
   useEffect(() => { loadDeudas() }, [])
 
@@ -61,10 +51,6 @@ function DeudasCashContent() {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
     getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
-
-  if (isBlocked) {
-    return null
-  }
 
   const proveedores = dataProveedores || []
 
@@ -101,12 +87,12 @@ function DeudasCashContent() {
             Gestione deudas de dinero en efectivo con proveedores
           </p>
         </div>
-        <Button onClick={() => setOpenForm(true)}
-          className="flex items-center space-x-2 mr-3"
-          >
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Deuda
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Deuda
+          </Button>
+        )}
       </div>
 
       <DeudasCashTable
@@ -116,7 +102,7 @@ function DeudasCashContent() {
         onPagar={handlePagar}
       />
 
-      <DeudaCashForm
+      {canCreate && <DeudaCashForm
         open={openForm}
         onOpenChange={setOpenForm}
         proveedores={proveedores.map((p: any) => ({
@@ -130,7 +116,7 @@ function DeudasCashContent() {
           moneda: c.moneda,
         }))}
         onSuccess={handleSuccess}
-      />
+      />}
 
       <PagoDeudaModal
         deuda={deudaSeleccionada}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockReplace = vi.fn();
@@ -43,13 +43,14 @@ vi.mock('@/features/contabilidad/components/deudas-cash/pago-deuda-modal', () =>
 }));
 
 import DeudasCashPage from './page';
+import { getDeudasCashAction } from '@/features/contabilidad/actions-deudas-cash';
 
 describe('/busy/contabilidad/deudas-cash page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan no incluye deudas cash', async () => {
+  it('permite consultar deudas cash existentes cuando el plan no permite crearlas', async () => {
     useAuthMock.mockReturnValue({
       user: {
         role: 'user',
@@ -60,8 +61,8 @@ describe('/busy/contabilidad/deudas-cash page', () => {
 
     render(<DeudasCashPage />);
 
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
-    });
+    await waitFor(() => expect(getDeudasCashAction).toHaveBeenCalled());
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /Nueva Deuda/i })).not.toBeInTheDocument();
   });
 });

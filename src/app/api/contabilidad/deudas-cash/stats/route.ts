@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet } from '@/lib/auth-middleware'
+import { withAuthGet, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { hasPermission, requireTenant } from '@/lib/services/tenant-scope'
 
 /**
  * @description Verifica si el módulo de deudas cash está habilitado
@@ -16,25 +17,34 @@ function deudasCashEnabled(): boolean {
  * @param {NextRequest} _request - Request (no utilizado)
  * @returns {NextResponse} Estadísticas: totalActivas, totalPagadas, totalVencidas, montoTotalDeuda, montoPendientePago por moneda
  */
-export const GET = withAuthGet(async (_request: NextRequest) => {
+export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
     if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user)
+    if (!hasPermission(user, 'financiero.contabilidad.acceder')) {
+      return NextResponse.json(
+        { error: 'No tienes permiso para consultar estadísticas contables', code: 'FORBIDDEN' },
+        { status: 403 },
+      )
+    }
+
     const [totalActivas, totalPagadas, totalVencidas, montosPorMoneda] = await Promise.all([
       prisma.deudaCash.count({
-        where: { estado: 'ACTIVO', deletedAt: null }
+        where: { tenantId, estado: 'ACTIVO', deletedAt: null }
       }),
       prisma.deudaCash.count({
-        where: { estado: 'PAGADO', deletedAt: null }
+        where: { tenantId, estado: 'PAGADO', deletedAt: null }
       }),
       prisma.deudaCash.count({
-        where: { estado: 'VENCIDO', deletedAt: null }
+        where: { tenantId, estado: 'VENCIDO', deletedAt: null }
       }),
       prisma.deudaCash.groupBy({
         by: ['moneda'],
         where: {
+          tenantId,
           estado: { not: 'CANCELADO' },
           deletedAt: null
         },
@@ -45,6 +55,7 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
     // Calcular monto pendiente agrupado por moneda de la deuda
     const cuentasPendientes = await prisma.cuentaPorPagar.findMany({
       where: {
+        tenantId,
         tipoDeuda: 'DEUDA_CASH',
         estado: { not: 'PAGADA' }
       },

@@ -42,4 +42,49 @@ describe('mobile cash debt update route', () => {
       user: mockUser,
     });
   });
+
+  it('denies debt edits after downgrade while preserving payment access', async () => {
+    const downgradedUser = {
+      ...mockUser,
+      role: 'regularUser',
+      tenantRole: 'manager',
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { 'deudas-cash': false },
+    };
+    vi.mocked(authenticateUser).mockResolvedValue({ user: downgradedUser } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/cash-debts/deuda-1', {
+      method: 'PUT',
+      headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
+      body: JSON.stringify({ observaciones: 'Updated' }),
+    });
+
+    const response = await PUT(request, { params: Promise.resolve({ id: 'deuda-1' }) } as never);
+
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(AccountingCashOperationsMutationService.updateCashDebt).not.toHaveBeenCalled();
+  });
+
+  it('denies debt edits without financial permission', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: {
+        ...mockUser,
+        role: 'regularUser',
+        permissions: new Set<string>(),
+      },
+    } as never);
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/cash-debts/deuda-1', {
+      method: 'PUT',
+      headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
+      body: JSON.stringify({ observaciones: 'Updated' }),
+    });
+
+    const response = await PUT(request, { params: Promise.resolve({ id: 'deuda-1' }) } as never);
+
+    expect(response.status).toBe(403);
+    expect(AccountingCashOperationsMutationService.updateCashDebt).not.toHaveBeenCalled();
+  });
 });

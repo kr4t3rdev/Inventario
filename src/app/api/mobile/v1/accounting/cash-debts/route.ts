@@ -4,7 +4,7 @@ import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 import {
   isCashCreateIdempotencyUniqueConflict,
@@ -43,6 +43,7 @@ function mapActionErrorStatus(code: string): number {
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'DISABLED':
       return 404;
@@ -58,6 +59,7 @@ export async function GET(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar deudas cash');
     const { searchParams } = new URL(request.url);
     const result = await AccountingCashOperationsService.listCashDebts({
       tenantId: authResult.user.tenantId ?? '',
@@ -83,7 +85,7 @@ export async function POST(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
-    requireFeature(authResult.user, 'deudas-cash', 'crear deudas cash');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'crear deudas cash');
     const tenantId = requireTenant(authResult.user);
     const body = createSchema.parse(await request.json());
     const headerKey = request.headers.get('Idempotency-Key');
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
         user: authResult.user,
       }),
       validatePeriod: async () => {
+        requireFeature(authResult.user, 'deudas-cash', 'crear deudas cash');
         const validation = await validarEscrituraPeriodo({
           fecha: operationDate,
           tenantId,

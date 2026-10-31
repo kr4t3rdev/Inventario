@@ -22,6 +22,7 @@ vi.mock("@/lib/prisma", () => {
 			count: vi.fn(),
 			create: vi.fn(),
 			findFirst: vi.fn(),
+			update: vi.fn(),
 		},
 		cuentaPorPagar: {
 			create: vi.fn(),
@@ -100,6 +101,8 @@ vi.mock("@/lib/services/tenant-scope", () => ({
 	requireTenant: vi.fn(() => "tenant-1"),
 	requireFeature: vi.fn(),
 	requirePermission: vi.fn(),
+	hasFeature: vi.fn(() => true),
+	hasPermission: vi.fn(() => true),
 }));
 
 describe("API contabilidad/deudas-cash", () => {
@@ -107,6 +110,52 @@ describe("API contabilidad/deudas-cash", () => {
 		vi.clearAllMocks();
 		vi.stubEnv("NEXT_PUBLIC_ENABLE_DEUDAS_CASH", "true");
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+	});
+
+	it("PUT detalle rechaza edición después de downgrade", async () => {
+		const { hasFeature } = await import("@/lib/services/tenant-scope");
+		const prisma = (await import("@/lib/prisma")).default as any;
+		vi.mocked(hasFeature).mockReturnValueOnce(false);
+
+		const { PUT } = await import("../[id]/route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/deuda-1", {
+			method: "PUT",
+			body: JSON.stringify({ observaciones: "No debe editarse" }),
+		});
+		const response = await PUT(request, { params: Promise.resolve({ id: "deuda-1" }) });
+		const body = await response.json();
+
+		expect(response.status).toBe(403);
+		expect(body.code).toBe("FEATURE_NOT_AVAILABLE");
+		expect(prisma.deudaCash.findFirst).not.toHaveBeenCalled();
+		expect(prisma.deudaCash.update).not.toHaveBeenCalled();
+	});
+
+	it("PUT detalle scopea lookup y escritura al tenant autenticado", async () => {
+		const prisma = (await import("@/lib/prisma")).default as any;
+		prisma.deudaCash.findFirst.mockResolvedValueOnce({
+			id: "deuda-1",
+			tenantId: "tenant-1",
+			fechaVencimiento: null,
+			tasaInteres: 1,
+			observaciones: null,
+		});
+		prisma.deudaCash.update.mockResolvedValueOnce({ id: "deuda-1" });
+
+		const { PUT } = await import("../[id]/route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/deuda-1", {
+			method: "PUT",
+			body: JSON.stringify({ observaciones: "Updated" }),
+		});
+		const response = await PUT(request, { params: Promise.resolve({ id: "deuda-1" }) });
+
+		expect(response.status).toBe(200);
+		expect(prisma.deudaCash.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { id: "deuda-1", tenantId: "tenant-1", deletedAt: null } }),
+		);
+		expect(prisma.deudaCash.update).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { id: "deuda-1", tenantId: "tenant-1" } }),
+		);
 	});
 
 	it("GET lista deudas con status 200", async () => {
@@ -123,6 +172,7 @@ describe("API contabilidad/deudas-cash", () => {
 		prisma.deudaCash.count.mockResolvedValue(1);
 
 		const { GET } = await import("../route");
+		const { requirePermission } = await import("@/lib/services/tenant-scope");
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/deudas-cash",
 		);
@@ -132,6 +182,26 @@ describe("API contabilidad/deudas-cash", () => {
 		expect(response.status).toBe(200);
 		expect(body.deudas).toHaveLength(1);
 		expect(body.pagination.total).toBe(1);
+		expect(requirePermission).toHaveBeenCalledWith(
+			expect.objectContaining({ userId: "user-test" }),
+			"financiero.contabilidad.acceder",
+			"consultar deudas cash",
+		);
+	});
+
+	it("GET devuelve 403 y no consulta cuando falta permiso financiero", async () => {
+		const { requirePermission } = await import("@/lib/services/tenant-scope");
+		const prisma = (await import("@/lib/prisma")).default as any;
+		vi.mocked(requirePermission).mockImplementationOnce(() => {
+			throw new ActionError("Forbidden", "FORBIDDEN");
+		});
+
+		const { GET } = await import("../route");
+		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash");
+		const response = await GET(request, {});
+
+		expect(response.status).toBe(403);
+		expect(prisma.deudaCash.findMany).not.toHaveBeenCalled();
 	});
 
 	it("GET filtra por proveedorId", async () => {
@@ -287,6 +357,25 @@ describe("API contabilidad/deudas-cash", () => {
 		).not.toHaveBeenCalled();
 	});
 
+	it("POST replays an existing debt after plan downgrade without creating another debt", async () => {
+		const guards = await import("@/lib/services/tenant-scope");
+		vi.mocked(guards.requireFeature).mockImplementation(() => {
+			throw new ActionError("plan downgraded", "FEATURE_NOT_AVAILABLE");
+		});
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService;
+		vi.mocked(service.findCashDebtCreateReplay).mockResolvedValue({ id: "existing-debt" } as never);
+		const { POST } = await import("../route");
+		const response = await POST(new NextRequest("http://localhost/api/contabilidad/deudas-cash", {
+			method: "POST",
+			headers: { "Idempotency-Key": "existing-debt-key" },
+			body: JSON.stringify({ proveedorId: "v-1", montoCapital: 3000, moneda: "CUP", cuentaBancariaId: "cb-1" }),
+		}), {});
+
+		expect(response.status).toBe(201);
+		expect(service.createCashDebt).not.toHaveBeenCalled();
+	});
+
 	it("POST maps a reused idempotency key with a different payload to 409", async () => {
 		const { AccountingCashOperationsMutationService } = await import(
 			"@/features/contabilidad/services/accounting-cash-operations-mutation-service"
@@ -312,6 +401,8 @@ describe("API contabilidad/deudas-cash", () => {
 	});
 
 	it("POST creates an idempotent debt after the period gate", async () => {
+		const { requireFeature } = await import("@/lib/services/tenant-scope");
+		vi.mocked(requireFeature).mockImplementationOnce(() => undefined);
 		const { AccountingCashOperationsMutationService } = await import(
 			"@/features/contabilidad/services/accounting-cash-operations-mutation-service"
 		);
@@ -346,6 +437,8 @@ describe("API contabilidad/deudas-cash", () => {
 	});
 
 	it("POST rechecks idempotency after a closed-period rejection", async () => {
+		const { requireFeature } = await import("@/lib/services/tenant-scope");
+		vi.mocked(requireFeature).mockImplementationOnce(() => undefined);
 		const { AccountingCashOperationsMutationService } = await import(
 			"@/features/contabilidad/services/accounting-cash-operations-mutation-service"
 		);
@@ -414,6 +507,8 @@ describe("API contabilidad/deudas-cash/[id]/pagar", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		const guards = await import("@/lib/services/tenant-scope");
+		vi.mocked(guards.requireFeature).mockImplementation(() => undefined);
 		vi.stubEnv("NEXT_PUBLIC_ENABLE_DEUDAS_CASH", "true");
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
 		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
@@ -442,6 +537,24 @@ describe("API contabilidad/deudas-cash/[id]/pagar", () => {
 			input: { id: "d-1", ...payment, idempotencyKey: "body-key" },
 			user: expect.objectContaining({ userId: "user-test", tenantId: "tenant-1" }),
 		});
+	});
+
+	it("allows settlement of an existing debt when the plan feature is unavailable", async () => {
+		const guards = await import("@/lib/services/tenant-scope");
+		const { ActionError } = await import("@/lib/server-actions");
+		vi.mocked(guards.requireFeature).mockImplementation(() => {
+			throw new ActionError("plan downgraded", "FEATURE_NOT_AVAILABLE");
+		});
+		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
+			.AccountingCashOperationsMutationService as any;
+		const { POST } = await import("../[id]/pagar/route");
+		const response = await POST(new NextRequest(
+			"http://localhost/api/contabilidad/deudas-cash/d-1/pagar",
+			{ method: "POST", body: JSON.stringify(payment) },
+		), mockContext);
+
+		expect(response.status).toBe(201);
+		expect(service.registerCashDebtPayment).toHaveBeenCalledOnce();
 	});
 
 	it("uses the Idempotency-Key header when the request body omits a key", async () => {
@@ -529,16 +642,13 @@ describe("API contabilidad/deudas-cash/[id]/pagar", () => {
 		expect(service.registerCashDebtPayment).not.toHaveBeenCalled();
 	});
 
-	it.each([
-		["feature", "FEATURE_NOT_AVAILABLE"],
-		["permission", "FORBIDDEN"],
-	] as const)("denies a payment before replay when the %s gate fails", async (gate, code) => {
+	it("denies a payment before replay when the permission gate fails", async () => {
 		const { ActionError } = await import("@/lib/server-actions");
 		const guards = await import("@/lib/services/tenant-scope");
 		const service = (await import("@/features/contabilidad/services/accounting-cash-operations-mutation-service"))
 			.AccountingCashOperationsMutationService as any;
-		vi.mocked(gate === "feature" ? guards.requireFeature : guards.requirePermission)
-			.mockImplementation(() => { throw new ActionError("denied", code); });
+		vi.mocked(guards.requirePermission)
+			.mockImplementation(() => { throw new ActionError("denied", "FORBIDDEN"); });
 		const { POST } = await import("../[id]/pagar/route");
 		const request = new NextRequest("http://localhost/api/contabilidad/deudas-cash/d-1/pagar", {
 			method: "POST",

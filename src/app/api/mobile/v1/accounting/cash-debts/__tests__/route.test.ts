@@ -11,8 +11,13 @@ vi.mock('@/features/contabilidad/services/accounting-cash-operations-service', (
   },
 }));
 
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requirePermission: vi.fn(),
+}));
+
 import { authenticateUser } from '@/lib/auth-middleware';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
+import { requirePermission } from '@/lib/services/tenant-scope';
 import { GET } from '../route';
 
 const mockUser = {
@@ -46,6 +51,9 @@ describe('mobile cash debts route', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(requirePermission).toHaveBeenCalledWith(
+      mockUser, 'financiero.contabilidad.acceder', 'consultar deudas cash',
+    );
     expect(data.items).toHaveLength(1);
     expect(AccountingCashOperationsService.listCashDebts).toHaveBeenCalledWith({
       tenantId: 'tenant-1',

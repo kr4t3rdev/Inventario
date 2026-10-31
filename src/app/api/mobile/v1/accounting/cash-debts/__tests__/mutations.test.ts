@@ -10,6 +10,7 @@ vi.mock('@/features/contabilidad/services/accounting-cash-operations-mutation-se
 }));
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireFeature: vi.fn(),
+  requirePermission: vi.fn(),
   requireTenant: vi.fn(() => 'tenant-1'),
 }));
 vi.mock('@/lib/services/validate-period-write', () => ({

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { ActionError } from '@/lib/server-actions'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { hasFeature, hasPermission, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 
@@ -28,17 +29,19 @@ function deudasCashEnabled(): boolean {
  * @param {NextRequest} request - Request
  * @returns {NextResponse} Deuda encontrada o 404
  */
-export const GET = withAuthGet(async (request: NextRequest, context: unknown) => {
+export const GET = withAuthGet(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user)
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar deudas cash')
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
     const deuda = await prisma.deudaCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, tenantId, deletedAt: null },
       include: {
         proveedor: {
           select: {
@@ -56,6 +59,9 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
 
     return NextResponse.json({ deuda })
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     console.error('Error obteniendo deuda cash:', error)
     return NextResponse.json({ error: 'Error obteniendo deuda cash' }, { status: 500 })
   }
@@ -75,6 +81,19 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     const tenantId = requireTenant(user)
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
+
+    if (!hasPermission(user, 'financiero.contabilidad.acceder')) {
+      return NextResponse.json(
+        { error: 'No tienes permiso para editar esta deuda', code: 'FORBIDDEN' },
+        { status: 403 },
+      )
+    }
+    if (!hasFeature(user, 'deudas-cash')) {
+      return NextResponse.json(
+        { error: 'La edición de deudas cash no está disponible en el plan actual', code: 'FEATURE_NOT_AVAILABLE' },
+        { status: 403 },
+      )
+    }
 
     const body = await request.json()
 
@@ -103,7 +122,7 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     const data = updateSchema.parse(body)
 
     const existing = await prisma.deudaCash.findFirst({
-      where: { id, deletedAt: null }
+      where: { id, tenantId, deletedAt: null }
     })
 
     if (!existing) {
@@ -111,7 +130,7 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     }
 
     const deuda = await prisma.deudaCash.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
         ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
