@@ -20,6 +20,9 @@ const BASIC_ACCOUNTING_HIDDEN_ITEMS = new Set([
 const ACCOUNTING_ITEM_FEATURE_MAP: Record<string, string> = {
   Dashboard: 'contabilidad',
   'Cuentas Bancarias': 'contabilidad',
+  'Cuentas por Cobrar': 'contabilidad',
+  'Cuentas por Pagar': 'contabilidad',
+  'Deudas en Efectivo': 'contabilidad',
   'Transferencias Bancarias': 'transferencias-bancarias',
   'Ajustes Bancarios': 'ajustes-bancarios',
   Reconciliación: 'contabilidad',

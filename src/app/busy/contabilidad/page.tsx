@@ -123,12 +123,10 @@ const quickActionsBase = [
  */
 export default async function ContabilidadDashboard(): Promise<React.JSX.Element> {
   const user = await getCurrentUser();
-  const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
   const hasContabilidad = user?.planFeatures?.contabilidad === true;
   const hideItemForBasic = (title: string) => !canAccessAccountingItem(user, title);
 
   const quickActions = quickActionsBase.filter((a) => {
-    if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
     if (a.title === 'Transferencias' && hideItemForBasic('Transferencias Bancarias')) return false;
     if (a.title === 'Ajustes Manuales' && hideItemForBasic('Ajustes Bancarios')) return false;
     if (a.title === 'Tasas de Cambio' && hideItemForBasic('Exchange')) return false;

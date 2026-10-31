@@ -187,8 +187,11 @@ describe('buildVisibleSidebarGroups', () => {
       // Items with explicit feature keys (multi-moneda, inyeccion-capital, etc.) are also hidden.
       expect(allTitles).not.toContain('Exchange')
       expect(allTitles).not.toContain('Inyección Capital')
-      // Cuentas por Cobrar uses 'cuentas-cobrar' feature key (not 'contabilidad'), so it's gated differently.
-      // Without that feature, it's still visible because the only filter is `planFeatures?.[key] === false`.
+      // Cuentas por Cobrar/Pagar y Deudas en Efectivo dependen de 'contabilidad'
+      // para exponer la consulta de deudas existentes.
+      expect(allTitles).not.toContain('Cuentas por Cobrar')
+      expect(allTitles).not.toContain('Cuentas por Pagar')
+      expect(allTitles).not.toContain('Deudas en Efectivo')
     })
   })
 
@@ -301,7 +304,14 @@ describe('buildVisibleSidebarGroups', () => {
         tenantRole: 'manager',
         tenantId: 't1',
         planName: 'Básico',
-        planFeatures: { contabilidad: true, empleados: true, 'prestamos-cash': false },
+        planFeatures: {
+          contabilidad: true,
+          empleados: true,
+          'prestamos-cash': false,
+          'cuentas-cobrar': false,
+          'cuentas-pagar': false,
+          'deudas-cash': false,
+        },
       })
       const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
       const allTitles = result.flatMap((g) => g.items.flatMap((i) => [i.title, ...(i.subItems?.map((s) => s.title) ?? [])]))
@@ -314,6 +324,9 @@ describe('buildVisibleSidebarGroups', () => {
       expect(allTitles).not.toContain('Reconciliación Servicios')
       expect(allTitles).not.toContain('Nómina')
       expect(allTitles).toContain('Préstamos en Efectivo')
+      expect(allTitles).toContain('Cuentas por Cobrar')
+      expect(allTitles).toContain('Cuentas por Pagar')
+      expect(allTitles).toContain('Deudas en Efectivo')
       expect(allTitles).not.toContain('Vacaciones')
       expect(allTitles).not.toContain('Asistencia')
     })
