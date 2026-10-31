@@ -12,12 +12,12 @@ vi.mock('@/lib/services/validate-period-write', () => ({
   extraerFechaDeBody: vi.fn(() => null),
   validarEscrituraPeriodo: vi.fn().mockResolvedValue({ permitido: true, modo: 'enforce' }),
 }));
-vi.mock('@/lib/services/tenant-scope', () => ({ requireFeature: vi.fn() }));
+vi.mock('@/lib/services/tenant-scope', () => ({ requireFeature: vi.fn(), requirePermission: vi.fn() }));
 
 import { authenticateUser } from '@/lib/auth-middleware';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { POST } from '../route';
 
 const mockUser = {
@@ -29,6 +29,7 @@ describe('mobile cash loan payment route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(requireFeature).mockImplementation(() => undefined);
+    vi.mocked(requirePermission).mockImplementation(() => undefined);
     vi.mocked(AccountingCashOperationsMutationService.findCashLoanPaymentReplay).mockResolvedValue(null as never);
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' } as never);
   });
@@ -78,7 +79,7 @@ describe('mobile cash loan payment route', () => {
     expect(AccountingCashOperationsMutationService.registerCashLoanPayment).not.toHaveBeenCalled();
   });
 
-  it('denies feature access before checking payment replay', async () => {
+  it('allows payment of an existing loan after plan downgrade', async () => {
     const { ActionError } = await import('@/lib/server-actions');
     vi.mocked(requireFeature).mockImplementation(() => {
       throw new ActionError('feature unavailable', 'FEATURE_NOT_AVAILABLE');
@@ -92,8 +93,25 @@ describe('mobile cash loan payment route', () => {
 
     const response = await POST(request, { params: Promise.resolve({ id: 'loan-1' }) } as never);
 
+    expect(response.status).toBe(200);
+    expect(AccountingCashOperationsMutationService.findCashLoanPaymentReplay).toHaveBeenCalledOnce();
+    expect(AccountingCashOperationsMutationService.registerCashLoanPayment).toHaveBeenCalledOnce();
+  });
+
+  it('denies Cash payment when accounting permission is missing', async () => {
+    const { ActionError } = await import('@/lib/server-actions');
+    vi.mocked(requirePermission).mockImplementation(() => {
+      throw new ActionError('forbidden', 'FORBIDDEN');
+    });
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/cash-loans/loan-1/payments', {
+      method: 'POST', headers: { authorization: 'Bearer token', 'content-type': 'application/json' },
+      body: JSON.stringify({ monto: 1, cuentaId: 'bank-1', tipoPagoId: 'cash-1' }),
+    });
+
+    const response = await POST(request, { params: Promise.resolve({ id: 'loan-1' }) } as never);
+
     expect(response.status).toBe(403);
-    expect(AccountingCashOperationsMutationService.findCashLoanPaymentReplay).not.toHaveBeenCalled();
     expect(AccountingCashOperationsMutationService.registerCashLoanPayment).not.toHaveBeenCalled();
   });
 

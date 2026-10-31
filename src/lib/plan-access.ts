@@ -34,6 +34,7 @@ const ACCOUNTING_ITEM_FEATURE_MAP: Record<string, string> = {
   'Reportes Contables': 'contabilidad',
   'Configuracion Contable': 'contabilidad',
   'Períodos Contables': 'contabilidad',
+  'Préstamos en Efectivo': 'contabilidad',
   Logs: 'contabilidad',
 };
 

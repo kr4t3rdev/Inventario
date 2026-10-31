@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 import { AccountingCashOperationsMutationService, validateCashPaymentAmount } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 
@@ -41,7 +41,6 @@ export const POST = withAuthPost(async (
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 });
     }
-    requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
     requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de préstamos cash');
 
     const { params } = context as { params: Promise<{ id: string }> };

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { ActionError } from '@/lib/server-actions'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
@@ -29,17 +30,19 @@ function prestamosCashEnabled(): boolean {
  * @param {NextRequest} request - Request
  * @returns {NextResponse} Préstamo encontrado o 404
  */
-export const GET = withAuthGet(async (request: NextRequest, context: unknown) => {
+export const GET = withAuthGet(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user)
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar préstamos cash')
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
     const prestamo = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, tenantId, deletedAt: null },
       include: {
         cliente: {
           select: {
@@ -72,6 +75,9 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
 
     return NextResponse.json({ prestamo: prestamoNormalizado })
   } catch (error) {
+    if (error instanceof ActionError && ['FORBIDDEN', 'TENANT_REQUIRED'].includes(error.code)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     console.error('Error obteniendo préstamo cash:', error)
     return NextResponse.json({ error: 'Error obteniendo préstamo cash' }, { status: 500 })
   }
@@ -88,6 +94,8 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    requirePermission(user, 'financiero.contabilidad.acceder', 'editar préstamos cash')
+    requireFeature(user, 'prestamos-cash', 'editar préstamos cash')
     const tenantId = requireTenant(user)
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
@@ -119,7 +127,7 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     const data = updateSchema.parse(body)
 
     const existing = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null }
+      where: { id, tenantId, deletedAt: null }
     })
 
     if (!existing) {
@@ -127,7 +135,7 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
     }
 
     const prestamo = await prisma.prestamoCash.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
         ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
@@ -173,6 +181,12 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
       },
     })
   } catch (error) {
+    if (error instanceof ActionError && ['FORBIDDEN', 'TENANT_REQUIRED', 'FEATURE_NOT_AVAILABLE'].includes(error.code)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
+    if (error instanceof ActionError && error.code === 'NOT_FOUND') {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 404 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }

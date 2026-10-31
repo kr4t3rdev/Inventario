@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: any) => handler,
+  withAuthGet: (handler: any) => (request: any, context: any) =>
+    handler(request, context, { userId: 'user-1', tenantId: 'tenant-1', role: 'admin' }),
+}))
+
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: vi.fn(() => 'tenant-1'),
+  requirePermission: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({

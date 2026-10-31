@@ -1,6 +1,7 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
+import { requirePermission } from '@/lib/services/tenant-scope';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar estadísticas de préstamos cash');
     const result = await AccountingCashOperationsService.getCashLoanStats({
       tenantId: authResult.user.tenantId ?? '',
     });

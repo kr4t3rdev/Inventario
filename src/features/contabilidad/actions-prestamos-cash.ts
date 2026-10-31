@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import {
@@ -64,7 +64,7 @@ export const getPrestamosCashAction = withAction(async (
   input: { estado?: string; clienteId?: string; moneda?: string; page?: number; limit?: number } = {},
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'prestamos-cash', 'gestionar préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar préstamos cash');
   const tenantId = requireTenant(user)
   return AccountingCashOperationsService.listCashLoans({
     tenantId,
@@ -77,13 +77,13 @@ export const getPrestamosCashAction = withAction(async (
 })
 
 export const getPrestamoCashByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
-  requireFeature(user, 'prestamos-cash', 'consultar préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar préstamos cash');
   const tenantId = requireTenant(user)
   return AccountingCashOperationsService.getCashLoanById({ tenantId, id })
 })
 
 export const getPrestamoCashHistorialAction = withAction(async (id: string, user: AuthenticatedUser) => {
-  requireFeature(user, 'prestamos-cash', 'consultar historial de préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar historial de préstamos cash');
   const tenantId = requireTenant(user)
   return AccountingCashOperationsService.getCashLoanHistory({ tenantId, id })
 })
@@ -92,7 +92,7 @@ export const createPrestamoCashAction = withAction(async (
   input: z.infer<typeof createSchema>,
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'crear préstamos cash');
   requireTenant(user);
   const body = createSchema.parse(input)
   const operationDate = new Date()
@@ -101,10 +101,13 @@ export const createPrestamoCashAction = withAction(async (
       input: body,
       user,
     }),
-    validatePeriod: () => withPeriodValidation(
-      () => operationDate,
-      async () => undefined,
-    )(undefined, user),
+    validatePeriod: async () => {
+      requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
+      return withPeriodValidation(
+        () => operationDate,
+        async () => undefined,
+      )(undefined, user);
+    },
     write: () => AccountingCashOperationsMutationService.createCashLoan({
       input: body,
       user,
@@ -127,6 +130,7 @@ export const updatePrestamoCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
   user: AuthenticatedUser
 ) => {
+  requirePermission(user, 'financiero.contabilidad.acceder', 'editar préstamos cash');
   requireFeature(user, 'prestamos-cash', 'editar préstamos cash');
   const { id, ...data } = input
   const parsed = updateSchema.parse(data)
@@ -142,7 +146,7 @@ export const registrarPagoPrestamoAction = withAction(async (
   input: { id: string } & z.infer<typeof pagoSchema>,
   user: AuthenticatedUser
 ) => {
-  requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de préstamos cash');
   const { id, ...body } = pagoSchema.parse(input);
   const paymentInput = { id, ...body };
   const resultado = await runCashCreateWithReplay({
@@ -167,25 +171,25 @@ export const registrarPagoPrestamoAction = withAction(async (
 });
 
 export const getPrestamosCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
-  requireFeature(user, 'prestamos-cash', 'ver estadísticas de préstamos cash');
+  requirePermission(user, 'financiero.contabilidad.acceder', 'consultar estadísticas de préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
-  requireTenant(user)
+  const tenantId = requireTenant(user)
 
   const [totalActivos, totalPagados, totalVencidos, montosPorMoneda, cuentasPendientes, rm] = await Promise.all([
-    prisma.prestamoCash.count({ where: { estado: 'ACTIVO', deletedAt: null } }),
-    prisma.prestamoCash.count({ where: { estado: 'PAGADO', deletedAt: null } }),
-    prisma.prestamoCash.count({ where: { estado: 'VENCIDO', deletedAt: null } }),
+    prisma.prestamoCash.count({ where: { tenantId, estado: 'ACTIVO', deletedAt: null } }),
+    prisma.prestamoCash.count({ where: { tenantId, estado: 'PAGADO', deletedAt: null } }),
+    prisma.prestamoCash.count({ where: { tenantId, estado: 'VENCIDO', deletedAt: null } }),
     prisma.prestamoCash.groupBy({
       by: ['moneda'],
-      where: { estado: { not: 'CANCELADO' }, deletedAt: null },
+      where: { tenantId, estado: { not: 'CANCELADO' }, deletedAt: null },
       _sum: { montoCapital: true },
     }),
     prisma.cuentaPorCobrar.findMany({
-      where: { tipoCuenta: 'PRESTAMO_CASH', estado: { not: 'PAGADA' } },
+      where: { tenantId, tipoCuenta: 'PRESTAMO_CASH', estado: { not: 'PAGADA' } },
       select: { montoDeuda: true, montoPagado: true, prestamoCash: { select: { moneda: true } } },
     }),
     prisma.reconciliacionVenta.aggregate({
-      where: { tipoReconciliacion: 'PRESTAMO_CASH' },
+      where: { tenantId, tipoReconciliacion: 'PRESTAMO_CASH' },
       _sum: { monto: true },
       _avg: { monto: true },
     }),

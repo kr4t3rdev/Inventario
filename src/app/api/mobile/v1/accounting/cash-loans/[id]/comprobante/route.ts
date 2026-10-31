@@ -3,6 +3,8 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse } from '@/lib/api-response';
+import { ActionError } from '@/lib/server-actions';
+import { requirePermission } from '@/lib/services/tenant-scope';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 
 export const runtime = 'nodejs';
@@ -70,6 +72,7 @@ export async function GET(
   }
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'descargar comprobantes de préstamos cash');
     const { id } = await context.params;
     const prestamo = await AccountingCashOperationsService.getCashLoanById({
       tenantId: authResult.user.tenantId ?? '',
@@ -96,6 +99,10 @@ export async function GET(
       },
     });
   } catch (error) {
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'TENANT_REQUIRED' ? 403 : 400;
+      return errorResponse(error.message, status, error.code);
+    }
     console.error('Error en mobile cash loan comprobante route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');
   }

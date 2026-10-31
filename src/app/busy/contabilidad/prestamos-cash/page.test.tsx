@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockReplace = vi.fn();
@@ -35,13 +35,14 @@ vi.mock('@/features/contabilidad/actions-prestamos-cash', () => ({
 }));
 
 import PrestamosCashPage from './page';
+import { getPrestamosCashAction } from '@/features/contabilidad/actions-prestamos-cash';
 
 describe('/busy/contabilidad/prestamos-cash page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan no incluye préstamos cash', async () => {
+  it('permite consultar préstamos existentes sin permitir crear en Básico', async () => {
     useAuthMock.mockReturnValue({
       user: {
         role: 'user',
@@ -52,8 +53,8 @@ describe('/busy/contabilidad/prestamos-cash page', () => {
 
     render(<PrestamosCashPage />);
 
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
-    });
+    await waitFor(() => expect(getPrestamosCashAction).toHaveBeenCalled());
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /Nuevo Préstamo/i })).not.toBeInTheDocument();
   });
 });

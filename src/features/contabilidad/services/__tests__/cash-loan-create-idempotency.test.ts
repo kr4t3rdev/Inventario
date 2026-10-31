@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
   const accountingPolicyFindUnique = vi.fn();
   const lock = vi.fn();
   const transaction = vi.fn();
+  const requireFeature = vi.fn();
   return {
     accountFindFirst,
     accountUpdateMany,
@@ -30,13 +31,17 @@ const mocks = vi.hoisted(() => {
     accountingPolicyFindUnique,
     lock,
     transaction,
+    requireFeature,
   };
 });
 
 vi.mock('@/lib/prisma', () => ({
   prisma: { $transaction: mocks.transaction },
 }));
-vi.mock('@/lib/services/tenant-scope', () => ({ requireTenant: () => 'tenant-1' }));
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: () => 'tenant-1',
+  requireFeature: mocks.requireFeature,
+}));
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: { log: vi.fn(), logStrict: mocks.auditStrict },
 }));
@@ -91,6 +96,7 @@ describe('cash-loan create tenant safety and atomicity', () => {
     mocks.loanCreate.mockResolvedValue({ id: 'loan-1' });
     mocks.auditStrict.mockResolvedValue({ id: 'audit-1' });
     mocks.accountingPolicyFindUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+    mocks.requireFeature.mockImplementation(() => undefined);
   });
 
   it('scopes both bank account and client ownership to the authenticated tenant', async () => {
@@ -113,6 +119,40 @@ describe('cash-loan create tenant safety and atomicity', () => {
       cashInterestPolicyVersion: 1,
       cashInterestPrincipalRemaining: expect.objectContaining({ d: expect.any(Array) }),
     });
+  });
+
+  it('replays an existing loan directly through the writer after downgrade', async () => {
+    const { cashCreatePayloadHash } = await import('@/lib/services/cash-create-idempotency');
+    const replay = { id: 'loan-existing' };
+    mocks.requireFeature.mockImplementation(() => {
+      const error = new Error('feature unavailable') as Error & { code: string };
+      error.code = 'FEATURE_NOT_AVAILABLE';
+      throw error;
+    });
+    mocks.reconciliationFindUnique.mockResolvedValueOnce({
+      idempotencyPayloadHash: cashCreatePayloadHash({
+        operation: 'CREATE_PRESTAMO_CASH',
+        clienteId: input.clienteId,
+        montoCapital: input.montoCapital,
+        moneda: input.moneda,
+        tasaInteres: input.tasaInteres,
+        tasaInteresMoratorio: input.tasaInteresMoratorio,
+        tasaCambioAlCrear: null,
+        fechaVencimiento: null,
+        observaciones: null,
+        cuentaBancariaId: input.cuentaBancariaId,
+      }),
+      prestamoCashId: 'loan-existing',
+    });
+    mocks.loanFindFirst.mockResolvedValueOnce(replay);
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+
+    await expect(service.createCashLoan({ input, user })).resolves.toBe(replay);
+    expect(mocks.requireFeature).not.toHaveBeenCalled();
+    expect(mocks.clientFindFirst).not.toHaveBeenCalled();
+    expect(mocks.loanCreate).not.toHaveBeenCalled();
   });
 
   it('rejects a foreign-tenant bank account before any balance or loan write', async () => {

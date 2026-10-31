@@ -81,7 +81,6 @@ export const SIDEBAR_FEATURE_MAP: Record<string, string> = {
   "Cuentas por Cobrar": "cuentas-cobrar",
   "Cuentas por Pagar": "cuentas-pagar",
   Anticipos: "anticipos",
-  "Préstamos en Efectivo": "prestamos-cash",
   "Deudas en Efectivo": "deudas-cash",
   "Transferencias Bancarias": "transferencias-bancarias",
   "Ajustes Bancarios": "ajustes-bancarios",

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
+import { ActionError } from '@/lib/server-actions'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { hasFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
@@ -44,6 +45,7 @@ function prestamosCashEnabled(): boolean {
 export const GET = withAuthGet(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
     const tenantId = requireTenant(user);
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar préstamos cash');
     const { searchParams } = new URL(request.url)
     const query = querySchema.parse({
       estado: searchParams.get('estado') || undefined,
@@ -114,6 +116,9 @@ export const GET = withAuthGet(async (request: NextRequest, _context: unknown, u
       }
     })
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
@@ -130,8 +135,15 @@ export const GET = withAuthGet(async (request: NextRequest, _context: unknown, u
 export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
     const tenantId = requireTenant(user);
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear préstamos cash');
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
+    }
+    if (!hasFeature(user, 'prestamos-cash')) {
+      return NextResponse.json(
+        { error: 'El plan actual no permite crear nuevos préstamos cash', code: 'FEATURE_NOT_AVAILABLE' },
+        { status: 403 },
+      )
     }
 
     const body = createSchema.parse(await request.json())
@@ -262,6 +274,14 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+    }
+    if (error instanceof ActionError) {
+      const status = ['FORBIDDEN', 'TENANT_REQUIRED', 'FEATURE_NOT_AVAILABLE'].includes(error.code)
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     console.error('Error creando préstamo cash:', error)
     return NextResponse.json({ error: 'Error creando préstamo cash' }, { status: 500 })
