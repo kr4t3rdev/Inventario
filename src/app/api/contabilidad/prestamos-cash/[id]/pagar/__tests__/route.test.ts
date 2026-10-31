@@ -51,6 +51,8 @@ const reconciliation = { reconciliacionId: 'rec-1', monto: 0.0123, montoConverti
 describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    const guards = await import('@/lib/services/tenant-scope');
+    vi.mocked(guards.requireFeature).mockImplementation(() => undefined);
     vi.stubEnv('PERIODO_GUARD_ENABLED', 'false');
     vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'true');
     const service = (await import('@/features/contabilidad/services/accounting-cash-operations-mutation-service'))
@@ -79,6 +81,24 @@ describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
       input: { id: 'p-1', ...payment, idempotencyKey: 'body-key' },
       user: expect.objectContaining({ userId: 'user-test', tenantId: 'tenant-1' }),
     });
+  });
+
+  it('allows settlement of an existing loan when the plan feature is unavailable', async () => {
+    const guards = await import('@/lib/services/tenant-scope');
+    const { ActionError } = await import('@/lib/server-actions');
+    vi.mocked(guards.requireFeature).mockImplementation(() => {
+      throw new ActionError('plan downgraded', 'FEATURE_NOT_AVAILABLE');
+    });
+    const service = (await import('@/features/contabilidad/services/accounting-cash-operations-mutation-service'))
+      .AccountingCashOperationsMutationService as any;
+    const { POST } = await import('../route');
+    const response = await POST(new NextRequest(
+      'http://localhost/api/contabilidad/prestamos-cash/p-1/pagar',
+      { method: 'POST', body: JSON.stringify(payment) },
+    ), mockContext);
+
+    expect(response.status).toBe(201);
+    expect(service.registerCashLoanPayment).toHaveBeenCalledOnce();
   });
 
   it('uses the Idempotency-Key header when the body does not provide a key', async () => {
@@ -166,16 +186,13 @@ describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
     expect(service.registerCashLoanPayment).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['feature', 'FEATURE_NOT_AVAILABLE'],
-    ['permission', 'FORBIDDEN'],
-  ] as const)('denies a payment before replay when the %s gate fails', async (gate, code) => {
+  it('denies a payment before replay when the permission gate fails', async () => {
     const { ActionError } = await import('@/lib/server-actions');
     const guards = await import('@/lib/services/tenant-scope');
     const service = (await import('@/features/contabilidad/services/accounting-cash-operations-mutation-service'))
       .AccountingCashOperationsMutationService as any;
-    vi.mocked(gate === 'feature' ? guards.requireFeature : guards.requirePermission)
-      .mockImplementation(() => { throw new ActionError('denied', code); });
+    vi.mocked(guards.requirePermission)
+      .mockImplementation(() => { throw new ActionError('denied', 'FORBIDDEN'); });
     const { POST } = await import('../route');
     const response = await POST(new NextRequest(
       'http://localhost/api/contabilidad/prestamos-cash/p-1/pagar',

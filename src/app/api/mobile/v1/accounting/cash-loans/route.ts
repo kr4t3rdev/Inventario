@@ -5,6 +5,7 @@ import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import {
   isCashCreateIdempotencyUniqueConflict,
   runCashCreateWithReplay,
@@ -42,6 +43,7 @@ function mapActionErrorStatus(code: string): number {
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'DISABLED':
       return 404;
@@ -57,6 +59,7 @@ export async function GET(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar préstamos cash');
     const { searchParams } = new URL(request.url);
     const result = await AccountingCashOperationsService.listCashLoans({
       tenantId: authResult.user.tenantId ?? '',
@@ -82,6 +85,7 @@ export async function POST(request: Request) {
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'crear préstamos cash');
     const body = createSchema.parse(await request.json());
     const headerKey = request.headers.get('Idempotency-Key');
     const rawKey = body.idempotencyKey !== undefined ? body.idempotencyKey : headerKey;
@@ -104,6 +108,7 @@ export async function POST(request: Request) {
         user: authResult.user,
       }),
       validatePeriod: async () => {
+        requireFeature(authResult.user, 'prestamos-cash', 'crear préstamos cash');
         const validation = await validarEscrituraPeriodo({
           fecha: operationDate,
           tenantId: authResult.user.tenantId ?? '',

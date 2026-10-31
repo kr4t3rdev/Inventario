@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet } from '@/lib/auth-middleware'
+import { withAuthGet, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { ActionError } from '@/lib/server-actions'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 
 function prestamosCashEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false'
@@ -11,17 +13,19 @@ function toNumber(value: unknown): number {
   return Number(value ?? 0)
 }
 
-export const GET = withAuthGet(async (_request: NextRequest, context: unknown) => {
+export const GET = withAuthGet(async (_request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user)
+    requirePermission(user, 'financiero.contabilidad.acceder', 'consultar historial de préstamos cash')
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
     const prestamo = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, tenantId, deletedAt: null },
       include: {
         cliente: { select: { clienteId: true, nombre: true } },
         cuentaPorCobrar: true,
@@ -35,6 +39,7 @@ export const GET = withAuthGet(async (_request: NextRequest, context: unknown) =
     const historial = await prisma.reconciliacionVenta.findMany({
       where: {
         prestamoCashId: id,
+        tenantId,
         tipoReconciliacion: 'PRESTAMO_CASH',
       },
       include: {
@@ -89,6 +94,9 @@ export const GET = withAuthGet(async (_request: NextRequest, context: unknown) =
       })),
     })
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     console.error('Error obteniendo historial de préstamo cash:', error)
     return NextResponse.json({ error: 'Error obteniendo historial de préstamo cash' }, { status: 500 })
   }

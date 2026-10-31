@@ -72,4 +72,18 @@ describe('ContabilidadDashboard (server shell)', () => {
     expect(screen.getByRole('link', { name: /ver centro de conciliación/i })).toHaveAttribute('href', '/busy/contabilidad/reconciliacion');
     expect(screen.getByRole('heading', { name: 'Gestión General' })).toBeInTheDocument();
   });
+
+  it('mantiene el acceso a préstamos existentes en Básico sin habilitar la función', async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      ...usuario,
+      planName: 'Básico',
+      planFeatures: { contabilidad: true, 'prestamos-cash': false },
+    });
+    render(await ContabilidadDashboard());
+
+    expect(screen.getByRole('link', { name: /préstamos en efectivo/i })).toHaveAttribute(
+      'href',
+      '/busy/contabilidad/prestamos-cash',
+    );
+  });
 });

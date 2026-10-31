@@ -301,7 +301,7 @@ describe('buildVisibleSidebarGroups', () => {
         tenantRole: 'manager',
         tenantId: 't1',
         planName: 'Básico',
-        planFeatures: { contabilidad: true, empleados: true },
+        planFeatures: { contabilidad: true, empleados: true, 'prestamos-cash': false },
       })
       const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
       const allTitles = result.flatMap((g) => g.items.flatMap((i) => [i.title, ...(i.subItems?.map((s) => s.title) ?? [])]))
@@ -313,6 +313,7 @@ describe('buildVisibleSidebarGroups', () => {
       expect(allTitles).not.toContain('Facturas Vencidas')
       expect(allTitles).not.toContain('Reconciliación Servicios')
       expect(allTitles).not.toContain('Nómina')
+      expect(allTitles).toContain('Préstamos en Efectivo')
       expect(allTitles).not.toContain('Vacaciones')
       expect(allTitles).not.toContain('Asistencia')
     })

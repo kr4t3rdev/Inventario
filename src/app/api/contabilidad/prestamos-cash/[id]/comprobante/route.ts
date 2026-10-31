@@ -2,20 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
+import { ActionError } from '@/lib/server-actions'
+import { withAuthGet, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
+
 export const runtime = 'nodejs'
 
 /**
  * @description Genera y descarga un comprobante PDF para un préstamo cash.
  * @param {NextRequest} request - Request HTTP.
- * @param {object} context - Contexto con params.
+ * @param {object} context - Contexto con params de ruta.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
  * @returns {NextResponse} PDF del comprobante con 2 copias (cliente e interna).
  */
-export async function GET(
+export const GET = withAuthGet(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser
+) => {
   try {
-    const { id } = await params
+    const tenantId = requireTenant(user)
+    requirePermission(user, 'financiero.contabilidad.acceder', 'descargar comprobantes de préstamos cash')
+    const { id } = await context.params
 
     if (!id) {
       return NextResponse.json(
@@ -24,8 +32,8 @@ export async function GET(
       )
     }
 
-    const prestamo = await prisma.prestamoCash.findUnique({
-      where: { id },
+    const prestamo = await prisma.prestamoCash.findFirst({
+      where: { id, tenantId, deletedAt: null },
       include: {
         cliente: true,
         cuentaPorCobrar: true,
@@ -56,13 +64,16 @@ export async function GET(
       }
     })
   } catch (error) {
+    if (error instanceof ActionError && ['FORBIDDEN', 'TENANT_REQUIRED'].includes(error.code)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 403 })
+    }
     console.error('Error generating loan voucher PDF:', error)
     return NextResponse.json(
       { error: 'Error generando comprobante PDF' },
       { status: 500 }
     )
   }
-}
+})
 
 function formatCurrency(amount: number, moneda: string): string {
   return `${amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${moneda}`

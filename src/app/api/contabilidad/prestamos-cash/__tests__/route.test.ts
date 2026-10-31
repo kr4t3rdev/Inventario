@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { ActionError } from "@/lib/server-actions";
 
 vi.mock("@/lib/auth-middleware", () => {
 	const mockUser = { userId: "user-test", tenantId: "tenant-1" };
@@ -43,11 +44,20 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 	AuditLogService: { log: vi.fn() },
 }));
 
+vi.mock("@/lib/services/tenant-scope", () => ({
+	requireTenant: vi.fn(() => "tenant-1"),
+	hasFeature: vi.fn(() => true),
+	requirePermission: vi.fn(),
+}));
+
 describe("API contabilidad/prestamos-cash", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.clearAllMocks();
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
 		vi.stubEnv("NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH", "true");
+		const scope = await import("@/lib/services/tenant-scope");
+		vi.mocked(scope.requirePermission).mockImplementation(() => undefined);
+		vi.mocked(scope.hasFeature).mockReturnValue(true);
 	});
 
 	it("GET devuelve lista vacía si no hay datos (GET no verifica módulo deshabilitado)", async () => {
@@ -82,6 +92,7 @@ describe("API contabilidad/prestamos-cash", () => {
 		prisma.prestamoCash.count.mockResolvedValue(1);
 
 		const { GET } = await import("../route");
+		const scope = await import("@/lib/services/tenant-scope");
 		const request = new NextRequest(
 			"http://localhost/api/contabilidad/prestamos-cash",
 		);
@@ -89,6 +100,11 @@ describe("API contabilidad/prestamos-cash", () => {
 		const body = await response.json();
 
 		expect(response.status).toBe(200);
+		expect(scope.requirePermission).toHaveBeenCalledWith(
+			expect.objectContaining({ userId: "user-test" }),
+			"financiero.contabilidad.acceder",
+			"consultar préstamos cash",
+		);
 		expect(body.prestamos).toHaveLength(1);
 		expect(body.pagination.total).toBe(1);
 		expect(body.prestamos[0].estado).toBe("PAGADO");
@@ -197,6 +213,45 @@ describe("API contabilidad/prestamos-cash", () => {
 
 		expect(response.status).toBe(201);
 		expect(body.prestamo.id).toBe("p-new");
+	});
+
+	it("POST blocks a new receivable when the plan lacks the cash-loan feature", async () => {
+		const scope = await import("@/lib/services/tenant-scope");
+		vi.mocked(scope.hasFeature).mockReturnValue(false);
+		const { POST } = await import("../route");
+		const request = new NextRequest("http://localhost/api/contabilidad/prestamos-cash", {
+			method: "POST",
+			body: JSON.stringify({
+				clienteId: "c-1", montoCapital: 500, moneda: "CUP", cuentaBancariaId: "cb-1",
+			}),
+		});
+
+		const response = await POST(request, {});
+
+		expect(response.status).toBe(403);
+		vi.mocked(scope.hasFeature).mockReturnValue(true);
+	});
+
+	it("POST maps missing accounting permission to 403 before touching the database", async () => {
+		const prisma = (await import("@/lib/prisma")).default as any;
+		const scope = await import("@/lib/services/tenant-scope");
+		vi.mocked(scope.requirePermission).mockImplementation(() => {
+			throw new ActionError("Forbidden", "FORBIDDEN");
+		});
+		const { POST } = await import("../route");
+		const request = new NextRequest("http://localhost/api/contabilidad/prestamos-cash", {
+			method: "POST",
+			body: JSON.stringify({
+				clienteId: "c-1", montoCapital: 500, moneda: "CUP", cuentaBancariaId: "cb-1",
+			}),
+		});
+
+		const response = await POST(request, {});
+		vi.mocked(scope.requirePermission).mockImplementation(() => undefined);
+
+		expect(response.status).toBe(403);
+		expect(prisma.prestamoCash.create).not.toHaveBeenCalled();
+		expect(prisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("POST devuelve 400 con body inválido", async () => {

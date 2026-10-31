@@ -79,6 +79,7 @@ function createLoan(overrides: CreateOverrides) {
     userId: overrides.userId ?? userAId,
     tenantId,
     tenantRole: 'manager',
+    planFeatures: { 'prestamos-cash': true },
   } as AuthenticatedUser;
 
   return withTestTenant(tenantId, () =>

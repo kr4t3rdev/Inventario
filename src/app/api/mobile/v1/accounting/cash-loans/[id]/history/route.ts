@@ -2,6 +2,7 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
+import { requirePermission } from '@/lib/services/tenant-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ export async function GET(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar historial de préstamos cash');
     const { id } = await context.params;
     const result = await AccountingCashOperationsService.getCashLoanHistory({
       tenantId: authResult.user.tenantId ?? '',

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -25,7 +24,6 @@ const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== "false"
  * @returns {JSX.Element} Contenido con tabla, form y modal de pago.
  */
 function PrestamosCashContent() {
-  const router = useRouter()
   const { user } = useAuth()
   const [openForm, setOpenForm] = useState(false)
   const [openPago, setOpenPago] = useState(false)
@@ -49,31 +47,20 @@ function PrestamosCashContent() {
   const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
   const [tiposPago, setTiposPago] = useState<any[]>([])
   const [tasasData, setTasasData] = useState<{ monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> }>({})
-  const isBlocked =
-    user?.role !== 'admin' &&
-    user?.planFeatures?.['prestamos-cash'] !== true
+  const canCreate = user?.role === 'admin' || user?.planFeatures?.['prestamos-cash'] === true
 
   useEffect(() => {
-    if (isBlocked) {
-      router.replace('/busy/contabilidad')
-    }
-  }, [isBlocked, router])
-
-  useEffect(() => {
-    getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
     getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    if (!canCreate) return
+    getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getTasasActualesAction().then(r => {
       if (r.success) {
         const payload = r.data as unknown as { monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> } | undefined
         setTasasData(payload ?? {})
       }
     })
-  }, [])
-
-  if (isBlocked) {
-    return null
-  }
+  }, [canCreate])
 
   const handlePagar = (prestamo: PrestamoCash) => {
     setPrestamoSeleccionado(prestamo)
@@ -108,11 +95,12 @@ function PrestamosCashContent() {
             Gestione préstamos de dinero en efectivo a clientes
           </p>
         </div>
-        <Button onClick={() => setOpenForm(true)}
-          className="flex items-center space-x-2 mr-3">
-          <Plus className="h-4 w-4" />
-          Nuevo Préstamo
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
+            <Plus className="h-4 w-4" />
+            Nuevo Préstamo
+          </Button>
+        )}
       </div>
 
       <PrestamosCashTable
@@ -122,7 +110,7 @@ function PrestamosCashContent() {
         onPagar={handlePagar}
       />
 
-      <PrestamoCashForm
+      {canCreate && <PrestamoCashForm
         open={openForm}
         onOpenChange={setOpenForm}
         clientes={clientes.map((c: any) => ({
@@ -137,7 +125,7 @@ function PrestamosCashContent() {
         }))}
         tasasData={tasasData}
         onSuccess={handleSuccess}
-      />
+      />}
 
       <PagoPrestamoModal
         prestamo={prestamoSeleccionado}

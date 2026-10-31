@@ -4,7 +4,7 @@ import { buildPersistedAccountingAmount } from '@/features/contabilidad/services
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
@@ -376,6 +376,8 @@ export const AccountingCashOperationsMutationService = {
         }
       }
 
+      requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
+
       const cliente = await tx.cliente.findFirst({
         where: { clienteId: input.clienteId, tenantId },
         select: { clienteId: true },
@@ -531,11 +533,17 @@ export const AccountingCashOperationsMutationService = {
       throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
     }
 
-    const existing = await prisma.prestamoCash.findFirst({ where: { id: input.id, deletedAt: null } });
+    const tenantId = requireTenant(user);
+    requirePermission(user, 'financiero.contabilidad.acceder', 'editar préstamos cash');
+    requireFeature(user, 'prestamos-cash', 'editar préstamos cash');
+
+    const existing = await prisma.prestamoCash.findFirst({
+      where: { id: input.id, tenantId, deletedAt: null },
+    });
     if (!existing) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND');
 
     const prestamo = await prisma.prestamoCash.update({
-      where: { id: input.id },
+      where: { id: input.id, tenantId },
       data: {
         ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
         ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),

@@ -4,6 +4,7 @@ import { ActionError } from '@/lib/server-actions';
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service';
 import { AccountingCashOperationsMutationService } from '@/features/contabilidad/services/accounting-cash-operations-mutation-service';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,7 @@ function mapActionErrorStatus(code: string): number {
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'DISABLED':
       return 404;
@@ -29,6 +31,7 @@ export async function GET(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar préstamos cash');
     const { id } = await context.params;
     const result = await AccountingCashOperationsService.getCashLoanById({
       tenantId: authResult.user.tenantId ?? '',
@@ -53,6 +56,8 @@ export async function PUT(
   if ('status' in authResult) return authResult as Response;
 
   try {
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'editar préstamos cash');
+    requireFeature(authResult.user, 'prestamos-cash', 'editar préstamos cash');
     const { id } = await context.params;
     const body = await request.json();
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
