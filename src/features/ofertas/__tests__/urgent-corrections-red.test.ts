@@ -29,7 +29,10 @@ vi.mock('pdf-lib', () => ({
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/features/turnos-pos', () => ({ getOrCreateTurnoActivo: vi.fn() }));
-vi.mock('@/features/ventas/services/facturacion-workflow', () => ({ applyFacturacionCobroWorkflow: vi.fn() }));
+vi.mock('@/features/ventas/services/facturacion-workflow', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/ventas/services/facturacion-workflow')>()),
+  applyFacturacionCobroWorkflow: vi.fn(),
+}));
 vi.mock('@/lib/services/anticipos-workflow', () => ({ applyAnticipoAllocations: vi.fn() }));
 vi.mock('@/lib/services/fifo-allocation', () => ({ allocateFifoForSale: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));

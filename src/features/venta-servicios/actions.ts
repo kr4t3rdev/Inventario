@@ -261,6 +261,10 @@ const createVentaServicioHandler = async (
         }
       }
 
+      if (payload.condicionPago === 'CREDITO') {
+        requireFeature(user, 'cuentas-cobrar', 'crear ventas de servicios con saldo pendiente');
+      }
+
       await guardAccountingWriteInTransaction({
         client: tx,
         tenantId,
@@ -411,6 +415,10 @@ const createVentaServicioHandler = async (
         }
         return { ventaServicio: existing[0], allocationsResult: [], replayed: true };
       }
+    }
+
+    if (data.condicionPago === 'CREDITO') {
+      requireFeature(user, 'cuentas-cobrar', 'crear ventas de servicios con saldo pendiente');
     }
 
     await guardAccountingWriteInTransaction({
@@ -698,6 +706,10 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     }
     const cambiaTotal = nuevoTotal !== existing.total;
     const cambiaCliente = data.clienteId !== undefined && data.clienteId !== existing.clienteId;
+
+    if (cxcActiva && cambiaTotal && nuevoTotal > Number(cxcActiva.montoDeuda)) {
+      requireFeature(user, 'cuentas-cobrar', 'aumentar el saldo pendiente de una venta');
+    }
 
     // C-6: con factura emitida el documento es inmutable — cambiar cantidad o
     // cliente dejaría venta, deuda y factura financieramente inconsistentes.

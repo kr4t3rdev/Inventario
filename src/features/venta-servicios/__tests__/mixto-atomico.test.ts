@@ -48,7 +48,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const managerUser = {
   userId: 'user-manager', name: 'Manager', email: 'm@test.com',
   role: 'regularUser', isActive: true, tenantId: 'tenant-test',
-  tenantRole: 'manager', planFeatures: { servicios: true },
+  tenantRole: 'manager', planFeatures: { servicios: true, 'cuentas-cobrar': true },
 } as unknown as AuthenticatedUser;
 
 describe('atomicidad del modo mixto (C-4)', () => {

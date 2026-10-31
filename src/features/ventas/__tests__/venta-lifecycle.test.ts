@@ -83,6 +83,7 @@ const adminUser: AuthenticatedUser = {
 	name: 'Admin',
 	email: 'admin@test.com',
 	role: 'admin',
+	planFeatures: { 'cuentas-cobrar': true },
 	isActive: true,
 	tenantId: 'tenant-1',
 	tenantRole: 'manager',
@@ -269,6 +270,26 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 			expect.anything(),
 			expect.objectContaining({ ventaId: 'venta-1', facturaId: 'fac-1' }),
 		);
+	});
+
+	it('blocks new invoice receivable creation when the plan lacks CxC', async () => {
+		const basicUser = {
+			...adminUser,
+			role: 'manager',
+			planFeatures: {
+				'ventas-pedidos': true,
+				facturacion: true,
+				'ventas-factura': true,
+				'cuentas-cobrar': false,
+			},
+		} as AuthenticatedUser;
+
+		await expect(svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'CREDITO', tipoVencimiento: 'plazo', fechaVencimiento: '2026-10-01' },
+			user: basicUser,
+		})).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' });
+		expect(prisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it('rechaza facturar un pedido que aún no se entregó', async () => {
@@ -497,7 +518,10 @@ describe('revalidación del límite de crédito al facturar (C-2)', () => {
 		isActive: true,
 		tenantId: 'tenant-1',
 		tenantRole: 'manager',
-		planFeatures: { 'ventas-pedidos': true, facturacion: true, 'ventas-factura': true },
+		planFeatures: {
+			'ventas-pedidos': true, facturacion: true, 'ventas-factura': true,
+			'cuentas-cobrar': true,
+		},
 		permissions: new Set(['ventas.pedido.gestionar']),
 	} as unknown as AuthenticatedUser;
 

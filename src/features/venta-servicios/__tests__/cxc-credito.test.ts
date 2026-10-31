@@ -76,6 +76,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
   role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
+  planFeatures: { 'cuentas-cobrar': true },
 };
 
 describe('B-06: crédito en ventas de servicios genera CxC', () => {
@@ -96,6 +97,29 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
     const result = await createVentaServicioAction({ servicioId: 'sv-1', cantidad: 2, clienteId: 'cli-1' } as never);
 
     expect(result.success).toBe(true);
+    expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
+  });
+
+  it('Basic cannot create legacy or mixed service sales that open a new receivable', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'manager',
+      planFeatures: { servicios: true, 'cuentas-cobrar': false },
+    } as AuthenticatedUser);
+
+    const legacyResult = await createVentaServicioAction({
+      servicioId: 'sv-1', cantidad: 1, clienteId: 'cli-1', condicionPago: 'CREDITO',
+    } as never);
+    const mixedResult = await createVentaServicioAction({
+      lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 1 }],
+      clienteId: 'cli-1', condicionPago: 'CREDITO',
+    } as never);
+
+    expect(legacyResult.success).toBe(false);
+    expect(expectActionFailure(legacyResult).error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(mixedResult.success).toBe(false);
+    expect(expectActionFailure(mixedResult).error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
     expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
   });
 
@@ -187,13 +211,13 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
   const dependiente = {
     userId: 'user-dependiente', name: 'Dep', email: 'dep@test.com',
     role: 'regularUser', isActive: true, tenantId: 'tenant-test',
-    tenantRole: 'dependiente', planFeatures: { servicios: true },
+    tenantRole: 'dependiente', planFeatures: { servicios: true, 'cuentas-cobrar': true },
   } as unknown as AuthenticatedUser;
 
   const manager = {
     userId: 'user-manager', name: 'Manager', email: 'm@test.com',
     role: 'regularUser', isActive: true, tenantId: 'tenant-test',
-    tenantRole: 'manager', planFeatures: { servicios: true },
+    tenantRole: 'manager', planFeatures: { servicios: true, 'cuentas-cobrar': true },
   } as unknown as AuthenticatedUser;
 
   beforeEach(() => {
@@ -351,6 +375,24 @@ describe('update coherente con la CxC (C-4)', () => {
     mockTx.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 } as never);
   });
 
+  it('Basic cannot increase an existing receivable balance after downgrade', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'manager',
+      planFeatures: { servicios: true, 'cuentas-cobrar': false },
+    } as AuthenticatedUser);
+
+    const result = await updateVentaServicioAction({
+      ventaServicioId: 'vs-1',
+      cantidad: 2,
+    } as never);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+    expect(mockTx.cuentaPorCobrar.updateMany).not.toHaveBeenCalled();
+  });
+
   it('espera el lock del documento antes de leer y rechaza la factura emitida mientras esperaba', async () => {
     let releaseLock!: () => void;
     const invoiceCommitted = new Promise<void>((resolve) => { releaseLock = resolve; });
@@ -444,7 +486,7 @@ describe('update coherente con la CxC (C-4)', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       role: 'regularUser',
-      planFeatures: { servicios: true },
+      planFeatures: { servicios: true, 'cuentas-cobrar': true },
       permissions: new Set(['ventas.servicios.editar']),
     } as unknown as AuthenticatedUser);
 
@@ -480,7 +522,7 @@ describe('update coherente con la CxC (C-4)', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       role: 'regularUser',
-      planFeatures: { servicios: true },
+      planFeatures: { servicios: true, 'cuentas-cobrar': true },
       permissions: new Set(['ventas.servicios.editar']),
     } as unknown as AuthenticatedUser);
 
@@ -505,7 +547,7 @@ describe('update coherente con la CxC (C-4)', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       role: 'regularUser',
-      planFeatures: { servicios: true },
+      planFeatures: { servicios: true, 'cuentas-cobrar': true },
       permissions: new Set(['ventas.servicios.editar']),
     } as unknown as AuthenticatedUser);
 

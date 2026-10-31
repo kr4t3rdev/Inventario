@@ -186,6 +186,13 @@ export const VentaMutationService = {
     const tenantId = requireTenant(user);
     const hasFacturacion = user.planFeatures?.facturacion === true;
 
+    const requestedMaturity = parsed.tipoVencimiento
+      ?? (parsed.fechaVencimiento ? 'fecha' : null);
+    if (!parsed.modoPedido && parsed.clienteId && hasFacturacion && requestedMaturity &&
+      requestedMaturity !== 'contra_pago') {
+      requireFeature(user, 'cuentas-cobrar', 'crear facturas con saldo pendiente');
+    }
+
     if (parsed.clienteId && !hasFacturacion) {
       throw new ActionError(
         'Tu plan no incluye facturación. Para vincular clientes a ventas, actualiza tu plan.',
