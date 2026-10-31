@@ -60,9 +60,9 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'src/features/compras-servicios/actions.ts',
-    occurrences: 1,
-    reason: 'Lock FOR UPDATE para serializar eliminación/reversión.',
-    tenantGuarantee: 'WHERE incluye id y tenantId obtenido con requireTenant.',
+    occurrences: 2,
+    reason: 'Locks FOR UPDATE para serializar aumentos de obligaciones y eliminación/reversión.',
+    tenantGuarantee: 'Cada WHERE incluye compraServicioId y tenantId obtenido con requireTenant.',
   },
   {
     file: 'src/features/compras-productos/actions.ts',

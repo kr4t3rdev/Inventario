@@ -57,6 +57,25 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     expect(expectActionFailure(result).error?.message).toBe('Ya existe una cuenta por pagar con ese número de factura')
   })
 
+  it('mantiene bloqueada la creación para Basic aunque la liquidación histórica esté habilitada', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      ...AUTH_USER,
+      role: 'manager' as const,
+      planFeatures: { contabilidad: true, 'cuentas-pagar': false },
+    })
+
+    const result = await createCuentaPorPagarAction({
+      numeroFactura: 'FAC-BASIC',
+      tipo: 'compra',
+      proveedorId: 'prov-1',
+      montoDeuda: 100,
+    })
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE')
+    expect(prismaMock.cuentaPorPagar.create).not.toHaveBeenCalled()
+  })
+
   it('permite crear cuando existe factura con mismo numero pero diferente proveedor', async () => {
     // Simular que existe una CxP con FAC-001 para proveedor A
     prismaMock.cuentaPorPagar.findFirst

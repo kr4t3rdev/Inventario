@@ -52,6 +52,9 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
   requirePermission(user, 'compras.servicios.crear', 'registrar servicios recibidos');
   const parsed = createCompraServicioSchema.parse(input);
   const tenantId = requireTenant(user);
+  if (parsed.formaPago === 'PAGO_PARCIAL' || parsed.estado === 'PENDIENTE') {
+    requireFeature(user, 'cuentas-pagar', 'crear servicios recibidos con saldo pendiente');
+  }
 
   // Verificar servicio (scoped al tenant)
   const servicio = await prisma.servicios.findFirst({
@@ -206,6 +209,10 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
       const estadoPagoAplicado: 'PAGADA' | 'PARCIAL' =
         anticipoTotalFuncional >= totalFuncional - 0.01 ? 'PAGADA' : 'PARCIAL';
 
+      if (estadoPagoAplicado === 'PARCIAL') {
+        requireFeature(user, 'cuentas-pagar', 'crear servicios recibidos con saldo pendiente');
+      }
+
       await tx.compraServicio.updateMany({
         where: { compraServicioId: compraServicio.compraServicioId, tenantId },
         data: { estado: estadoPagoAplicado },
@@ -274,11 +281,22 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
   requirePermission(user, 'compras.servicios.editar', 'editar servicios recibidos');
   const parsed = updateCompraServicioSchema.parse(input);
   const { compraServicioId, ...data } = parsed;
+  if (data.formaPago === 'PAGO_PARCIAL' || data.estado === 'PENDIENTE') {
+    requireFeature(user, 'cuentas-pagar', 'modificar servicios recibidos con saldo pendiente');
+  }
   const tenantId = requireTenant(user);
 
   const existing = await prisma.compraServicio.findFirst({
     where: { compraServicioId, tenantId },
-    select: { compraServicioId: true, costoUnitario: true, cantidad: true, createdAt: true },
+    select: {
+      compraServicioId: true,
+      costoUnitario: true,
+      cantidad: true,
+      total: true,
+      formaPago: true,
+      estado: true,
+      createdAt: true,
+    },
   });
   if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
 
@@ -299,6 +317,15 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
     const costo = typeof data.costoUnitario !== 'undefined' ? Number(data.costoUnitario) : existing.costoUnitario;
     const cantidad = typeof data.cantidad !== 'undefined' ? Number(data.cantidad) : existing.cantidad;
     updateData.total = costo * cantidad;
+
+    const resultingPaymentMethod = data.formaPago ?? existing.formaPago;
+    const resultingState = data.estado ?? existing.estado;
+    if (
+      Number(updateData.total) > Number(existing.total) &&
+      (resultingPaymentMethod === 'PAGO_PARCIAL' || resultingState === 'PENDIENTE' || resultingState === 'PARCIAL')
+    ) {
+      requireFeature(user, 'cuentas-pagar', 'aumentar el saldo pendiente de un servicio recibido');
+    }
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -312,6 +339,27 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
       businessDate: existing.createdAt,
       actorId: user.userId,
     });
+    await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${compraServicioId} AND "tenantId" = ${tenantId} FOR UPDATE`;
+    const current = await tx.compraServicio.findFirst({
+      where: { compraServicioId, tenantId },
+      select: { total: true, costoUnitario: true, cantidad: true, formaPago: true, estado: true, createdAt: true },
+    });
+    if (!current) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+
+    if (typeof data.costoUnitario !== 'undefined' || typeof data.cantidad !== 'undefined') {
+      const nextTotal = (typeof data.costoUnitario !== 'undefined' ? Number(data.costoUnitario) : Number(current.costoUnitario)) *
+        (typeof data.cantidad !== 'undefined' ? Number(data.cantidad) : Number(current.cantidad));
+      updateData.total = nextTotal;
+      const resultingPaymentMethod = data.formaPago ?? current.formaPago;
+      const resultingState = data.estado ?? current.estado;
+      if (
+        nextTotal > Number(current.total) &&
+        (resultingPaymentMethod === 'PAGO_PARCIAL' || resultingState === 'PENDIENTE' || resultingState === 'PARCIAL')
+      ) {
+        requireFeature(user, 'cuentas-pagar', 'aumentar el saldo pendiente de un servicio recibido');
+      }
+    }
+
     return tx.compraServicio.update({
       where: { compraServicioId },
       data: updateData,

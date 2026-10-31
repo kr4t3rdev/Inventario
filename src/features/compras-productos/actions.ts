@@ -98,6 +98,10 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     if (existente) return existente;
   }
 
+  if (parsed.formaPago === 'PAGO_PARCIAL') {
+    requireFeature(user, 'cuentas-pagar', 'crear cuentas por pagar desde compras');
+  }
+
   const proveedor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
   if (parsed.ordenCompraId) {
@@ -553,6 +557,9 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
       if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
 
       if (data.formaPago !== existing.formaPago) {
+        if (existing.formaPago === 'PAGO_PARCIAL' || data.formaPago === 'PAGO_PARCIAL') {
+          requireFeature(user, 'cuentas-pagar', 'modificar cuentas por pagar vinculadas a compras');
+        }
         await reconcileFormaPago(tx, existing, data.formaPago ?? '');
       }
 

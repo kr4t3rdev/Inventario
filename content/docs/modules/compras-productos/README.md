@@ -27,6 +27,7 @@ Este módulo no solo guarda compras: también recalcula precio de costo, increme
 - Al crear la compra se validan proveedor y productos del tenant.
 - La compra ajusta stock mediante `StockUbicacion` y puede recalcular `precioCosto`.
 - `PAGO_PARCIAL` puede generar una cuenta por pagar enlazada.
+- Para crear una compra que deje saldo pendiente, el plan debe incluir la función `cuentas-pagar`.
 - `ANTICIPO_PAGO` tiene reglas especiales y no soporta ciertos cambios posteriores de reconciliación.
 
 ## Unidades de compra (alcance F-1)
