@@ -229,6 +229,15 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
           );
         }
 
+        const accountingAmount = buildPersistedAccountingAmount(
+          alloc.montoAplicado,
+          monedaAnticipo,
+          tasa?.tasa,
+          tasa?.fechaVigencia,
+          tasa?.tasaId,
+          monedaFuncional,
+        );
+
         await tx.reconciliacionGasto.create({
           data: {
             tenantId,
@@ -239,14 +248,11 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             monto: alloc.montoAplicado,
             estado: estadoPagoAplicado,
             moneda: monedaAnticipo,
-            ...buildPersistedAccountingAmount(
-              alloc.montoAplicado,
-              monedaAnticipo,
-              tasa?.tasa,
-              tasa?.fechaVigencia,
-              tasa?.tasaId,
-              monedaFuncional,
-            ),
+            ...(accountingAmount.montoConvertido != null
+              ? { montoConvertido: accountingAmount.montoConvertido }
+              : {}),
+            ...(accountingAmount.tasaCambio != null ? { tasaCambio: accountingAmount.tasaCambio } : {}),
+            ...(accountingAmount.fxEvidence ?? {}),
             descripcion: `Pago anticipado de servicio ${compraServicio.compraServicioId}`,
             reconciliadoPor: user.userId || 'system',
           },
