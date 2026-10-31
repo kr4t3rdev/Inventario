@@ -1,6 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 
@@ -43,7 +43,8 @@ export async function GET(request: Request) {
     if (!tenantId) {
       return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
     }
-    requireFeature(authResult.user, 'cuentas-cobrar', 'consultar cuentas por cobrar');
+    requireFeature(authResult.user, 'contabilidad', 'consultar las cuentas por cobrar existentes');
+    requirePermission(authResult.user, 'financiero.contabilidad.acceder', 'consultar las cuentas por cobrar');
     const { searchParams } = new URL(request.url);
     const result = await AccountingAccountsService.listReceivables({
       tenantId,
