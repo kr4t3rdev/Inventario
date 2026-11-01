@@ -17,6 +17,7 @@ import { ActionError, type ActionResponse, type ServerAction } from "./types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { serializePrismaData } from "@/lib/prisma-utils";
 import { PeriodoError } from "@/lib/services/periodo-contable-types";
+import { logSafeOperationalEvent } from "@/lib/observability/safe-sentry-logger";
 
 /** @description Códigos de error de Prisma mapeados a mensajes en español */
 const PRISMA_ERROR_MESSAGES: Record<string, string> = {
@@ -134,6 +135,11 @@ export function withAction<TInput, TOutput>(
 			// Error inesperado (bug): reportar a Sentry. Los flujos esperados
 			// —ZodError, ActionError, Prisma P-codes, PeriodoError— NO se
 			// reportan para no contaminar el dashboard ni quemar la cuota.
+			logSafeOperationalEvent({
+				event: "tcp.operation.failed",
+				runtime: "server",
+				result: "failure",
+			});
 			Sentry.captureException(error, {
 				tags: { source: "server-action" },
 			});

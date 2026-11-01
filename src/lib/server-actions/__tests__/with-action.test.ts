@@ -21,12 +21,17 @@ vi.mock('@/lib/server-actions/get-current-user');
 // Mockeamos Sentry para verificar qué errores se reportan
 vi.mock('@sentry/nextjs', () => ({
 	captureException: vi.fn(),
+	logger: { info: vi.fn() },
+	getGlobalScope: () => ({ getScopeData: () => ({ attributes: {} }) }),
+	getCurrentScope: () => ({ getScopeData: () => ({ attributes: {} }) }),
+	getIsolationScope: () => ({ getScopeData: () => ({ attributes: {} }) }),
 }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { withAction } from '@/lib/server-actions/with-action';
 import { ActionError } from '@/lib/server-actions/types';
 import { captureException } from '@sentry/nextjs';
+import { logger } from '@sentry/nextjs';
 import { PeriodoError } from '@/lib/services/periodo-contable-types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -310,6 +315,7 @@ describe('withAction()', () => {
   describe('reporte de errores a Sentry', () => {
     it('reporta el error original a Sentry en el fallback INTERNAL_ERROR', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      process.env.SENTRY_ENABLE_LOGS = 'true';
       const original = new Error('Algo explotó inesperadamente');
 
       const wrapped = withAction(async () => {
@@ -319,6 +325,10 @@ describe('withAction()', () => {
 
       expect(captureException).toHaveBeenCalledWith(original, {
         tags: { source: 'server-action' },
+      });
+      expect(logger.info).toHaveBeenCalledTimes(1);
+      expect(logger.info).toHaveBeenCalledWith('tcp.operation.failed', {
+        runtime: 'server', result: 'failure',
       });
     });
 

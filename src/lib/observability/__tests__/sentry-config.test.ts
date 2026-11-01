@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { init, captureRouterTransitionStart } = vi.hoisted(() => ({
+const { init, loggerInfo, captureRouterTransitionStart } = vi.hoisted(() => ({
   init: vi.fn(),
+  loggerInfo: vi.fn(),
   captureRouterTransitionStart: vi.fn(),
 }));
 
-vi.mock('@sentry/nextjs', () => ({ init, captureRouterTransitionStart }));
+vi.mock('@sentry/nextjs', () => ({ init, logger: { info: loggerInfo }, captureRouterTransitionStart }));
 
 const DSN = 'https://examplePublicKey@o0.ingest.sentry.io/0';
 
@@ -17,6 +18,8 @@ describe('Sentry runtime configuration', () => {
     delete process.env.NEXT_PUBLIC_SENTRY_DSN;
     delete process.env.SENTRY_TRACES_SAMPLE_RATE;
     delete process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE;
+    delete process.env.SENTRY_ENABLE_LOGS;
+    delete process.env.NEXT_PUBLIC_SENTRY_ENABLE_LOGS;
   });
 
   it.each([
@@ -26,12 +29,24 @@ describe('Sentry runtime configuration', () => {
     ['Edge config', '@/sentry.edge.config', 'SENTRY_DSN'],
   ])('%s requires its environment DSN and minimizes collected data', async (_name, path, envKey) => {
     process.env[envKey] = DSN;
+    process.env.SENTRY_ENABLE_LOGS = 'true';
+    process.env.NEXT_PUBLIC_SENTRY_ENABLE_LOGS = 'true';
 
     await import(path);
 
     const options = init.mock.calls[0][0];
     expect(options.dsn).toBe(DSN);
     expect(options.tracesSampleRate).toBe(0);
+    expect(options.beforeSendLog({
+      level: 'info', message: 'free form content with 123', attributes: { account: 'abc' },
+    })).toBeNull();
+    expect(options.beforeSendLog({
+      level: 'info', message: 'tcp.operation.completed',
+      attributes: { runtime: 'server', result: 'success', secret: 'discard' },
+    })).toEqual({
+      level: 'info', message: 'tcp.operation.completed',
+      attributes: { runtime: 'server', result: 'success' },
+    });
     expect(options.dataCollection).toEqual({
       userInfo: false,
       cookies: false,
@@ -56,4 +71,5 @@ describe('Sentry runtime configuration', () => {
 
     expect(init.mock.calls[0][0].dsn).toBeUndefined();
   });
+
 });

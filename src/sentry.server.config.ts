@@ -13,6 +13,22 @@ import {
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
+  beforeSendLog: (log) => {
+    if (process.env.SENTRY_ENABLE_LOGS !== "true") return null;
+    const message = log.message;
+    if (message !== "tcp.operation.completed" && message !== "tcp.operation.failed") {
+      return null;
+    }
+    const runtime = log.attributes?.runtime;
+    const result = log.attributes?.result;
+    if (
+      !["server", "browser", "edge"].includes(String(runtime)) ||
+      !["success", "failure"].includes(String(result))
+    ) {
+      return null;
+    }
+    return { ...log, attributes: { runtime, result } };
+  },
 
   // Tracing remains off until its privacy and OTel delivery are verified.
   tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0),
