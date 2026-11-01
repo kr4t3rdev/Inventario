@@ -43,6 +43,10 @@ export async function proxy(request: NextRequest) {
     '/api/licencias/validar',
     '/api/mobile/v1/auth/login',
     '/api/mobile/v1/auth/refresh',
+    // Reporte de errores de render del navegador: debe funcionar sin sesión
+    // (un fallo puede ocurrir en /login o tras expirar el token). El endpoint
+    // aplica su propio rate limit por IP y no acepta datos sensibles.
+    '/api/errors',
   ]
 
   const publicPathsPrefix = [
