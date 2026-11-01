@@ -25,6 +25,10 @@ durante la aplicación.
 - Permitir aplicaciones comerciales solo hasta el saldo financiado. Valorar
   cada aplicación con el costo funcional promedio ponderado persistido de las
   financiaciones y emitir el evento formal de aplicación en la misma transacción.
+- Al eliminar el documento que consumió el anticipo, revertir solo el saldo
+  aplicado a ese documento mediante un movimiento idempotente, con alcance por
+  tenant y asiento formal compensatorio; este reverso documental no mueve
+  tesorería.
 - Mantener los saldos a favor originados por notas de crédito en su flujo
   separado.
 - Requerir conciliación para saldos históricos positivos sin evidencia de
@@ -42,6 +46,8 @@ durante la aplicación.
   hasta que se concilien; la migración no altera esos saldos.
 - La acción de ejecución directa deja de ser válida; la aplicación debe ocurrir
   desde el flujo transaccional del documento comercial.
+- Los reversos documentales restauran como máximo los fondos financiados y
+  compensan el asiento original sin borrar su historia.
 
 ## Alternativas consideradas
 

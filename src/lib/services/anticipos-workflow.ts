@@ -379,66 +379,217 @@ export async function reverseAnticipo(
       'El monto de reverso debe ser mayor que cero'
     )
   }
+  const idempotencyKey = params.idempotencyKey?.trim()
+    || `legacy:${params.documentoDestinoId}:${params.montoReverso}`
 
-  const anticipo = await tx.anticipo.findUnique({
-      where: { anticipoId: params.anticipoId },
-      select: {
-        anticipoId: true,
-        estado: true,
-        montoOriginal: true,
-        saldoDisponible: true,
-        moneda: true
-      }
-    })
-
-    if (!anticipo) {
-      throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', 'Anticipo no encontrado')
+  const anticipo = await tx.anticipo.findFirst({
+    where: { anticipoId: params.anticipoId, tenantId: params.tenantId },
+    select: {
+      anticipoId: true,
+      tenantId: true,
+      tipo: true,
+      estado: true,
+      montoOriginal: true,
+      montoFinanciado: true,
+      saldoDisponible: true,
+      moneda: true,
+      referenciaExterna: true,
+    },
+  })
+  if (!anticipo) {
+    throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', 'Anticipo no encontrado')
+  }
+  const movimientoExistente = await tx.anticipoMovimiento.findFirst({
+    where: { anticipoId: anticipo.anticipoId, idempotencyKey },
+    select: {
+      movimientoId: true,
+      tipoMovimiento: true,
+      documentoDestinoId: true,
+      monto: true,
+      saldoDespues: true,
+    },
+  })
+  if (movimientoExistente) {
+    if (
+      movimientoExistente.tipoMovimiento !== 'REVERSO' ||
+      movimientoExistente.documentoDestinoId !== params.documentoDestinoId ||
+      Number(movimientoExistente.monto) !== params.montoReverso
+    ) {
+      throw createAnticipoWorkflowError(409, 'IDEMPOTENCIA_CONFLICTO', 'La clave ya se usó con otros datos')
     }
+    return {
+      anticipoId: anticipo.anticipoId,
+      estado: anticipo.estado,
+      saldoDisponible: Number(movimientoExistente.saldoDespues),
+      movimientoId: movimientoExistente.movimientoId,
+      idempotentReplay: true,
+    }
+  }
+  if (anticipo.estado === 'ANULADO') {
+    throw createAnticipoWorkflowError(409, 'ANTICIPO_ANULADO', 'No es posible revertir un anticipo anulado')
+  }
 
-    if (anticipo.estado === 'ANULADO') {
+  const aplicaciones = await tx.anticipoMovimiento.findMany({
+    where: {
+      anticipoId: anticipo.anticipoId,
+      documentoDestinoId: params.documentoDestinoId,
+      tipoMovimiento: 'EJECUCION',
+    },
+    select: {
+      movimientoId: true,
+      tipoMovimiento: true,
+      contexto: true,
+      monto: true,
+      montoFuncional: true,
+      functionalCurrency: true,
+      tasaAplicada: true,
+      fxEvidenceFingerprint: true,
+    },
+  })
+  const reversosPrevios = await tx.anticipoMovimiento.findMany({
+    where: {
+      anticipoId: anticipo.anticipoId,
+      documentoDestinoId: params.documentoDestinoId,
+      tipoMovimiento: 'REVERSO',
+    },
+    select: { monto: true, montoFuncional: true, fxEvidenceFingerprint: true },
+  })
+  const montoAplicado = aplicaciones.reduce((total, movimiento) => total + Number(movimiento.monto), 0)
+  const montoReversado = reversosPrevios.reduce((total, movimiento) => total + Number(movimiento.monto), 0)
+  const montoPendienteReverso = montoAplicado - montoReversado
+  if (montoPendienteReverso <= 0.000001 || params.montoReverso > montoPendienteReverso + 0.000001) {
+    throw createAnticipoWorkflowError(
+      409,
+      'MONTO_REVERSO_EXCEDE_APLICACION',
+      'El reverso supera el monto de aplicación pendiente del documento',
+    )
+  }
+
+  const esNotaCredito = anticipo.referenciaExterna?.startsWith('NC:') ?? false
+  const saldoAntes = Number(anticipo.saldoDisponible)
+  const saldoRepuesto = saldoAntes + params.montoReverso
+  const limiteSaldo = esNotaCredito ? Number(anticipo.montoOriginal) : Number(anticipo.montoFinanciado)
+  if (saldoRepuesto > limiteSaldo + 0.000001) {
+    throw createAnticipoWorkflowError(409, 'SALDO_REVERSO_EXCEDE_FINANCIACION', 'El reverso excede los fondos disponibles')
+  }
+  const estadoRepuesto = saldoRepuesto >= Number(anticipo.montoOriginal) - 0.000001
+    ? 'RESERVADO'
+    : anticipo.estado
+  const actualizacion = await tx.anticipo.updateMany({
+    where: {
+      anticipoId: anticipo.anticipoId,
+      tenantId: params.tenantId,
+      saldoDisponible: anticipo.saldoDisponible,
+      estado: { not: 'ANULADO' },
+    },
+    data: {
+      saldoDisponible: { increment: params.montoReverso },
+      estado: estadoRepuesto,
+      ...(estadoRepuesto === 'RESERVADO' ? { fechaEjecucion: null } : {}),
+    },
+  })
+  if (actualizacion.count !== 1) {
+    throw createAnticipoWorkflowError(409, 'ANTICIPO_CAMBIO_CONCURRENTE', 'El anticipo cambió; vuelve a intentar')
+  }
+
+  const monedaFuncionalReferencia = aplicaciones.find((movimiento) => movimiento.functionalCurrency)
+    ?.functionalCurrency ?? anticipo.moneda
+  let montoFuncional: number | null = null
+  let monedaFuncional: string | null = null
+  let tasaAplicada: number | null = null
+  let fxEvidenceFingerprint: string | null = null
+  if (!esNotaCredito) {
+    const monedasFuncionales = new Set(
+      aplicaciones
+        .map((movimiento) => movimiento.functionalCurrency?.trim().toUpperCase())
+        .filter((moneda): moneda is string => Boolean(moneda)),
+    )
+    if (
+      monedasFuncionales.size > 1 ||
+      aplicaciones.some((movimiento) => movimiento.montoFuncional == null || !movimiento.functionalCurrency) ||
+      reversosPrevios.some((movimiento) => movimiento.montoFuncional == null) ||
+      (anticipo.moneda.trim().toUpperCase() !== monedaFuncionalReferencia.trim().toUpperCase()
+        && aplicaciones.some((movimiento) => !movimiento.fxEvidenceFingerprint))
+    ) {
       throw createAnticipoWorkflowError(
         409,
-        'ANTICIPO_ANULADO',
-        'No es posible revertir un anticipo anulado'
+        'VALORACION_FONDOS_INCOMPLETA',
+        'No hay valoración funcional o evidencia FX suficiente para compensar la aplicación',
       )
     }
-
-    const saldoAntes = Number(anticipo.saldoDisponible)
-    const saldoRepuesto = Math.min(
-      Number(anticipo.montoOriginal),
-      Number(anticipo.saldoDisponible) + Number(params.montoReverso)
+    const valorAplicado = aplicaciones.reduce(
+      (total, movimiento) => total + Number(movimiento.montoFuncional ?? 0),
+      0,
     )
-
-    const estadoRepuesto = saldoRepuesto >= Number(anticipo.montoOriginal) ? 'RESERVADO' : anticipo.estado
-
-  await tx.anticipo.update({
-      where: { anticipoId: anticipo.anticipoId },
-      data: {
-        saldoDisponible: saldoRepuesto,
-        estado: estadoRepuesto,
-        fechaEjecucion: estadoRepuesto === 'RESERVADO' ? null : undefined
-      }
-    })
+    const valorReversado = reversosPrevios.reduce(
+      (total, movimiento) => total + Number(movimiento.montoFuncional ?? 0),
+      0,
+    )
+    const valorPendienteReverso = valorAplicado - valorReversado
+    if (montoPendienteReverso <= 0 || valorPendienteReverso <= 0) {
+      throw createAnticipoWorkflowError(
+        409,
+        'VALORACION_FONDOS_INCOMPLETA',
+        'No hay valoración funcional persistida para compensar la aplicación',
+      )
+    }
+    montoFuncional = params.montoReverso * valorPendienteReverso / montoPendienteReverso
+    monedaFuncional = monedaFuncionalReferencia
+    tasaAplicada = anticipo.moneda.trim().toUpperCase() === monedaFuncional.trim().toUpperCase()
+      ? null
+      : valorPendienteReverso / montoPendienteReverso
+    const huellas = [
+      ...aplicaciones.map((movimiento) => movimiento.fxEvidenceFingerprint),
+      ...reversosPrevios.map((movimiento) => movimiento.fxEvidenceFingerprint),
+    ].filter((fingerprint): fingerprint is string => Boolean(fingerprint)).sort()
+    fxEvidenceFingerprint = huellas.length
+      ? createHash('sha256').update(huellas.join(':')).digest('hex')
+      : null
+  }
 
   const movimiento = await tx.anticipoMovimiento.create({
-      data: {
-        anticipoId: anticipo.anticipoId,
-        tipoMovimiento: 'REVERSO',
-        documentoDestinoId: params.documentoDestinoId,
-        monto: Number(params.montoReverso),
-        moneda: anticipo.moneda,
-        saldoAntes: saldoAntes,
-        saldoDespues: saldoRepuesto,
-        usuarioId: params.usuarioId,
-        observaciones: params.observaciones || null
-      }
+    data: {
+      anticipoId: anticipo.anticipoId,
+      tipoMovimiento: 'REVERSO',
+      contexto: aplicaciones[0]?.contexto ?? null,
+      documentoDestinoId: params.documentoDestinoId,
+      monto: params.montoReverso,
+      moneda: anticipo.moneda,
+      montoConvertido: montoFuncional,
+      montoFuncional,
+      functionalCurrency: monedaFuncional,
+      tasaAplicada,
+      fxEvidenceFingerprint,
+      saldoAntes,
+      saldoDespues: saldoRepuesto,
+      usuarioId: params.usuarioId,
+      observaciones: params.observaciones || null,
+    },
+  })
+
+  if (!esNotaCredito && montoFuncional !== null && monedaFuncional) {
+    await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
+      anticipoMovimientoId: movimiento.movimientoId,
+      tipo: anticipo.tipo === 'COBRO'
+        ? 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
+        : 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
+      fecha: new Date(),
+      monto: params.montoReverso,
+      moneda: anticipo.moneda,
+      montoFuncional,
+      monedaFuncional,
+      tasaCambio: tasaAplicada,
+      fxEvidenceFingerprint,
+      descripcion: 'Reverso de aplicación por eliminación del documento',
     })
+  }
 
   return {
     anticipoId: anticipo.anticipoId,
     estado: estadoRepuesto,
     saldoDisponible: saldoRepuesto,
-    movimientoId: movimiento.movimientoId
+    movimientoId: movimiento.movimientoId,
+    idempotentReplay: false,
   }
 }
 

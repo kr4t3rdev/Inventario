@@ -10,6 +10,7 @@ import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/vali
 const schema = z.object({
   documentoDestinoId: z.string().min(1),
   montoReverso: z.coerce.number().positive(),
+  idempotencyKey: z.string().trim().min(1).optional(),
   observaciones: z.string().optional(),
 });
 
@@ -19,16 +20,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const { id: anticipoId } = await params;
+    const tenantId = authResult.user.tenantId;
+    if (!tenantId) return errorResponse('Tenant requerido', 403, 'TENANT_REQUIRED');
     const body = await request.json();
     const payload = schema.parse(body);
 
-    const anticipo = await prisma.anticipo.findUnique({ where: { anticipoId }, select: { tenantId: true } });
+    const anticipo = await prisma.anticipo.findFirst({
+      where: { anticipoId, tenantId },
+      select: { tenantId: true },
+    });
     if (!anticipo) return errorResponse('Anticipo no encontrado', 404, 'ANTICIPO_NO_ENCONTRADO');
 
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
-      tenantId: anticipo.tenantId,
+      tenantId,
       tipoOperacion: 'revertir_anticipo',
       actor: authResult.user.userId,
     });
@@ -38,8 +44,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const result = await prisma.$transaction(async (tx) => reverseAnticipo(tx, {
       anticipoId,
+      tenantId,
       documentoDestinoId: payload.documentoDestinoId,
       montoReverso: payload.montoReverso,
+      idempotencyKey: payload.idempotencyKey,
       observaciones: payload.observaciones,
       usuarioId: authResult.user.userId,
     }));

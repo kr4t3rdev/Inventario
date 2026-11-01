@@ -275,11 +275,31 @@ export async function executeAnticipoHandler(request: NextRequest, anticipoId: s
   return NextResponse.json({ result: r }, { status: 200 })
 }
 
-const RAS = z.object({ documentoDestinoId: z.string().min(1), montoReverso: z.coerce.number().positive(), observaciones: z.string().optional() })
+const RAS = z.object({
+  documentoDestinoId: z.string().min(1),
+  montoReverso: z.coerce.number().positive(),
+  idempotencyKey: z.string().trim().min(1).optional(),
+  observaciones: z.string().optional(),
+})
 
-export async function reverseAnticipoHandler(request: NextRequest, anticipoId: string, user: { userId: string }) {
+export async function reverseAnticipoHandler(
+  request: NextRequest,
+  anticipoId: string,
+  user: { userId: string; tenantId: string },
+) {
+  if (!user.tenantId) {
+    return NextResponse.json({ error: 'Tenant requerido', code: 'TENANT_REQUIRED' }, { status: 403 })
+  }
   const p = RAS.parse(await request.json())
-  const r = await prisma.$transaction(async (tx) => reverseAnticipo(tx, { anticipoId, documentoDestinoId: p.documentoDestinoId, montoReverso: p.montoReverso, observaciones: p.observaciones, usuarioId: user.userId }))
+  const r = await prisma.$transaction(async (tx) => reverseAnticipo(tx, {
+    anticipoId,
+    tenantId: user.tenantId,
+    documentoDestinoId: p.documentoDestinoId,
+    montoReverso: p.montoReverso,
+    idempotencyKey: p.idempotencyKey,
+    observaciones: p.observaciones,
+    usuarioId: user.userId,
+  }))
   return NextResponse.json({ result: r }, { status: 200 })
 }
 

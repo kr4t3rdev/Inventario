@@ -46,4 +46,26 @@ describe('buildAnticipoEvent', () => {
     })
     expect(event.medioCobro).toBeUndefined()
   })
+
+  it('construye un asiento compensatorio anclado al movimiento de reverso', () => {
+    const event = buildAnticipoEvent({
+      anticipoMovimientoId: 'movement-reverse-1',
+      tipo: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
+      fecha: new Date('2026-11-01T12:00:00.000Z'),
+      monto: 40,
+      moneda: 'USD',
+      montoFuncional: 1200,
+      monedaFuncional: 'CUP',
+      tasaCambio: 30,
+      fxEvidenceFingerprint: 'fx-fingerprint',
+    })
+
+    expect(event).toMatchObject({
+      tipo: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
+      descripcion: 'Reverso de aplicación de anticipo a proveedor',
+      origen: { tipo: 'anticipo_movimiento', id: 'movement-reverse-1' },
+      montoFuncional: 1200,
+    })
+    expect(event.medioCobro).toBeUndefined()
+  })
 })

@@ -11,6 +11,7 @@ import {
   createAnticipo,
   executeAnticipo,
   registrarMovimientoEfectivoAnticipo,
+  reverseAnticipo,
   isAnticipoWorkflowError
 } from '@/lib/services/anticipos-workflow'
 
@@ -226,6 +227,130 @@ describe('anticipos-workflow', () => {
 
     expect(result).toEqual({ movimientoId: 'movement-1', saldoDisponible: 40, idempotentReplay: true })
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled()
+  })
+
+  it('revierte una aplicación documental con valoración y asiento compensatorio', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-1',
+      tenantId: 'tenant-1',
+      tipo: 'PAGO',
+      estado: 'EJECUTADO',
+      montoOriginal: 100,
+      montoFinanciado: 100,
+      saldoDisponible: 20,
+      moneda: 'USD',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findMany
+      .mockResolvedValueOnce([{
+        movimientoId: 'apply-1',
+        tipoMovimiento: 'EJECUCION',
+        monto: 80,
+        montoFuncional: 2400,
+        functionalCurrency: 'CUP',
+        tasaAplicada: 30,
+        fxEvidenceFingerprint: 'fx-source',
+        contexto: 'COMPRA_SERVICIO',
+      }])
+      .mockResolvedValueOnce([])
+    tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
+    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'reverse-1' })
+
+    const result = await reverseAnticipo(tx, {
+      anticipoId: 'ant-1',
+      tenantId: 'tenant-1',
+      documentoDestinoId: 'expense-1',
+      montoReverso: 40,
+      idempotencyKey: 'expense-1:advance-1:reverse',
+      usuarioId: 'user-1',
+    })
+
+    expect(result).toMatchObject({ saldoDisponible: 60, movimientoId: 'reverse-1' })
+    expect(tx.anticipoMovimiento.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        tipoMovimiento: 'REVERSO',
+        monto: 40,
+        montoFuncional: 1200,
+        functionalCurrency: 'CUP',
+        tasaAplicada: 30,
+      }),
+    }))
+    expect(emitirEventoAnticipo).toHaveBeenCalledWith(
+      tx,
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
+        anticipoMovimientoId: 'reverse-1',
+        monto: 40,
+        montoFuncional: 1200,
+        fxEvidenceFingerprint: expect.any(String),
+      }),
+    )
+  })
+
+  it('rechaza revertir anticipos de otro tenant', async () => {
+    const tx = createTxMock()
+
+    await expect(reverseAnticipo(tx, {
+      anticipoId: 'ant-other',
+      tenantId: 'tenant-1',
+      documentoDestinoId: 'expense-1',
+      montoReverso: 10,
+      idempotencyKey: 'expense-1:advance-other:reverse',
+      usuarioId: 'user-1',
+    })).rejects.toMatchObject({ code: 'ANTICIPO_NO_ENCONTRADO' })
+
+    expect(tx.anticipoMovimiento.findMany).not.toHaveBeenCalled()
+    expect(tx.anticipoMovimiento.create).not.toHaveBeenCalled()
+  })
+
+  it('reproduce el mismo reverso ante un replay idempotente', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-1', tenantId: 'tenant-1', tipo: 'PAGO', estado: 'RESERVADO',
+      montoOriginal: 100, montoFinanciado: 100, saldoDisponible: 60, moneda: 'CUP',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findFirst.mockResolvedValue({
+      movimientoId: 'reverse-existing',
+      tipoMovimiento: 'REVERSO',
+      documentoDestinoId: 'expense-1',
+      monto: 40,
+      saldoDespues: 60,
+    })
+
+    const result = await reverseAnticipo(tx, {
+      anticipoId: 'ant-1', tenantId: 'tenant-1', documentoDestinoId: 'expense-1',
+      montoReverso: 40, idempotencyKey: 'reverse-key-1', usuarioId: 'user-1',
+    })
+
+    expect(result).toMatchObject({ movimientoId: 'reverse-existing', saldoDisponible: 60, idempotentReplay: true })
+    expect(tx.anticipoMovimiento.findMany).not.toHaveBeenCalled()
+    expect(tx.anticipo.updateMany).not.toHaveBeenCalled()
+    expect(tx.anticipoMovimiento.create).not.toHaveBeenCalled()
+  })
+
+  it('rechaza un reverso mayor que la aplicación documental pendiente', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-1', tenantId: 'tenant-1', tipo: 'PAGO', estado: 'EJECUTADO',
+      montoOriginal: 100, montoFinanciado: 100, saldoDisponible: 20, moneda: 'CUP',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findMany.mockResolvedValueOnce([{
+      movimientoId: 'apply-1', tipoMovimiento: 'EJECUCION', monto: 80,
+      montoFuncional: 80, functionalCurrency: 'CUP', tasaAplicada: null,
+      fxEvidenceFingerprint: null, contexto: 'COMPRA_SERVICIO',
+    }]).mockResolvedValueOnce([{ tipoMovimiento: 'REVERSO', monto: 30, montoFuncional: 30 }])
+
+    await expect(reverseAnticipo(tx, {
+      anticipoId: 'ant-1', tenantId: 'tenant-1', documentoDestinoId: 'expense-1',
+      montoReverso: 60, idempotencyKey: 'expense-1:another-reversal', usuarioId: 'user-1',
+    })).rejects.toMatchObject({ code: 'MONTO_REVERSO_EXCEDE_APLICACION' })
+
+    expect(tx.anticipo.updateMany).not.toHaveBeenCalled()
+    expect(tx.anticipoMovimiento.create).not.toHaveBeenCalled()
   })
 
   it('valida tenant antes de consultar movimientos idempotentes', async () => {

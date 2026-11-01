@@ -5,7 +5,9 @@ export type AnticipoEventType =
 	| 'ANTICIPO_CLIENTE_RECIBIDO'
 	| 'ANTICIPO_CLIENTE_APLICADO'
 	| 'ANTICIPO_PROVEEDOR_ENTREGADO'
-	| 'ANTICIPO_PROVEEDOR_APLICADO';
+	| 'ANTICIPO_PROVEEDOR_APLICADO'
+	| 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
+	| 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA';
 
 export interface AnticipoEventParams {
 	anticipoMovimientoId: string;
@@ -32,6 +34,7 @@ export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableI
 	const esCobroEfectivo = params.tipo === 'ANTICIPO_CLIENTE_RECIBIDO';
 	const esPagoEfectivo = params.tipo === 'ANTICIPO_PROVEEDOR_ENTREGADO';
 	const esAplicacion = !esCobroEfectivo && !esPagoEfectivo;
+	const esReverso = params.tipo.endsWith('REVERSADA');
 	const medioCobro = params.treasuryAccountType === 'EFECTIVO' ? 'CAJA' : 'BANCOS';
 
 	return {
@@ -43,6 +46,10 @@ export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableI
 				? 'Recepción de anticipo de cliente'
 				: esPagoEfectivo
 					? 'Entrega de anticipo a proveedor'
+				: esReverso
+					? esCliente
+						? 'Reverso de aplicación de anticipo de cliente'
+						: 'Reverso de aplicación de anticipo a proveedor'
 					: esCliente
 						? 'Aplicación de anticipo de cliente'
 						: 'Aplicación de anticipo a proveedor'),

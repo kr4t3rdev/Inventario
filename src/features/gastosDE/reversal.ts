@@ -186,7 +186,11 @@ export async function reverseExpenseEffects(
   let anticipos = 0;
   if (params.anticipoContext && tx.anticipoMovimiento?.findMany) {
     const movements = await tx.anticipoMovimiento.findMany({
-      where: { documentoDestinoId: params.referenciaId },
+      where: {
+        documentoDestinoId: params.referenciaId,
+        tipoMovimiento: { in: ['EJECUCION', 'REVERSO'] },
+        anticipo: { is: { tenantId: params.tenantId } },
+      },
       select: { anticipoId: true, tipoMovimiento: true, monto: true },
     });
     const netByAnticipo = new Map<string, number>();
@@ -202,8 +206,10 @@ export async function reverseExpenseEffects(
       if (amount <= 0) continue;
       await reverseAnticipo(tx, {
         anticipoId,
+        tenantId: params.tenantId,
         documentoDestinoId: params.referenciaId,
         montoReverso: amount,
+        idempotencyKey: `delete:${params.tipoGasto}:${params.referenciaId}:advance:${anticipoId}`,
         usuarioId: params.usuarioId,
         observaciones: `Reversión por eliminación de ${params.tipoGasto} ${params.referenciaId}`,
       });

@@ -55,8 +55,10 @@ export interface ExecuteAnticipoPersistedResult {
 
 export interface ReverseAnticipoParams {
   anticipoId: string
+  tenantId: string
   documentoDestinoId: string
   montoReverso: number
+  idempotencyKey?: string
   observaciones?: string
   usuarioId: string
 }

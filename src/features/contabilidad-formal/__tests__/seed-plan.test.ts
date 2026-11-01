@@ -202,6 +202,25 @@ describe('seedPlanContable', () => {
 });
 
 describe('seedPlantillasGlobales', () => {
+	it('define plantillas compensatorias que invierten cada línea original', () => {
+		const pares = [
+			['ANTICIPO_CLIENTE_APLICADO', 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'],
+			['ANTICIPO_PROVEEDOR_APLICADO', 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA'],
+		] as const;
+
+		for (const [original, reverso] of pares) {
+			const originalLineas = PLANTILLAS_DEFAULT.filter((linea) => linea.evento === original);
+			const reversoLineas = PLANTILLAS_DEFAULT.filter((linea) => linea.evento === reverso);
+			const firma = (linea: (typeof originalLineas)[number], lado: 'DEBE' | 'HABER') =>
+				`${lado}:${linea.rolCuenta}:${linea.montoRegla}:${linea.condicion ?? ''}`;
+			const ladoOpuesto = (lado: 'DEBE' | 'HABER') => (lado === 'DEBE' ? 'HABER' : 'DEBE');
+
+			expect(reversoLineas.map((linea) => firma(linea, linea.lado)).sort()).toEqual(
+				originalLineas.map((linea) => firma(linea, ladoOpuesto(linea.lado))).sort(),
+			);
+		}
+	});
+
 	it('siembra todas las líneas de plantilla como datos globales', async () => {
 		const { tx, llamadasPlantillas } = crearTxMock();
 		const resultado = await seedPlantillasGlobales(tx);

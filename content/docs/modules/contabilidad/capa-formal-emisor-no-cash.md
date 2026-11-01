@@ -21,6 +21,8 @@ de servicios (`COBRO_SERVICIO`) y recepción, entrega o aplicación de anticipos
 | `ANTICIPO_CLIENTE_APLICADO` | Anticipos de clientes contra CxC, con ramas FX | `VENTAS` | `CXC_CLIENTES` |
 | `ANTICIPO_PROVEEDOR_ENTREGADO` | Anticipos a proveedores contra tesorería | `COMPRAS` | `ANTICIPOS_PROVEEDORES` |
 | `ANTICIPO_PROVEEDOR_APLICADO` | CxP contra anticipos de proveedores, con ramas FX | `COMPRAS` | `CXP_PROVEEDORES` |
+| `ANTICIPO_CLIENTE_APLICACION_REVERSADA` | Asiento compensatorio de la aplicación | `VENTAS` | `CXC_CLIENTES` / `ANTICIPOS_CLIENTES` |
+| `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | Asiento compensatorio de la aplicación | `COMPRAS` | `ANTICIPOS_PROVEEDORES` / `CXP_PROVEEDORES` |
 
 Las plantillas ya existían en `src/features/contabilidad-formal/lib/plan-default.ts`;
 lo nuevo es el **emisor**: el punto que traduce una conciliación operativa
@@ -94,6 +96,9 @@ recepción/entrega explícita persiste el movimiento de tesorería y la valoraci
 FX; cada aplicación posterior usa el costo funcional promedio de los fondos
 financiados y se ancla a su movimiento de aplicación. Ambos momentos usan el
 mismo gate `off/shadow/enforce`, que permanece `off` por defecto.
+Al eliminar un gasto o servicio, las aplicaciones de anticipos financiados se
+restituyen con un movimiento `REVERSO` y un asiento compensatorio anclado a ese
+movimiento; esta operación no representa una devolución de efectivo.
 La decisión y sus consecuencias están registradas en
 [`ADR-0002`](../../../../docs/adr/0002-ciclo-formal-de-anticipos.md).
 
