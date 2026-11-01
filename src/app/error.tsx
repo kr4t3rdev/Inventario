@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Home, RotateCcw } from 'lucide-react';
+import * as Sentry from '@sentry/nextjs';
 
 import { Button } from '@/components/ui/button';
 import { reportClientError } from '@/lib/error-reporting-client';
@@ -39,6 +40,13 @@ export default function AppErrorBoundary({ error, reset }: ErrorBoundaryProps) {
     // evita enviar el mismo error dos veces al log del servidor.
     if (reportedRef.current === error) return;
     reportedRef.current = error;
+
+    // Reporte a Sentry (alertas y trazas) y al log del servidor via
+    // /api/errors. Ambos son best-effort: no deben interferir con el manejo
+    // del error original, que ya esta a cargo del boundary.
+    Sentry.captureException(error, {
+      tags: { boundary: 'app-error' },
+    });
 
     void reportClientError({
       message: error.message,

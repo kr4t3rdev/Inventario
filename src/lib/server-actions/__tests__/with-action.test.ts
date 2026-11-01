@@ -18,9 +18,16 @@ import { Prisma } from '@/generated/prisma';
 // Mockeamos getCurrentUser ANTES de importar withAction
 vi.mock('@/lib/server-actions/get-current-user');
 
+// Mockeamos Sentry para verificar qué errores se reportan
+vi.mock('@sentry/nextjs', () => ({
+	captureException: vi.fn(),
+}));
+
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { withAction } from '@/lib/server-actions/with-action';
 import { ActionError } from '@/lib/server-actions/types';
+import { captureException } from '@sentry/nextjs';
+import { PeriodoError } from '@/lib/services/periodo-contable-types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -295,6 +302,85 @@ describe('withAction()', () => {
 
       expect(expectActionFailure(result).error!.message).not.toContain('SECRETO');
       expect(expectActionFailure(result).error!.message).not.toContain('12345');
+    });
+  });
+
+  // ─── Reporte a Sentry (solo errores inesperados) ──
+
+  describe('reporte de errores a Sentry', () => {
+    it('reporta el error original a Sentry en el fallback INTERNAL_ERROR', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const original = new Error('Algo explotó inesperadamente');
+
+      const wrapped = withAction(async () => {
+        throw original;
+      });
+      await wrapped(undefined);
+
+      expect(captureException).toHaveBeenCalledWith(original, {
+        tags: { source: 'server-action' },
+      });
+    });
+
+    it('reporta PrismaClientValidationError a Sentry (indica bug de código)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const original = new Prisma.PrismaClientValidationError(
+        'Invalid value for field "precio"',
+        '5.0.0' as never
+      );
+
+      const wrapped = withAction(async () => {
+        throw original;
+      });
+      await wrapped(undefined);
+
+      expect(captureException).toHaveBeenCalledWith(original, {
+        tags: { source: 'server-action' },
+      });
+    });
+
+    it('NO reporta ZodError a Sentry (validación esperada)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw makeZodError();
+      });
+      await wrapped(undefined);
+
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('NO reporta ActionError a Sentry (error de negocio controlado)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw new ActionError('El precio no coincide con el vigente', 'PRICE_MISMATCH');
+      });
+      await wrapped(undefined);
+
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('NO reporta PrismaClientKnownRequestError a Sentry (flujo de negocio mapeado)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw makePrismaKnownError('P2002', { target: ['nombre'] });
+      });
+      await wrapped(undefined);
+
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('NO reporta PeriodoError a Sentry (error de dominio controlado)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw new PeriodoError('El período está cerrado', 'PERIODO_CERRADO');
+      });
+      await wrapped(undefined);
+
+      expect(captureException).not.toHaveBeenCalled();
     });
   });
 
