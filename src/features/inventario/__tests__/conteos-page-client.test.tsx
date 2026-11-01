@@ -6,6 +6,7 @@ vi.mock('@/features/inventario/actions-conteos', () => ({
   registrarConteoAction: vi.fn(),
   conciliarConteoAction: vi.fn(),
   cancelarConteoAction: vi.fn(),
+  getConteoLineasAction: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -15,6 +16,7 @@ vi.mock('next/navigation', () => ({
 import {
   cancelarConteoAction,
   conciliarConteoAction,
+  getConteoLineasAction,
   iniciarConteoAction,
   registrarConteoAction,
 } from '@/features/inventario/actions-conteos'
@@ -55,6 +57,15 @@ describe('ConteosPageClient', () => {
 
   it('registra capturas con el usuario actual y llama registrarConteo', async () => {
     vi.mocked(registrarConteoAction).mockResolvedValue({ success: true } as any)
+    vi.mocked(getConteoLineasAction).mockResolvedValue({
+      success: true,
+      data: {
+        lineas: [
+          { productoId: 'prod-1', nombre: 'Producto 1', codigoInterno: 'P-1', codigoNegocio: null },
+          { productoId: 'prod-2', nombre: 'Producto 2', codigoInterno: 'P-2', codigoNegocio: null },
+        ],
+      },
+    } as any)
 
     renderPage([
       {
@@ -68,15 +79,19 @@ describe('ConteosPageClient', () => {
     ])
 
     fireEvent.click(screen.getByRole('button', { name: /capturar/i }))
+    await screen.findByText('Producto 1')
     fireEvent.change(screen.getAllByLabelText(/cantidad/i)[0], { target: { value: '9' } })
-    fireEvent.change(screen.getAllByLabelText(/producto/i)[0], { target: { value: 'prod-1' } })
+    fireEvent.change(screen.getAllByLabelText(/cantidad/i)[1], { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: /guardar captura/i }))
 
     await waitFor(() => {
       expect(registrarConteoAction).toHaveBeenCalledWith(
         expect.objectContaining({
           conteoId: 'c-1',
-          lineas: [{ productoId: 'prod-1', cantidad: 9 }],
+          lineas: [
+            { productoId: 'prod-1', cantidad: 9 },
+            { productoId: 'prod-2', cantidad: 0 },
+          ],
         }),
       )
     })
@@ -86,6 +101,21 @@ describe('ConteosPageClient', () => {
     vi.mocked(conciliarConteoAction).mockResolvedValue({
       success: true,
       data: { ajustes: 1, estado: 'AJUSTADO' },
+    } as any)
+    vi.mocked(getConteoLineasAction).mockResolvedValue({
+      success: true,
+      data: {
+        lineas: [
+          {
+            productoId: 'prod-1',
+            nombre: 'Producto 1',
+            codigoInterno: 'P-1',
+            codigoNegocio: null,
+            conteo1: 9,
+            conteo2: 8,
+          },
+        ],
+      },
     } as any)
 
     renderPage([
@@ -100,10 +130,18 @@ describe('ConteosPageClient', () => {
     ])
 
     fireEvent.click(screen.getByRole('button', { name: /conciliar/i }))
+    await screen.findByText(/pasada 1: 9 · pasada 2: 8/i)
+    fireEvent.change(screen.getByLabelText(/cantidad final de producto 1/i), {
+      target: { value: '8' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /confirmar conciliación/i }))
 
     await waitFor(() => {
       expect(conciliarConteoAction).toHaveBeenCalledWith(
-        expect.objectContaining({ conteoId: 'c-1' }),
+        expect.objectContaining({
+          conteoId: 'c-1',
+          finales: [{ productoId: 'prod-1', contadoFinal: 8 }],
+        }),
       )
     })
   })

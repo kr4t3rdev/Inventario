@@ -19,7 +19,10 @@ const { mockTx } = vi.hoisted(() => ({
 		},
 		stockUbicacion: { findMany: vi.fn() },
 		ajusteInventario: { create: vi.fn() },
-		producto: { findUnique: vi.fn().mockResolvedValue({ precioCosto: 100 }) },
+		producto: {
+			findMany: vi.fn(),
+			findUnique: vi.fn().mockResolvedValue({ precioCosto: 100 }),
+		},
 		stockMoveLine: {
 			upsert: vi.fn(),
 			findMany: vi.fn().mockResolvedValue([]),
@@ -32,6 +35,8 @@ const { mockTx } = vi.hoisted(() => ({
 vi.mock('@/lib/prisma', () => ({
 	prisma: {
 		conteoInventario: { findFirst: vi.fn(), update: vi.fn() },
+		conteoLinea: { findMany: vi.fn() },
+		producto: { findMany: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -45,6 +50,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
 	cancelarConteoAction,
 	conciliarConteoAction,
+	getConteoLineasAction,
 	iniciarConteoAction,
 	registrarConteoAction,
 } from '@/features/inventario/actions-conteos';
@@ -76,6 +82,11 @@ describe('iniciarConteoAction', () => {
 			{ productoId: 'prod-1', cantidad: 10 },
 			{ productoId: 'prod-2', cantidad: 3 },
 		]);
+		mockTx.producto.findMany.mockResolvedValue([
+			{ id: 'prod-1' },
+			{ id: 'prod-2' },
+			{ id: 'prod-3' },
+		]);
 		mockTx.conteoInventario.create.mockResolvedValue(conteoBase as any);
 
 		const result = await iniciarConteoAction({
@@ -88,6 +99,7 @@ describe('iniciarConteoAction', () => {
 			data: expect.arrayContaining([
 				expect.objectContaining({ productoId: 'prod-1', teorico: 10 }),
 				expect.objectContaining({ productoId: 'prod-2', teorico: 3 }),
+				expect.objectContaining({ productoId: 'prod-3', teorico: 0 }),
 			]),
 		});
 	});
@@ -101,6 +113,9 @@ describe('registrarConteoAction (doble captura ciega)', () => {
 	it('primera captura pasa el conteo a CONTEO_1 con usuario1Id', async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(manager);
 		vi.mocked(prisma.conteoInventario.findFirst).mockResolvedValue(conteoBase as any);
+		mockTx.conteoLinea.findMany.mockResolvedValue([
+			{ productoId: 'prod-1', usuario1Id: null },
+		]);
 		mockTx.conteoInventario.update.mockResolvedValue({ ...conteoBase, estado: 'CONTEO_1' } as any);
 
 		const result = await registrarConteoAction({
@@ -117,6 +132,40 @@ describe('registrarConteoAction (doble captura ciega)', () => {
 			where: { id: 'conteo-1' },
 			data: { estado: 'CONTEO_1' },
 		});
+	});
+
+	it('rechaza una pasada incompleta sin cambiar el estado', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(manager);
+		vi.mocked(prisma.conteoInventario.findFirst).mockResolvedValue(conteoBase as any);
+		mockTx.conteoLinea.findMany.mockResolvedValue([
+			{ productoId: 'prod-1', usuario1Id: null },
+			{ productoId: 'prod-2', usuario1Id: null },
+		]);
+
+		const result = await registrarConteoAction({
+			conteoId: 'conteo-1',
+			lineas: [{ productoId: 'prod-1', cantidad: 9 }],
+		});
+
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe('CAPTURA_INCOMPLETA');
+		expect(mockTx.conteoInventario.update).not.toHaveBeenCalled();
+	});
+
+	it('rechaza productos que no pertenecen al conteo', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(manager);
+		vi.mocked(prisma.conteoInventario.findFirst).mockResolvedValue(conteoBase as any);
+		mockTx.conteoLinea.findMany.mockResolvedValue([
+			{ productoId: 'prod-1', usuario1Id: null },
+		]);
+
+		const result = await registrarConteoAction({
+			conteoId: 'conteo-1',
+			lineas: [{ productoId: 'prod-inexistente', cantidad: 9 }],
+		});
+
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe('PRODUCTO_FUERA_CONTEO');
 	});
 
 	it('segunda captura exige un usuario distinto y pasa a CONTEO_2', async () => {
@@ -159,6 +208,38 @@ describe('registrarConteoAction (doble captura ciega)', () => {
 
 		expect(result.success).toBe(false);
 		expect(expectActionFailure(result).error?.code).toBe('MISMO_CONTADOR');
+	});
+});
+
+describe('getConteoLineasAction', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(getCurrentUser).mockResolvedValue(manager);
+	});
+
+	it('no revela valores de conteo durante una pasada ciega', async () => {
+		vi.mocked(prisma.conteoInventario.findFirst).mockResolvedValue({
+			id: 'conteo-1',
+			estado: 'CONTEO_1',
+		} as any);
+		vi.mocked(prisma.conteoLinea.findMany).mockResolvedValue([
+			{ productoId: 'prod-1', conteo1: 8, conteo2: null },
+		] as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([
+			{ id: 'prod-1', nombre: 'Producto 1', codigoInterno: 'P-1', codigoNegocio: null },
+		] as any);
+
+		const result = await getConteoLineasAction({ conteoId: 'conteo-1' });
+
+		expect(result.success).toBe(true);
+		expect(expectActionSuccess(result).data.lineas).toEqual([
+			{
+				productoId: 'prod-1',
+				nombre: 'Producto 1',
+				codigoInterno: 'P-1',
+				codigoNegocio: null,
+			},
+		]);
 	});
 });
 

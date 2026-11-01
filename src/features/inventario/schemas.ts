@@ -68,8 +68,7 @@ export const registrarConteoSchema = z.object({
 				productoId: z.string().min(1),
 				cantidad: z.coerce.number().int().min(0),
 			}),
-		)
-		.min(1),
+		),
 });
 export type RegistrarConteoInput = z.infer<typeof registrarConteoSchema>;
 

@@ -60,22 +60,34 @@ export const iniciarConteoAction = withAction(
 				},
 			});
 
-			const stock = await tx.stockUbicacion.findMany({
-				where: {
-					tenantId,
-					tipoUbicacion: parsed.tipoUbicacion,
-					ubicacionId: parsed.ubicacionId,
-				},
-				select: { productoId: true, cantidad: true },
-			});
+			const [stock, productos] = await Promise.all([
+				tx.stockUbicacion.findMany({
+					where: {
+						tenantId,
+						tipoUbicacion: parsed.tipoUbicacion,
+						ubicacionId: parsed.ubicacionId,
+					},
+					select: { productoId: true, cantidad: true },
+				}),
+				tx.producto.findMany({
+					where: { tenantId },
+					select: { id: true },
+				}),
+			]);
 
-			if (stock.length > 0) {
+			if (productos.length > 0) {
+				const stockPorProducto = new Map(
+					stock.map((s: { productoId: string; cantidad: number }) => [
+						s.productoId,
+						s.cantidad,
+					]),
+				);
 				await tx.conteoLinea.createMany({
-					data: stock.map((s: any) => ({
+					data: productos.map((producto: { id: string }) => ({
 						conteoId: conteo.id,
 						tenantId,
-						productoId: s.productoId,
-						teorico: s.cantidad,
+						productoId: producto.id,
+						teorico: stockPorProducto.get(producto.id) ?? 0,
 					})),
 				});
 			}
@@ -112,22 +124,43 @@ export const registrarConteoAction = withAction(
 		const esSegundaCaptura = conteo.estado === 'CONTEO_1';
 
 		return prisma.$transaction(async (tx: any) => {
+			const previas = await tx.conteoLinea.findMany({
+				where: { conteoId: conteo.id },
+				select: { productoId: true, usuario1Id: true },
+			});
+			const idsEsperados = new Set<string>(
+				previas.map((linea: { productoId: string }) => linea.productoId),
+			);
+			const idsRecibidos = new Set<string>(parsed.lineas.map((linea) => linea.productoId));
+
+			if (idsRecibidos.size !== parsed.lineas.length) {
+				throw new ActionError(
+					'Cada producto debe aparecer una sola vez.',
+					'PRODUCTO_DUPLICADO',
+				);
+			}
+			if ([...idsRecibidos].some((productoId) => !idsEsperados.has(productoId))) {
+				throw new ActionError(
+					'La captura incluye un producto fuera del conteo.',
+					'PRODUCTO_FUERA_CONTEO',
+				);
+			}
+			if ([...idsEsperados].some((productoId) => !idsRecibidos.has(productoId))) {
+				throw new ActionError(
+					'Debes capturar todos los productos del conteo.',
+					'CAPTURA_INCOMPLETA',
+				);
+			}
+
 			if (esSegundaCaptura) {
-				const previas = await tx.conteoLinea.findMany({
-					where: { conteoId: conteo.id },
-					select: { productoId: true, usuario1Id: true },
-				});
 				const idsPrimerUsuario = new Set(
 					previas.map((l: any) => l.usuario1Id).filter(Boolean),
 				);
-				for (const linea of parsed.lineas) {
-					if (idsPrimerUsuario.has(user.userId)) {
-						throw new ActionError(
-							'La segunda captura debe registrarla una persona distinta a la primera.',
-							'MISMO_CONTADOR',
-						);
-					}
-					void linea;
+				if (idsPrimerUsuario.has(user.userId)) {
+					throw new ActionError(
+						'La segunda captura debe registrarla una persona distinta a la primera.',
+						'MISMO_CONTADOR',
+					);
 				}
 			}
 
@@ -294,6 +327,53 @@ export const getConteosAction = withAction(
 			orderBy: { createdAt: 'desc' },
 			take: Math.min(200, input?.limit ?? 50),
 		});
+	},
+);
+
+/**
+ * @description Obtiene los productos del conteo sin revelar el teórico durante
+ * las pasadas ciegas. Solo en conciliación devuelve los valores de ambas pasadas.
+ * @param {{ conteoId: string }} input - Conteo consultado.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<unknown>} Productos disponibles para captura o conciliación.
+ */
+export const getConteoLineasAction = withAction(
+	async (input: { conteoId: string }, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requireFeature(user, 'conteo-fisico', 'consultar líneas de conteo');
+		const conteo = await prisma.conteoInventario.findFirst({
+			where: { id: input.conteoId, tenantId },
+			select: { id: true, estado: true },
+		});
+		if (!conteo) throw new ActionError('Conteo no encontrado', 'NOT_FOUND');
+
+		const lineas = await prisma.conteoLinea.findMany({
+			where: { conteoId: conteo.id, tenantId },
+			orderBy: { productoId: 'asc' },
+			select: { productoId: true, conteo1: true, conteo2: true },
+		});
+		const idsProducto = lineas.map((linea: { productoId: string }) => linea.productoId);
+		const productos = await prisma.producto.findMany({
+			where: { tenantId, id: { in: idsProducto } },
+			select: { id: true, nombre: true, codigoInterno: true, codigoNegocio: true },
+		});
+		const productosPorId = new Map(productos.map((producto: any) => [producto.id, producto]));
+
+		return {
+			estado: conteo.estado,
+			lineas: lineas.map((linea: any) => {
+				const producto = productosPorId.get(linea.productoId);
+				return {
+					productoId: linea.productoId,
+					nombre: producto?.nombre ?? linea.productoId,
+					codigoInterno: producto?.codigoInterno ?? null,
+					codigoNegocio: producto?.codigoNegocio ?? null,
+					...(conteo.estado === 'CONTEO_2'
+						? { conteo1: linea.conteo1, conteo2: linea.conteo2 }
+						: {}),
+				};
+			}),
+		};
 	},
 );
 
