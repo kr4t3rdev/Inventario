@@ -39,6 +39,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
 	anularAjusteAction,
 	createAjusteAction,
+	getStockParaAjusteAction,
 } from '@/features/inventario/actions-ajustes';
 
 const mockUser = {
@@ -194,5 +195,62 @@ describe('anularAjusteAction', () => {
 		const result = await anularAjusteAction('aj-1');
 
 		expect(result.success).toBe(false);
+	});
+});
+
+describe('getStockParaAjusteAction', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+	});
+
+	it('devuelve el stock de la ubicación seleccionada', async () => {
+		vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any);
+		vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
+			productoId: 'prod-1',
+			cantidad: 8,
+			cantidadReservada: 0,
+			cantidadDisponible: 8,
+		} as any);
+
+		const result = await getStockParaAjusteAction({
+			productoId: 'prod-1',
+			tipoUbicacion: 'almacen',
+			ubicacionId: 'alm-1',
+		});
+
+		expect(expectActionSuccess(result).data).toEqual({
+			cantidad: 8,
+			cantidadDisponible: 8,
+		});
+	});
+
+	it('devuelve cero cuando el producto no tiene registro en la ubicación', async () => {
+		vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any);
+		vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue(null as any);
+
+		const result = await getStockParaAjusteAction({
+			productoId: 'prod-1',
+			tipoUbicacion: 'almacen',
+			ubicacionId: 'alm-1',
+		});
+
+		expect(expectActionSuccess(result).data).toEqual({
+			cantidad: 0,
+			cantidadDisponible: 0,
+		});
+	});
+
+	it('rechaza un producto que no pertenece al tenant', async () => {
+		vi.mocked(prisma.producto.findFirst).mockResolvedValue(null as any);
+
+		const result = await getStockParaAjusteAction({
+			productoId: 'prod-ajeno',
+			tipoUbicacion: 'almacen',
+			ubicacionId: 'alm-1',
+		});
+
+		expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
+		expect(prisma.stockUbicacion.findUnique).not.toHaveBeenCalled();
 	});
 });

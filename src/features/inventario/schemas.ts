@@ -31,6 +31,19 @@ export const createAjusteSchema = z.object({
 
 export type CreateAjusteInput = z.infer<typeof createAjusteSchema>;
 
+/**
+ * @description Parámetros para consultar el stock de un producto en una
+ * ubicación concreta. Se usa en la pantalla de ajustes para mostrar el stock
+ * actual y previsualizar la diferencia antes de aplicar el ajuste.
+ */
+export const stockParaAjusteSchema = z.object({
+	productoId: z.string().min(1),
+	tipoUbicacion: tipoUbicacionSchema,
+	ubicacionId: z.string().min(1),
+});
+
+export type StockParaAjusteInput = z.infer<typeof stockParaAjusteSchema>;
+
 export const ESTADOS_CONTEO = [
 	'BORRADOR',
 	'CONTEO_1',

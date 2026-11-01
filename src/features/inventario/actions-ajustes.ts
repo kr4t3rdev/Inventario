@@ -13,10 +13,46 @@ import {
 } from '@/features/inventario/movimientos';
 import {
 	createAjusteSchema,
+	stockParaAjusteSchema,
 	tipoUbicacionSchema,
 	type CreateAjusteInput,
+	type StockParaAjusteInput,
 } from './schemas';
+import { getStockPorUbicacion } from '@/lib/services/stock-ubicacion-queries';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+
+/**
+ * @description Consulta el stock actual de un producto en una ubicación para
+ * poder previsualizar el efecto de un ajuste antes de aplicarlo.
+ * `StockUbicacion` es la fuente de verdad operativa del inventario.
+ * @param {StockParaAjusteInput} input - Producto y ubicación a consultar.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<{ cantidad: number; cantidadDisponible: number }>} Stock
+ * de la ubicación; si el producto no tiene registro, cantidades en cero.
+ */
+export const getStockParaAjusteAction = withAction(
+	async (input: StockParaAjusteInput, user: AuthenticatedUser) => {
+		const parsed = stockParaAjusteSchema.parse(input);
+		const tenantId = requireTenant(user);
+
+		const producto = await prisma.producto.findFirst({
+			where: { id: parsed.productoId, tenantId },
+			select: { id: true },
+		});
+		if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+
+		const stock = await getStockPorUbicacion(prisma as any, {
+			productoId: parsed.productoId,
+			tipoUbicacion: parsed.tipoUbicacion,
+			ubicacionId: parsed.ubicacionId,
+		});
+
+		return {
+			cantidad: stock?.cantidad ?? 0,
+			cantidadDisponible: stock?.cantidadDisponible ?? 0,
+		};
+	},
+);
 
 /**
  * @description Crea un ajuste unificado de inventario: calcula diferencia

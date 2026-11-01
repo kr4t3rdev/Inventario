@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertTriangle, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ import {
 import {
 	anularAjusteAction,
 	createAjusteAction,
+	getStockParaAjusteAction,
 } from '@/features/inventario/actions-ajustes';
 import { MOTIVOS_AJUSTE } from '@/features/inventario/schemas';
 
@@ -89,12 +91,48 @@ export function AjustesPageClient({
 	const [cantidadContada, setCantidadContada] = useState('');
 	const [tipoUbicacion, setTipoUbicacion] = useState<'almacen' | 'punto_venta'>('almacen');
 	const [ubicacionId, setUbicacionId] = useState('');
+	const [stockActual, setStockActual] = useState<number | null>(null);
+	const [stockCargando, setStockCargando] = useState(false);
 
 	const ubicaciones = useMemo(() => {
 		return tipoUbicacion === 'almacen'
 			? almacenes.map((a) => ({ id: a.almacenId, nombre: a.nombre }))
 			: puntosVenta.map((p) => ({ id: p.pvId, nombre: p.nombre }));
 	}, [tipoUbicacion, almacenes, puntosVenta]);
+
+	// El stock de la ubicación seleccionada se consulta para poder mostrar
+	// cuánto hay hoy y cuánto se descontará o sumará antes de aplicar.
+	useEffect(() => {
+		let vigente = true;
+
+		if (!productoId || !ubicacionId) {
+			setStockActual(null);
+			setStockCargando(false);
+			return;
+		}
+
+		setStockCargando(true);
+		getStockParaAjusteAction({ productoId, tipoUbicacion, ubicacionId })
+			.then((resultado) => {
+				if (!vigente) return;
+				setStockActual(resultado.success ? (resultado.data?.cantidad ?? 0) : null);
+			})
+			.catch(() => {
+				if (vigente) setStockActual(null);
+			})
+			.finally(() => {
+				if (vigente) setStockCargando(false);
+			});
+
+		return () => {
+			vigente = false;
+		};
+	}, [productoId, tipoUbicacion, ubicacionId]);
+
+	const cantidadIngresada = Number(cantidadContada);
+	const cantidadValida = cantidadContada !== '' && Number.isFinite(cantidadIngresada);
+	const diferencia =
+		stockActual !== null && cantidadValida ? cantidadIngresada - stockActual : null;
 
 	async function handleCrear(e: React.FormEvent) {
 		e.preventDefault();
@@ -251,10 +289,58 @@ export function AjustesPageClient({
 								onChange={(e) => setCantidadContada(e.target.value)}
 								required
 							/>
+							<p className="mt-1 text-xs text-muted-foreground">
+								Unidades contadas en el conteo físico. El ajuste deja el stock de esta
+								ubicación en ese valor: la diferencia contra el stock actual es lo que
+								se descuenta o se suma.
+							</p>
 						</div>
 					</div>
 
-					<Button type="submit" disabled={isSubmitting}>
+					{stockCargando && (
+						<p className="text-sm text-muted-foreground">
+							Consultando el stock de la ubicación…
+						</p>
+					)}
+
+					{!stockCargando && stockActual !== null && (
+						<div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+							<p className="flex items-center gap-2">
+								<Info className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+								<span>
+									Stock actual en esta ubicación:{' '}
+									<span className="font-medium">{stockActual}</span> unidades.
+								</span>
+							</p>
+
+							{diferencia !== null && diferencia !== 0 && (
+								<p className="mt-2">
+									{diferencia < 0
+										? `Se descontarán ${Math.abs(diferencia)} unidades y el stock quedará en ${cantidadIngresada}.`
+										: `Se sumarán ${diferencia} unidades y el stock quedará en ${cantidadIngresada}.`}
+								</p>
+							)}
+
+							{diferencia === 0 && (
+								<p className="mt-2 flex items-start gap-2 text-destructive">
+									<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+									<span>
+										La cantidad contada coincide con el stock actual, así que no hay
+										diferencia que ajustar.
+									</span>
+								</p>
+							)}
+						</div>
+					)}
+
+					{!stockCargando && stockActual === null && productoId && ubicacionId && (
+						<p className="text-sm text-muted-foreground">
+							No se pudo consultar el stock de esta ubicación. El ajuste se calculará con
+							el stock del servidor al aplicarlo.
+						</p>
+					)}
+
+					<Button type="submit" disabled={isSubmitting || diferencia === 0}>
 						{isSubmitting ? 'Aplicando…' : 'Aplicar ajuste'}
 					</Button>
 				</form>

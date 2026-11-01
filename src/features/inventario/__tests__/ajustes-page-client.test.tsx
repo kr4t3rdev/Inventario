@@ -5,6 +5,7 @@ vi.mock('@/features/inventario/actions-ajustes', () => ({
   createAjusteAction: vi.fn(),
   anularAjusteAction: vi.fn(),
   getAjustesAction: vi.fn(),
+  getStockParaAjusteAction: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -15,6 +16,7 @@ import {
   anularAjusteAction,
   createAjusteAction,
   getAjustesAction,
+  getStockParaAjusteAction,
 } from '@/features/inventario/actions-ajustes'
 import { AjustesPageClient } from '@/features/inventario/components/ajustes-page-client'
 
@@ -32,12 +34,26 @@ function renderPage() {
   )
 }
 
+/**
+ * @description Abre el formulario y completa producto, motivo y ubicación.
+ */
+function abrirFormulario() {
+  fireEvent.click(screen.getByRole('button', { name: /nuevo ajuste/i }))
+  fireEvent.change(screen.getByLabelText(/producto/i), { target: { value: 'prod-1' } })
+  fireEvent.change(screen.getByLabelText(/motivo/i), { target: { value: 'DANO' } })
+  fireEvent.change(screen.getByLabelText(/^ubicación$/i), { target: { value: 'alm-1' } })
+}
+
 describe('AjustesPageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getAjustesAction).mockResolvedValue({
       success: true,
       data: { items: [], total: 0, page: 1, limit: 20 },
+    } as any)
+    vi.mocked(getStockParaAjusteAction).mockResolvedValue({
+      success: true,
+      data: { cantidad: 8, cantidadDisponible: 8 },
     } as any)
   })
 
@@ -75,6 +91,82 @@ describe('AjustesPageClient', () => {
         }),
       )
     })
+  })
+
+  it('consulta el stock del producto en la ubicación seleccionada', async () => {
+    renderPage()
+    abrirFormulario()
+
+    await waitFor(() => {
+      expect(getStockParaAjusteAction).toHaveBeenCalledWith({
+        productoId: 'prod-1',
+        tipoUbicacion: 'almacen',
+        ubicacionId: 'alm-1',
+      })
+    })
+  })
+
+  it('muestra el stock actual y cuántas unidades se descontarán', async () => {
+    renderPage()
+    abrirFormulario()
+
+    await waitFor(() => {
+      expect(screen.getByText(/stock actual en esta ubicación/i)).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/cantidad contada/i), { target: { value: '2' } })
+
+    await waitFor(() => {
+      expect(screen.getByText(/se descontarán 6 unidades/i)).toBeInTheDocument()
+    })
+    expect(screen.getByText(/el stock quedará en 2/i)).toBeInTheDocument()
+  })
+
+  it('aclara que se sumarán unidades cuando la cantidad contada es mayor', async () => {
+    renderPage()
+    abrirFormulario()
+
+    await waitFor(() => {
+      expect(screen.getByText(/stock actual en esta ubicación/i)).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/cantidad contada/i), { target: { value: '10' } })
+
+    await waitFor(() => {
+      expect(screen.getByText(/se sumarán 2 unidades/i)).toBeInTheDocument()
+    })
+  })
+
+  it('bloquea el envío y explica cuando no hay diferencia con el stock actual', async () => {
+    renderPage()
+    abrirFormulario()
+
+    await waitFor(() => {
+      expect(screen.getByText(/stock actual en esta ubicación/i)).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/cantidad contada/i), { target: { value: '8' } })
+
+    await waitFor(() => {
+      expect(screen.getByText(/no hay diferencia que ajustar/i)).toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: /aplicar ajuste/i })).toBeDisabled()
+  })
+
+  it('explica que la cantidad contada fija el stock de la ubicación', async () => {
+    renderPage()
+    abrirFormulario()
+
+    // Se espera la consulta de stock para que su resolución no actualice el
+    // estado fuera de act() al terminar el test.
+    await waitFor(() => {
+      expect(getStockParaAjusteAction).toHaveBeenCalled()
+    })
+
+    expect(
+      screen.getByText(/unidades contadas en el conteo físico/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/la diferencia contra el stock actual/i)).toBeInTheDocument()
   })
 
   it('anula un ajuste aplicado previa confirmación', async () => {
