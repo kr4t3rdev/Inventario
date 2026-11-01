@@ -1,4 +1,4 @@
-# Emisor formal no Cash (COBRO_CXC / PAGO_CXP / COBRO_SERVICIO)
+# Emisor formal no Cash (CxC/CxP, servicios y anticipos)
 
 La capa formal contable exige que todo movimiento de tesorería tenga su asiento
 con partida doble, hash encadenado y evidencia de auditoría. La primera
@@ -7,8 +7,8 @@ de deuda y desembolso de deuda); esta capa añade cobros de ventas, servicios y
 pagos de gastos.
 
 Los writers conectados traducen cada conciliación operativa persistida en un
-evento formal: cobro de venta (`COBRO_CXC`), pago de gasto (`PAGO_CXP`) y cobro
-de servicios (`COBRO_SERVICIO`).
+evento formal: cobro de venta (`COBRO_CXC`), pago de gasto (`PAGO_CXP`), cobro
+de servicios (`COBRO_SERVICIO`) y recepción, entrega o aplicación de anticipos.
 
 ## Qué emite
 
@@ -17,6 +17,10 @@ de servicios (`COBRO_SERVICIO`).
 | `COBRO_CXC` | 6 líneas (3 ramas FX + 2 de diferencia + tesorería) | `VENTAS` | `CXC_CLIENTES` |
 | `PAGO_CXP` | 6 líneas (espejo del anterior) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `COBRO_SERVICIO` | Plantilla de cobro de servicios con ramas FX | `VENTAS` | `CXC_CLIENTES` |
+| `ANTICIPO_CLIENTE_RECIBIDO` | Tesorería contra anticipos de clientes | `VENTAS` | `ANTICIPOS_CLIENTES` |
+| `ANTICIPO_CLIENTE_APLICADO` | Anticipos de clientes contra CxC, con ramas FX | `VENTAS` | `CXC_CLIENTES` |
+| `ANTICIPO_PROVEEDOR_ENTREGADO` | Anticipos a proveedores contra tesorería | `COMPRAS` | `ANTICIPOS_PROVEEDORES` |
+| `ANTICIPO_PROVEEDOR_APLICADO` | CxP contra anticipos de proveedores, con ramas FX | `COMPRAS` | `CXP_PROVEEDORES` |
 
 Las plantillas ya existían en `src/features/contabilidad-formal/lib/plan-default.ts`;
 lo nuevo es el **emisor**: el punto que traduce una conciliación operativa
@@ -84,10 +88,16 @@ La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 - `TenantAccountingPolicy.functionalCurrencyCode` configurada;
 - un período contable **abierto** para la fecha de la operación.
 
+El alta contractual de un anticipo es solo una reserva y no emite asiento. La
+recepción/entrega explícita persiste el movimiento de tesorería y la valoración
+FX; cada aplicación posterior usa el costo funcional promedio de los fondos
+financiados y se ancla a su movimiento de aplicación. Ambos momentos usan el
+mismo gate `off/shadow/enforce`, que permanece `off` por defecto.
+La decisión y sus consecuencias están registradas en
+[`ADR-0002`](../../../../docs/adr/0002-ciclo-formal-de-anticipos.md).
+
 ## Pendiente (slices siguientes)
 
-- `ANTICIPO_*` (anticipos a clientes y proveedores): tienen plantillas, pero
-  no emisor.
 - `facturacion-workflow.ts` (`applyFacturacionCobroWorkflow`): la vía de
   facturación de ventas todavía no emite `COBRO_CXC`.
 - Handlers legacy sin importadores
@@ -100,6 +110,8 @@ La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 
 - Motor: `src/features/contabilidad-formal/services/posting-engine.ts`
 - Builder: `src/features/contabilidad-formal/lib/settlement-event-builder.ts`
+- Anticipos: `src/features/contabilidad-formal/lib/advance-event-builder.ts` y
+  `src/features/contabilidad-formal/services/advance-posting-service.ts`
 - Servicio de emisión: `src/features/contabilidad-formal/services/settlement-posting-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

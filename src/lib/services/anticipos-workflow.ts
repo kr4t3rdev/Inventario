@@ -1,11 +1,12 @@
 import { Prisma } from '@/generated/prisma'
-import { getIdempotentResult, setIdempotentResult } from '@/lib/idempotency'
+import { createHash } from 'node:crypto'
+import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
+import { emitirEventoAnticipo } from '@/features/contabilidad-formal/services/advance-posting-service'
 import {
   AnticipoWorkflowError,
   AnticipoContexto,
   CreateAnticipoParams,
   ExecuteAnticipoParams,
-  ExecuteAnticipoPersistedResult,
   ExecuteAnticipoResult,
   ExecuteReconciliacionHandler,
   ReverseAnticipoParams,
@@ -30,17 +31,6 @@ export function isAnticipoWorkflowError(error: unknown): error is AnticipoWorkfl
   }
   const candidate = error as { status?: unknown; code?: unknown }
   return typeof candidate.status === 'number' && typeof candidate.code === 'string'
-}
-
-function buildExecuteFingerprint(params: ExecuteAnticipoParams): string {
-  return JSON.stringify({
-    anticipoId: params.anticipoId,
-    contexto: params.contexto,
-    documentoDestinoId: params.documentoDestinoId,
-    montoObjetivo: Number(params.montoObjetivo),
-    monedaObjetivo: params.monedaObjetivo,
-    tasaAplicada: typeof params.tasaAplicada === 'number' ? Number(params.tasaAplicada) : null
-  })
 }
 
 function resolveVigencia(vigenciaHasta?: Date | string): Date | null {
@@ -149,7 +139,8 @@ export async function createAnticipo(
       proveedorId: params.proveedorId || null,
       clienteId: params.clienteId || null,
       montoOriginal: monto,
-      saldoDisponible: monto,
+      montoFinanciado: 0,
+      saldoDisponible: 0,
       moneda: params.moneda || 'CUP',
       cuentaOrigenId: params.cuentaOrigenId || null,
       tipoPagoOrigenId: params.tipoPagoOrigenId || null,
@@ -166,7 +157,7 @@ export async function createAnticipo(
       monto: monto,
       moneda: anticipo.moneda,
       saldoAntes: 0,
-      saldoDespues: monto,
+      saldoDespues: 0,
       usuarioId: params.usuarioId
     }
   })
@@ -174,166 +165,207 @@ export async function createAnticipo(
   return anticipo
 }
 
-export async function executeAnticipo(
+/**
+ * @description Registra una recepción/entrega parcial de fondos del anticipo,
+ * actualiza tesorería y emite el asiento formal dentro de la misma transacción.
+ * @param {Prisma.TransactionClient} tx - Transacción activa de Prisma.
+ * @param {object} params - Anticipo, cuenta, tipo de pago, monto y actor.
+ * @returns {Promise<{movimientoId: string; saldoDisponible: number}>} Movimiento y saldo financiado.
+ */
+export async function registrarMovimientoEfectivoAnticipo(
   tx: Prisma.TransactionClient,
-  params: ExecuteAnticipoParams
-): Promise<ExecuteAnticipoResult> {
-  if (!params.idempotencyKey?.trim()) {
-    throw createAnticipoWorkflowError(
-      400,
-      'IDEMPOTENCY_KEY_REQUERIDA',
-      'La clave de idempotencia es obligatoria'
-    )
+  params: {
+    anticipoId: string
+    tenantId: string
+    cuentaId: string
+    tipoPagoId: string
+    monto: number
+    idempotencyKey: string
+    usuarioId: string
+    observaciones?: string
+  },
+): Promise<{ movimientoId: string; saldoDisponible: number; idempotentReplay: boolean }> {
+  if (!Number.isFinite(params.monto) || params.monto <= 0) {
+    throw createAnticipoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
+  }
+  if (!params.idempotencyKey.trim()) {
+    throw createAnticipoWorkflowError(400, 'IDEMPOTENCY_KEY_REQUERIDA', 'La clave de idempotencia es obligatoria')
   }
 
-  if (!Number.isFinite(params.montoObjetivo) || params.montoObjetivo <= 0) {
-    throw createAnticipoWorkflowError(
-      400,
-      'MONTO_OBJETIVO_INVALIDO',
-      'El monto objetivo debe ser mayor que cero'
-    )
-  }
+  const anticipo = await tx.anticipo.findFirst({
+    where: { anticipoId: params.anticipoId, tenantId: params.tenantId },
+    select: {
+      anticipoId: true,
+      tenantId: true,
+      tipo: true,
+      estado: true,
+      montoOriginal: true,
+      montoFinanciado: true,
+      saldoDisponible: true,
+      moneda: true,
+      referenciaExterna: true,
+    },
+  })
+  if (!anticipo) throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', 'Anticipo no encontrado')
 
-  const idempotencyCacheKey = `anticipos:execute:${params.anticipoId}:${params.idempotencyKey}`
-  const fingerprint = buildExecuteFingerprint(params)
-  const persisted = await getIdempotentResult<ExecuteAnticipoPersistedResult>(idempotencyCacheKey)
-  if (persisted) {
-    if (persisted.requestFingerprint !== fingerprint) {
-      throw createAnticipoWorkflowError(
-        409,
-        'IDEMPOTENCIA_CONFLICTO',
-        'La clave de idempotencia ya fue usada con otro payload'
-      )
+  const existente = await tx.anticipoMovimiento.findFirst({
+    where: { anticipoId: params.anticipoId, idempotencyKey: params.idempotencyKey },
+    select: { movimientoId: true, monto: true, saldoDespues: true, cuentaId: true, tipoPagoId: true },
+  })
+  if (existente) {
+    if (
+      Number(existente.monto) !== params.monto ||
+      existente.cuentaId !== params.cuentaId ||
+      existente.tipoPagoId !== params.tipoPagoId
+    ) {
+      throw createAnticipoWorkflowError(409, 'IDEMPOTENCIA_CONFLICTO', 'La clave ya se usó con otros datos')
     }
     return {
-      ...persisted.response,
-      idempotentReplay: true
+      movimientoId: existente.movimientoId,
+      saldoDisponible: Number(existente.saldoDespues),
+      idempotentReplay: true,
     }
   }
 
-  const anticipo = await tx.anticipo.findUnique({
-      where: { anticipoId: params.anticipoId },
-      select: {
-        anticipoId: true,
-        estado: true,
-        saldoDisponible: true,
-        moneda: true,
-        vigenciaHasta: true
-      }
+  if (anticipo.estado !== 'RESERVADO' || anticipo.referenciaExterna?.startsWith('NC:')) {
+    throw createAnticipoWorkflowError(409, 'ANTICIPO_NO_FINANCIABLE', 'Este anticipo no admite financiación de efectivo')
+  }
+  if (Number(anticipo.saldoDisponible) > 0 && Number(anticipo.montoFinanciado) === 0) {
+    throw createAnticipoWorkflowError(
+      409,
+      'SALDO_LEGADO_NO_FINANCIADO',
+      'Este anticipo tiene saldo anterior sin evidencia de financiación; requiere conciliación manual',
+    )
+  }
+  if (Number(anticipo.montoFinanciado) + params.monto > Number(anticipo.montoOriginal) + 0.000001) {
+    throw createAnticipoWorkflowError(409, 'MONTO_EXCEDE_RESERVA', 'La financiación supera el monto reservado')
+  }
+
+  const [cuenta, tipoPago, policy] = await Promise.all([
+    tx.cuentaBancaria.findFirst({
+      where: { cuentaId: params.cuentaId, tenantId: params.tenantId, isActive: true },
+      select: { cuentaId: true, moneda: true, tipoCuenta: true },
+    }),
+    tx.tipoPago.findFirst({
+      where: { tipoId: params.tipoPagoId, tenantId: params.tenantId, isActive: true },
+      select: { tipoId: true },
+    }),
+    tx.tenantAccountingPolicy.findUnique({
+      where: { tenantId: params.tenantId },
+      select: { functionalCurrencyCode: true },
+    }),
+  ])
+  if (!cuenta) throw createAnticipoWorkflowError(404, 'CUENTA_NO_ENCONTRADA', 'Cuenta activa no encontrada')
+  if (!tipoPago) throw createAnticipoWorkflowError(404, 'TIPO_PAGO_NO_ENCONTRADO', 'Tipo de pago activo no encontrado')
+  if (cuenta.moneda.trim().toUpperCase() !== anticipo.moneda.trim().toUpperCase()) {
+    throw createAnticipoWorkflowError(409, 'MONEDA_CUENTA_INCOMPATIBLE', 'La moneda de la cuenta debe coincidir con la del anticipo')
+  }
+
+  const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() || 'CUP'
+  const moneda = anticipo.moneda.trim().toUpperCase()
+  let tasaCambio: number | null = null
+  let montoFuncional = params.monto
+  let tasaId: string | null = null
+  if (moneda !== monedaFuncional) {
+    const tasa = await exchangeRateProvider.getRateAsOf({
+      sourceCurrency: moneda,
+      targetCurrency: monedaFuncional,
+      boundaryAt: new Date(),
+      client: tx,
     })
+    if (!tasa) throw createAnticipoWorkflowError(409, 'TASA_INVALIDA', `No hay tasa vigente ${moneda} → ${monedaFuncional}`)
+    tasaCambio = tasa.tasa
+    tasaId = tasa.tasaId
+    montoFuncional = params.monto * tasa.tasa
+  }
 
-    if (!anticipo) {
-      throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', 'Anticipo no encontrado')
-    }
+  const saldoAntes = Number(anticipo.saldoDisponible)
+  const nuevoSaldo = saldoAntes + params.monto
+  const update = await tx.anticipo.updateMany({
+    where: {
+      anticipoId: anticipo.anticipoId,
+      tenantId: params.tenantId,
+      estado: 'RESERVADO',
+      montoFinanciado: anticipo.montoFinanciado,
+      saldoDisponible: anticipo.saldoDisponible,
+    },
+    data: {
+      montoFinanciado: { increment: params.monto },
+      saldoDisponible: { increment: params.monto },
+    },
+  })
+  if (update.count !== 1) {
+    throw createAnticipoWorkflowError(409, 'CONCURRENCIA', 'El anticipo cambió durante la financiación')
+  }
 
-    if (anticipo.estado !== 'RESERVADO') {
-      throw createAnticipoWorkflowError(
-        409,
-        'ANTICIPO_NO_ELEGIBLE',
-        'El anticipo no está en estado reservado'
-      )
-    }
+  const cuentaUpdate = await tx.cuentaBancaria.updateMany({
+    where: {
+      cuentaId: cuenta.cuentaId,
+      tenantId: params.tenantId,
+      isActive: true,
+      ...(anticipo.tipo === 'PAGO' ? { saldo: { gte: params.monto } } : {}),
+    },
+    data: { saldo: anticipo.tipo === 'COBRO' ? { increment: params.monto } : { decrement: params.monto } },
+  })
+  if (cuentaUpdate.count !== 1) {
+    throw createAnticipoWorkflowError(
+      409,
+      anticipo.tipo === 'PAGO' ? 'SALDO_CUENTA_INSUFICIENTE' : 'CUENTA_MODIFICADA',
+      anticipo.tipo === 'PAGO'
+        ? 'La cuenta no tiene saldo suficiente para entregar el anticipo'
+        : 'La cuenta cambió durante la financiación',
+    )
+  }
 
-    if (
-      anticipo.vigenciaHasta &&
-      new Date(anticipo.vigenciaHasta).getTime() < Date.now()
-    ) {
-      throw createAnticipoWorkflowError(409, 'ANTICIPO_VENCIDO', 'El anticipo está vencido')
-    }
-
-    const saldoDisponible = Number(anticipo.saldoDisponible)
-    const montoObjetivo = Number(params.montoObjetivo)
-    if (saldoDisponible + 0.000001 < montoObjetivo) {
-      throw createAnticipoWorkflowError(
-        409,
-        'COBERTURA_INSUFICIENTE',
-        'El saldo del anticipo no cubre el monto objetivo'
-      )
-    }
-
-    if (saldoDisponible - montoObjetivo > 0.000001) {
-      throw createAnticipoWorkflowError(
-        409,
-        'EJECUCION_PARCIAL_NO_PERMITIDA',
-        'La ejecución parcial del anticipo no está permitida'
-      )
-    }
-
-    let montoConvertido: number | null = null
-    let tasaAplicada: number | null = null
-    if (anticipo.moneda !== params.monedaObjetivo) {
-      if (!params.tasaAplicada || !Number.isFinite(params.tasaAplicada) || params.tasaAplicada <= 0) {
-        throw createAnticipoWorkflowError(
-          409,
-          'TASA_INVALIDA',
-          'No existe una tasa válida para ejecutar el anticipo en otra moneda'
-        )
-      }
-      tasaAplicada = Number(params.tasaAplicada)
-      montoConvertido = montoObjetivo * tasaAplicada
-    }
-
-    const nuevoSaldo = saldoDisponible - montoObjetivo
-    const now = new Date()
-  const updateResult = await tx.anticipo.updateMany({
-      where: {
-        anticipoId: anticipo.anticipoId,
-        estado: 'RESERVADO',
-        saldoDisponible: anticipo.saldoDisponible
-      },
-      data: {
-        saldoDisponible: nuevoSaldo,
-        estado: nuevoSaldo <= 0 ? 'EJECUTADO' : 'RESERVADO',
-        fechaEjecucion: nuevoSaldo <= 0 ? now : null
-      }
-    })
-
-    if (updateResult.count !== 1) {
-      throw createAnticipoWorkflowError(
-        409,
-        'CONCURRENCIA',
-        'El anticipo fue modificado por otra operación concurrente'
-      )
-    }
-
-  // NO se llama a reconciliación aquí.
-  // La reconciliación vive en el flujo que consume el anticipo (applyAnticipoAllocations).
-
+  const fxEvidenceFingerprint = tasaId
+    ? createHash('sha256').update(`${tasaId}:${moneda}:${monedaFuncional}:${tasaCambio}`).digest('hex')
+    : null
   const movimiento = await tx.anticipoMovimiento.create({
-      data: {
-        anticipoId: anticipo.anticipoId,
-        tipoMovimiento: 'EJECUCION',
-        contexto: params.contexto,
-        documentoDestinoId: params.documentoDestinoId,
-        monto: montoObjetivo,
-        moneda: anticipo.moneda,
-        tasaAplicada: tasaAplicada || null,
-        montoConvertido: montoConvertido || null,
-        saldoAntes: saldoDisponible,
-        saldoDespues: nuevoSaldo,
-        usuarioId: params.usuarioId,
-        idempotencyKey: params.idempotencyKey,
-        observaciones: params.observaciones || null
-      }
-    })
-
-  const estadoFinal: 'EJECUTADO' | 'RESERVADO' = nuevoSaldo <= 0 ? 'EJECUTADO' : 'RESERVADO'
-  const result = {
-    anticipoId: anticipo.anticipoId,
-    estado: estadoFinal,
-    saldoDisponible: nuevoSaldo,
-    movimientoId: movimiento.movimientoId
-  }
-
-  await setIdempotentResult<ExecuteAnticipoPersistedResult>(idempotencyCacheKey, {
-    requestFingerprint: fingerprint,
-    response: result
+    data: {
+      anticipoId: anticipo.anticipoId,
+      tipoMovimiento: anticipo.tipo === 'COBRO' ? 'RECEPCION' : 'ENTREGA',
+      cuentaId: cuenta.cuentaId,
+      tipoPagoId: tipoPago.tipoId,
+      monto: params.monto,
+      moneda,
+      tasaAplicada: tasaCambio,
+      montoConvertido: tasaCambio === null ? null : montoFuncional,
+      montoFuncional,
+      functionalCurrency: monedaFuncional,
+      fxEvidenceFingerprint,
+      saldoAntes,
+      saldoDespues: nuevoSaldo,
+      usuarioId: params.usuarioId,
+      idempotencyKey: params.idempotencyKey,
+      observaciones: params.observaciones || null,
+    },
   })
 
-  return {
-    ...result,
-    idempotentReplay: false
-  }
+  await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
+    anticipoMovimientoId: movimiento.movimientoId,
+    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_RECIBIDO' : 'ANTICIPO_PROVEEDOR_ENTREGADO',
+    fecha: new Date(),
+    monto: params.monto,
+    moneda,
+    montoFuncional,
+    monedaFuncional,
+    tasaCambio,
+    fxEvidenceFingerprint,
+    treasuryAccountType: cuenta.tipoCuenta,
+  })
+
+  return { movimientoId: movimiento.movimientoId, saldoDisponible: nuevoSaldo, idempotentReplay: false }
+}
+
+export async function executeAnticipo(
+  _tx: Prisma.TransactionClient,
+  _params: ExecuteAnticipoParams
+): Promise<ExecuteAnticipoResult> {
+  throw createAnticipoWorkflowError(
+    409,
+    'APLICACION_DOCUMENTAL_REQUERIDA',
+    'Aplique el anticipo desde el flujo transaccional del documento comercial',
+  )
 }
 
 export async function reverseAnticipo(
@@ -459,12 +491,15 @@ export async function applyAnticipoAllocations(
         anticipoId: true,
         tipo: true,
         estado: true,
+        montoOriginal: true,
+        montoFinanciado: true,
         saldoDisponible: true,
         moneda: true,
         vigenciaHasta: true,
         proveedorId: true,
         clienteId: true,
         cuentaOrigenId: true,
+        referenciaExterna: true,
       },
     })
 
@@ -493,6 +528,67 @@ export async function applyAnticipoAllocations(
       )
     }
 
+    const esSaldoNotaCredito = anticipo.referenciaExterna?.startsWith('NC:') ?? false
+    if (!esSaldoNotaCredito && Number(anticipo.montoFinanciado) <= 0) {
+      throw createAnticipoWorkflowError(
+        409,
+        'ANTICIPO_SIN_FONDOS_REALES',
+        `El anticipo ${anticipoId} no tiene fondos recibidos o entregados registrados`,
+      )
+    }
+
+    let valorFuncionalAplicado: number | null = null
+    let monedaFuncional: string | null = null
+    let tasaPromedio: number | null = null
+    let fxEvidenceFingerprint: string | null = null
+    if (!esSaldoNotaCredito) {
+      const movimientosValorados = await tx.anticipoMovimiento.findMany({
+        where: { anticipoId, tipoMovimiento: { in: ['RECEPCION', 'ENTREGA', 'EJECUCION'] } },
+        select: {
+          tipoMovimiento: true,
+          monto: true,
+          montoFuncional: true,
+          tasaAplicada: true,
+          functionalCurrency: true,
+          fxEvidenceFingerprint: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      })
+      const financiaciones = movimientosValorados.filter((movimiento) =>
+        movimiento.tipoMovimiento === 'RECEPCION' || movimiento.tipoMovimiento === 'ENTREGA',
+      )
+      const aplicacionesPrevias = movimientosValorados.filter((movimiento) =>
+        movimiento.tipoMovimiento === 'EJECUCION',
+      )
+      const montoFinanciado = financiaciones.reduce((total, movimiento) => total + Number(movimiento.monto), 0)
+      const valorFinanciado = financiaciones.reduce(
+        (total, movimiento) => total + Number(movimiento.montoFuncional ?? movimiento.monto),
+        0,
+      )
+      const montoAplicadoPreviamente = aplicacionesPrevias.reduce((total, movimiento) => total + Number(movimiento.monto), 0)
+      const valorAplicadoPreviamente = aplicacionesPrevias.reduce(
+        (total, movimiento) => total + Number(movimiento.montoFuncional ?? movimiento.monto),
+        0,
+      )
+      const saldoFinanciado = montoFinanciado - montoAplicadoPreviamente
+      const saldoValorado = valorFinanciado - valorAplicadoPreviamente
+      if (saldoFinanciado + 0.000001 < montoAplicado || saldoFinanciado <= 0) {
+        throw createAnticipoWorkflowError(409, 'VALORACION_FONDOS_INCOMPLETA', 'No hay valoración persistida suficiente para aplicar el anticipo')
+      }
+      valorFuncionalAplicado = montoAplicado * saldoValorado / saldoFinanciado
+      monedaFuncional = financiaciones.find((movimiento) => movimiento.functionalCurrency)?.functionalCurrency ?? anticipo.moneda
+      tasaPromedio = anticipo.moneda.trim().toUpperCase() === monedaFuncional.trim().toUpperCase()
+        ? null
+        : valorFinanciado / montoFinanciado
+      const huellas = financiaciones
+        .map((movimiento) => movimiento.fxEvidenceFingerprint)
+        .filter((fingerprint): fingerprint is string => Boolean(fingerprint))
+        .sort()
+      fxEvidenceFingerprint = huellas.length
+        ? createHash('sha256').update(huellas.join(':')).digest('hex')
+        : null
+    }
+
     // El decremento condicional evita tanto acceso cruzado entre tenants como
     // el lost update de dos aplicaciones concurrentes sobre el mismo anticipo.
     const applied = await tx.anticipo.updateMany({
@@ -519,7 +615,9 @@ export async function applyAnticipoAllocations(
       select: { saldoDisponible: true },
     })
     const nuevoSaldo = Number(actualizado?.saldoDisponible ?? 0)
-    if (nuevoSaldo <= 0.000001) {
+    const anticipoTotalmenteConsumido = nuevoSaldo <= 0.000001 &&
+      Number(anticipo.montoFinanciado) >= Number(anticipo.montoOriginal) - 0.000001
+    if (anticipoTotalmenteConsumido) {
       await tx.anticipo.updateMany({
         where: { anticipoId, tenantId: context.tenantId },
         data: { estado: 'EJECUTADO', fechaEjecucion: new Date() },
@@ -535,6 +633,10 @@ export async function applyAnticipoAllocations(
         documentoDestinoId: context.documentoDestinoId,
         monto: montoAplicado,
         moneda: anticipo.moneda,
+        montoFuncional: valorFuncionalAplicado,
+        functionalCurrency: monedaFuncional,
+        tasaAplicada: tasaPromedio,
+        fxEvidenceFingerprint,
         saldoAntes: nuevoSaldo + montoAplicado,
         saldoDespues: nuevoSaldo,
         usuarioId: context.usuarioId,
@@ -544,6 +646,20 @@ export async function applyAnticipoAllocations(
         observaciones: context.observaciones || null,
       },
     })
+
+    if (!esSaldoNotaCredito && valorFuncionalAplicado !== null && monedaFuncional) {
+      await emitirEventoAnticipo(tx, { tenantId: context.tenantId, userId: context.usuarioId }, {
+        anticipoMovimientoId: movimiento.movimientoId,
+        tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_APLICADO' : 'ANTICIPO_PROVEEDOR_APLICADO',
+        fecha: new Date(),
+        monto: montoAplicado,
+        moneda: anticipo.moneda,
+        montoFuncional: valorFuncionalAplicado,
+        monedaFuncional,
+        tasaCambio: tasaPromedio,
+        fxEvidenceFingerprint,
+      })
+    }
 
     results.push({
       anticipoId,

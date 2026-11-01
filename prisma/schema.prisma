@@ -3075,6 +3075,7 @@ model Anticipo {
   facturaId         String?              @unique
   compraProductoId  String?              @unique
   montoOriginal     Decimal
+  montoFinanciado   Decimal              @default(0)
   saldoDisponible   Decimal
   moneda            String               @default("CUP")
   cuentaOrigenId    String?
@@ -3114,10 +3115,15 @@ model AnticipoMovimiento {
   documentoDestinoId    String?
   reconciliacionVentaId String?
   reconciliacionGastoId String?
+  cuentaId              String?
+  tipoPagoId            String?
   monto                 Decimal
   moneda                String
   tasaAplicada          Decimal?
   montoConvertido       Decimal?
+  montoFuncional        Decimal?
+  functionalCurrency    String?
+  fxEvidenceFingerprint String?
   saldoAntes            Decimal
   saldoDespues          Decimal
   usuarioId             String

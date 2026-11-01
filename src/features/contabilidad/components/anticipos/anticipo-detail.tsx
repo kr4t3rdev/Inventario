@@ -45,6 +45,10 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar, isLoadi
     switch (tipo) {
       case "CREACION_RESERVA":
         return <Clock className="h-4 w-4 text-blue-500" />
+      case "RECEPCION":
+        return <ArrowDownCircle className="h-4 w-4 text-green-500" />
+      case "ENTREGA":
+        return <ArrowUpCircle className="h-4 w-4 text-orange-500" />
       case "EJECUCION":
         return <ArrowDownCircle className="h-4 w-4 text-green-500" />
       case "REVERSO":
@@ -72,6 +76,8 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar, isLoadi
   const getMovimientoBadge = (tipo: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       CREACION_RESERVA: "outline",
+      RECEPCION: "default",
+      ENTREGA: "secondary",
       EJECUCION: "default",
       REVERSO: "outline",
       ANULACION: "destructive",
@@ -211,6 +217,14 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar, isLoadi
                               {movimiento.moneda} {Number(movimiento.saldoDespues).toLocaleString("es-ES")}
                             </p>
                           </div>
+                          {movimiento.montoFuncional != null && (
+                            <div>
+                              <p className="text-muted-foreground">Valor funcional</p>
+                              <p className="font-medium">
+                                {movimiento.functionalCurrency} {Number(movimiento.montoFuncional).toLocaleString("es-ES")}
+                              </p>
+                            </div>
+                          )}
                           {movimiento.contexto && (
                             <div>
                               <p className="text-muted-foreground">Contexto</p>

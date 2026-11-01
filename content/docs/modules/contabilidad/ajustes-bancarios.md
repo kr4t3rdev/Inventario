@@ -32,6 +32,22 @@ Este bloque agrupa herramientas para cuando el flujo estandar de ventas, gastos 
 - Documenta bien motivo y descripcion porque estos registros suelen revisarse en auditoria.
 - No mezcles cash modules con operaciones estandar si queres reportes limpios.
 
+### Ciclo contable de anticipos
+
+El alta de un anticipo contractual crea únicamente una **reserva**: no cambia el
+saldo de tesorería ni permite consumir fondos. La recepción del anticipo de un
+cliente o la entrega al proveedor se registra después, desde la acción
+**Registrar recepción/entrega**. Esta operación admite importes parciales,
+actualiza la cuenta seleccionada y emite el evento formal del movimiento en la
+misma transacción, con la valoración funcional y evidencia FX persistidas.
+
+Las aplicaciones se registran desde el flujo del documento comercial que
+consume el anticipo y emiten su evento formal asociado al movimiento de
+aplicación. El saldo disponible refleja únicamente fondos registrados. Los
+saldos históricos sin movimientos de financiación documentados requieren
+conciliación antes de volver a aplicarse. Los saldos a favor originados por una
+nota de crédito conservan su flujo específico.
+
 ## Referencias utiles
 
 - `src/features/contabilidad/actions-ajustes-bancarios.ts`

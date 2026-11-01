@@ -22,8 +22,6 @@ const anticipoSchema = z.object({
   clienteId: z.string().optional(),
   monto: z.coerce.number().positive("El monto debe ser mayor que cero"),
   moneda: z.string().min(1, "Seleccione la moneda"),
-  cuentaOrigenId: z.string().optional(),
-  tipoPagoOrigenId: z.string().optional(),
   referenciaExterna: z.string().optional(),
   vigenciaHasta: z.string().optional(),
 })
@@ -49,8 +47,6 @@ export function buildCreateAnticipoPayload(
     clienteId: data.tipo === 'COBRO' ? (clienteId || data.clienteId) : undefined,
     monto: data.monto,
     moneda: data.moneda,
-    cuentaOrigenId: data.cuentaOrigenId,
-    tipoPagoOrigenId: data.tipoPagoOrigenId,
     referenciaExterna: data.referenciaExterna,
     vigenciaHasta: data.vigenciaHasta || undefined,
   }
@@ -62,8 +58,6 @@ interface AnticipoFormProps {
   contratos?: Array<{ nombre: string; contratoId: string; clienteId?: string; vendorId?: string }>
   clientes?: Array<{ clienteId: string; nombre: string }>
   proveedores?: Array<{ vendorId: string; nombre: string }>
-  cuentasBancarias?: Array<{ cuentaId: string; nombreBanco: string; numeroCuenta: string }>
-  tiposPago?: Array<{ tipoId: string; nombre: string }>
   onSuccess?: () => void
 }
 
@@ -78,8 +72,6 @@ export function AnticipoForm({
   contratos = [],
   clientes = [],
   proveedores = [],
-  cuentasBancarias = [],
-  tiposPago = [],
   onSuccess,
 }: AnticipoFormProps) {
   const router = useRouter()
@@ -95,8 +87,6 @@ export function AnticipoForm({
       clienteId: "",
       monto: 0,
       moneda: "CUP",
-      cuentaOrigenId: "",
-      tipoPagoOrigenId: "",
       referenciaExterna: "",
       vigenciaHasta: "",
     },
@@ -160,7 +150,7 @@ export function AnticipoForm({
         <DialogHeader>
           <DialogTitle>Crear Anticipo</DialogTitle>
           <DialogDescription>
-            Complete los datos para registrar un nuevo anticipo de pago o cobro.
+            Crea una reserva sin movimiento de efectivo. La recepción o entrega se registra después.
           </DialogDescription>
         </DialogHeader>
 
@@ -273,62 +263,6 @@ export function AnticipoForm({
                 </FormItem>
               )}
             />
-
-            {/* Cuenta de Origen */}
-            {cuentasBancarias.length > 0 && (
-              <FormField
-                control={form.control}
-                name="cuentaOrigenId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cuenta de Origen (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione cuenta" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {cuentasBancarias.map((cuenta) => (
-                          <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                            {cuenta.nombreBanco} - {cuenta.numeroCuenta}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Tipo de Pago de Origen */}
-            {tiposPago.length > 0 && (
-              <FormField
-                control={form.control}
-                name="tipoPagoOrigenId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Pago (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione tipo de pago" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {tiposPago.map((tipo) => (
-                          <SelectItem key={tipo.tipoId} value={tipo.tipoId}>
-                            {tipo.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             {/* Referencia Externa */}
             <FormField

@@ -106,7 +106,7 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
     });
     servicioId = servicio.servicioId;
     const cuenta = await prisma.cuentaBancaria.create({
-      data: { tenantId, nombreBanco: 'Fixture bank', numeroCuenta: suffix, tipoCuenta: 'CORRIENTE' },
+      data: { tenantId, nombreBanco: 'Fixture bank', numeroCuenta: suffix, tipoCuenta: 'CORRIENTE', moneda: fxCurrencyCode, saldo: 100 },
     });
     cuentaId = cuenta.cuentaId;
     const tipoPago = await prisma.tipoPago.create({ data: { tenantId, nombre: 'Transferencia' } });
@@ -117,6 +117,7 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
         tipo: 'PAGO',
         estado: 'RESERVADO',
         montoOriginal: 100,
+        montoFinanciado: 100,
         saldoDisponible: 100,
         moneda: fxCurrencyCode,
         cuentaOrigenId: cuentaId,
@@ -125,6 +126,24 @@ describe('Basic partial advance rollback — PostgreSQL', { timeout: 90_000 }, (
       },
     });
     anticipoId = anticipo.anticipoId;
+    await prisma.anticipoMovimiento.create({
+      data: {
+        anticipoId,
+        tipoMovimiento: 'RECEPCION',
+        cuentaId,
+        tipoPagoId,
+        monto: 100,
+        moneda: fxCurrencyCode,
+        tasaAplicada: 24,
+        montoConvertido: 2400,
+        montoFuncional: 2400,
+        functionalCurrency: 'CUP',
+        fxEvidenceFingerprint: 'integration-fx-evidence',
+        saldoAntes: 0,
+        saldoDespues: 100,
+        usuarioId: userId,
+      },
+    });
     vi.mocked(getCurrentUser).mockImplementation(async () => basicUser());
   });
 

@@ -132,6 +132,8 @@ export type ContextoAnticipo =
 	| "FACTURA_DIRECTA";
 export type TipoMovimientoAnticipo =
 	| "CREACION_RESERVA"
+	| "RECEPCION"
+	| "ENTREGA"
 	| "EJECUCION"
 	| "REVERSO"
 	| "ANULACION";
@@ -148,6 +150,11 @@ export interface AnticipoMovimiento {
 	moneda: string;
 	tasaAplicada?: number;
 	montoConvertido?: number;
+	montoFuncional?: number;
+	functionalCurrency?: string;
+	fxEvidenceFingerprint?: string;
+	cuentaId?: string;
+	tipoPagoId?: string;
 	saldoAntes: number;
 	saldoDespues: number;
 	usuarioId: string;
@@ -161,6 +168,7 @@ export interface Anticipo {
 	tipo: TipoAnticipo;
 	estado: EstadoAnticipo;
 	montoOriginal: number;
+	montoFinanciado?: number;
 	saldoDisponible: number;
 	moneda: string;
 	contratoId: string;

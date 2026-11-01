@@ -9,14 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 import { getAnticiposAction, getAnticipoByIdAction } from "@/features/contabilidad/actions-anticipos"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getClientesAction } from "@/features/clientes"
 import { getAuthToken } from '@/lib/token'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticiposTable } from "@/features/contabilidad/components/anticipos/anticipos-table"
 import { AnticipoForm } from "@/features/contabilidad/components/anticipos/anticipo-form"
 import { AnticipoDetail } from "@/features/contabilidad/components/anticipos/anticipo-detail"
-import { AnticipoEjecutarDialog } from "@/features/contabilidad/components/anticipos/anticipo-ejecutar-dialog"
-import { AnticipoRevertirDialog } from "@/features/contabilidad/components/anticipos/anticipo-revertir-dialog"
+import { AnticipoFinanciarDialog } from "@/features/contabilidad/components/anticipos/anticipo-financiar-dialog"
 import { ReportesAnticipos } from "@/features/contabilidad/components/anticipos/reportes-anticipos"
 import { Anticipo } from "@/app/models/model"
 import { useAuth } from "@/contexts/auth-context"
@@ -41,8 +41,7 @@ function AnticiposContent() {
   // Estados para modals/dialogs
   const [openForm, setOpenForm] = useState(false)
   const [openDetail, setOpenDetail] = useState(false)
-  const [openEjecutar, setOpenEjecutar] = useState(false)
-  const [openRevertir, setOpenRevertir] = useState(false)
+  const [openFinanciar, setOpenFinanciar] = useState(false)
   const [anticipoSeleccionado, setAnticipoSeleccionado] = useState<Anticipo | null>(null)
   const [anticipoDetailId, setAnticipoDetailId] = useState<string | null>(null)
   const [tabActiva, setTabActiva] = useState("lista")
@@ -60,6 +59,7 @@ function AnticiposContent() {
   const [clientes, setClientes] = useState<any[]>([])
   const [proveedores, setProveedores] = useState<any[]>([])
   const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
 
   const loadAnticipos = async () => {
     setLoadingAnticipos(true)
@@ -78,6 +78,7 @@ function AnticiposContent() {
     loadAnticipos()
     getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
 
   useEffect(() => {
@@ -134,14 +135,9 @@ function AnticiposContent() {
     setOpenDetail(true)
   }
 
-  const handleEjecutar = (anticipo: Anticipo) => {
+  const handleFinanciar = (anticipo: Anticipo) => {
     setAnticipoSeleccionado(anticipo)
-    setOpenEjecutar(true)
-  }
-
-  const handleRevertir = (anticipo: Anticipo) => {
-    setAnticipoSeleccionado(anticipo)
-    setOpenRevertir(true)
+    setOpenFinanciar(true)
   }
 
   const handleSuccess = () => {
@@ -193,8 +189,7 @@ function AnticiposContent() {
             anticipos={anticipos}
             isLoading={loadingAnticipos}
             onVerDetalle={handleVerDetalle}
-            onEjecutar={handleEjecutar}
-            onRevertir={handleRevertir}
+            onFinanciar={handleFinanciar}
           />
         </TabsContent>
 
@@ -225,11 +220,6 @@ function AnticiposContent() {
           vendorId: p.vendorId,
           nombre: p.nombre,
         }))}
-        cuentasBancarias={cuentasBancarias.map((c: any) => ({
-          cuentaId: c.cuentaId,
-          nombreBanco: c.nombreBanco,
-          numeroCuenta: c.numeroCuenta,
-        }))}
         onSuccess={handleSuccess}
       />
 
@@ -249,17 +239,12 @@ function AnticiposContent() {
         isLoading={loadingDetail}
       />
 
-      <AnticipoEjecutarDialog
+      <AnticipoFinanciarDialog
         anticipo={anticipoSeleccionado}
-        open={openEjecutar}
-        onOpenChange={setOpenEjecutar}
-        onSuccess={handleSuccess}
-      />
-
-      <AnticipoRevertirDialog
-        anticipo={anticipoSeleccionado}
-        open={openRevertir}
-        onOpenChange={setOpenRevertir}
+        cuentas={cuentasBancarias}
+        tiposPago={tiposPago}
+        open={openFinanciar}
+        onOpenChange={setOpenFinanciar}
         onSuccess={handleSuccess}
       />
     </>

@@ -1,0 +1,59 @@
+import type { DecimalInput, EventoContableInput } from '../services/posting-engine';
+import type { TipoEventoClave } from './plan-default';
+
+export type AnticipoEventType =
+	| 'ANTICIPO_CLIENTE_RECIBIDO'
+	| 'ANTICIPO_CLIENTE_APLICADO'
+	| 'ANTICIPO_PROVEEDOR_ENTREGADO'
+	| 'ANTICIPO_PROVEEDOR_APLICADO';
+
+export interface AnticipoEventParams {
+	anticipoMovimientoId: string;
+	tipo: AnticipoEventType;
+	fecha: Date;
+	monto: DecimalInput;
+	moneda: string;
+	montoFuncional: DecimalInput;
+	monedaFuncional: string;
+	tasaCambio?: DecimalInput | null;
+	fxEvidenceFingerprint?: string | null;
+	diferenciaFx?: DecimalInput;
+	treasuryAccountType?: string | null;
+	descripcion?: string;
+}
+
+/**
+ * @description Construye un evento formal de origen o aplicación de anticipo.
+ * @param {AnticipoEventParams} params - Movimiento y valoración persistidos.
+ * @returns {EventoContableInput} Evento anclado al movimiento del anticipo.
+ */
+export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableInput {
+	const esCliente = params.tipo.startsWith('ANTICIPO_CLIENTE');
+	const esCobroEfectivo = params.tipo === 'ANTICIPO_CLIENTE_RECIBIDO';
+	const esPagoEfectivo = params.tipo === 'ANTICIPO_PROVEEDOR_ENTREGADO';
+	const esAplicacion = !esCobroEfectivo && !esPagoEfectivo;
+	const medioCobro = params.treasuryAccountType === 'EFECTIVO' ? 'CAJA' : 'BANCOS';
+
+	return {
+		tipo: params.tipo as TipoEventoClave,
+		fecha: params.fecha,
+		descripcion:
+			params.descripcion ??
+			(esCobroEfectivo
+				? 'Recepción de anticipo de cliente'
+				: esPagoEfectivo
+					? 'Entrega de anticipo a proveedor'
+					: esCliente
+						? 'Aplicación de anticipo de cliente'
+						: 'Aplicación de anticipo a proveedor'),
+		origen: { tipo: 'anticipo_movimiento', id: params.anticipoMovimientoId },
+		monto: params.monto,
+		moneda: params.moneda,
+		montoFuncional: params.montoFuncional,
+		monedaFuncional: params.monedaFuncional,
+		tasaCambio: params.tasaCambio ?? null,
+		fxEvidenceFingerprint: params.fxEvidenceFingerprint ?? null,
+		...(esAplicacion || !params.treasuryAccountType ? {} : { medioCobro }),
+		auxiliares: { diferenciaFx: params.diferenciaFx ?? 0 },
+	};
+}
