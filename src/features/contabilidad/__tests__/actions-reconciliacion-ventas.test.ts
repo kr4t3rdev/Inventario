@@ -31,6 +31,7 @@ const prismaMock = vi.hoisted(() => ({
 }));
 const workflowMock = vi.hoisted(() => ({ applyPagoGastoWorkflow: vi.fn() }));
 const exchangeRateMock = vi.hoisted(() => ({ getRateAsOf: vi.fn() }));
+const emitterMock = vi.hoisted(() => ({ emitirEventoLiquidacion: vi.fn() }));
 
 vi.mock('@/lib/server-actions/get-current-user', () => ({
 	getCurrentUser: getCurrentUserMock,
@@ -48,6 +49,9 @@ vi.mock('@/lib/services/pago-gastos-workflow', () => ({
 }));
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
 	exchangeRateProvider: exchangeRateMock,
+}));
+vi.mock('@/features/contabilidad-formal/services/settlement-posting-service', () => ({
+	emitirEventoLiquidacion: emitterMock.emitirEventoLiquidacion,
 }));
 vi.mock('@/lib/services/tenant-scope', () => ({
 	requireFeature: vi.fn(),
@@ -555,6 +559,58 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 				monto: -100,
 			}),
 		).toThrowError('Datos de reconciliación inválidos');
+	});
+
+	it('emite el evento formal COBRO_CXC al reconciliar un cobro de venta', async () => {
+		const { AuditLogService } = await import('@/lib/services/audit-log-service');
+		vi.mocked(AuditLogService.log).mockResolvedValue(undefined);
+		txMock.venta.findUnique.mockResolvedValue({
+			tenantId: 'tenant-1',
+			deletedAt: null,
+			factura: null,
+		});
+		txMock.cuentaPorCobrar.findFirst.mockResolvedValue(null);
+		txMock.cuentaBancaria.findFirst.mockResolvedValue({
+			cuentaId: 'cuenta-1',
+			isActive: true,
+			tipoCuenta: 'EFECTIVO',
+		});
+		txMock.tipoPago.findFirst.mockResolvedValue({ tipoId: 'tipo-1', isActive: true });
+		txMock.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 });
+		txMock.reconciliacionVenta.create.mockResolvedValue({
+			reconciliacionId: 'rec-1',
+			monto: 100,
+			moneda: 'CUP',
+			montoConvertido: 100,
+			functionalCurrency: 'CUP',
+			tasaCambio: 1,
+			fxEvidenceFingerprint: 'fx-1',
+			fechaReconciliacion: new Date('2026-11-01T12:00:00.000Z'),
+		});
+
+		const result = await reconciliarVentaAction({
+			ventaId: 'venta-1',
+			cuentaId: 'cuenta-1',
+			tipoPagoId: 'tipo-1',
+			monto: 100,
+		});
+
+		expect(result.success).toBe(true);
+		expect(emitterMock.emitirEventoLiquidacion).toHaveBeenCalledTimes(1);
+		const [txArg, ctxArg, payload] = emitterMock.emitirEventoLiquidacion.mock.calls[0];
+		expect(txArg).toBe(txMock);
+		expect(ctxArg).toEqual({ tenantId: 'tenant-1', userId: user.userId });
+		expect(payload).toMatchObject({
+			tipo: 'COBRO_CXC',
+			treasuryAccountType: 'EFECTIVO',
+			reconciliacion: {
+				reconciliacionId: 'rec-1',
+				monto: 100,
+				moneda: 'CUP',
+				montoConvertido: 100,
+				functionalCurrency: 'CUP',
+			},
+		});
 	});
 
 	it('bloquea el pago de un CompraServicio marcado como ELIMINANDO bajo lock', async () => {

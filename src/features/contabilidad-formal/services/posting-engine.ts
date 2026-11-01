@@ -558,20 +558,33 @@ function resolverMontos(
 	return resultado;
 }
 
+/** Opciones de ejecucion de `postEvento` (rollout por familia de eventos). */
+export interface OpcionesPostEvento {
+	/**
+	 * Modo forzado para esta invocacion. Si no se indica, aplica el modo global
+	 * (`CONTABILIDAD_FORMAL_MODE`). Lo usan los emisores con rollout propio
+	 * (ejemplo: `CONTABILIDAD_FORMAL_NO_CASH_MODE`), que deben poder observar
+	 * en shadow antes de exigir el asiento.
+	 */
+	modo?: ModoMotorContable;
+}
+
 /**
  * @description Construye y persiste el asiento de un evento de negocio.
  * Debe invocarse DENTRO de la transacción del writer (misma atomicidad).
  * @param {PostingTx} tx - Transacción Prisma activa.
  * @param {ContextoPosting} ctx - Tenant y actor.
  * @param {EventoContableInput} evento - Evento valorizado por la capa caja.
+ * @param {OpcionesPostEvento} opciones - Modo forzado opcional (rollout por familia).
  * @returns {Promise<PostEventoResult>} Estado resultante del posteo.
  */
 export async function postEvento(
 	tx: PostingTx,
 	ctx: ContextoPosting,
 	evento: EventoContableInput,
+	opciones?: OpcionesPostEvento,
 ): Promise<PostEventoResult> {
-	const modo = modoActual();
+	const modo = opciones?.modo ?? modoActual();
 	if (modo === 'off') return { estado: 'OMITIDO', motivo: 'MODO_OFF' };
 	const inicio = performance.now();
 
