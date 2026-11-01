@@ -26,6 +26,7 @@ import {
 	ACTIVE_RECEIVABLE_STATES,
 } from '@/features/contabilidad/domain/balance-calculator';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { ModoContable } from '@/lib/services/periodo-contable-types';
 import { seedPlanContable } from '@/features/contabilidad-formal/services/seed-plan-contable';
 
 /** Codigos del plan contable estandar (src/features/contabilidad-formal/lib/plan-default.ts). */
@@ -680,7 +681,7 @@ async function main(): Promise<void> {
 		const solicitud = await acciones.solicitarAperturaManualAction({
 			tipo: 'MENSUAL',
 			categoria: 'ORDINARIO',
-			modoContable: 'CAJA',
+			modoContable: ModoContable.CAJA,
 			fechaInicio: fechaInicio.toISOString(),
 			fechaFin: fechaFin.toISOString(),
 			observaciones:
