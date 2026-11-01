@@ -8,6 +8,7 @@ import { getAlmacenesAction } from '@/features/almacenes';
 import { getPuntosDeVentaAction } from '@/features/puntos-venta';
 import { getConteosAction } from '@/features/inventario/actions-conteos';
 import { ConteosPageClient } from '@/features/inventario/components/conteos-page-client';
+import { toIsoString, toIsoStringOrNull } from '@/lib/date-utils';
 
 export const metadata = {
 	title: 'Conteos físicos - FinanceMDM',
@@ -29,8 +30,8 @@ export default async function ConteosPage() {
 			conteosIniciales={conteos.success
 				? (conteos.data ?? []).map((conteo) => ({
 					...conteo,
-					createdAt: conteo.createdAt.toISOString(),
-					conciliadoAt: conteo.conciliadoAt?.toISOString() ?? null,
+					createdAt: toIsoString(conteo.createdAt),
+					conciliadoAt: toIsoStringOrNull(conteo.conciliadoAt),
 				}))
 				: []}
 		/>
