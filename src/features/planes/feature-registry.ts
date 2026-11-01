@@ -294,6 +294,13 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "contabilidad-formal",
+		label: "Contabilidad formal",
+		description:
+			"Asientos formales con partida doble, hash y cadena de evidencia para las operaciones con emisor implementado. Capa de auditoría, no de UI.",
+		category: "financiero",
+	},
+	{
 		key: "transferencias-bancarias",
 		label: "Transferencias bancarias",
 		description: "Movimientos entre cuentas bancarias con comprobantes y trazabilidad",
