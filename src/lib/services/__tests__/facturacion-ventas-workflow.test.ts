@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
+import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
+
+vi.mock('@/features/contabilidad-formal/services/settlement-posting-service', () => ({
+  emitirEventoLiquidacion: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+}))
+vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
+  exchangeRateProvider: { getRateAsOf: vi.fn() }
+}))
 
 import {
   applyFacturacionCobroWorkflow,
@@ -22,6 +31,9 @@ function createTxMock() {
     tipoPago: {
       findMany: vi.fn()
     },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn()
+    },
     cuentaBancaria: {
       findFirst: vi.fn(),
       update: vi.fn()
@@ -35,6 +47,8 @@ function createTxMock() {
 describe('facturacion-ventas-workflow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(emitirEventoLiquidacion).mockResolvedValue({ estado: 'OMITIDO' })
+    vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null)
   })
 
   it('normaliza aliases de tipo de vencimiento', () => {
@@ -146,10 +160,19 @@ describe('facturacion-ventas-workflow', () => {
     ])
     tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cuenta-1',
-      moneda: 'CUP'
+      moneda: 'CUP',
+      tipoCuenta: 'CORRIENTE',
     })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
     tx.reconciliacionVenta.create.mockResolvedValue({
-      reconciliacionId: 'rec-1'
+      reconciliacionId: 'rec-1',
+      monto: 1000,
+      moneda: 'CUP',
+      montoConvertido: 1000,
+      functionalCurrency: 'CUP',
+      tasaCambio: 1,
+      fxEvidenceFingerprint: 'fx-cup',
+      fechaReconciliacion: new Date('2026-11-01T12:00:00.000Z')
     })
     tx.cuentaBancaria.update.mockResolvedValue({})
     tx.cuentaPorCobrar.upsert.mockResolvedValue({})
@@ -170,6 +193,28 @@ describe('facturacion-ventas-workflow', () => {
       reconciliacionId: 'rec-1'
     })
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledTimes(1)
+    expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        functionalCurrency: 'CUP',
+        montoConvertido: 1000,
+        tasaCambio: 1,
+      }),
+    }))
+    expect(emitirEventoLiquidacion).toHaveBeenCalledWith(
+      tx,
+      { tenantId: 'tenant-test', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'COBRO_CXC',
+        treasuryAccountType: 'CORRIENTE',
+        reconciliacion: expect.objectContaining({
+          reconciliacionId: 'rec-1',
+          monto: 1000,
+          moneda: 'CUP',
+          montoConvertido: 1000,
+          functionalCurrency: 'CUP',
+        }),
+      }),
+    )
     expect(tx.cuentaBancaria.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { cuentaId: 'cuenta-1' }
@@ -250,8 +295,10 @@ describe('facturacion-ventas-workflow', () => {
     ])
     tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cuenta-explicita',
-      moneda: 'CUP'
+      moneda: 'CUP',
+      tipoCuenta: 'CORRIENTE',
     })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
     tx.reconciliacionVenta.create.mockResolvedValue({
       reconciliacionId: 'rec-exp-1'
     })
@@ -276,5 +323,96 @@ describe('facturacion-ventas-workflow', () => {
         data: expect.objectContaining({ estado: 'PAGADA' })
       })
     )
+  })
+
+  it('persiste y emite el cobro en moneda funcional con la tasa vigente', async () => {
+    const tx = createTxMock()
+    const fechaVigencia = new Date('2026-10-31T00:00:00.000Z')
+    tx.tipoPago.findMany.mockResolvedValue([
+      { tipoId: 'tipo-1', nombre: 'Transferencia', cuentaDefecto: 'cuenta-usd' }
+    ])
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'cuenta-usd',
+      moneda: 'USD',
+      tipoCuenta: 'CORRIENTE'
+    })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
+    vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+      tasaId: 'rate-usd-cup',
+      tasa: 320,
+      fechaVigencia
+    })
+    tx.reconciliacionVenta.create.mockImplementation(async ({ data }: any) => ({
+      ...data,
+      reconciliacionId: 'rec-usd-1',
+      fechaReconciliacion: data.fechaReconciliacion
+    }))
+    tx.cuentaBancaria.update.mockResolvedValue({})
+    tx.factura.update.mockResolvedValue({})
+
+    await applyFacturacionCobroWorkflow(tx as any, {
+      ventaId: 'venta-usd',
+      facturaId: 'factura-usd',
+      clienteId: 'cliente-usd',
+      montoTotal: 10,
+      usuarioId: 'user-1',
+      tenantId: 'tenant-test',
+      tipoVencimiento: 'contra_pago'
+    })
+
+    expect(exchangeRateProvider.getRateAsOf).toHaveBeenCalledWith(expect.objectContaining({
+      sourceCurrency: 'USD',
+      targetCurrency: 'CUP',
+      client: tx
+    }))
+    expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        moneda: 'USD',
+        montoConvertido: 3200,
+        tasaCambio: 320,
+        functionalCurrency: 'CUP',
+        fxCatalogRateId: 'rate-usd-cup'
+      })
+    }))
+    expect(emitirEventoLiquidacion).toHaveBeenCalledWith(
+      tx,
+      expect.anything(),
+      expect.objectContaining({
+        tipo: 'COBRO_CXC',
+        reconciliacion: expect.objectContaining({
+          reconciliacionId: 'rec-usd-1',
+          montoConvertido: 3200,
+          tasaCambio: 320,
+          functionalCurrency: 'CUP'
+        })
+      })
+    )
+  })
+
+  it('rechaza un cobro en moneda extranjera si no hay tasa vigente', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findMany.mockResolvedValue([
+      { tipoId: 'tipo-1', nombre: 'Transferencia', cuentaDefecto: 'cuenta-usd' }
+    ])
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'cuenta-usd',
+      moneda: 'USD',
+      tipoCuenta: 'CORRIENTE'
+    })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
+
+    await expect(applyFacturacionCobroWorkflow(tx as any, {
+      ventaId: 'venta-usd',
+      facturaId: 'factura-usd',
+      clienteId: 'cliente-usd',
+      montoTotal: 10,
+      usuarioId: 'user-1',
+      tenantId: 'tenant-test',
+      tipoVencimiento: 'contra_pago'
+    })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
+
+    expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled()
+    expect(tx.cuentaBancaria.update).not.toHaveBeenCalled()
+    expect(emitirEventoLiquidacion).not.toHaveBeenCalled()
   })
 })

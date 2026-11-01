@@ -1,5 +1,8 @@
 import { Prisma } from '@/generated/prisma'
+import { ActionError } from '@/lib/server-actions'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
+import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
 
 export type TipoVencimientoFactura = 'fecha' | 'plazo' | 'contra_pago'
 
@@ -76,6 +79,7 @@ interface CuentaTipoPagoResolucion {
   cuenta: {
     cuentaId: string
     moneda: string
+    tipoCuenta: string
   }
   tipoPago: {
     tipoId: string
@@ -88,7 +92,7 @@ async function resolveCuentaYTipoPago(
   cuentaBancariaId?: string | null,
   tenantId?: string
 ): Promise<CuentaTipoPagoResolucion> {
-  let cuentaPreferida: { cuentaId: string; moneda: string } | null = null
+  let cuentaPreferida: { cuentaId: string; moneda: string; tipoCuenta: string } | null = null
   if (cuentaBancariaId) {
     cuentaPreferida = await tx.cuentaBancaria.findFirst({
       where: {
@@ -98,7 +102,8 @@ async function resolveCuentaYTipoPago(
       },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     })
   }
@@ -117,7 +122,7 @@ async function resolveCuentaYTipoPago(
     throw new Error('No hay tipos de pago activos para registrar el cobro')
   }
 
-  let cuentaDefecto: { cuentaId: string; moneda: string } | null = null
+  let cuentaDefecto: { cuentaId: string; moneda: string; tipoCuenta: string } | null = null
   let tipoPagoSeleccionado = tipoPagoActivos[0]
 
   for (const tipoPago of tipoPagoActivos) {
@@ -128,11 +133,13 @@ async function resolveCuentaYTipoPago(
     const cuenta = await tx.cuentaBancaria.findFirst({
       where: {
         cuentaId: tipoPago.cuentaDefecto,
-        isActive: true
+        isActive: true,
+        tenantId,
       },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     })
 
@@ -153,7 +160,8 @@ async function resolveCuentaYTipoPago(
       orderBy: { createdAt: 'asc' },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     }))
 
@@ -257,11 +265,41 @@ export async function applyFacturacionCobroWorkflow(
     const referenciaCobro = `AUTO-${params.facturaId.slice(-8)}`
 
     const fechaReconciliacion = new Date()
+    const politica = await tx.tenantAccountingPolicy.findUnique({
+      where: { tenantId: params.tenantId },
+      select: { functionalCurrencyCode: true }
+    })
+    const monedaFuncional = politica?.functionalCurrencyCode?.trim().toUpperCase() || 'CUP'
+    const monedaCobro = cuenta.moneda.trim().toUpperCase()
+    let tasaCambio: number | undefined
+    let fechaVigenciaTasa: Date | undefined
+    let tasaId: string | undefined
+
+    if (monedaCobro !== monedaFuncional) {
+      const tasa = await exchangeRateProvider.getRateAsOf({
+        sourceCurrency: monedaCobro,
+        targetCurrency: monedaFuncional,
+        boundaryAt: fechaReconciliacion,
+        client: tx
+      })
+      if (!tasa) {
+        throw new ActionError(
+          `No hay tasa de cambio publicada para ${monedaCobro} → ${monedaFuncional}; no se puede registrar el cobro`,
+          'VALIDATION_ERROR'
+        )
+      }
+      tasaCambio = tasa.tasa
+      fechaVigenciaTasa = tasa.fechaVigencia
+      tasaId = tasa.tasaId
+    }
+
     const conversion = buildPersistedAccountingAmount(
       montoTotal,
-      cuenta.moneda,
-      undefined,
-      fechaReconciliacion
+      monedaCobro,
+      tasaCambio,
+      fechaVigenciaTasa,
+      tasaId,
+      monedaFuncional
     )
 
     const reconciliacion = await tx.reconciliacionVenta.create({
@@ -271,13 +309,14 @@ export async function applyFacturacionCobroWorkflow(
         cuentaId: cuenta.cuentaId,
         tipoPagoId: tipoPago.tipoId,
         monto: montoTotal,
-        moneda: cuenta.moneda,
+        moneda: monedaCobro,
         ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
         ...(conversion.montoConvertido != null
           ? { montoConvertido: conversion.montoConvertido }
           : {}),
         fechaReconciliacion,
         ...(conversion.fxEvidence ?? {}),
+        functionalCurrency: monedaFuncional,
         verificacionTransferenciaId: referenciaCobro,
         idTransferencia: referenciaCobro,
         observaciones: params.observaciones || `Cobro total por contra pago`,
@@ -301,6 +340,27 @@ export async function applyFacturacionCobroWorkflow(
         fechaVencimiento: null
       }
     })
+
+    await emitirEventoLiquidacion(
+      tx,
+      { tenantId: params.tenantId, userId: params.usuarioId },
+      {
+        tipo: 'COBRO_CXC',
+        reconciliacion: {
+          reconciliacionId: reconciliacion.reconciliacionId,
+          monto: reconciliacion.monto,
+          moneda: reconciliacion.moneda,
+          montoConvertido: reconciliacion.montoConvertido,
+          functionalCurrency: reconciliacion.functionalCurrency,
+          tasaCambio: reconciliacion.tasaCambio,
+          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+          fechaReconciliacion: reconciliacion.fechaReconciliacion
+        },
+        treasuryAccountType: cuenta.tipoCuenta,
+        referencia: referenciaCobro,
+        descripcion: params.observaciones || 'Cobro total por contra pago'
+      }
+    )
 
     return {
       tipoVencimiento,

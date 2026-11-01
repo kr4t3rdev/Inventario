@@ -52,6 +52,7 @@ builder de pagos Cash.
 | `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarVentaAction` | `COBRO_CXC` | Ya persistía la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileSale` | `COBRO_CXC` | Ahora persiste la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileService` | `COBRO_SERVICIO` | Un asiento por distribución, basado en su valoración persistida; comparte la transacción operativa |
+| `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `COBRO_CXC` | `contra_pago` persiste valoración funcional y emite en la misma transacción; requiere tasa vigente para moneda extranjera |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
 
@@ -98,8 +99,6 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
-- `facturacion-workflow.ts` (`applyFacturacionCobroWorkflow`): la vía de
-  facturación de ventas todavía no emite `COBRO_CXC`.
 - Handlers legacy sin importadores
   (`handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts`,
   `handlers-reconciliacion-servicios.ts`).
