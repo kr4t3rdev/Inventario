@@ -766,7 +766,7 @@ export async function POST(request: NextRequest) {
 						functionalAmount: montoAplicadoVentaCUP,
 						exchangeRate: tasaCambio ?? null,
 						fxEvidenceFingerprint: evidenciaFx?.fxEvidenceFingerprint ?? null,
-						treasuryAccountType: reconciliacion.cuentaBancaria.tipoCuenta,
+						treasuryAccountType: reconciliacion.cuentaBancaria?.tipoCuenta ?? null,
 						descripcion: validatedData.observaciones ?? "Cobro de venta",
 					},
 				);
