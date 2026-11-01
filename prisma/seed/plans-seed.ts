@@ -54,8 +54,9 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	recepciones: false,
 	reabastecimiento: false,
 	// Financiero
-	gastos: true,
+	"gastos": true,
 	contabilidad: true,
+	"contabilidad-formal": true,
 	"transferencias-bancarias": false,
 	"ajustes-bancarios": false,
 	"multi-moneda": false,
