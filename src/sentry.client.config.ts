@@ -11,14 +11,16 @@
  * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/
  */
 import * as Sentry from "@sentry/nextjs";
+import {
+  sanitizeSentryEvent,
+  sanitizeSentryTransaction,
+} from "@/lib/observability/sentry-event-sanitizer";
 
 Sentry.init({
-  dsn:
-    process.env.NEXT_PUBLIC_SENTRY_DSN ??
-    "https://60104f06aac562e15aec147354ee6aa5@o4512346323091456.ingest.us.sentry.io/4512346464518144",
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Muestreo de trazas del cliente. 1.0 = 100% (innecesario en produccion).
-  tracesSampleRate: Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
+  // Tracing remains off until its privacy and OTel delivery are verified.
+  tracesSampleRate: Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? 0),
 
   debug: false,
 
@@ -31,6 +33,8 @@ Sentry.init({
     httpBodies: [],
     urlQueryParams: false,
   },
+  beforeSend: (event) => sanitizeSentryEvent(event),
+  beforeSendTransaction: (event) => sanitizeSentryTransaction(event),
 
   // Replays desactivados: capturan el DOM y pueden exponer datos del usuario.
   replaysSessionSampleRate: 0,

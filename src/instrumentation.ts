@@ -22,6 +22,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { registerOTel } from "@vercel/otel";
+import { recordSafeOtelException } from "@/lib/observability/sentry-event-sanitizer";
 
 /**
  * @description Hook de Next.js: registra instrumentaciones antes de que
@@ -94,8 +95,7 @@ export async function onRequestError(
     const span = trace.getActiveSpan();
 
     if (span) {
-      span.recordException(err);
-      span.setStatus({ code: 2, message: err.message });
+      recordSafeOtelException(span, err);
     }
   } catch {
     // Si OpenTelemetry no está disponible, continuar con Sentry

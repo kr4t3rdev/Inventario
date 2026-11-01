@@ -6,12 +6,15 @@
  * React, interacciones y navegaciones del lado cliente.
  */
 import * as Sentry from "@sentry/nextjs";
+import {
+  sanitizeSentryEvent,
+  sanitizeSentryTransaction,
+} from "@/lib/observability/sentry-event-sanitizer";
 
 Sentry.init({
-  dsn:
-    "https://60104f06aac562e15aec147354ee6aa5@o4512346323091456.ingest.us.sentry.io/4512346464518144",
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  tracesSampleRate: 1.0,
+  tracesSampleRate: Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? 0),
   debug: false,
   // No enviar datos potencialmente sensibles (headers, cookies, usuario, query params).
   // Sentry v11 reemplazo `sendDefaultPii` por `dataCollection`.
@@ -22,6 +25,8 @@ Sentry.init({
     httpBodies: [],
     urlQueryParams: false,
   },
+  beforeSend: (event) => sanitizeSentryEvent(event),
+  beforeSendTransaction: (event) => sanitizeSentryTransaction(event),
 
   // Agrupar sesiones para métricas de usuarios afectados por issue
   replaysSessionSampleRate: 0,
