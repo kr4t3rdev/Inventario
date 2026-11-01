@@ -10,6 +10,7 @@
  * @returns ServerAction<TInput, TOutput>
  */
 import { ZodError } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { getCurrentUser } from "./get-current-user";
 import { runWithTenantContext } from "@/lib/db/tenant-context";
 import { ActionError, type ActionResponse, type ServerAction } from "./types";
@@ -106,6 +107,10 @@ export function withAction<TInput, TOutput>(
 				// Extraer la parte relevante del mensaje (primeros 500 chars)
 				const detail =
 					message.length > 500 ? message.substring(0, 500) + "..." : message;
+				// Bug de código (query malformada): reportar a Sentry como inesperado
+				Sentry.captureException(error, {
+					tags: { source: "server-action" },
+				});
 				console.error("Prisma Validation Error:", {
 					message: detail,
 				});
@@ -126,6 +131,12 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
+			// Error inesperado (bug): reportar a Sentry. Los flujos esperados
+			// —ZodError, ActionError, Prisma P-codes, PeriodoError— NO se
+			// reportan para no contaminar el dashboard ni quemar la cuota.
+			Sentry.captureException(error, {
+				tags: { source: "server-action" },
+			});
 			console.error("Server Action Error:", error);
 			return {
 				success: false,

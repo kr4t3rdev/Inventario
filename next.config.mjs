@@ -2,6 +2,7 @@
 
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -131,4 +132,29 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Envuelve la config con el plugin de build de Sentry.
+ *
+ * - En dev no hace nada especial (los errores ya se capturan en runtime).
+ * - En build de producción sube source maps a Sentry para stack traces
+ *   legibles (requiere SENTRY_AUTH_TOKEN en el entorno de CI/Vercel).
+ * - Org y project son los slugs de la URL de Sentry:
+ *   sentry.io/organizations/<org>/projects/<project>/
+ */
+export default withSentryConfig(nextConfig, {
+  // Completar con los slugs de tu organización y proyecto en Sentry:
+  // org: "mi-org",
+  // project: "mi-proyecto-nextjs",
+
+  // Token de autenticación para subir source maps en CI (no es necesario en local)
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Silencia el log del plugin en builds locales (ruidoso)
+  silent: !process.env.CI,
+
+  // Amplía el upload de artifacts del cliente para mejores stack traces
+  widenClientFileUpload: true,
+
+  // Elimina el logger de Sentry del bundle del cliente
+  disableLogger: true,
+});
