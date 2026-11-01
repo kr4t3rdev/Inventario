@@ -9,6 +9,7 @@ import { getPuntosDeVentaAction } from '@/features/puntos-venta';
 import { getProductosAction } from '@/features/productos/actions';
 import { getAjustesAction } from '@/features/inventario/actions-ajustes';
 import { AjustesPageClient } from '@/features/inventario/components/ajustes-page-client';
+import { toIsoString } from '@/lib/date-utils';
 
 export const metadata = {
 	title: 'Ajustes de inventario - FinanceMDM',
@@ -32,7 +33,7 @@ export default async function AjustesPage() {
 			ajustesIniciales={ajustes.success
 				? (ajustes.data?.items ?? []).map((ajuste) => ({
 					...ajuste,
-					createdAt: ajuste.createdAt.toISOString(),
+					createdAt: toIsoString(ajuste.createdAt),
 				}))
 				: []}
 		/>
