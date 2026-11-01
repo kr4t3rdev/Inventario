@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma'
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
 
 /**
  * @description Representa un error funcional del workflow de pago de gastos.
@@ -492,7 +493,8 @@ export async function applyPagoGastoWorkflow(
       cuentaId: true,
       moneda: true,
       saldo: true,
-      isActive: true
+      isActive: true,
+      tipoCuenta: true
     }
   })
   const cuentaMap = new Map(cuentas.map((cuenta) => [cuenta.cuentaId, cuenta]))
@@ -593,6 +595,33 @@ export async function applyPagoGastoWorkflow(
         descripcion: true
       }
     })
+
+    // Emisor formal no Cash (PAGO_CXP). Solo cuando el pago mueve la tesoreria:
+    // una conciliacion PENDIENTE no descuenta el banco y por tanto no genera
+    // asiento. El gate de rollout mantiene el comportamiento inerte por defecto.
+    if (estadoReconciliacion !== 'PENDIENTE') {
+      await emitirEventoLiquidacion(
+        tx,
+        { tenantId: params.tenantId, userId: params.reconciliadoPor },
+        {
+          tipo: 'PAGO_CXP',
+          reconciliacion: {
+            reconciliacionId: reconciliacion.reconciliacionId,
+            monto: montoPago,
+            moneda: params.moneda,
+            montoConvertido,
+            functionalCurrency: fxEvidence.functionalCurrency,
+            tasaCambio: params.tasaCambio ?? null,
+            fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
+            fechaReconciliacion: fechaOperacion
+          },
+          treasuryAccountType: cuentaMap.get(pago.cuentaId)?.tipoCuenta ?? null,
+          descripcion: typeof pago.porcentaje === 'number'
+            ? `${params.descripcion} (${pago.porcentaje}%)`
+            : params.descripcion
+        }
+      )
+    }
 
     reconciliaciones.push({
       reconciliacionId: reconciliacion.reconciliacionId,

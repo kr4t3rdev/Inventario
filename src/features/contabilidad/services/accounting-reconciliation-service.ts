@@ -6,6 +6,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service';
 import { guardAccountingWriteInTransaction } from './period-close-write-guard';
 
 interface ServiceCollectionInput {
@@ -498,7 +499,7 @@ export const AccountingReconciliationService = {
 
       const cuentaBancaria = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: input.cuentaId, tenantId },
-        select: { cuentaId: true, isActive: true },
+        select: { cuentaId: true, isActive: true, tipoCuenta: true },
       });
       if (!cuentaBancaria || !cuentaBancaria.isActive) {
         throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'NOT_FOUND');
@@ -542,6 +543,9 @@ export const AccountingReconciliationService = {
            moneda: input.moneda || 'CUP',
            montoConvertido: conversion.montoConvertido,
            tasaCambio: conversion.tasaCambio,
+          // Evidencia FX persistida: la exige el motor formal cuando la moneda
+          // de la operacion difiere de la moneda funcional del tenant.
+          ...(conversion.fxEvidence ?? {}),
           fechaReconciliacion: input.fechaReconciliacion
             ? new Date(input.fechaReconciliacion)
             : new Date(),
@@ -550,6 +554,29 @@ export const AccountingReconciliationService = {
           reconciliadoPor: user.userId,
         },
       });
+
+      // Emisor formal no Cash (COBRO_CXC): el cobro mueve la tesoreria, por lo
+      // que genera asiento formal. El gate de rollout mantiene el
+      // comportamiento inerte por defecto.
+      await emitirEventoLiquidacion(
+        tx,
+        { tenantId, userId: user.userId },
+        {
+          tipo: 'COBRO_CXC',
+          reconciliacion: {
+            reconciliacionId: reconciliacion.reconciliacionId,
+            monto: reconciliacion.monto,
+            moneda: reconciliacion.moneda,
+            montoConvertido: reconciliacion.montoConvertido,
+            functionalCurrency: reconciliacion.functionalCurrency,
+            tasaCambio: reconciliacion.tasaCambio,
+            fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+            fechaReconciliacion: reconciliacion.fechaReconciliacion,
+          },
+          treasuryAccountType: cuentaBancaria.tipoCuenta,
+          descripcion: input.observaciones ?? 'Cobro de venta',
+        },
+      );
 
       if (cuentaPorCobrar) {
         const reconciliaciones = await tx.reconciliacionVenta.findMany({

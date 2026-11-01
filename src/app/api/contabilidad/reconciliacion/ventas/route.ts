@@ -10,6 +10,8 @@ import {
 	validarEscrituraPeriodo,
 	extraerFechaDeBody,
 } from "@/lib/services/validate-period-write";
+import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
+import { emitirEventoLiquidacion } from "@/features/contabilidad-formal/services/settlement-posting-service";
 
 // Schema para validar la reconciliación de ventas
 const reconciliacionVentaSchema = z.object({
@@ -508,6 +510,34 @@ export async function POST(request: NextRequest) {
 			tasaCambio,
 		);
 
+		// Evidencia FX del cobro: la exige el motor formal cuando la moneda de
+		// la operacion difiere de la moneda funcional del tenant.
+		let evidenciaFx: ReturnType<typeof buildAppliedFxEvidence> | null = null;
+		if (validatedData.moneda.trim().toUpperCase() !== "CUP") {
+			try {
+				evidenciaFx = buildAppliedFxEvidence({
+					originalAmount: montoBase,
+					originalCurrency: validatedData.moneda,
+					functionalCurrency: "CUP",
+					exchangeRate: tasaCambio ?? null,
+					convertedAmount: montoAplicadoVentaCUP,
+					rateEffectiveAt: fechaOperacion,
+					source: "api-reconciliacion-ventas",
+				});
+			} catch (error) {
+				return NextResponse.json(
+					{
+						error:
+							error instanceof Error
+								? error.message
+								: "No se pudo construir la evidencia de tipo de cambio",
+						code: "EVIDENCIA_FX_INVALIDA",
+					},
+					{ status: 400 },
+				);
+			}
+		}
+
 		// Si el tipo de pago requiere cuenta, verificar cuenta defecto
 		let cuentaOrigen = null;
 		if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
@@ -682,6 +712,16 @@ export async function POST(request: NextRequest) {
 							tasaCambio: validatedData.tasaCambio,
 						}),
 						montoConvertido: montoDestino,
+						...(evidenciaFx
+							? {
+									functionalCurrency: evidenciaFx.functionalCurrency,
+									fxProvenanceKind: evidenciaFx.fxProvenanceKind,
+									fxProvenanceSource: evidenciaFx.fxProvenanceSource,
+									fxCatalogRateId: evidenciaFx.fxCatalogRateId,
+									fxEvidenceFingerprint: evidenciaFx.fxEvidenceFingerprint,
+									fxEvidenceVersion: evidenciaFx.fxEvidenceVersion,
+								}
+							: {}),
 						verificacionTransferenciaId: referenciaTransferencia,
 						...(validatedData.observaciones != null && {
 							observaciones: validatedData.observaciones,
@@ -703,6 +743,33 @@ export async function POST(request: NextRequest) {
 						tipoPago: true,
 					},
 				});
+
+				// Emisor formal no Cash (COBRO_CXC). El valor funcional explicito
+				// usa el importe en CUP de la operacion: en esta ruta legacy
+				// `montoConvertido` guarda el importe en la moneda de la cuenta
+				// bancaria, que no es necesariamente la moneda funcional.
+				await emitirEventoLiquidacion(
+					tx,
+					{ tenantId, userId: user.userId },
+					{
+						tipo: "COBRO_CXC",
+						reconciliacion: {
+							reconciliacionId: reconciliacion.reconciliacionId,
+							monto: reconciliacion.monto,
+							moneda: reconciliacion.moneda,
+							montoConvertido: reconciliacion.montoConvertido,
+							functionalCurrency: reconciliacion.functionalCurrency,
+							tasaCambio: reconciliacion.tasaCambio,
+							fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+							fechaReconciliacion: reconciliacion.fechaReconciliacion,
+						},
+						functionalAmount: montoAplicadoVentaCUP,
+						exchangeRate: tasaCambio ?? null,
+						fxEvidenceFingerprint: evidenciaFx?.fxEvidenceFingerprint ?? null,
+						treasuryAccountType: reconciliacion.cuentaBancaria.tipoCuenta,
+						descripcion: validatedData.observaciones ?? "Cobro de venta",
+					},
+				);
 
 				// Actualizar el saldo de las cuentas bancarias
 				const saldoIncrementoDestino = parseFloat(montoDestino.toString());

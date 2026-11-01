@@ -31,6 +31,7 @@ import {
 import { guardAccountingWriteInTransaction } from "@/features/contabilidad/services/period-close-write-guard";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { resolveAppliedReconciliationAmount } from "@/features/contabilidad/domain/applied-reconciliation-amount";
+import { emitirEventoLiquidacion } from "@/features/contabilidad-formal/services/settlement-posting-service";
 
 const RECONCILIATION_EVIDENCE_PAGE_SIZE = 500;
 
@@ -457,7 +458,7 @@ export const reconciliarVentaAction = withAction(
 				}
 				const cuentaBancaria = await tx.cuentaBancaria.findFirst({
 					where: { cuentaId: input.cuentaId, tenantId },
-					select: { cuentaId: true, isActive: true },
+					select: { cuentaId: true, isActive: true, tipoCuenta: true },
 				});
 				if (!cuentaBancaria || !cuentaBancaria.isActive) {
 					throw new ActionError(
@@ -498,6 +499,28 @@ export const reconciliarVentaAction = withAction(
 						reconciliadoPor: user.userId,
 					},
 				});
+
+				// Emisor formal no Cash (COBRO_CXC). El gate de rollout mantiene
+				// el comportamiento inerte por defecto.
+				await emitirEventoLiquidacion(
+					tx,
+					{ tenantId, userId: user.userId },
+					{
+						tipo: 'COBRO_CXC',
+						reconciliacion: {
+							reconciliacionId: reconciliacion.reconciliacionId,
+							monto: reconciliacion.monto,
+							moneda: reconciliacion.moneda,
+							montoConvertido: reconciliacion.montoConvertido,
+							functionalCurrency: reconciliacion.functionalCurrency,
+							tasaCambio: reconciliacion.tasaCambio,
+							fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+							fechaReconciliacion: reconciliacion.fechaReconciliacion,
+						},
+						treasuryAccountType: cuentaBancaria.tipoCuenta,
+						descripcion: input.observaciones ?? 'Cobro de venta',
+					},
+				);
 
 				if (cuentaPorCobrar) {
 					// Sumar todas las reconciliaciones de esta venta para calcular el total pagado
