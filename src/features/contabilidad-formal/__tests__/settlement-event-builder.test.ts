@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	buildCobroCxcEvent,
+	buildCobroServicioEvent,
 	buildPagoCxpEvent,
 	derivarMedioCobro,
 } from '../lib/settlement-event-builder';
@@ -44,6 +45,24 @@ describe('settlement-event-builder', () => {
 			fecha,
 			descripcion: 'Pago de cuenta por pagar',
 			origen: { tipo: 'reconciliacion_gasto', id: 'recon-1' },
+			monto: '125.5000',
+			moneda: 'USD',
+			montoFuncional: '37725.0000',
+			monedaFuncional: 'CUP',
+			tasaCambio: '300',
+			fxEvidenceFingerprint: 'fx-history:2026-11-01:USD-CUP',
+			medioCobro: 'CAJA',
+			referencia: 'op-77',
+			auxiliares: { diferenciaFx: 0 },
+		});
+	});
+
+	it('builds a service collection anchored to the service reconciliation', () => {
+		expect(buildCobroServicioEvent({ ...common, treasuryAccountType: 'EFECTIVO' })).toEqual({
+			tipo: 'COBRO_SERVICIO',
+			fecha,
+			descripcion: 'Cobro de servicio',
+			origen: { tipo: 'reconciliacion_servicio', id: 'recon-1' },
 			monto: '125.5000',
 			moneda: 'USD',
 			montoFuncional: '37725.0000',

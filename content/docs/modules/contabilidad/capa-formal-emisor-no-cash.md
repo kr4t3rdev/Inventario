@@ -1,12 +1,14 @@
-# Emisor formal no Cash (COBRO_CXC / PAGO_CXP)
+# Emisor formal no Cash (COBRO_CXC / PAGO_CXP / COBRO_SERVICIO)
 
 La capa formal contable exige que todo movimiento de tesorería tenga su asiento
-con partida doble, hash encadenado y evidencia de auditoría. Hasta ahora solo
-los tres emisores de operaciones Cash (cobro de préstamo, pago de deuda y
-desembolso de deuda) escribían asientos formales.
+con partida doble, hash encadenado y evidencia de auditoría. La primera
+integración tenía tres emisores de operaciones Cash (cobro de préstamo, pago
+de deuda y desembolso de deuda); esta capa añade cobros de ventas, servicios y
+pagos de gastos.
 
-Este slice agrega el emisor de **liquidaciones de cuentas por cobrar y por
-pagar**: el cobro de una venta contra banco y el pago de un gasto contra banco.
+Los writers conectados traducen cada conciliación operativa persistida en un
+evento formal: cobro de venta (`COBRO_CXC`), pago de gasto (`PAGO_CXP`) y cobro
+de servicios (`COBRO_SERVICIO`).
 
 ## Qué emite
 
@@ -14,6 +16,7 @@ pagar**: el cobro de una venta contra banco y el pago de un gasto contra banco.
 |---|---|---|---|
 | `COBRO_CXC` | 6 líneas (3 ramas FX + 2 de diferencia + tesorería) | `VENTAS` | `CXC_CLIENTES` |
 | `PAGO_CXP` | 6 líneas (espejo del anterior) | `COMPRAS` | `CXP_PROVEEDORES` |
+| `COBRO_SERVICIO` | Plantilla de cobro de servicios con ramas FX | `VENTAS` | `CXC_CLIENTES` |
 
 Las plantillas ya existían en `src/features/contabilidad-formal/lib/plan-default.ts`;
 lo nuevo es el **emisor**: el punto que traduce una conciliación operativa
@@ -44,6 +47,7 @@ builder de pagos Cash.
 |---|---|---|
 | `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarVentaAction` | `COBRO_CXC` | Ya persistía la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileSale` | `COBRO_CXC` | Ahora persiste la evidencia FX |
+| `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileService` | `COBRO_SERVICIO` | Un asiento por distribución, basado en su valoración persistida; comparte la transacción operativa |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
 
@@ -82,8 +86,8 @@ La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 
 ## Pendiente (slices siguientes)
 
-- `COBRO_SERVICIO` (cobro de servicios) y `ANTICIPO_*` (anticipos a clientes y
-  proveedores): tienen plantillas, pero no emisor.
+- `ANTICIPO_*` (anticipos a clientes y proveedores): tienen plantillas, pero
+  no emisor.
 - `facturacion-workflow.ts` (`applyFacturacionCobroWorkflow`): la vía de
   facturación de ventas todavía no emite `COBRO_CXC`.
 - Handlers legacy sin importadores

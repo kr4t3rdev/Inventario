@@ -14,10 +14,13 @@ import type { DecimalInput } from '../services/posting-engine';
 export type SettlementDecimalInput = DecimalInput;
 
 /** Origen operativo del evento: la conciliacion que lo produjo. */
-export type SettlementOriginType = 'reconciliacion_venta' | 'reconciliacion_gasto';
+export type SettlementOriginType =
+	| 'reconciliacion_venta'
+	| 'reconciliacion_gasto'
+	| 'reconciliacion_servicio';
 
 export interface SettlementEvent {
-	tipo: 'COBRO_CXC' | 'PAGO_CXP';
+	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO';
 	fecha: Date;
 	descripcion: string;
 	origen: { tipo: SettlementOriginType; id: string };
@@ -76,7 +79,7 @@ export function derivarMedioCobro(treasuryAccountType?: string | null): 'CAJA' |
  */
 export function buildSettlementEvent(
 	params: SettlementEventParams,
-	tipo: 'COBRO_CXC' | 'PAGO_CXP',
+	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO',
 	origenTipo: SettlementOriginType,
 ): SettlementEvent {
 	const fingerprint = params.fxEvidenceFingerprint ?? null;
@@ -84,7 +87,12 @@ export function buildSettlementEvent(
 		tipo,
 		fecha: params.fecha,
 		descripcion:
-			params.descripcion ?? (tipo === 'COBRO_CXC' ? 'Cobro de cuenta por cobrar' : 'Pago de cuenta por pagar'),
+			params.descripcion ??
+			(tipo === 'COBRO_CXC'
+				? 'Cobro de cuenta por cobrar'
+				: tipo === 'COBRO_SERVICIO'
+					? 'Cobro de servicio'
+					: 'Pago de cuenta por pagar'),
 		origen: { tipo: origenTipo, id: params.reconciliationId },
 		monto: params.amount,
 		moneda: params.currency,
@@ -119,4 +127,13 @@ export function buildCobroCxcEvent(params: SettlementEventParams): SettlementEve
  */
 export function buildPagoCxpEvent(params: SettlementEventParams): SettlementEvent {
 	return buildSettlementEvent(params, 'PAGO_CXP', 'reconciliacion_gasto');
+}
+
+/**
+ * @description Construye el evento formal de un cobro de servicio.
+ * @param {SettlementEventParams} params - Conciliación de servicio persistida.
+ * @returns {SettlementEvent} Evento COBRO_SERVICIO apto para el motor formal.
+ */
+export function buildCobroServicioEvent(params: SettlementEventParams): SettlementEvent {
+	return buildSettlementEvent(params, 'COBRO_SERVICIO', 'reconciliacion_servicio');
 }

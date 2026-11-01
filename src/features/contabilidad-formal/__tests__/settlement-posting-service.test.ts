@@ -117,6 +117,25 @@ describe('settlement-posting-service', () => {
 		expect(opciones).toEqual({ modo: 'shadow' });
 	});
 
+	it('emits service collections anchored to their service reconciliation', async () => {
+		vi.stubEnv(ENV_MODO_EMISOR_NO_CASH, 'enforce');
+		const tx = crearTx('CUP');
+
+		await emitirEventoLiquidacion(tx as never, { tenantId, userId }, {
+			tipo: 'COBRO_SERVICIO',
+			reconciliacion: conciliacion,
+			treasuryAccountType: 'EFECTIVO',
+		});
+
+		const [, , evento, opciones] = (postEvento as PostEventoMock).mock.calls[0];
+		expect(evento).toMatchObject({
+			tipo: 'COBRO_SERVICIO',
+			origen: { tipo: 'reconciliacion_servicio', id: 'recon-1' },
+			medioCobro: 'CAJA',
+		});
+		expect(opciones).toEqual({ modo: 'enforce' });
+	});
+
 	it('uses the reconciliation functional currency when it is persisted', async () => {
 		vi.stubEnv(ENV_MODO_EMISOR_NO_CASH, 'enforce');
 		const tx = crearTx('CUP');

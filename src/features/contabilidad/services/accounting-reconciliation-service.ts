@@ -737,6 +737,17 @@ export const AccountingReconciliationService = {
         );
       }
 
+      const cuentasTesoreria = await tx.cuentaBancaria.findMany({
+        where: {
+          tenantId,
+          cuentaId: { in: [...new Set(input.distribuciones.map((dist) => dist.cuentaId))] },
+        },
+        select: { cuentaId: true, tipoCuenta: true },
+      });
+      const tipoCuentaPorId = new Map(
+        cuentasTesoreria.map((cuenta) => [cuenta.cuentaId, cuenta.tipoCuenta]),
+      );
+
       for (const dist of input.distribuciones) {
         await tx.cuentaBancaria.update({
           where: { cuentaId: dist.cuentaId, tenantId },
@@ -749,7 +760,7 @@ export const AccountingReconciliationService = {
         const conversion = buildPersistedAccountingAmount(
           dist.monto, dist.moneda || 'CUP', dist.tasaCambio,
         );
-        await tx.reconciliacionServicio.create({
+        const reconciliacion = await tx.reconciliacionServicio.create({
           data: {
             ventaServicioId: input.ventaServicioId,
             cuentaId: dist.cuentaId,
@@ -765,6 +776,26 @@ export const AccountingReconciliationService = {
             reconciliadoPor: user.userId,
           },
         });
+
+        await emitirEventoLiquidacion(
+          tx,
+          { tenantId, userId: user.userId },
+          {
+            tipo: 'COBRO_SERVICIO',
+            reconciliacion: {
+              reconciliacionId: reconciliacion.reconciliacionId,
+              monto: reconciliacion.monto,
+              moneda: reconciliacion.moneda,
+              montoConvertido: reconciliacion.montoConvertido,
+              functionalCurrency: reconciliacion.functionalCurrency,
+              tasaCambio: reconciliacion.tasaCambio,
+              fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+              fechaReconciliacion: reconciliacion.fechaReconciliacion,
+            },
+            treasuryAccountType: tipoCuentaPorId.get(dist.cuentaId),
+            descripcion: dist.observaciones ?? 'Cobro de servicio',
+          },
+        );
       }
 
       await tx.ventaServicios.update({

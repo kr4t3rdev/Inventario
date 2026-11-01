@@ -1,6 +1,6 @@
 /**
- * @description Servicio de emision de los eventos formales de liquidacion de
- * cuentas por cobrar y por pagar (COBRO_CXC / PAGO_CXP).
+ * @description Servicio de emisión formal de cobros de CxC y servicios, y pagos
+ * de CxP (COBRO_CXC / COBRO_SERVICIO / PAGO_CXP).
  *
  * El servicio es el unico punto de entrada para los writers no Cash: decide
  * el modo de rollout, resuelve la moneda funcional del tenant y delega el
@@ -25,6 +25,7 @@ import {
 import { resolveModoEmisorNoCash } from './non-cash-emitter-gate';
 import {
 	buildCobroCxcEvent,
+	buildCobroServicioEvent,
 	buildPagoCxpEvent,
 	type SettlementEventParams,
 } from '../lib/settlement-event-builder';
@@ -43,7 +44,7 @@ export interface SettlementReconciliation {
 
 export interface SettlementPostingParams {
 	/** Plantilla formal a emitir. */
-	tipo: 'COBRO_CXC' | 'PAGO_CXP';
+	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO';
 	/** Conciliacion operativa que origina el evento (ya persistida). */
 	reconciliacion: SettlementReconciliation;
 	/**
@@ -140,7 +141,11 @@ export async function emitirEventoLiquidacion(
 	};
 
 	const evento =
-		params.tipo === 'COBRO_CXC' ? buildCobroCxcEvent(base) : buildPagoCxpEvent(base);
+		params.tipo === 'COBRO_CXC'
+			? buildCobroCxcEvent(base)
+			: params.tipo === 'COBRO_SERVICIO'
+				? buildCobroServicioEvent(base)
+				: buildPagoCxpEvent(base);
 
 	return postEvento(tx, ctx, evento, { modo });
 }

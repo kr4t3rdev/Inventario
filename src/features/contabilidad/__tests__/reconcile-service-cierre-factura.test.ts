@@ -17,14 +17,34 @@ vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () =>
   acquireAccountingTenantLock: vi.fn(),
 }));
 
+const { emitirEventoLiquidacion } = vi.hoisted(() => ({
+  emitirEventoLiquidacion: vi.fn().mockResolvedValue({ estado: 'CONTABILIZADO' }),
+}));
+
+vi.mock('@/features/contabilidad-formal/services/settlement-posting-service', () => ({
+  emitirEventoLiquidacion,
+}));
+
 const mockTx = {
   ventaServicios: {
     findFirst: vi.fn().mockResolvedValue({ total: 10000, reconciliado: false }),
     update: vi.fn().mockResolvedValue({}),
   },
-  cuentaBancaria: { count: vi.fn().mockResolvedValue(1), update: vi.fn().mockResolvedValue({}) },
+  cuentaBancaria: {
+    count: vi.fn().mockResolvedValue(1),
+    findMany: vi.fn().mockResolvedValue([{ cuentaId: 'cta-1', tipoCuenta: 'CORRIENTE' }]),
+    update: vi.fn().mockResolvedValue({}),
+  },
   tipoPago: { count: vi.fn().mockResolvedValue(1) },
-  reconciliacionServicio: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({}) },
+  reconciliacionServicio: {
+    findFirst: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockImplementation(({ data }) => Promise.resolve({
+      ...data,
+      reconciliacionId: 'recon-servicio-1',
+      functionalCurrency: 'CUP',
+      fxEvidenceFingerprint: 'fx-cup',
+    })),
+  },
   factura: { findFirst: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   $executeRaw: vi.fn(),
@@ -54,6 +74,12 @@ const input = {
 describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    emitirEventoLiquidacion.mockResolvedValue({ estado: 'CONTABILIZADO' });
+    mockTx.cuentaBancaria.count.mockResolvedValue(1);
+    mockTx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cta-1', tipoCuenta: 'CORRIENTE' },
+    ]);
+    mockTx.tipoPago.count.mockResolvedValue(1);
     vi.stubEnv('PERIODO_GUARD_ENABLED', 'false');
     vi.mocked(getCurrentUser).mockResolvedValue({ ...user, role: 'admin' });
   });
@@ -115,6 +141,71 @@ describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
       where: { id: 'cxc-1', estado: { in: ['PENDIENTE', 'PARCIAL'] } },
       data: { estado: 'PAGADA', montoPagado: 10000 },
     });
+  });
+
+  it('emite COBRO_SERVICIO con la valoración persistida dentro de la transacción', async () => {
+    await AccountingReconciliationService.reconcileService({ input, user });
+
+    expect(emitirEventoLiquidacion).toHaveBeenCalledTimes(1);
+    const [tx, context, params] = emitirEventoLiquidacion.mock.calls[0];
+    expect(tx).toBe(mockTx);
+    expect(context).toEqual({ tenantId: 'tenant-1', userId: 'user-1' });
+    expect(params).toMatchObject({
+      tipo: 'COBRO_SERVICIO',
+      treasuryAccountType: 'CORRIENTE',
+      reconciliacion: {
+        reconciliacionId: 'recon-servicio-1',
+        monto: 10000,
+        moneda: 'CUP',
+        montoConvertido: 10000,
+        functionalCurrency: 'CUP',
+        tasaCambio: 1,
+        fxEvidenceFingerprint: 'fx-cup',
+      },
+    });
+  });
+
+  it('emite un asiento por cada distribución con la cuenta de tesorería correspondiente', async () => {
+    const dosDistribuciones = {
+      ...input,
+      distribuciones: [
+        { cuentaId: 'cta-1', tipoPagoId: 'tp-1', monto: 4000, moneda: 'CUP' },
+        { cuentaId: 'cta-2', tipoPagoId: 'tp-2', monto: 6000, moneda: 'CUP' },
+      ],
+    };
+    mockTx.cuentaBancaria.count.mockResolvedValue(2);
+    mockTx.tipoPago.count.mockResolvedValue(2);
+    mockTx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cta-1', tipoCuenta: 'EFECTIVO' },
+      { cuentaId: 'cta-2', tipoCuenta: 'CORRIENTE' },
+    ]);
+    mockTx.reconciliacionServicio.create
+      .mockImplementationOnce(({ data }) => Promise.resolve({
+        ...data, reconciliacionId: 'recon-1', functionalCurrency: 'CUP',
+      }))
+      .mockImplementationOnce(({ data }) => Promise.resolve({
+        ...data, reconciliacionId: 'recon-2', functionalCurrency: 'CUP',
+      }));
+
+    await AccountingReconciliationService.reconcileService({ input: dosDistribuciones, user });
+
+    expect(emitirEventoLiquidacion).toHaveBeenCalledTimes(2);
+    expect(emitirEventoLiquidacion.mock.calls.map(([, , params]) => [
+      params.reconciliacion.reconciliacionId,
+      params.treasuryAccountType,
+    ])).toEqual([
+      ['recon-1', 'EFECTIVO'],
+      ['recon-2', 'CORRIENTE'],
+    ]);
+  });
+
+  it('propaga un fallo del emisor formal para abortar la operación transaccional', async () => {
+    emitirEventoLiquidacion.mockRejectedValueOnce(new Error('fallo de posteo'));
+
+    await expect(AccountingReconciliationService.reconcileService({ input, user }))
+      .rejects.toThrow('fallo de posteo');
+    expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledTimes(1);
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
   });
 
   it('sin factura ni CxC vivas el cobro funciona sin tocar documentos', async () => {
