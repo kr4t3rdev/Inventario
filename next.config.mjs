@@ -142,9 +142,14 @@ const nextConfig = {
  *   sentry.io/organizations/<org>/projects/<project>/
  */
 export default withSentryConfig(nextConfig, {
-  // Completar con los slugs de tu organización y proyecto en Sentry:
-  // org: "mi-org",
-  // project: "mi-proyecto-nextjs",
+  // Slugs de la organización y del proyecto en Sentry.
+  // Se leen del entorno (Railway) para no fijarlos en el repositorio:
+  //   SENTRY_ORG     -> sentry.io/organizations/<slug>/
+  //   SENTRY_PROJECT -> sentry.io/organizations/<org>/projects/<slug>/
+  // Sin estas variables el SDK sigue reportando errores (usa la DSN), pero el
+  // plugin no sube los source maps.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
 
   // Token de autenticación para subir source maps en CI (no es necesario en local)
   authToken: process.env.SENTRY_AUTH_TOKEN,

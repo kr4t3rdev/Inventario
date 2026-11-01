@@ -9,13 +9,15 @@ import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   dsn:
+    process.env.SENTRY_DSN ??
     "https://60104f06aac562e15aec147354ee6aa5@o4512346323091456.ingest.us.sentry.io/4512346464518144",
 
-  // 100% de transacciones. En producción se puede bajar (p. ej. 0.2)
-  // según el volumen de tráfico y la cuota del plan de Sentry.
-  tracesSampleRate: 1.0,
+  // Muestreo de trazas. Por defecto 10% (suficiente para el diagnostico y
+  // sustainable con la cuota del plan); se ajusta con SENTRY_TRACES_SAMPLE_RATE
+  // (1.0 = 100%) segun volumen de trafico.
+  tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
 
-  // Activar solo para depurar la integración (loguea cada evento en consola)
+  // Activar solo para depurar la integracion (loguea cada evento en consola)
   debug: false,
 
   // No enviar datos potencialmente sensibles (headers, cookies, usuario completo).
