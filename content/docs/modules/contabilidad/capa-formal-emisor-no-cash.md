@@ -8,7 +8,8 @@ pagos de gastos.
 
 Los writers conectados traducen cada conciliación operativa persistida en un
 evento formal: cobro de venta (`COBRO_CXC`), pago de gasto (`PAGO_CXP`), cobro
-de servicios (`COBRO_SERVICIO`) y recepción, entrega o aplicación de anticipos.
+de servicios (`COBRO_SERVICIO`), reconocimiento de compra a crédito
+(`COMPRA_CREDITO`) y recepción, entrega o aplicación de anticipos.
 
 ## Qué emite
 
@@ -17,6 +18,7 @@ de servicios (`COBRO_SERVICIO`) y recepción, entrega o aplicación de anticipos
 | `COBRO_CXC` | 6 líneas (3 ramas FX + 2 de diferencia + tesorería) | `VENTAS` | `CXC_CLIENTES` |
 | `PAGO_CXP` | 6 líneas (espejo del anterior) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `COBRO_SERVICIO` | Plantilla de cobro de servicios con ramas FX | `VENTAS` | `CXC_CLIENTES` |
+| `COMPRA_CREDITO` | Inventario contra cuentas por pagar | `COMPRAS` | `CXP_PROVEEDORES` |
 | `ANTICIPO_CLIENTE_RECIBIDO` | Tesorería contra anticipos de clientes | `VENTAS` | `ANTICIPOS_CLIENTES` |
 | `ANTICIPO_CLIENTE_APLICADO` | Anticipos de clientes contra CxC, con ramas FX | `VENTAS` | `CXC_CLIENTES` |
 | `ANTICIPO_PROVEEDOR_ENTREGADO` | Anticipos a proveedores contra tesorería | `COMPRAS` | `ANTICIPOS_PROVEEDORES` |
@@ -61,6 +63,18 @@ builder de pagos Cash.
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
 | `src/features/productos/actions-restock.ts` → `handlePaymentInTransaction` | `PAGO_CXP` | Solo `PAGO_COMPLETO`; persiste evidencia FX y emite dentro de la transacción que registra el pago y descuenta la cuenta |
+| `src/features/compras-productos/actions.ts` → `createCompraProductoAction` | `COMPRA_CREDITO` | Reconoce compras a crédito, anticipadas y contado antes de liquidar cualquier pago; comparte la transacción |
+
+`PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
+reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
+y descuenta el saldo, liquida la CxP y emite `PAGO_CXP` dentro de la misma
+transacción. Así el pago se representa con dos eventos enlazados, sin acreditar
+tesorería sin evidencia. `ANTICIPO_PAGO` también se reconoce contra CxP antes de
+aplicar el anticipo. Para monedas distintas de CUP, el formulario exige tasa y
+el evento de compra persiste la evidencia FX construida para la fecha de compra;
+el motor no inventa una valoración funcional cuando falta. Este reconocimiento
+usa el modo global `CONTABILIDAD_FORMAL_MODE`; no cambia los gates de emisor no
+Cash.
 
 ## Rollout
 

@@ -28,15 +28,22 @@ vi.mock("@/lib/cost-history-utils", () => ({
 vi.mock("@/lib/services/anticipos-guards", () => ({
 	hasUnrevertedAnticipoExecution: vi.fn(),
 }));
+vi.mock("@/features/contabilidad-formal/services/purchase-posting-service", () => ({
+	emitirReconocimientoCompra: vi.fn(),
+}));
 
 const mockTx = {
 	$queryRaw: vi.fn(),
 	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
 	compraDocumentoItem: { create: vi.fn() },
+	lote: { create: vi.fn() },
 	ordenCompra: { findFirst: vi.fn(), updateMany: vi.fn() },
 	producto: { update: vi.fn(), findFirst: vi.fn() },
 	gastoCompra: { create: vi.fn() },
 	cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },
+	cuentaBancaria: { findFirst: vi.fn() },
+	tipoPago: { findFirst: vi.fn() },
+	tenantAccountingPolicy: { findUnique: vi.fn() },
 	stockMoveLine: { upsert: vi.fn(), findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
 	unidadConversion: { findFirst: vi.fn() },
 	unidad: { findFirst: vi.fn() },
@@ -65,6 +72,9 @@ import { prisma } from "@/lib/prisma";
 import { calcularPrecioCostoCompra } from "@/lib/inventory-cost-utils";
 import { getStockTotalProducto } from "@/lib/services/stock-ubicacion-queries";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow";
+import { applyPagoGastoWorkflow } from "@/lib/services/pago-gastos-workflow";
+import { emitirReconocimientoCompra } from "@/features/contabilidad-formal/services/purchase-posting-service";
 import {
 	getComprasProductosAction,
 	getCompraProductoByIdAction,
@@ -228,12 +238,15 @@ function mockAnticipoMovimientoResponse(overrides: Partial<AnticipoMovimiento> |
  * @param {Pick<CreateCompraProductoInput, "proveedorId" | "formaPago" | "estado" | "items"> & Partial<CreateCompraProductoInput>} input - Purchase input fixture.
  * @returns {ReturnType<typeof createCompraProductoAction>} Typed action response.
  */
-function createCompraProductoWithDefaults(
+	function createCompraProductoWithDefaults(
 	input: Pick<CreateCompraProductoInput, "proveedorId" | "formaPago" | "estado" | "items"> &
 		Partial<CreateCompraProductoInput>,
 ) {
 	return createCompraProductoAction({
 		...input,
+		cuentaId: input.cuentaId ?? (input.formaPago === "PAGO_COMPLETO" ? "bank-1" : undefined),
+		tipoPagoId: input.tipoPagoId ?? (input.formaPago === "PAGO_COMPLETO" ? "payment-type-1" : undefined),
+		tasaCambio: input.tasaCambio ?? (input.moneda && input.moneda !== "CUP" ? 25 : undefined),
 		moneda: input.moneda ?? "CUP",
 		numeroFactura: input.numeroFactura ?? "",
 		facturaUrl: input.facturaUrl ?? "",
@@ -243,6 +256,14 @@ function createCompraProductoWithDefaults(
 describe("ComprasProductos Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockTx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: "bank-1", moneda: "CUP" });
+		mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "payment-type-1" });
+		mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue(null);
+		vi.mocked(applyPagoGastoWorkflow).mockResolvedValue({
+			reconciliaciones: [],
+			cuentaPorPagar: null,
+			pagoCuentaPorPagar: null,
+		});
 	});
 
 	describe("getComprasProductosAction", () => {
@@ -267,6 +288,39 @@ describe("ComprasProductos Server Actions", () => {
 	});
 
 	describe("createCompraProductoAction", () => {
+		it("rechaza pago completo sin evidencia explícita de cuenta y tipo de pago", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", tenantId: "tenant-test" });
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
+		it("requiere tasa para reconocer compras en moneda extranjera", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", tenantId: "tenant-test" });
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				moneda: "USD",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+		});
+
 		it("bloquea una compra a crédito cuando el plan no permite crear CxP", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue({
 				...mockUser,
@@ -330,6 +384,7 @@ describe("ComprasProductos Server Actions", () => {
 				compraDocumentoId: "cd-1",
 			});
 			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-1" });
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-full" });
 			mockTx.compraDocumento.update.mockResolvedValue({} as any);
 			vi.mocked(getStockTotalProducto).mockResolvedValue(12);
 			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
@@ -345,6 +400,24 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+			expect(emitirReconocimientoCompra).toHaveBeenCalledWith(
+				mockTx,
+				expect.anything(),
+				expect.objectContaining({ compraDocumentoId: "cd-1", monto: 4000, moneda: "CUP" }),
+			);
+			expect(applyPagoGastoWorkflow).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					tipoGasto: "compra",
+					cuentaId: "bank-1",
+					tipoPagoId: "payment-type-1",
+					monto: 4000,
+					estado: "PAGADA",
+				}),
+			);
+			expect(emitirReconocimientoCompra.mock.invocationCallOrder[0]).toBeLessThan(
+				vi.mocked(applyPagoGastoWorkflow).mock.invocationCallOrder[0],
+			);
 			// El stock se consulta dentro de la transacción (tx), no con el cliente global.
 			expect(getStockTotalProducto).toHaveBeenCalledWith(
 				expect.anything(),
@@ -439,6 +512,188 @@ describe("ComprasProductos Server Actions", () => {
 			expect(mockTx.unidadConversion.findFirst).toHaveBeenCalledWith({
 				where: { tenantId: "tenant-test", productoId: "prod-1", baseUnidadId: "unit-each", unidadId: "unit-box" },
 			});
+		});
+
+		it("crea un lote rastreable por línea para una compra directa si el plan incluye lotes", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test" });
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-lote" });
+			mockTx.compraDocumentoItem.create.mockResolvedValue({ compraDocumentoItemId: "cdi-lote" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-lote" });
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-lote" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				numeroFactura: "FAC-LOT-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 500, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.lote.create).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					tenantId: "tenant-test",
+					productoId: "prod-1",
+					codigo: expect.stringMatching(/^F-FAC-LOT-1-\d{8}-L0$/),
+					cantidadInicial: 10,
+					cantidadDisponible: 10,
+					compraItemId: "cdi-lote",
+					recepcionItemId: null,
+				}),
+			});
+		});
+
+		it("conserva las compras del plan Básico sin crear seguimiento de lotes", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "regularUser",
+				planFeatures: { contabilidad: true, "cuentas-pagar": true, "lotes-series": false },
+			} as AuthenticatedUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test" });
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-basic" });
+			mockTx.compraDocumentoItem.create.mockResolvedValue({ compraDocumentoItemId: "cdi-basic" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-basic" });
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-basic" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				items: [{ productoId: "prod-1", precioCosto: 500, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.lote.create).not.toHaveBeenCalled();
+		});
+
+		it("rechaza una cuenta de pago con moneda incompatible", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({ id: "prod-1", tenantId: "tenant-test" });
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: "bank-1", moneda: "EUR" });
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				moneda: "USD",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error.code).toBe("PAYMENT_CURRENCY_MISMATCH");
+			expect(mockTx.compraDocumento.create).not.toHaveBeenCalled();
+			expect(applyPagoGastoWorkflow).not.toHaveBeenCalled();
+		});
+
+		it("propaga el fallo del pago para revertir la compra en la transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({
+				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-payment-failure" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-payment-failure" });
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-payment-failure" });
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+			vi.mocked(applyPagoGastoWorkflow).mockRejectedValue(new Error("Saldo insuficiente"));
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 2 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(emitirReconocimientoCompra).toHaveBeenCalled();
+			expect(applyPagoGastoWorkflow).toHaveBeenCalled();
+		});
+
+		it("emite el reconocimiento de compra a crédito dentro de la transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({
+				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-credit" });
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-credit" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-credit" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				moneda: "CUP",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 2 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(emitirReconocimientoCompra).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({ tenantId: "tenant-test", userId: "user-1" }),
+				expect.objectContaining({ compraDocumentoId: "cd-credit", monto: 800, moneda: "CUP" }),
+			);
+		});
+
+		it("reconoce la compra antes de aplicar el anticipo del proveedor", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
+			mockProductResponse({
+				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-advance" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-advance" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+
+			const result = await createCompraProductoWithDefaults({
+				proveedorId: "ven-1",
+				formaPago: "ANTICIPO_PAGO",
+				estado: "PAGADA",
+				anticipoPagoId: "advance-1",
+				idempotencyKey: "purchase-advance-1",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 2 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(emitirReconocimientoCompra).toHaveBeenCalledWith(
+				mockTx,
+				expect.anything(),
+				expect.objectContaining({ compraDocumentoId: "cd-advance", monto: 800 }),
+			);
+			expect(emitirReconocimientoCompra.mock.invocationCallOrder[0]).toBeLessThan(
+				vi.mocked(applyAnticipoAllocations).mock.invocationCallOrder[0],
+			);
 		});
 
 		it("requires the existing units plan feature only when a source unit is selected", async () => {
@@ -631,6 +886,7 @@ describe("ComprasProductos Server Actions", () => {
 			expect(result.success).toBe(true);
 			expect(upsertStockUbicacion).not.toHaveBeenCalled();
 			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+			expect(mockTx.lote.create).not.toHaveBeenCalled();
 			// La orden quedó bloqueada a nivel de fila dentro de la transacción.
 			expect(mockTx.ordenCompra.updateMany).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -971,7 +1227,7 @@ describe("ComprasProductos Server Actions", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("PAGO_PARCIAL → PAGO_COMPLETO elimina cuentaPorPagar", async () => {
+		it("exige liquidar la CxP antes de marcar la compra como pagada", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			mockTx.compraDocumento.findFirst.mockResolvedValue({
 				compraDocumentoId: "cd-1",
@@ -993,11 +1249,39 @@ describe("ComprasProductos Server Actions", () => {
 				formaPago: "PAGO_COMPLETO",
 			});
 
-			expect(result.success).toBe(true);
+			expect(result.success).toBe(false);
 			expect(prisma.$transaction).toHaveBeenCalled();
-			expect(mockTx.cuentaPorPagar.delete).toHaveBeenCalledWith({
-				where: { cuentaPorPagarId: "cxp-1" },
+			expect(expectActionFailure(result).error.code).toBe("PAYMENT_REQUIRED");
+			expect(mockTx.cuentaPorPagar.delete).not.toHaveBeenCalled();
+		});
+
+		it("marca pagada la compra cuando su CxP ya quedó totalmente liquidada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockTx.compraDocumento.findFirst.mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				tenantId: "tenant-test",
+				formaPago: "PAGO_PARCIAL",
+				cuentaPorPagarId: "cxp-1",
+				cuentaPorPagar: {
+					cuentaPorPagarId: "cxp-1",
+					montoDeuda: 1000,
+					montoPagado: 1000,
+					saldoPendiente: 0,
+					estado: "PAGADA",
+				},
 			});
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.cuentaPorPagar.delete).not.toHaveBeenCalled();
+			expect(mockTx.compraDocumento.update).toHaveBeenCalledWith(
+				expect.objectContaining({ data: expect.objectContaining({ estado: "PAGADA" }) }),
+			);
 		});
 
 		it("PAGO_COMPLETO → PAGO_PARCIAL crea cuentaPorPagar", async () => {
@@ -1082,6 +1366,7 @@ describe("ComprasProductos Server Actions", () => {
 				cuentaPorPagar: {
 					cuentaPorPagarId: "cxp-1",
 					montoDeuda: 1000,
+					montoPagado: 500,
 					saldoPendiente: 500,
 					estado: "PENDIENTE",
 				},

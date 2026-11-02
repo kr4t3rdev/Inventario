@@ -26,6 +26,8 @@ const {
 const prefix = `f1-direct-${randomUUID().replaceAll('-', '')}`;
 let tenantId = '';
 let vendorId = '';
+let cuentaPagoId = '';
+let tipoPagoId = '';
 let categoryId = '';
 let warehouseId = '';
 let baseUnitId = '';
@@ -86,6 +88,8 @@ async function submitPurchase(input: PurchaseInput) {
     numeroFactura: input.invoice,
     formaPago: 'PAGO_COMPLETO',
     estado: 'PAGADA',
+    cuentaId: cuentaPagoId,
+    tipoPagoId,
     items: [{
       productoId: input.productId,
       unidadId: input.sourceUnitId,
@@ -169,6 +173,21 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
     userId = user.userId;
     const vendor = await prisma.vendor.create({ data: { tenantId, nombre: `${prefix}-vendor` } });
     vendorId = vendor.vendorId;
+    const cuentaPago = await prisma.cuentaBancaria.create({ data: {
+      tenantId,
+      nombreBanco: `${prefix}-bank`,
+      numeroCuenta: `${prefix}-account`,
+      tipoCuenta: 'EFECTIVO',
+      moneda: 'CUP',
+      saldo: 1_000_000_000,
+    } });
+    cuentaPagoId = cuentaPago.cuentaId;
+    const tipoPago = await prisma.tipoPago.create({ data: {
+      tenantId,
+      nombre: `${prefix}-payment-type`,
+      cuentaDefecto: cuentaPagoId,
+    } });
+    tipoPagoId = tipoPago.tipoId;
     const category = await prisma.categoria.create({ data: { tenantId, nombre: `${prefix}-category` } });
     categoryId = category.catId;
     const warehouse = await prisma.almacen.create({ data: { tenantId, nombre: `${prefix}-warehouse` } });
@@ -210,7 +229,8 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
       isActive: true,
       tenantId,
       tenantRole: 'manager',
-      planFeatures: { unidades: true },
+      // contabilidad: el pago completo exige el feature para liquidar la CxP.
+      planFeatures: { unidades: true, contabilidad: true },
     };
     auth.user = actionUser;
   });
@@ -223,6 +243,7 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
         await operation();
         return true;
       } catch (error) {
+        console.error(`Cleanup failed (${label}):`, error);
         cleanupErrors.push(new Error(`Cleanup failed (${label})`, { cause: error }));
         return false;
       }
@@ -233,6 +254,10 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
         await attemptCleanup(`expense failpoint ${name}`, () => toggleExpenseFailpoint(false, name));
       }
       if (tenantId) {
+        await attemptCleanup('purchase payment reconciliations', () =>
+          prisma.reconciliacionGasto.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('payable payments', () =>
+          prisma.pagoCuentaPorPagar.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase document items', () =>
           prisma.compraDocumentoItem.deleteMany({ where: { tenantId } }));
         const triggerDropped = await attemptCleanup('drop temporary Kardex cleanup guard', () =>
@@ -251,7 +276,10 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
         }));
         await attemptCleanup('unit conversions', () => prisma.unidadConversion.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase documents', () => prisma.compraDocumento.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('purchase payables', () => prisma.cuentaPorPagar.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase expenses', () => prisma.gastoCompra.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('payment types', () => prisma.tipoPago.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('payment accounts', () => prisma.cuentaBancaria.deleteMany({ where: { tenantId } }));
         await attemptCleanup('products', () => prisma.producto.deleteMany({ where: { id: { in: [...productIds] } } }));
         await attemptCleanup('warehouses', () => prisma.almacen.deleteMany({ where: { tenantId } }));
         await attemptCleanup('categories', () => prisma.categoria.deleteMany({ where: { tenantId } }));

@@ -9,15 +9,18 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { hasFeature, requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
+import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
+import { crearLoteDesdeEntrada, deriveLoteCodigo } from '@/features/inventario/lotes';
 import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
+import { emitirReconocimientoCompra } from '@/features/contabilidad-formal/services/purchase-posting-service';
 import { isCompatibleUnitConversion } from '@/lib/inventory-unit-conversion-compatibility';
 import { calculateUnitQuantityCost } from '@/lib/unit-quantity-cost';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
@@ -101,6 +104,10 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   if (parsed.formaPago === 'PAGO_PARCIAL') {
     requireFeature(user, 'cuentas-pagar', 'crear cuentas por pagar desde compras');
   }
+  if (parsed.formaPago === 'PAGO_COMPLETO') {
+    requireFeature(user, 'contabilidad', 'registrar pagos completos de compras');
+  }
+  const rastreaLotes = hasFeature(user, 'lotes-series');
 
   const proveedor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
@@ -133,6 +140,49 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
 
   try {
     const resultado = await prisma.$transaction(async (tx: any) => {
+      if (parsed.formaPago === 'PAGO_COMPLETO') {
+        const accountingPolicy = await tx.tenantAccountingPolicy.findUnique({
+          where: { tenantId },
+          select: { functionalCurrencyCode: true },
+        });
+        const functionalCurrency = accountingPolicy?.functionalCurrencyCode?.trim().toUpperCase();
+        if (functionalCurrency && functionalCurrency !== 'CUP') {
+          throw new ActionError(
+            'El flujo de pago completo de compras requiere moneda funcional CUP',
+            'PAYMENT_FUNCTIONAL_CURRENCY_UNSUPPORTED',
+          );
+        }
+
+        // Sin lock temprano: applyPagoGastoWorkflow bloquea CuentaBancaria en su
+        // orden canónico (después de GastoCompra/CxP) para evitar inversión con
+        // el flujo de restock, que muta stock antes de bloquear la cuenta.
+        const [cuentaPago, tipoPago] = await Promise.all([
+          tx.cuentaBancaria.findFirst({
+            where: { cuentaId: parsed.cuentaId, tenantId, isActive: true },
+            select: { cuentaId: true, moneda: true },
+          }),
+          tx.tipoPago.findFirst({
+            where: { tipoId: parsed.tipoPagoId, tenantId, isActive: true },
+            select: { tipoId: true },
+          }),
+        ]);
+
+        if (!cuentaPago) {
+          throw new ActionError('La cuenta bancaria no existe o está inactiva', 'PAYMENT_ACCOUNT_INVALID');
+        }
+        if (!tipoPago) {
+          throw new ActionError('El tipo de pago no existe o está inactivo', 'PAYMENT_TYPE_INVALID');
+        }
+
+        const monedaCuenta = cuentaPago.moneda.trim().toUpperCase();
+        if (monedaCuenta !== parsed.moneda && monedaCuenta !== 'CUP') {
+          throw new ActionError(
+            'La cuenta debe estar en la moneda de la compra o en CUP',
+            'PAYMENT_CURRENCY_MISMATCH',
+          );
+        }
+      }
+
       // Serialize conversion reads against product-unit edits; stable lock ordering avoids deadlocks.
       const productosConUnidad = [...new Set(
         parsed.items.filter((item) => item.unidadId).map((item) => item.productoId),
@@ -154,6 +204,8 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         cantidad: number;
         precioCosto: number;
         totalLinea: number;
+        codigoLote?: string;
+        fechaVencimiento?: Date;
         traza?: {
           unidadOrigenId: string;
           unidadOrigenNombre: string;
@@ -173,6 +225,8 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
             cantidad: item.cantidad,
             precioCosto: item.precioCosto,
             totalLinea: item.cantidad * item.precioCosto,
+            codigoLote: item.codigoLote,
+            fechaVencimiento: item.fechaVencimiento,
           });
           continue;
         }
@@ -236,6 +290,8 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           cantidad: converted.data.stockQuantity,
           precioCosto: converted.data.stockUnitPrice,
           totalLinea: converted.data.lineTotal,
+          codigoLote: item.codigoLote,
+          fechaVencimiento: item.fechaVencimiento,
           traza: {
             unidadOrigenId: item.unidadId,
             unidadOrigenNombre: unidadOrigen.nombre,
@@ -386,8 +442,9 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         },
       });
 
+      const compraItems = [] as Array<{ compraDocumentoItemId: string }>
       for (const item of itemsNormalizados) {
-        await tx.compraDocumentoItem.create({
+        const compraItem = await tx.compraDocumentoItem.create({
           data: {
             tenantId,
             compraDocumentoId: compra.compraDocumentoId,
@@ -398,6 +455,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
             ...(item.traza ?? {}),
           },
         });
+        compraItems.push(compraItem);
       }
 
       const compraCompleta = await tx.compraDocumento.findUnique({
@@ -454,8 +512,25 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           secuencia: `ITEM-${idx}`,
           creadoPorId: user.userId,
         });
+        if (rastreaLotes) {
+          await crearLoteDesdeEntrada(tx, {
+            tenantId,
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            codigo: item.codigoLote || deriveLoteCodigo({
+              factura: parsed.numeroFactura || compra.compraDocumentoId,
+              fecha: compra.fechaCompra ?? new Date(),
+              linea: idx,
+            }),
+            fechaVencimiento: item.fechaVencimiento,
+            compraItemId: compraItems[idx]?.compraDocumentoItemId,
+          });
+        }
       }
       }
+
+      let gastoCompraId: string | null = null;
+      let cuentaPorPagarId: string | null = null;
 
       if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
       const now = new Date();
@@ -478,13 +553,14 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           numeroFactura: parsed.numeroFactura || undefined,
         },
       });
+      gastoCompraId = gastoCompra.gastoCompraId;
 
       await tx.compraDocumento.update({
         where: { compraDocumentoId: compra.compraDocumentoId },
         data: { gastoCompraId: gastoCompra.gastoCompraId },
       });
 
-      if (parsed.formaPago === 'PAGO_PARCIAL') {
+      if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
         const cxp = await tx.cuentaPorPagar.create({
           data: {
             tenantId,
@@ -499,12 +575,55 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
             proveedorNombre: proveedor.nombre,
           },
         });
+        cuentaPorPagarId = cxp.cuentaPorPagarId;
 
         await tx.compraDocumento.update({
           where: { compraDocumentoId: compra.compraDocumentoId },
           data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
         });
       }
+      }
+
+      if (
+        parsed.formaPago === 'PAGO_COMPLETO' ||
+        parsed.formaPago === 'PAGO_PARCIAL' ||
+        parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO
+      ) {
+        await emitirReconocimientoCompra(
+          tx,
+          { tenantId, userId: user.userId || 'system' },
+          {
+            compraDocumentoId: compra.compraDocumentoId,
+            fecha: compra.fechaCompra,
+            monto: total,
+            moneda: parsed.moneda,
+            tasaCambio: parsed.tasaCambio,
+          },
+        );
+      }
+
+      if (parsed.formaPago === 'PAGO_COMPLETO') {
+        if (!gastoCompraId || !cuentaPorPagarId || !parsed.cuentaId || !parsed.tipoPagoId) {
+          throw new ActionError('No se pudo preparar el pago completo de la compra', 'PAYMENT_SETUP_FAILED');
+        }
+
+        await applyPagoGastoWorkflow(tx, {
+          tipoGasto: 'compra',
+          referenciaId: gastoCompraId,
+          gastoCompraId,
+          cuentaPorPagarId,
+          reconciliadoPor: user.userId || 'system',
+          descripcion: `Pago de compra #${compra.compraDocumentoId}`,
+          monto: total,
+          moneda: parsed.moneda,
+          tasaCambio: parsed.tasaCambio,
+          tenantId,
+          fechaPago: compra.fechaCompra,
+          estado: 'PAGADA',
+          cuentaId: parsed.cuentaId,
+          tipoPagoId: parsed.tipoPagoId,
+          observaciones: parsed.descripcionCompra,
+        });
       }
 
       if (parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO && parsed.anticipoPagoId) {
@@ -561,6 +680,9 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
           requireFeature(user, 'cuentas-pagar', 'modificar cuentas por pagar vinculadas a compras');
         }
         await reconcileFormaPago(tx, existing, data.formaPago ?? '');
+        if (existing.formaPago === 'PAGO_PARCIAL' && data.formaPago === 'PAGO_COMPLETO') {
+          updateData.estado = 'PAGADA';
+        }
       }
 
       return tx.compraDocumento.update({
@@ -615,25 +737,38 @@ async function reconcileFormaPago(
     }
 
     const cxp = compra.cuentaPorPagar;
-    if (Number(cxp.saldoPendiente) < Number(cxp.montoDeuda)) {
+    const montoPagado = Number(cxp.montoPagado ?? 0);
+    const saldoPendiente = Number(cxp.saldoPendiente);
+    const montoDeuda = Number(cxp.montoDeuda);
+    if (montoPagado > 0.01 && saldoPendiente > 0.01) {
       throw new ActionError(
-        'No se puede cambiar la forma de pago porque la cuenta por pagar tiene pagos parciales aplicados. Revierta los pagos desde Contabilidad primero.',
+        'La cuenta por pagar tiene pagos parciales; liquide el saldo restante desde Contabilidad antes de marcar la compra como pagada.',
         'CXP_HAS_PAYMENTS',
       );
     }
-
-    await tx.cuentaPorPagar.delete({
-      where: { cuentaPorPagarId: compra.cuentaPorPagarId },
-    });
-
-    await tx.compraDocumento.update({
-      where: { compraDocumentoId: compra.compraDocumentoId },
-      data: { cuentaPorPagarId: null },
-    });
+    if (
+      saldoPendiente > 0.01 ||
+      montoPagado + 0.01 < montoDeuda
+    ) {
+      throw new ActionError(
+        'Registre el pago desde Contabilidad antes de marcar la compra como pagada.',
+        'PAYMENT_REQUIRED',
+      );
+    }
   }
 
   if (oldFormaPago === 'PAGO_COMPLETO' && nuevaFormaPago === 'PAGO_PARCIAL') {
     if (compra.cuentaPorPagarId) {
+      const cxp = compra.cuentaPorPagar;
+      if (!cxp) {
+        throw new ActionError('La cuenta por pagar vinculada no existe', 'DATA_INCONSISTENCY');
+      }
+      if (Number(cxp.montoPagado ?? 0) > 0 || Number(cxp.saldoPendiente) < Number(cxp.montoDeuda)) {
+        throw new ActionError(
+          'No se puede cambiar la compra porque su pago ya tiene conciliaciones registradas.',
+          'CXP_HAS_PAYMENTS',
+        );
+      }
       throw new ActionError(
         'La compra ya tiene cuenta por pagar asociada pero la forma de pago es PAGO_COMPLETO. Inconsistencia de datos.',
         'DATA_INCONSISTENCY',

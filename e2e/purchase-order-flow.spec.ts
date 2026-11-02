@@ -84,6 +84,8 @@ test.describe('Flujo de orden de compra profesional', () => {
     await page.getByLabel('Orden de compra (opcional)').click();
     await page.getByRole('option').filter({ hasText: 'Proveedor Demo' }).first().click();
     await page.getByLabel('Nro. Factura').fill(`E2E-${Date.now()}`);
+    await page.getByLabel('Forma de Pago').click();
+    await page.getByRole('option', { name: 'Pago parcial' }).click();
     await page.getByRole('button', { name: /Registrar compra \(1 producto\)/ }).click();
     await expect(page).toHaveURL(/\/busy\/compras-productos$/, { timeout: 10000 });
 

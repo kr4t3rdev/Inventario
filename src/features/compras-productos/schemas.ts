@@ -8,6 +8,8 @@ const itemSchema = z.object({
   unidadId: z.string().min(1).optional(),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
   cantidad: z.coerce.number().int('Debe ser un entero').positive('Debe ser mayor a 0'),
+  codigoLote: z.string().trim().min(1).max(128).optional(),
+  fechaVencimiento: z.coerce.date().optional(),
 });
 
 export const createCompraProductoSchema = z.object({
@@ -19,6 +21,9 @@ export const createCompraProductoSchema = z.object({
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   // Moneda del documento y de la CxP que genere (B-02.1). Histórico: CUP.
   moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']).default('CUP'),
+  cuentaId: z.string().trim().min(1).optional(),
+  tipoPagoId: z.string().trim().min(1).optional(),
+  tasaCambio: z.coerce.number().finite().positive().optional(),
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),
@@ -39,6 +44,12 @@ export const createCompraProductoSchema = z.object({
 ).refine(
   (data) => (data.formaPago === 'ANTICIPO_PAGO' ? !!data.idempotencyKey : true),
   { message: 'Debe indicar idempotencyKey', path: ['idempotencyKey'] }
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || (!!data.cuentaId && !!data.tipoPagoId),
+  { message: 'Seleccione una cuenta bancaria y un tipo de pago', path: ['cuentaId'] }
+).refine(
+  (data) => data.moneda === 'CUP' || data.tasaCambio != null,
+  { message: 'Indique la tasa de cambio aplicada a la compra', path: ['tasaCambio'] }
 );
 
 export const updateCompraProductoSchema = z.object({

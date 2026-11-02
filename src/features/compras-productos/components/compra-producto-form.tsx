@@ -26,6 +26,8 @@ import { createCompraProductoAction } from '@/features/compras-productos/actions
 import { getDirectPurchaseUnitsAction } from '@/features/productos/actions'
 import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
+import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias'
+import { getTiposPagoAction } from '@/features/contabilidad/actions-tipos-pago'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 import { buildPurchaseUnitPayload } from '@/features/compras-productos/unit-selection-payload'
 
@@ -44,6 +46,9 @@ const compraDocumentoSchema = z.object({
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']),
+  cuentaId: z.string().optional().default(''),
+  tipoPagoId: z.string().optional().default(''),
+  tasaCambio: z.number().finite().positive().optional(),
   descripcionCompra: z.string().max(500).optional().default(''),
   fechaVencimiento: z.string().optional().default(''),
   anticipoPagoId: z.string().optional().default(''),
@@ -70,6 +75,18 @@ const compraDocumentoSchema = z.object({
     message: 'Seleccione un anticipo para completar la compra',
     path: ['anticipoPagoId']
   }
+).refine(
+  (data) => data.formaPago !== 'PAGO_COMPLETO' || (!!data.cuentaId && !!data.tipoPagoId),
+  {
+    message: 'Seleccione una cuenta bancaria y un tipo de pago',
+    path: ['cuentaId']
+  }
+).refine(
+  (data) => data.moneda === 'CUP' || data.tasaCambio != null,
+  {
+    message: 'Indique la tasa de cambio aplicada',
+    path: ['tasaCambio']
+  }
 )
 
 type CompraDocumentoFormValues = z.input<typeof compraDocumentoSchema>
@@ -90,6 +107,14 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const [unitOptionsByProduct, setUnitOptionsByProduct] = useState<Record<string, Array<{ unidadId: string; nombre: string; simbolo: string }>>>({})
   const [unitOptionsLoading, setUnitOptionsLoading] = useState<Record<string, boolean>>({})
   const [unitOptionsError, setUnitOptionsError] = useState<Record<string, string>>({})
+  const [cuentasPago, setCuentasPago] = useState<Array<{
+    cuentaId: string
+    nombreBanco: string
+    numeroCuenta: string
+    moneda: string
+    isActive: boolean
+  }>>([])
+  const [tiposPago, setTiposPago] = useState<Array<{ tipoId: string; nombre: string; isActive: boolean }>>([])
   const submittingRef = useRef(false)
   const [claveIdempotencia] = useState(() =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -112,6 +137,9 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       formaPago: 'PAGO_COMPLETO',
       estado: 'PAGADA',
       moneda: 'CUP',
+      cuentaId: '',
+      tipoPagoId: '',
+      tasaCambio: undefined,
       descripcionCompra: '',
       fechaVencimiento: '',
       anticipoPagoId: '',
@@ -125,6 +153,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   })
 
   const formaPagoSeleccionada = form.watch('formaPago')
+  const monedaCompra = form.watch('moneda')
   const ordenCompraSeleccionada = form.watch('ordenCompraId')
   const proveedorSeleccionado = form.watch('proveedorId')
   const items = useWatch({ control: form.control, name: 'items' }) ?? []
@@ -154,6 +183,34 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
   const [anticiposDisponibles, setAnticiposDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
   const [isLoadingAnticipos, setIsLoadingAnticipos] = useState(false)
+
+  useEffect(() => {
+    if (formaPagoSeleccionada !== 'PAGO_COMPLETO') return
+    let cancelled = false
+    Promise.all([getCuentasBancariasAction(), getTiposPagoAction()]).then(([accounts, paymentTypes]) => {
+      if (cancelled) return
+      if (accounts.success) {
+        setCuentasPago((accounts.data?.cuentas ?? []).filter((account) => account.isActive))
+      }
+      if (paymentTypes.success) {
+        setTiposPago((paymentTypes.data?.data ?? []).filter((paymentType) => paymentType.isActive))
+      }
+    }).catch(() => {
+      if (!cancelled) sileo.error({ title: 'No se pudieron cargar las opciones de pago.' })
+    })
+    return () => { cancelled = true }
+  }, [formaPagoSeleccionada])
+
+  useEffect(() => {
+    const cuentaSeleccionadaId = form.getValues('cuentaId')
+    if (formaPagoSeleccionada !== 'PAGO_COMPLETO' || !cuentaSeleccionadaId) return
+    const cuenta = cuentasPago.find((option) => option.cuentaId === cuentaSeleccionadaId)
+    if (!cuenta) return
+    const currency = cuenta.moneda.trim().toUpperCase()
+    if (currency !== monedaCompra && currency !== 'CUP') {
+      form.setValue('cuentaId', '')
+    }
+  }, [cuentasPago, formaPagoSeleccionada, form, monedaCompra])
 
   useEffect(() => {
     if (!anticiposFeatureEnabled || formaPagoSeleccionada !== FORMA_PAGO_ANTICIPO_PAGO || !proveedorSeleccionado) {
@@ -222,6 +279,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     form.setValue('estado', nextEstado, { shouldValidate: true })
     if (formaPagoSeleccionada !== FORMA_PAGO_ANTICIPO_PAGO) {
       form.setValue('anticipoPagoId', '')
+    }
+    if (formaPagoSeleccionada !== 'PAGO_COMPLETO') {
+      form.setValue('cuentaId', '')
+      form.setValue('tipoPagoId', '')
     }
   }, [formaPagoSeleccionada, form])
 
@@ -342,6 +403,9 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
         ordenCompraId: data.ordenCompraId || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
         idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined,
+        cuentaId: data.formaPago === 'PAGO_COMPLETO' ? data.cuentaId : undefined,
+        tipoPagoId: data.formaPago === 'PAGO_COMPLETO' ? data.tipoPagoId : undefined,
+        tasaCambio: data.tasaCambio,
         claveIdempotencia,
       })
 
@@ -530,7 +594,9 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                           <SelectItem value={FORMA_PAGO_ANTICIPO_PAGO}>Pago anticipado</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>El pago parcial genera cuentas por pagar.</FormDescription>
+                      <FormDescription>
+                        El pago completo descuenta la cuenta seleccionada; el pago parcial genera una cuenta por pagar.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -542,7 +608,13 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Moneda</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          if (value === 'CUP') form.setValue('tasaCambio', undefined)
+                        }}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger aria-label='Moneda'>
                             <SelectValue placeholder='Moneda de la compra' />
@@ -555,11 +627,98 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                           <SelectItem value='MLC'>MLC</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>La deuda por esta compra se registra en esta moneda.</FormDescription>
+                      <FormDescription>La compra y el pago se registran en esta moneda.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {formaPagoSeleccionada === 'PAGO_COMPLETO' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name='cuentaId'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cuenta de pago</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger aria-label='Cuenta de pago'>
+                                <SelectValue placeholder='Seleccione una cuenta' />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {cuentasPago
+                                .filter((account) => {
+                                  const currency = account.moneda.trim().toUpperCase()
+                                  return currency === monedaCompra || currency === 'CUP'
+                                })
+                                .map((account) => (
+                                  <SelectItem key={account.cuentaId} value={account.cuentaId}>
+                                    {`${account.nombreBanco} · ${account.numeroCuenta} · ${account.moneda}`}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>Solo se muestran cuentas compatibles con la moneda de compra.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name='tipoPagoId'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de pago</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger aria-label='Tipo de pago'>
+                                <SelectValue placeholder='Seleccione un tipo de pago' />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {tiposPago.map((paymentType) => (
+                                <SelectItem key={paymentType.tipoId} value={paymentType.tipoId}>
+                                  {paymentType.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {monedaCompra !== 'CUP' && (
+                  <FormField
+                    control={form.control}
+                    name='tasaCambio'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tasa de cambio a CUP</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min='0'
+                            step='0.00000001'
+                            aria-label='Tasa de cambio a CUP'
+                            value={field.value ?? ''}
+                            onChange={(event) => {
+                              const value = event.target.value
+                              field.onChange(value === '' ? undefined : Number(value))
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>Se conserva como evidencia de valoración de la compra.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
