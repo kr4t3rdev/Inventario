@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,6 +105,7 @@ export function KardexPageClient({
 	const [page, setPage] = useState(1);
 	const [datos, setDatos] = useState<KardexDatos | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isExportingPdf, setIsExportingPdf] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const ubicacionesDisponibles = useMemo(() => {
@@ -166,6 +167,38 @@ export function KardexPageClient({
 		enlace.download = `kardex-${productoId}-${Date.now()}.csv`;
 		enlace.click();
 		URL.revokeObjectURL(url);
+	}
+
+	/**
+	 * @description Exporta a PDF los movimientos visibles de la página actual.
+	 * @returns {Promise<void>} Promesa resuelta al finalizar la exportación.
+	 */
+	async function exportarPdf(): Promise<void> {
+		if (!datos) return;
+
+		setIsExportingPdf(true);
+		setError(null);
+
+		try {
+			const { exportarKardexPdf } = await import('@/features/inventario/lib/kardex-pdf');
+			const productoNombre = productos.find(
+				(producto) => producto.id === productoId,
+			)?.nombre ?? productoId;
+
+			exportarKardexPdf({
+				productoId,
+				productoNombre,
+				saldoInicial: datos.saldoInicial,
+				pagina: datos.page,
+				totalPaginas,
+				movimientos: datos.items,
+			});
+		} catch (err) {
+			console.error('Error al exportar el kardex a PDF:', err);
+			setError('No se pudo generar el PDF del kardex');
+		} finally {
+			setIsExportingPdf(false);
+		}
 	}
 
 	return (
@@ -247,7 +280,7 @@ export function KardexPageClient({
 				</div>
 			</div>
 
-			<div className="flex items-center gap-2">
+			<div className="flex flex-wrap items-center gap-2">
 				<Input
 					id="fechaHasta"
 					aria-label="Hasta"
@@ -262,6 +295,17 @@ export function KardexPageClient({
 				<Button variant="outline" onClick={exportarCsv} disabled={!datos || datos.items.length === 0}>
 					<Download className="mr-2 h-4 w-4" />
 					Exportar CSV
+				</Button>
+				<Button
+					variant="outline"
+					onClick={exportarPdf}
+					disabled={
+						!datos || datos.items.length === 0 || isLoading || isExportingPdf
+					}
+					aria-busy={isExportingPdf}
+				>
+					<FileText className="mr-2 h-4 w-4" />
+					Exportar PDF
 				</Button>
 			</div>
 

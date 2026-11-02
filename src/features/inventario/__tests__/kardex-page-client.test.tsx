@@ -5,8 +5,13 @@ vi.mock('@/features/inventario', () => ({
   getKardexAction: vi.fn(),
 }))
 
+vi.mock('@/features/inventario/lib/kardex-pdf', () => ({
+  exportarKardexPdf: vi.fn(),
+}))
+
 import { getKardexAction } from '@/features/inventario'
 import { KardexPageClient } from '@/features/inventario/components/kardex-page-client'
+import { exportarKardexPdf } from '@/features/inventario/lib/kardex-pdf'
 
 const productos = [
   { id: 'prod-1', nombre: 'Arroz' },
@@ -158,6 +163,7 @@ describe('KardexPageClient', () => {
       .toBeInTheDocument()
     expect(screen.getByText(/saldo inicial: 8/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /exportar csv/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /exportar pdf/i })).toBeDisabled()
   })
 
   it('envía filtros de ubicación y fecha, y permite avanzar y regresar páginas', async () => {
@@ -226,6 +232,15 @@ describe('KardexPageClient', () => {
     expect(screen.getByRole('button', { name: /anterior/i })).toBeEnabled()
     expect(screen.getByRole('button', { name: /siguiente/i })).toBeDisabled()
 
+    fireEvent.click(screen.getByRole('button', { name: /exportar pdf/i }))
+    await waitFor(() => {
+      expect(exportarKardexPdf).toHaveBeenCalledWith(expect.objectContaining({
+        pagina: 2,
+        totalPaginas: 2,
+        movimientos: [expect.objectContaining({ origenId: 'v-2' })],
+      }))
+    })
+
     fireEvent.click(screen.getByRole('button', { name: /anterior/i }))
     await waitFor(() => {
       expect(getKardexAction).toHaveBeenNthCalledWith(3, expect.objectContaining({ page: 1 }))
@@ -269,6 +284,87 @@ describe('KardexPageClient', () => {
     expect(link.href).toBe('blob:kardex-test')
     expect(link.click).toHaveBeenCalledOnce()
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:kardex-test')
+  })
+
+  it('exporta las filas visibles en un PDF descargable', async () => {
+    vi.mocked(getKardexAction).mockResolvedValue({
+      success: true,
+      data: {
+        saldoInicial: 5,
+        total: 1,
+        page: 1,
+        limit: 50,
+        items: [{
+          id: 'm-pdf', tipoOrigen: 'COMPRA', origenId: 'c-pdf', cantidad: 3,
+          saldo: 8, costoUnitario: 45, createdAt: new Date('2026-10-03T10:00:00.000Z'),
+        }],
+      },
+    } as unknown as Awaited<ReturnType<typeof getKardexAction>>)
+
+    renderPage()
+    fireEvent.change(screen.getByLabelText(/producto/i), {
+      target: { value: 'prod-1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /consultar/i }))
+    expect(await screen.findByText('c-pdf')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /exportar pdf/i }))
+
+    await waitFor(() => {
+      expect(exportarKardexPdf).toHaveBeenCalledWith({
+        productoId: 'prod-1',
+        productoNombre: 'Arroz',
+        saldoInicial: 5,
+        pagina: 1,
+        totalPaginas: 1,
+        movimientos: [{
+          id: 'm-pdf',
+          tipoOrigen: 'COMPRA',
+          origenId: 'c-pdf',
+          cantidad: 3,
+          costoUnitario: 45,
+          createdAt: '2026-10-03T10:00:00.000Z',
+          saldo: 8,
+        }],
+      })
+    })
+  })
+
+  it('muestra error si no se puede generar el PDF', async () => {
+    vi.mocked(getKardexAction).mockResolvedValue({
+      success: true,
+      data: {
+        saldoInicial: 5,
+        total: 1,
+        page: 1,
+        limit: 50,
+        items: [{
+          id: 'm-pdf-error', tipoOrigen: 'COMPRA', origenId: 'c-pdf-error', cantidad: 3,
+          saldo: 8, costoUnitario: 45, createdAt: new Date('2026-10-03T10:00:00.000Z'),
+        }],
+      },
+    } as unknown as Awaited<ReturnType<typeof getKardexAction>>)
+    vi.mocked(exportarKardexPdf).mockImplementationOnce(() => {
+      throw new Error('Fallo de generación');
+    })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    renderPage()
+    fireEvent.change(screen.getByLabelText(/producto/i), {
+      target: { value: 'prod-1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /consultar/i }))
+    expect(await screen.findByText('c-pdf-error')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /exportar pdf/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No se pudo generar el PDF del kardex',
+    )
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error al exportar el kardex a PDF:',
+      expect.any(Error),
+    )
   })
 
   it('muestra error si la consulta falla', async () => {
