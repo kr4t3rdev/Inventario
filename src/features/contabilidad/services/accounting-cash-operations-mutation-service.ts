@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -451,30 +450,29 @@ export const AccountingCashOperationsMutationService = {
 
       const cxc = await tx.cuentaPorCobrar.create({ data: cxcData });
 
-      const conversion = buildPersistedAccountingAmount(
-        Number(input.montoCapital),
-        input.moneda || 'CUP',
-        input.tasaCambioAlCrear ?? undefined,
-        fechaReconciliacion,
-      );
       const reconciliacionData: Record<string, unknown> = {
         tenant: { connect: { tenantId } },
         cuentaBancaria: { connect: { cuentaId: input.cuentaBancariaId } },
         tipoPago: { connect: { tipoId: tp.tipoId } },
         monto: input.montoCapital,
-        moneda: input.moneda || 'CUP',
-        montoConvertido: conversion.montoConvertido,
+        moneda: monedaObligacion,
+        montoConvertido: obligationFx.amount,
+        functionalCurrency: obligationFx.functionalCurrency,
+        tasaCambio: obligationFx.fields.tasaCambio,
+        rateEffectiveAt: obligationFx.fields.rateEffectiveAt,
+        fxProvenanceKind: obligationFx.fields.fxProvenanceKind,
+        fxProvenanceSource: obligationFx.fields.fxProvenanceSource,
+        fxCatalogRateId: obligationFx.fields.fxCatalogRateId,
+        fxEvidenceJson: obligationFx.fields.fxEvidenceJson,
+        fxEvidenceFingerprint: obligationFx.fields.fxEvidenceFingerprint,
+        fxEvidenceVersion: obligationFx.fields.fxEvidenceVersion,
         fechaReconciliacion,
-        ...(conversion.fxEvidence ?? {}),
         observaciones:
           input.observaciones || `Desembolso de préstamo cash para cliente ${input.clienteId}`,
         reconciliadoPor: user.userId,
         tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
         ...(idempotencyKey ? { idempotencyKey, idempotencyPayloadHash } : {}),
       };
-      if (conversion.tasaCambio != null) {
-        reconciliacionData.tasaCambio = conversion.tasaCambio;
-      }
 
       const reconciliacion = await tx.reconciliacionVenta.create({ data: reconciliacionData });
 
@@ -511,6 +509,20 @@ export const AccountingCashOperationsMutationService = {
           data: { prestamoCashId: createdLoan.id },
         });
       }
+      await postEvento(tx, { tenantId, userId: user.userId }, {
+        tipo: 'PRESTAMO_OTORGADO',
+        fecha: reconciliacion.fechaReconciliacion,
+        descripcion: input.observaciones || `Préstamo otorgado al cliente ${input.clienteId}`,
+        origen: { tipo: 'prestamo_cash', id: createdLoan.id },
+        monto: reconciliacion.monto,
+        moneda: reconciliacion.moneda,
+        montoFuncional: reconciliacion.montoConvertido,
+        monedaFuncional: reconciliacion.functionalCurrency,
+        tasaCambio: reconciliacion.tasaCambio,
+        fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+        medioCobro: 'BANCOS',
+        referencia: idempotencyKey ?? reconciliacion.reconciliacionId,
+      });
       await AuditLogService.logStrict({
         accion: 'CREATE',
         entidad: 'PRESTAMO_CASH',

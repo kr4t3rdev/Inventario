@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => {
   const loanFindFirst = vi.fn();
   const auditStrict = vi.fn();
   const accountingPolicyFindUnique = vi.fn();
+  const postEvent = vi.fn();
   const lock = vi.fn();
   const transaction = vi.fn();
   const requireFeature = vi.fn();
@@ -29,6 +30,7 @@ const mocks = vi.hoisted(() => {
     loanFindFirst,
     auditStrict,
     accountingPolicyFindUnique,
+    postEvent,
     lock,
     transaction,
     requireFeature,
@@ -47,6 +49,9 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 }));
 vi.mock('../accounting-tenant-lock-service', () => ({
   acquireAccountingTenantLock: mocks.lock,
+}));
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+  postEvento: mocks.postEvent,
 }));
 
 const input = {
@@ -91,11 +96,14 @@ describe('cash-loan create tenant safety and atomicity', () => {
     mocks.clientFindFirst.mockResolvedValue({ clienteId: 'client-1' });
     mocks.paymentTypeFindFirst.mockResolvedValue({ tipoId: 'payment-type-1' });
     mocks.receivableCreate.mockResolvedValue({ id: 'receivable-1' });
-    mocks.reconciliationCreate.mockResolvedValue({ reconciliacionId: 'reconciliation-1' });
+    mocks.reconciliationCreate.mockImplementation(async ({ data }: {
+      data: Record<string, unknown>;
+    }) => ({ ...data, reconciliacionId: 'reconciliation-1' }));
     mocks.reconciliationUpdate.mockResolvedValue({});
     mocks.loanCreate.mockResolvedValue({ id: 'loan-1' });
     mocks.auditStrict.mockResolvedValue({ id: 'audit-1' });
     mocks.accountingPolicyFindUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+    mocks.postEvent.mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'entry-1' });
     mocks.requireFeature.mockImplementation(() => undefined);
   });
 
@@ -119,6 +127,62 @@ describe('cash-loan create tenant safety and atomicity', () => {
       cashInterestPolicyVersion: 1,
       cashInterestPrincipalRemaining: expect.objectContaining({ d: expect.any(Array) }),
     });
+  });
+
+  it('posts PRESTAMO_OTORGADO from the persisted functional valuation in the same transaction', async () => {
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+    const operationDate = new Date('2026-11-02T12:00:00.000Z');
+    const transactionClient = tx();
+    mocks.transaction.mockImplementation(async (callback: (client: unknown) => unknown) =>
+      callback(transactionClient),
+    );
+
+    await service.createCashLoan({
+      input: { ...input, moneda: 'USD', tasaCambioAlCrear: 35 },
+      user,
+      operationDate,
+    });
+
+    const reconciliation = mocks.reconciliationCreate.mock.calls[0][0].data;
+    expect(reconciliation.montoConvertido.toString()).toBe('2625');
+    expect(reconciliation.fxProvenanceSource).toBe('cash-loan-obligation');
+    expect(mocks.postEvent).toHaveBeenCalledWith(
+      transactionClient,
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'PRESTAMO_OTORGADO',
+        fecha: operationDate,
+        origen: { tipo: 'prestamo_cash', id: 'loan-1' },
+        monto: 75,
+        moneda: 'USD',
+        montoFuncional: expect.objectContaining({ d: expect.any(Array) }),
+        monedaFuncional: 'CUP',
+        tasaCambio: expect.objectContaining({ d: expect.any(Array) }),
+        fxEvidenceFingerprint: reconciliation.fxEvidenceFingerprint,
+        medioCobro: 'BANCOS',
+        referencia: 'retry-1',
+      }),
+    );
+    expect(reconciliation).toMatchObject({
+      montoConvertido: expect.objectContaining({ d: expect.any(Array) }),
+      functionalCurrency: 'CUP',
+      tasaCambio: expect.objectContaining({ d: expect.any(Array) }),
+      fxEvidenceFingerprint: expect.any(String),
+      rateEffectiveAt: operationDate,
+    });
+  });
+
+  it('does not complete the transaction when posting PRESTAMO_OTORGADO fails', async () => {
+    mocks.postEvent.mockRejectedValueOnce(new Error('posting failed'));
+    const { AccountingCashOperationsMutationService: service } = await import(
+      '../accounting-cash-operations-mutation-service'
+    );
+
+    await expect(service.createCashLoan({ input, user })).rejects.toThrow('posting failed');
+    expect(mocks.loanCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.auditStrict).not.toHaveBeenCalled();
   });
 
   it('replays an existing loan directly through the writer after downgrade', async () => {
@@ -153,6 +217,7 @@ describe('cash-loan create tenant safety and atomicity', () => {
     expect(mocks.requireFeature).not.toHaveBeenCalled();
     expect(mocks.clientFindFirst).not.toHaveBeenCalled();
     expect(mocks.loanCreate).not.toHaveBeenCalled();
+    expect(mocks.postEvent).not.toHaveBeenCalled();
   });
 
   it('rejects a foreign-tenant bank account before any balance or loan write', async () => {

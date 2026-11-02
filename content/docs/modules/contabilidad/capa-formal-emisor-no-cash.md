@@ -111,9 +111,10 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
-- Handlers legacy sin importadores
-  (`handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts`,
-  `handlers-reconciliacion-servicios.ts`).
+- Los handlers legacy `handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts` y
+  `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
+  los endpoints activos delegan en servicios de mutación o emiten desde sus
+  rutas actuales. No se consideran writers activos pendientes de integración.
 - El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
   licencia para activar el emisor tenant a tenant.
 
