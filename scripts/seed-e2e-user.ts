@@ -10,6 +10,11 @@ export interface E2EFixtureOwnership {
   tenantId: string;
   userId: string;
   email: string;
+  fixtures: {
+    almacenId: string;
+    productoId: string;
+    proveedorId: string;
+  };
 }
 
 export async function run(): Promise<E2EFixtureOwnership> {
@@ -180,8 +185,8 @@ export async function run(): Promise<E2EFixtureOwnership> {
        * @returns {Promise<void>} Licencia activa con featureOverrides de servicios.
        */
       async function seedLicenseE2E(): Promise<void> {
-        const plan = await prisma.plan.findFirst({ orderBy: { precio: 'asc' } })
-        if (!plan) throw new Error('No hay planes en la DB — ejecuta pnpm run seed:plans primero')
+        const plan = await prisma.plan.findFirst({ where: { nombre: 'Profesional' } })
+        if (!plan) throw new Error('No existe el plan Profesional — ejecuta pnpm run seed:plans primero')
 
         const now = new Date()
         const expiry = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
@@ -477,7 +482,16 @@ export async function run(): Promise<E2EFixtureOwnership> {
         await seedPrecioListaCatalog()
         await seedPaymentCatalog()
 
-        return { tenantId: E2E_TENANT_ID, userId: user.userId, email: E2E_USER.email };
+        return {
+          tenantId: E2E_TENANT_ID,
+          userId: user.userId,
+          email: E2E_USER.email,
+          fixtures: {
+            almacenId: E2E_FIXTURES.almacenId,
+            productoId: E2E_FIXTURES.productoAceiteId,
+            proveedorId: `${fixtureId}-proveedor-1`,
+          },
+        };
       }
       return main();
     }, { timeout: 30000 });

@@ -162,9 +162,9 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'scripts/seed-e2e-user.ts',
-    occurrences: 1,
+    occurrences: 2,
     reason: 'Reinicia el esquema de una base de datos descartable para fixtures E2E.',
-    tenantGuarantee: 'Tooling offline destructivo; no procesa requests ni datos de tenants reales.',
+    tenantGuarantee: 'assertDisposableDatabase exige opt-in y target local tcp_test_*; tooling offline sin requests de tenants reales.',
   },
   {
     file: 'src/lib/admin/userMetrics.ts',
