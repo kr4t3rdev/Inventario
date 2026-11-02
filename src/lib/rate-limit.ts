@@ -32,6 +32,7 @@ const defaults: Record<string, RateLimitConfig> = {
   '/api/auth/register': { maxRequests: 5, windowMs: 60_000 },
   '/api/auth/verify-email': { maxRequests: 5, windowMs: 60_000 },
   '/api/auth/onboarding/resend-verification': { maxRequests: 3, windowMs: 300_000 },
+  '/api/sentry-smoke': { maxRequests: 2, windowMs: 300_000 },
 }
 
 const defaultConfig: RateLimitConfig = { maxRequests: 20, windowMs: 60_000 }
