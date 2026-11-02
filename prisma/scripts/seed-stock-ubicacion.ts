@@ -1,5 +1,6 @@
 // prisma/scripts/seed-stock-ubicacion.ts
 import { prisma } from "../../src/lib/prisma";
+import { calcularUnidadesMovidas } from "../../src/features/transferencias/lib/stock-pv";
 
 /**
  * @description Pobla StockUbicacion con datos calculados del estado actual del sistema.
@@ -23,16 +24,26 @@ async function main() {
 	});
 
 	for (const pv of puntosDeVenta) {
-		// Entradas al PV (transferencias donde este PV es destino)
+		// Entradas al PV (transferencias donde este PV es destino). Solo
+		// cuentan las que de verdad movieron stock, con la misma regla que
+		// aplica el runtime (calcularUnidadesMovidas).
 		const entradas = await prisma.transferencia.findMany({
-			where: { puntoDeVentaDestinoId: pv.pvId },
-			select: { productoId: true, cantidad: true },
+			where: {
+				puntoDeVentaDestinoId: pv.pvId,
+				deletedAt: null,
+				estado: { in: ["COMPLETADA", "PARCIAL"] },
+			},
+			select: { productoId: true, cantidad: true, cantidadRecibida: true, estado: true },
 		});
 
 		// Salidas del PV (transferencias donde este PV es origen)
 		const salidas = await prisma.transferencia.findMany({
-			where: { puntoDeVentaOrigenId: pv.pvId },
-			select: { productoId: true, cantidad: true },
+			where: {
+				puntoDeVentaOrigenId: pv.pvId,
+				deletedAt: null,
+				estado: { in: ["COMPLETADA", "PARCIAL"] },
+			},
+			select: { productoId: true, cantidad: true, cantidadRecibida: true, estado: true },
 		});
 
 		// Ventas en el PV con items detallados (VentaItem)
@@ -53,13 +64,13 @@ async function main() {
 		entradas.forEach((t) => {
 			stockMap.set(
 				t.productoId,
-				(stockMap.get(t.productoId) ?? 0) + t.cantidad,
+				(stockMap.get(t.productoId) ?? 0) + calcularUnidadesMovidas(t),
 			);
 		});
 		salidas.forEach((t) => {
 			stockMap.set(
 				t.productoId,
-				(stockMap.get(t.productoId) ?? 0) - t.cantidad,
+				(stockMap.get(t.productoId) ?? 0) - calcularUnidadesMovidas(t),
 			);
 		});
 		ventasItems.forEach((v) => {

@@ -32,7 +32,8 @@ export type AuditEntity =
   | "TENANT_ROLE"
   | "CLIENTE"
   | "VENTA_SERVICIO"
-  | "CONTRATO";
+  | "CONTRATO"
+  | "OFERTA";
 
 export type AuditAction = 
   | "CREATE" 

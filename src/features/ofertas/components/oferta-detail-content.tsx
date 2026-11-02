@@ -28,6 +28,7 @@ import { facturarOfertaAction, updateOfertaAction, convertirOfertaAPedidoAction 
 import { formatCurrency } from '@/lib/utils'
 import { getAuthToken } from '@/lib/token'
 import { getSeriesFacturacionAction } from '@/features/series-facturacion/actions'
+import { OfertaItemsEditor } from '@/features/ofertas/components/oferta-items-editor'
 import type { Oferta } from '@/app/models/model'
 
 interface OfertaDetailContentProps {
@@ -281,6 +282,13 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
             >
               {oferta.estado}
             </Badge>
+            {oferta.estado === 'PENDIENTE' && (
+              <OfertaItemsEditor
+                oferta={oferta}
+                disabled={isPending}
+                onSaved={(actualizada) => setOferta(actualizada)}
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -11,6 +11,7 @@ export {
 
 export { NewVersionDialog } from './components/new-version-dialog'
 export { AddFirmaDialog } from './components/add-firma-dialog'
+export { AddFirmaSection } from './components/add-firma-section'
 export { TiposContratosList } from './components/tipos-contratos-list'
 export { TiposContratosForm } from './components/tipos-contratos-form'
 export { ConfiguracionContratos } from './components/configuracion-contratos'

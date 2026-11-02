@@ -141,30 +141,26 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
     db: PrismaClient | Prisma.TransactionClient = this.db,
   ): Promise<void> {
     try {
-      // Crear CUP (moneda principal) si no existe
-      await db.moneda.upsert({
-        where: { codigo: 'CUP' },
-        update: {},
-        create: {
-          codigo: 'CUP',
-          nombre: 'Peso Cubano',
-          simbolo: '₱',
-          esPrincipal: true,
-          isActive: true,
-        },
-      });
-
-      // Crear USD (moneda secundaria común) si no existe
-      await db.moneda.upsert({
-        where: { codigo: 'USD' },
-        update: {},
-        create: {
-          codigo: 'USD',
-          nombre: 'Dólar Estadounidense',
-          simbolo: '$',
-          esPrincipal: false,
-          isActive: true,
-        },
+      // El insert masivo con skipDuplicates evita que dos primeras lecturas
+      // concurrentes compitan con upsert por el código único de la moneda.
+      await db.moneda.createMany({
+        data: [
+          {
+            codigo: 'CUP',
+            nombre: 'Peso Cubano',
+            simbolo: '₱',
+            esPrincipal: true,
+            isActive: true,
+          },
+          {
+            codigo: 'USD',
+            nombre: 'Dólar Estadounidense',
+            simbolo: '$',
+            esPrincipal: false,
+            isActive: true,
+          },
+        ],
+        skipDuplicates: true,
       });
     } catch (error) {
       // Si falla, no bloquear la operación - solo loguear

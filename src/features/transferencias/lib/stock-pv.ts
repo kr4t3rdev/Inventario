@@ -9,6 +9,29 @@ export interface FilaAporteTransferencia {
 }
 
 /**
+ * @description Calcula las unidades que una transferencia movió del stock.
+ * Es la fuente única de verdad: una COMPLETADA movió su cantidad (o lo
+ * recibido cuando la fila se recibió por partes, que es el caso de las filas
+ * heredadas sin backfill), una PARCIAL movió solo lo recibido y una
+ * transferencia sin recepción (PENDIENTE, APROBADA, EN_TRANSITO) no movió
+ * nada. Se usa tanto para calcular el aporte al stock de un punto de venta
+ * como para revertir el stock al cancelar, de modo que ambos caminos no
+ * puedan divergir.
+ * @param {FilaAporteTransferencia} fila - Fila de transferencia con estado,
+ * cantidad enviada y cantidad recibida.
+ * @returns {number} Unidades que la transferencia movió del stock.
+ */
+export function calcularUnidadesMovidas(fila: FilaAporteTransferencia): number {
+	if (fila.estado === "COMPLETADA") {
+		return fila.cantidadRecibida ?? fila.cantidad;
+	}
+	if (fila.estado === "PARCIAL") {
+		return fila.cantidadRecibida ?? 0;
+	}
+	return 0;
+}
+
+/**
  * @description Calcula las unidades que un conjunto de transferencias aportó
  * al stock de un punto de venta. Con el flujo de la Sesión B el stock solo se
  * mueve al recibir, así que manda lo recibido y no lo enviado: una COMPLETADA
@@ -23,13 +46,5 @@ export interface FilaAporteTransferencia {
 export function calcularAporteRecibido(
 	filas: FilaAporteTransferencia[],
 ): number {
-	return filas.reduce((total, fila) => {
-		if (fila.estado === "COMPLETADA") {
-			return total + (fila.cantidadRecibida ?? fila.cantidad);
-		}
-		if (fila.estado === "PARCIAL") {
-			return total + (fila.cantidadRecibida ?? 0);
-		}
-		return total;
-	}, 0);
+	return filas.reduce((total, fila) => total + calcularUnidadesMovidas(fila), 0);
 }

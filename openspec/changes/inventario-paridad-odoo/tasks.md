@@ -178,6 +178,54 @@
 
 * [ ] 8.1 `pnpm run test:run` por feature + `test-isolation-contract`
   en verde (0 offenders); integración solo con `DATABASE_URL_TEST`.
+
+## Auditoría posterior de Sesión F — merma tenant-scope + LP-1 (2026-11-02)
+
+- [x] Merma desktop: listado/lectura filtran por `tenantId`; create verifica
+  producto y ubicación; update/delete leen la merma por `(mermaId, tenantId)`;
+  el espejo `AjusteInventario` y kardex filtran por tenant.
+- [x] Hallazgo adicional en el alcance: `almacenId` explícito de create/update
+  no se comprobaba contra el tenant y la ubicación de producto usada en POST
+  móvil tampoco se volvía a validar. Ahora ambas rutas validan almacén mediante
+  `findFirst({ almacenId, tenantId })` antes de consultar stock o mutar datos.
+  RED desktop: `src/features/mermas/__tests__/actions.test.ts` — 2 casos
+  fallaban al recibir `STOCK_INSUFICIENTE` en vez de `NOT_FOUND`; GREEN desktop
+  y móvil: suites de mermas + mobile.
+- [x] LP-1 cotejado contra `5e37f30e8`: fuente única
+  `resolvePrecioVenta` (cliente > PV > default del tenant > base); el writer
+  de ventas tenant-scopes PV, cliente, productos y lista default, y rechaza
+  divergencia con `PRICE_MISMATCH` sin override; `getPrecioEfectivo` y el
+  endpoint por ubicación comparten resolver y restringen datos a listas
+  aplicables del tenant. Docs en `content/docs/modules/ventas/integridad-precios.md`
+  y `docs/auditoria-listas-precios-vs-odoo.md` concuerdan.
+- [x] E2E LP-1.4 cotejado: fixtures base 180/default 165/cliente 150 en
+  `scripts/seed-e2e-user.ts`; `e2e/pos-lista-precio-cliente.spec.ts` comprueba
+  el default en POS, cambio de cliente, total y precio persistido por el
+  endpoint de venta.
+- [x] Pruebas unitarias focalizadas: `src/features/mermas`, mobile mermas,
+  resolver/price-integrity, orquestación de venta, pricing adapter y endpoint
+  de productos por ubicación → 97/97 (11 archivos).
+- [x] E2E LP-1.4 ejecutado en `tcp_test_e2e_lp1_20261102`, DB local desechable
+  nueva en `127.0.0.1:5433`; migraciones y planes sembrados. Se corrigió el
+  feature `clientes` faltante en la licencia fixture, se añadieron cuenta/tipo
+  de pago E2E y se ajustaron aserciones a copy/formato monetario reales. El
+  test verifica que la venta facturada quede listada en 150 CUP; **1/1 passed**.
+  El global teardown verifica limpieza de fixtures y reinicia el esquema.
+  Reproducir con `NODE_OPTIONS='--import=tsx'`, `ALLOW_DISPOSABLE_TEST_DB=1`,
+  `DATABASE_URL` igual a `DATABASE_URL_TEST` y un `E2E_TEST_PASSWORD` de 16+
+  caracteres.
+- [x] **Drift de esquema encontrado por el E2E y corregido**: Prisma incluía
+  `OrdenReparacion.tenantId`, pero la columna no existía en migraciones. Se
+  agregó `20261106000000_add_tenant_id_to_orden_reparacion`, que deriva el
+  tenant del cliente, falla ante datos huérfanos/cruzados y agrega NOT NULL,
+  índice y FK a `tenants`. Contrato RED→GREEN en
+  `src/lib/__tests__/orden-reparacion-tenant-migration-contract.test.ts`; se
+  aplicó a la DB TCP y el E2E LP-1.4 volvió a pasar 1/1, cargando la factura.
+- [x] La corrida limpia expuso carrera en la creación lazy de monedas CUP/USD:
+  solicitudes simultáneas hacían `upsert` contra `codigo` único y una registraba
+  P2002 aunque el error se absorbía. Se reemplazó por `createMany` con
+  `skipDuplicates`; test en `exchange-rate-provider.test.ts` y E2E repetido
+  → **1/1 passed sin errores de monedas**.
 * [ ] 8.2 `pnpm run lint` y `tsc --noEmit` en archivos tocados.
 * [ ] 8.3 Matriz manual por plan: Básico no ve OC/lotes/variantes/MRP
   (toast upgrade); Profesional ve P1; Empresarial ve todo.

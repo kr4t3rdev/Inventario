@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     merma: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
     producto: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+    almacen: { findFirst: vi.fn().mockResolvedValue({ almacenId: 'alm-1' }) },
     stockUbicacion: { findUnique: vi.fn() },
     $transaction: vi.fn((args: any) => (typeof args === 'function' ? args(mockTx) : Promise.all(args))),
     $queryRaw: vi.fn(),

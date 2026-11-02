@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth-middleware';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { expirarOfertasVencidas } from '@/features/ofertas/services/expiracion-ofertas-service';
 
 async function handler(
   _request: NextRequest,
@@ -9,9 +10,13 @@ async function handler(
   user: AuthenticatedUser,
 ) {
   const { id } = await params;
+  if (!user.tenantId) {
+    return NextResponse.json({ error: 'Tenant no identificado' }, { status: 403 });
+  }
+  await expirarOfertasVencidas(user.tenantId);
 
   const oferta = await prisma.oferta.findFirst({
-    where: { id, tenantId: user.tenantId! },
+    where: { id, tenantId: user.tenantId },
     include: {
       cliente: true,
       items: {

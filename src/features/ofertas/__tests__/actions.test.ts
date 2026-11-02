@@ -17,7 +17,12 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion:
 
 const mockTx = {
   $executeRaw: vi.fn(),
-  oferta: { findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+  oferta: {
+    findFirst: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    deleteMany: vi.fn(),
+  },
   venta: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   servicios: { findFirst: vi.fn() },
@@ -470,7 +475,7 @@ describe('Ofertas Server Actions', () => {
       mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 1 });
       mockTx.serieFacturacion.update.mockResolvedValue({ consecutivo: 2 });
       mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-mix' });
-      mockTx.servicios.findFirst.mockResolvedValue({ servicioId: 'srv-1', moneda: 'CUP', nombre: 'Srv' });
+      mockTx.servicios.findFirst.mockResolvedValue({ servicioId: 'srv-1', moneda: 'CUP', nombre: 'Srv', costo: 40 });
       mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' });
       mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-mix' });
       mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'P', tenantId: 'tenant-test' });
@@ -482,7 +487,7 @@ describe('Ofertas Server Actions', () => {
       expect(result.success).toBe(true);
       expect(mockTx.servicios.findFirst).toHaveBeenCalledWith({
         where: { servicioId: 'srv-1', tenantId: 'tenant-test' },
-        select: { servicioId: true, moneda: true, nombre: true },
+        select: { servicioId: true, moneda: true, nombre: true, costo: true },
       });
       expect(mockTx.venta.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
@@ -490,7 +495,7 @@ describe('Ofertas Server Actions', () => {
         }),
       }));
       expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ servicioId: 'srv-1', cantidad: 1, total: 100, moneda: 'CUP' }),
+        data: expect.objectContaining({ servicioId: 'srv-1', cantidad: 1, total: 100, moneda: 'CUP', costo: 40 }),
       }));
     });
 
@@ -618,8 +623,9 @@ describe('Ofertas Server Actions', () => {
   describe('deleteOfertaAction', () => {
     it('elimina oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' } as any);
-      vi.mocked(prisma.oferta.delete).mockResolvedValue({} as any);
+      mockTx.oferta.findFirst.mockResolvedValue({ id: 'of-1', estado: 'PENDIENTE' } as any);
+      mockTx.oferta.deleteMany.mockResolvedValue({ count: 1 } as any);
+      mockTx.venta.findFirst.mockResolvedValue(null);
       const result = await deleteOfertaAction('of-1');
       expect(result.success).toBe(true);
     });

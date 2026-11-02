@@ -7,6 +7,7 @@ const { prismaMock } = vi.hoisted(() => {
     merma: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), delete: vi.fn() },
     compraProducto: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     producto: { findUnique: vi.fn(), findFirst: vi.fn() },
+    almacen: { findFirst: vi.fn() },
     vendor: { findFirst: vi.fn() },
     stockUbicacion: { findUnique: vi.fn() },
     ajusteInventario: { create: vi.fn(), updateMany: vi.fn() },
@@ -101,6 +102,7 @@ describe('Mobile API: transfers, mermas & purchases', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     currentTenantId = 'tenant-1';
+    (prismaMock.almacen.findFirst as Mock).mockResolvedValue({ almacenId: 'a1' });
   });
 
   it('GET /api/mobile/transfers mapea filas a la forma móvil', async () => {
@@ -170,6 +172,24 @@ describe('Mobile API: transfers, mermas & purchases', () => {
     const response = await createMerma(request);
 
     expect(response.status).toBe(201);
+  });
+
+  it('POST /api/mobile/mermas rechaza el almacén asignado si pertenece a otro tenant', async () => {
+    (prismaMock.producto.findUnique as Mock).mockResolvedValue({
+      id: 'p1', tenantId: 'tenant-1', precioCosto: 50, almacenId: 'a-foreign',
+    });
+    (prismaMock.almacen.findFirst as Mock).mockResolvedValue(null);
+
+    const request = new NextRequest('http://localhost/api/mobile/mermas', {
+      method: 'POST',
+      body: JSON.stringify({ productoId: 'p1', cantidad: 2 }),
+    });
+    const response = await createMerma(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.code).toBe('NOT_FOUND');
+    expect(prismaMock.stockUbicacion.findUnique).not.toHaveBeenCalled();
   });
 
   it('POST /api/mobile/mermas crea con trazabilidad completa (creadoPor, kardex, espejo) y notifica', async () => {

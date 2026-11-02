@@ -51,6 +51,14 @@ interface AddFirmaDialogProps {
   users: Array<{ userId: string, name: string }>
 }
 
+/**
+ * @description Diálogo para registrar una solicitud de firma (o una firma ya
+ *              firmada) sobre un contrato. Una firma FIRMADA sobre un contrato
+ *              APROBADO activa el contrato vía la máquina de estados (CTF-3).
+ * @param {AddFirmaDialogProps} props - Contrato destino, callback de éxito y
+ *   padrón de firmantes elegibles (miembros activos del tenant).
+ * @returns {JSX.Element} Diálogo de registro de firma.
+ */
 export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -147,7 +155,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                         <UserPlus className="h-4 w-4 text-muted-foreground" />
                         Firmante
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
                             <SelectValue placeholder="Seleccione un usuario" />
@@ -181,7 +189,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                         <PenTool className="h-4 w-4 text-muted-foreground" />
                         Tipo de Firma
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
                             <SelectValue placeholder="Seleccione tipo" />
@@ -213,7 +221,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                         <PenTool className="h-4 w-4 text-muted-foreground" />
                         Estado de la firma
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
                             <SelectValue placeholder="Seleccione el estado" />

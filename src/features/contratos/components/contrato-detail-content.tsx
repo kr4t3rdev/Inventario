@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { FileUpload } from "@/components/file-upload"
 import { NewVersionDialog } from "@/features/contratos"
+import { AddFirmaSection } from "@/features/contratos/components/add-firma-section"
 import { LazyMotion, m as motion } from "framer-motion"
 
 interface Usuario {
@@ -98,6 +99,8 @@ interface ContratoDetail {
 interface ContratoDetailContentProps {
   initialData?: ContratoDetail
   contratoId: string
+  /** Si el usuario puede gestionar contratos: habilita registrar firmas. */
+  puedeFirmar?: boolean
 }
 
 /**
@@ -105,7 +108,7 @@ interface ContratoDetailContentProps {
  * @param {ContratoDetailContentProps} props - Props del componente
  * @returns {JSX.Element} Componente de detalle de contrato
  */
-export function ContratoDetailContent({ initialData, contratoId }: ContratoDetailContentProps) {
+export function ContratoDetailContent({ initialData, contratoId, puedeFirmar = false }: ContratoDetailContentProps) {
   const params = useParams()
   const router = useRouter()
   const id = params?.id as string || contratoId
@@ -391,8 +394,13 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
 
             <TabsContent value="firmas" className="mt-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Firmas</CardTitle>
+                  <AddFirmaSection
+                    contratoId={contrato.contratoId}
+                    puedeFirmar={puedeFirmar}
+                    onSuccess={() => { void fetchContrato(contrato.contratoId) }}
+                  />
                 </CardHeader>
                 <CardContent>
                   {contrato.firmas?.length ? (

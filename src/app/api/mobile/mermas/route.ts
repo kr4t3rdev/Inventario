@@ -98,6 +98,13 @@ export async function POST(request: Request) {
     if (!producto.almacenId) {
       return errorResponse('El producto no tiene almacén asignado', 400, 'VALIDATION_ERROR');
     }
+    const almacen = await prisma.almacen.findFirst({
+      where: { almacenId: producto.almacenId, tenantId },
+      select: { almacenId: true },
+    });
+    if (!almacen) {
+      return errorResponse('Almacén no encontrado', 404, 'NOT_FOUND');
+    }
 
     const stockUbicacion = await prisma.stockUbicacion.findUnique({
       where: {

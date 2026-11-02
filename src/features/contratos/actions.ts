@@ -85,6 +85,32 @@ export const getContratoByIdAction = withAction(async (id: string, user: Authent
   return contrato;
 });
 
+/**
+ * @description Lista los firmantes disponibles para un contrato: los miembros
+ *              activos del tenant con su nombre. El handler de firmas exige
+ *              que el firmante sea miembro del tenant, por lo que la UI solo
+ *              puede ofrecer este padrón.
+ * @param {void} _input - Sin parámetros.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<{ firmantes: Array<{ userId: string; name: string }> }>} Firmantes del tenant.
+ * @throws {ActionError} TENANT_REQUIRED sin membresía; FORBIDDEN sin permiso de contratos.
+ */
+export const getFirmantesAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireContratosFeature(user);
+  requirePermission(user, 'ventas.contratos.gestionar', 'gestionar contratos');
+  const tenantId = requireTenant(user);
+
+  const membresias = await prisma.tenantMembership.findMany({
+    where: { tenantId, isActive: true },
+    select: { userId: true, user: { select: { name: true } } },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return {
+    firmantes: membresias.map((m) => ({ userId: m.userId, name: m.user.name })),
+  };
+});
+
 export const createContratoAction = withAction(async (input: ContratoInput, user: AuthenticatedUser) => {
   requireContratosFeature(user);
   requirePermission(user, 'ventas.contratos.gestionar', 'gestionar contratos');

@@ -174,3 +174,21 @@ _(Rellenar por fase: comando RED + fallo observado, comando GREEN + resultado, r
 - GREEN: `resolverSerieYNumero` extraído y `facturarVenta` migrado (regresión 31/31); `Factura.ventaServicioId` unique (migración `20260927120000_factura_venta_servicio`); `facturarVentaServicioAction` con permiso `ventas.servicios.facturar` (+ fixture), sin revalidación de tope (documentada, test la fija); guard `VENTA_CON_FACTURA` en delete; helper `cerrarDocumentoServicio` cableado en el servicio compartido móvil Y en `reconciliarServicioAction` (web). Regresión cruzada 934 passed / 114 archivos.
 - Review: hallazgo propio 🟠 corregido — el escritor web del cobro (`reconciliarServicioAction`) no cerraba el documento; se extrae helper compartido para ambos escritores.
 - Commit: `2967e2b4` feat(servicios): factura-documento para ventas de servicios (C-6)
+
+### Revisión posterior de crédito en ofertas (2026-11-01)
+
+- [x] Se sostuvo la decisión documentada: facturar una venta de servicio no
+  revalida el tope, porque la exposición CxC ya se validó al crear/actualizar
+  la venta y la factura solo enlaza esa deuda. Contrato fijado en
+  `src/features/venta-servicios/__tests__/facturar-servicio.test.ts` (test
+  “no revalida el tope de crédito: la deuda ya fue validada y existe”).
+- [x] Se cerró el bypass de oferta: `facturarOfertaAction` ahora bloquea por
+  cliente y valida el límite antes del workflow si el vencimiento crea CxC;
+  `contra_pago` y el fast-path sin límite no hacen evaluación. Override usa
+  `AuditLogService.logStrict` dentro de la transacción. RED→GREEN en
+  `src/features/ofertas/__tests__/credito-facturacion-oferta.test.ts` (6/6).
+- [x] C-3: `facturar-oferta-workflow.ts` carga `Servicios.costo` y persiste el
+  snapshot en `VentaServicios.costo`; test de regresión añadido en
+  `facturar-workerflow-mixta.test.ts`.
+- [x] Verificación: `pnpm exec vitest run src/features/ofertas src/app/api/ofertas`
+  → 101/101 al integrar las correcciones de crédito/costo.

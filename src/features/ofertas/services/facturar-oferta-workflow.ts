@@ -181,7 +181,7 @@ export async function facturarOfertaWorkflow(
     if (!item.servicioId) continue;
     const servicio = await tx.servicios.findFirst({
       where: { servicioId: item.servicioId, tenantId: params.tenantId },
-      select: { servicioId: true, moneda: true, nombre: true },
+      select: { servicioId: true, moneda: true, nombre: true, costo: true },
     });
     if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
     await tx.ventaServicios.create({
@@ -190,6 +190,8 @@ export async function facturarOfertaWorkflow(
         servicioId: item.servicioId,
         clienteId: params.clienteId,
         cantidad: item.cantidad,
+        // C-3: el costo es el snapshot del catálogo; el payload no lo fija.
+        costo: servicio.costo,
         precioUnitario: Number(item.precioUnitario),
         total: Number(item.total),
         moneda: servicio.moneda ?? item.moneda,

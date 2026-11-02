@@ -72,6 +72,11 @@ export const createMermaAction = withAction(
 		const almacenIdEfectivo = parsed.almacenId ?? producto.almacenId;
 		if (!almacenIdEfectivo)
 			throw new ActionError("El producto no tiene almacén asignado", "VALIDATION_ERROR");
+		const almacen = await prisma.almacen.findFirst({
+			where: { almacenId: almacenIdEfectivo, tenantId },
+			select: { almacenId: true },
+		});
+		if (!almacen) throw new ActionError("Almacén no encontrado", "NOT_FOUND");
 		const stockUbicacion = await prisma.stockUbicacion.findUnique({
 			where: {
 				productoId_tipoUbicacion_ubicacionId: {
@@ -167,6 +172,14 @@ export const updateMermaAction = withAction(
 					throw new ActionError("Producto no encontrado", "NOT_FOUND");
 				precioCostoVigente = productoActual.precioCosto;
 			}
+			if (!resolvedAlmacenId) {
+				throw new ActionError("El producto no tiene almacén asignado", "VALIDATION_ERROR");
+			}
+			const almacen = await prisma.almacen.findFirst({
+				where: { almacenId: resolvedAlmacenId, tenantId },
+				select: { almacenId: true },
+			});
+			if (!almacen) throw new ActionError("Almacén no encontrado", "NOT_FOUND");
 
 			const cantidadAdicional =
 				productoCambia || almacenCambia

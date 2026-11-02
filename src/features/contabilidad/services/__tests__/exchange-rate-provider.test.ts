@@ -7,6 +7,8 @@ const mockPrisma = vi.hoisted(() => ({
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     findMany: vi.fn(),
+    createMany: vi.fn(),
+    upsert: vi.fn(),
   },
   tasaCambio: {
     findFirst: vi.fn(),
@@ -69,5 +71,34 @@ describe('PrismaExchangeRateProvider', () => {
       ruta: 'direct',
       effectiveAt: '2026-06-14T10:00:00.000Z',
     })
+  })
+
+  it('creates default currencies with conflict-safe bulk insert for concurrent readers', async () => {
+    mockPrisma.moneda.createMany.mockResolvedValue({ count: 2 })
+    mockPrisma.moneda.findMany.mockResolvedValue([])
+
+    const provider = new PrismaExchangeRateProvider(mockPrisma as any)
+    await provider.listCurrencies()
+
+    expect(mockPrisma.moneda.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          codigo: 'CUP',
+          nombre: 'Peso Cubano',
+          simbolo: '₱',
+          esPrincipal: true,
+          isActive: true,
+        },
+        {
+          codigo: 'USD',
+          nombre: 'Dólar Estadounidense',
+          simbolo: '$',
+          esPrincipal: false,
+          isActive: true,
+        },
+      ],
+      skipDuplicates: true,
+    })
+    expect(mockPrisma.moneda.upsert).not.toHaveBeenCalled()
   })
 })

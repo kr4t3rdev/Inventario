@@ -26,19 +26,57 @@ import type { Oferta } from '@/app/models/model';
 import { crearOfertaConNumero } from './lib/numero-oferta-generator';
 import { expirarOfertasVencidas } from './services/expiracion-ofertas-service';
 import { transicionPermitida } from './lib/transiciones-estado';
-import { calcularTotalesOferta } from './lib/totales-oferta';
+import { calcularTotalesOferta, recalcularMontosOferta } from './lib/totales-oferta';
 import { resolverItemsOferta } from './lib/resolver-items-oferta';
 import { lockOferta } from './lib/oferta-lock';
+import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { Prisma } from '@/generated/prisma';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
 }
 
+/**
+ * @description Distingue la causa de un claim condicional fallido sobre una
+ * oferta. La expiración perezosa usa un claim sin advisory lock, así que la
+ * oferta puede haber vencido entre la lectura y la escritura final: en ese
+ * caso se marca VENCIDA y se informa como vencida; cualquier otro cambio de
+ * estado es una transición concurrente.
+ * @param {Prisma.TransactionClient} tx - Transacción donde falló el claim.
+ * @param {string} tenantId - Tenant de la oferta.
+ * @param {string} ofertaId - Oferta cuyo claim falló.
+ * @returns {Promise<'OFERTA_VENCIDA' | 'CAMBIO_ESTADO'>} Causa del fallo.
+ */
+async function releerCausaDeClaimFallido(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  ofertaId: string,
+): Promise<'OFERTA_VENCIDA' | 'CAMBIO_ESTADO'> {
+  const latest = await tx.oferta.findFirst({
+    where: { id: ofertaId, tenantId },
+    select: { estado: true, fechaVencimiento: true },
+  });
+  if (!latest) return 'CAMBIO_ESTADO';
+  if (latest.estado === 'VENCIDA') return 'OFERTA_VENCIDA';
+  if (
+    latest.estado === 'PENDIENTE'
+    && latest.fechaVencimiento
+    && latest.fechaVencimiento < new Date()
+  ) {
+    await tx.oferta.updateMany({
+      where: { id: ofertaId, tenantId, estado: 'PENDIENTE' },
+      data: { estado: 'VENCIDA' },
+    });
+    return 'OFERTA_VENCIDA';
+  }
+  return 'CAMBIO_ESTADO';
+}
+
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  await expirarOfertasVencidas(tenantId);
+  // La expiración perezosa se dispara dentro del servicio de lectura.
   const ofertas = await listOfertasForTenant(tenantId);
   return ofertas.map(serializeOferta);
 });
@@ -46,7 +84,7 @@ export const getOfertasAction = withAction(async (_input: void, user: Authentica
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  await expirarOfertasVencidas(tenantId);
+  // La expiración perezosa se dispara dentro del servicio de lectura.
   const oferta = await getOfertaForTenant(id, tenantId);
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   return serializeOferta(oferta);
@@ -186,6 +224,10 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
       // La expiración perezosa usa un claim sin advisory lock. Nunca se debe
       // restaurar PENDIENTE si ganó entre la lectura y la escritura final.
       if (claim.count !== 1) {
+        const causa = await releerCausaDeClaimFallido(tx, tenantId, existing.id);
+        if (causa === 'OFERTA_VENCIDA') {
+          throw new ActionError('La oferta ya venció y sus ítems ya no son editables', 'OFERTA_VENCIDA');
+        }
         throw new ActionError('La oferta cambió de estado durante la edición', 'ITEMS_NO_EDITABLES');
       }
       return tx.oferta.findFirst({ where: { id: existing.id, tenantId }, include: OFERTA_INCLUDE });
@@ -223,7 +265,63 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
         },
       });
       if (claim.count !== 1) {
+        const causa = await releerCausaDeClaimFallido(tx, tenantId, ofertaId);
+        if (causa === 'OFERTA_VENCIDA') {
+          throw new ActionError(
+            'La oferta ya venció y no puede cambiar de estado',
+            'OFERTA_VENCIDA',
+          );
+        }
         throw new ActionError('El estado de la oferta cambió concurrentemente.', 'ESTADO_TRANSICION_INVALIDA');
+      }
+      return tx.oferta.findFirst({ where: { id: ofertaId, tenantId }, include: OFERTA_INCLUDE });
+    });
+    revalidatePath('/busy/ofertas');
+    return serializeOferta(actualizada);
+  }
+
+  // H-5: los impuestos declarados sin replacement de ítems también se aplican:
+  // el total se recalcula en el servidor sobre el subtotal persistido. Solo es
+  // editable mientras la oferta está PENDIENTE (misma regla que los ítems).
+  if (parsed.impuestos !== undefined) {
+    const impuestosDeclarados = parsed.impuestos;
+    const actualizada = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await lockOferta(tx, tenantId, ofertaId);
+      const actual = await tx.oferta.findFirst({ where: { id: ofertaId, tenantId } });
+      if (!actual) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+      if (actual.estado !== 'PENDIENTE') {
+        throw new ActionError(
+          'Solo se pueden editar los montos de una oferta en estado PENDIENTE',
+          'MONTOS_NO_EDITABLES',
+        );
+      }
+      const ahora = new Date();
+      if (actual.fechaVencimiento && actual.fechaVencimiento < ahora) {
+        await tx.oferta.updateMany({
+          where: { id: ofertaId, tenantId, estado: 'PENDIENTE' },
+          data: { estado: 'VENCIDA' },
+        });
+        throw new ActionError('La oferta ya venció y sus montos ya no son editables', 'OFERTA_VENCIDA');
+      }
+      const recalculo = recalcularMontosOferta(Number(actual.subtotal ?? 0), impuestosDeclarados);
+      if (!recalculo.ok) throw new ActionError(recalculo.message, recalculo.code);
+      const claim = await tx.oferta.updateMany({
+        where: {
+          id: ofertaId, tenantId, estado: 'PENDIENTE',
+          OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: ahora } }],
+        },
+        data: {
+          impuestos: recalculo.impuestos,
+          total: recalculo.total,
+          ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
+        },
+      });
+      if (claim.count !== 1) {
+        const causa = await releerCausaDeClaimFallido(tx, tenantId, ofertaId);
+        if (causa === 'OFERTA_VENCIDA') {
+          throw new ActionError('La oferta ya venció y sus montos ya no son editables', 'OFERTA_VENCIDA');
+        }
+        throw new ActionError('La oferta cambió de estado durante la edición', 'CONFLICT');
       }
       return tx.oferta.findFirst({ where: { id: ofertaId, tenantId }, include: OFERTA_INCLUDE });
     });
@@ -245,15 +343,50 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
 export const deleteOfertaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  const existing = await prisma.oferta.findFirst({ where: { id: id, tenantId } });
-  if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
-  if (existing.estado === 'FACTURADA') {
-    throw new ActionError('No se puede eliminar una oferta facturada', 'ESTADO_NO_ELIMINABLE');
-  }
+  // Toque de módulo (E-2): una PENDIENTE vencida se marca VENCIDA antes de
+  // leerse, para que no se pueda eliminar como si siguiera vigente.
+  await expirarOfertasVencidas(tenantId);
 
-  await prisma.oferta.delete({ where: { id: id } });
+  const eliminada = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Serializa con la facturación, la conversión y la edición de ítems: sin
+    // el lock, una facturación concurrente podía crear la factura justo
+    // antes del borrado y dejar el documento huérfano.
+    await lockOferta(tx, tenantId, id);
+    const actual = await tx.oferta.findFirst({
+      where: { id, tenantId },
+      select: { id: true, estado: true },
+    });
+    if (!actual) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+    if (actual.estado === 'FACTURADA') {
+      throw new ActionError('No se puede eliminar una oferta facturada', 'ESTADO_NO_ELIMINABLE');
+    }
+    // Una oferta con una venta viva vinculada no se puede eliminar: la venta
+    // (y su factura) quedarían sin oferta y sin posibilidad de rehacerlas.
+    const ventaViva = await tx.venta.findFirst({
+      where: { ofertaId: id, tenantId, deletedAt: null },
+      select: { ventaId: true },
+    });
+    if (ventaViva) {
+      throw new ActionError(
+        'No se puede eliminar una oferta con una venta vinculada',
+        'OFERTA_CON_VENTA_VINCULADA',
+      );
+    }
+    // Claim: solo se borra si el estado sigue siendo el releído bajo lock.
+    const borrada = await tx.oferta.deleteMany({
+      where: { id, tenantId, estado: actual.estado },
+    });
+    if (borrada.count !== 1) {
+      throw new ActionError(
+        'La oferta cambió de estado; recarga la página e inténtalo de nuevo',
+        'CONFLICT',
+      );
+    }
+    return actual.id;
+  });
+
   revalidatePath('/busy/ofertas');
-  return { id, eliminado: true };
+  return { id: eliminada, eliminado: true };
 });
 
 /**
@@ -265,6 +398,7 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
 export const duplicarOfertaAction = withAction(async (ofertaId: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
 
   const original = await prisma.oferta.findFirst({
     where: { id: ofertaId, tenantId },
@@ -369,6 +503,48 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
     if (fresh.estado === 'VENCIDA' || (fresh.estado === 'PENDIENTE'
       && fresh.fechaVencimiento && fresh.fechaVencimiento < new Date())) {
       throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
+    }
+
+    // C-2: con vencimiento distinto de contra_pago el workflow crea una CxC
+    // por el total de la oferta: es deuda nueva del cliente y, por tanto, pasa
+    // por el mismo enforcement de tope que el resto de writers de deuda (venta
+    // de servicios, facturación de productos, POS). El anticipo aplicado a la
+    // factura reduce la exposición porque la CxC nace por el total y el
+    // anticipo la cancela; sin anticipo se evalúa el total completo.
+    const totalOferta = Math.max(Number(fresh.total ?? 0), 0);
+    const anticipoAplicado = parsed.anticipoCobroId ? totalOferta : 0;
+    const montoCreditoRequerido = requestedMaturity !== 'contra_pago'
+      ? Math.max(totalOferta - anticipoAplicado, 0)
+      : 0;
+    if (montoCreditoRequerido > 0) {
+      // Lock de crédito del cliente: la evaluación se serializa contra otras
+      // ventas y facturaciones concurrentes del mismo cliente.
+      await lockCreditoCliente(tx, tenantId, fresh.clienteId);
+      const resCredito = await exigirLimiteCredito({
+        client: tx,
+        tenantId,
+        clienteId: fresh.clienteId,
+        montoRequerido: montoCreditoRequerido,
+        user,
+      });
+      if (resCredito.overrideUsado) {
+        await AuditLogService.logStrict(
+          {
+            accion: 'EXECUTE',
+            entidad: 'OFERTA',
+            entidadId: fresh.id,
+            usuarioId: user.userId,
+            detalles: {
+              tipo: 'CREDITO_OVERRIDE',
+              clienteId: fresh.clienteId,
+              limiteCredito: resCredito.limiteCredito,
+              saldoVivo: resCredito.saldoVivo,
+              montoRequerido: resCredito.montoEvaluado,
+            },
+          },
+          tx,
+        );
+      }
     }
 
     const workflow = await facturarOfertaWorkflow(tx, {

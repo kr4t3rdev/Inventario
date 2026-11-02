@@ -42,6 +42,8 @@ export async function run(): Promise<E2EFixtureOwnership> {
         listaDefaultId: `${fixtureId}-lista-default`,
         clienteListaId: `${fixtureId}-cliente-lista`,
         pvListaId: `${fixtureId}-pv-lista`,
+        cuentaId: `${fixtureId}-cuenta-caja`,
+        tipoPagoId: `${fixtureId}-tipo-pago-efectivo`,
       }
 
       /**
@@ -190,6 +192,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
             activa: true,
             expiracion: expiry,
             featureOverrides: {
+              clientes: true,
               servicios: true,
               'venta-servicios': true,
               'compras-servicios': true,
@@ -210,6 +213,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
             maxProductos: 90000,
             maxClientes: 90000,
             featureOverrides: {
+              clientes: true,
               servicios: true,
               'venta-servicios': true,
               'compras-servicios': true,
@@ -378,6 +382,42 @@ export async function run(): Promise<E2EFixtureOwnership> {
       }
 
       /**
+       * @description Crea la cuenta y el tipo de pago necesarios para finalizar
+       * la venta del E2E de precios en el POS.
+       * @returns {Promise<void>} Catálogo de cobro listo para la venta E2E.
+       */
+      async function seedPaymentCatalog(): Promise<void> {
+        await prisma.cuentaBancaria.upsert({
+          where: { cuentaId: E2E_FIXTURES.cuentaId },
+          update: { isActive: true, saldo: 0 },
+          create: {
+            cuentaId: E2E_FIXTURES.cuentaId,
+            tenantId: E2E_TENANT_ID,
+            nombreBanco: 'Caja E2E',
+            numeroCuenta: `${fixtureId}-caja`,
+            tipoCuenta: 'EFECTIVO',
+            saldo: 0,
+            moneda: 'CUP',
+            isActive: true,
+          },
+        })
+
+        await prisma.tipoPago.upsert({
+          where: { tipoId: E2E_FIXTURES.tipoPagoId },
+          update: { isActive: true, cuentaDefecto: E2E_FIXTURES.cuentaId },
+          create: {
+            tipoId: E2E_FIXTURES.tipoPagoId,
+            tenantId: E2E_TENANT_ID,
+            nombre: 'Efectivo E2E',
+            descripcion: 'Tipo de pago local para pruebas E2E',
+            requiereCuenta: true,
+            cuentaDefecto: E2E_FIXTURES.cuentaId,
+            isActive: true,
+          },
+        })
+      }
+
+      /**
        * @description Ejecuta la siembra del usuario y del catálogo E2E.
        * @returns {Promise<void>} Promesa resuelta cuando todas las fixtures quedan listas.
        */
@@ -435,6 +475,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
         await seedLicenseE2E()
         await seedServiciosCatalog()
         await seedPrecioListaCatalog()
+        await seedPaymentCatalog()
 
         return { tenantId: E2E_TENANT_ID, userId: user.userId, email: E2E_USER.email };
       }
@@ -460,7 +501,8 @@ export async function cleanup(ownership: E2EFixtureOwnership): Promise<void> {
   const { PrismaClient } = await import('../src/generated/prisma');
   const client = new PrismaClient();
   try {
-    await client.$executeRawUnsafe('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+    await client.$executeRawUnsafe('DROP SCHEMA public CASCADE');
+    await client.$executeRawUnsafe('CREATE SCHEMA public');
     console.log('[E2E] Esquema desechable eliminado; no quedan datos de la corrida.');
   } finally {
     await client.$disconnect();

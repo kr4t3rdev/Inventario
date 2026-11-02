@@ -13,6 +13,9 @@ import {
 import {
 	calcularCantidadRequeridaMaterial,
 } from '../../src/lib/utils/produccion';
+import {
+	calcularUnidadesMovidas,
+} from '../../src/features/transferencias/lib/stock-pv';
 
 const prisma = new PrismaClient();
 
@@ -98,14 +101,22 @@ export async function backfillStockMoves(
 		}
 	}
 
-	// 3. Transferencias completadas
+	// 3. Transferencias que movieron stock (COMPLETADA y PARCIAL).
+	// Las unidades son las realmente movidas (lo recibido), no las enviadas:
+	// es la misma regla que aplica el runtime.
 	const transferencias = await prisma.transferencia.findMany({
-		where: { ...whereTenant, deletedAt: null, estado: 'COMPLETADA' },
+		where: {
+			...whereTenant,
+			deletedAt: null,
+			estado: { in: ['COMPLETADA', 'PARCIAL'] },
+		},
 		include: { producto: { select: { id: true, precioCosto: true } } },
 		orderBy: { createdAt: 'asc' },
 	});
 	for (const t of transferencias) {
 		const costo = t.costoUnitario ?? t.producto.precioCosto;
+		const unidades = calcularUnidadesMovidas(t);
+		if (unidades <= 0) continue;
 		const origen = t.origenId
 			? { tipoUbicacion: 'almacen', ubicacionId: t.origenId }
 			: t.puntoDeVentaOrigenId
@@ -125,7 +136,7 @@ export async function backfillStockMoves(
 				origenId: t.transferenciaId,
 				tipoUbicacion: origen.tipoUbicacion,
 				ubicacionId: origen.ubicacionId,
-				cantidad: -t.cantidad,
+				cantidad: -unidades,
 				costoUnitario: costo,
 				secuencia: 'SALIDA-0',
 			});
@@ -136,7 +147,7 @@ export async function backfillStockMoves(
 				origenId: t.transferenciaId,
 				tipoUbicacion: destino.tipoUbicacion,
 				ubicacionId: destino.ubicacionId,
-				cantidad: t.cantidad,
+				cantidad: unidades,
 				costoUnitario: costo,
 				secuencia: 'ENTRADA-0',
 			});

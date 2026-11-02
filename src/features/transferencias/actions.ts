@@ -30,7 +30,8 @@ import type {
 	CompletarTransferenciaInput,
 	RechazarTransferenciaInput,
 } from "./schemas";
-import { calcularAporteRecibido } from "./lib/stock-pv";
+import { calcularAporteRecibido, calcularUnidadesMovidas } from "./lib/stock-pv";
+import { siguienteIndiceKardex } from "./lib/kardex-secuencia";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -588,6 +589,12 @@ export const updateTransferenciaAction = withAction(
 				});
 
 				if (costoKardex > 0) {
+					// Secuencia libre: la clave de evento incluye la secuencia, así
+					// que reutilizar SALIDA-1/ENTRADA-1 haría que el `upsert`
+					// descartara la nueva versión del movimiento.
+					const indice = siguienteIndiceKardex(
+						originales.map((m) => m.secuencia),
+					);
 					await registrarMovimiento(tx, {
 						tenantId,
 						productoId,
@@ -597,7 +604,7 @@ export const updateTransferenciaAction = withAction(
 						ubicacionId: origenId,
 						cantidad: -cantidad,
 						costoUnitario: costoKardex,
-						secuencia: "SALIDA-1",
+						secuencia: `SALIDA-${indice}`,
 						creadoPorId: user.userId,
 					});
 					await registrarMovimiento(tx, {
@@ -609,7 +616,7 @@ export const updateTransferenciaAction = withAction(
 						ubicacionId: destinoId,
 						cantidad,
 						costoUnitario: costoKardex,
-						secuencia: "ENTRADA-1",
+						secuencia: `ENTRADA-${indice}`,
 						creadoPorId: user.userId,
 					});
 				}
@@ -714,13 +721,12 @@ export const deleteTransferenciaAction = withAction(
 			}
 
 			// Revertir stock si la transferencia movió unidades: COMPLETADA movió
-			// el total y PARCIAL movió lo recibido hasta el momento (B-2).
-			// (PENDIENTE/APROBADA/EN_TRANSITO nunca movieron stock)
-			if (current.estado === "COMPLETADA" || current.estado === "PARCIAL") {
-				const cantidadMovida =
-					current.estado === "PARCIAL"
-						? (current.cantidadRecibida ?? 0)
-						: current.cantidad;
+			// el total (o lo recibido si llegó por partes) y PARCIAL movió lo
+			// recibido hasta el momento (B-2). La misma regla que calcula el
+			// aporte al stock del punto de venta, para que ambos caminos no
+			// divergan. (PENDIENTE/APROBADA/EN_TRANSITO nunca movieron stock)
+			const cantidadMovida = calcularUnidadesMovidas(current);
+			if (cantidadMovida > 0) {
 				const tipoOrigen = current.origenId
 					? ("almacen" as const)
 					: ("punto_venta" as const);
@@ -799,10 +805,25 @@ export const aprobarTransferenciaAction = withAction(
 		}
 
 		await prisma.$transaction(async (tx: any) => {
-			await tx.transferencia.update({
-				where: { transferenciaId: parsed.transferenciaId },
+			// Claim atómico y tenant-scoped: solo una decisión puede ganar la
+			// transición desde PENDIENTE. Si otra decisión (aprobación o
+			// rechazo) ganó primero, el count es 0 y se informa CONFLICT en
+			// lugar de sobrescribir el estado ya decidido.
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: parsed.transferenciaId,
+					tenantId,
+					deletedAt: null,
+					estado: "PENDIENTE",
+				},
 				data: { estado: "APROBADA" },
 			});
+			if (claim.count !== 1) {
+				throw new ActionError(
+					"La transferencia cambió; vuelve a cargarla e inténtalo de nuevo",
+					"CONFLICT",
+				);
+			}
 
 			// No mover stock aún — se mueve al completar
 		});
@@ -999,16 +1020,17 @@ export const completarTransferenciaAction = withAction(
 				delta: recibidasAhora,
 			});
 
-			// Kardex: secuencia por recepción (la clave de evento es idempotente,
-			// así que cada entrega nueva necesita un n distinto).
+			// Kardex: secuencia libre por recepción (la clave de evento es
+			// idempotente, así que cada entrega nueva necesita un índice
+			// distinto y libre).
 			const movimientosPrevios = await getMovimientosDeOrigen(tx, {
 				tenantId,
 				tipoOrigen: "TRANSFERENCIA",
 				origenId: transferencia.transferenciaId,
 			});
-			const nRecepcion = movimientosPrevios.filter((m) =>
-				m.secuencia.startsWith("ENTRADA"),
-			).length;
+			const nRecepcion = siguienteIndiceKardex(
+				movimientosPrevios.map((m) => m.secuencia),
+			);
 
 			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
 			await registrarMovimiento(tx, {
@@ -1075,12 +1097,28 @@ export const rechazarTransferenciaAction = withAction(
 			);
 		}
 
-		await prisma.transferencia.update({
-			where: { transferenciaId: parsed.transferenciaId },
-			data: {
-				estado: "RECHAZADA",
-				descripcion: parsed.motivo,
-			},
+		await prisma.$transaction(async (tx: any) => {
+			// Claim atómico y tenant-scoped: el rechazo solo puede proceder
+			// desde PENDIENTE y una sola vez. Si otra decisión ganó la carrera,
+			// se informa CONFLICT en lugar de sobrescribir el estado.
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: parsed.transferenciaId,
+					tenantId,
+					deletedAt: null,
+					estado: "PENDIENTE",
+				},
+				data: {
+					estado: "RECHAZADA",
+					descripcion: parsed.motivo,
+				},
+			});
+			if (claim.count !== 1) {
+				throw new ActionError(
+					"La transferencia cambió; vuelve a cargarla e inténtalo de nuevo",
+					"CONFLICT",
+				);
+			}
 		});
 
 		revalidatePath("/busy/transferencias");

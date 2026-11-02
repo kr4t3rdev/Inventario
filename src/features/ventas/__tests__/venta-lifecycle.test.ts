@@ -34,6 +34,7 @@ const { mockTx } = vi.hoisted(() => {
 		$executeRaw: vi.fn(),
 		venta: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 			update: vi.fn(),
 		},
@@ -50,7 +51,10 @@ const { mockTx } = vi.hoisted(() => {
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
-		oferta: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+		oferta: {
+			findFirst: vi.fn(),
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+		},
 	};
 	return { mockTx };
 });
@@ -144,6 +148,12 @@ beforeEach(() => {
 	mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
 	mockTx.producto.findUnique.mockResolvedValue(ventaPedido.items[0].producto);
 	mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+	// La oferta no tiene otra venta viva vinculada por defecto: la anulación
+	// puede devolverla a ACEPTADA (limbo de ofertas).
+	mockTx.oferta.findFirst.mockResolvedValue({
+		estado: 'ACEPTADA',
+		venta: null,
+	});
 });
 
 describe('entregarVenta (PEDIDO → ENTREGADA)', () => {
@@ -504,6 +514,62 @@ describe('anularVentaPorEstado', () => {
 		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
 
 		expect(mockTx.oferta.updateMany).not.toHaveBeenCalled();
+	});
+
+	describe('H-1 — serialización con la facturación de la oferta', () => {
+		it('toma el lock transaccional de la oferta antes de tocar su estado', async () => {
+			mirarVenta({ ...ventaPedido, ofertaId: 'of-lock' });
+			await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
+
+			// El lock se toma con $executeRaw (el FOR UPDATE de la venta usa
+			// $queryRaw), de modo que la anulación se serializa con la
+			// facturación y la conversión de la misma oferta.
+			expect(mockTx.$executeRaw).toHaveBeenCalled();
+		});
+
+		it('no reabre una oferta FACTURADA cuya venta viva ya tomó el vínculo', async () => {
+			mirarVenta({
+				...ventaPedido,
+				estado: 'FACTURADA',
+				ofertaId: 'of-3',
+				factura: { idFactura: 'fac-3', tenantId: 'tenant-1' },
+			});
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+			// Una facturación concurrente ya tomó el vínculo de la oferta con
+			// otra venta viva: la oferta ya tiene su documento y no debe
+			// volver a ACEPTADA (quedaría facturable dos veces).
+			mockTx.oferta.findFirst.mockResolvedValue({
+				estado: 'FACTURADA',
+				venta: { ventaId: 'venta-2', deletedAt: null },
+			});
+
+			await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
+
+			expect(mockTx.oferta.updateMany).not.toHaveBeenCalled();
+		});
+
+		it('reabre la oferta cuando la venta anulada era la única que la tenía vinculada', async () => {
+			mirarVenta({
+				...ventaPedido,
+				estado: 'FACTURADA',
+				ofertaId: 'of-4',
+				factura: { idFactura: 'fac-4', tenantId: 'tenant-1' },
+			});
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+			mockTx.oferta.findFirst.mockResolvedValue({
+				estado: 'FACTURADA',
+				venta: null,
+			});
+
+			await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
+
+			expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ id: 'of-4', tenantId: 'tenant-1' }),
+					data: { estado: 'ACEPTADA' },
+				}),
+			);
+		});
 	});
 });
 

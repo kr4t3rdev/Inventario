@@ -85,15 +85,22 @@ test.describe('POS — lista de precios del cliente (LP-1.4)', () => {
 		await page.getByRole('button', { name: 'Confirmar y facturar' }).click();
 
 		// El cobro refleja el total de la lista del cliente.
-		await expect(page.getByText(/Total a cobrar: \$150/)).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByRole('dialog', { name: 'Cobrar venta' })).toContainText(
+			/Total a cobrar:\s*150,00\s*CUP/,
+			{ timeout: 15_000 },
+		);
 
 		await page.locator('#monto-recibido').fill('200');
 		await page.getByRole('button', { name: 'Cobrar', exact: true }).click();
 
-		// La venta se registra por el precio de la lista del cliente, no por la
-		// default: el server habría rechazado cualquier otro precio (PRICE_MISMATCH).
-		await expect(page.getByText(/Se ha registrado la venta por \$150/)).toBeVisible({
-			timeout: 20_000,
-		});
+		// La venta queda persistida por el precio de la lista del cliente, no por
+		// la default: el server habría rechazado cualquier otro precio (PRICE_MISMATCH).
+		await expect(page.getByRole('heading', { name: 'FACTURA' })).toBeVisible({ timeout: 20_000 });
+		await expect(page.getByText('E2E Cliente Lista')).toBeVisible();
+		const ventaRegistrada = page
+			.getByRole('row')
+			.filter({ hasText: 'E2E Aceite Volumen 1L' })
+			.filter({ hasText: '150.00' });
+		await expect(ventaRegistrada).toBeVisible({ timeout: 20_000 });
 	});
 });

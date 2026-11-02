@@ -6,6 +6,7 @@ const { prismaMock } = vi.hoisted(() => ({
     oferta: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }));
@@ -55,6 +56,7 @@ describe('Mobile API: offers', () => {
     vi.clearAllMocks();
     currentRole = 'admin';
     currentFeatures = {};
+    prismaMock.oferta.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it('lists tenant offers using the real Oferta domain shape', async () => {

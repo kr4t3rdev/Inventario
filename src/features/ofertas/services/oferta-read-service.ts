@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { expirarOfertasVencidas } from './expiracion-ofertas-service';
 
 export const OFERTA_INCLUDE = {
   cliente: true,
@@ -25,10 +26,14 @@ export interface OfertaReadRecord {
 
 /**
  * @description Lists offers scoped to a tenant using the shared Oferta include graph.
+ * La expiración perezosa se dispara aquí: es el único punto de lectura del
+ * módulo, de modo que ninguna pantalla ni endpoint móvil puede mostrar una
+ * oferta vencida como vigente.
  * @param {string} tenantId - Authenticated tenant identifier.
  * @returns {Promise<OfertaReadRecord[]>} Tenant offers ordered newest first.
  */
 export async function listOfertasForTenant(tenantId: string): Promise<OfertaReadRecord[]> {
+  await expirarOfertasVencidas(tenantId);
   return prisma.oferta.findMany({
     where: { tenantId },
     include: OFERTA_INCLUDE,
@@ -38,6 +43,7 @@ export async function listOfertasForTenant(tenantId: string): Promise<OfertaRead
 
 /**
  * @description Gets one offer without allowing cross-tenant access.
+ * La expiración perezosa se dispara antes de leer (ver `listOfertasForTenant`).
  * @param {string} id - Offer identifier.
  * @param {string} tenantId - Authenticated tenant identifier.
  * @returns {Promise<OfertaReadRecord | null>} Matching offer or null.
@@ -46,6 +52,7 @@ export async function getOfertaForTenant(
   id: string,
   tenantId: string,
 ): Promise<OfertaReadRecord | null> {
+  await expirarOfertasVencidas(tenantId);
   return prisma.oferta.findFirst({
     where: { id, tenantId },
     include: OFERTA_INCLUDE,

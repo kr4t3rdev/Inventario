@@ -13,6 +13,7 @@
  */
 
 import { prisma } from "../../src/lib/prisma";
+import { calcularUnidadesMovidas } from "../../src/features/transferencias/lib/stock-pv";
 
 interface Discrepancia {
 	tipo: "almacen" | "punto_venta";
@@ -64,13 +65,24 @@ async function main() {
 
 	// Pre-cargar transferencias y ventas agrupadas para cada PV
 	for (const pv of puntosDeVenta) {
+		// La regla de unidades movidas es la misma que aplica el runtime
+		// (calcularUnidadesMovidas): solo cuentan las transferencias que de
+		// verdad movieron stock, por lo que manda lo recibido y no lo enviado.
 		const entradas = await prisma.transferencia.findMany({
-			where: { puntoDeVentaDestinoId: pv.pvId },
-			select: { productoId: true, cantidad: true },
+			where: {
+				puntoDeVentaDestinoId: pv.pvId,
+				deletedAt: null,
+				estado: { in: ["COMPLETADA", "PARCIAL"] },
+			},
+			select: { productoId: true, cantidad: true, cantidadRecibida: true, estado: true },
 		});
 		const salidas = await prisma.transferencia.findMany({
-			where: { puntoDeVentaOrigenId: pv.pvId },
-			select: { productoId: true, cantidad: true },
+			where: {
+				puntoDeVentaOrigenId: pv.pvId,
+				deletedAt: null,
+				estado: { in: ["COMPLETADA", "PARCIAL"] },
+			},
+			select: { productoId: true, cantidad: true, cantidadRecibida: true, estado: true },
 		});
 		const ventasItems = await prisma.ventaItem.findMany({
 			where: { venta: { puntoDeVentaId: pv.pvId } },
@@ -86,12 +98,14 @@ async function main() {
 		for (const t of entradas)
 			stockEsperado.set(
 				t.productoId,
-				(stockEsperado.get(t.productoId) ?? 0) + t.cantidad,
+				(stockEsperado.get(t.productoId) ?? 0) +
+					calcularUnidadesMovidas(t),
 			);
 		for (const t of salidas)
 			stockEsperado.set(
 				t.productoId,
-				(stockEsperado.get(t.productoId) ?? 0) - t.cantidad,
+				(stockEsperado.get(t.productoId) ?? 0) -
+					calcularUnidadesMovidas(t),
 			);
 		for (const v of ventasItems)
 			stockEsperado.set(

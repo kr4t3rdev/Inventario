@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { expirarOfertasVencidas } from '@/features/ofertas/services/expiracion-ofertas-service'
 
 const ORANGE = rgb(249 / 255, 115 / 255, 22 / 255)
 const DARK = rgb(30 / 255, 30 / 255, 30 / 255)
@@ -25,6 +26,7 @@ export async function getOfertaPdfHandler(
     const tenantId = authResult.user.tenantId
     if (!tenantId) return NextResponse.json({ error: 'Autenticación requerida' }, { status: 401 })
     const { id } = await context.params
+    await expirarOfertasVencidas(tenantId)
 
     const oferta = await prisma.oferta.findFirst({
       where: { id, tenantId },
@@ -196,6 +198,7 @@ export async function getOfertaExcelHandler(
     const tenantId = authResult.user.tenantId
     if (!tenantId) return NextResponse.json({ error: 'Autenticación requerida' }, { status: 401 })
     const { id } = await context.params
+    await expirarOfertasVencidas(tenantId)
 
     const oferta = await prisma.oferta.findFirst({
       where: { id, tenantId },

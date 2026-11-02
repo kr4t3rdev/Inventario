@@ -81,7 +81,7 @@ describe('facturarOfertaWorkflow – aislamiento de servicios', () => {
 
     expect(mockTx.servicios.findFirst).toHaveBeenCalledWith({
       where: { servicioId: 'srv-b', tenantId: 'tenant-A' },
-      select: { servicioId: true, moneda: true, nombre: true },
+      select: { servicioId: true, moneda: true, nombre: true, costo: true },
     });
   });
 
@@ -145,6 +145,35 @@ describe('facturarOfertaWorkflow – aislamiento de servicios', () => {
     expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ moneda: 'USD' }),
+      }),
+    );
+  });
+
+  // C-3: el costo de la venta de servicio es el snapshot del catálogo; el
+  // payload no puede fijarlo. Sin este snapshot la fila nace con costo 0 y
+  // la política de costo de servicios vendidos (SOLD_SERVICE_COST) se calcula
+  // sobre un costo falso.
+  it('persiste el costo del catálogo como snapshot en VentaServicios', async () => {
+    mockTx.servicios.findFirst.mockResolvedValue({
+      servicioId: 'srv-1', moneda: 'CUP', nombre: 'Srv', costo: 30,
+    });
+    mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' });
+
+    await facturarOfertaWorkflow(mockTx as any, {
+      tenantId: 'tenant-A',
+      ofertaId: 'of-3',
+      clienteId: 'cli-1',
+      puntoDeVentaId: 'pv-1',
+      items: [],
+      servicios: [{ servicioId: 'srv-1', cantidad: 2, precioUnitario: 50, total: 100, moneda: 'CUP' }],
+      subtotal: 100, impuestos: 0, total: 100, observaciones: null, cargoTransporte: 0,
+      serieId: null, tipoVencimiento: null, fechaVencimiento: null, cuentaBancariaId: null,
+      usuarioId: 'user-1',
+    });
+
+    expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ costo: 30 }),
       }),
     );
   });

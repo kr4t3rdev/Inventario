@@ -4,7 +4,67 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { calcularAporteRecibido } from "../stock-pv";
+import { calcularAporteRecibido, calcularUnidadesMovidas } from "../stock-pv";
+
+describe("calcularUnidadesMovidas", () => {
+	it("una COMPLETADA movió lo recibido cuando la fila se recibió por partes", () => {
+		expect(
+			calcularUnidadesMovidas({
+				estado: "COMPLETADA",
+				cantidad: 10,
+				cantidadRecibida: 4,
+			}),
+		).toBe(4);
+	});
+
+	it("una COMPLETADA de creación directa movió su cantidad completa", () => {
+		expect(
+			calcularUnidadesMovidas({
+				estado: "COMPLETADA",
+				cantidad: 7,
+				cantidadRecibida: null,
+			}),
+		).toBe(7);
+	});
+
+	it("una PARCIAL movió solo lo recibido", () => {
+		expect(
+			calcularUnidadesMovidas({
+				estado: "PARCIAL",
+				cantidad: 10,
+				cantidadRecibida: 4,
+			}),
+		).toBe(4);
+	});
+
+	it("una PARCIAL sin recepciones no movió unidades", () => {
+		expect(
+			calcularUnidadesMovidas({
+				estado: "PARCIAL",
+				cantidad: 10,
+				cantidadRecibida: null,
+			}),
+		).toBe(0);
+	});
+
+	it("los estados sin recepción no movieron unidades", () => {
+		for (const estado of [
+			"PENDIENTE",
+			"APROBADA",
+			"EN_TRANSITO",
+			"RECHAZADA",
+			"CANCELADA",
+		]) {
+			expect(
+				calcularUnidadesMovidas({
+					estado,
+					cantidad: 10,
+					cantidadRecibida: 5,
+				}),
+			).toBe(0);
+		}
+	});
+});
 
 describe("calcularAporteRecibido", () => {
 	it("una COMPLETADA con cantidadRecibida aporta lo recibido", () => {

@@ -52,6 +52,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       update: vi.fn(),
     },
+    almacen: { findFirst: vi.fn() },
     stockUbicacion: {
       findUnique: vi.fn(),
     },
@@ -102,7 +103,11 @@ const mockProducto = {
 };
 
 describe('Mermas Server Actions', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.almacen.findFirst).mockResolvedValue({ almacenId: 'alm-1' } as never);
+  });
 
   describe('getMermasAction', () => {
     it('retorna lista del tenant', async () => {
@@ -181,6 +186,22 @@ describe('Mermas Server Actions', () => {
 
       expect(result.success).toBe(false);
       expect(expectActionFailure(result).error!.message).toContain('Producto no encontrado');
+    });
+
+    it('rechaza un almacén de otro tenant aunque el producto sí pertenezca al tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto as any);
+      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(null);
+
+      const result = await createMermaAction({
+        productoId: 'prod-1',
+        cantidad: 1,
+        almacenId: 'alm-foreign',
+      });
+
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
+      expect(prisma.stockUbicacion.findUnique).not.toHaveBeenCalled();
     });
 
     it('rechaza si stock es insuficiente', async () => {
@@ -273,6 +294,24 @@ describe('Mermas Server Actions', () => {
           delta: -7,
         }),
       );
+    });
+
+    it('rechaza cambiar a un almacén de otro tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1',
+        productoId: 'prod-1',
+        cantidad: 5,
+        tenantId: 'tenant-test',
+        almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.almacen.findFirst).mockResolvedValue(null);
+
+      const result = await updateMermaAction({ mermaId: 'mer-1', almacenId: 'alm-foreign' });
+
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error!.code).toBe('NOT_FOUND');
+      expect(prisma.stockUbicacion.findUnique).not.toHaveBeenCalled();
     });
 
     it('cambia solo almacén y mueve stock entre ubicaciones', async () => {

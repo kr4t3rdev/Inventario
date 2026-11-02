@@ -4,7 +4,7 @@ import { expectActionFailure, expectActionSuccess } from "@/test/action-response
 vi.mock('@/lib/auth-middleware', () => ({ authenticateUser: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    oferta: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
+    oferta: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), updateMany: vi.fn() },
     venta: { create: vi.fn() },
     ventaServicios: { create: vi.fn() },
     cliente: { findFirst: vi.fn() },
@@ -13,7 +13,7 @@ vi.mock('@/lib/prisma', () => ({
     servicios: { findFirst: vi.fn() },
   },
   default: {
-    oferta: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
+    oferta: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), updateMany: vi.fn() },
     venta: { create: vi.fn() },
     ventaServicios: { create: vi.fn() },
     cliente: { findFirst: vi.fn() },
@@ -39,6 +39,7 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion:
 
 import { authenticateUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import prismaDefault from '@/lib/prisma';
 import { getOfertaPdfHandler, getOfertaExcelHandler } from '@/features/ofertas/api/handlers';
 import { createOfertaAction } from '@/features/ofertas/actions';
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
@@ -55,7 +56,11 @@ function request(): any {
 }
 
 describe('F-02 ofertas, RED de correcciones urgentes', () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(prisma.oferta.updateMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prismaDefault.oferta.updateMany).mockResolvedValue({ count: 0 } as never);
+  });
 
   it('PDF sin sesión responde 401', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ status: 401 } as never);

@@ -9,6 +9,7 @@ import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
 import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
+import { lockOferta } from '@/features/ofertas/lib/oferta-lock';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -582,14 +583,31 @@ export const VentaLifecycleService = {
       // Limbo de ofertas: una oferta cuya venta se anuló vuelve a ACEPTADA
       // para permitir reintento de conversión o facturación directa.
       if (currentVenta.ofertaId) {
-        await tx.oferta.updateMany({
-          where: {
-            id: currentVenta.ofertaId,
-            tenantId,
-            estado: { in: ['ACEPTADA', 'FACTURADA'] },
+        // Serializa con la facturación, la conversión y la edición de ítems de
+        // la misma oferta: sin este lock la anulación podía reabrir una
+        // oferta que otra transacción acababa de marcar FACTURADA.
+        await lockOferta(tx, tenantId, currentVenta.ofertaId);
+        const ofertaActual = await tx.oferta.findFirst({
+          where: { id: currentVenta.ofertaId, tenantId },
+          select: {
+            estado: true,
+            venta: { select: { ventaId: true, deletedAt: true } },
           },
-          data: { estado: 'ACEPTADA' },
         });
+        // Si otra venta viva ya tomó el vínculo (p. ej. una facturación
+        // concurrente que se confirmó antes), la oferta ya tiene su documento:
+        // no se reabre, o quedaría facturable por segunda vez.
+        const otraVentaViva = ofertaActual?.venta && !ofertaActual.venta.deletedAt;
+        if (!otraVentaViva) {
+          await tx.oferta.updateMany({
+            where: {
+              id: currentVenta.ofertaId,
+              tenantId,
+              estado: { in: ['ACEPTADA', 'FACTURADA'] },
+            },
+            data: { estado: 'ACEPTADA' },
+          });
+        }
       }
 
       if (currentVenta.estado === 'PEDIDO') {

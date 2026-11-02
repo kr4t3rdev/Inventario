@@ -67,10 +67,9 @@ Reglas de ejecución (aplican a todas las fases):
 - [x] **T3 — GREEN.** `ofertaUpdateSchema.items/impuestos`; lib compartida
   `resolver-items-oferta.ts` (reusada en create); rama de ítems en
   `updateOfertaAction`; `duplicarOfertaAction`.
-- [x] **T4 — UI.** Botón Duplicar en la tabla (toast + `router.refresh()`).
-  **Pendiente explícito:** formulario de edición de ítems en la UI — la acción
-  server quedó lista y testeada; `OfertaForm` (579 líneas, modo create) necesita
-  una fase propia de refactor a modo edición.
+- [x] **T4 — UI.** Botón Duplicar en la tabla (toast + `router.refresh()`). La
+  UI de edición de ítems quedó cerrada en la revisión posterior de pendientes E
+  (ver evidencia de 2026-11-02 al final de este archivo).
 - [x] Commit: `ea3ac5dd feat(ofertas): edición de ítems en PENDIENTE y duplicación con precios re-resueltos (E-4)`
 
 ## Cierre
@@ -131,3 +130,43 @@ independientes + análisis propio) halló 2 bloqueos; ambos corregidos con TDD
 - Honestidad de evidencia: los intercalados se cierran por diseño (lock
   compartido + relectura + claims) y quedan fijados con tests de claim
   fallido; no se reprodujeron carreras reales contra PostgreSQL vivo.
+
+## Revisión posterior de pendientes E (2026-11-02)
+
+- [x] **H-1 — anulación de venta y limbo de ofertas.**
+  `VentaLifecycleService.anularVentaPorEstado` toma el mismo advisory lock de
+  oferta que facturar/convertir antes de restaurar el estado; relee la oferta y
+  no la reabre si ya existe otra venta viva vinculada. RED→GREEN en
+  `src/features/ventas/__tests__/venta-lifecycle.test.ts` (33/33).
+- [x] **H-2 — edición de ítems accesible desde UI.** Se reabrió E-4 T4: el
+  detalle muestra `OfertaItemsEditor` para PENDIENTE, permite agregar,
+  reemplazar, quitar y cambiar cantidades de productos/servicios e impuestos;
+  los precios se re-resuelven en el servidor. Test del componente en
+  `src/features/ofertas/components/oferta-items-editor.test.tsx` (1/1).
+- [x] **H-3 — expiración perezosa en todos los puntos de entrada.** Se centró
+  en `listOfertasForTenant`/`getOfertaForTenant`, cubriendo las 4 lecturas
+  móviles y las lecturas compartidas del módulo; se añadió expiración explícita
+  al GET `/api/ofertas/[id]`, PDF, Excel, `deleteOfertaAction` y
+  `duplicarOfertaAction`. `expiracion-puntos-entrada.test.ts` verifica lecturas,
+  borrado y duplicación.
+- [x] **H-4 — borrado de oferta serializado.** `deleteOfertaAction` toma
+  `lockOferta`, relee tenant/estado, rechaza ventas vivas con
+  `OFERTA_CON_VENTA_VINCULADA` y borra mediante claim `deleteMany`; claim
+  perdido → `CONFLICT`. RED→GREEN: 6/6 en
+  `delete-oferta-coherencia.test.ts`.
+- [x] **H-5 — impuestos sin reemplazo de ítems.** Se añadió
+  `recalcularMontosOferta`: los impuestos se aplican, se validan contra el
+  subtotal persistido y se recalcula el total; solo se permite en PENDIENTE y
+  queda serializado bajo `lockOferta`. RED→GREEN: 4/4 en
+  `update-oferta-montos.test.ts`.
+- [x] **H-6/H-7 — causa del claim fallido.** Los claims de transición y edición
+  releen la oferta; si la expiración ganó, marcan/identifican VENCIDA y
+  devuelven `OFERTA_VENCIDA`; otro cambio devuelve el error de transición o
+  conflicto correspondiente. RED→GREEN: 3/3 en `claim-fallido-oferta.test.ts`.
+- [x] **H-13 — contrato de evidencia.** Rutas de tests ajustadas al layout real
+  (`src/features/ofertas/__tests__/`); se comprobó el export de
+  `convertirOfertaAPedidoAction` en el barrel del feature.
+- [x] Verificación final: suite combinada de ofertas, API de ofertas/móvil y
+  regresiones de venta/merma/transferencias → **401/401** (45 archivos);
+  `NODE_OPTIONS=--max-old-space-size=8192 pnpm exec tsc --noEmit` sin errores;
+  ESLint de archivos tocados sin errores.

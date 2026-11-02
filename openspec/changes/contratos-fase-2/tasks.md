@@ -127,3 +127,16 @@ todos corregidos con tests de regresión (RED genuino capturado en
   Typecheck **0 errores** (tras `prisma generate`: el merge trajo el schema de
   Sesión C con `Factura.ventaServicioId`); lint **0 errores** (416 warnings
   preexistentes de main); `openapi:check` **exit 0**.
+
+## Revisión posterior — acceso a firma en detalle (2026-11-01)
+
+- [x] `getFirmantesAction` lista membresías activas del tenant y exige
+  `ventas.contratos.gestionar`; `AddFirmaSection` carga firmantes y monta el
+  diálogo en la pestaña Firmas del detalle. El permiso se resuelve en el
+  Server Component de la página y controla visibilidad.
+- [x] Se corrigieron los `Select` del diálogo para ser controlados y resetear
+  correctamente al abrir/cerrar.
+- [x] RED→GREEN: `firmantes-action.test.ts` 4/4;
+  `contrato-detail-firma.test.tsx` 2/2; suite de contratos y detalle
+  `src/features/contratos src/app/busy/contratos` → 197/197.
+- [x] `tsc --noEmit` y ESLint de archivos modificados limpios.
