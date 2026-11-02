@@ -6,6 +6,8 @@ import { authenticateUser } from "@/lib/auth-middleware"
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
 
 // Schema para validar la reconciliación de servicios
 const reconciliacionServicioSchema = z.object({
@@ -170,11 +172,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calcular monto convertido si es necesario
-    let montoConvertido = validatedData.monto
-    if (cuentaBancaria.moneda !== 'CUP' && validatedData.tasaCambio) {
-      montoConvertido = validatedData.monto * validatedData.tasaCambio
-    }
+    // Persistir valoración funcional y evidencia FX con la fecha de la operación.
+    const valoracion = buildPersistedAccountingAmount(
+      validatedData.monto,
+      validatedData.moneda,
+      validatedData.tasaCambio,
+      fechaOperacion,
+      null,
+      'CUP',
+    )
+    const montoConvertido = valoracion.montoConvertido ?? validatedData.monto
 
     // Si el tipo de pago requiere cuenta, verificar cuenta defecto
     let cuentaOrigen = null
@@ -210,8 +217,10 @@ export async function POST(request: NextRequest) {
           tipoPagoId: validatedData.tipoPagoId,
           monto: validatedData.monto,
           moneda: validatedData.moneda,
-          tasaCambio: validatedData.tasaCambio,
-          montoConvertido: montoConvertido,
+          montoConvertido: valoracion.montoConvertido,
+          tasaCambio: valoracion.tasaCambio,
+          ...(valoracion.fxEvidence ?? {}),
+          fechaReconciliacion: fechaOperacion,
           observaciones: validatedData.observaciones,
           reconciliadoPor: user.userId
         },
@@ -266,6 +275,30 @@ export async function POST(request: NextRequest) {
           throw new Error('No se pudo actualizar la cuenta bancaria destino')
         }
       }
+
+      await emitirEventoLiquidacion(
+        tx,
+        { tenantId, userId: user.userId },
+        {
+          tipo: 'COBRO_SERVICIO',
+          reconciliacion: {
+            reconciliacionId: reconciliacion.reconciliacionId,
+            monto: reconciliacion.monto,
+            moneda: reconciliacion.moneda,
+            montoConvertido: reconciliacion.montoConvertido,
+            functionalCurrency: reconciliacion.functionalCurrency,
+            tasaCambio: reconciliacion.tasaCambio,
+            fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+            fechaReconciliacion: reconciliacion.fechaReconciliacion,
+          },
+          functionalAmount: reconciliacion.montoConvertido,
+          functionalCurrency: reconciliacion.functionalCurrency,
+          exchangeRate: reconciliacion.tasaCambio,
+          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+          treasuryAccountType: cuentaBancaria.tipoCuenta,
+          descripcion: validatedData.observaciones ?? 'Cobro de servicio',
+        },
+      )
 
       // Registrar la transacción de moneda si es diferente a CUP
       if (validatedData.moneda !== 'CUP' && validatedData.tasaCambio) {

@@ -43,10 +43,15 @@ vi.mock('@/lib/services/validate-period-write', () => ({
   extraerFechaDeBody: vi.fn().mockReturnValue(new Date()),
 }))
 
+vi.mock('@/features/contabilidad-formal/services/settlement-posting-service', () => ({
+  emitirEventoLiquidacion: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+}))
+
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write'
+import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
 import { GET, POST } from '../route'
 
 const user = { userId: 'user-a', tenantId: 'tenant-a' }
@@ -64,6 +69,10 @@ function createTransactionMock() {
         monto: 10,
         moneda: 'USD',
         montoConvertido: 10,
+        functionalCurrency: 'CUP',
+        fxEvidenceFingerprint: 'fx-fingerprint-service',
+        tasaCambio: 1,
+        fechaReconciliacion: new Date('2026-11-02T12:00:00.000Z'),
       }),
     },
     cuentaBancaria: {
@@ -131,6 +140,7 @@ describe('Reconciliación de servicios: aislamiento multi-tenant', () => {
       tenantId: 'tenant-a',
       isActive: true,
       moneda: 'USD',
+      tipoCuenta: 'BANCO',
     } as never)
     vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue({
       tipoId: 'payment-type-a',
@@ -177,7 +187,14 @@ describe('Reconciliación de servicios: aislamiento multi-tenant', () => {
     })
     expect(transaction.reconciliacionServicio.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ tenantId: 'tenant-a' }),
+        data: expect.objectContaining({
+          tenantId: 'tenant-a',
+          montoConvertido: 10,
+          tasaCambio: 1,
+          functionalCurrency: 'CUP',
+          rateEffectiveAt: expect.any(Date),
+          fxEvidenceFingerprint: expect.any(String),
+        }),
       }),
     )
     expect(transaction.cuentaBancaria.updateMany).toHaveBeenCalledWith({
@@ -187,6 +204,74 @@ describe('Reconciliación de servicios: aislamiento multi-tenant', () => {
     expect(transaction.transaccionMoneda.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ referenciaId: 'service-sale-a' }),
     })
+    expect(emitirEventoLiquidacion).toHaveBeenCalledWith(
+      transaction,
+      { tenantId: 'tenant-a', userId: 'user-a' },
+      expect.objectContaining({
+        tipo: 'COBRO_SERVICIO',
+        reconciliacion: expect.objectContaining({
+          reconciliacionId: 'reconciliation-a',
+          monto: 10,
+          moneda: 'USD',
+          montoConvertido: 10,
+          functionalCurrency: 'CUP',
+          tasaCambio: 1,
+          fxEvidenceFingerprint: 'fx-fingerprint-service',
+        }),
+        functionalAmount: 10,
+        functionalCurrency: 'CUP',
+        exchangeRate: 1,
+        fxEvidenceFingerprint: 'fx-fingerprint-service',
+        treasuryAccountType: 'BANCO',
+      }),
+    )
+  })
+
+  it('POST no confirma la operación si falla el posteo formal', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user } as never)
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never)
+    vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue({
+      ventaServicioId: 'service-sale-a',
+      tenantId: 'tenant-a',
+    } as never)
+    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
+      cuentaId: 'account-a',
+      tenantId: 'tenant-a',
+      isActive: true,
+      moneda: 'CUP',
+      tipoCuenta: 'EFECTIVO',
+    } as never)
+    vi.mocked(prisma.tipoPago.findFirst).mockResolvedValue({
+      tipoId: 'payment-type-a',
+      tenantId: 'tenant-a',
+      isActive: true,
+      requiereCuenta: false,
+      cuentaDefecto: null,
+      nombre: 'Efectivo',
+    } as never)
+    vi.mocked(emitirEventoLiquidacion).mockRejectedValueOnce(new Error('fallo de posteo'))
+
+    const transaction = createTransactionMock()
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(transaction as never),
+    )
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/contabilidad/reconciliacion/servicios', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ventaServicioId: 'service-sale-a',
+          cuentaId: 'account-a',
+          tipoPagoId: 'payment-type-a',
+          monto: 10,
+          moneda: 'CUP',
+        }),
+      }),
+    )
+
+    expect(response.status).toBe(500)
+    expect(emitirEventoLiquidacion).toHaveBeenCalledTimes(1)
   })
 
   it('POST no muta cuando el servicio no pertenece al tenant autenticado', async () => {
