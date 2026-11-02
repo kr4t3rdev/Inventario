@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 vi.mock('@/lib/auth-middleware', () => ({ authenticateUser: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    anticipo: { findUnique: vi.fn() },
+    anticipo: { findFirst: vi.fn() },
     $transaction: vi.fn(),
   },
   default: {
-    anticipo: { findUnique: vi.fn() },
+    anticipo: { findFirst: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -31,7 +31,7 @@ describe('mobile advance revert route', () => {
 
   it('reverts anticipo', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
-    vi.mocked(prisma.anticipo.findUnique).mockResolvedValue({ tenantId: 'tenant-1' } as never);
+    vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ tenantId: 'tenant-1' } as never);
     vi.mocked(extraerFechaDeBody).mockReturnValue(null as never);
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true } as never);
     vi.mocked(reverseAnticipo).mockResolvedValue({ anticipoId: 'a1' } as never);
