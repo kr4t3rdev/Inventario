@@ -7,7 +7,9 @@ export type AnticipoEventType =
 	| 'ANTICIPO_PROVEEDOR_ENTREGADO'
 	| 'ANTICIPO_PROVEEDOR_APLICADO'
 	| 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
-	| 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA';
+	| 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA'
+	| 'ANTICIPO_CLIENTE_DEVUELTO'
+	| 'ANTICIPO_PROVEEDOR_REINTEGRADO';
 
 export interface AnticipoEventParams {
 	anticipoMovimientoId: string;
@@ -33,8 +35,11 @@ export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableI
 	const esCliente = params.tipo.startsWith('ANTICIPO_CLIENTE');
 	const esCobroEfectivo = params.tipo === 'ANTICIPO_CLIENTE_RECIBIDO';
 	const esPagoEfectivo = params.tipo === 'ANTICIPO_PROVEEDOR_ENTREGADO';
-	const esAplicacion = !esCobroEfectivo && !esPagoEfectivo;
 	const esReverso = params.tipo.endsWith('REVERSADA');
+	const esAplicacion = params.tipo.includes('_APLICADO') || esReverso;
+	const esDevolucion = params.tipo === 'ANTICIPO_CLIENTE_DEVUELTO' ||
+		params.tipo === 'ANTICIPO_PROVEEDOR_REINTEGRADO';
+	const esEfectivo = esCobroEfectivo || esPagoEfectivo || esDevolucion;
 	const medioCobro = params.treasuryAccountType === 'EFECTIVO' ? 'CAJA' : 'BANCOS';
 
 	return {
@@ -44,8 +49,12 @@ export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableI
 			params.descripcion ??
 			(esCobroEfectivo
 				? 'Recepción de anticipo de cliente'
-				: esPagoEfectivo
+			: esPagoEfectivo
 					? 'Entrega de anticipo a proveedor'
+				: params.tipo === 'ANTICIPO_CLIENTE_DEVUELTO'
+					? 'Devolución de anticipo a cliente'
+					: params.tipo === 'ANTICIPO_PROVEEDOR_REINTEGRADO'
+						? 'Reintegro de anticipo por proveedor'
 				: esReverso
 					? esCliente
 						? 'Reverso de aplicación de anticipo de cliente'
@@ -60,7 +69,7 @@ export function buildAnticipoEvent(params: AnticipoEventParams): EventoContableI
 		monedaFuncional: params.monedaFuncional,
 		tasaCambio: params.tasaCambio ?? null,
 		fxEvidenceFingerprint: params.fxEvidenceFingerprint ?? null,
-		...(esAplicacion || !params.treasuryAccountType ? {} : { medioCobro }),
+		...(esAplicacion || !esEfectivo || !params.treasuryAccountType ? {} : { medioCobro }),
 		auxiliares: { diferenciaFx: params.diferenciaFx ?? 0 },
 	};
 }

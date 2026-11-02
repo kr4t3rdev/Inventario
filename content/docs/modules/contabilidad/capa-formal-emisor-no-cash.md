@@ -22,7 +22,9 @@ de servicios (`COBRO_SERVICIO`) y recepción, entrega o aplicación de anticipos
 | `ANTICIPO_PROVEEDOR_ENTREGADO` | Anticipos a proveedores contra tesorería | `COMPRAS` | `ANTICIPOS_PROVEEDORES` |
 | `ANTICIPO_PROVEEDOR_APLICADO` | CxP contra anticipos de proveedores, con ramas FX | `COMPRAS` | `CXP_PROVEEDORES` |
 | `ANTICIPO_CLIENTE_APLICACION_REVERSADA` | Asiento compensatorio de la aplicación | `VENTAS` | `CXC_CLIENTES` / `ANTICIPOS_CLIENTES` |
+| `ANTICIPO_CLIENTE_DEVUELTO` | Devolución de fondos disponibles al cliente, con diferencia FX | `VENTAS` | `ANTICIPOS_CLIENTES` / `CAJA_PRINCIPAL` |
 | `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | Asiento compensatorio de la aplicación | `COMPRAS` | `ANTICIPOS_PROVEEDORES` / `CXP_PROVEEDORES` |
+| `ANTICIPO_PROVEEDOR_REINTEGRADO` | Reintegro de fondos disponibles por el proveedor, con diferencia FX | `COMPRAS` | `CAJA_PRINCIPAL` / `ANTICIPOS_PROVEEDORES` |
 
 Las plantillas ya existían en `src/features/contabilidad-formal/lib/plan-default.ts`;
 lo nuevo es el **emisor**: el punto que traduce una conciliación operativa
@@ -86,7 +88,7 @@ evento, aunque el emisor no Cash esté en `enforce`.
 
 La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 
-- plan de cuentas sembrado (35 cuentas + 7 diarios + 25 roles) y las 96
+- plan de cuentas sembrado (35 cuentas + 7 diarios + 25 roles) y las
   plantillas globales activas;
 - `TenantAccountingPolicy.functionalCurrencyCode` configurada;
 - un período contable **abierto** para la fecha de la operación.
@@ -99,6 +101,10 @@ mismo gate `off/shadow/enforce`, que permanece `off` por defecto.
 Al eliminar un gasto o servicio, las aplicaciones de anticipos financiados se
 restituyen con un movimiento `REVERSO` y un asiento compensatorio anclado a ese
 movimiento; esta operación no representa una devolución de efectivo.
+La devolución de financiación sí registra la tesorería: el anticipo se reduce
+por su valor funcional histórico proporcional, la cuenta se valora a la tasa
+vigente y cualquier diferencia se contabiliza como resultado cambiario. Solo se
+admiten importes disponibles que no se hayan aplicado a documentos.
 La decisión y sus consecuencias están registradas en
 [`ADR-0002`](../../../../docs/adr/0002-ciclo-formal-de-anticipos.md).
 

@@ -1,0 +1,9 @@
+ALTER TYPE "TipoEventoContable"
+  ADD VALUE IF NOT EXISTS 'ANTICIPO_CLIENTE_DEVUELTO';
+
+ALTER TYPE "TipoEventoContable"
+  ADD VALUE IF NOT EXISTS 'ANTICIPO_PROVEEDOR_REINTEGRADO';
+
+ALTER TABLE "AnticipoMovimiento"
+  ADD COLUMN "valorAnticipoFuncional" DECIMAL(65,30),
+  ADD COLUMN "valorTesoreriaFuncional" DECIMAL(65,30);

@@ -357,6 +357,294 @@ export async function registrarMovimientoEfectivoAnticipo(
   return { movimientoId: movimiento.movimientoId, saldoDisponible: nuevoSaldo, idempotentReplay: false }
 }
 
+/**
+ * @description Devuelve fondos de un anticipo financiado al cliente o proveedor,
+ * actualiza el saldo disponible y la tesorería y emite su asiento formal.
+ * @param {Prisma.TransactionClient} tx - Transacción Prisma activa.
+ * @param {object} params - Anticipo, cuenta, tipo de pago, importe e idempotencia.
+ * @returns {Promise<{movimientoId: string; saldoDisponible: number; idempotentReplay: boolean}>}
+ * Resultado del movimiento de devolución.
+ */
+export async function devolverFondosAnticipo(
+  tx: Prisma.TransactionClient,
+  params: {
+    anticipoId: string
+    tenantId: string
+    cuentaId: string
+    tipoPagoId: string
+    monto: number
+    idempotencyKey: string
+    usuarioId: string
+    observaciones?: string
+  },
+): Promise<{ movimientoId: string; saldoDisponible: number; idempotentReplay: boolean }> {
+  if (!Number.isFinite(params.monto) || params.monto <= 0) {
+    throw createAnticipoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
+  }
+  if (!params.idempotencyKey.trim()) {
+    throw createAnticipoWorkflowError(400, 'IDEMPOTENCY_KEY_REQUERIDA', 'La clave de idempotencia es obligatoria')
+  }
+
+  const anticipo = await tx.anticipo.findFirst({
+    where: { anticipoId: params.anticipoId, tenantId: params.tenantId },
+    select: {
+      anticipoId: true,
+      tenantId: true,
+      tipo: true,
+      estado: true,
+      montoOriginal: true,
+      montoFinanciado: true,
+      saldoDisponible: true,
+      moneda: true,
+      referenciaExterna: true,
+    },
+  })
+  if (!anticipo) throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', 'Anticipo no encontrado')
+  if (anticipo.estado === 'ANULADO' || anticipo.referenciaExterna?.startsWith('NC:')) {
+    throw createAnticipoWorkflowError(409, 'ANTICIPO_NO_REEMBOLSABLE', 'Este anticipo no admite devolución de fondos')
+  }
+
+  const existente = await tx.anticipoMovimiento.findFirst({
+    where: { anticipoId: anticipo.anticipoId, idempotencyKey: params.idempotencyKey },
+    select: {
+      movimientoId: true,
+      tipoMovimiento: true,
+      monto: true,
+      saldoDespues: true,
+      cuentaId: true,
+      tipoPagoId: true,
+    },
+  })
+  const tipoDevolucion = anticipo.tipo === 'COBRO' ? 'DEVOLUCION' : 'REINTEGRO'
+  if (existente) {
+    if (
+      existente.tipoMovimiento !== tipoDevolucion ||
+      Number(existente.monto) !== params.monto ||
+      existente.cuentaId !== params.cuentaId ||
+      existente.tipoPagoId !== params.tipoPagoId
+    ) {
+      throw createAnticipoWorkflowError(409, 'IDEMPOTENCIA_CONFLICTO', 'La clave ya se usó con otros datos')
+    }
+    return {
+      movimientoId: existente.movimientoId,
+      saldoDisponible: Number(existente.saldoDespues),
+      idempotentReplay: true,
+    }
+  }
+  if (anticipo.estado !== 'RESERVADO' && anticipo.estado !== 'EJECUTADO') {
+    throw createAnticipoWorkflowError(409, 'ANTICIPO_NO_REEMBOLSABLE', 'El estado del anticipo no admite devolución')
+  }
+  const saldoDisponible = Number(anticipo.saldoDisponible)
+  if (params.monto > saldoDisponible + 0.000001) {
+    throw createAnticipoWorkflowError(
+      409,
+      'DEVOLUCION_EXCEDE_SALDO_DISPONIBLE',
+      'La devolución supera los fondos disponibles no aplicados',
+    )
+  }
+
+  const [movimientos, cuenta, tipoPago, policy] = await Promise.all([
+    tx.anticipoMovimiento.findMany({
+      where: { anticipoId: anticipo.anticipoId },
+      select: {
+        tipoMovimiento: true,
+        monto: true,
+        montoFuncional: true,
+        functionalCurrency: true,
+        fxEvidenceFingerprint: true,
+        valorAnticipoFuncional: true,
+        valorTesoreriaFuncional: true,
+      },
+    }),
+    tx.cuentaBancaria.findFirst({
+      where: { cuentaId: params.cuentaId, tenantId: params.tenantId, isActive: true },
+      select: { cuentaId: true, moneda: true, tipoCuenta: true },
+    }),
+    tx.tipoPago.findFirst({
+      where: { tipoId: params.tipoPagoId, tenantId: params.tenantId, isActive: true },
+      select: { tipoId: true },
+    }),
+    tx.tenantAccountingPolicy.findUnique({
+      where: { tenantId: params.tenantId },
+      select: { functionalCurrencyCode: true },
+    }),
+  ])
+  if (!cuenta) throw createAnticipoWorkflowError(404, 'CUENTA_NO_ENCONTRADA', 'Cuenta activa no encontrada')
+  if (!tipoPago) throw createAnticipoWorkflowError(404, 'TIPO_PAGO_NO_ENCONTRADO', 'Tipo de pago activo no encontrado')
+  if (cuenta.moneda.trim().toUpperCase() !== anticipo.moneda.trim().toUpperCase()) {
+    throw createAnticipoWorkflowError(409, 'MONEDA_CUENTA_INCOMPATIBLE', 'La moneda de la cuenta debe coincidir con la del anticipo')
+  }
+
+  const moneda = anticipo.moneda.trim().toUpperCase()
+  const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() || 'CUP'
+  const movimientosFinanciacion = movimientos.filter((movimiento) =>
+    movimiento.tipoMovimiento === 'RECEPCION' || movimiento.tipoMovimiento === 'ENTREGA')
+  const movimientosAplicacion = movimientos.filter((movimiento) => movimiento.tipoMovimiento === 'EJECUCION')
+  const reversosAplicacion = movimientos.filter((movimiento) => movimiento.tipoMovimiento === 'REVERSO')
+  const devolucionesPrevias = movimientos.filter((movimiento) =>
+    movimiento.tipoMovimiento === 'DEVOLUCION' || movimiento.tipoMovimiento === 'REINTEGRO')
+  if (movimientosFinanciacion.some((movimiento) =>
+    movimiento.montoFuncional == null || !movimiento.functionalCurrency ||
+    (moneda !== monedaFuncional && !movimiento.fxEvidenceFingerprint))) {
+    throw createAnticipoWorkflowError(
+      409,
+      'VALORACION_FONDOS_INCOMPLETA',
+      'La financiación histórica no tiene valoración funcional suficiente para devolver fondos',
+    )
+  }
+  if (
+    movimientosAplicacion.some((movimiento) =>
+      movimiento.montoFuncional == null || !movimiento.functionalCurrency) ||
+    reversosAplicacion.some((movimiento) =>
+      movimiento.montoFuncional == null || !movimiento.functionalCurrency) ||
+    devolucionesPrevias.some((movimiento) =>
+      movimiento.valorAnticipoFuncional == null || movimiento.valorTesoreriaFuncional == null)
+  ) {
+    throw createAnticipoWorkflowError(
+      409,
+      'VALORACION_FONDOS_INCOMPLETA',
+      'Las aplicaciones históricas no tienen valoración funcional suficiente para conciliar el anticipo',
+    )
+  }
+  const divisasFuncionales = new Set(movimientosFinanciacion
+    .map((movimiento) => movimiento.functionalCurrency?.trim().toUpperCase())
+    .filter((codigo): codigo is string => Boolean(codigo)))
+  const divisasDeAplicaciones = new Set([
+    ...movimientosAplicacion,
+    ...reversosAplicacion,
+  ].map((movimiento) => movimiento.functionalCurrency?.trim().toUpperCase())
+    .filter((codigo): codigo is string => Boolean(codigo)))
+  if (
+    divisasFuncionales.size > 1 ||
+    (divisasFuncionales.size === 1 && !divisasFuncionales.has(monedaFuncional)) ||
+    divisasDeAplicaciones.size > 1 ||
+    [...divisasDeAplicaciones].some((codigo) => codigo !== monedaFuncional)
+  ) {
+    throw createAnticipoWorkflowError(409, 'MONEDA_FUNCIONAL_INCOMPATIBLE', 'La moneda funcional histórica no coincide con la política actual')
+  }
+
+  const totalFinanciado = movimientosFinanciacion.reduce((sum, movimiento) => sum + Number(movimiento.monto), 0)
+  const valorFinanciado = movimientosFinanciacion.reduce((sum, movimiento) => sum + Number(movimiento.montoFuncional), 0)
+  const totalAplicado = movimientosAplicacion.reduce((sum, movimiento) => sum + Number(movimiento.monto), 0)
+  const valorAplicado = movimientosAplicacion.reduce((sum, movimiento) => sum + Number(movimiento.montoFuncional ?? 0), 0)
+  const totalReversado = reversosAplicacion.reduce((sum, movimiento) => sum + Number(movimiento.monto), 0)
+  const valorReversado = reversosAplicacion.reduce((sum, movimiento) => sum + Number(movimiento.montoFuncional ?? 0), 0)
+  const totalDevuelto = devolucionesPrevias.reduce((sum, movimiento) => sum + Number(movimiento.monto), 0)
+  const valorDevuelto = devolucionesPrevias.reduce(
+    (sum, movimiento) => sum + Number(movimiento.valorAnticipoFuncional ?? 0), 0,
+  )
+  const saldoLibro = valorFinanciado - valorAplicado + valorReversado - valorDevuelto
+  const saldoMoneda = totalFinanciado - totalAplicado + totalReversado - totalDevuelto
+  if (Math.abs(saldoMoneda - saldoDisponible) > 0.000001 || saldoLibro <= 0) {
+    throw createAnticipoWorkflowError(
+      409,
+      'VALORACION_FONDOS_INCOMPLETA',
+      'No se puede conciliar el valor funcional del saldo disponible',
+    )
+  }
+  const valorAnticipoFuncional = params.monto * saldoLibro / saldoMoneda
+
+  let tasaCambio: number | null = null
+  let tasaId: string | null = null
+  let valorTesoreriaFuncional = params.monto
+  if (moneda !== monedaFuncional) {
+    const tasa = await exchangeRateProvider.getRateAsOf({
+      sourceCurrency: moneda,
+      targetCurrency: monedaFuncional,
+      boundaryAt: new Date(),
+      client: tx,
+    })
+    if (!tasa) throw createAnticipoWorkflowError(409, 'TASA_INVALIDA', `No hay tasa vigente ${moneda} → ${monedaFuncional}`)
+    tasaCambio = tasa.tasa
+    tasaId = tasa.tasaId
+    valorTesoreriaFuncional = params.monto * tasa.tasa
+  }
+  if (!Number.isFinite(valorTesoreriaFuncional) || valorTesoreriaFuncional <= 0) {
+    throw createAnticipoWorkflowError(409, 'VALORACION_FONDOS_INVALIDA', 'La valoración de tesorería es inválida')
+  }
+  const diferenciaFx = valorTesoreriaFuncional - valorAnticipoFuncional
+  const saldoDespues = saldoDisponible - params.monto
+  const actualizacion = await tx.anticipo.updateMany({
+    where: {
+      anticipoId: anticipo.anticipoId,
+      tenantId: params.tenantId,
+      estado: anticipo.estado,
+      montoFinanciado: anticipo.montoFinanciado,
+      saldoDisponible: anticipo.saldoDisponible,
+    },
+    data: {
+      montoFinanciado: { decrement: params.monto },
+      saldoDisponible: { decrement: params.monto },
+    },
+  })
+  if (actualizacion.count !== 1) {
+    throw createAnticipoWorkflowError(409, 'CONCURRENCIA', 'El anticipo cambió durante la devolución')
+  }
+  const cuentaUpdate = await tx.cuentaBancaria.updateMany({
+    where: {
+      cuentaId: cuenta.cuentaId,
+      tenantId: params.tenantId,
+      isActive: true,
+      ...(anticipo.tipo === 'COBRO' ? { saldo: { gte: params.monto } } : {}),
+    },
+    data: { saldo: anticipo.tipo === 'COBRO' ? { decrement: params.monto } : { increment: params.monto } },
+  })
+  if (cuentaUpdate.count !== 1) {
+    throw createAnticipoWorkflowError(
+      409,
+      anticipo.tipo === 'COBRO' ? 'SALDO_CUENTA_INSUFICIENTE' : 'CUENTA_MODIFICADA',
+      anticipo.tipo === 'COBRO' ? 'La cuenta no tiene saldo suficiente para devolver el anticipo' : 'La cuenta cambió durante la devolución',
+    )
+  }
+
+  const huellas = [
+    ...movimientosFinanciacion.map((movimiento) => movimiento.fxEvidenceFingerprint),
+    ...movimientosAplicacion.map((movimiento) => movimiento.fxEvidenceFingerprint),
+    ...reversosAplicacion.map((movimiento) => movimiento.fxEvidenceFingerprint),
+    ...devolucionesPrevias.map((movimiento) => movimiento.fxEvidenceFingerprint),
+    tasaId ? createHash('sha256').update(`${tasaId}:${moneda}:${monedaFuncional}:${tasaCambio}`).digest('hex') : null,
+  ].filter((fingerprint): fingerprint is string => Boolean(fingerprint)).sort()
+  const fxEvidenceFingerprint = huellas.length
+    ? createHash('sha256').update(huellas.join(':')).digest('hex')
+    : null
+  const movimiento = await tx.anticipoMovimiento.create({
+    data: {
+      anticipoId: anticipo.anticipoId,
+      tipoMovimiento: tipoDevolucion,
+      cuentaId: cuenta.cuentaId,
+      tipoPagoId: tipoPago.tipoId,
+      monto: params.monto,
+      moneda,
+      tasaAplicada: tasaCambio,
+      montoConvertido: valorTesoreriaFuncional,
+      montoFuncional: valorTesoreriaFuncional,
+      functionalCurrency: monedaFuncional,
+      fxEvidenceFingerprint,
+      valorAnticipoFuncional,
+      valorTesoreriaFuncional,
+      saldoAntes: saldoDisponible,
+      saldoDespues,
+      usuarioId: params.usuarioId,
+      idempotencyKey: params.idempotencyKey,
+      observaciones: params.observaciones || null,
+    },
+  })
+  await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
+    anticipoMovimientoId: movimiento.movimientoId,
+    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_DEVUELTO' : 'ANTICIPO_PROVEEDOR_REINTEGRADO',
+    fecha: new Date(),
+    monto: params.monto,
+    moneda,
+    montoFuncional: valorTesoreriaFuncional,
+    monedaFuncional,
+    tasaCambio,
+    fxEvidenceFingerprint,
+    diferenciaFx,
+    treasuryAccountType: cuenta.tipoCuenta,
+  })
+  return { movimientoId: movimiento.movimientoId, saldoDisponible: saldoDespues, idempotentReplay: false }
+}
+
 export async function executeAnticipo(
   _tx: Prisma.TransactionClient,
   _params: ExecuteAnticipoParams

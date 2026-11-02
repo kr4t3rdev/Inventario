@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { registrarMovimientoEfectivoAnticipoAction } from "@/features/contabilidad/actions-anticipos"
+import {
+  devolverFondosAnticipoAction,
+  registrarMovimientoEfectivoAnticipoAction,
+} from "@/features/contabilidad/actions-anticipos"
 
 interface CuentaFinanciamiento {
   cuentaId: string
@@ -26,6 +29,7 @@ interface TipoPagoFinanciamiento {
 }
 
 interface AnticipoFinanciarDialogProps {
+  modo?: "financiar" | "devolver"
   anticipo: Anticipo | null
   cuentas: CuentaFinanciamiento[]
   tiposPago: TipoPagoFinanciamiento[]
@@ -35,11 +39,12 @@ interface AnticipoFinanciarDialogProps {
 }
 
 /**
- * @description Registra el movimiento real de efectivo que financia un anticipo.
+ * @description Registra financiación o devolución monetaria de un anticipo.
  * @param {AnticipoFinanciarDialogProps} props - Anticipo, cuentas y acciones del diálogo.
  * @returns {JSX.Element} Diálogo para recibir o entregar fondos parcialmente.
  */
 export function AnticipoFinanciarDialog({
+  modo = "financiar",
   anticipo,
   cuentas,
   tiposPago,
@@ -53,7 +58,9 @@ export function AnticipoFinanciarDialog({
   const [observaciones, setObservaciones] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const restante = anticipo
-    ? Math.max(0, Number(anticipo.montoOriginal) - Number(anticipo.montoFinanciado ?? 0))
+    ? modo === "devolver"
+      ? Number(anticipo.saldoDisponible)
+      : Math.max(0, Number(anticipo.montoOriginal) - Number(anticipo.montoFinanciado ?? 0))
     : 0
 
   useEffect(() => {
@@ -62,13 +69,16 @@ export function AnticipoFinanciarDialog({
     setCuentaId("")
     setTipoPagoId("")
     setObservaciones("")
-  }, [open, restante])
+  }, [modo, open, restante])
 
   const handleSubmit = async () => {
     if (!anticipo || !cuentaId || !tipoPagoId || !Number.isFinite(Number(monto))) return
     setIsLoading(true)
     try {
-      const result = await registrarMovimientoEfectivoAnticipoAction({
+      const action = modo === "devolver"
+        ? devolverFondosAnticipoAction
+        : registrarMovimientoEfectivoAnticipoAction
+      const result = await action({
         anticipoId: anticipo.anticipoId,
         cuentaId,
         tipoPagoId,
@@ -77,7 +87,9 @@ export function AnticipoFinanciarDialog({
         observaciones: observaciones || undefined,
       })
       if (!result.success) throw new Error(result.error?.message || "No se pudo registrar el movimiento")
-      toast.success(anticipo.tipo === "COBRO" ? "Recepción registrada" : "Entrega registrada")
+      toast.success(modo === "devolver"
+        ? anticipo.tipo === "COBRO" ? "Devolución al cliente registrada" : "Reintegro del proveedor registrado"
+        : anticipo.tipo === "COBRO" ? "Recepción registrada" : "Entrega registrada")
       onOpenChange(false)
       onSuccess?.()
     } catch (error) {
@@ -92,16 +104,20 @@ export function AnticipoFinanciarDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {anticipo?.tipo === "COBRO" ? "Recibir fondos del cliente" : "Entregar fondos al proveedor"}
+            {modo === "devolver"
+              ? anticipo?.tipo === "COBRO" ? "Devolver fondos al cliente" : "Registrar reintegro del proveedor"
+              : anticipo?.tipo === "COBRO" ? "Recibir fondos del cliente" : "Entregar fondos al proveedor"}
           </DialogTitle>
           <DialogDescription>
-            El anticipo se creó como reserva. Registra aquí el movimiento de efectivo real;
-            el saldo disponible y su asiento se actualizarán juntos.
+            {modo === "devolver"
+              ? "Solo puedes devolver fondos financiados que sigan disponibles y no se hayan aplicado. El saldo, la tesorería y el asiento se actualizarán juntos."
+              : "El anticipo se creó como reserva. Registra aquí el movimiento de efectivo real; el saldo disponible y su asiento se actualizarán juntos."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border bg-muted/30 p-3 text-sm">
-            Pendiente de financiar: <strong>{anticipo?.moneda} {restante.toLocaleString("es-ES")}</strong>
+            {modo === "devolver" ? "Saldo financiado disponible para devolver:" : "Pendiente de financiar:"}{" "}
+            <strong>{anticipo?.moneda} {restante.toLocaleString("es-ES")}</strong>
           </div>
           <div className="space-y-2">
             <Label htmlFor="anticipo-funding-amount">Monto</Label>
@@ -131,7 +147,7 @@ export function AnticipoFinanciarDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Tipo de pago</Label>
+            <Label>{modo === "devolver" ? "Medio de devolución" : "Tipo de pago"}</Label>
             <Select value={tipoPagoId} onValueChange={setTipoPagoId}>
               <SelectTrigger><SelectValue placeholder="Selecciona un tipo de pago" /></SelectTrigger>
               <SelectContent>

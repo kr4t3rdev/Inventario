@@ -13,7 +13,10 @@ import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
+import {
+  devolverFondosAnticipo,
+  registrarMovimientoEfectivoAnticipo,
+} from '@/lib/services/anticipos-workflow';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Schemas ───────────────────────────────────────────────
@@ -54,6 +57,8 @@ const cashMovementSchema = z.object({
   idempotencyKey: z.string().min(1),
   observaciones: z.string().max(500).optional(),
 });
+
+const cashRefundSchema = cashMovementSchema;
 
 // ─── Server Actions ────────────────────────────────────────
 
@@ -154,6 +159,22 @@ export const registrarMovimientoEfectivoAnticipoAction = withAction(withPeriodVa
     const parsed = cashMovementSchema.parse(input);
     const tenantId = requireTenant(user);
     const result = await prisma.$transaction((tx) => registrarMovimientoEfectivoAnticipo(tx, {
+      ...parsed,
+      tenantId,
+      usuarioId: user.userId,
+    }));
+    revalidatePath('/busy/contabilidad/anticipos');
+    return result;
+  },
+));
+
+export const devolverFondosAnticipoAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: z.infer<typeof cashRefundSchema>, user: AuthenticatedUser) => {
+    requireFeature(user, 'anticipos', 'devolver fondos de anticipos');
+    const parsed = cashRefundSchema.parse(input);
+    const tenantId = requireTenant(user);
+    const result = await prisma.$transaction((tx) => devolverFondosAnticipo(tx, {
       ...parsed,
       tenantId,
       usuarioId: user.userId,

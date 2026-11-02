@@ -29,6 +29,10 @@ durante la aplicación.
   aplicado a ese documento mediante un movimiento idempotente, con alcance por
   tenant y asiento formal compensatorio; este reverso documental no mueve
   tesorería.
+- Permitir la devolución de fondos explícitamente financiados solo por el saldo
+  disponible no aplicado. Reducir el anticipo por su valor funcional histórico
+  proporcional, registrar la tesorería a tasa vigente y reconocer la diferencia
+  cambiaria en el asiento formal, todo dentro de una transacción.
 - Mantener los saldos a favor originados por notas de crédito en su flujo
   separado.
 - Requerir conciliación para saldos históricos positivos sin evidencia de
@@ -48,6 +52,8 @@ durante la aplicación.
   desde el flujo transaccional del documento comercial.
 - Los reversos documentales restauran como máximo los fondos financiados y
   compensan el asiento original sin borrar su historia.
+- Las devoluciones monetarias no consumen el saldo ya aplicado y conservan tanto
+  el valor en libros del anticipo como la valoración actual de tesorería.
 
 ## Alternativas consideradas
 

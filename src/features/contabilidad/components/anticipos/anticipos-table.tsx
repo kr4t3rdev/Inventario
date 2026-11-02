@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Banknote, Eye, MoreHorizontal } from "lucide-react"
+import { Banknote, CornerUpLeft, Eye, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
@@ -37,6 +37,7 @@ interface AnticiposTableProps {
   error?: any
   onVerDetalle?: (anticipo: Anticipo) => void
   onFinanciar?: (anticipo: Anticipo) => void
+  onDevolver?: (anticipo: Anticipo) => void
 }
 
 const surfaceCardClass = cn(
@@ -55,6 +56,7 @@ export function AnticiposTable({
   error,
   onVerDetalle,
   onFinanciar,
+  onDevolver,
 }: AnticiposTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -88,6 +90,14 @@ export function AnticiposTable({
                   <DropdownMenuItem onClick={() => onFinanciar?.(anticipo)}>
                     <Banknote className="mr-2 h-4 w-4" />
                     Registrar recepción/entrega
+                  </DropdownMenuItem>
+                )}
+              {Number(anticipo.saldoDisponible) > 0 &&
+                Number(anticipo.montoFinanciado ?? 0) > 0 &&
+                anticipo.estado !== "ANULADO" && (
+                  <DropdownMenuItem onClick={() => onDevolver?.(anticipo)}>
+                    <CornerUpLeft className="mr-2 h-4 w-4" />
+                    {anticipo.tipo === "COBRO" ? "Devolver al cliente" : "Registrar reintegro"}
                   </DropdownMenuItem>
                 )}
             </DropdownMenuContent>

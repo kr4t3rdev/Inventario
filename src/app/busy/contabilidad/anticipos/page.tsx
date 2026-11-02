@@ -42,6 +42,7 @@ function AnticiposContent() {
   const [openForm, setOpenForm] = useState(false)
   const [openDetail, setOpenDetail] = useState(false)
   const [openFinanciar, setOpenFinanciar] = useState(false)
+  const [modoMovimientoEfectivo, setModoMovimientoEfectivo] = useState<"financiar" | "devolver">("financiar")
   const [anticipoSeleccionado, setAnticipoSeleccionado] = useState<Anticipo | null>(null)
   const [anticipoDetailId, setAnticipoDetailId] = useState<string | null>(null)
   const [tabActiva, setTabActiva] = useState("lista")
@@ -136,6 +137,13 @@ function AnticiposContent() {
   }
 
   const handleFinanciar = (anticipo: Anticipo) => {
+    setModoMovimientoEfectivo("financiar")
+    setAnticipoSeleccionado(anticipo)
+    setOpenFinanciar(true)
+  }
+
+  const handleDevolver = (anticipo: Anticipo) => {
+    setModoMovimientoEfectivo("devolver")
     setAnticipoSeleccionado(anticipo)
     setOpenFinanciar(true)
   }
@@ -190,6 +198,7 @@ function AnticiposContent() {
             isLoading={loadingAnticipos}
             onVerDetalle={handleVerDetalle}
             onFinanciar={handleFinanciar}
+            onDevolver={handleDevolver}
           />
         </TabsContent>
 
@@ -240,6 +249,7 @@ function AnticiposContent() {
       />
 
       <AnticipoFinanciarDialog
+        modo={modoMovimientoEfectivo}
         anticipo={anticipoSeleccionado}
         cuentas={cuentasBancarias}
         tiposPago={tiposPago}

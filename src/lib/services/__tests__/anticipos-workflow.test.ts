@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createHash } from 'node:crypto'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { emitirEventoAnticipo } from '@/features/contabilidad-formal/services/advance-posting-service'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
 
@@ -10,6 +11,7 @@ import {
   applyAnticipoAllocations,
   createAnticipo,
   executeAnticipo,
+  devolverFondosAnticipo,
   registrarMovimientoEfectivoAnticipo,
   reverseAnticipo,
   isAnticipoWorkflowError
@@ -46,6 +48,10 @@ function createTxMock() {
 }
 
 describe('anticipos-workflow', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(emitirEventoAnticipo).mockResolvedValue({ estado: 'OMITIDO' })
@@ -227,6 +233,145 @@ describe('anticipos-workflow', () => {
 
     expect(result).toEqual({ movimientoId: 'movement-1', saldoDisponible: 40, idempotentReplay: true })
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled()
+  })
+
+  it('devuelve fondos disponibles de anticipo cliente y registra diferencia FX', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-client', tenantId: 'tenant-1', tipo: 'COBRO', estado: 'RESERVADO',
+      montoOriginal: 100, montoFinanciado: 80, saldoDisponible: 50, moneda: 'USD',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findFirst.mockResolvedValue(null)
+    tx.anticipoMovimiento.findMany
+      .mockResolvedValueOnce([{
+        tipoMovimiento: 'RECEPCION', monto: 80, montoFuncional: 2400,
+        functionalCurrency: 'CUP', fxEvidenceFingerprint: 'funding-fx',
+      }, {
+        tipoMovimiento: 'EJECUCION', monto: 30, montoFuncional: 900,
+        functionalCurrency: 'CUP', fxEvidenceFingerprint: 'application-fx',
+      }])
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'bank-1', moneda: 'USD', tipoCuenta: 'CORRIENTE', isActive: true,
+    })
+    tx.tipoPago.findFirst.mockResolvedValue({ tipoId: 'payment-1' })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
+    tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'refund-1' })
+    vi.spyOn(exchangeRateProvider, 'getRateAsOf').mockResolvedValue({
+      tasaId: 'rate-refund', tasa: 35, fechaVigencia: new Date('2026-11-01T00:00:00Z'),
+    })
+
+    const result = await devolverFondosAnticipo(tx, {
+      anticipoId: 'ant-client', tenantId: 'tenant-1', cuentaId: 'bank-1',
+      tipoPagoId: 'payment-1', monto: 20, idempotencyKey: 'refund-1', usuarioId: 'user-1',
+    })
+    const evidenciaTasa = createHash('sha256').update('rate-refund:USD:CUP:35').digest('hex')
+    const evidenciaCompleta = createHash('sha256')
+      .update(['funding-fx', 'application-fx', evidenciaTasa].sort().join(':'))
+      .digest('hex')
+
+    expect(result).toMatchObject({ movimientoId: 'refund-1', saldoDisponible: 30, idempotentReplay: false })
+    expect(tx.anticipo.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { montoFinanciado: { decrement: 20 }, saldoDisponible: { decrement: 20 } },
+    }))
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { saldo: { decrement: 20 } },
+    }))
+    expect(tx.anticipoMovimiento.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        tipoMovimiento: 'DEVOLUCION', monto: 20, montoFuncional: 700,
+        valorAnticipoFuncional: 600, valorTesoreriaFuncional: 700, tasaAplicada: 35,
+        fxEvidenceFingerprint: evidenciaCompleta,
+      }),
+    }))
+    expect(emitirEventoAnticipo).toHaveBeenCalledWith(tx, { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'ANTICIPO_CLIENTE_DEVUELTO', montoFuncional: 700, diferenciaFx: 100,
+        anticipoMovimientoId: 'refund-1',
+      }),
+    )
+  })
+
+  it('reproduce una devolución con la misma clave sin afectar anticipos ni tesorería', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-client', tenantId: 'tenant-1', tipo: 'COBRO', estado: 'RESERVADO',
+      montoOriginal: 100, montoFinanciado: 60, saldoDisponible: 40, moneda: 'CUP',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findFirst.mockResolvedValue({
+      movimientoId: 'refund-existing', tipoMovimiento: 'DEVOLUCION', monto: 20,
+      saldoDespues: 40, cuentaId: 'bank-1', tipoPagoId: 'payment-1',
+    })
+
+    const result = await devolverFondosAnticipo(tx, {
+      anticipoId: 'ant-client', tenantId: 'tenant-1', cuentaId: 'bank-1',
+      tipoPagoId: 'payment-1', monto: 20, idempotencyKey: 'refund-key', usuarioId: 'user-1',
+    })
+
+    expect(result).toMatchObject({
+      movimientoId: 'refund-existing', saldoDisponible: 40, idempotentReplay: true,
+    })
+    expect(tx.anticipoMovimiento.findMany).not.toHaveBeenCalled()
+    expect(tx.anticipo.updateMany).not.toHaveBeenCalled()
+    expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled()
+    expect(emitirEventoAnticipo).not.toHaveBeenCalled()
+  })
+
+  it('rechaza devolver anticipos ya aplicados y no modifica tesorería', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-provider', tenantId: 'tenant-1', tipo: 'PAGO', estado: 'EJECUTADO',
+      montoOriginal: 100, montoFinanciado: 80, saldoDisponible: 10, moneda: 'CUP',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findFirst.mockResolvedValue(null)
+
+    await expect(devolverFondosAnticipo(tx, {
+      anticipoId: 'ant-provider', tenantId: 'tenant-1', cuentaId: 'bank-1',
+      tipoPagoId: 'payment-1', monto: 20, idempotencyKey: 'refund-over', usuarioId: 'user-1',
+    })).rejects.toMatchObject({ code: 'DEVOLUCION_EXCEDE_SALDO_DISPONIBLE' })
+
+    expect(tx.anticipoMovimiento.findMany).not.toHaveBeenCalled()
+    expect(tx.anticipo.updateMany).not.toHaveBeenCalled()
+    expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled()
+  })
+
+  it('reintegra tesorería cuando devuelve un anticipo a proveedor', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst.mockResolvedValue({
+      anticipoId: 'ant-provider', tenantId: 'tenant-1', tipo: 'PAGO', estado: 'RESERVADO',
+      montoOriginal: 100, montoFinanciado: 50, saldoDisponible: 50, moneda: 'CUP',
+      referenciaExterna: null,
+    })
+    tx.anticipoMovimiento.findFirst.mockResolvedValue(null)
+    tx.anticipoMovimiento.findMany
+      .mockResolvedValueOnce([{
+        tipoMovimiento: 'ENTREGA', monto: 50, montoFuncional: 50,
+        functionalCurrency: 'CUP', fxEvidenceFingerprint: null,
+      }])
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'bank-1', moneda: 'CUP', tipoCuenta: 'EFECTIVO', isActive: true,
+    })
+    tx.tipoPago.findFirst.mockResolvedValue({ tipoId: 'payment-1' })
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' })
+    tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'refund-provider-1' })
+
+    await devolverFondosAnticipo(tx, {
+      anticipoId: 'ant-provider', tenantId: 'tenant-1', cuentaId: 'bank-1',
+      tipoPagoId: 'payment-1', monto: 20, idempotencyKey: 'refund-provider-1', usuarioId: 'user-1',
+    })
+
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { saldo: { increment: 20 } },
+    }))
+    expect(emitirEventoAnticipo).toHaveBeenCalledWith(tx, { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({ tipo: 'ANTICIPO_PROVEEDOR_REINTEGRADO', diferenciaFx: 0 }),
+    )
   })
 
   it('revierte una aplicación documental con valoración y asiento compensatorio', async () => {

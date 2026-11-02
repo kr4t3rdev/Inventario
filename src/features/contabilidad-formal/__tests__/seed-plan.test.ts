@@ -202,6 +202,33 @@ describe('seedPlanContable', () => {
 });
 
 describe('seedPlantillasGlobales', () => {
+	it('mantiene balanceadas las plantillas de devolución en ambos sentidos FX', () => {
+		const eventos = ['ANTICIPO_CLIENTE_DEVUELTO', 'ANTICIPO_PROVEEDOR_REINTEGRADO'] as const;
+		for (const evento of eventos) {
+			for (const diferencia of [-100, 0, 100]) {
+				const condicion = diferencia > 0
+					? 'FX_POSITIVA'
+					: diferencia < 0 ? 'FX_NEGATIVA' : 'SIN_DIFERENCIA_FX';
+				const lineas = PLANTILLAS_DEFAULT.filter((linea) =>
+					linea.evento === evento && (!linea.condicion || linea.condicion === condicion));
+				const monto = (regla: string) => {
+					switch (regla) {
+						case 'TOTAL': return 700;
+						case 'TOTAL_MENOS_DIFERENCIA': return 700 - Math.abs(diferencia);
+						case 'TOTAL_MAS_DIFERENCIA': return 700 + Math.abs(diferencia);
+						case 'DIFERENCIA_FX': return Math.abs(diferencia);
+						default: throw new Error(`Regla inesperada: ${regla}`);
+					}
+				};
+				const debe = lineas.filter((linea) => linea.lado === 'DEBE')
+					.reduce((suma, linea) => suma + monto(linea.montoRegla), 0);
+				const haber = lineas.filter((linea) => linea.lado === 'HABER')
+					.reduce((suma, linea) => suma + monto(linea.montoRegla), 0);
+				expect(debe).toBe(haber);
+			}
+		}
+	});
+
 	it('define plantillas compensatorias que invierten cada línea original', () => {
 		const pares = [
 			['ANTICIPO_CLIENTE_APLICADO', 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'],

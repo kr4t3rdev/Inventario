@@ -68,4 +68,27 @@ describe('buildAnticipoEvent', () => {
     })
     expect(event.medioCobro).toBeUndefined()
   })
+
+  it('expone la devolución monetaria de cliente con efectivo y diferencia FX', () => {
+    const event = buildAnticipoEvent({
+      anticipoMovimientoId: 'refund-1',
+      tipo: 'ANTICIPO_CLIENTE_DEVUELTO',
+      fecha: new Date('2026-11-01T12:00:00.000Z'),
+      monto: 20,
+      moneda: 'USD',
+      montoFuncional: 700,
+      monedaFuncional: 'CUP',
+      tasaCambio: 35,
+      fxEvidenceFingerprint: 'refund-fx',
+      diferenciaFx: 100,
+      treasuryAccountType: 'CORRIENTE',
+    })
+
+    expect(event).toMatchObject({
+      tipo: 'ANTICIPO_CLIENTE_DEVUELTO',
+      origen: { tipo: 'anticipo_movimiento', id: 'refund-1' },
+      medioCobro: 'BANCOS',
+      auxiliares: { diferenciaFx: 100 },
+    })
+  })
 })
