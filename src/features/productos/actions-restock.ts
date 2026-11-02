@@ -9,6 +9,8 @@ import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
+import { buildPersistedAccountingAmount } from "@/features/contabilidad/services/accounting-reconciliation-service";
+import { emitirEventoLiquidacion } from "@/features/contabilidad-formal/services/settlement-posting-service";
 import { restockSchema } from "./schemas";
 import type { RestockInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -510,7 +512,7 @@ async function handlePaymentInTransaction(
 
 		const cuentaBancaria = await tx.cuentaBancaria.findUnique({
 			where: { cuentaId },
-			select: { cuentaId: true, isActive: true },
+			select: { cuentaId: true, isActive: true, tipoCuenta: true },
 		});
 
 		if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -533,11 +535,26 @@ async function handlePaymentInTransaction(
 		const reconciliacionTasaCambio = isForeignCurrency
 			? (tasaCambio ?? null)
 			: null;
-		const reconciliacionMontoConvertido = isForeignCurrency
-			? (montoConvertido ?? null)
-			: null;
+		const conversion = buildPersistedAccountingAmount(
+			Number(reconciliacionMonto),
+			reconciliacionMoneda,
+			reconciliacionTasaCambio ?? undefined,
+			now,
+		);
+		if (
+			isForeignCurrency &&
+			montoConvertido != null &&
+			conversion.montoConvertido != null &&
+			Math.abs(montoConvertido - conversion.montoConvertido) >
+				Math.max(0.01, Math.abs(conversion.montoConvertido) * 0.000001)
+		) {
+			throw new ActionError(
+				"El monto convertido no coincide con la tasa de cambio aplicada",
+				"INCONSISTENT_CONVERSION",
+			);
+		}
 
-		await tx.reconciliacionGasto.create({
+		const reconciliacion = await tx.reconciliacionGasto.create({
 			data: {
 				tipoGasto: "compra",
 				referenciaId: gastoCompraId,
@@ -546,8 +563,9 @@ async function handlePaymentInTransaction(
 				gastoCompraId,
 				monto: reconciliacionMonto,
 				moneda: reconciliacionMoneda,
-				tasaCambio: reconciliacionTasaCambio,
-				montoConvertido: reconciliacionMontoConvertido,
+				tasaCambio: conversion.tasaCambio,
+				montoConvertido: conversion.montoConvertido,
+				...(conversion.fxEvidence ?? {}),
 				descripcion: `Restock pagado - ${productoNombre}`,
 				periodo,
 				estado: "PAGADA",
@@ -557,13 +575,25 @@ async function handlePaymentInTransaction(
 		});
 
 		const saldoADescontar = isForeignCurrency
-			? (montoConvertido ?? totalCost)
+			? (conversion.montoConvertido ?? montoConvertido ?? totalCost)
 			: totalCost;
 
 		await tx.cuentaBancaria.update({
 			where: { cuentaId },
 			data: { saldo: { decrement: saldoADescontar } },
 		});
+
+		await emitirEventoLiquidacion(
+			tx,
+			{ tenantId, userId },
+			{
+				tipo: "PAGO_CXP",
+				reconciliacion,
+				treasuryAccountType: cuentaBancaria.tipoCuenta,
+				referencia: gastoCompraId,
+				descripcion: `Restock pagado - ${productoNombre}`,
+			},
+		);
 	} else if (formaPagoFinal === "PAGO_PARCIAL" && canRun) {
 		const isForeignCurrency = monedaOriginal && monedaOriginal !== "CUP";
 

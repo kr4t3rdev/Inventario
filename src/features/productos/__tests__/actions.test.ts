@@ -117,6 +117,10 @@ vi.mock("@/lib/restock-utils", () => {
 		executeProductInstanceCreationWorkflow: vi.fn(),
 	};
 });
+const formalPostingMocks = vi.hoisted(() => ({ emitSettlement: vi.fn() }));
+vi.mock("@/features/contabilidad-formal/services/settlement-posting-service", () => ({
+	emitirEventoLiquidacion: formalPostingMocks.emitSettlement,
+}));
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
@@ -690,8 +694,13 @@ describe("Productos Server Actions", () => {
 			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
 				cuentaId: "cuenta-1",
 				isActive: true,
+				tipoCuenta: "BANCOS",
 			});
-			mockTx.reconciliacionGasto.create.mockResolvedValue({});
+			mockTx.reconciliacionGasto.create.mockImplementation(async ({ data }: any) => ({
+				...data,
+				reconciliacionId: "reconciliacion-restock-1",
+				fechaReconciliacion: new Date("2026-11-02T12:00:00.000Z"),
+			}));
 			mockTx.cuentaBancaria.update.mockResolvedValue({});
 
 			mockTransaction({
@@ -718,6 +727,21 @@ describe("Productos Server Actions", () => {
 			// Verificar que se llamó a reconcile y update de cuenta
 			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalled();
 			expect(mockTx.cuentaBancaria.update).toHaveBeenCalled();
+			expect(formalPostingMocks.emitSettlement).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({ tenantId: "tenant-test", userId: "user-test-1" }),
+				expect.objectContaining({
+					tipo: "PAGO_CXP",
+					reconciliacion: expect.objectContaining({
+						reconciliacionId: "reconciliacion-restock-1",
+						moneda: "CUP",
+						functionalCurrency: "CUP",
+						fxEvidenceFingerprint: expect.any(String),
+					}),
+					treasuryAccountType: "BANCOS",
+					referencia: "gasto-pago-1",
+				}),
+			);
 		});
 
 		// ── 3.4: Restock con PAGO_PARCIAL ──
@@ -774,6 +798,7 @@ describe("Productos Server Actions", () => {
 					}),
 				}),
 			);
+			expect(formalPostingMocks.emitSettlement).not.toHaveBeenCalled();
 		});
 
 		// ── 3.5: Restock con moneda extranjera ──
@@ -798,8 +823,12 @@ describe("Productos Server Actions", () => {
 			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
 				cuentaId: "cuenta-1",
 				isActive: true,
+				tipoCuenta: "EFECTIVO",
 			});
-			mockTx.reconciliacionGasto.create.mockResolvedValue({});
+			mockTx.reconciliacionGasto.create.mockImplementation(async ({ data }: any) => ({
+				...data,
+				reconciliacionId: "reconciliacion-usd-1",
+			}));
 			mockTx.cuentaBancaria.update.mockResolvedValue({});
 
 			mockTransaction({
@@ -821,7 +850,7 @@ describe("Productos Server Actions", () => {
 				formaPago: "PAGO_COMPLETO",
 				moneda: "USD",
 				tasaCambio: 24,
-				montoConvertido: 1200,
+				montoConvertido: 6000,
 				monedaOriginal: "USD",
 				montoOriginal: 250,
 			});
@@ -833,16 +862,107 @@ describe("Productos Server Actions", () => {
 					data: expect.objectContaining({
 						moneda: "USD",
 						tasaCambio: 24,
-						montoConvertido: 1200,
+						montoConvertido: 6000,
+						functionalCurrency: "CUP",
+						fxEvidenceFingerprint: expect.any(String),
 					}),
 				}),
 			);
-			// El saldo se decrementa con montoConvertido (1200 CUP)
+			// El saldo se decrementa con el valor funcional persistido (6000 CUP)
 			expect(mockTx.cuentaBancaria.update).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: { saldo: { decrement: 1200 } },
+					data: { saldo: { decrement: 6000 } },
 				}),
 			);
+			expect(formalPostingMocks.emitSettlement).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({ tenantId: "tenant-test", userId: "user-test-1" }),
+				expect.objectContaining({
+					tipo: "PAGO_CXP",
+					reconciliacion: expect.objectContaining({
+						reconciliacionId: "reconciliacion-usd-1",
+						monto: 250,
+						moneda: "USD",
+						montoConvertido: 6000,
+						tasaCambio: 24,
+						fxEvidenceFingerprint: expect.any(String),
+					}),
+					treasuryAccountType: "EFECTIVO",
+				}),
+			);
+		});
+
+		it("rechaza una conversión FX inconsistente antes de registrar tesorería", async () => {
+			mockTx.producto.update.mockResolvedValue({ ...mockProductoCompleto, stock: 55 });
+			mockTx.gastoCompra.create.mockResolvedValue({
+				...mockGastoCompra,
+				gastoCompraId: "gasto-fx-invalid-1",
+			});
+			mockTx.compraProducto.create.mockResolvedValue({ compraProductoId: "compra-fx-invalid-1" });
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tipo-1", cuentaDefecto: "cuenta-1" });
+			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
+				cuentaId: "cuenta-1",
+				isActive: true,
+				tipoCuenta: "BANCOS",
+			});
+			mockTransaction({});
+
+			const result = await restockProductoAction({
+				productoId: "prod-1",
+				cantidad: 5,
+				precioCosto: 50,
+				formaPago: "PAGO_COMPLETO",
+				moneda: "USD",
+				tasaCambio: 24,
+				montoConvertido: 1200,
+				monedaOriginal: "USD",
+				montoOriginal: 250,
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.code).toBe("INCONSISTENT_CONVERSION");
+			expect(mockTx.reconciliacionGasto.create).not.toHaveBeenCalled();
+			expect(mockTx.cuentaBancaria.update).not.toHaveBeenCalled();
+			expect(formalPostingMocks.emitSettlement).not.toHaveBeenCalled();
+		});
+
+		it("falla el restock si no se puede postear el pago formal", async () => {
+			mockTx.producto.update.mockResolvedValue({ ...mockProductoCompleto, stock: 55 });
+			mockTx.gastoCompra.create.mockResolvedValue({
+				...mockGastoCompra,
+				gastoCompraId: "gasto-posting-failure-1",
+			});
+			mockTx.compraProducto.create.mockResolvedValue({ compraProductoId: "compra-posting-failure-1" });
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tipo-1", cuentaDefecto: "cuenta-1" });
+			mockTx.cuentaBancaria.findUnique.mockResolvedValue({
+				cuentaId: "cuenta-1",
+				isActive: true,
+				tipoCuenta: "BANCOS",
+			});
+			mockTx.reconciliacionGasto.create.mockResolvedValue({
+				reconciliacionId: "reconciliacion-posting-failure-1",
+				monto: 500,
+				moneda: "CUP",
+				fechaReconciliacion: new Date(),
+				montoConvertido: 500,
+				functionalCurrency: "CUP",
+				fxEvidenceFingerprint: "fingerprint-cup",
+			});
+			mockTx.cuentaBancaria.update.mockResolvedValue({});
+			formalPostingMocks.emitSettlement.mockRejectedValueOnce(new Error("posting failed"));
+			mockTransaction({});
+
+			const result = await restockProductoAction({
+				productoId: "prod-1",
+				cantidad: 5,
+				precioCosto: 100,
+				formaPago: "PAGO_COMPLETO",
+				cuentaId: "cuenta-1",
+			});
+
+			expect(result.success).toBe(false);
+			expect(expectActionFailure(result).error?.message).toBe("Error interno del servidor");
+			expect(formalPostingMocks.emitSettlement).toHaveBeenCalledTimes(1);
 		});
 
 		// ── 3.8: tipoRestock = nueva_instancia ──

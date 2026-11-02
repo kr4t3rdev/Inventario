@@ -60,6 +60,7 @@ builder de pagos Cash.
 | `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `COBRO_CXC` | `contra_pago` persiste valoración funcional y emite en la misma transacción; requiere tasa vigente para moneda extranjera |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
+| `src/features/productos/actions-restock.ts` → `handlePaymentInTransaction` | `PAGO_CXP` | Solo `PAGO_COMPLETO`; persiste evidencia FX y emite dentro de la transacción que registra el pago y descuenta la cuenta |
 
 ## Rollout
 
