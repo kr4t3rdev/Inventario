@@ -15,17 +15,25 @@ interface CartItemProps {
     precioVenta: number
     cantidad: number
     stock: number
+    unidadId?: string
+    unidadesDisponibles?: Array<{ unidadId: string; nombre: string; simbolo: string }>
     unidad?: {
       simbolo: string
     }
   }
   onUpdateQuantity: (id: string, quantity: number) => void
   onUpdatePrice: (id: string, price: number) => void
+  onUpdateUnit?: (id: string, unitId: string) => void
   onRemove: (id: string) => void
   reduceMotion?: boolean
 }
 
-export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove, reduceMotion = false }: CartItemProps) {
+/**
+ * @description Muestra una línea del carrito con selección de unidad, cantidad y precio.
+ * @param {CartItemProps} props - Producto, opciones disponibles y callbacks de edición.
+ * @returns {JSX.Element} Tarjeta editable de la línea de venta.
+ */
+export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onUpdateUnit, onRemove, reduceMotion = false }: CartItemProps) {
   const subtotal = item.precioVenta * item.cantidad
 
   return (
@@ -62,6 +70,23 @@ export function CartItem({ item, onUpdateQuantity, onUpdatePrice, onRemove, redu
             </Button>
           </motion.div>
         </div>
+        {(item.unidadesDisponibles?.length ?? 0) > 1 && onUpdateUnit && (
+          <label className="mb-2 block text-sm">
+            <span className="mb-1 block text-muted-foreground">Unidad de venta</span>
+            <select
+              aria-label={`Unidad de ${item.nombre}`}
+              className="h-10 w-full rounded-md border border-input bg-background px-3"
+              value={item.unidadId ?? ""}
+              onChange={(event) => onUpdateUnit(item.cartId, event.target.value)}
+            >
+              {item.unidadesDisponibles?.map((unidad) => (
+                <option key={unidad.unidadId} value={unidad.unidadId}>
+                  {unidad.nombre} ({unidad.simbolo})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center">
             <motion.div

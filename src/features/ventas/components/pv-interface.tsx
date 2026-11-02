@@ -65,6 +65,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getPrecioEfectivo } from "@/lib/types/pricing";
+import { calculateSourceUnitPrice } from "@/lib/sale-unit-quantity";
 import {
 	getSeriesFacturacionAction,
 	createSerieFacturacionAction,
@@ -81,14 +82,28 @@ import { VentaInvoiceDialog } from "./pv-invoice-dialog"
 import { PosCobroDialog, type CobroPos } from "./pos-cobro-dialog";
 import { useAuth } from "@/contexts/auth-context";
 
+interface CartUnitOption {
+	unidadId: string;
+	nombre: string;
+	simbolo: string;
+	factorAStock: string;
+}
+
 interface CartProduct {
 	cartId: string; // Unique identifier for the cart item
 	id: string;
 	nombre: string;
 	precioVenta: number;
+	precioBaseVenta: number;
 	cantidad: number;
 	stock: number;
+	stockBase: number;
+	unidadId: string;
+	factorAStock: string;
+	unidadesDisponibles: CartUnitOption[];
 	unidad?: {
+		unidadId: string;
+		nombre: string;
 		simbolo: string;
 	};
 }
@@ -279,18 +294,53 @@ export function VentaInterface() {
 		);
 	};
 
+	/**
+	 * @description Prepara un producto para el carrito con sus unidades y precio base.
+	 * @param {ProductoConStock} producto - Producto y conversiones del punto de venta.
+	 * @param {number} precioBaseVenta - Precio vigente por unidad de inventario.
+	 * @returns {Omit<CartProduct, "cartId">} Línea inicial en unidad base.
+	 */
+	const buildCartProduct = (
+		producto: ProductoConStock,
+		precioBaseVenta: number,
+	): Omit<CartProduct, "cartId"> => {
+		const unidadBase = producto.unidad ?? {
+			unidadId: producto.unidadId,
+			nombre: "Unidad",
+			simbolo: "u",
+		};
+		return {
+			id: producto.id,
+			nombre: producto.nombre,
+			precioVenta: precioBaseVenta,
+			precioBaseVenta,
+			cantidad: 1,
+			stock: producto.stockEnUbicacion,
+			stockBase: producto.stockEnUbicacion,
+			unidadId: producto.unidadId,
+			factorAStock: "1",
+			unidadesDisponibles: [
+				{ ...unidadBase, factorAStock: "1" },
+				...(user?.planFeatures?.unidades === true
+					? producto.unidadesConversion.map((conversion) => ({
+							unidadId: conversion.unidadId,
+							nombre: conversion.unidad.nombre,
+							simbolo: conversion.unidad.simbolo,
+							factorAStock: conversion.factorAStock,
+						}))
+					: []),
+			],
+			unidad: unidadBase,
+		};
+	};
+
 	const handleBarcodeScan = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter") {
 			const product = productos?.find((p) => p.codigoBarras === barcodeInput);
 			if (product) {
-				addToCart({
-					id: product.id,
-					nombre: product.nombre,
-					precioVenta: getPrecioEfectivo(product, clienteListaPrecioId),
-					cantidad: 1,
-					stock: product.stockEnUbicacion,
-					unidad: product.unidad,
-				});
+				addToCart(
+					buildCartProduct(product, getPrecioEfectivo(product, clienteListaPrecioId)),
+				);
 				toast(`Producto "${product.nombre}" añadido al carrito`);
 				setBarcodeInput("");
 			} else {
@@ -372,17 +422,40 @@ export function VentaInterface() {
 			const updatedCart = cart.map((item) => {
 				const prod = productos.find((p) => p.id === item.id);
 				if (prod) {
-					const newPrice = getPrecioEfectivo(prod, clienteListaPrecioId);
-					if (newPrice !== item.precioVenta) {
+					const newBasePrice = getPrecioEfectivo(prod, clienteListaPrecioId);
+					if (newBasePrice !== item.precioBaseVenta) {
 						toast(`Precio de ${item.nombre} actualizado por cambio de cliente`);
-						return { ...item, precioVenta: newPrice };
+						const sourcePrice = calculateSourceUnitPrice({
+							stockUnitPrice: newBasePrice,
+							factorToStock: item.factorAStock,
+						});
+						if (sourcePrice.success) {
+							return {
+								...item,
+								precioBaseVenta: newBasePrice,
+								precioVenta: sourcePrice.data,
+							};
+						}
+						const baseUnit = item.unidadesDisponibles.find(
+							(unidad) => unidad.unidadId === prod.unidadId,
+						);
+						return {
+							...item,
+							precioBaseVenta: newBasePrice,
+							precioVenta: newBasePrice,
+							unidadId: prod.unidadId,
+							factorAStock: "1",
+							unidad: baseUnit,
+							stock: item.stockBase,
+							cantidad: Math.min(item.cantidad, item.stockBase),
+						};
 					}
 				}
 				return item;
 			});
 			// Solo actualizamos si hubo cambios reales para evitar re-renders infinitos
 			const hasChanges = updatedCart.some(
-				(item, i) => item.precioVenta !== cart[i].precioVenta,
+				(item, i) => item.precioBaseVenta !== cart[i].precioBaseVenta,
 			);
 			if (hasChanges) {
 				setCart(updatedCart);
@@ -404,7 +477,9 @@ export function VentaInterface() {
 	const addToCart = (product: Omit<CartProduct, "cartId">) => {
 		const existingItem = cart.find(
 			(item) =>
-				item.id === product.id && item.precioVenta === product.precioVenta,
+				item.id === product.id &&
+				item.unidadId === product.unidadId &&
+				item.precioVenta === product.precioVenta,
 		);
 
 		if (existingItem) {
@@ -424,6 +499,38 @@ export function VentaInterface() {
 				{ ...product, cartId: crypto.randomUUID(), cantidad: 1 },
 			]);
 		}
+	};
+
+	const updateUnit = (cartId: string, unitId: string) => {
+		const product = cart.find((item) => item.cartId === cartId);
+		const unit = product?.unidadesDisponibles.find((option) => option.unidadId === unitId);
+		if (!product || !unit) return;
+
+		const sourcePrice = calculateSourceUnitPrice({
+			stockUnitPrice: product.precioBaseVenta,
+			factorToStock: unit.factorAStock,
+		});
+		if (!sourcePrice.success) {
+			toast.error('El precio del producto no se puede expresar exactamente en esta unidad');
+			return;
+		}
+
+		const stockInSourceUnits = Math.floor(product.stockBase / Number(unit.factorAStock));
+		if (stockInSourceUnits < 1) {
+			toast.error(`No hay stock suficiente en ${unit.nombre}`);
+			return;
+		}
+		setCart((current) => current.map((item) => item.cartId === cartId
+			? {
+				...item,
+				unidadId: unit.unidadId,
+				unidad: unit,
+				factorAStock: unit.factorAStock,
+				precioVenta: sourcePrice.data,
+				stock: stockInSourceUnits,
+				cantidad: Math.min(item.cantidad, stockInSourceUnits),
+			}
+			: item));
 	};
 
 	// Actualizar cantidad
@@ -489,6 +596,7 @@ export function VentaInterface() {
 		try {
 			const items = cart.map((item) => ({
 				productoId: item.id,
+				unidadId: item.unidadId,
 				cantidad: item.cantidad,
 				precioUnitario: Math.round(item.precioVenta),
 			}));
@@ -553,6 +661,7 @@ export function VentaInterface() {
 		try {
 			const items = cart.map((item) => ({
 				productoId: item.id,
+				unidadId: item.unidadId,
 				cantidad: item.cantidad,
 				precioUnitario: Math.round(item.precioVenta),
 			}));
@@ -1075,20 +1184,15 @@ export function VentaInterface() {
 																clienteListaPrecioId,
 															),
 															stock: producto.stockEnUbicacion,
-														}}
-														onAddToCart={() =>
-															addToCart({
-																id: producto.id,
-																nombre: producto.nombre,
-																precioVenta: getPrecioEfectivo(
-																	producto,
-																	clienteListaPrecioId,
-																),
-																cantidad: 1,
-																stock: producto.stockEnUbicacion,
-																unidad: producto.unidad,
-															})
-														}
+									}}
+									onAddToCart={() =>
+										addToCart(
+											buildCartProduct(
+												producto,
+												getPrecioEfectivo(producto, clienteListaPrecioId),
+											),
+										)
+									}
 														searchTerm={debouncedSearchTerm}
 													/>
 												</motion.div>
@@ -1111,21 +1215,16 @@ export function VentaInterface() {
 													initial={{ opacity: 0, x: -20 }}
 													animate={{ opacity: 1, x: 0 }}
 													transition={{ delay: index * 0.02, duration: 0.3 }}
-													whileHover={{ scale: 1.005 }}
-													className="flex items-center gap-4 p-3 border rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer"
-													onClick={() =>
-														addToCart({
-															id: producto.id,
-															nombre: producto.nombre,
-															precioVenta: getPrecioEfectivo(
-																producto,
-																clienteListaPrecioId,
-															),
-															cantidad: 1,
-															stock: producto.stockEnUbicacion,
-															unidad: producto.unidad,
-														})
-													}
+														whileHover={{ scale: 1.005 }}
+														className="flex items-center gap-4 p-3 border rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer"
+														onClick={() =>
+															addToCart(
+																buildCartProduct(
+																	producto,
+																	getPrecioEfectivo(producto, clienteListaPrecioId),
+																),
+															)
+														}
 												>
 													{producto.fotos && producto.fotos.length > 0 ? (
 														<motion.div
@@ -1327,21 +1426,16 @@ export function VentaInterface() {
 															</td>
 															<td className="p-3 text-center">
 																<motion.button
-																	whileHover={{ scale: 1.1 }}
-																	whileTap={{ scale: 0.9 }}
-																	onClick={() =>
-																		addToCart({
-																			id: producto.id,
-																			nombre: producto.nombre,
-																			precioVenta: getPrecioEfectivo(
-																				producto,
-																				clienteListaPrecioId,
-																			),
-																			cantidad: 1,
-																			stock: producto.stockEnUbicacion,
-																			unidad: producto.unidad,
-																		})
-																	}
+															whileHover={{ scale: 1.1 }}
+															whileTap={{ scale: 0.9 }}
+															onClick={() =>
+																addToCart(
+																	buildCartProduct(
+																		producto,
+																		getPrecioEfectivo(producto, clienteListaPrecioId),
+																	),
+																)
+															}
 																	className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 																	disabled={producto.stockEnUbicacion === 0}
 																>
@@ -1475,11 +1569,12 @@ export function VentaInterface() {
 													exit={{ opacity: 0, x: 20 }}
 													transition={{ delay: index * 0.05 }}
 												>
-													<CartItem
-														item={item}
-														onUpdateQuantity={updateQuantity}
-														onUpdatePrice={updatePrice}
-														onRemove={removeFromCart}
+														<CartItem
+															item={item}
+															onUpdateQuantity={updateQuantity}
+															onUpdatePrice={updatePrice}
+															onUpdateUnit={updateUnit}
+															onRemove={removeFromCart}
 													/>
 												</motion.div>
 											))}

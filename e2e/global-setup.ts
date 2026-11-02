@@ -14,5 +14,8 @@ export default async function globalSetup(): Promise<void> {
   await writeFile(E2E_FIXTURE_MANIFEST, JSON.stringify(ownership), { mode: 0o600 });
   process.env.E2E_USER_EMAIL = ownership.email;
   process.env.E2E_USER_PASSWORD = process.env.E2E_TEST_PASSWORD;
+  process.env.E2E_PURCHASE_ORDER_VENDOR_ID = ownership.fixtures.proveedorId;
+  process.env.E2E_PURCHASE_ORDER_PRODUCT_ID = ownership.fixtures.productoId;
+  process.env.E2E_PURCHASE_ORDER_WAREHOUSE_ID = ownership.fixtures.almacenId;
   console.log('[E2E] Fixtures listas; manifiesto sin credenciales persistido.');
 }

@@ -1,9 +1,10 @@
 import { expect, test, type Page, type BrowserContext } from '@playwright/test';
 
-const E2E_EMAIL = 'e2e@test.local';
-const E2E_PASSWORD = 'E2ETest123!';
-const E2E_VENDOR = 'e2e-proveedor-1';
-const E2E_PRODUCT = 'e2e-producto-aceite';
+const E2E_EMAIL = process.env.E2E_USER_EMAIL;
+const E2E_PASSWORD = process.env.E2E_USER_PASSWORD;
+const E2E_VENDOR = process.env.E2E_PURCHASE_ORDER_VENDOR_ID;
+const E2E_PRODUCT = process.env.E2E_PURCHASE_ORDER_PRODUCT_ID;
+const E2E_WAREHOUSE = process.env.E2E_PURCHASE_ORDER_WAREHOUSE_ID;
 
 class PurchaseOrderPage {
   constructor(private readonly page: Page) {}
@@ -15,8 +16,8 @@ class PurchaseOrderPage {
   async createOrder(): Promise<void> {
     await this.page.goto('/busy/compras/ordenes');
     await expect(this.page.getByRole('heading', { name: 'Órdenes de compra' })).toBeVisible({ timeout: 10000 });
-    await this.page.getByLabel('Proveedor', { exact: true }).selectOption(E2E_VENDOR);
-    await this.page.getByRole('combobox', { name: /Producto/ }).selectOption(E2E_PRODUCT);
+    await this.page.getByLabel('Proveedor', { exact: true }).selectOption(E2E_VENDOR!);
+    await this.page.getByRole('combobox', { name: /Producto/ }).selectOption(E2E_PRODUCT!);
     await this.page.getByRole('spinbutton', { name: /Cantidad/ }).fill('100');
     await this.page.getByRole('spinbutton', { name: /Precio unitario/ }).fill('120');
     await this.page.getByRole('button', { name: 'Crear orden' }).click();
@@ -45,8 +46,14 @@ test.describe('Flujo de orden de compra profesional', () => {
   let authCookie: { name: string; value: string; domain: string; path: string };
 
   test.beforeAll(async ({ request }) => {
+    expect(E2E_EMAIL, 'El global setup debe proporcionar E2E_USER_EMAIL').toBeTruthy();
+    expect(E2E_PASSWORD, 'El global setup debe proporcionar E2E_USER_PASSWORD').toBeTruthy();
+    expect(E2E_VENDOR, 'El global setup debe proporcionar el proveedor E2E').toBeTruthy();
+    expect(E2E_PRODUCT, 'El global setup debe proporcionar el producto E2E').toBeTruthy();
+    expect(E2E_WAREHOUSE, 'El global setup debe proporcionar el almacén E2E').toBeTruthy();
+
     const response = await request.post('/api/auth/login', {
-      data: { email: E2E_EMAIL, password: E2E_PASSWORD },
+      data: { email: E2E_EMAIL!, password: E2E_PASSWORD! },
     });
     expect(response.ok(), `Login falló (${response.status()}): ${await response.text()}`).toBeTruthy();
 
@@ -81,9 +88,9 @@ test.describe('Flujo de orden de compra profesional', () => {
     await expect(page).toHaveURL(/\/busy\/compras-productos$/, { timeout: 10000 });
 
     await page.goto('/busy/inventario/kardex');
-    await page.getByLabel('Producto', { exact: true }).selectOption(E2E_PRODUCT);
+    await page.getByLabel('Producto', { exact: true }).selectOption(E2E_PRODUCT!);
     await page.getByLabel('Tipo de ubicación').selectOption('almacen');
-    await page.getByLabel('Ubicación', { exact: true }).selectOption('e2e-almacen-principal');
+    await page.getByLabel('Ubicación', { exact: true }).selectOption(E2E_WAREHOUSE!);
     await page.getByRole('button', { name: 'Consultar' }).click();
     // El kardex tiene al menos dos entradas COMPRA nuevas: recepción parcial (60) + final (40).
     // La factura vinculada no genera movimiento físico. Verificamos las dos más recientes.

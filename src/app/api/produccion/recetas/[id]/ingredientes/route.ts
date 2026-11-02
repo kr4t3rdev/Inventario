@@ -5,6 +5,9 @@ import { convertToBase } from '@/lib/utils/unit-converter';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 import { validateAndNormalizeIngredientUnit } from '@/lib/validators/production-units';
 import type { UnitError, UnitNormalization } from '@/lib/validators/production-units';
+import { ActionError } from '@/lib/server-actions';
+import { requireFeature } from '@/lib/services/tenant-scope';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -38,7 +41,11 @@ type IngredientValidationResult = IngredientValidationSuccess | IngredientValida
  * @param {object} params - Parámetros de la ruta.
  * @returns {Promise<NextResponse>} Receta con ingredientes actualizados.
  */
-export const POST = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const POST = withAuthPost(async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
+) => {
   try {
     const { id: recetaId } = await params;
     const { ingredientes } = setIngredientesSchema.parse(await request.json());
@@ -56,6 +63,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     // CRITICAL FIX #1: Fetch ALL product data in ONE query (no N+1 + race condition)
     const productosInventarioRaw = await prisma.producto.findMany({
       where: {
+        tenantId: recetaExistente.tenantId,
         id: {
           in: ingredientes.map((ing) => ing.productoId),
         },
@@ -64,14 +72,37 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         id: true,
         nombre: true,
         precioCosto: true, // Include cost data to avoid re-fetching
-        unidad: { select: { simbolo: true } },
+        unidad: { select: { simbolo: true, dimension: true } },
+        unidadesConversion: {
+          where: { tenantId: recetaExistente.tenantId },
+          select: {
+            factorAStock: true,
+            unidad: { select: { simbolo: true, dimension: true } },
+          },
+        },
       },
     });
 
     const productosInventario = productosInventarioRaw.map((p) => ({
       ...p,
       unidadSimbolo: p.unidad?.simbolo ?? null,
+      unidadDimension: p.unidad?.dimension ?? null,
+      unidadesConversion: (p.unidadesConversion ?? []).map((conversion) => ({
+        factorAStock: conversion.factorAStock.toString(),
+        unidad: conversion.unidad,
+      })),
     }));
+
+    const usaConversionPorProducto = ingredientes.some((ingrediente) => {
+      const producto = productosInventario.find((item) => item.id === ingrediente.productoId);
+      return producto?.unidadesConversion.some(
+        (conversion) => conversion.unidad.simbolo.trim().toLowerCase() ===
+          ingrediente.unidadSimbolo?.trim().toLowerCase(),
+      ) ?? false;
+    });
+    if (usaConversionPorProducto) {
+      requireFeature(user, 'unidades', 'conversiones de unidades en producción');
+    }
 
     // CRITICAL FIX #2: Validate that ALL products exist before proceeding
     const ingredientesIds = ingredientes.map((ing) => ing.productoId);
@@ -224,6 +255,9 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FEATURE_NOT_AVAILABLE') {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos inválidos para ingredientes.', issues: error.issues },

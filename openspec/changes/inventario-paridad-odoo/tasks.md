@@ -88,12 +88,11 @@
   min/max, FKs compuestas `(tenantId, id)` en tablas de OC/recepción, UI
   multilínea con selector de línea pendiente, gating por feature en páginas
   y corrección del render del formulario de compra (`index` fuera de scope).
-* [ ] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial →
-  recepción total → factura → kardex cuadra. Spec escrito en
-  `e2e/purchase-order-flow.spec.ts` (gitignored, local-only) + selector
-  de OC en el formulario de compra. La ejecución corre
-  `pnpm exec playwright test e2e/purchase-order-flow.spec.ts` y requiere
-  `DATABASE_URL` accesible.
+* [x] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial (60) →
+  recepción total (40) → factura vinculada → kardex cuadra. El spec usa las
+  credenciales e IDs dinámicos del global setup; el seed exige plan Profesional.
+  Ejecutado en DB local desechable `tcp_test_e2e_lp1_20261102`: **1/1 passed**;
+  el teardown confirmó limpieza y reinició el esquema.
 
 <!-- Diseño original de Fase 3:
 * [ ] 3.1 Migración: `OrdenCompra`, `OrdenCompraItem`,
@@ -119,16 +118,17 @@
 
 ## Fase 4 — P1 UdM con factor (Profesional)
 
-* [ ] 4.1 Migración: `Unidad.factorAStock Float @default(1)` +
-  `tipoUso String @default("STOCK")`.
-* [ ] 4.2 Helper `aUnidadStock(cantidad, unidadId)` +
-  `costoPorUnidadStock()` en `src/lib/inventory-cost-utils.ts`.
-  - RED: 2 cajas x12 a 120/caja = 24 u. a 10/u.
-* [ ] 4.3 Aplicar conversión en formularios de compra/venta/producción
-  antes de persistir y antes de `allocateFifoForVentaItem`
-  (`src/lib/services/fifo-allocation.ts`).
-* [ ] 4.4 Ajustar `cost-calculator.ts` y `venta-costo.ts` al costo por
-  unidad stock; test FIFO con factor.
+* [x] 4.1 Reutilizar `UnidadConversion.factorAStock` por producto; no añadir
+  un factor global en `Unidad` porque el mismo empaque puede variar entre productos.
+* [x] 4.2 Reutilizar conversión exacta `calculateUnitQuantityCost()` y cubrir
+  cantidad/costo en unidad stock; añadir conversión exacta de precio de venta.
+* [x] 4.3 Aplicar conversión antes de persistir: compra directa normaliza;
+  ventas normalizan cantidad/precio y guardan snapshots antes de stock/FIFO;
+  recetas normalizan factores por producto y el consumo usa cantidad en unidad stock.
+* [x] 4.4 Verificar costo/FIFO usando la cantidad y costo en unidad stock;
+  prueba FIFO confirma que una línea con snapshot de empaque asigna las unidades
+  stock persistidas. `cost-calculator.ts` y `venta-costo.ts` reciben cantidades/
+  precios ya normalizados, por lo que no necesitan una conversión adicional.
 
 ## Fase 5 — P1 Lotes/FEFO + Ubicaciones (Profesional)
 
@@ -176,8 +176,11 @@
 
 ## Fase 8 — Verificación y archivo
 
-* [ ] 8.1 `pnpm run test:run` por feature + `test-isolation-contract`
-  en verde (0 offenders); integración solo con `DATABASE_URL_TEST`.
+* [x] 8.1 `pnpm run test:run` por feature + `test-isolation-contract`
+  en verde (0 offenders); integración solo con `DATABASE_URL_TEST`. La suite
+  completa pasó con un worker: **803 archivos aprobados, 1 omitido; 5,455
+  pruebas aprobadas, 1 omitida y 2 todo**. Las pruebas focalizadas de seed E2E
+  y allowlist también pasaron **11/11**.
 
 ## Auditoría posterior de Sesión F — merma tenant-scope + LP-1 (2026-11-02)
 
@@ -226,8 +229,16 @@
   P2002 aunque el error se absorbía. Se reemplazó por `createMany` con
   `skipDuplicates`; test en `exchange-rate-provider.test.ts` y E2E repetido
   → **1/1 passed sin errores de monedas**.
-* [ ] 8.2 `pnpm run lint` y `tsc --noEmit` en archivos tocados.
+* [x] 8.2 `pnpm run lint` y `tsc --noEmit` en archivos tocados. Lint completó
+  con **0 errores y 680 advertencias**; el chequeo global de tipos pasó con
+  `NODE_OPTIONS='--max-old-space-size=4096' pnpm exec tsc --noEmit --pretty false`
+  (el límite Node predeterminado de 2 GB no alcanzaba para este proyecto).
 * [ ] 8.3 Matriz manual por plan: Básico no ve OC/lotes/variantes/MRP
-  (toast upgrade); Profesional ve P1; Empresarial ve todo.
+  (toast upgrade); Profesional ve P1; Empresarial ve todo. La prueba de
+  configuración `src/features/planes/__tests__/inventario-paridad-odoo.test.ts`
+  pasó **5/5** (flags por plan); falta la comprobación manual de navegación,
+  acciones y mensajes de upgrade en la UI. El cierre manual de lotes, variantes
+  y MRP se verificará cuando existan sus pantallas (fases 5–7); no bloquea el
+  inicio de Fase 4.
 * [ ] 8.4 Actualizar `PLANES-SUSCRIPCION.md` y demo seeds
   (`base-seed.ts`, `professional-seed.ts`, `enterprise-seed.ts`).

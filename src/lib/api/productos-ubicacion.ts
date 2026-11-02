@@ -44,6 +44,11 @@ export interface ProductoConStock {
 		nombre: string;
 		simbolo: string;
 	};
+	unidadesConversion: Array<{
+		unidadId: string;
+		factorAStock: string;
+		unidad: { unidadId: string; nombre: string; simbolo: string };
+	}>;
 	vendor?: {
 		vendorId: string;
 		nombre: string;
@@ -123,6 +128,14 @@ export async function getProductosPorUbicacion(
 			updatedAt: true,
 			categoria: true,
 			unidad: true,
+			unidadesConversion: {
+				where: { tenantId },
+				select: {
+					unidadId: true,
+					factorAStock: true,
+					unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
+				},
+			},
 			vendor: true,
 		},
 	});
@@ -203,6 +216,11 @@ export async function getProductosPorUbicacion(
 
 		return {
 			...producto,
+			unidadesConversion: (producto.unidadesConversion ?? []).map((conversion) => ({
+				unidadId: conversion.unidadId,
+				factorAStock: conversion.factorAStock.toString(),
+				unidad: conversion.unidad,
+			})),
 			stockEnUbicacion,
 			precioVentaResuelto,
 			precioFuente,

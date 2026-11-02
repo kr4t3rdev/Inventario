@@ -7,6 +7,7 @@ import { MetodoPagoVenta } from '@/generated/prisma';
 /** Schema para una línea de venta */
 export const ventaItemSchema = z.object({
   productoId: z.string().min(1, 'El producto es requerido'),
+  unidadId: z.string().min(1).optional(),
   cantidad: z.coerce.number().int('Debe ser entero').positive('Debe ser mayor a 0'),
   precioUnitario: z.coerce.number().int().min(0, 'No puede ser negativo'),
 });

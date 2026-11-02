@@ -27,6 +27,10 @@ type RecipeUnitPreview = {
   rows: Array<{ productoId: string } & PreviewRow>
 }
 
+type RecipeProduct = Producto & {
+  unidadesConversion?: Array<{ unidad: { simbolo: string } }>
+}
+
 interface RecipeEditorDialogProps {
   open: boolean
   nombreReceta: string
@@ -34,7 +38,7 @@ interface RecipeEditorDialogProps {
   selectedProducto: string
   outputMode: RecipeOutputMode
   createdOutputProductName: string | null
-  productosTyped: Producto[] | undefined
+  productosTyped: RecipeProduct[] | undefined
   busquedaProductos: string
   nuevoItems: RecipeEditorItem[]
   newRecipePreview: RecipeUnitPreview
@@ -185,6 +189,11 @@ export function RecipeEditorDialog({
                   <TableBody>
                     {nuevoItems.map((item) => {
                       const prod = productosTyped?.find((p) => p.id === item.productoId)
+                      const conversionUnits = [...new Set(
+                        (prod?.unidadesConversion ?? [])
+                          .map((conversion) => conversion.unidad.simbolo)
+                          .filter((simbolo) => !noConversionUnits.includes(simbolo)),
+                      )]
                       const previewRow = newRecipePreview.rows.find((row) => row.productoId === item.productoId) || {
                         blockingMessage: null,
                         normalizationMessage: null,
@@ -230,6 +239,9 @@ export function RecipeEditorDialog({
                                 ))}
                                 {noConversionUnits.map((unit) => (
                                   <SelectItem key={`plain-${unit}`} value={unit}>{unit}</SelectItem>
+                                ))}
+                                {conversionUnits.map((unit) => (
+                                  <SelectItem key={`conversion-${unit}`} value={unit}>{unit}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>

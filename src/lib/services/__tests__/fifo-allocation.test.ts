@@ -284,6 +284,27 @@ describe("allocateFifoForSale", () => {
 		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledTimes(2);
 	});
 
+	it("asigna a FIFO la cantidad persistida en unidad stock aunque la venta tenga snapshot de empaque", async () => {
+		tx.ventaItem.findMany.mockResolvedValue([
+			{ id: "vi-box", productoId: "p-cereal", cantidad: 24 },
+		]);
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{ compraDocumentoItemId: "compra-stock", cantidad: 30 },
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForSale(tx as any, "t1", "venta-caja");
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [{
+				tenantId: "t1",
+				compraDocumentoItemId: "compra-stock",
+				ventaItemId: "vi-box",
+				cantidad: 24,
+			}],
+		});
+	});
+
 	it("debe continuar aunque un producto no tenga compras", async () => {
 		tx.ventaItem.findMany.mockResolvedValue([
 			{ id: "vi1", productoId: "p1", cantidad: 10 },

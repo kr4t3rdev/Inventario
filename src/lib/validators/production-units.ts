@@ -29,6 +29,11 @@ export interface UnitError {
   reason: UnitErrorReason;
 }
 
+export interface ProductionUnitConversion {
+  factorAStock: string;
+  unidad: { simbolo: string; dimension: string };
+}
+
 /**
  * @description Categoriza una unidad en mass, volume, unit o unknown
  * @param {string | null | undefined} simbolo - Símbolo de unidad
@@ -190,7 +195,13 @@ export function validateIngredientsUnits(
  */
 export function validateAndNormalizeIngredientUnit(
   ingrediente: { productoId: string; cantidad: number; unidadSimbolo?: string | null },
-  producto: { id: string; nombre: string; unidadSimbolo?: string | null }
+  producto: {
+    id: string;
+    nombre: string;
+    unidadSimbolo?: string | null;
+    unidadDimension?: string | null;
+    unidadesConversion?: ProductionUnitConversion[];
+  }
 ): {
   isValid: boolean;
   normalizedCantidad?: number;
@@ -202,6 +213,60 @@ export function validateAndNormalizeIngredientUnit(
   const canonicalUnit = producto.unidadSimbolo ?? null;
   const providedCategory = categorizeUnit(providedUnit);
   const canonicalCategory = categorizeCatalogUnit(canonicalUnit);
+
+  const conversion = producto.unidadesConversion?.find(
+    (entry) => entry.unidad.simbolo.trim().toLowerCase() === providedUnit?.trim().toLowerCase(),
+  );
+  if (conversion) {
+    const factor = Number(conversion.factorAStock);
+    if (
+      !canonicalUnit ||
+      !producto.unidadDimension ||
+      conversion.unidad.dimension !== producto.unidadDimension ||
+      !Number.isFinite(factor) ||
+      factor <= 0
+    ) {
+      return {
+        isValid: false,
+        normalization: null,
+        error: {
+          productoId: ingrediente.productoId,
+          productoNombre: producto.nombre,
+          providedUnit,
+          canonicalUnit,
+          reason: 'incompatible_category',
+        },
+      };
+    }
+
+    const normalizedCantidad = ingrediente.cantidad * factor;
+    if (!Number.isFinite(normalizedCantidad) || normalizedCantidad <= 0) {
+      return {
+        isValid: false,
+        normalization: null,
+        error: {
+          productoId: ingrediente.productoId,
+          productoNombre: producto.nombre,
+          providedUnit,
+          canonicalUnit,
+          reason: 'incompatible_category',
+        },
+      };
+    }
+    return {
+      isValid: true,
+      normalizedCantidad,
+      normalizedUnidadSimbolo: canonicalUnit,
+      normalization: {
+        productoId: ingrediente.productoId,
+        productoNombre: producto.nombre,
+        providedUnit,
+        canonicalUnit,
+        originalCantidad: ingrediente.cantidad,
+        normalizedCantidad,
+      },
+    };
+  }
 
   if (providedCategory === 'unknown') {
     return {

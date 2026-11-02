@@ -8,6 +8,9 @@ import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { createVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { resolvePrecioVenta, type PrecioVentaFuente } from '@/features/ventas/services/precio-venta-resolver';
+import { calculateUnitQuantityCost } from '@/lib/unit-quantity-cost';
+import { calculateSaleUnitQuantity } from '@/lib/sale-unit-quantity';
+import { isCompatibleUnitConversion } from '@/lib/inventory-unit-conversion-compatibility';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
@@ -254,10 +257,30 @@ export const VentaMutationService = {
         id: true,
         nombre: true,
         precioVenta: true,
+        unidadId: true,
+        unidad: {
+          select: { unidadId: true, tenantId: true, nombre: true, simbolo: true, dimension: true },
+        },
+        unidadesConversion: {
+          where: { tenantId },
+          include: {
+            unidad: {
+              select: { unidadId: true, tenantId: true, nombre: true, simbolo: true, dimension: true },
+            },
+          },
+        },
         precios: { select: { listaPrecioId: true, precio: true } },
       },
     });
     const productoPrecioMap = new Map(productosParaPrecio.map((p) => [p.id, p]));
+
+    const usaUnidadAlternativa = parsed.items.some((item) => {
+      const producto = productoPrecioMap.get(item.productoId);
+      return Boolean(item.unidadId && item.unidadId !== producto?.unidadId);
+    });
+    if (usaUnidadAlternativa) {
+      requireFeature(user, 'unidades', 'conversiones de unidades');
+    }
 
     const puedeOverridePrecio = hasPermission(user, 'ventas.precio.override');
     const overrides: PriceOverrideDetalle[] = [];
@@ -277,26 +300,108 @@ export const VentaMutationService = {
         clienteListaId,
         defaultListaId,
       });
-      if (precio !== item.precioUnitario) {
-        if (!puedeOverridePrecio) {
+      if (!item.unidadId) {
+        if (precio !== item.precioUnitario) {
+          if (!puedeOverridePrecio) {
+            throw new ActionError(
+              `El precio de "${producto.nombre}" no coincide con el vigente (${precio}). Recarga los productos e inténtalo de nuevo.`,
+              'PRICE_MISMATCH',
+            );
+          }
+          overrides.push({
+            productoId: producto.id,
+            nombre: producto.nombre,
+            precioEsperado: precio,
+            precioAplicado: item.precioUnitario,
+            fuente,
+          });
+        }
+        return {
+          productoId: item.productoId,
+          cantidad: item.cantidad,
+          precioUnitario: item.precioUnitario,
+          total: item.cantidad * item.precioUnitario,
+        };
+      }
+
+      const unidadBase = producto.unidad;
+      if (!producto.unidadId || !unidadBase || unidadBase.tenantId !== tenantId) {
+        throw new ActionError('El producto no tiene una unidad base válida', 'VALIDATION_ERROR');
+      }
+      const conversion = item.unidadId === producto.unidadId
+        ? null
+        : producto.unidadesConversion.find((entry) =>
+            entry.unidadId === item.unidadId && entry.baseUnidadId === producto.unidadId,
+          );
+      const unidadOrigen = item.unidadId === producto.unidadId ? unidadBase : conversion?.unidad;
+      if (!unidadOrigen || unidadOrigen.tenantId !== tenantId || (item.unidadId !== producto.unidadId && !conversion)) {
+        throw new ActionError('No existe una conversión válida para la unidad seleccionada', 'VALIDATION_ERROR');
+      }
+      const factorAStock = conversion?.factorAStock.toString() ?? '1';
+      const conversionCompatible = isCompatibleUnitConversion({
+        tenantId,
+        productId: producto.id,
+        stockUnitId: producto.unidadId,
+        stockUnitDimension: unidadBase.dimension,
+        sourceTenantId: unidadOrigen.tenantId,
+        sourceUnitId: item.unidadId,
+        sourceUnitDimension: unidadOrigen.dimension,
+        conversionTenantId: conversion?.tenantId ?? tenantId,
+        conversionProductId: conversion?.productoId ?? producto.id,
+        conversionStockUnitId: conversion?.baseUnidadId ?? producto.unidadId,
+        factorToStock: factorAStock,
+      });
+      if (!conversionCompatible) {
+        throw new ActionError('La conversión de la unidad no es válida para este producto', 'VALIDATION_ERROR');
+      }
+
+      const conversionResult = puedeOverridePrecio
+        ? calculateUnitQuantityCost({
+            sourceQuantity: item.cantidad,
+            sourceUnitPrice: item.precioUnitario,
+            factorToStock: factorAStock,
+          })
+        : calculateSaleUnitQuantity({
+            sourceQuantity: item.cantidad,
+            sourceUnitPrice: item.precioUnitario,
+            factorToStock: factorAStock,
+            expectedStockUnitPrice: precio,
+          });
+      if (!conversionResult.success) {
+        if (conversionResult.error === 'UNIT_PRICE_MISMATCH') {
           throw new ActionError(
             `El precio de "${producto.nombre}" no coincide con el vigente (${precio}). Recarga los productos e inténtalo de nuevo.`,
             'PRICE_MISMATCH',
           );
         }
+        throw new ActionError(
+          'La cantidad y el precio no se pueden convertir exactamente a la unidad de inventario',
+          'VALIDATION_ERROR',
+        );
+      }
+      if (conversionResult.data.stockUnitPrice !== precio) {
         overrides.push({
           productoId: producto.id,
           nombre: producto.nombre,
           precioEsperado: precio,
-          precioAplicado: item.precioUnitario,
+          precioAplicado: conversionResult.data.stockUnitPrice,
           fuente,
         });
       }
       return {
         productoId: item.productoId,
-        cantidad: item.cantidad,
-        precioUnitario: item.precioUnitario,
-        total: item.cantidad * item.precioUnitario,
+        cantidad: conversionResult.data.stockQuantity,
+        precioUnitario: conversionResult.data.stockUnitPrice,
+        total: conversionResult.data.lineTotal,
+        unidadOrigenId: item.unidadId,
+        unidadOrigenNombre: unidadOrigen.nombre,
+        unidadOrigenSimbolo: unidadOrigen.simbolo,
+        cantidadOrigen: item.cantidad,
+        precioUnitarioOrigen: item.precioUnitario,
+        factorAStockAplicado: factorAStock,
+        unidadBaseIdSnapshot: producto.unidadId,
+        unidadBaseNombreSnapshot: unidadBase.nombre,
+        unidadBaseSimboloSnapshot: unidadBase.simbolo,
       };
     });
 

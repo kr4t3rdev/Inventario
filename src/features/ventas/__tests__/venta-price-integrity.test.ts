@@ -174,6 +174,65 @@ describe("integridad de precios en createVentaAction", () => {
 		expect(AuditLogService.logStrict).not.toHaveBeenCalled();
 	});
 
+	it("normaliza la unidad seleccionada a stock y valida el precio base vigente", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...cajeroUser,
+			planFeatures: { ...cajeroUser.planFeatures, unidades: true },
+		});
+		mockHappyPath();
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 30 });
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([{
+			id: "prod-1",
+			nombre: "Producto",
+			precioVenta: 500,
+			unidadId: "unit-each",
+			unidad: {
+				unidadId: "unit-each",
+				tenantId: "tenant-test",
+				nombre: "Unidad",
+				simbolo: "u",
+				dimension: "COUNT",
+			},
+			unidadesConversion: [{
+				tenantId: "tenant-test",
+				productoId: "prod-1",
+				baseUnidadId: "unit-each",
+				unidadId: "unit-box",
+				factorAStock: "12",
+				unidad: {
+					unidadId: "unit-box",
+					tenantId: "tenant-test",
+					nombre: "Caja",
+					simbolo: "cj",
+					dimension: "COUNT",
+				},
+			}],
+			precios: [],
+		}] as any);
+
+		const result = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			items: [{ productoId: "prod-1", unidadId: "unit-box", cantidad: 2, precioUnitario: 6000 }],
+		});
+
+		expect(result.success, JSON.stringify(result)).toBe(true);
+		expect(mockTx.venta.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				cantidad: 24,
+				items: { create: [expect.objectContaining({
+					cantidad: 24,
+					precioUnitario: 500,
+					total: 12000,
+					cantidadOrigen: 2,
+					precioUnitarioOrigen: 6000,
+					factorAStockAplicado: "12",
+					unidadBaseIdSnapshot: "unit-each",
+				})] },
+			}),
+		}));
+	});
+
 	it("con ventas.precio.override acepta el precio enviado y lo audita", async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
 		mockHappyPath();

@@ -67,6 +67,11 @@ describe("getProductosPorUbicacion", () => {
 				updatedAt: new Date(),
 				categoria: { catId: "cat-1", nombre: "Categoria" },
 				unidad: { unidadId: "und-1", nombre: "Unidad", simbolo: "U" },
+				unidadesConversion: [{
+					unidadId: "und-caja",
+					factorAStock: { toString: () => "12.00000000" },
+					unidad: { unidadId: "und-caja", nombre: "Caja", simbolo: "cj" },
+				}],
 				vendor: { vendorId: "v-1", nombre: "Vendor" },
 			},
 		];
@@ -93,6 +98,11 @@ describe("getProductosPorUbicacion", () => {
 		expect(result[0].stockEnUbicacion).toBe(12);
 		expect(result[0].precioVentaResuelto).toBe(160);
 		expect(result[0].precioFuente).toBe("LISTA");
+		expect(result[0].unidadesConversion).toEqual([{
+			unidadId: "und-caja",
+			factorAStock: "12.00000000",
+			unidad: { unidadId: "und-caja", nombre: "Caja", simbolo: "cj" },
+		}]);
 		// Todas las lecturas van scoped al tenant del contexto
 		expect(prisma.puntoDeVenta.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({

@@ -478,6 +478,78 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     )
   })
 
+  it('normaliza un empaque configurado por producto a la unidad stock antes de guardar la receta', async () => {
+    const recetaId = 'receta-factor'
+    const productoId = 'prod-cereal'
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({ recetaId }) as any)
+    vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({ count: 0 })
+    vi.mocked(prisma.recetaIngrediente.createMany).mockResolvedValueOnce({ count: 1 })
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([{
+      id: productoId,
+      nombre: 'Cereal',
+      precioCosto: 10,
+      unidad: { simbolo: 'u', dimension: 'COUNT' },
+      unidadesConversion: [{
+        factorAStock: '12.00000000',
+        unidad: { simbolo: 'caja', dimension: 'COUNT' },
+      }],
+    } as any])
+    vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(120)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce({
+      ...buildRecetaBase({ recetaId }),
+      RecetaIngrediente: [],
+    } as any)
+
+    const response = await setIngredientesHandler(createIngredientesRequest(recetaId, [{
+      productoId,
+      cantidad: 2,
+      unidadSimbolo: 'caja',
+      desperdicio: 0,
+    }]), { params: paramsFor(recetaId) }, {
+      role: 'user',
+      tenantId: 'tenant-1',
+      planFeatures: { unidades: true },
+    } as any)
+
+    expect(response.status).toBe(200)
+    expect(prisma.recetaIngrediente.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({ cantidad: 24, unidadSimbolo: 'u' })],
+    }))
+    expect(calculateCostoUnitarioReceta).toHaveBeenCalledWith(
+      expect.any(Number),
+      [expect.objectContaining({ cantidad: 24, unidadSimbolo: 'u' })],
+      expect.any(Number),
+    )
+  })
+
+  it('exige el feature de unidades al usar una conversión por producto en una receta', async () => {
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase() as any)
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([{
+      id: 'prod-cereal',
+      nombre: 'Cereal',
+      precioCosto: 10,
+      unidad: { simbolo: 'u', dimension: 'COUNT' },
+      unidadesConversion: [{
+        factorAStock: '12',
+        unidad: { simbolo: 'caja', dimension: 'COUNT' },
+      }],
+    } as any])
+
+    const response = await setIngredientesHandler(createIngredientesRequest('receta-123', [{
+      productoId: 'prod-cereal',
+      cantidad: 1,
+      unidadSimbolo: 'caja',
+      desperdicio: 0,
+    }]), { params: paramsFor('receta-123') }, {
+      role: 'user',
+      tenantId: 'tenant-1',
+      planFeatures: {},
+    } as any)
+
+    expect(response.status).toBe(403)
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
+
   it('debe rechazar ingredientes incompatibles con unitErrors y sin persistir cambios', async () => {
     const recetaId = 'receta-123'
 

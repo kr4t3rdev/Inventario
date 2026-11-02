@@ -777,6 +777,15 @@ model VentaItem {
   cantidad       Int
   precioUnitario Int
   total          Int
+  unidadOrigenId          String?
+  unidadOrigenNombre      String?
+  unidadOrigenSimbolo     String?
+  cantidadOrigen          Int?
+  precioUnitarioOrigen    Int?
+  factorAStockAplicado    Decimal?             @db.Decimal(18, 8)
+  unidadBaseIdSnapshot    String?
+  unidadBaseNombreSnapshot String?
+  unidadBaseSimboloSnapshot String?
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
   allocations    PurchaseAllocation[]
