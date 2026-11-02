@@ -91,4 +91,14 @@ describe('checkRateLimit', () => {
     const allowed = checkRateLimit('1.2.3.4', '/api/auth/onboarding/resend-verification')
     expect(allowed.allowed).toBe(true)
   })
+
+  it('limita smoke Sentry a 2 requests por 5 minutos', () => {
+    expect(checkRateLimit('user-1', '/api/sentry-smoke').allowed).toBe(true)
+    expect(checkRateLimit('user-1', '/api/sentry-smoke').allowed).toBe(true)
+    expect(checkRateLimit('user-1', '/api/sentry-smoke').allowed).toBe(false)
+
+    vi.advanceTimersByTime(300_001)
+
+    expect(checkRateLimit('user-1', '/api/sentry-smoke').allowed).toBe(true)
+  })
 })
