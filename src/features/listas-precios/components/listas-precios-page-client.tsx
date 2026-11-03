@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Loader2, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Check, Loader2, Pencil, Plus, Search, Star, Trash2, Tags } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { sileo } from '@/lib/sileo-shim';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { ManagementPageTitle } from '@/components/management-page-title';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   AlertDialog,
@@ -53,6 +54,7 @@ export function ListasPreciosPageClient({
   listas: initialListas,
   initialError,
 }: ListasPreciosPageClientProps) {
+  const reduceMotion = useReducedMotion();
   const router = useRouter();
   const [listas, setListas] = useState(initialListas);
   const [query, setQuery] = useState('');
@@ -169,17 +171,26 @@ export function ListasPreciosPageClient({
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
-        <main className='container mx-auto space-y-6 px-4 py-6'>
-          <header className='flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
-            <div>
-              <h1 className='text-2xl font-bold sm:text-3xl'>Listas de precios</h1>
-              <p className='text-sm text-muted-foreground'>Administrá precios por sucursal y canal de venta.</p>
-            </div>
+    <main className='container mx-auto space-y-6 px-4 py-4'>
+          <motion.header className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : 0.1, duration: reduceMotion ? 0 : 0.5 }}
+          >
+            <ManagementPageTitle
+              icon={Tags}
+              title='Listas de precios'
+              description='Administra precios por sucursal y canal de venta.'
+            />
             <Badge variant='secondary'>{metrics.total} listas</Badge>
-          </header>
+          </motion.header>
 
+          <motion.div
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : 0.3, duration: reduceMotion ? 0 : 0.5, ease: 'easeOut' }}
+            className='space-y-6'
+          >
           {initialError && (
             <div role='alert' className='rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive'>
               <p className='font-semibold'>No pudimos cargar las listas de precios</p>
@@ -269,8 +280,7 @@ export function ListasPreciosPageClient({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          </motion.div>
+    </main>
   );
 }

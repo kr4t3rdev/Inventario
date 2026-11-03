@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Eye, Printer, Trash2, Receipt, Copy } from "lucide-react"
+import { ManagementPageTitle } from "@/components/management-page-title"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
@@ -324,18 +325,11 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
           className="flex items-center justify-between"
           variants={fadeInUp}
         >
-          <div className="flex items-center gap-3">
-            <motion.div
-              className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <Receipt className="h-5 w-5 text-white" />
-            </motion.div>
-            <div className="relative">
-              <h2 className="text-lg font-semibold">Lista de Ofertas</h2>
-            </div>
-          </div>
+          <ManagementPageTitle
+            icon={Receipt}
+            title="Ofertas"
+            description="Consulta y administra las ofertas comerciales."
+          />
         </motion.div>
 
         <motion.div

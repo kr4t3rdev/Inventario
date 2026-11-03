@@ -160,7 +160,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
     return (
       <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
         <CardHeader>
-          <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500 rounded-t-lg" />
+          <div className="h-1 bg-primary rounded-t-lg" />
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-6">
@@ -194,7 +194,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           transition={{ delay: 0.1 }}
         >
           <motion.div
-            className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg"
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
@@ -205,7 +205,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           </CardTitle>
         </motion.div>
       </CardHeader>
-      <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
+      <div className="h-1 bg-primary" />
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completa los campos requeridos antes de continuar.') })} className="space-y-6">
@@ -431,7 +431,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow"
+                  className="bg-primary text-primary-foreground"
                 >
                   {isLoading ? (
                     <>

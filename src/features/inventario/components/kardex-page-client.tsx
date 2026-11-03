@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, FileText } from 'lucide-react';
+import { ManagementPageTitle } from '@/components/management-page-title';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -228,7 +229,7 @@ export function KardexPageClient({
 
 	return (
 		<div className="space-y-4 p-6">
-			<h1 className="text-2xl font-semibold">Kardex de inventario</h1>
+			<ManagementPageTitle icon={FileText} title="Kardex de inventario" description="Consulta los movimientos del inventario." />
 
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-5">
 				<div className="md:col-span-2">

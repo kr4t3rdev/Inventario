@@ -4,15 +4,16 @@
  * @description Componente de contenido para Mermas (Client Component).
  * Maneja toda la interactividad: listado, eliminación, diálogos de confirmación.
  * Los datos iniciales se reciben como props desde el Server Component (page.tsx).
- * 
+ *
  * @param {MermasContentProps} props - Props del componente
  * @returns {JSX.Element} Interfaz de gestión de Mermas
  */
 import { useState, useTransition } from "react"
 import Link from "next/link"
-import { LazyMotion, m as motion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { ManagementPageTitle } from "@/components/management-page-title"
 import { PlusCircle, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -46,6 +47,7 @@ interface MermasContentProps {
 }
 
 export function MermasContent({ initialMermas, isLoading: initialIsLoading, error: initialError }: MermasContentProps) {
+  const reduceMotion = useReducedMotion()
   const [mermas, setMermas] = useState<Merma[]>(initialMermas)
   const isLoading = initialIsLoading ?? false
   const error = initialError
@@ -74,38 +76,24 @@ export function MermasContent({ initialMermas, isLoading: initialIsLoading, erro
       <SidebarInset>
         <div className="container mx-auto py-4">
           {/* Header */}
-          <motion.div 
+          <motion.div
             className="flex justify-between items-center mb-6"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: reduceMotion ? 0 : 0.5 }}
           >
-            <motion.div 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
+            <ManagementPageTitle
+              icon={AlertTriangle}
+              title="Mermas"
+              description="Consulta y administra las mermas de inventario."
+            />
+            <motion.div
+              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
             >
-              <motion.div 
-                className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <AlertTriangle className="h-5 w-5 text-white" />
-              </motion.div>
-              <div className="relative">
-                <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-                  Mermas
-                </h1>
-              </div>
-            </motion.div>
-            <motion.div 
-              whileHover={{ scale: 1.02 }} 
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button 
-                asChild 
-                className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white"
+              <Button
+                asChild
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Link href="/busy/mermas/new">
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -117,11 +105,11 @@ export function MermasContent({ initialMermas, isLoading: initialIsLoading, erro
 
           {/* Table */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            transition={{ delay: reduceMotion ? 0 : 0.2, duration: reduceMotion ? 0 : 0.5 }}
           >
-            <MermasTable 
+            <MermasTable
   // @ts-expect-error TODO: fix type for mermas prop
               mermas={
               mermas

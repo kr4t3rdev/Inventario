@@ -215,14 +215,14 @@ export function EmpleadosNominaContent({
 					>
 						<motion.div className="flex items-center gap-3">
 							<motion.div
-								className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+								className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg"
 								whileHover={{ scale: 1.05, rotate: 5 }}
 								transition={{ type: "spring", stiffness: 400, damping: 10 }}
 							>
 								<Users className="h-5 w-5 text-white" />
 							</motion.div>
 							<div className="relative">
-								<h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+								<h1 className="text-2xl font-bold text-foreground">
 									Empleados
 								</h1>
 								<motion.div
@@ -239,7 +239,7 @@ export function EmpleadosNominaContent({
 						<motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
 							<Button
 								asChild
-								className="bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow"
+								className="bg-primary text-primary-foreground"
 							>
 								<Link href="/busy/empleados/new">
 									<Plus className="mr-2 h-4 w-4" /> Nuevo Empleado
@@ -259,7 +259,7 @@ export function EmpleadosNominaContent({
 								whileHover={{ y: -4, transition: { duration: 0.2 } }}
 							>
 								<Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10 overflow-hidden group">
-									<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+									<div className="h-1 bg-primary" />
 									<CardHeader>
 										<div className="flex justify-between items-start">
 											<div>
@@ -279,7 +279,7 @@ export function EmpleadosNominaContent({
 												}}
 											>
 												<Avatar className="h-12 w-12 ring-2 ring-orange-500/20">
-													<AvatarFallback className="bg-linear-to-br from-orange-500/20 to-red-600/20 text-orange-500 font-semibold">
+													<AvatarFallback className="bg-primary/10 text-primary font-semibold">
 														{empleado.nombre.charAt(0)}
 														{empleado.apellido?.charAt(0)}
 													</AvatarFallback>
@@ -359,12 +359,12 @@ export function EmpleadosNominaContent({
 					<motion.div className="mt-8" variants={itemVariants}>
 						<motion.div className="flex items-center gap-3 mb-4">
 							<motion.div
-								className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
+								className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"
 								whileHover={{ scale: 1.1, rotate: 5 }}
 							>
 								<CreditCard className="h-4 w-4 text-white" />
 							</motion.div>
-							<h2 className="text-xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+							<h2 className="text-xl font-bold text-foreground">
 								Historial de Pagos de Salario
 							</h2>
 						</motion.div>
@@ -384,7 +384,7 @@ export function EmpleadosNominaContent({
 
 								<TabsContent value="historial" className="mt-4">
 									<Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
-										<div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
+										<div className="h-1 bg-primary" />
 										<CardContent className="pt-6">
 											<Table>
 												<TableHeader>
@@ -475,7 +475,7 @@ export function EmpleadosNominaContent({
 
 								<TabsContent value="resumen" className="mt-4">
 									<Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
-										<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+										<div className="h-1 bg-primary" />
 										<CardContent className="pt-6">
 											<Table>
 												<TableHeader>
@@ -687,7 +687,7 @@ export function EmpleadosNominaContent({
 									</Button>
 									<Button
 										type="submit"
-										className="bg-linear-to-r from-orange-500 to-red-600 text-white"
+										className="bg-primary text-primary-foreground"
 									>
 										Registrar Pago
 									</Button>

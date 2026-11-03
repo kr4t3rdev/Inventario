@@ -4,7 +4,7 @@
  * @description Componente de contenido para Servicios (Client Component).
  * Maneja toda la interactividad: catálogo, carrito, búsqueda, eliminación.
  * Los datos iniciales se reciben como props desde el Server Component (page.tsx).
- * 
+ *
  * @param {ServiciosContentProps} props - Props del componente
  * @returns {JSX.Element} Interfaz de gestión de Servicios
  */
@@ -17,6 +17,7 @@ import { facturarVentaServicioAction } from '@/features/venta-servicios/actions'
 import type { VentaServicio } from '@/features/venta-servicios/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck, FileText } from 'lucide-react'
+import { ManagementPageTitle } from "@/components/management-page-title"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -219,33 +220,21 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
   return (
     <SidebarProvider>
       <SidebarInset>
-        <motion.div 
+        <motion.div
           className='container mx-auto py-4 px-4'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
           {/* Header */}
-          <motion.div 
+          <motion.div
             className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
           >
-            <div className='flex items-center gap-3'>
-              <motion.div
-                className='w-10 h-10 bg-linear-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Package className='h-5 w-5 text-white' />
-              </motion.div>
-              <div>
-                <h1 className='text-3xl font-bold'>Servicios</h1>
-                <p className='text-muted-foreground text-sm'>Gestiona tu catálogo de servicios y ventas</p>
-              </div>
-            </div>
-            
+            <ManagementPageTitle icon={Package} title="Servicios" description="Gestiona tu catálogo de servicios y ventas." />
+
             <div className='flex gap-2'>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button asChild variant='outline'>
@@ -265,9 +254,9 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
               )}
               {puedeEditar && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button 
-                  asChild 
-                  className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                <Button
+                  asChild
+                  className='bg-primary text-primary-foreground hover:bg-primary/90'
                 >
                   <Link href='/busy/servicios/new'>
                     <Plus className='mr-2 h-4 w-4' /> Nuevo Servicio
@@ -276,12 +265,12 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
               </motion.div>
               )}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button 
+                <Button
                   onClick={() => setIsCartDialogOpen(true)}
                   disabled={cart.length === 0}
-                  className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50'
                 >
-                  <ShoppingCart className='mr-2 h-4 w-4' /> 
+                  <ShoppingCart className='mr-2 h-4 w-4' />
                   Carrito ({cart.length})
                 </Button>
               </motion.div>
@@ -325,7 +314,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                   transition={{ duration: 0.3 }}
                 >
                   {/* Search */}
-                  <motion.div 
+                  <motion.div
                     className='mb-6'
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -343,7 +332,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                   </motion.div>
 
                   {/* Services Grid */}
-                  <motion.div 
+                  <motion.div
                     className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6'
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -372,9 +361,9 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                                 </Link>
                                 )}
                                 {puedeEditar && (
-                                <Button 
-                                  variant='ghost' 
-                                  size='icon' 
+                                <Button
+                                  variant='ghost'
+                                  size='icon'
                                   className='h-8 w-8'
                                   onClick={() => setServicioToDelete(servicio.servicioId)}
                                 >
@@ -394,8 +383,8 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                           </CardContent>
                           <CardFooter className='bg-muted/50 pt-3 border-t'>
                             <motion.div className='w-full' whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                              <Button 
-                                className='w-full bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg' 
+                              <Button
+                                className='w-full bg-primary text-primary-foreground hover:bg-primary/90'
                                 onClick={() => addToCart(servicio)}
                               >
                                 <ShoppingCart className='mr-2 h-4 w-4' /> Agregar al Carrito
@@ -408,7 +397,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                   </motion.div>
 
                   {filteredServices?.length === 0 && (
-                    <motion.div 
+                    <motion.div
                       className='text-center py-16'
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -424,9 +413,9 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                       </p>
                       {puedeEditar && (
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button 
+                        <Button
                           asChild
-                          className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                          className='bg-primary text-primary-foreground hover:bg-primary/90'
                         >
                           <Link href='/busy/servicios/new'>
                             <Plus className='mr-2 h-4 w-4' /> Crear Servicio
@@ -457,11 +446,11 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                     Haga clic en el botón "Carrito" para ver y gestionar los servicios agregados
                   </p>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className='inline-block'>
-                    <Button 
+                    <Button
                       onClick={() => setIsCartDialogOpen(true)}
                       disabled={cart.length === 0}
                       size='lg'
-                      className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                      className='bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50'
                     >
                       <ShoppingCart className='mr-2 h-5 w-5' />
                       Abrir Carrito ({cart.length})
@@ -558,7 +547,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
           </AlertDialog>
 
           {/* Cart Component */}
-          <ServiciosCart 
+          <ServiciosCart
             cart={cart}
             setCart={setCart}
             isOpen={isCartDialogOpen}

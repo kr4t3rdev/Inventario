@@ -1,5 +1,8 @@
 'use client';
 
+import { ManagementPageTitle } from '@/components/management-page-title'
+import { ShoppingCart } from 'lucide-react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -141,10 +144,7 @@ export function OrdenesCompraPageClient({
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-sm text-muted-foreground">Solicita mercancía, recibe parcialmente y conserva el backorder.</p>
-      </div>
+      <ManagementPageTitle icon={ShoppingCart} title={title} description="Solicita mercancía, recibe parcialmente y conserva el backorder." />
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
       {canManageOrders && showCreateForm && (

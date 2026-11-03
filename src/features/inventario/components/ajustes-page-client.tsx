@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Info } from 'lucide-react';
+import { ManagementPageTitle } from '@/components/management-page-title';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -180,7 +181,7 @@ export function AjustesPageClient({
 	return (
 		<div className="space-y-4 p-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-semibold">Ajustes de inventario</h1>
+				<ManagementPageTitle icon={AlertTriangle} title="Ajustes de inventario" description="Consulta y registra ajustes de inventario." />
 				<Button onClick={() => setMostrarFormulario((v) => !v)}>
 					{mostrarFormulario ? 'Cerrar' : 'Nuevo ajuste'}
 				</Button>

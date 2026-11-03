@@ -7,8 +7,9 @@
  * @param {string} props.description - Descripción de la página
  * @returns {JSX.Element} Header con icono naranja animado
  */
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { UserCircle } from "lucide-react"
+import { ManagementPageTitle } from "@/components/management-page-title"
 
 interface ClientesPageHeaderProps {
   title: string
@@ -16,36 +17,15 @@ interface ClientesPageHeaderProps {
 }
 
 export function ClientesPageHeader({ title, description }: ClientesPageHeaderProps) {
+  const reduceMotion = useReducedMotion()
   return (
     <motion.div
       className="mb-6"
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: reduceMotion ? 0 : 0.5 }}
     >
-      <div className="flex items-center gap-3">
-        <motion.div
-          className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
-          <UserCircle className="h-5 w-5 text-white" />
-        </motion.div>
-        <div className="relative">
-          <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-            {title}
-          </h1>
-
-        </div>
-      </div>
-      <motion.p
-        className="text-muted-foreground ml-13 mt-1"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        {description}
-      </motion.p>
+      <ManagementPageTitle icon={UserCircle} title={title} description={description} />
     </motion.div>
   )
 }
