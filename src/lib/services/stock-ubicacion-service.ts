@@ -361,6 +361,61 @@ async function aplicarDeltaDetalle(
 }
 
 /**
+ * @description Inicializa en `General` el saldo agregado legacy cuando aún
+ * no existe ningún desglose, para permitir operaciones sobre datos creados
+ * antes de habilitar ubicaciones hijas.
+ * @param {any} tx - Cliente Prisma transaccional.
+ * @param {string} tenantId - Tenant del saldo.
+ * @param {string} productoId - Producto del saldo.
+ * @param {string} almacenId - Almacén del saldo.
+ * @param {string} ubicacionHijaId - Hoja General usada para el backfill diferido.
+ * @returns {Promise<void>} No devuelve valor.
+ */
+async function inicializarDetalleLegacy(
+	tx: any,
+	tenantId: string,
+	productoId: string,
+	almacenId: string,
+	ubicacionHijaId: string,
+): Promise<void> {
+	const where = { tenantId, productoId, almacenId };
+	const detalles = await tx.stockUbicacionDetalle.findMany({
+		where,
+		select: { id: true },
+		take: 1,
+	});
+	if (detalles.length > 0) return;
+
+	const stock = await tx.stockUbicacion.findUnique({
+		where: {
+			productoId_tipoUbicacion_ubicacionId: {
+				productoId,
+				tipoUbicacion: 'almacen',
+				ubicacionId: almacenId,
+			},
+		},
+		select: { cantidad: true, cantidadReservada: true, cantidadDisponible: true },
+	});
+	if (!stock || stock.cantidad <= 0) return;
+
+	await tx.stockUbicacionDetalle.upsert({
+		where: {
+			tenantId_productoId_ubicacionHijaId: { tenantId, productoId, ubicacionHijaId },
+		},
+		create: {
+			tenantId,
+			productoId,
+			almacenId,
+			ubicacionHijaId,
+			cantidad: stock.cantidad,
+			cantidadReservada: stock.cantidadReservada,
+			cantidadDisponible: stock.cantidadDisponible,
+		},
+		update: {},
+	});
+}
+
+/**
  * @description Mantiene sincronizados el saldo agregado y su desglose por hoja.
  * Las salidas legacy se distribuyen por disponibilidad; las entradas van a
  * `General` salvo que el llamador indique una hoja.
@@ -386,6 +441,9 @@ export async function upsertStockUbicacion(
 	const hojaId = opts.tipoUbicacion === 'almacen'
 		? await resolverHojaStock(tx, tenantId, opts.ubicacionId, opts.ubicacionHijaId ?? undefined)
 		: null;
+	if (hojaId) {
+		await inicializarDetalleLegacy(tx, tenantId, opts.productoId, opts.ubicacionId, hojaId);
+	}
 
 	await upsertStockUbicacionAgregado(tx, opts);
 	if (!hojaId) return;

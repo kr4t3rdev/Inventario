@@ -20,6 +20,7 @@ export const miEmpresaUpsertSchema = z.object({
   logoAsset: cloudinaryAssetSchema.optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'ID de cuenta inválido').optional().nullable(),
   usaCodigoEan13: z.boolean().optional(),
+  diasAlertaVencimientoLotes: z.number().int().min(1).max(30).optional(),
   confirmReset: z.boolean().optional(),
 });
 
@@ -37,6 +38,7 @@ const MI_EMPRESA_SELECT = {
   logoUrl: true,
   cuentaBancariaId: true,
   usaCodigoEan13: true,
+  diasAlertaVencimientoLotes: true,
   cuentaBancaria: {
     select: {
       nombreBanco: true,
@@ -96,6 +98,9 @@ export async function upsertMiEmpresa({
   if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
   if (data.cuentaBancariaId !== undefined) updateData.cuentaBancariaId = data.cuentaBancariaId;
   if (data.usaCodigoEan13 !== undefined) updateData.usaCodigoEan13 = data.usaCodigoEan13;
+  if (data.diasAlertaVencimientoLotes !== undefined) {
+    updateData.diasAlertaVencimientoLotes = data.diasAlertaVencimientoLotes;
+  }
 
   const miEmpresa = await prisma.miEmpresa.upsert({
     where: { tenantId },
@@ -112,6 +117,7 @@ export async function upsertMiEmpresa({
       logoUrl: data.logoUrl ?? null,
       cuentaBancariaId: data.cuentaBancariaId ?? null,
       usaCodigoEan13: data.usaCodigoEan13 ?? false,
+      diasAlertaVencimientoLotes: data.diasAlertaVencimientoLotes ?? 30,
     },
     update: updateData,
     include: {

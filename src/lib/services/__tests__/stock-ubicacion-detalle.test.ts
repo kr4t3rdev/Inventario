@@ -28,6 +28,7 @@ describe('upsertStockUbicacion con detalle jerárquico', () => {
 		txMock.ubicacion.findFirst.mockImplementation(async (args: { where: { id?: string } }) => ({
 			id: args.where.id ?? 'legacy-general-alm-1',
 		}));
+		txMock.stockUbicacionDetalle.findMany.mockResolvedValue([]);
 	});
 
 	it('actualiza el saldo agregado y asigna las entradas a la hoja General', async () => {
@@ -150,6 +151,51 @@ describe('upsertStockUbicacion con detalle jerárquico', () => {
 			expect.objectContaining({
 				where: expect.objectContaining({ ubicacionHijaId: 'hoja-b', cantidad: 5 }),
 				data: expect.objectContaining({ cantidad: { increment: -1 } }),
+			}),
+		);
+	});
+
+	it('inicializa en General el saldo legacy antes de descontar una salida', async () => {
+		txMock.stockUbicacion.findUnique.mockResolvedValue({
+			cantidad: 9,
+			cantidadReservada: 2,
+			cantidadDisponible: 7,
+		});
+		txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
+		txMock.stockUbicacionDetalle.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{ ubicacionHijaId: 'legacy-general-alm-1', cantidad: 9, cantidadDisponible: 7 },
+			]);
+		txMock.stockUbicacionDetalle.findUnique.mockResolvedValue({
+			cantidad: 9,
+			cantidadReservada: 2,
+			cantidadDisponible: 7,
+		});
+		txMock.stockUbicacionDetalle.updateMany.mockResolvedValue({ count: 1 });
+
+		await upsertStockUbicacion(txMock, {
+			tenantId: 'tenant-1',
+			productoId: 'producto-1',
+			tipoUbicacion: 'almacen',
+			ubicacionId: 'alm-1',
+			modo: 'increment',
+			delta: -3,
+		});
+
+		expect(txMock.stockUbicacionDetalle.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({
+					ubicacionHijaId: 'legacy-general-alm-1',
+					cantidad: 9,
+					cantidadReservada: 2,
+					cantidadDisponible: 7,
+				}),
+			}),
+		);
+		expect(txMock.stockUbicacionDetalle.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ cantidad: { increment: -3 } }),
 			}),
 		);
 	});

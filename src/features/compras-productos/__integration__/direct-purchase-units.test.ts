@@ -271,6 +271,8 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
           `));
         }
         await attemptCleanup('stock locations', () => prisma.stockUbicacion.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('stock location details', () =>
+          prisma.stockUbicacionDetalle.deleteMany({ where: { tenantId } }));
         await attemptCleanup('product cost history', () => prisma.productoCostHistory.deleteMany({
           where: { productoId: { in: [...productIds] } },
         }));
@@ -281,6 +283,7 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
         await attemptCleanup('payment types', () => prisma.tipoPago.deleteMany({ where: { tenantId } }));
         await attemptCleanup('payment accounts', () => prisma.cuentaBancaria.deleteMany({ where: { tenantId } }));
         await attemptCleanup('products', () => prisma.producto.deleteMany({ where: { id: { in: [...productIds] } } }));
+        await attemptCleanup('warehouse locations', () => prisma.ubicacion.deleteMany({ where: { tenantId } }));
         await attemptCleanup('warehouses', () => prisma.almacen.deleteMany({ where: { tenantId } }));
         await attemptCleanup('categories', () => prisma.categoria.deleteMany({ where: { tenantId } }));
         await attemptCleanup('vendors', () => prisma.vendor.deleteMany({ where: { tenantId } }));
