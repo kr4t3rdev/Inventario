@@ -70,4 +70,35 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 		});
 		expect(r).toEqual({ restaurado: 0, costoTotal: 0 });
 	});
+
+	it('restaura una allocation de recepción usando el snapshot conciliado', async () => {
+		const tx = {
+			purchaseAllocation: {
+				findMany: vi.fn().mockResolvedValue([{
+					id: 'allocation-recepcion',
+					cantidad: 2,
+					costoUnitarioSnapshot: 125,
+					compraDocumentoItem: null,
+					recepcionItem: {
+						recepcion: { fecha: new Date('2026-09-01T00:00:00.000Z') },
+						ordenItem: { createdAt: new Date('2026-08-25T00:00:00.000Z'), precioUnitario: 100 },
+					},
+				}]),
+				update: vi.fn(),
+				delete: vi.fn(),
+			},
+		};
+
+		const result = await restaurarAllocacionesFifo(tx as never, {
+			tenantId: 't-1',
+			ventaItemId: 'vi-recepcion',
+			cantidad: 1,
+		});
+
+		expect(result).toEqual({ restaurado: 1, costoTotal: 125 });
+		expect(tx.purchaseAllocation.update).toHaveBeenCalledWith({
+			where: { id: 'allocation-recepcion' },
+			data: { cantidad: 1 },
+		});
+	});
 });

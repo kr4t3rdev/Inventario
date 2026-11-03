@@ -19,6 +19,7 @@
 export interface AllocationParaCosto {
   id: string;
   cantidad: number;
+  costoUnitarioSnapshot?: number | null;
   compraDocumentoItem: { precioUnitario: number; compraDocumentoId?: string } | null;
 }
 
@@ -75,7 +76,7 @@ export function calcularDetalleCostoVenta(venta: VentaParaCosto): DetalleCostoVe
     for (const allocation of allocations) {
       const usedQuantity = Math.min(Math.max(allocation.cantidad, 0), remainingQuantity);
       const excessQuantity = Math.max(0, allocation.cantidad - usedQuantity);
-      const unitCost = allocation.compraDocumentoItem?.precioUnitario ?? 0;
+      const unitCost = allocation.costoUnitarioSnapshot ?? allocation.compraDocumentoItem?.precioUnitario ?? 0;
       historical += usedQuantity * unitCost;
       overAllocatedCost += excessQuantity * unitCost;
       remainingQuantity -= usedQuantity;

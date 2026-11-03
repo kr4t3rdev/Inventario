@@ -56,13 +56,20 @@ mezcladas por unidad en movimientos.
 **Rationale**: una misma caja puede representar cantidades distintas por
 producto; FIFO, `StockUbicacion` y costos operan en una magnitud stock común.
 
-### Decision: Lotes como extensión de PurchaseAllocation
+### Decision: Lotes y asignación física desde recepción
 
-**Choice**: `Lote` por `CompraDocumentoItem`; `PurchaseAllocation`
-agrega `loteId` nullable; salidas usan FEFO.
-**Alternatives considered**: tabla de trazabilidad separada.
-**Rationale**: reutiliza el FIFO real ya auditado en vez de crear un
-segundo motor de asignación.
+**Choice**: `PurchaseAllocation` admite como origen `CompraDocumentoItem` o
+`RecepcionItem`, además del `loteId`. Las recepciones participan en FIFO/FEFO
+antes de la factura con costo estimado de OC guardado en snapshot. Al facturar,
+se reparte el monto por las recepciones FIFO y se actualizan sus asignaciones
+con el costo unitario conciliado de cada línea recibida. Las líneas de compra
+vinculadas a una OC no vuelven a aportar stock si ese stock ya proviene de lotes
+de recepción.
+**Alternatives considered**: permitir FEFO solo después de facturar o crear un
+motor separado de trazabilidad de ventas.
+**Rationale**: la existencia física nace en la recepción; conservar su origen
+evita perder trazabilidad en ventas pre-factura y evita doble conteo al vincular
+la factura. El snapshot mantiene el costo histórico y permite reconciliarlo.
 
 ### Decision: Variantes como productos hijos tipados
 
@@ -90,7 +97,8 @@ Venta/Compra/Transferencia/Merma/Producción/Conteo/Ajuste
 registrarMovimiento() ──► StockMoveLine (append-only)
   │                          │
   │                          ├──► Kardex / Valorizado / Rotación
-  │                          └──► PurchaseAllocation (+loteId) / FIFO-FEFO
+  │                          └──► PurchaseAllocation (compra o recepción,
+  │                               + loteId + costo snapshot) / FIFO-FEFO
   ▼
 StockUbicacion.cantidadDisponible (derivado, nunca editado directo)
 ```

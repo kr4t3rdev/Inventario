@@ -33,6 +33,7 @@ export const VENTA_SELECT = {
       allocations: {
         select: {
           cantidad: true,
+          costoUnitarioSnapshot: true,
           compraDocumentoItem: { select: { precioUnitario: true } },
         },
       },

@@ -142,12 +142,16 @@
   al item de compra o recepción (`20261108100000_link_lots_to_receipt_items`).
   Facturar una OC recibida no duplica el lote.
   RED/GREEN: `lotes.test.ts` + suites de compras y recepciones.
-* [x] 5.3 FEFO en `allocateFifoForVentaItem`: mantiene FIFO entre líneas de
-  compra y, dentro de cada una, asigna los lotes por vencimiento ascendente
-  (`NULLS LAST`, fecha de entrada e ID como desempate). Cada asignación lleva
-  `loteId` y respeta la disponibilidad neta de la compra y el lote.
-  RED/GREEN: A(10 días,5) + B(60 días,5), venta 6 → 5 de A + 1 de B;
-  cobertura para vencimientos nulos, empates y saldos previamente asignados.
+* [x] 5.3 FEFO en `allocateFifoForVentaItem`: mantiene FIFO entre entradas y,
+  dentro de cada una, asigna lotes por vencimiento ascendente (`NULLS LAST`,
+  fecha de entrada e ID como desempate). Las asignaciones pueden tomar como
+  origen `CompraDocumentoItem` o `RecepcionItem`; las recepciones participan
+  antes de facturar con costo estimado. Al vincular la factura, las cantidades
+  y costos se concilian por línea recibida y actualizan los snapshots históricos.
+  Se evita volver a contar las líneas facturadas como stock aparte de los lotes
+  recibidos. Tests: FEFO (incluye nulos, empates, saldos y lotes recibidos),
+  conciliación parcial y exceso facturado; la migración reconstruye el saldo
+  facturado histórico en orden FIFO. Migración pendiente de aplicar a BD.
 * [ ] 5.4 `getAlertasVencimientoAction` (≤30 días, configurable) +
   badge en inventario.
 * [ ] 5.5 Kardex y conteo filtran por `Ubicacion` hija; migración de

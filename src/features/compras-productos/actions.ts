@@ -16,6 +16,7 @@ import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { crearLoteDesdeEntrada, deriveLoteCodigo } from '@/features/inventario/lotes';
+import { reconciliarCostosRecepcionConFactura } from '@/lib/services/reconciliar-costos-recepcion';
 import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
@@ -456,6 +457,17 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           },
         });
         compraItems.push(compraItem);
+      }
+      if (parsed.ordenCompraId) {
+        await reconciliarCostosRecepcionConFactura(tx, {
+          tenantId,
+          ordenId: parsed.ordenCompraId,
+          items: itemsNormalizados.map((item) => ({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioCosto,
+          })),
+        });
       }
 
       const compraCompleta = await tx.compraDocumento.findUnique({

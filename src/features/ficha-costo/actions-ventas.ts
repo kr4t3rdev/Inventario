@@ -35,7 +35,11 @@ interface CostoGlobalRow {
  */
 function calcularCostoFifoItem(
   ventaItemId: string,
-  allocations: Array<{ compraDocumentoItemId: string; cantidad: number }>,
+  allocations: Array<{
+    compraDocumentoItemId: string | null
+    cantidad: number
+    costoUnitarioSnapshot: number | null
+  }>,
   comprasMap: Map<string, number>,
   precioCostoFallback: number,
   cantidad: number,
@@ -48,7 +52,8 @@ function calcularCostoFifoItem(
   // Sumar costo de todas las allocations
   let costoReal = 0
   for (const alloc of allocations) {
-    const precioCompra = comprasMap.get(alloc.compraDocumentoItemId) ?? 0
+    const precioCompra = alloc.costoUnitarioSnapshot ??
+      (alloc.compraDocumentoItemId ? comprasMap.get(alloc.compraDocumentoItemId) : undefined) ?? 0
     costoReal += alloc.cantidad * precioCompra
   }
 
@@ -155,7 +160,7 @@ export const getVentasProductoAction = withAction(
         FROM (
           SELECT CASE
             WHEN COUNT(pa."id") = 0 THEN vi."cantidad"::bigint * ${producto.precioCosto}
-            ELSE COALESCE(SUM(pa."cantidad"::bigint * cdi."precioUnitario"), 0)
+            ELSE COALESCE(SUM(pa."cantidad"::bigint * COALESCE(pa."costoUnitarioSnapshot", cdi."precioUnitario")), 0)
           END AS "costoItem"
           FROM "venta_items" vi
           INNER JOIN "Venta" v ON v."ventaId" = vi."ventaId"
@@ -176,13 +181,18 @@ export const getVentasProductoAction = withAction(
       ventaItemIds.length > 0
         ? await prisma.purchaseAllocation.findMany({
             where: { ventaItemId: { in: ventaItemIds }, tenantId },
-            select: { ventaItemId: true, compraDocumentoItemId: true, cantidad: true },
+            select: {
+              ventaItemId: true,
+              compraDocumentoItemId: true,
+              cantidad: true,
+              costoUnitarioSnapshot: true,
+            },
           })
         : []
 
     // 6. Obtener precios de las compras de las allocations.
     const compraIds = Array.from(
-      new Set(allocations.map((a) => a.compraDocumentoItemId)),
+      new Set(allocations.map((a) => a.compraDocumentoItemId).filter((id): id is string => Boolean(id))),
     )
     const compras =
       compraIds.length > 0
@@ -195,10 +205,18 @@ export const getVentasProductoAction = withAction(
     const comprasMap = new Map(compras.map((c) => [c.compraDocumentoItemId, c.precioUnitario]))
 
     // 7. Agrupar allocations por ventaItemId.
-    const allocationsPorVenta = new Map<string, Array<{ compraDocumentoItemId: string; cantidad: number }>>()
+    const allocationsPorVenta = new Map<string, Array<{
+      compraDocumentoItemId: string | null
+      cantidad: number
+      costoUnitarioSnapshot: number | null
+    }>>()
     for (const alloc of allocations) {
       const existing = allocationsPorVenta.get(alloc.ventaItemId) ?? []
-      existing.push({ compraDocumentoItemId: alloc.compraDocumentoItemId, cantidad: alloc.cantidad })
+      existing.push({
+        compraDocumentoItemId: alloc.compraDocumentoItemId,
+        cantidad: alloc.cantidad,
+        costoUnitarioSnapshot: alloc.costoUnitarioSnapshot,
+      })
       allocationsPorVenta.set(alloc.ventaItemId, existing)
     }
 

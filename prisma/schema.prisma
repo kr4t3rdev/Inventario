@@ -1592,11 +1592,14 @@ model RecepcionItem {
   productoId  String
   tenantId    String
   cantidad    Int
+  cantidadFacturada Int      @default(0)
+  montoFacturado     Int      @default(0)
   recepcion   Recepcion       @relation(fields: [tenantId, recepcionId], references: [tenantId, id], onDelete: Cascade)
   ordenItem   OrdenCompraItem @relation(fields: [tenantId, ordenItemId], references: [tenantId, id], onDelete: Restrict)
   producto    Producto        @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   lotes       Lote[]
+  allocations PurchaseAllocation[]
 
   @@unique([tenantId, id])
   @@index([tenantId, recepcionId])
@@ -1627,18 +1630,22 @@ model ReglaReabastecimiento {
 model PurchaseAllocation {
   id                    String              @id @default(cuid())
   tenantId              String
-  compraDocumentoItemId String
+  compraDocumentoItemId String?
+  recepcionItemId       String?
   ventaItemId           String
   loteId                String?
+  costoUnitarioSnapshot Int?
   cantidad              Int
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
-  compraDocumentoItem   CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId], onDelete: Cascade)
+  compraDocumentoItem   CompraDocumentoItem? @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId], onDelete: Cascade)
+  recepcionItem         RecepcionItem?       @relation(fields: [tenantId, recepcionItemId], references: [tenantId, id], onDelete: Restrict)
   tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
   ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id], onDelete: Cascade)
   lote                  Lote?               @relation(fields: [tenantId, loteId], references: [tenantId, id], onDelete: Restrict)
 
   @@index([tenantId, loteId])
+  @@index([tenantId, recepcionItemId])
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
   @@index([tenantId])

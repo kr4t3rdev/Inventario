@@ -61,7 +61,13 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
         // null cuando la línea no tiene allocations (legacy/pedido no entregado);
         // 0 cuando la venta ya fue devuelta por completo — la devolución elimina
         // las allocations y sin regla el costo reaparecería por el fallback.
-        const allocations = (item as { allocations?: Array<{ cantidad?: number; compraDocumentoItem?: { precioUnitario?: number } | null }> }).allocations
+        const allocations = (item as {
+          allocations?: Array<{
+            cantidad?: number
+            costoUnitarioSnapshot?: number | null
+            compraDocumentoItem?: { precioUnitario?: number } | null
+          }>
+        }).allocations
         const devoluciones = (venta as { devoluciones?: Array<{ estado?: string; total?: number | string }> }).devoluciones
         const totalDevuelto = (devoluciones ?? [])
           .filter((d) => d.estado === 'REGISTRADA')
@@ -71,7 +77,9 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
 
         const costoFifo = Array.isArray(allocations) && allocations.length > 0
           ? allocations.reduce(
-              (sum, alloc) => sum + Number(alloc.cantidad ?? 0) * Number(alloc.compraDocumentoItem?.precioUnitario ?? 0),
+              (sum, alloc) => sum + Number(alloc.cantidad ?? 0) * Number(
+                alloc.costoUnitarioSnapshot ?? alloc.compraDocumentoItem?.precioUnitario ?? 0,
+              ),
               0,
             )
           : ventaDevueltaCompleta

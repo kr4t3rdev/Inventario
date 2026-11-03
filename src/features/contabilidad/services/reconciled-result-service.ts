@@ -266,6 +266,7 @@ export async function getReconciledResultForYear(params: {
                   select: {
                     id: true,
                     cantidad: true,
+                    costoUnitarioSnapshot: true,
                     compraDocumentoItem: {
                       select: { precioUnitario: true, compraDocumentoId: true },
                     },
@@ -366,6 +367,7 @@ export async function getReconciledResultForYear(params: {
                     orderBy: { createdAt: 'asc' },
                     select: {
                       id: true, cantidad: true,
+                      costoUnitarioSnapshot: true,
                       compraDocumentoItem: {
                         select: { precioUnitario: true, compraDocumentoId: true },
                       },

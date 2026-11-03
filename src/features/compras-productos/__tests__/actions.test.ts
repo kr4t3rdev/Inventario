@@ -31,6 +31,9 @@ vi.mock("@/lib/services/anticipos-guards", () => ({
 vi.mock("@/features/contabilidad-formal/services/purchase-posting-service", () => ({
 	emitirReconocimientoCompra: vi.fn(),
 }));
+vi.mock("@/lib/services/reconciliar-costos-recepcion", () => ({
+	reconciliarCostosRecepcionConFactura: vi.fn().mockResolvedValue(undefined),
+}));
 
 const mockTx = {
 	$queryRaw: vi.fn(),

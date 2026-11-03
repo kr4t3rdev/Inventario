@@ -19,6 +19,9 @@ function createMockTx() {
 		lote: {
 			findMany: vi.fn().mockResolvedValue([]),
 		},
+		recepcionItem: {
+			findMany: vi.fn().mockResolvedValue([]),
+		},
 		purchaseAllocation: {
 			groupBy: vi.fn(),
 			aggregate: vi.fn(),
@@ -173,6 +176,90 @@ describe("allocateFifoForVentaItem", () => {
 				cantidad: 5,
 			}],
 		});
+	});
+
+	it("consume lotes de una recepción antes de facturar y guarda su costo estimado", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
+		tx.recepcionItem.findMany.mockResolvedValue([
+			{
+				id: "ri-1",
+				cantidad: 5,
+				ordenItemId: "oi-1",
+				ordenItem: {
+					id: "oi-1",
+					ordenId: "oc-1",
+					createdAt: new Date("2026-01-01T00:00:00.000Z"),
+					precioUnitario: 120,
+					costoUnitarioFacturado: null,
+				},
+				recepcion: { fecha: new Date("2026-01-02T00:00:00.000Z") },
+				lotes: [{
+					id: "lote-rec-1",
+					cantidadDisponible: 5,
+					fechaVencimiento: new Date("2027-01-10T00:00:00.000Z"),
+					createdAt: new Date("2026-01-02T00:00:00.000Z"),
+				}],
+			},
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v-rec",
+			productoId: "p1",
+			cantidad: 3,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [{
+				tenantId: "t1",
+				compraDocumentoItemId: null,
+				recepcionItemId: "ri-1",
+				ventaItemId: "v-rec",
+				loteId: "lote-rec-1",
+				costoUnitarioSnapshot: 120,
+				cantidad: 3,
+			}],
+		});
+	});
+
+	it("no vuelve a asignar la línea de factura cuando el lote recibido ya se agotó", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{
+				compraDocumentoItemId: "factura-1",
+				cantidad: 5,
+				productoId: "p1",
+				createdAt: new Date("2026-01-03T00:00:00.000Z"),
+				compraDocumento: { ordenCompraId: "oc-1" },
+			},
+		]);
+		tx.recepcionItem.findMany.mockResolvedValue([
+			{
+				id: "ri-agotada",
+				cantidad: 5,
+				cantidadFacturada: 5,
+				montoFacturado: 500,
+				ordenItemId: "oi-1",
+				ordenItem: { id: "oi-1", ordenId: "oc-1", precioUnitario: 100 },
+				recepcion: { fecha: new Date("2026-01-02T00:00:00.000Z") },
+				lotes: [{
+					id: "lote-agotado",
+					cantidadDisponible: 0,
+					fechaVencimiento: null,
+					createdAt: new Date("2026-01-02T00:00:00.000Z"),
+				}],
+			},
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v-agotada",
+			productoId: "p1",
+			cantidad: 1,
+		});
+
+		expect(tx.purchaseAllocation.createMany).not.toHaveBeenCalled();
 	});
 
 	it("excluye compras anuladas o eliminadas del pool FIFO (B-02.2)", async () => {
