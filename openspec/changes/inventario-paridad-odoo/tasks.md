@@ -152,12 +152,27 @@
   recibidos. Tests: FEFO (incluye nulos, empates, saldos y lotes recibidos),
   conciliación parcial y exceso facturado; la migración reconstruye el saldo
   facturado histórico en orden FIFO. Migración pendiente de aplicar a BD.
-* [ ] 5.4 `getAlertasVencimientoAction` (≤30 días, configurable) +
-  badge en inventario.
-* [ ] 5.5 Kardex y conteo filtran por `Ubicacion` hija; migración de
-  `StockUbicacion` plano a hoja de la jerarquía sin pérdida.
-* [ ] 5.6 Seed demo Profesional (`professional-seed.ts`): lotes con
-  vencimientos y ubicaciones hijas.
+* [x] 5.4 `getAlertasVencimientoAction` (≤30 días, configurable) +
+  badge en inventario. La ventana se guarda por tenant en `MiEmpresa`, con
+  valor predeterminado de 30 días y validación de 1–30. Contratos de acción,
+  servicio, componente y migración cubiertos por pruebas focalizadas.
+* [x] 5.5 Kardex y conteo filtran por `Ubicacion` hija; migración de
+  `StockUbicacion` plano a hoja de la jerarquía sin pérdida. El backfill asigna
+  los saldos/eventos históricos a `General`, mantiene el saldo agregado y
+  comprueba la reconciliación detalle/agregado. El detalle nuevo se sincroniza
+  transaccionalmente; las consultas y mutaciones por hoja requieren
+  `ubicaciones-avanzadas`.
+  Verificación: suites de inventario/stock, contratos de migración y
+  `MiEmpresa` en verde; `prisma validate` y `prisma generate` correctos. CI del
+  commit de compatibilidad `51d0e706` verde (run `41650992885`: tests unitarios,
+  integración PostgreSQL, typecheck, lint y build).
+* [x] 5.6 Seed demo Profesional (`professional-seed.ts`): lotes de arroz y
+  yogurt con vencimientos próximos y futuros, dos árboles de ubicación con
+  hojas, y saldos `StockUbicacion`/`StockUbicacionDetalle` reconciliados. Los
+  IDs y claves de upsert son tenant-scoped y deterministas. El seed Empresarial
+  reutiliza el agregado Profesional de arroz sin duplicarlo.
+  Verificación: `professional-inventory.test.ts`, `sales-totals.test.ts` y
+  `seed-behavior.test.ts` → 15/15; ESLint focalizado sin errores.
 
 ## Fase 6 — P1 Variantes (Profesional)
 

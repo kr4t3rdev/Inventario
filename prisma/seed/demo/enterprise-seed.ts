@@ -329,7 +329,7 @@ async function seedTransferenciasEmp(client: EnterpriseSeedClient, tenantId: str
 
 async function seedStockUbicacionEmp(client: EnterpriseSeedClient, tenantId: string): Promise<void> {
   const stocks = [
-    { productoId: demoSeedId('demo_base_arroz', tenantId), almacenId: demoSeedId('demo_base_alm', tenantId), cantidad: 80, puntoDeVentaId: demoSeedId('demo_base_pv', tenantId), cantidadPv: 70 },
+    // El seed Profesional ya crea el agregado y su desglose por hoja para el arroz.
     { productoId: demoSeedId('demo_base_arroz', tenantId), almacenId: demoSeedId('demo_pro_alm_02', tenantId), cantidad: 40, puntoDeVentaId: demoSeedId('demo_pro_pv_02', tenantId), cantidadPv: 30 },
     { productoId: demoSeedId('demo_emp_laptop', tenantId), almacenId: demoSeedId('demo_base_alm', tenantId), cantidad: 4, puntoDeVentaId: demoSeedId('demo_emp_pv_04', tenantId), cantidadPv: 2 },
     { productoId: demoSeedId('demo_emp_paracetamol', tenantId), almacenId: demoSeedId('demo_emp_alm_03', tenantId), cantidad: 80, puntoDeVentaId: demoSeedId('demo_emp_pv_03', tenantId), cantidadPv: 70 },

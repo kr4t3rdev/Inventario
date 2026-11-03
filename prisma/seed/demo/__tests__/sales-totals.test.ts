@@ -28,6 +28,10 @@ function createSeedClient() {
       findFirst: vi.fn().mockResolvedValue({ id: 'base-product' }),
     },
     precioProducto: { upsert: vi.fn() },
+    lote: { upsert: vi.fn() },
+    ubicacion: { upsert: vi.fn() },
+    stockUbicacion: { create: vi.fn(), upsert: vi.fn() },
+    stockUbicacionDetalle: { upsert: vi.fn() },
     venta: {
       create: vi
         .fn()
@@ -38,7 +42,6 @@ function createSeedClient() {
     ventaItem: { createMany: vi.fn() },
     ventaServicios: { create: vi.fn() },
     gastoCompra: { create: vi.fn() },
-    stockUbicacion: { create: vi.fn() },
     transferencia: { create: vi.fn() },
   };
 }
@@ -101,6 +104,15 @@ describe('demo sales totals seed', () => {
         total: 1200,
       },
     });
+    expect(client.stockUbicacion.create).toHaveBeenCalledTimes(4);
+    expect(client.stockUbicacion.create).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          productoId: expect.stringContaining('demo_base_arroz'),
+          almacenId: expect.stringContaining('demo_base_alm'),
+        }),
+      }),
+    );
   });
 
   it('base seed creates tenant-scoped payment types with tenant-specific ids', async () => {

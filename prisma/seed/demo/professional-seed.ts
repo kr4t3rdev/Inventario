@@ -23,6 +23,10 @@ export interface ProfessionalSeedClient {
   puntoDeVenta: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   producto: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   precioProducto: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  lote: { upsert: (args: any) => Promise<unknown> }
+  ubicacion: { upsert: (args: any) => Promise<unknown> }
+  stockUbicacion: { upsert: (args: any) => Promise<unknown> }
+  stockUbicacionDetalle: { upsert: (args: any) => Promise<unknown> }
   venta: {
     create: (args: any) => Promise<unknown>
     update: (args: any) => Promise<unknown>
@@ -87,6 +91,180 @@ async function seedClientesExtra(client: ProfessionalSeedClient, tenantId: strin
 async function seedAlmacenExtra(client: ProfessionalSeedClient, tenantId: string): Promise<void> {
   const a = { almacenId: demoSeedId('demo_pro_alm_02', tenantId), nombre: 'Almacén Secundario' }
   await client.almacen.upsert({ where: { almacenId: a.almacenId }, update: a, create: { ...a, tenantId } })
+}
+
+/* ───── Ubicaciones avanzadas, lotes y stock detallado ───── */
+
+/** @description IDs deterministas del almacén y sus hojas de ubicación demo. */
+interface ProfessionalWarehouseSeed {
+  almacenId: string
+  ubicacionRaizId: string
+  hojas: [string, string]
+}
+
+const PROFESSIONAL_LOTS = [
+  {
+    productoId: 'demo_base_arroz',
+    almacen: 'principal',
+    lotes: [
+      { codigo: 'DEMO-PRO-ARROZ-01', cantidad: 30, diasVencimiento: 12, hoja: 0 },
+      { codigo: 'DEMO-PRO-ARROZ-02', cantidad: 50, diasVencimiento: 120, hoja: 1 },
+    ],
+  },
+  {
+    productoId: 'demo_pro_yogurt',
+    almacen: 'secundario',
+    lotes: [
+      { codigo: 'DEMO-PRO-YOGURT-01', cantidad: 30, diasVencimiento: 20, hoja: 0 },
+      { codigo: 'DEMO-PRO-YOGURT-02', cantidad: 35, diasVencimiento: 90, hoja: 1 },
+    ],
+  },
+] as const
+
+/**
+ * @description Calcula una fecha de vencimiento a partir del día UTC actual.
+ * @param {number} dias - Días futuros hasta el vencimiento.
+ * @returns {Date} Fecha normalizada a medianoche UTC.
+ */
+function fechaVencimientoEnDias(dias: number): Date {
+  const fecha = new Date()
+  fecha.setUTCHours(0, 0, 0, 0)
+  fecha.setUTCDate(fecha.getUTCDate() + dias)
+  return fecha
+}
+
+/**
+ * @description Crea dos árboles de ubicación idempotentes para los almacenes demo.
+ * @param {ProfessionalSeedClient} client - Cliente Prisma del seed.
+ * @param {string} tenantId - Tenant dueño de los almacenes.
+ * @returns {Promise<Record<'principal' | 'secundario', ProfessionalWarehouseSeed>>}
+ * Almacenes con IDs de raíz y hojas.
+ */
+async function seedUbicacionesProfesionales(
+  client: ProfessionalSeedClient,
+  tenantId: string,
+): Promise<Record<'principal' | 'secundario', ProfessionalWarehouseSeed>> {
+  const almacenes = {
+    principal: demoSeedId('demo_base_alm', tenantId),
+    secundario: demoSeedId('demo_pro_alm_02', tenantId),
+  }
+  const result = {} as Record<'principal' | 'secundario', ProfessionalWarehouseSeed>
+
+  for (const [clave, almacenId] of Object.entries(almacenes) as Array<
+    ['principal' | 'secundario', string]
+  >) {
+    const raizId = demoSeedId(`demo_pro_ubic_zona_${clave}`, tenantId)
+    const hojas: [string, string] = [
+      demoSeedId(`demo_pro_ubic_${clave}_estante_a`, tenantId),
+      demoSeedId(`demo_pro_ubic_${clave}_estante_b`, tenantId),
+    ]
+    const ubicaciones = [
+      { id: raizId, parentId: null, nombre: 'Zona de almacenamiento', tipo: 'ZONA' },
+      { id: hojas[0], parentId: raizId, nombre: 'Estante A', tipo: 'HOJA' },
+      { id: hojas[1], parentId: raizId, nombre: 'Estante B', tipo: 'HOJA' },
+    ]
+
+    for (const ubicacion of ubicaciones) {
+      await client.ubicacion.upsert({
+        where: { tenantId_almacenId_id: { tenantId, almacenId, id: ubicacion.id } },
+        update: { parentId: ubicacion.parentId, nombre: ubicacion.nombre, tipo: ubicacion.tipo },
+        create: { ...ubicacion, tenantId, almacenId },
+      })
+    }
+
+    result[clave] = { almacenId, ubicacionRaizId: raizId, hojas }
+  }
+
+  return result
+}
+
+/**
+ * @description Siembra lotes demo y saldos agregados/detallados reconciliados.
+ * @param {ProfessionalSeedClient} client - Cliente Prisma del seed.
+ * @param {string} tenantId - Tenant dueño de los productos y lotes.
+ * @param {Record<'principal' | 'secundario', ProfessionalWarehouseSeed>} almacenes -
+ * Árboles de ubicación previamente creados.
+ * @returns {Promise<void>} Promesa resuelta al completar los upserts.
+ */
+async function seedLotesYStockProfesionales(
+  client: ProfessionalSeedClient,
+  tenantId: string,
+  almacenes: Record<'principal' | 'secundario', ProfessionalWarehouseSeed>,
+): Promise<void> {
+  for (const productoSeed of PROFESSIONAL_LOTS) {
+    const productoId = demoSeedId(productoSeed.productoId, tenantId)
+    const almacen = almacenes[productoSeed.almacen]
+    const cantidadTotal = productoSeed.lotes.reduce((total, lote) => total + lote.cantidad, 0)
+
+    await client.stockUbicacion.upsert({
+      where: {
+        productoId_tipoUbicacion_ubicacionId: {
+          productoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: almacen.almacenId,
+        },
+      },
+      update: {
+        tenantId,
+        cantidad: cantidadTotal,
+        cantidadReservada: 0,
+        cantidadDisponible: cantidadTotal,
+      },
+      create: {
+        tenantId,
+        productoId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: almacen.almacenId,
+        cantidad: cantidadTotal,
+        cantidadReservada: 0,
+        cantidadDisponible: cantidadTotal,
+      },
+    })
+
+    for (const lote of productoSeed.lotes) {
+      const ubicacionHijaId = almacen.hojas[lote.hoja]
+      const fechaVencimiento = fechaVencimientoEnDias(lote.diasVencimiento)
+      await client.lote.upsert({
+        where: {
+          tenantId_productoId_codigo: { tenantId, productoId, codigo: lote.codigo },
+        },
+        update: {
+          fechaVencimiento,
+          cantidadInicial: lote.cantidad,
+          cantidadDisponible: lote.cantidad,
+        },
+        create: {
+          tenantId,
+          productoId,
+          codigo: lote.codigo,
+          fechaVencimiento,
+          cantidadInicial: lote.cantidad,
+          cantidadDisponible: lote.cantidad,
+        },
+      })
+
+      await client.stockUbicacionDetalle.upsert({
+        where: {
+          tenantId_productoId_ubicacionHijaId: { tenantId, productoId, ubicacionHijaId },
+        },
+        update: {
+          almacenId: almacen.almacenId,
+          cantidad: lote.cantidad,
+          cantidadReservada: 0,
+          cantidadDisponible: lote.cantidad,
+        },
+        create: {
+          tenantId,
+          productoId,
+          almacenId: almacen.almacenId,
+          ubicacionHijaId,
+          cantidad: lote.cantidad,
+          cantidadReservada: 0,
+          cantidadDisponible: lote.cantidad,
+        },
+      })
+    }
+  }
 }
 
 /* ───── Lista de precios mayorista ───── */
@@ -295,9 +473,11 @@ export async function seedProfessionalExtras(
   await seedProveedoresExtra(client, tenantId)
   await seedClientesExtra(client, tenantId)
   await seedAlmacenExtra(client, tenantId)
+  const ubicaciones = await seedUbicacionesProfesionales(client, tenantId)
   await seedListaMayorista(client, tenantId)
   await seedPuntoDeVentaExtra(client, tenantId)
   await seedProductosExtra(client, tenantId)
+  await seedLotesYStockProfesionales(client, tenantId, ubicaciones)
   await seedConversionesUnidades(client, tenantId)
   await seedPreciosMayoristas(client, tenantId)
   await seedVentasDemo(client, tenantId)
