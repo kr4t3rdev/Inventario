@@ -1,7 +1,12 @@
 import { Prisma } from '@/generated/prisma'
 import { createHash } from 'node:crypto'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
-import { emitirEventoAnticipo } from '@/features/contabilidad-formal/services/advance-posting-service'
+import {
+	emitirEventoAnticipo,
+	emitirAplicacionAnticipo,
+	emitirDevolucionAnticipo,
+	emitirReversionAplicacionAnticipo,
+} from '@/features/contabilidad-formal/services/advance-formal-posting-service';
 import {
   AnticipoWorkflowError,
   AnticipoContexto,
@@ -343,12 +348,12 @@ export async function registrarMovimientoEfectivoAnticipo(
 
   await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
     anticipoMovimientoId: movimiento.movimientoId,
-    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_RECIBIDO' : 'ANTICIPO_PROVEEDOR_ENTREGADO',
+    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_RECIBIDO' : 'ANTICIPO_PROVEEDOR_ENTREGADO' as const,
     fecha: new Date(),
     monto: params.monto,
     moneda,
-    montoFuncional,
-    monedaFuncional,
+    montoFuncional: montoFuncional ?? 0,
+    monedaFuncional: monedaFuncional ?? 'CUP',
     tasaCambio,
     fxEvidenceFingerprint,
     treasuryAccountType: cuenta.tipoCuenta,
@@ -631,12 +636,12 @@ export async function devolverFondosAnticipo(
   })
   await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
     anticipoMovimientoId: movimiento.movimientoId,
-    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_DEVUELTO' : 'ANTICIPO_PROVEEDOR_REINTEGRADO',
+    tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_DEVUELTO' : 'ANTICIPO_PROVEEDOR_REINTEGRADO' as const,
     fecha: new Date(),
     monto: params.monto,
     moneda,
-    montoFuncional: valorTesoreriaFuncional,
-    monedaFuncional,
+    montoFuncional: valorTesoreriaFuncional ?? 0,
+    monedaFuncional: monedaFuncional ?? 'CUP',
     tasaCambio,
     fxEvidenceFingerprint,
     diferenciaFx,
@@ -856,19 +861,17 @@ export async function reverseAnticipo(
   })
 
   if (!esNotaCredito && montoFuncional !== null && monedaFuncional) {
-    await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
+    await emitirReversionAplicacionAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
       anticipoMovimientoId: movimiento.movimientoId,
-      tipo: anticipo.tipo === 'COBRO'
-        ? 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
-        : 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
       fecha: new Date(),
       monto: params.montoReverso,
-      moneda: anticipo.moneda,
       montoFuncional,
       monedaFuncional,
       tasaCambio: tasaAplicada,
       fxEvidenceFingerprint,
-      descripcion: 'Reverso de aplicación por eliminación del documento',
+      tipoReverso: anticipo.tipo === 'COBRO'
+        ? 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
+        : 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
     })
   }
 
@@ -1087,9 +1090,8 @@ export async function applyAnticipoAllocations(
     })
 
     if (!esSaldoNotaCredito && valorFuncionalAplicado !== null && monedaFuncional) {
-      await emitirEventoAnticipo(tx, { tenantId: context.tenantId, userId: context.usuarioId }, {
+      await emitirAplicacionAnticipo(tx, { tenantId: context.tenantId, userId: context.usuarioId }, {
         anticipoMovimientoId: movimiento.movimientoId,
-        tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_APLICADO' : 'ANTICIPO_PROVEEDOR_APLICADO',
         fecha: new Date(),
         monto: montoAplicado,
         moneda: anticipo.moneda,
@@ -1097,6 +1099,7 @@ export async function applyAnticipoAllocations(
         monedaFuncional,
         tasaCambio: tasaPromedio,
         fxEvidenceFingerprint,
+        tipoEvento: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_APLICADO' : 'ANTICIPO_PROVEEDOR_APLICADO',
       })
     }
 
