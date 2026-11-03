@@ -22,8 +22,9 @@ const SPRING_HOVER = { type: 'spring' as const, stiffness: 300, damping: 15 }
  * @returns {React.ReactElement}
  */
 export default function RegisterPage(): React.ReactElement {
-	const [name, setName] = useState('')
-	const [email, setEmail] = useState('')
+	const searchParams = useSearchParams()
+	const [name, setName] = useState(searchParams.get('name') || '')
+	const [email, setEmail] = useState(searchParams.get('email') || '')
 	const [password, setPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
 	const [showPassword, setShowPassword] = useState(false)
@@ -32,7 +33,6 @@ export default function RegisterPage(): React.ReactElement {
 	const [successMessage, setSuccessMessage] = useState('')
 	const [loading, setLoading] = useState(false)
 	const { register } = useAuth()
-	const searchParams = useSearchParams()
 	const reduceMotion = !!useReducedMotion()
 	const [mounted, setMounted] = useState(false)
 	const referralCode = searchParams.get('ref')?.trim() || ''
