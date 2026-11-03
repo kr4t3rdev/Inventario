@@ -348,6 +348,7 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
         { title: "Analisis Estado Cuenta", url: "/busy/contabilidad/analisis-cuenta-cliente", icon: FileText as LucideIcon },
         { title: "Facturas Vencidas", url: "/busy/contabilidad/facturas-vencidas", icon: AlertTriangle as LucideIcon },
         { title: "Balance y Resultados", url: "/busy/contabilidad/balance-resultados", icon: Calculator as LucideIcon },
+        { title: "Libros Contables", url: "/busy/contabilidad/libros", icon: BookOpen as LucideIcon },
         { title: "Reportes Contables", url: "/busy/contabilidad/reportes", icon: FileText as LucideIcon },
         { title: "Configuracion Contable", url: "/busy/contabilidad/configuracion", icon: Option as LucideIcon },
         { title: "Períodos Contables", url: "/busy/contabilidad/periodos", icon: Calendar as LucideIcon },

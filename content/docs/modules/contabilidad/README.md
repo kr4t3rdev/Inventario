@@ -61,6 +61,7 @@ Este módulo no es una sola pantalla sino un hub financiero completo. Desde el d
 - `src/features/contabilidad/actions-exchange.ts`
 - `src/features/contabilidad/actions-deudas-cash.ts`
 - `content/docs/modules/contabilidad/capa-formal-emisor-no-cash.md` (capa formal: asientos con partida doble para cobros y pagos)
+- `content/docs/modules/contabilidad/libros-formales.md` (libros contables formales: diario, mayor, balance de comprobación y conciliación cruzada)
 
 ## En una frase
 
