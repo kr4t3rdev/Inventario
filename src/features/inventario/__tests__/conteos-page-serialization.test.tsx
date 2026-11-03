@@ -19,6 +19,14 @@ vi.mock('@/features/puntos-venta', () => ({
 vi.mock('@/features/inventario/actions-conteos', () => ({
 	getConteosAction: getConteosActionMock,
 }));
+vi.mock('@/lib/server-actions/get-current-user', () => ({
+	getCurrentUser: vi.fn().mockResolvedValue({
+		userId: 'user-1',
+		role: 'admin',
+		tenantId: 'tenant-1',
+		planFeatures: {},
+	}),
+}));
 
 import ConteosPage from '@/app/busy/inventario/conteos/page';
 

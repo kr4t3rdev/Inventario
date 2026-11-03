@@ -9,6 +9,7 @@ import { getAlmacenesAction } from '@/features/almacenes';
 import { getPuntosDeVentaAction } from '@/features/puntos-venta';
 import { getProductosAction } from '@/features/productos/actions';
 import { KardexPageClient } from '@/features/inventario/components/kardex-page-client';
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 
 export const metadata = {
 	title: 'Kardex de inventario - FinanceMDM',
@@ -17,10 +18,11 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function KardexPage() {
-	const [productosResult, almacenesResult, puntosVentaResult] = await Promise.all([
+	const [productosResult, almacenesResult, puntosVentaResult, user] = await Promise.all([
 		getProductosAction(),
 		getAlmacenesAction(),
 		getPuntosDeVentaAction(),
+		getCurrentUser(),
 	]);
 
 	return (
@@ -28,6 +30,9 @@ export default async function KardexPage() {
 			productos={productosResult.success ? (productosResult.data ?? []) : []}
 			almacenes={almacenesResult.success ? (almacenesResult.data ?? []) : []}
 			puntosVenta={puntosVentaResult.success ? (puntosVentaResult.data ?? []) : []}
+			ubicacionesAvanzadasHabilitadas={
+				user?.role === 'admin' || user?.planFeatures?.['ubicaciones-avanzadas'] === true
+			}
 		/>
 	);
 }

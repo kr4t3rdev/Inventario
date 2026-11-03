@@ -299,6 +299,7 @@ model Tenant {
   replayApprovals  ReplayApproval[]
   replayRuns       ReplayRun[]
   shadowPosteos                  ShadowPosteoOutbox[]
+  stockUbicacionDetalles         StockUbicacionDetalle[]
 
   @@index([slug])
   @@map("tenants")
@@ -401,6 +402,7 @@ model MiEmpresa {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   usaCodigoEan13    Boolean         @default(false)
+  diasAlertaVencimientoLotes Int     @default(30)
   cuentaBancaria    CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
   tenant            Tenant?         @relation(fields: [tenantId], references: [tenantId])
 }
@@ -573,6 +575,7 @@ model Producto {
   RecetaIngrediente    RecetaIngrediente[]
   stockUbicaciones     StockUbicacion[]
   stockMoveLines       StockMoveLine[]
+  stockUbicacionDetalles StockUbicacionDetalle[]
   lotes                Lote[]
   transferencias       Transferencia[]
   ValeSalidaItem       ValeSalidaItem[]
@@ -634,6 +637,7 @@ model AjusteInventario {
   productoId           String
   tipoUbicacion        String
   ubicacionId          String
+  ubicacionHijaId      String?
   motivo               String
   cantidadTeorica      Int
   cantidadContada      Int
@@ -648,11 +652,13 @@ model AjusteInventario {
   creadoPorId          String?
   createdAt            DateTime      @default(now())
   tenant               Tenant        @relation(fields: [tenantId], references: [tenantId])
+  ubicacionHija        Ubicacion?     @relation("AjusteUbicacionHija", fields: [tenantId, ubicacionId, ubicacionHijaId], references: [tenantId, almacenId, id], onDelete: Restrict)
   conteoLineas         ConteoLinea[]
 
   @@index([tenantId, estado])
   @@index([tenantId, productoId])
   @@index([tenantId, origenConteoId])
+  @@index([tenantId, ubicacionId, ubicacionHijaId])
 }
 
 /// Conteo físico de una ubicación con doble pasada ciega y conciliación.
@@ -661,6 +667,7 @@ model ConteoInventario {
   tenantId        String
   tipoUbicacion   String
   ubicacionId     String
+  ubicacionHijaId String?
   estado          String        @default("BORRADOR")
   observaciones   String?
   iniciadoPorId   String?
@@ -669,10 +676,12 @@ model ConteoInventario {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   tenant          Tenant        @relation(fields: [tenantId], references: [tenantId])
+  ubicacionHija   Ubicacion?    @relation("ConteoUbicacionHija", fields: [tenantId, ubicacionId, ubicacionHijaId], references: [tenantId, almacenId, id], onDelete: Restrict)
   lineas          ConteoLinea[]
 
   @@index([tenantId, estado])
   @@index([tenantId, ubicacionId])
+  @@index([tenantId, ubicacionHijaId])
 }
 
 /// Línea de producto dentro de un conteo ciego en dos pasadas.
@@ -710,6 +719,8 @@ model StockMoveLine {
   origenId         String
   tipoUbicacion    String
   ubicacionId      String
+  ubicacionHijaId  String?
+  ubicacionHijaKey String                @default("")
   cantidad         Int
   costoUnitario    Int
   costoTotal       Int
@@ -719,11 +730,13 @@ model StockMoveLine {
   tenant           Tenant               @relation(fields: [tenantId], references: [tenantId])
   producto         Producto             @relation(fields: [productoTenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   creadoPor        User?                @relation(fields: [creadoPorId], references: [userId], onDelete: SetNull)
+  ubicacionHija    Ubicacion?            @relation("MovimientoUbicacionHija", fields: [tenantId, ubicacionId, ubicacionHijaId], references: [tenantId, almacenId, id], onDelete: Restrict)
 
-  @@unique([tenantId, tipoOrigen, origenId, productoId, tipoUbicacion, ubicacionId, secuencia], name: "eventoKey")
+  @@unique([tenantId, tipoOrigen, origenId, productoId, tipoUbicacion, ubicacionId, ubicacionHijaKey, secuencia], name: "eventoKey")
   @@index([tenantId, productoId, createdAt])
   @@index([tenantId, tipoOrigen, origenId])
   @@index([tenantId, ubicacionId, createdAt, id])
+  @@index([tenantId, ubicacionHijaId, createdAt, id])
 }
 
 model Venta {
@@ -1691,10 +1704,35 @@ model Ubicacion {
   almacen   Almacen     @relation(fields: [tenantId, almacenId], references: [tenantId, almacenId], onDelete: Restrict)
   parent    Ubicacion?  @relation("UbicacionTree", fields: [tenantId, almacenId, parentId], references: [tenantId, almacenId, id], onDelete: Restrict)
   children  Ubicacion[] @relation("UbicacionTree")
+  stockDetalles StockUbicacionDetalle[] @relation("StockUbicacionDetalleHoja")
+  movimientos StockMoveLine[] @relation("MovimientoUbicacionHija")
+  ajustes AjusteInventario[] @relation("AjusteUbicacionHija")
+  conteos ConteoInventario[] @relation("ConteoUbicacionHija")
 
   @@unique([tenantId, id])
   @@unique([tenantId, almacenId, id])
   @@index([tenantId, almacenId, parentId])
+}
+
+/// Saldo de inventario en una hoja de Ubicacion; StockUbicacion conserva el total agregado.
+model StockUbicacionDetalle {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  productoId         String
+  almacenId          String
+  ubicacionHijaId    String
+  cantidad           Int       @default(0)
+  cantidadReservada  Int       @default(0)
+  cantidadDisponible Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  tenant             Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  producto           Producto  @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade)
+  ubicacion          Ubicacion @relation("StockUbicacionDetalleHoja", fields: [tenantId, almacenId, ubicacionHijaId], references: [tenantId, almacenId, id], onDelete: Restrict)
+
+  @@unique([tenantId, productoId, ubicacionHijaId])
+  @@index([tenantId, almacenId, ubicacionHijaId])
+  @@index([tenantId, productoId])
 }
 
 model Servicios {

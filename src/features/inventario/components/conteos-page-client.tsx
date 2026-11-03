@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 	iniciarConteoAction,
 	registrarConteoAction,
 } from '@/features/inventario/actions-conteos';
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones';
 
 interface AlmacenOpcion {
 	almacenId: string;
@@ -32,11 +33,18 @@ interface PuntoVentaOpcion {
 	nombre: string;
 }
 
+interface UbicacionHijaOpcion {
+	id: string;
+	nombre: string;
+	parentId: string | null;
+}
+
 interface ConteoRow {
 	id: string;
 	tenantId: string;
 	tipoUbicacion: string;
 	ubicacionId: string;
+	ubicacionHijaId?: string | null;
 	estado: string;
 	createdAt: string;
 }
@@ -55,6 +63,7 @@ interface ConteosPageClientProps {
 	almacenes: AlmacenOpcion[];
 	puntosVenta: PuntoVentaOpcion[];
 	conteosIniciales: ConteoRow[];
+	ubicacionesAvanzadasHabilitadas?: boolean;
 }
 
 /**
@@ -68,10 +77,13 @@ export function ConteosPageClient({
 	almacenes,
 	puntosVenta,
 	conteosIniciales,
+	ubicacionesAvanzadasHabilitadas = false,
 }: ConteosPageClientProps) {
 	const router = useRouter();
 	const [tipoUbicacion, setTipoUbicacion] = useState<'almacen' | 'punto_venta'>('almacen');
 	const [ubicacionId, setUbicacionId] = useState('');
+	const [ubicacionHijaId, setUbicacionHijaId] = useState('');
+	const [ubicacionesHijas, setUbicacionesHijas] = useState<UbicacionHijaOpcion[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -84,6 +96,19 @@ export function ConteosPageClient({
 	const ubicaciones = tipoUbicacion === 'almacen'
 		? almacenes.map((a) => ({ id: a.almacenId, nombre: a.nombre }))
 		: puntosVenta.map((p) => ({ id: p.pvId, nombre: p.nombre }));
+
+	useEffect(() => {
+		let vigente = true;
+		setUbicacionHijaId('');
+		setUbicacionesHijas([]);
+		if (!ubicacionesAvanzadasHabilitadas || tipoUbicacion !== 'almacen' || !ubicacionId) {
+			return () => { vigente = false; };
+		}
+		getUbicacionesHijasAction({ almacenId: ubicacionId }).then((resultado) => {
+			if (vigente && resultado.success) setUbicacionesHijas(resultado.data ?? []);
+		});
+		return () => { vigente = false; };
+	}, [tipoUbicacion, ubicacionId, ubicacionesAvanzadasHabilitadas]);
 
 	async function accion(fn: () => Promise<{ success: boolean; error?: { message?: string } | null }>) {
 		setIsSubmitting(true);
@@ -100,7 +125,11 @@ export function ConteosPageClient({
 
 	async function handleIniciar() {
 		await accion(() =>
-			iniciarConteoAction({ tipoUbicacion, ubicacionId }),
+			iniciarConteoAction({
+				tipoUbicacion,
+				ubicacionId,
+				...(ubicacionHijaId ? { ubicacionHijaId } : {}),
+			}),
 		);
 	}
 
@@ -227,6 +256,7 @@ export function ConteosPageClient({
 						onChange={(e) => {
 							setTipoUbicacion(e.target.value as 'almacen' | 'punto_venta');
 							setUbicacionId('');
+							setUbicacionHijaId('');
 						}}
 					>
 						<option value="almacen">Almacén</option>
@@ -253,6 +283,27 @@ export function ConteosPageClient({
 						))}
 					</select>
 				</div>
+				{ubicacionesAvanzadasHabilitadas && tipoUbicacion === 'almacen' && ubicacionId && (
+					<div>
+						<label htmlFor="c-ubicacion-hija" className="mb-1 block text-sm font-medium">
+							Ubicación hija
+						</label>
+						<select
+							id="c-ubicacion-hija"
+							aria-label="Ubicación hija"
+							className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+							value={ubicacionHijaId}
+							onChange={(event) => setUbicacionHijaId(event.target.value)}
+						>
+							<option value="">Almacén completo</option>
+							{ubicacionesHijas.map((ubicacion) => (
+								<option key={ubicacion.id} value={ubicacion.id}>
+									{ubicacion.nombre}
+								</option>
+							))}
+						</select>
+					</div>
+				)}
 				<Button type="submit" disabled={!ubicacionId || isSubmitting}>
 					Iniciar conteo
 				</Button>
@@ -270,7 +321,11 @@ export function ConteosPageClient({
 				<TableBody>
 					{conteosIniciales.map((conteo) => (
 						<TableRow key={conteo.id}>
-							<TableCell>{conteo.ubicacionId}</TableCell>
+							<TableCell>
+								{conteo.ubicacionHijaId
+									? `${conteo.ubicacionId} · ${conteo.ubicacionHijaId}`
+									: conteo.ubicacionId}
+							</TableCell>
 							<TableCell>{conteo.estado}</TableCell>
 							<TableCell>{new Date(conteo.createdAt).toLocaleDateString()}</TableCell>
 							<TableCell className="space-x-2 text-right">

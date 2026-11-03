@@ -5,11 +5,16 @@ vi.mock('@/features/inventario', () => ({
   getKardexAction: vi.fn(),
 }))
 
+vi.mock('@/features/inventario/actions-ubicaciones', () => ({
+  getUbicacionesHijasAction: vi.fn(),
+}))
+
 vi.mock('@/features/inventario/lib/kardex-pdf', () => ({
   exportarKardexPdf: vi.fn(),
 }))
 
 import { getKardexAction } from '@/features/inventario'
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones'
 import { KardexPageClient } from '@/features/inventario/components/kardex-page-client'
 import { exportarKardexPdf } from '@/features/inventario/lib/kardex-pdf'
 
@@ -21,12 +26,13 @@ const productos = [
 const almacenes = [{ almacenId: 'alm-1', nombre: 'Principal' }] as any[]
 const puntosVenta = [{ pvId: 'pv-1', nombre: 'Tienda' }] as any[]
 
-function renderPage() {
+function renderPage(ubicacionesAvanzadasHabilitadas = false) {
   return render(
     <KardexPageClient
       productos={productos}
       almacenes={almacenes}
       puntosVenta={puntosVenta}
+      ubicacionesAvanzadasHabilitadas={ubicacionesAvanzadasHabilitadas}
     />,
   )
 }
@@ -246,6 +252,35 @@ describe('KardexPageClient', () => {
       expect(getKardexAction).toHaveBeenNthCalledWith(3, expect.objectContaining({ page: 1 }))
     })
     expect(screen.getByText('c-1')).toBeInTheDocument()
+  })
+
+  it('carga hojas del almacén seleccionado y envía la hoja como filtro', async () => {
+    vi.mocked(getUbicacionesHijasAction).mockResolvedValue({
+      success: true,
+      data: [{ id: 'hoja-a1', nombre: 'A-1', parentId: 'pasillo-a' }],
+    } as never)
+    vi.mocked(getKardexAction).mockResolvedValue({
+      success: true,
+      data: { saldoInicial: 0, total: 0, page: 1, limit: 50, items: [] },
+    } as never)
+
+    renderPage(true)
+    fireEvent.change(screen.getByLabelText(/producto/i), { target: { value: 'prod-1' } })
+    fireEvent.change(screen.getByLabelText(/tipo de ubicación/i), { target: { value: 'almacen' } })
+    fireEvent.change(screen.getByLabelText('Ubicación'), { target: { value: 'alm-1' } })
+
+    await waitFor(() => expect(getUbicacionesHijasAction).toHaveBeenCalledWith({ almacenId: 'alm-1' }))
+    fireEvent.change(await screen.findByLabelText('Ubicación hija'), { target: { value: 'hoja-a1' } })
+    fireEvent.click(screen.getByRole('button', { name: /consultar/i }))
+
+    await waitFor(() => {
+      expect(getKardexAction).toHaveBeenCalledWith(expect.objectContaining({
+        productoId: 'prod-1',
+        tipoUbicacion: 'almacen',
+        ubicacionId: 'alm-1',
+        ubicacionHijaId: 'hoja-a1',
+      }))
+    })
   })
 
   it('exporta las filas visibles en un CSV descargable', async () => {

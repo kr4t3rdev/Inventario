@@ -1,5 +1,6 @@
 export { getKardexAction } from './actions-kardex';
 export type { KardexInput } from './actions-kardex';
+export { getUbicacionesHijasAction } from './actions-ubicaciones';
 export {
 	createAjusteAction,
 	anularAjusteAction,

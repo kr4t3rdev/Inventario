@@ -8,6 +8,7 @@ type UpsertStockOpts =
 			productoId: string;
 			tipoUbicacion: TipoUbicacion;
 			ubicacionId: string;
+			ubicacionHijaId?: string | null;
 			modo: "increment";
 			delta: number;
 			/** Stock reservado (pedidos pendientes, etc.). Si se omite, preserva el valor existente. */
@@ -18,6 +19,7 @@ type UpsertStockOpts =
 			productoId: string;
 			tipoUbicacion: TipoUbicacion;
 			ubicacionId: string;
+			ubicacionHijaId?: string | null;
 			modo: "set";
 			valor: number;
 			/** Stock reservado (pedidos pendientes, etc.). Si se omite, preserva el valor existente. */
@@ -38,7 +40,7 @@ type UpsertStockOpts =
  * @param {UpsertStockOpts} opts - Opciones de actualización
  * @returns {Promise<void>}
  */
-export async function upsertStockUbicacion(
+async function upsertStockUbicacionAgregado(
 	tx: any,
 	opts: UpsertStockOpts,
 ): Promise<void> {
@@ -210,6 +212,259 @@ export async function upsertStockUbicacion(
 				cantidadDisponible: valor - reservada,
 			},
 		});
+	}
+}
+
+/**
+ * @description Resuelve una hoja válida del almacén, creando `General` solo
+ * para compatibilidad cuando aún no existe una hoja configurada.
+ * @param {any} tx - Cliente Prisma transaccional.
+ * @param {string} tenantId - Tenant de la operación.
+ * @param {string} almacenId - Almacén cuyo árbol se consulta.
+ * @param {string | undefined} ubicacionHijaId - Hoja explícita opcional.
+ * @returns {Promise<string | null>} ID de hoja; null en clientes legacy simulados.
+ */
+async function resolverHojaStock(
+	tx: any,
+	tenantId: string,
+	almacenId: string,
+	ubicacionHijaId?: string,
+): Promise<string | null> {
+	if (!tx.ubicacion?.findFirst || !tx.stockUbicacionDetalle) return null;
+
+	if (ubicacionHijaId) {
+		const hoja = await tx.ubicacion.findFirst({
+			where: {
+				id: ubicacionHijaId,
+				tenantId,
+				almacenId,
+				children: { none: {} },
+			},
+			select: { id: true },
+		});
+		if (!hoja) {
+			throw new ActionError(
+				'La ubicación hija no pertenece al almacén seleccionado o no es una hoja.',
+				'UBICACION_HIJA_INVALIDA',
+			);
+		}
+		return hoja.id;
+	}
+
+	const general = await tx.ubicacion.findFirst({
+		where: {
+			tenantId,
+			almacenId,
+			nombre: 'General',
+			tipo: 'HOJA',
+			children: { none: {} },
+		},
+		select: { id: true },
+	});
+	if (general) return general.id;
+
+	const zoneId = `legacy-zone-${almacenId}`;
+	const generalId = `legacy-general-${almacenId}`;
+	await tx.ubicacion.upsert({
+		where: { tenantId_almacenId_id: { tenantId, almacenId, id: zoneId } },
+		create: {
+			id: zoneId,
+			tenantId,
+			almacenId,
+			nombre: 'Área general',
+			tipo: 'ZONA',
+		},
+		update: {},
+	});
+	const hoja = await tx.ubicacion.upsert({
+		where: { tenantId_almacenId_id: { tenantId, almacenId, id: generalId } },
+		create: {
+			id: generalId,
+			tenantId,
+			almacenId,
+			parentId: zoneId,
+			nombre: 'General',
+			tipo: 'HOJA',
+		},
+		update: {},
+		select: { id: true },
+	});
+	return hoja.id;
+}
+
+/**
+ * @description Cambia saldo detallado por hoja con control optimista para
+ * impedir cantidades negativas y conservar la igualdad con el agregado.
+ * @param {any} tx - Cliente Prisma transaccional.
+ * @param {object} input - Tenant, producto, almacén, hoja y delta.
+ * @returns {Promise<void>} No devuelve valor.
+ */
+async function aplicarDeltaDetalle(
+	tx: any,
+	input: {
+		tenantId: string;
+		productoId: string;
+		almacenId: string;
+		ubicacionHijaId: string;
+		delta: number;
+		cantidadReservada?: number;
+	},
+): Promise<void> {
+	const { tenantId, productoId, almacenId, ubicacionHijaId, delta } = input;
+	const uniqueWhere = {
+		tenantId_productoId_ubicacionHijaId: { tenantId, productoId, ubicacionHijaId },
+	};
+	const existing = await tx.stockUbicacionDetalle.findUnique({
+		where: uniqueWhere,
+		select: { cantidad: true, cantidadReservada: true, cantidadDisponible: true },
+	});
+	const cantidad = (existing?.cantidad ?? 0) + delta;
+	const cantidadReservada = input.cantidadReservada ?? existing?.cantidadReservada ?? 0;
+	const disponible = cantidad - cantidadReservada;
+	if (cantidad < 0 || disponible < 0) {
+		throw new ActionError('Stock insuficiente en la ubicación hija', 'STOCK_INSUFICIENTE');
+	}
+
+	if (!existing) {
+		await tx.stockUbicacionDetalle.upsert({
+			where: uniqueWhere,
+			create: {
+				tenantId, productoId, almacenId, ubicacionHijaId,
+				cantidad, cantidadReservada, cantidadDisponible: disponible,
+			},
+			update: {
+				cantidad: { increment: delta },
+				cantidadReservada,
+				cantidadDisponible: disponible,
+			},
+		});
+		return;
+	}
+
+	const updated = await tx.stockUbicacionDetalle.updateMany({
+		where: {
+			tenantId,
+			productoId,
+			ubicacionHijaId,
+			cantidad: existing.cantidad,
+			cantidadDisponible: existing.cantidadDisponible,
+		},
+		data: {
+			cantidad: { increment: delta },
+			cantidadReservada,
+			cantidadDisponible: disponible,
+		},
+	});
+	if (updated.count !== 1) {
+		throw new ActionError('El stock de la ubicación cambió durante la operación', 'STOCK_CONCURRENCIA');
+	}
+}
+
+/**
+ * @description Mantiene sincronizados el saldo agregado y su desglose por hoja.
+ * Las salidas legacy se distribuyen por disponibilidad; las entradas van a
+ * `General` salvo que el llamador indique una hoja.
+ * @param {any} tx - Cliente Prisma transaccional.
+ * @param {UpsertStockOpts} opts - Operación de actualización de stock.
+ * @returns {Promise<void>} No devuelve valor.
+ */
+export async function upsertStockUbicacion(
+	tx: any,
+	opts: UpsertStockOpts,
+): Promise<void> {
+	if (typeof tx.$transaction === 'function') {
+		await tx.$transaction((transaction: any) => upsertStockUbicacion(transaction, opts));
+		return;
+	}
+
+	const tenantId = opts.tenantId ?? (
+		await tx.producto.findUniqueOrThrow({
+			where: { id: opts.productoId },
+			select: { tenantId: true },
+		})
+	).tenantId;
+	const hojaId = opts.tipoUbicacion === 'almacen'
+		? await resolverHojaStock(tx, tenantId, opts.ubicacionId, opts.ubicacionHijaId ?? undefined)
+		: null;
+
+	await upsertStockUbicacionAgregado(tx, opts);
+	if (!hojaId) return;
+
+	if (opts.modo === 'increment') {
+		if (opts.delta >= 0 || opts.ubicacionHijaId) {
+			await aplicarDeltaDetalle(tx, {
+				tenantId,
+				productoId: opts.productoId,
+				almacenId: opts.ubicacionId,
+				ubicacionHijaId: hojaId,
+				delta: opts.delta,
+				cantidadReservada: opts.cantidadReservada,
+			});
+			return;
+		}
+
+		let restante = Math.abs(opts.delta);
+		const hojas = await tx.stockUbicacionDetalle.findMany({
+			where: { tenantId, productoId: opts.productoId, almacenId: opts.ubicacionId },
+			orderBy: [{ ubicacionHijaId: 'asc' }, { id: 'asc' }],
+			select: { ubicacionHijaId: true, cantidad: true, cantidadDisponible: true },
+		});
+		for (const hoja of hojas) {
+			if (restante === 0) break;
+			const tomar = Math.min(restante, hoja.cantidadDisponible);
+			if (tomar <= 0) continue;
+			await aplicarDeltaDetalle(tx, {
+				tenantId,
+				productoId: opts.productoId,
+				almacenId: opts.ubicacionId,
+				ubicacionHijaId: hoja.ubicacionHijaId,
+				delta: -tomar,
+			});
+			restante -= tomar;
+		}
+		if (restante > 0) {
+			throw new ActionError(
+				'El detalle por ubicación no cuadra con el saldo agregado.',
+				'STOCK_DETALLE_INCONSISTENTE',
+			);
+		}
+		return;
+	}
+
+	const hojas = await tx.stockUbicacionDetalle.findMany({
+		where: { tenantId, productoId: opts.productoId, almacenId: opts.ubicacionId },
+		select: { ubicacionHijaId: true, cantidad: true },
+	});
+	const detalleActual = hojas.reduce((total: number, hoja: { cantidad: number }) => total + hoja.cantidad, 0);
+	const delta = opts.valor - detalleActual;
+	if (delta >= 0) {
+		await aplicarDeltaDetalle(tx, {
+			tenantId,
+			productoId: opts.productoId,
+			almacenId: opts.ubicacionId,
+			ubicacionHijaId: hojaId,
+			delta,
+			cantidadReservada: opts.cantidadReservada,
+		});
+		return;
+	}
+
+	let restante = -delta;
+	for (const hoja of hojas.sort((a: { ubicacionHijaId: string }, b: { ubicacionHijaId: string }) => a.ubicacionHijaId.localeCompare(b.ubicacionHijaId))) {
+		if (restante === 0) break;
+		const tomar = Math.min(restante, hoja.cantidad);
+		if (tomar <= 0) continue;
+		await aplicarDeltaDetalle(tx, {
+			tenantId,
+			productoId: opts.productoId,
+			almacenId: opts.ubicacionId,
+			ubicacionHijaId: hoja.ubicacionHijaId,
+			delta: -tomar,
+		});
+		restante -= tomar;
+	}
+	if (restante > 0) {
+		throw new ActionError('El detalle por ubicación no cuadra con el saldo agregado.', 'STOCK_DETALLE_INCONSISTENTE');
 	}
 }
 

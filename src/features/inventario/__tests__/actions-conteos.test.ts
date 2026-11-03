@@ -18,6 +18,7 @@ const { mockTx } = vi.hoisted(() => ({
 			update: vi.fn(),
 		},
 		stockUbicacion: { findMany: vi.fn() },
+		stockUbicacionDetalle: { findMany: vi.fn() },
 		ajusteInventario: { create: vi.fn() },
 		producto: {
 			findMany: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock('@/lib/prisma', () => ({
 		conteoInventario: { findFirst: vi.fn(), update: vi.fn() },
 		conteoLinea: { findMany: vi.fn() },
 		producto: { findMany: vi.fn() },
+		ubicacion: { findFirst: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -101,6 +103,37 @@ describe('iniciarConteoAction', () => {
 				expect.objectContaining({ productoId: 'prod-2', teorico: 3 }),
 				expect.objectContaining({ productoId: 'prod-3', teorico: 0 }),
 			]),
+		});
+	});
+
+	it('inicia un conteo para una hoja con los saldos detallados de esa hoja', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...manager,
+			planFeatures: { 'conteo-fisico': true, 'ubicaciones-avanzadas': true },
+		} as any);
+		vi.mocked(prisma.ubicacion.findFirst).mockResolvedValue({ id: 'hoja-a1' } as any);
+		mockTx.stockUbicacionDetalle.findMany.mockResolvedValue([
+			{ productoId: 'prod-1', cantidad: 6 },
+		]);
+		mockTx.producto.findMany.mockResolvedValue([{ id: 'prod-1' }, { id: 'prod-2' }]);
+		mockTx.conteoInventario.create.mockResolvedValue({ ...conteoBase, ubicacionHijaId: 'hoja-a1' } as any);
+
+		const result = await iniciarConteoAction({
+			tipoUbicacion: 'almacen',
+			ubicacionId: 'alm-1',
+			ubicacionHijaId: 'hoja-a1',
+		});
+
+		expect(result.success).toBe(true);
+		expect(mockTx.stockUbicacionDetalle.findMany).toHaveBeenCalledWith({
+			where: { tenantId: 'tenant-1', almacenId: 'alm-1', ubicacionHijaId: 'hoja-a1' },
+			select: { productoId: true, cantidad: true },
+		});
+		expect(mockTx.conteoLinea.createMany).toHaveBeenCalledWith({
+			data: [
+				{ conteoId: 'conteo-1', tenantId: 'tenant-1', productoId: 'prod-1', teorico: 6 },
+				{ conteoId: 'conteo-1', tenantId: 'tenant-1', productoId: 'prod-2', teorico: 0 },
+			],
 		});
 	});
 });

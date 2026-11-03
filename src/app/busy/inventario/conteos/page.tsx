@@ -9,6 +9,7 @@ import { getPuntosDeVentaAction } from '@/features/puntos-venta';
 import { getConteosAction } from '@/features/inventario/actions-conteos';
 import { ConteosPageClient } from '@/features/inventario/components/conteos-page-client';
 import { toIsoString, toIsoStringOrNull } from '@/lib/date-utils';
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 
 export const metadata = {
 	title: 'Conteos físicos - FinanceMDM',
@@ -17,10 +18,11 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ConteosPage() {
-	const [almacenes, puntosVenta, conteos] = await Promise.all([
+	const [almacenes, puntosVenta, conteos, user] = await Promise.all([
 		getAlmacenesAction(),
 		getPuntosDeVentaAction(),
 		getConteosAction({}),
+		getCurrentUser(),
 	]);
 
 	return (
@@ -34,6 +36,9 @@ export default async function ConteosPage() {
 					conciliadoAt: toIsoStringOrNull(conteo.conciliadoAt),
 				}))
 				: []}
+			ubicacionesAvanzadasHabilitadas={
+				user?.role === 'admin' || user?.planFeatures?.['ubicaciones-avanzadas'] === true
+			}
 		/>
 	);
 }

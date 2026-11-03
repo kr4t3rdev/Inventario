@@ -56,6 +56,7 @@ export const ESTADOS_CONTEO = [
 export const iniciarConteoSchema = z.object({
 	tipoUbicacion: tipoUbicacionSchema,
 	ubicacionId: z.string().min(1),
+	ubicacionHijaId: z.string().min(1).optional(),
 	observaciones: z.string().max(500).optional().nullable(),
 });
 export type IniciarConteoInput = z.infer<typeof iniciarConteoSchema>;

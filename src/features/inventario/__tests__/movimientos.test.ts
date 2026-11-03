@@ -48,6 +48,7 @@ describe('registrarMovimiento', () => {
           productoId: 'producto-1',
           tipoUbicacion: 'punto_venta',
           ubicacionId: 'pv-1',
+          ubicacionHijaKey: '',
           secuencia: 'ITEM-0',
         },
       },
@@ -175,6 +176,33 @@ describe('getKardex', () => {
       expect.objectContaining({ skip: 100, take: 50 }),
     );
     expect(result.total).toBe(250);
+  });
+
+  it('filtra movimientos y saldos de apertura por ubicación hija', async () => {
+    const store = createStore();
+    store.stockMoveLine.findMany.mockResolvedValue([]);
+    store.stockMoveLine.count.mockResolvedValue(0);
+    store.stockMoveLine.aggregate.mockResolvedValue({ _sum: { cantidad: 12 } });
+
+    await getKardex(store, {
+      tenantId: 'tenant-1',
+      productoId: 'producto-1',
+      tipoUbicacion: 'almacen',
+      ubicacionId: 'alm-1',
+      ubicacionHijaId: 'hoja-1',
+      fechaDesde: new Date('2026-02-01'),
+    });
+
+    expect(store.stockMoveLine.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ ubicacionHijaId: 'hoja-1' }),
+      }),
+    );
+    expect(store.stockMoveLine.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ ubicacionHijaId: 'hoja-1' }),
+      }),
+    );
   });
 });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Download, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 
 import { getKardexAction } from '@/features/inventario';
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones';
 
 interface ProductoOpcion {
 	id: string;
@@ -29,6 +30,12 @@ interface AlmacenOpcion {
 interface PuntoVentaOpcion {
 	pvId: string;
 	nombre: string;
+}
+
+interface UbicacionHijaOpcion {
+	id: string;
+	nombre: string;
+	parentId: string | null;
 }
 
 interface KardexMovimientoItem {
@@ -55,6 +62,7 @@ interface KardexPageClientProps {
 	productos: ProductoOpcion[];
 	almacenes: AlmacenOpcion[];
 	puntosVenta: PuntoVentaOpcion[];
+	ubicacionesAvanzadasHabilitadas?: boolean;
 }
 
 const PAGE_SIZE = 50;
@@ -96,10 +104,13 @@ export function KardexPageClient({
 	productos,
 	almacenes,
 	puntosVenta,
+	ubicacionesAvanzadasHabilitadas = false,
 }: KardexPageClientProps) {
 	const [productoId, setProductoId] = useState('');
 	const [tipoUbicacion, setTipoUbicacion] = useState<string>('');
 	const [ubicacionId, setUbicacionId] = useState<string>('');
+	const [ubicacionHijaId, setUbicacionHijaId] = useState('');
+	const [ubicacionesHijas, setUbicacionesHijas] = useState<UbicacionHijaOpcion[]>([]);
 	const [fechaDesde, setFechaDesde] = useState('');
 	const [fechaHasta, setFechaHasta] = useState('');
 	const [page, setPage] = useState(1);
@@ -114,6 +125,19 @@ export function KardexPageClient({
 		return [];
 	}, [tipoUbicacion, almacenes, puntosVenta]);
 
+	useEffect(() => {
+		let vigente = true;
+		setUbicacionHijaId('');
+		setUbicacionesHijas([]);
+		if (!ubicacionesAvanzadasHabilitadas || tipoUbicacion !== 'almacen' || !ubicacionId) {
+			return () => { vigente = false; };
+		}
+		getUbicacionesHijasAction({ almacenId: ubicacionId }).then((resultado) => {
+			if (vigente && resultado.success) setUbicacionesHijas(resultado.data ?? []);
+		});
+		return () => { vigente = false; };
+	}, [tipoUbicacion, ubicacionId, ubicacionesAvanzadasHabilitadas]);
+
 	const totalPaginas = datos ? Math.max(1, Math.ceil(datos.total / datos.limit)) : 0;
 
 	async function consultar(nuevaPagina = 1) {
@@ -126,6 +150,7 @@ export function KardexPageClient({
 				productoId,
 				tipoUbicacion: (tipoUbicacion || undefined) as 'almacen' | 'punto_venta' | undefined,
 				ubicacionId: ubicacionId || undefined,
+				ubicacionHijaId: ubicacionHijaId || undefined,
 				fechaDesde: fechaDesde ? new Date(fechaDesde) : undefined,
 				fechaHasta: fechaHasta ? new Date(fechaHasta) : undefined,
 				page: nuevaPagina,
@@ -238,6 +263,7 @@ export function KardexPageClient({
 						onChange={(e) => {
 							setTipoUbicacion(e.target.value);
 							setUbicacionId('');
+							setUbicacionHijaId('');
 						}}
 					>
 						<option value="">Todas</option>
@@ -266,6 +292,28 @@ export function KardexPageClient({
 						))}
 					</select>
 				</div>
+
+				{ubicacionesAvanzadasHabilitadas && tipoUbicacion === 'almacen' && ubicacionId && (
+					<div>
+						<label htmlFor="ubicacionHijaId" className="mb-1 block text-sm font-medium">
+							Ubicación hija
+						</label>
+						<select
+							id="ubicacionHijaId"
+							aria-label="Ubicación hija"
+							className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+							value={ubicacionHijaId}
+							onChange={(event) => setUbicacionHijaId(event.target.value)}
+						>
+							<option value="">Todas las ubicaciones hijas</option>
+							{ubicacionesHijas.map((ubicacion) => (
+								<option key={ubicacion.id} value={ubicacion.id}>
+									{ubicacion.nombre}
+								</option>
+							))}
+						</select>
+					</div>
+				)}
 
 				<div>
 					<label htmlFor="fechaDesde" className="mb-1 block text-sm font-medium">

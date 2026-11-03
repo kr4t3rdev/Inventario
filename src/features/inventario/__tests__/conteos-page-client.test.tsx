@@ -9,6 +9,10 @@ vi.mock('@/features/inventario/actions-conteos', () => ({
   getConteoLineasAction: vi.fn(),
 }))
 
+vi.mock('@/features/inventario/actions-ubicaciones', () => ({
+  getUbicacionesHijasAction: vi.fn(),
+}))
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }))
@@ -21,12 +25,18 @@ import {
   registrarConteoAction,
 } from '@/features/inventario/actions-conteos'
 import { ConteosPageClient } from '@/features/inventario/components/conteos-page-client'
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones'
 
 const almacenes = [{ almacenId: 'alm-1', nombre: 'Principal' }] as any[]
 
-function renderPage(conteos: any[] = []) {
+function renderPage(conteos: any[] = [], ubicacionesAvanzadasHabilitadas = false) {
   return render(
-    <ConteosPageClient almacenes={almacenes} puntosVenta={[]} conteosIniciales={conteos} />,
+    <ConteosPageClient
+      almacenes={almacenes}
+      puntosVenta={[]}
+      conteosIniciales={conteos}
+      ubicacionesAvanzadasHabilitadas={ubicacionesAvanzadasHabilitadas}
+    />,
   )
 }
 
@@ -52,6 +62,28 @@ describe('ConteosPageClient', () => {
       expect(iniciarConteoAction).toHaveBeenCalledWith(
         expect.objectContaining({ tipoUbicacion: 'almacen', ubicacionId: 'alm-1' }),
       )
+    })
+  })
+
+  it('carga hojas y crea conteo limitado a la ubicación hija seleccionada', async () => {
+    vi.mocked(getUbicacionesHijasAction).mockResolvedValue({
+      success: true,
+      data: [{ id: 'hoja-a1', nombre: 'A-1', parentId: 'pasillo-a' }],
+    } as never)
+    vi.mocked(iniciarConteoAction).mockResolvedValue({ success: true } as never)
+
+    renderPage([], true)
+    fireEvent.change(screen.getByLabelText(/^ubicación$/i), { target: { value: 'alm-1' } })
+    await waitFor(() => expect(getUbicacionesHijasAction).toHaveBeenCalledWith({ almacenId: 'alm-1' }))
+    fireEvent.change(await screen.findByLabelText('Ubicación hija'), { target: { value: 'hoja-a1' } })
+    fireEvent.click(screen.getByRole('button', { name: /iniciar conteo/i }))
+
+    await waitFor(() => {
+      expect(iniciarConteoAction).toHaveBeenCalledWith({
+        tipoUbicacion: 'almacen',
+        ubicacionId: 'alm-1',
+        ubicacionHijaId: 'hoja-a1',
+      })
     })
   })
 

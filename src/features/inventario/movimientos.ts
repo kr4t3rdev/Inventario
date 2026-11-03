@@ -40,6 +40,7 @@ export interface RegistrarMovimientoInput {
   origenId: string;
   tipoUbicacion: string;
   ubicacionId: string;
+  ubicacionHijaId?: string | null;
   cantidad: number;
   costoUnitario: number;
   /**
@@ -57,6 +58,7 @@ export interface FiltrosKardex {
   productoId: string;
   tipoUbicacion?: string;
   ubicacionId?: string;
+  ubicacionHijaId?: string;
   fechaDesde?: Date;
   fechaHasta?: Date;
   page?: number;
@@ -77,6 +79,7 @@ export interface MovimientoKardex {
   origenId: string;
   tipoUbicacion: string;
   ubicacionId: string;
+  ubicacionHijaId?: string | null;
   cantidad: number;
   costoUnitario: number;
   costoTotal: number;
@@ -104,6 +107,7 @@ interface EventoKeyInput {
   productoId: string;
   tipoUbicacion: string;
   ubicacionId: string;
+  ubicacionHijaKey: string;
   secuencia: string;
 }
 
@@ -115,6 +119,8 @@ export interface StockMoveLineStore {
         productoTenantId: string;
         costoTotal: number;
         secuencia: string;
+        ubicacionHijaId: string | null;
+        ubicacionHijaKey: string;
       };
       update: Record<string, never>;
     }): Promise<MovimientoKardex>;
@@ -129,6 +135,12 @@ export interface StockMoveLineStore {
       where: Record<string, unknown>;
       _sum: { cantidad: true };
     }): Promise<{ _sum: { cantidad: number | null } }>;
+  };
+  ubicacion?: {
+    findFirst(args: {
+      where: Record<string, unknown>;
+      select: { id: true };
+    }): Promise<{ id: string } | null>;
   };
 }
 
@@ -159,6 +171,21 @@ export async function registrarMovimiento(
   }
 
   const secuencia = input.secuencia ?? '0';
+  const hoja = input.ubicacionHijaId
+    ? { id: input.ubicacionHijaId }
+    : input.tipoUbicacion === 'almacen' && tx.ubicacion?.findFirst
+      ? await tx.ubicacion.findFirst({
+          where: {
+            tenantId: input.tenantId,
+            almacenId: input.ubicacionId,
+            nombre: 'General',
+            tipo: 'HOJA',
+            children: { none: {} },
+          },
+          select: { id: true },
+        })
+      : null;
+  const ubicacionHijaId = hoja?.id ?? null;
 
   return tx.stockMoveLine.upsert({
     where: {
@@ -167,9 +194,10 @@ export async function registrarMovimiento(
         tipoOrigen: input.tipoOrigen,
         origenId: input.origenId,
         productoId: input.productoId,
-        tipoUbicacion: input.tipoUbicacion,
-        ubicacionId: input.ubicacionId,
-        secuencia,
+          tipoUbicacion: input.tipoUbicacion,
+          ubicacionId: input.ubicacionId,
+          ubicacionHijaKey: ubicacionHijaId ?? '',
+          secuencia,
       },
     },
     create: {
@@ -180,6 +208,8 @@ export async function registrarMovimiento(
       origenId: input.origenId,
       tipoUbicacion: input.tipoUbicacion,
       ubicacionId: input.ubicacionId,
+      ubicacionHijaId,
+      ubicacionHijaKey: ubicacionHijaId ?? '',
       cantidad: input.cantidad,
       costoUnitario: input.costoUnitario,
       costoTotal: input.cantidad * input.costoUnitario,
@@ -216,6 +246,7 @@ export async function getKardex(
 
   if (filtros.tipoUbicacion) where.tipoUbicacion = filtros.tipoUbicacion;
   if (filtros.ubicacionId) where.ubicacionId = filtros.ubicacionId;
+  if (filtros.ubicacionHijaId) where.ubicacionHijaId = filtros.ubicacionHijaId;
   if (filtros.fechaDesde || filtros.fechaHasta) {
     where.createdAt = {
       ...(filtros.fechaDesde ? { gte: filtros.fechaDesde } : {}),
@@ -231,6 +262,7 @@ export async function getKardex(
         productoId: filtros.productoId,
         ...(filtros.tipoUbicacion ? { tipoUbicacion: filtros.tipoUbicacion } : {}),
         ...(filtros.ubicacionId ? { ubicacionId: filtros.ubicacionId } : {}),
+        ...(filtros.ubicacionHijaId ? { ubicacionHijaId: filtros.ubicacionHijaId } : {}),
         createdAt: { lt: filtros.fechaDesde },
       },
       _sum: { cantidad: true },
@@ -264,6 +296,7 @@ export async function getKardex(
         productoId: filtros.productoId,
         ...(filtros.tipoUbicacion ? { tipoUbicacion: filtros.tipoUbicacion } : {}),
         ...(filtros.ubicacionId ? { ubicacionId: filtros.ubicacionId } : {}),
+        ...(filtros.ubicacionHijaId ? { ubicacionHijaId: filtros.ubicacionHijaId } : {}),
         createdAt: {
           ...(filtros.fechaDesde ? { gte: filtros.fechaDesde } : {}),
           lt: primerMovimiento.createdAt,
@@ -357,6 +390,7 @@ export async function revertirMovimientosDeOrigen(
           origenId: filtros.origenId,
           tipoUbicacion: original.tipoUbicacion,
           ubicacionId: original.ubicacionId,
+          ubicacionHijaId: original.ubicacionHijaId,
           cantidad: original.cantidad,
           costoUnitario: original.costoUnitario,
           secuencia: original.secuencia,

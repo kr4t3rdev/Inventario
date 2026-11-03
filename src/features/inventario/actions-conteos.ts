@@ -31,12 +31,32 @@ export const iniciarConteoAction = withAction(
 		const parsed = iniciarConteoSchema.parse(input);
 		const tenantId = requireTenant(user);
 		requireFeature(user, 'conteo-fisico', 'iniciar conteos físicos');
+		if (parsed.ubicacionHijaId) {
+			requireFeature(user, 'ubicaciones-avanzadas', 'contar por ubicaciones avanzadas');
+			if (parsed.tipoUbicacion !== 'almacen') {
+				throw new ActionError(
+					'Las ubicaciones hijas pertenecen a un almacén.',
+					'UBICACION_HIJA_REQUIERE_ALMACEN',
+				);
+			}
+			const hoja = await prisma.ubicacion.findFirst({
+				where: {
+					id: parsed.ubicacionHijaId,
+					tenantId,
+					almacenId: parsed.ubicacionId,
+					children: { none: {} },
+				},
+				select: { id: true },
+			});
+			if (!hoja) throw new ActionError('Ubicación hija no encontrada', 'NOT_FOUND');
+		}
 
 		const activo = await prisma.conteoInventario.findFirst({
 			where: {
 				tenantId,
 				tipoUbicacion: parsed.tipoUbicacion,
 				ubicacionId: parsed.ubicacionId,
+				ubicacionHijaId: parsed.ubicacionHijaId ?? null,
 				estado: { in: ['BORRADOR', 'CONTEO_1', 'CONTEO_2'] },
 			},
 			select: { id: true },
@@ -54,6 +74,7 @@ export const iniciarConteoAction = withAction(
 					tenantId,
 					tipoUbicacion: parsed.tipoUbicacion,
 					ubicacionId: parsed.ubicacionId,
+					ubicacionHijaId: parsed.ubicacionHijaId ?? null,
 					observaciones: parsed.observaciones ?? null,
 					estado: 'BORRADOR',
 					iniciadoPorId: user.userId,
@@ -61,14 +82,23 @@ export const iniciarConteoAction = withAction(
 			});
 
 			const [stock, productos] = await Promise.all([
-				tx.stockUbicacion.findMany({
-					where: {
-						tenantId,
-						tipoUbicacion: parsed.tipoUbicacion,
-						ubicacionId: parsed.ubicacionId,
-					},
-					select: { productoId: true, cantidad: true },
-				}),
+				parsed.ubicacionHijaId
+					? tx.stockUbicacionDetalle.findMany({
+							where: {
+								tenantId,
+								almacenId: parsed.ubicacionId,
+								ubicacionHijaId: parsed.ubicacionHijaId,
+							},
+							select: { productoId: true, cantidad: true },
+						})
+					: tx.stockUbicacion.findMany({
+							where: {
+								tenantId,
+								tipoUbicacion: parsed.tipoUbicacion,
+								ubicacionId: parsed.ubicacionId,
+							},
+							select: { productoId: true, cantidad: true },
+						}),
 				tx.producto.findMany({
 					where: { tenantId },
 					select: { id: true },
@@ -253,6 +283,7 @@ export const conciliarConteoAction = withAction(
 						productoId: linea.productoId,
 						tipoUbicacion,
 						ubicacionId: conteo.ubicacionId,
+						ubicacionHijaId: conteo.ubicacionHijaId,
 						motivo: 'ERROR_CONTEO',
 						cantidadTeorica: linea.teorico,
 						cantidadContada: fin,
@@ -275,6 +306,7 @@ export const conciliarConteoAction = withAction(
 					productoId: linea.productoId,
 					tipoUbicacion,
 					ubicacionId: conteo.ubicacionId,
+					ubicacionHijaId: conteo.ubicacionHijaId,
 					modo: 'increment',
 					delta: diferencia,
 				});
@@ -286,6 +318,7 @@ export const conciliarConteoAction = withAction(
 					origenId: conteo.id,
 					tipoUbicacion,
 					ubicacionId: conteo.ubicacionId,
+					ubicacionHijaId: conteo.ubicacionHijaId,
 					cantidad: diferencia,
 					costoUnitario,
 					secuencia: `CONTEO-${linea.id}`,
