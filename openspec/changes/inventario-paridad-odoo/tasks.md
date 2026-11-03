@@ -132,14 +132,22 @@
 
 ## Fase 5 — P1 Lotes/FEFO + Ubicaciones (Profesional)
 
-* [ ] 5.1 Migración: `Lote` + `PurchaseAllocation.loteId?` +
-  `Ubicacion` (parentId, tipo).
-* [ ] 5.2 Entradas crean lote (código = factura + fecha o manual);
-  `cantidadDisponible` por lote.
-  - RED: `lotes.test.ts`: entrada 10 crea lote con 10 disponibles.
-* [ ] 5.3 FEFO en `allocateFifoForVentaItem`: ordenar por
-  `fechaVencimiento` NULLS LAST dentro del FIFO.
-  - RED: A(10 días,5) + B(60 días,5), venta 6 → 5 de A + 1 de B.
+* [x] 5.1 Migración `20261108000000_add_inventory_lots_locations`:
+  `Lote` + `PurchaseAllocation.loteId?` + `Ubicacion` jerárquica (`parentId`,
+  `tipo`), FKs compuestas para tenant/producto/almacén/lote y contrato de
+  migración en `src/features/inventario/__tests__/lotes-ubicaciones-migration-contract.test.ts`.
+* [x] 5.2 Compras directas y recepciones crean un lote por línea cuando el plan
+  incluye `lotes-series`; código automático desde factura/recepción + fecha o
+  código manual, cantidad disponible inicial, vencimiento opcional y vínculo
+  al item de compra o recepción (`20261108100000_link_lots_to_receipt_items`).
+  Facturar una OC recibida no duplica el lote.
+  RED/GREEN: `lotes.test.ts` + suites de compras y recepciones.
+* [x] 5.3 FEFO en `allocateFifoForVentaItem`: mantiene FIFO entre líneas de
+  compra y, dentro de cada una, asigna los lotes por vencimiento ascendente
+  (`NULLS LAST`, fecha de entrada e ID como desempate). Cada asignación lleva
+  `loteId` y respeta la disponibilidad neta de la compra y el lote.
+  RED/GREEN: A(10 días,5) + B(60 días,5), venta 6 → 5 de A + 1 de B;
+  cobertura para vencimientos nulos, empates y saldos previamente asignados.
 * [ ] 5.4 `getAlertasVencimientoAction` (≤30 días, configurable) +
   badge en inventario.
 * [ ] 5.5 Kardex y conteo filtran por `Ubicacion` hija; migración de
@@ -233,12 +241,18 @@
   con **0 errores y 680 advertencias**; el chequeo global de tipos pasó con
   `NODE_OPTIONS='--max-old-space-size=4096' pnpm exec tsc --noEmit --pretty false`
   (el límite Node predeterminado de 2 GB no alcanzaba para este proyecto).
-* [ ] 8.3 Matriz manual por plan: Básico no ve OC/lotes/variantes/MRP
-  (toast upgrade); Profesional ve P1; Empresarial ve todo. La prueba de
-  configuración `src/features/planes/__tests__/inventario-paridad-odoo.test.ts`
-  pasó **5/5** (flags por plan); falta la comprobación manual de navegación,
-  acciones y mensajes de upgrade en la UI. El cierre manual de lotes, variantes
-  y MRP se verificará cuando existan sus pantallas (fases 5–7); no bloquea el
-  inicio de Fase 4.
-* [ ] 8.4 Actualizar `PLANES-SUSCRIPCION.md` y demo seeds
-  (`base-seed.ts`, `professional-seed.ts`, `enterprise-seed.ts`).
+* [ ] 8.3 Matriz por plan: flags/configuración **5/5** y menú lateral con los
+  flags reales **21/21**; Básico conserva Kardex/ajustes/conteo y oculta P1,
+  Profesional muestra OC/recepciones/reabastecimiento y Empresarial hereda P1.
+  Tests de acciones verifican `FEATURE_NOT_AVAILABLE` para funciones bloqueadas.
+  La observación visual manual y el toast desde pantalla deben repetirse con una
+  sesión de navegador conectada; aquí no hay navegador de escritorio disponible.
+  El sidebar oculta módulos bloqueados, por lo que no muestra toast de upgrade en
+  navegación. Lotes, variantes, ubicaciones avanzadas y MRP no tienen todavía
+  pantallas enlazadas; verificar su navegación/acciones queda para fases 5–7.
+* [x] 8.4 `PLANES-SUSCRIPCION.md` alineado con precios, matriz actual de flags,
+  features P1/MRP y estado de las pantallas pendientes. El seed Profesional
+  demuestra una conversión por producto (Papel Higiénico: 1 caja = 4 unidades)
+  con upsert tenant-scoped; Básico y Empresarial conservan la composición por
+  niveles actual. Lotes/variantes/ubicaciones y MRP se añadirán a los seeds al
+  completar las fases funcionales correspondientes.

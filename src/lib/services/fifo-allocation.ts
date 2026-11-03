@@ -69,6 +69,41 @@ export async function allocateFifoForVentaItem(
 		// Puede ser un producto creado manualmente o compuesto.
 		return;
 	}
+	const purchaseItemIds = purchaseItems.map((item) => item.compraDocumentoItemId);
+	const lots = await tx.lote.findMany({
+		where: {
+			tenantId,
+			productoId,
+			compraItemId: { in: purchaseItemIds },
+			cantidadDisponible: { gt: 0 },
+		},
+		select: {
+			id: true,
+			compraItemId: true,
+			cantidadDisponible: true,
+			fechaVencimiento: true,
+			createdAt: true,
+		},
+	});
+	const lotsByPurchaseItem = new Map<string, typeof lots>();
+	for (const lot of lots) {
+		if (!lot.compraItemId) continue;
+		const itemLots = lotsByPurchaseItem.get(lot.compraItemId) ?? [];
+		itemLots.push(lot);
+		lotsByPurchaseItem.set(lot.compraItemId, itemLots);
+	}
+	for (const itemLots of lotsByPurchaseItem.values()) {
+		itemLots.sort((a, b) => {
+			if (a.fechaVencimiento === null && b.fechaVencimiento !== null) return 1;
+			if (a.fechaVencimiento !== null && b.fechaVencimiento === null) return -1;
+			if (a.fechaVencimiento && b.fechaVencimiento) {
+				const expirationOrder = a.fechaVencimiento.getTime() - b.fechaVencimiento.getTime();
+				if (expirationOrder !== 0) return expirationOrder;
+			}
+			const fifoOrder = a.createdAt.getTime() - b.createdAt.getTime();
+			return fifoOrder || a.id.localeCompare(b.id);
+		});
+	}
 
 	// 2. Obtener asignaciones previas para calcular disponible
 	const previousAllocations = await tx.purchaseAllocation.groupBy({
@@ -85,6 +120,17 @@ export async function allocateFifoForVentaItem(
 	for (const alloc of previousAllocations) {
 		allocatedMap.set(alloc.compraDocumentoItemId, alloc._sum.cantidad ?? 0);
 	}
+	const allocatedByLot = new Map<string, number>();
+	if (lots.length > 0) {
+		const previousLotAllocations = await tx.purchaseAllocation.groupBy({
+			by: ["loteId"],
+			where: { tenantId, loteId: { in: lots.map((lot) => lot.id) } },
+			_sum: { cantidad: true },
+		});
+		for (const alloc of previousLotAllocations) {
+			if (alloc.loteId) allocatedByLot.set(alloc.loteId, alloc._sum.cantidad ?? 0);
+		}
+	}
 
 	// 3. Asignar FIFO
 	let remaining = cantidad;
@@ -92,6 +138,7 @@ export async function allocateFifoForVentaItem(
 		tenantId: string;
 		compraDocumentoItemId: string;
 		ventaItemId: string;
+		loteId?: string;
 		cantidad: number;
 	}> = [];
 
@@ -103,6 +150,31 @@ export async function allocateFifoForVentaItem(
 
 		if (available <= 0) continue;
 
+		const itemLots = lotsByPurchaseItem.get(item.compraDocumentoItemId);
+		if (itemLots?.length) {
+			let itemRemaining = available;
+			for (const lot of itemLots) {
+				if (remaining <= 0 || itemRemaining <= 0) break;
+				const lotAvailable = Math.max(
+					0,
+					lot.cantidadDisponible - (allocatedByLot.get(lot.id) ?? 0),
+				);
+				if (lotAvailable <= 0) continue;
+
+				const toAllocate = Math.min(remaining, itemRemaining, lotAvailable);
+				allocations.push({
+					tenantId,
+					compraDocumentoItemId: item.compraDocumentoItemId,
+					ventaItemId,
+					loteId: lot.id,
+					cantidad: toAllocate,
+				});
+				remaining -= toAllocate;
+				itemRemaining -= toAllocate;
+			}
+			continue;
+		}
+
 		const toAllocate = Math.min(remaining, available);
 		allocations.push({
 			tenantId,
@@ -110,7 +182,6 @@ export async function allocateFifoForVentaItem(
 			ventaItemId,
 			cantidad: toAllocate,
 		});
-
 		remaining -= toAllocate;
 	}
 

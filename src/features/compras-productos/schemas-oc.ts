@@ -14,6 +14,8 @@ export const createOrdenCompraSchema = z.object({
 const recepcionItemSchema = z.object({
   ordenItemId: z.string().min(1),
   cantidad: z.coerce.number().int().positive('La cantidad recibida debe ser mayor a 0'),
+  codigoLote: z.string().trim().min(1).max(128).optional(),
+  fechaVencimiento: z.coerce.date().optional(),
 });
 
 export const registrarRecepcionSchema = z.object({

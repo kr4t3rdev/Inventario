@@ -15,6 +15,7 @@ export interface ProfessionalSeedClient {
   cuentaBancaria: { upsert: (args: any) => Promise<unknown> }
   categoria: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   unidad: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  unidadConversion: { upsert: (args: any) => Promise<unknown> }
   vendor: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   cliente: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   almacen: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
@@ -107,6 +108,30 @@ async function seedPuntoDeVentaExtra(client: ProfessionalSeedClient, tenantId: s
 async function seedUnidadExtra(client: ProfessionalSeedClient, tenantId: string): Promise<void> {
   const u = { unidadId: demoSeedId('demo_pro_caja', tenantId), nombre: 'Caja', simbolo: 'cj' }
   await client.unidad.upsert({ where: { unidadId: u.unidadId }, update: u, create: { ...u, tenantId } })
+}
+
+/**
+ * @description Configura una conversión de empaque por producto para demostrar compras y ventas
+ *              en unidades alternativas sin alterar la unidad base del inventario.
+ * @param {ProfessionalSeedClient} client - Cliente Prisma del seed o doble de prueba.
+ * @param {string} tenantId - Tenant propietario de la conversión.
+ * @returns {Promise<void>} Promesa resuelta al completar el upsert.
+ */
+async function seedConversionesUnidades(
+  client: ProfessionalSeedClient,
+  tenantId: string,
+): Promise<void> {
+  const productoId = demoSeedId('demo_pro_papel', tenantId)
+  const baseUnidadId = demoSeedId('demo_base_unidad', tenantId)
+  const unidadId = demoSeedId('demo_pro_caja', tenantId)
+
+  await client.unidadConversion.upsert({
+    where: {
+      tenantId_productoId_unidadId: { tenantId, productoId, unidadId },
+    },
+    update: { baseUnidadId, factorAStock: 4 },
+    create: { tenantId, productoId, baseUnidadId, unidadId, factorAStock: 4 },
+  })
 }
 
 /* ───── Categoría extra ───── */
@@ -273,6 +298,7 @@ export async function seedProfessionalExtras(
   await seedListaMayorista(client, tenantId)
   await seedPuntoDeVentaExtra(client, tenantId)
   await seedProductosExtra(client, tenantId)
+  await seedConversionesUnidades(client, tenantId)
   await seedPreciosMayoristas(client, tenantId)
   await seedVentasDemo(client, tenantId)
 

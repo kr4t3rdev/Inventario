@@ -16,6 +16,9 @@ function createMockTx() {
 			findMany: vi.fn(),
 			findUnique: vi.fn(),
 		},
+		lote: {
+			findMany: vi.fn().mockResolvedValue([]),
+		},
 		purchaseAllocation: {
 			groupBy: vi.fn(),
 			aggregate: vi.fn(),
@@ -35,6 +38,141 @@ describe("allocateFifoForVentaItem", () => {
 
 	beforeEach(() => {
 		tx = createMockTx();
+		tx.lote.findMany.mockResolvedValue([]);
+	});
+
+	it("prioriza el vencimiento más próximo dentro de FIFO y cruza al siguiente lote", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{ compraDocumentoItemId: "c1", cantidad: 10 },
+		]);
+		tx.lote.findMany.mockResolvedValue([
+			{
+				id: "lote-60-dias",
+				compraItemId: "c1",
+				cantidadDisponible: 5,
+				fechaVencimiento: new Date("2027-03-01T00:00:00.000Z"),
+			},
+			{
+				id: "lote-10-dias",
+				compraItemId: "c1",
+				cantidadDisponible: 5,
+				fechaVencimiento: new Date("2027-01-10T00:00:00.000Z"),
+			},
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v1",
+			productoId: "p1",
+			cantidad: 6,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [
+				{
+					tenantId: "t1",
+					compraDocumentoItemId: "c1",
+					ventaItemId: "v1",
+					loteId: "lote-10-dias",
+					cantidad: 5,
+				},
+				{
+					tenantId: "t1",
+					compraDocumentoItemId: "c1",
+					ventaItemId: "v1",
+					loteId: "lote-60-dias",
+					cantidad: 1,
+				},
+			],
+		});
+	});
+
+	it("ordena lotes sin vencimiento al final y conserva FIFO para fechas iguales", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{ compraDocumentoItemId: "c1", cantidad: 6 },
+		]);
+		tx.lote.findMany.mockResolvedValue([
+			{
+				id: "lote-nulo",
+				compraItemId: "c1",
+				cantidadDisponible: 2,
+				fechaVencimiento: null,
+				createdAt: new Date("2026-01-03T00:00:00.000Z"),
+			},
+			{
+				id: "lote-mismo-vencimiento-reciente",
+				compraItemId: "c1",
+				cantidadDisponible: 2,
+				fechaVencimiento: new Date("2027-02-01T00:00:00.000Z"),
+				createdAt: new Date("2026-01-02T00:00:00.000Z"),
+			},
+			{
+				id: "lote-mismo-vencimiento-antiguo",
+				compraItemId: "c1",
+				cantidadDisponible: 2,
+				fechaVencimiento: new Date("2027-02-01T00:00:00.000Z"),
+				createdAt: new Date("2026-01-01T00:00:00.000Z"),
+			},
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v1",
+			productoId: "p1",
+			cantidad: 6,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [
+				expect.objectContaining({ loteId: "lote-mismo-vencimiento-antiguo", cantidad: 2 }),
+				expect.objectContaining({ loteId: "lote-mismo-vencimiento-reciente", cantidad: 2 }),
+				expect.objectContaining({ loteId: "lote-nulo", cantidad: 2 }),
+			],
+		});
+	});
+
+	it("respeta la disponibilidad neta del lote y de la compra", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{ compraDocumentoItemId: "c1", cantidad: 10 },
+		]);
+		tx.lote.findMany.mockResolvedValue([
+			{
+				id: "lote-temprano-agotado",
+				compraItemId: "c1",
+				cantidadDisponible: 5,
+				fechaVencimiento: new Date("2027-01-10T00:00:00.000Z"),
+				createdAt: new Date("2026-01-01T00:00:00.000Z"),
+			},
+			{
+				id: "lote-tardio-disponible",
+				compraItemId: "c1",
+				cantidadDisponible: 5,
+				fechaVencimiento: new Date("2027-03-01T00:00:00.000Z"),
+				createdAt: new Date("2026-01-02T00:00:00.000Z"),
+			},
+		]);
+		tx.purchaseAllocation.groupBy
+			.mockResolvedValueOnce([{ compraDocumentoItemId: "c1", _sum: { cantidad: 5 } }])
+			.mockResolvedValueOnce([{ loteId: "lote-temprano-agotado", _sum: { cantidad: 5 } }]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v1",
+			productoId: "p1",
+			cantidad: 5,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [{
+				tenantId: "t1",
+				compraDocumentoItemId: "c1",
+				ventaItemId: "v1",
+				loteId: "lote-tardio-disponible",
+				cantidad: 5,
+			}],
+		});
 	});
 
 	it("excluye compras anuladas o eliminadas del pool FIFO (B-02.2)", async () => {

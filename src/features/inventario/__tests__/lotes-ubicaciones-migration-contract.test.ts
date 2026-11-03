@@ -1,0 +1,40 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { describe, expect, it } from 'vitest'
+
+const root = process.cwd()
+const migrationPath = resolve(
+  root,
+  'prisma/migrations/20261108000000_add_inventory_lots_locations/migration.sql',
+)
+const receiptLinkMigrationPath = resolve(
+  root,
+  'prisma/migrations/20261108100000_link_lots_to_receipt_items/migration.sql',
+)
+const schemaPath = resolve(root, 'prisma/schema.prisma')
+
+describe('lotes y ubicaciones jerárquicas migration contract', () => {
+  it('define modelos relacionados en Prisma y columnas persistentes en SQL', () => {
+    const migration = readFileSync(migrationPath, 'utf8')
+    const receiptLinkMigration = readFileSync(receiptLinkMigrationPath, 'utf8')
+    const schema = readFileSync(schemaPath, 'utf8')
+
+    expect(schema).toContain('model Lote {')
+    expect(schema).toContain('cantidadDisponible Int')
+    expect(schema).toContain('model Ubicacion {')
+    expect(schema).toContain('parentId  String?')
+    expect(schema).toContain('model PurchaseAllocation {')
+    expect(schema).toContain('loteId                String?')
+
+    expect(migration).toContain('CREATE TABLE "Lote"')
+    expect(migration).toContain('CREATE TABLE "Ubicacion"')
+    expect(migration).toMatch(/"purchase_allocations" ADD COLUMN "loteId" TEXT/)
+    expect(migration).toMatch(/FOREIGN KEY \("tenantId", "productoId"\)/)
+    expect(migration).toMatch(/FOREIGN KEY \("tenantId", "almacenId"\)/)
+    expect(migration).toMatch(/FOREIGN KEY \("tenantId", "almacenId", "parentId"\)/)
+    expect(migration).toMatch(/FOREIGN KEY \("tenantId", "loteId"\)/)
+    expect(schema).toContain('recepcionItemId    String?')
+    expect(receiptLinkMigration).toMatch(/ALTER TABLE "Lote" ADD COLUMN "recepcionItemId" TEXT/)
+    expect(receiptLinkMigration).toMatch(/FOREIGN KEY \("tenantId", "recepcionItemId"\)/)
+  })
+})

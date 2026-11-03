@@ -19,6 +19,7 @@ const mockTx = {
   ordenCompraItem: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
   recepcion: { create: vi.fn() },
   recepcionItem: { create: vi.fn() },
+  lote: { create: vi.fn() },
   producto: { findFirst: vi.fn() },
   stockMoveLine: { upsert: vi.fn() },
 };
@@ -133,7 +134,12 @@ describe('Órdenes de compra y recepciones', () => {
 
     const result = await registrarRecepcionAction({
       ordenId: 'oc-1',
-      items: [{ ordenItemId: 'item-1', cantidad: 60 }],
+      items: [{
+        ordenItemId: 'item-1',
+        cantidad: 60,
+        codigoLote: 'LOTE-REC-MANUAL',
+        fechaVencimiento: new Date('2027-01-15T00:00:00.000Z'),
+      }],
     });
 
     expect(result.success).toBe(true);
@@ -141,6 +147,18 @@ describe('Órdenes de compra y recepciones', () => {
       data: { estado: 'PARCIAL' },
     }));
     expect(upsertStockUbicacion).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ delta: 60 }));
+    expect(mockTx.lote.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: 'tenant-1',
+        productoId: 'prod-1',
+        codigo: 'LOTE-REC-MANUAL',
+        cantidadInicial: 60,
+        cantidadDisponible: 60,
+        compraItemId: null,
+        recepcionItemId: 'rec-item-1',
+        fechaVencimiento: new Date('2027-01-15T00:00:00.000Z'),
+      }),
+    });
     expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ tipoOrigen: 'COMPRA', cantidad: 60 }),
     }));

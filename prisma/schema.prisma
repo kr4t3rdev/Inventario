@@ -272,6 +272,8 @@ model Tenant {
   facturas                       Factura[]
   periodosContables              PeriodoContable[]
   purchaseAllocations            PurchaseAllocation[]
+  lotes                          Lote[]
+  ubicaciones                    Ubicacion[]
   reviewPrompts                  ReviewPrompt[]
   reviews                        Review[]
   seriesFacturacion              SerieFacturacion[]
@@ -415,7 +417,9 @@ model Almacen {
   puntosDeVenta         PuntoDeVenta[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
+  ubicaciones           Ubicacion[]
 
+  @@unique([tenantId, almacenId])
   @@index([tenantId])
 }
 
@@ -569,6 +573,7 @@ model Producto {
   RecetaIngrediente    RecetaIngrediente[]
   stockUbicaciones     StockUbicacion[]
   stockMoveLines       StockMoveLine[]
+  lotes                Lote[]
   transferencias       Transferencia[]
   ValeSalidaItem       ValeSalidaItem[]
   ventas               Venta[]
@@ -1513,7 +1518,9 @@ model CompraDocumentoItem {
   producto              Producto             @relation(fields: [productoId], references: [id], onDelete: Cascade)
   tenant                Tenant               @relation(fields: [tenantId], references: [tenantId])
   allocations           PurchaseAllocation[]
+  lotes                 Lote[]
 
+  @@unique([tenantId, compraDocumentoItemId])
   @@index([tenantId])
   @@index([compraDocumentoId])
   @@index([productoId])
@@ -1589,7 +1596,9 @@ model RecepcionItem {
   ordenItem   OrdenCompraItem @relation(fields: [tenantId, ordenItemId], references: [tenantId, id], onDelete: Restrict)
   producto    Producto        @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
+  lotes       Lote[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, recepcionId])
   @@index([tenantId, ordenItemId])
 }
@@ -1620,17 +1629,65 @@ model PurchaseAllocation {
   tenantId              String
   compraDocumentoItemId String
   ventaItemId           String
+  loteId                String?
   cantidad              Int
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
   compraDocumentoItem   CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId], onDelete: Cascade)
   tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
   ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id], onDelete: Cascade)
+  lote                  Lote?               @relation(fields: [tenantId, loteId], references: [tenantId, id], onDelete: Restrict)
 
+  @@index([tenantId, loteId])
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
   @@index([tenantId])
   @@map("purchase_allocations")
+}
+
+/// Lote de inventario originado por una entrada de compra; FIFO/FEFO lo consume.
+model Lote {
+  id                 String                @id @default(cuid())
+  tenantId           String
+  productoId         String
+  codigo             String
+  fechaVencimiento   DateTime?
+  cantidadInicial    Int
+  cantidadDisponible Int
+  compraItemId       String?
+  recepcionItemId    String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  tenant             Tenant                @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  producto           Producto              @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
+  compraItem         CompraDocumentoItem?  @relation(fields: [tenantId, compraItemId], references: [tenantId, compraDocumentoItemId], onDelete: Restrict)
+  recepcionItem      RecepcionItem?        @relation(fields: [tenantId, recepcionItemId], references: [tenantId, id], onDelete: Restrict)
+  allocations        PurchaseAllocation[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, productoId, codigo])
+  @@index([tenantId, fechaVencimiento])
+  @@index([tenantId, productoId, fechaVencimiento])
+}
+
+/// Ubicación jerárquica de almacén: zona, pasillo, estante o posición.
+model Ubicacion {
+  id        String      @id @default(cuid())
+  tenantId  String
+  almacenId String
+  parentId  String?
+  nombre    String
+  tipo      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  tenant    Tenant      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  almacen   Almacen     @relation(fields: [tenantId, almacenId], references: [tenantId, almacenId], onDelete: Restrict)
+  parent    Ubicacion?  @relation("UbicacionTree", fields: [tenantId, almacenId, parentId], references: [tenantId, almacenId, id], onDelete: Restrict)
+  children  Ubicacion[] @relation("UbicacionTree")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, almacenId, id])
+  @@index([tenantId, almacenId, parentId])
 }
 
 model Servicios {

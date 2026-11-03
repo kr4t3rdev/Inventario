@@ -3,6 +3,11 @@ import { SIDEBAR_CONFIG } from './sidebar-config'
 import { buildVisibleSidebarGroups } from './build-visible-groups'
 import { getDefaultPermissionsForRole } from '@/lib/auth/permission-registry'
 import type { SidebarAccessContext } from './types'
+import {
+  PLAN_BASICO_FEATURES,
+  PLAN_EMPRESARIAL_FEATURES,
+  PLAN_PROFESIONAL_FEATURES,
+} from '../../../prisma/seed/plans-seed'
 
 function makeCtx(overrides: Partial<SidebarAccessContext>): SidebarAccessContext {
   return {
@@ -69,6 +74,44 @@ const FULL_FEATURES = {
 } as const
 
 describe('buildVisibleSidebarGroups', () => {
+  it('muestra cada módulo de inventario según los flags reales de los tres planes', () => {
+    const titlesForPlan = (planFeatures: Record<string, boolean>) => {
+      const groups = buildVisibleSidebarGroups(SIDEBAR_CONFIG, makeCtx({
+        role: 'regularUser',
+        tenantRole: 'manager',
+        tenantId: 'tenant-plan-matrix',
+        planFeatures,
+      }))
+      return groups.flatMap((group) => group.items.flatMap((item) => [
+        item.title,
+        ...(item.subItems?.map((subItem) => subItem.title) ?? []),
+      ]))
+    }
+
+    const basicTitles = titlesForPlan(PLAN_BASICO_FEATURES)
+    const professionalTitles = titlesForPlan(PLAN_PROFESIONAL_FEATURES)
+    const enterpriseTitles = titlesForPlan(PLAN_EMPRESARIAL_FEATURES)
+
+    expect(basicTitles).toContain('Kardex')
+    expect(basicTitles).toContain('Ajustes de Inventario')
+    expect(basicTitles).toContain('Conteo Físico')
+    expect(basicTitles).not.toContain('Órdenes de Compra')
+    expect(basicTitles).not.toContain('Lotes')
+    expect(basicTitles).not.toContain('Variantes')
+    expect(basicTitles).not.toContain('MRP Avanzado')
+
+    expect(professionalTitles).toContain('Órdenes de Compra')
+    expect(professionalTitles).toContain('Recepciones')
+    expect(professionalTitles).toContain('Reabastecimiento')
+    expect(professionalTitles).not.toContain('MRP Avanzado')
+
+    expect(enterpriseTitles).toContain('Órdenes de Compra')
+    // Lotes, variantes y MRP no tienen entrada de navegación hasta sus fases UI.
+    expect(enterpriseTitles).not.toContain('Lotes')
+    expect(enterpriseTitles).not.toContain('Variantes')
+    expect(enterpriseTitles).not.toContain('MRP Avanzado')
+  })
+
   describe('admin role', () => {
     it('admin with full features sees every group and item', () => {
       const ctx = makeCtx({

@@ -2,17 +2,24 @@
 
 ## Resumen
 
-Definición de los planes **Básico**, **Profesional** y **Empresarial**. Los flags de cada plan se persisten en el campo JSON `Plan.features` y se propagan a cada tenant vía `TenantLicense.features` para hacer gating real en backend (`requireFeature`) y en UI (`SIDEBAR_FEATURE_MAP`).
+Definición de los planes **Básico**, **Profesional** y **Empresarial**. Los flags de cada plan se persisten en `Plan.features` y se propagan al tenant vía `TenantLicense.features` para controlar el acceso en backend (`requireFeature`) y en el menú lateral (`SIDEBAR_FEATURE_MAP` en `src/features/sidebar/sidebar-config.ts`). Los planes y permisos efectivos se mantienen en `prisma/seed/plans-seed.ts`.
 
-**Fuente única de verdad**: el catálogo de features vive en `src/features/planes/feature-registry.ts` (51 features en 9 categorías). Cualquier feature nuevo debe agregarse ahí primero y recién después asignarse a un plan. El seed (`prisma/seed/plans-seed.ts`) y el panel admin (`/admin/planes`) leen de ese registro.
+**Fuente única de verdad**: el catálogo de features vive en `src/features/planes/feature-registry.ts` (80 features en 9 categorías). Cualquier feature nuevo debe agregarse ahí primero y recién después asignarse a un plan. El seed (`prisma/seed/plans-seed.ts`) y el panel admin (`/admin/planes`) leen de ese registro.
 
-**Moneda**: los precios se manejan en **USD**. La conversión a CUP se hace en el frontend de la landing según la tasa vigente.
+Los demos comparten `prisma/seed/demo/base-seed.ts`; Profesional añade sus datos
+en `professional-seed.ts` y Empresarial en `enterprise-seed.ts`. El demo
+Profesional incluye una conversión de empaque específica por producto: el Papel
+Higiénico se inventaría por unidad y se compra/vende también por caja (4 unidades).
+Los seeds de lotes, variantes, ubicaciones hijas y MRP se incorporarán cuando
+se implementen esas fases.
+
+**Moneda**: los precios se manejan en **USD**. Los valores actuales del seed son $40, $80 y $110 al mes; los importes de referido son $35, $75 y $105. La conversión a CUP se hace en el frontend de la landing según la tasa vigente.
 
 ---
 
 ## Plan Básico — Arranque del Negocio
 
-Para negocios que están empezando y necesitan la base operativa completa: productos, almacenes, POS, compras a proveedores, gastos y contabilidad básica en CUP.
+Para negocios que están empezando y necesitan la base operativa: productos, almacenes, POS, compras a proveedores, inventario auditable, gastos y contabilidad básica en CUP.
 
 ### Límites
 
@@ -53,12 +60,12 @@ Para negocios que están empezando y necesitan la base operativa completa: produ
   "series-facturacion": false,
   "proveedores": true,
   "compras": true,
-  "servicios": true,
+  "servicios": false,
   "gastos": true,
   "contabilidad": true,
   "multi-moneda": false,
   "rentabilidad-compra": true,
-  "reportes-financieros": false,
+  "reportes-financieros": true,
   "cuentas-cobrar": false,
   "cuentas-pagar": false,
   "prestamos-cash": false,
@@ -67,6 +74,14 @@ Para negocios que están empezando y necesitan la base operativa completa: produ
   "analisis-estado-cuenta": false,
   "facturas-vencidas": false,
   "produccion": false,
+  "ordenes-compra": false,
+  "recepciones": false,
+  "reabastecimiento": false,
+  "unidades-conversion": false,
+  "lotes-series": false,
+  "variantes": false,
+  "ubicaciones-avanzadas": false,
+  "mrp-avanzado": false,
   "reparaciones": false,
   "empleados": true,
   "vacaciones": false,
@@ -130,7 +145,7 @@ Para negocios que están empezando y necesitan la base operativa completa: produ
 
 ## Plan Profesional — PYME en Crecimiento
 
-Para negocios que necesitan facturación, multi-moneda, clientes, empleados y herramientas de control diario. Hereda todo lo del Básico y suma automatización.
+Para negocios que necesitan facturación, multi-moneda, clientes, empleados y herramientas de control diario. Hereda todo lo del Básico y suma automatización de compras e inventario.
 
 ### Límites
 
@@ -161,6 +176,14 @@ Para negocios que necesitan facturación, multi-moneda, clientes, empleados y he
   "empleados": true,
   "notificaciones": true,
   "ventas-factura": true,
+  "ordenes-compra": true,
+  "recepciones": true,
+  "reabastecimiento": true,
+  "unidades-conversion": true,
+  "lotes-series": true,
+  "variantes": true,
+  "ubicaciones-avanzadas": true,
+  "mrp-avanzado": false,
   "backups-semanal": false,
   "backups-diario": true
 }
@@ -232,7 +255,8 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
   "facturas-vencidas": true,
   "multitenantmembership": true,
   "backups-diario": false,
-  "backups-tiempo-real": true
+  "backups-tiempo-real": true,
+  "mrp-avanzado": true
 }
 ```
 
@@ -242,6 +266,10 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 - **Stock mínimo masivo**: actualizar el mínimo de stock de toda una lista en una sola operación
 - **Prefijos y configuración EAN-13** por categoría
 - **Generación de EAN-13** desde Mi Empresa
+- Incluye las funciones de inventario Profesional: órdenes de compra, recepciones,
+  reglas de reabastecimiento, conversiones de unidades, lotes, variantes y
+  ubicaciones avanzadas. Las pantallas de lotes, variantes y ubicaciones se
+  incorporan en la Fase 5; MRP se incorpora en la Fase 7.
 
 #### Producción (Manufactura)
 - Recetas de producción (BOM) con ingredientes y unidades
@@ -287,7 +315,7 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 
 | Feature | Básico | Profesional | Empresarial |
 |---------|:-:|:-:|:-:|
-| **Precio mensual (USD)** | $30 | $70 | $100 |
+| **Precio mensual (USD)** | $40 | $80 | $110 |
 | **Usuarios** | 3 | 5 | 10 |
 | **Almacenes** | 2 | 5 | Ilimitado |
 | **Puntos de Venta** | 2 | 5 | Ilimitado |
@@ -295,6 +323,12 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 | **Clientes** | Ilimitado | Ilimitado | Ilimitado |
 | **Contratos** | ❌ | 50 | Ilimitado |
 | **Productos con código** | ✅ | ✅ | ✅ |
+| **Kardex, ajustes y conteo físico** | ✅ | ✅ | ✅ |
+| **Órdenes de compra y recepciones** | ❌ | ✅ | ✅ |
+| **Reabastecimiento** | ❌ | ✅ | ✅ |
+| **Conversión de unidades por producto** | ❌ | ✅ | ✅ |
+| **Lotes, variantes y ubicaciones avanzadas** | ❌ | ✅ | ✅ |
+| **MRP avanzado** | ❌ | ❌ | ✅ |
 | **Stock mínimo masivo** | ❌ | ❌ | ✅ |
 | **Categorías + EAN-13 config** | ❌ | ❌ | ✅ |
 | **Restock sugerido** | ✅ | ✅ | ✅ |
@@ -313,14 +347,14 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 | **Series fiscales** | ❌ | ✅ | ✅ |
 | **Proveedores** | ✅ | ✅ | ✅ |
 | **Compras** | ✅ | ✅ | ✅ |
-| **Servicios** | ✅ | ✅ | ✅ |
+| **Servicios** | ❌ | ✅ | ✅ |
 | **Gastos** | ✅ | ✅ | ✅ |
 | **Contabilidad** | ✅ | ✅ | ✅ |
 | **Multi-moneda (USD)** | ❌ | ✅ | ✅ |
 | **Rentabilidad por compra** | ✅ | ✅ | ✅ |
-| **Reportes financieros** | ❌ | ✅ | ✅ |
-| **Cuentas por Cobrar** | ❌ | ❌ | ✅ |
-| **Cuentas por Pagar** | ❌ | ❌ | ✅ |
+| **Reportes financieros** | ✅ | ✅ | ✅ |
+| **Cuentas por Cobrar** | ❌ | ✅ | ✅ |
+| **Cuentas por Pagar** | ❌ | ✅ | ✅ |
 | **Préstamos cash** | ❌ | ❌ | ✅ |
 | **Deudas cash** | ❌ | ❌ | ✅ |
 | **Anticipos** | ❌ | ❌ | ✅ |
@@ -345,15 +379,19 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 | **API e integraciones** | ❌ | ❌ | ❌ |
 | **Taller de reparaciones** | ❌ | ❌ | ❌ |
 
+> Las capacidades de lotes, variantes, ubicaciones avanzadas y MRP ya están
+> asignadas a sus planes, pero sus pantallas y flujos se completan en las fases
+> 5 y 7 del cambio `inventario-paridad-odoo`.
+
 ---
 
 ## Pricing
 
 | Plan | Precio mensual (USD) |
 |------|----------------------|
-| Básico | $30 |
-| Profesional | $70 |
-| Empresarial | $100 |
+| Básico | $40 |
+| Profesional | $80 |
+| Empresarial | $110 |
 
 > El cobro es mensual. La conversión a CUP se muestra en la landing según la tasa vigente del mercado. El `duracionDias` del plan es 30.
 
@@ -409,7 +447,7 @@ model TenantLicense {
 
 ### 2. Feature Registry (`src/features/planes/feature-registry.ts`)
 
-Catálogo central con 51 features organizadas en 9 categorías (`inventario`, `operaciones`, `ventas`, `compras`, `financiero`, `produccion`, `rrhh`, `config`, `infra`). Es la fuente de verdad: cualquier feature nuevo debe declararse acá antes de poder asignarse a un plan.
+Catálogo central con 80 features organizadas en 9 categorías (`inventario`, `operaciones`, `ventas`, `compras`, `financiero`, `produccion`, `rrhh`, `config`, `infra`). Es la fuente de verdad: cualquier feature nuevo debe declararse acá antes de poder asignarse a un plan.
 
 ```typescript
 export const FEATURE_REGISTRY: FeatureDef[] = [

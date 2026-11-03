@@ -1,6 +1,7 @@
 /**
  * @description Seed extras para demo Empresarial.
- *              Extiende base + profesional con operación multi-sede completa:
+ *              El orquestador ejecuta antes los extras Profesional (incluida la
+ *              conversión por producto) y aquí se añaden datos multi-sede:
  *              + MXN, + cuentas en todas las monedas, + más almacenes/PVs,
  *              + catálogo extenso (~50 productos extra), + transferencias,
  *              + stock por ubicación, + historial de ventas y compras.

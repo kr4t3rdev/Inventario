@@ -2,6 +2,7 @@
  * @description Seed base para demos — todos los planes (Básico, Profesional, Empresarial).
  *              Cuenta la historia de un negocio pequeño listo para operar:
  *              1 almacén, 1 punto de venta, ~20 productos, operación simple.
+ *              No crea conversiones de empaque ni datos de lotes; son extras de plan.
  *
  * @module prisma/seed/demo/base-seed
  */

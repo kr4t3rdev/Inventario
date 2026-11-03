@@ -3,10 +3,11 @@
 import { revalidatePath } from 'next/cache';
 
 import { registrarMovimiento } from '@/features/inventario/movimientos';
+import { crearLoteDesdeEntrada, deriveLoteCodigo } from '@/features/inventario/lotes';
 import { prisma } from '@/lib/prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { hasFeature, requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import {
   createOrdenCompraSchema,
@@ -238,6 +239,7 @@ export const registrarRecepcionAction = withAction(
     const parsed = registrarRecepcionSchema.parse(input);
     const tenantId = requireTenant(user);
     requireFeature(user, 'recepciones', 'recepciones de compra');
+    const rastreaLotes = hasFeature(user, 'lotes-series');
 
     // Idempotencia de negocio: un reintento con la misma clave devuelve la
     // recepción ya registrada sin duplicar stock ni kardex.
@@ -301,10 +303,11 @@ export const registrarRecepcionAction = withAction(
           claveIdempotencia: parsed.claveIdempotencia || null,
         },
       });
+      const recepcionItems = new Map<string, { id: string }>();
       for (const inputItem of itemsOrdenados) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
         if (!orderItem) throw new ActionError('Línea de orden no encontrada', 'NOT_FOUND');
-        await tx.recepcionItem.create({
+        const recepcionItem = await tx.recepcionItem.create({
           data: {
             tenantId,
             recepcionId: recepcion.id,
@@ -313,6 +316,7 @@ export const registrarRecepcionAction = withAction(
             cantidad: inputItem.cantidad,
           },
         });
+        recepcionItems.set(inputItem.ordenItemId, recepcionItem);
       }
 
       // Los incrementos se serializan por lock de fila en PostgreSQL; tras
@@ -356,6 +360,24 @@ export const registrarRecepcionAction = withAction(
           secuencia: `ITEM-${index}`,
           creadoPorId: user.userId,
         });
+        if (rastreaLotes) {
+          const recepcionItem = recepcionItems.get(inputItem.ordenItemId);
+          if (!recepcionItem) {
+            throw new ActionError('No se pudo identificar la línea recibida para crear el lote', 'LOTE_ORIGEN_REQUERIDO');
+          }
+          await crearLoteDesdeEntrada(tx, {
+            tenantId,
+            productoId: orderItem.productoId,
+            cantidad: inputItem.cantidad,
+            codigo: inputItem.codigoLote || deriveLoteCodigo({
+              recepcionId: recepcion.id,
+              fecha: recepcion.fecha ?? new Date(),
+              linea: index,
+            }),
+            fechaVencimiento: inputItem.fechaVencimiento,
+            recepcionItemId: recepcionItem.id,
+          });
+        }
       }
 
       // El estado final se decide leyendo TODAS las líneas de nuevo dentro de

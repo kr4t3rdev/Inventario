@@ -2,7 +2,7 @@
 
 ## Technical Approach
 
-Se agregan 9 modelos Prisma aislados y un helper central de escritura.
+Se agregan modelos Prisma de forma aditiva y un helper central de escritura.
 Ningún modelo existente se elimina. Cada flujo que mueve stock (venta,
 compra, transferencia, merma, producción, conteo, ajuste) inserta una
 fila en `StockMoveLine` dentro de la misma transacción. Las capacidades
@@ -45,13 +45,16 @@ la factura y referencia `ordenCompraId` nullable.
 **Rationale**: compras directas (contado simple) siguen funcionando;
 la OC es opt-in por plan Profesional.
 
-### Decision: UdM con factor, conversión en el borde
+### Decision: UdM con factor por producto, conversión en el borde
 
-**Choice**: `Unidad.factorAStock` + `tipoUso`; toda persistencia en
-unidad stock, conversión solo en formularios y reportes.
-**Alternatives considered**: guardar cantidad + unidad por movimiento.
-**Rationale**: FIFO, `StockUbicacion` y costos ya operan en una sola
-unidad; mezclar unidades en el motor rompe la valorización.
+**Choice**: `UnidadConversion.factorAStock` específico para cada producto;
+toda persistencia de inventario se normaliza a la unidad stock antes de
+actualizar stock, costo o FIFO. Las líneas de venta guardan además un snapshot
+de la unidad y el factor de origen.
+**Alternatives considered**: un factor global en `Unidad` o guardar cantidades
+mezcladas por unidad en movimientos.
+**Rationale**: una misma caja puede representar cantidades distintas por
+producto; FIFO, `StockUbicacion` y costos operan en una magnitud stock común.
 
 ### Decision: Lotes como extensión de PurchaseAllocation
 
@@ -100,7 +103,7 @@ Conteo: `teórico (StockUbicacion)` vs `contado` → `varianza` →
 
 | Archivo | Acción | Descripción |
 |---------|--------|-------------|
-| `prisma/schema.prisma` | Modificar | 9 modelos + `Unidad.factorAStock/tipoUso` + índices |
+| `prisma/schema.prisma` | Modificar | Modelos de inventario por fases; conversiones por producto con `UnidadConversion.factorAStock`; índices y relaciones tenant-scoped |
 | `src/features/planes/feature-registry.ts` | Modificar | 10 claves nuevas (ver contratos) |
 | `prisma/seed/plans-seed.ts` | Modificar | Flags por plan Básico/Profesional/Empresarial |
 | `src/features/inventario/movimientos.ts` | Crear | `registrarMovimiento()` + `getKardex()` |
