@@ -13,6 +13,10 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
+	getCostoFifoVentaValorado: vi.fn(),
+}));
+vi.mock('@/features/contabilidad-formal/services/sale-posting-service', () => ({
+	emitirCostoVenta: vi.fn(),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -55,7 +59,8 @@ vi.mock('@/lib/prisma', () => ({
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
+import { emitirCostoVenta } from '@/features/contabilidad-formal/services/sale-posting-service';
 import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -256,5 +261,60 @@ describe('create como orquestador del ciclo (PVE-T3)', () => {
 			user: adminUser,
 		});
 		expect(result).toEqual({ ventaId: 'v-1' });
+	});
+
+	it('devenga el costo FIFO en la capa formal cuando la mercaderia sale del inventario', async () => {
+		const modoAnterior = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'shadow';
+		try {
+			const fechaVenta = new Date('2026-11-03T10:00:00.000Z');
+			mockTx.venta.create.mockResolvedValue({ ventaId: 'v-1', createdAt: fechaVenta });
+			vi.mocked(getCostoFifoVentaValorado).mockResolvedValue({
+				montoFuncional: 600,
+				monedaFuncional: 'CUP',
+				cantidad: 2,
+				fuentesSinTasa: [],
+			});
+
+			await VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			});
+
+			expect(getCostoFifoVentaValorado).toHaveBeenCalledWith(
+				expect.anything(),
+				'tenant-1',
+				'v-1',
+			);
+			expect(emitirCostoVenta).toHaveBeenCalledWith(
+				expect.anything(),
+				{ tenantId: 'tenant-1', userId: 'user-1' },
+				{
+					ventaId: 'v-1',
+					fecha: fechaVenta,
+					costoFifo: 600,
+					monedaFuncional: 'CUP',
+				},
+			);
+		} finally {
+			if (modoAnterior === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = modoAnterior;
+		}
+	});
+
+	it('no devenga el costo FIFO mientras la capa formal esta apagada', async () => {
+		const modoAnterior = process.env.CONTABILIDAD_FORMAL_MODE;
+		delete process.env.CONTABILIDAD_FORMAL_MODE;
+		try {
+			await VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			});
+
+			expect(getCostoFifoVentaValorado).not.toHaveBeenCalled();
+			expect(emitirCostoVenta).not.toHaveBeenCalled();
+		} finally {
+			if (modoAnterior !== undefined) process.env.CONTABILIDAD_FORMAL_MODE = modoAnterior;
+		}
 	});
 });

@@ -9,6 +9,7 @@
  */
 
 import { Prisma } from "@/generated/prisma";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 
 // ─── Tipos ────────────────────────────────────────────────────
 
@@ -17,6 +18,23 @@ export interface AllocateFifoParams {
 	ventaItemId: string;
 	productoId: string;
 	cantidad: number;
+}
+
+/**
+ * @description Costo FIFO de una venta valorado en la moneda funcional.
+ *
+ * `montoFuncional` es null cuando alguna fuente del costo no tiene tasa
+ * publicada vigente: el costo no se estima con una tasa inferida.
+ */
+export interface CostoFifoValorado {
+	/** Costo total devengado en moneda funcional; null si falta alguna tasa. */
+	montoFuncional: number | null;
+	/** Moneda funcional del tenant; null si no tiene política contable. */
+	monedaFuncional: string | null;
+	/** Unidades asignadas a la venta. */
+	cantidad: number;
+	/** Fuentes del costo sin tasa publicada vigente. */
+	fuentesSinTasa: string[];
 }
 
 /**
@@ -422,6 +440,115 @@ export async function allocateFifoForSale(
 			cantidad: item.cantidad,
 		});
 	}
+}
+
+/**
+ * @description Valora en la moneda funcional el costo FIFO asignado a una
+ * venta, tomando el costo real de cada fuente (lote de compra o recepción).
+ *
+ * Cada porción se valora con la tasa publicada vigente en la fecha de su
+ * fuente; las fuentes en moneda distinta de la funcional sin tasa vigente
+ * dejan el costo funcional sin completar, en lugar de estimarlo con una tasa
+ * inferida.
+ *
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional del writer.
+ * @param {string} tenantId - Tenant propietario de la venta y sus compras.
+ * @param {string} ventaId - Venta cuyo costo FIFO se valora.
+ * @returns {Promise<CostoFifoValorado | null>} Costo valorado, o null si la
+ * venta no tiene asignaciones FIFO.
+ */
+export async function getCostoFifoVentaValorado(
+	tx: Prisma.TransactionClient,
+	tenantId: string,
+	ventaId: string,
+): Promise<CostoFifoValorado | null> {
+	const asignaciones = await tx.purchaseAllocation.findMany({
+		where: { tenantId, ventaItem: { ventaId } },
+		select: {
+			cantidad: true,
+			costoUnitarioSnapshot: true,
+			compraDocumentoItem: {
+				select: {
+					precioUnitario: true,
+					compraDocumento: { select: { moneda: true, fechaCompra: true } },
+				},
+			},
+		},
+	});
+	if (asignaciones.length === 0) return null;
+
+	const policy = await tx.tenantAccountingPolicy.findUnique({
+		where: { tenantId },
+		select: { functionalCurrencyCode: true },
+	});
+	const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
+
+	// Una fuente por moneda y fecha: las porciones de la misma fuente comparten
+	// la tasa publicada vigente en su fecha.
+	const fuentes = new Map<
+		string,
+		{ moneda: string; fecha: Date; costo: number; cantidad: number }
+	>();
+	let cantidadTotal = 0;
+	for (const asignacion of asignaciones) {
+		const cantidad = asignacion.cantidad;
+		if (!Number.isSafeInteger(cantidad) || cantidad <= 0) continue;
+		const costoUnitario =
+			asignacion.costoUnitarioSnapshot ?? asignacion.compraDocumentoItem?.precioUnitario ?? null;
+		if (costoUnitario == null || !Number.isFinite(costoUnitario) || costoUnitario < 0) continue;
+		const compra = asignacion.compraDocumentoItem?.compraDocumento ?? null;
+		const moneda = compra?.moneda?.trim().toUpperCase() || "CUP";
+		const fecha = compra?.fechaCompra ?? new Date(0);
+		const clave = `${moneda}|${fecha.toISOString()}`;
+		const fuente = fuentes.get(clave) ?? { moneda, fecha, costo: 0, cantidad: 0 };
+		fuente.costo += costoUnitario * cantidad;
+		fuente.cantidad += cantidad;
+		fuentes.set(clave, fuente);
+		cantidadTotal += cantidad;
+	}
+	if (cantidadTotal === 0) {
+		return { montoFuncional: 0, monedaFuncional, cantidad: 0, fuentesSinTasa: [] };
+	}
+
+	const fuentesSinTasa: string[] = [];
+	let montoFuncional = 0;
+	for (const fuente of fuentes.values()) {
+		if (!monedaFuncional) {
+			fuentesSinTasa.push(`${fuente.moneda}@${fuente.fecha.toISOString()}`);
+			continue;
+		}
+		if (fuente.moneda === monedaFuncional) {
+			montoFuncional += fuente.costo;
+			continue;
+		}
+		const tasa = await exchangeRateProvider.getRateAsOf({
+			sourceCurrency: fuente.moneda,
+			targetCurrency: monedaFuncional,
+			boundaryAt: fuente.fecha,
+			client: tx,
+		});
+		if (!tasa || !Number.isFinite(tasa.tasa) || tasa.tasa <= 0) {
+			fuentesSinTasa.push(`${fuente.moneda}@${fuente.fecha.toISOString()}`);
+			continue;
+		}
+		montoFuncional += fuente.costo * tasa.tasa;
+	}
+
+	return {
+		montoFuncional: fuentesSinTasa.length > 0 ? null : redondearEscalaFuncional(montoFuncional),
+		monedaFuncional,
+		cantidad: cantidadTotal,
+		fuentesSinTasa,
+	};
+}
+
+/**
+ * @description Redondea un importe a la escala de la contabilidad funcional.
+ * @param {number} valor - Importe a ajustar.
+ * @returns {number} Importe con cuatro decimales.
+ */
+function redondearEscalaFuncional(valor: number): number {
+	return Math.round(valor * 10000) / 10000;
 }
 
 /**

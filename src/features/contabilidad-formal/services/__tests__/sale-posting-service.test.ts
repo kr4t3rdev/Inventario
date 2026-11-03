@@ -16,7 +16,7 @@ vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
 
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { postEvento } from '../posting-engine';
-import { emitirVentaContado, emitirVentaCredito } from '../sale-posting-service';
+import { emitirCostoVenta, emitirVentaContado, emitirVentaCredito } from '../sale-posting-service';
 import type { PostingTx } from '../posting-engine';
 
 describe('sale posting service', () => {
@@ -174,6 +174,44 @@ describe('sale posting service', () => {
 			montoFuncional: null,
 			tasaCambio: null,
 			fxEvidenceFingerprint: null,
+		}));
+	});
+
+	it('devenga el costo FIFO de la venta con el importe funcional', async () => {
+		await emitirCostoVenta(tx, ctx, {
+			ventaId: 'venta-1',
+			fecha,
+			costoFifo: 750,
+			monedaFuncional: 'CUP',
+		});
+
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+			tipo: 'COSTO_VENTA_DEVENGADO',
+			origen: { tipo: 'venta_costo', id: 'venta-1' },
+			monto: 750,
+			moneda: 'CUP',
+			montoFuncional: 750,
+			monedaFuncional: 'CUP',
+			auxiliares: { costoFifo: 750 },
+		}));
+	});
+
+	it('emite el devengo sin valoracion cuando el costo FIFO no pudo valorarse', async () => {
+		await emitirCostoVenta(tx, ctx, {
+			ventaId: 'venta-2',
+			fecha,
+			costoFifo: null,
+			monedaFuncional: 'CUP',
+		});
+
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+			tipo: 'COSTO_VENTA_DEVENGADO',
+			origen: { tipo: 'venta_costo', id: 'venta-2' },
+			monto: 0,
+			montoFuncional: null,
+		}));
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.not.objectContaining({
+			auxiliares: expect.anything(),
 		}));
 	});
 });

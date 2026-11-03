@@ -5,7 +5,9 @@ import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
-import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
+import { modoActual } from '@/features/contabilidad-formal/services/posting-engine';
+import { emitirCostoVenta } from '@/features/contabilidad-formal/services/sale-posting-service';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
 import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
@@ -228,6 +230,24 @@ export const VentaLifecycleService = {
       }
 
       await allocateFifoForSale(tx, tenantId, ventaId);
+
+      // Capa de contabilidad formal: la entrega del pedido compensa el
+      // inventario con el costo FIFO real de los lotes consumidos.
+      if (modoActual() !== 'off') {
+        const costoFifo = await getCostoFifoVentaValorado(tx, tenantId, ventaId);
+        if (costoFifo && costoFifo.cantidad > 0) {
+          await emitirCostoVenta(
+            tx,
+            { tenantId, userId: user.userId },
+            {
+              ventaId,
+              fecha: new Date(),
+              costoFifo: costoFifo.montoFuncional,
+              monedaFuncional: costoFifo.monedaFuncional,
+            },
+          );
+        }
+      }
 
       await AuditLogService.logStrict(
         {

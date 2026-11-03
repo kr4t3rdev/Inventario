@@ -33,6 +33,9 @@ const VENTA_CREDITO_ORIGIN_TYPE = 'factura';
 /** Origen idempotente del reconocimiento de venta al contado: la conciliacion. */
 const VENTA_CONTADO_ORIGIN_TYPE = 'reconciliacion_venta';
 
+/** Origen idempotente del devengo del costo de venta: la venta. */
+const COSTO_VENTA_ORIGIN_TYPE = 'venta_costo';
+
 /** Parametros del reconocimiento formal de una venta a credito. */
 export interface VentaCreditoPostingParams {
 	/** Identificador de la factura que origina el evento. */
@@ -147,5 +150,60 @@ export async function emitirVentaContado(
 		fxEvidenceFingerprint: params.fxEvidenceFingerprint ?? null,
 		medioCobro: derivarMedioCobro(params.treasuryAccountType),
 		...(params.referencia == null ? {} : { referencia: params.referencia }),
+	});
+}
+
+/** Parametros del devengo formal del costo de venta. */
+export interface CostoVentaPostingParams {
+	/** Identificador de la venta que origina el devengo. */
+	ventaId: string;
+	/** Fecha efectiva del asiento (fecha de la entrega de la mercaderia). */
+	fecha: Date;
+	/** Costo FIFO en moneda funcional; null si no se pudo valorar. */
+	costoFifo: number | null;
+	/** Moneda funcional del tenant; null si el tenant no tiene politica. */
+	monedaFuncional: string | null;
+	/** Descripcion legible del asiento. */
+	descripcion?: string;
+}
+
+/**
+ * @description Devenga formalmente el costo de la mercaderia vendida: debita el
+ * costo de ventas y acredita el inventario por el costo FIFO real de los lotes
+ * consumidos.
+ *
+ * El costo ya llega valorado en la moneda funcional (cada porcion del FIFO con
+ * la tasa vigente de su fuente), de modo que el asiento no recalcula moneda ni
+ * tipo de cambio: las dos lineas se mueven por el mismo importe funcional.
+ *
+ * Si el costo no pudo valorarse (falta la tasa publicada de una fuente), el
+ * evento se emite sin valoracion funcional para que el motor falle cerrado en
+ * modo `enforce` y registre la causa en modo `shadow`.
+ *
+ * @param {PostingTx} tx - Transaccion Prisma del writer de ventas.
+ * @param {ContextoPosting} ctx - Tenant y usuario que registraron la entrega.
+ * @param {CostoVentaPostingParams} params - Venta, costo FIFO y fecha.
+ * @returns {Promise<PostEventoResult>} Resultado de la emision formal.
+ */
+export async function emitirCostoVenta(
+	tx: PostingTx,
+	ctx: ContextoPosting,
+	params: CostoVentaPostingParams,
+): Promise<PostEventoResult> {
+	const costo = params.costoFifo == null ? null : Math.abs(Number(params.costoFifo));
+	const monedaFuncional = params.monedaFuncional?.trim().toUpperCase() || null;
+
+	return postEvento(tx, ctx, {
+		tipo: 'COSTO_VENTA_DEVENGADO',
+		fecha: params.fecha,
+		descripcion: params.descripcion ?? `Costo de venta devengado ${params.ventaId}`,
+		origen: { tipo: COSTO_VENTA_ORIGIN_TYPE, id: params.ventaId },
+		monto: costo ?? 0,
+		moneda: monedaFuncional,
+		montoFuncional: costo,
+		monedaFuncional,
+		tasaCambio: null,
+		fxEvidenceFingerprint: null,
+		...(costo == null ? {} : { auxiliares: { costoFifo: costo } }),
 	});
 }

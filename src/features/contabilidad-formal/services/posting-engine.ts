@@ -184,7 +184,11 @@ function funcional(valor: DecimalInput): Prisma.Decimal {
 	return decimal;
 }
 
-function modoActual(): ModoMotorContable {
+/**
+ * @description Modo efectivo de la capa formal global: `off` por defecto.
+ * @returns {'off'|'shadow'|'enforce'} Modo configurado por entorno.
+ */
+export function modoActual(): ModoMotorContable {
 	const modo = process.env.CONTABILIDAD_FORMAL_MODE;
 	return modo === 'shadow' || modo === 'enforce' ? modo : 'off';
 }

@@ -88,6 +88,8 @@ falla cerrado, sin inventar conversión.
 | `src/app/api/mobile/mermas/[id]/route.ts` → `DELETE` | `MERMA_INVENTARIO_REVERSADA` | Mismo criterio que la eliminación de escritorio |
 | `src/features/produccion/actions.ts` → `completarOrdenProduccionAction` | `PRODUCCION_SALIDA` | Emite al completar, con el costo histórico de las líneas `ING-*` del kardex |
 | `src/features/venta-servicios/actions.ts` → `createVentaServicioAction` | `VENTA_SERVICIO_CREDITO` | Reconoce el ingreso y la cuenta por cobrar al crear la venta (modo legacy y mixto), en la misma transacción |
+| `src/features/ventas/services/venta-mutation-service.ts` → `VentaMutationService.create` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO de la mercadería que sale del inventario, en la misma transacción de la venta |
+| `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.entregarPedido` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO cuando el pedido se entrega y la mercadería sale del inventario |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -174,6 +176,23 @@ compensatorio: la plantilla `DEVOLUCION_VENTA` está diseñada para ventas de
 productos (inventario y costo FIFO) y no aplica a servicios. Queda pendiente un
 evento de reverso propio para este writer.
 
+El costo de la mercadería vendida se devenga con `COSTO_VENTA_DEVENGADO`
+(DEBE costo de ventas / HABER inventarios) cuando la mercadería sale del
+inventario: al crear una venta en el punto de venta y al entregar un pedido.
+El importe es el **costo FIFO real** de los lotes consumidos, tomado de las
+asignaciones persistidas (`costoUnitarioSnapshot` para las recepciones y el
+precio del ítem de compra para las compras), no del precio de venta ni de un
+costo promedio estimado.
+
+El costo se expresa en la moneda funcional del tenant: cada porción del FIFO se
+valora con la tasa publicada vigente en la fecha de su fuente (la fecha de la
+compra o de la recepción). Si alguna porción no tiene tasa publicada, el costo
+funcional queda sin completar: el asiento no se emite con una tasa inferida y
+el motor falla cerrado en modo `enforce` (en `shadow` registra la causa). El
+ancla idempotente es la venta (`venta_costo:<id>`), de modo que el replay de la
+entrega no duplica el devengo. La devolución de la venta repone el inventario
+con su propio evento (`DEVOLUCION_VENTA`), que todavía no está conectado.
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -185,10 +204,11 @@ CONTABILIDAD_FORMAL_NO_CASH_MODE=enforce # se exige el asiento formal
 ```
 
 Los emisores de reconocimiento (compras, gastos de servicio, mermas,
-producción, anticipos y venta de servicios) no usan ese gate: respetan el modo
-global `CONTABILIDAD_FORMAL_MODE`, que sigue `off` por defecto. Las
-liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`, `PAGO_CXP`) conservan el gate no
-Cash. Para la convergencia futura existe `emitirLiquidacionFormal`
+producción, anticipos, venta de servicios y venta de productos —ingreso y costo
+FIFO—) no usan ese gate: respetan el modo global `CONTABILIDAD_FORMAL_MODE`,
+que sigue `off` por defecto. Las liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`,
+`PAGO_CXP`) conservan el gate no Cash. Para la convergencia futura existe
+`emitirLiquidacionFormal`
 (`src/features/contabilidad-formal/services/settlement-formal-posting-service.ts`):
 comparte con el emisor no Cash la resolución de la valoración, de modo que
 cambiar de emisor no altera el asiento y solo cambia el gate que lo gobierna.
@@ -233,14 +253,11 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
-- La venta de productos todavía no devenga el costo: la plantilla
-  `COSTO_VENTA_DEVENGADO` (DEBE costo de ventas / HABER inventarios) existe en
-  el plan, pero ningún writer la emite. El costo FIFO ya está persistido en las
-  asignaciones de lote de la venta, de modo que el devengo puede tomar esa
-  evidencia sin recalcular el costo.
-- La devolución de una venta de productos tampoco tiene asiento formal: la
-  plantilla `DEVOLUCION_VENTA` está diseñada para reponer inventario y costo
-  FIFO, y ningún writer la emite.
+- La devolución de una venta de productos todavía no tiene asiento formal: la
+  plantilla `DEVOLUCION_VENTA` (DEBE ventas / HABER tesorería, más el reintegro
+  del inventario y la reversión del costo FIFO) existe en el plan, pero ningún
+  writer la emite. El costo devengado se repone con ese evento, no con un
+  ajuste del asiento original.
 - Ningún writer anula todavía un asiento formal por reversión (asiento inverso
   inmutable): la reversión llega en un slice propio, junto con el cierre y la
   apertura formal de período.
@@ -261,5 +278,6 @@ La decisión y sus consecuencias están registradas en
 - Inventario (merma y producción): `src/features/contabilidad-formal/services/inventory-adjustment-posting-service.ts`
 - Venta de productos: `src/features/contabilidad-formal/services/sale-posting-service.ts`
 - Valoración operativa compartida: `src/features/contabilidad-formal/lib/functional-valuation-resolver.ts`
+- Valoración del costo FIFO: `src/lib/services/fifo-allocation.ts` → `getCostoFifoVentaValorado`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
