@@ -2,7 +2,10 @@ import { Prisma } from '@/generated/prisma'
 import { ActionError } from '@/lib/server-actions'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
-import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
+import {
+  emitirVentaContado,
+  emitirVentaCredito
+} from '@/features/contabilidad-formal/services/sale-posting-service'
 
 export type TipoVencimientoFactura = 'fecha' | 'plazo' | 'contra_pago'
 
@@ -73,6 +76,11 @@ export interface FacturacionCobroWorkflowParams {
   tipoVencimiento?: string | null
   fechaVencimiento?: string | null
   cuentaBancariaId?: string | null
+  /**
+   * Fecha de emision de la factura; define la fecha del asiento formal para
+   * que el corte de periodo use la fecha del documento y no la del proceso.
+   */
+  fechaEmision?: Date | null
 }
 
 interface CuentaTipoPagoResolucion {
@@ -341,21 +349,23 @@ export async function applyFacturacionCobroWorkflow(
       }
     })
 
-    await emitirEventoLiquidacion(
+    // Capa de contabilidad formal: la venta cobrada al contado no deja cuenta
+    // por cobrar (el cobro ocurre en el mismo instante), asi que el asiento
+    // debita la tesoreria y acredita el ingreso por ventas. El cobro de una
+    // venta a plazo es otro evento (`COBRO_CXC`), que liquida la cuenta por
+    // cobrar abierta por `VENTA_CREDITO`.
+    await emitirVentaContado(
       tx,
       { tenantId: params.tenantId, userId: params.usuarioId },
       {
-        tipo: 'COBRO_CXC',
-        reconciliacion: {
-          reconciliacionId: reconciliacion.reconciliacionId,
-          monto: reconciliacion.monto,
-          moneda: reconciliacion.moneda,
-          montoConvertido: reconciliacion.montoConvertido,
-          functionalCurrency: reconciliacion.functionalCurrency,
-          tasaCambio: reconciliacion.tasaCambio,
-          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
-          fechaReconciliacion: reconciliacion.fechaReconciliacion
-        },
+        reconciliacionId: reconciliacion.reconciliacionId,
+        fecha: reconciliacion.fechaReconciliacion,
+        monto: reconciliacion.monto,
+        moneda: reconciliacion.moneda,
+        montoFuncional: reconciliacion.montoConvertido,
+        monedaFuncional: reconciliacion.functionalCurrency,
+        tasaCambio: reconciliacion.tasaCambio,
+        fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
         treasuryAccountType: cuenta.tipoCuenta,
         referencia: referenciaCobro,
         descripcion: params.observaciones || 'Cobro total por contra pago'
@@ -396,6 +406,20 @@ export async function applyFacturacionCobroWorkflow(
       fechaVencimiento
     }
   })
+
+  // Capa de contabilidad formal: la venta a plazo abre la cuenta por cobrar con
+  // la que quedo registrada la factura. El cobro posterior la liquida con
+  // `COBRO_CXC`, de modo que el ingreso se reconoce una sola vez.
+  await emitirVentaCredito(
+    tx,
+    { tenantId: params.tenantId, userId: params.usuarioId },
+    {
+      facturaId: params.facturaId,
+      fecha: params.fechaEmision ?? new Date(),
+      monto: montoTotal,
+      descripcion: `Venta a credito ${params.facturaId}`
+    }
+  )
 
   return { tipoVencimiento, reconciliacionId: null }
 }

@@ -451,6 +451,7 @@ export const VentaLifecycleService = {
           tipoVencimiento: parsed.tipoVencimiento || undefined,
           fechaVencimiento: parsed.fechaVencimiento || undefined,
           cuentaBancariaId: parsed.cuentaBancariaId || undefined,
+          fechaEmision: factura.fechaEmision,
         });
       }
 

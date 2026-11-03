@@ -77,7 +77,7 @@ falla cerrado, sin inventar conversión.
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileSale` | `COBRO_CXC` | Ahora persiste la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileService` | `COBRO_SERVICIO` | Un asiento por distribución, basado en su valoración persistida; comparte la transacción operativa |
 | `src/app/api/contabilidad/reconciliacion/servicios/route.ts` (POST) | `COBRO_SERVICIO` | Conserva el cobro individual legacy; persiste la valoración funcional y emite en la misma transacción |
-| `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `COBRO_CXC` | `contra_pago` persiste valoración funcional y emite en la misma transacción; requiere tasa vigente para moneda extranjera |
+| `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `VENTA_CONTADO` / `VENTA_CREDITO` | Reconoce el ingreso de la venta de productos: al contado debita la tesorería; a plazo abre la cuenta por cobrar que después liquida `COBRO_CXC` |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
 | `src/features/productos/actions-restock.ts` → `handlePaymentInTransaction` | `PAGO_CXP` | Solo `PAGO_COMPLETO`; persiste evidencia FX y emite dentro de la transacción que registra el pago y descuenta la cuenta |
@@ -127,6 +127,30 @@ antiguas sin esas líneas caen al cálculo histórico por receta para no complet
 con costo cero. La plantilla reclasifica inventario de materias primas contra
 inventario de producto terminado, por lo que ambas líneas usan el rol
 `INVENTARIOS`.
+
+La venta de productos reconoce el ingreso **al facturar**, con dos eventos
+distintos según cómo se cobre la factura:
+
+- `contra_pago` (cobro en el mismo instante): `VENTA_CONTADO`, que debita la
+  tesorería (caja o bancos según el tipo de la cuenta bancaria) y acredita el
+  ingreso por ventas. No hay cuenta por cobrar que liquidar, porque la venta
+  nunca fue a plazo; el emisor consume la valoración ya persistida en la
+  conciliación de caja, sin recalcular moneda ni tipo de cambio.
+- `fecha` o `plazo` (factura a plazo): `VENTA_CREDITO`, que debita la cuenta por
+  cobrar y acredita el ingreso por ventas. El cobro posterior de esa factura
+  emite `COBRO_CXC` (DEBE tesorería / HABER cuenta por cobrar), de modo que el
+  ingreso se reconoce una sola vez y la cuenta por cobrar queda cerrada.
+
+El ancla idempotente es el documento: `factura:<idFactura>` para la venta a
+plazo y `reconciliacion_venta:<id>` para la venta al contado. La fecha del
+asiento es la fecha de emisión de la factura (no la del proceso), para que el
+corte de período use la fecha del documento. El importe de la factura está
+expresado en la moneda operativa (CUP): si la moneda funcional del tenant es
+distinta, el emisor valora con la tasa publicada vigente en la fecha de
+emisión y, si no hay tasa, deja la valoración funcional ausente para que el
+motor falle cerrado en vez de inventar una conversión. Este reconocimiento usa
+el modo global `CONTABILIDAD_FORMAL_MODE`; no cambia los gates de emisor no
+Cash.
 
 La venta de servicios reconoce `VENTA_SERVICIO_CREDITO` al **crear** la venta,
 tanto en modo legacy (un servicio) como en modo mixto (una línea por venta): el
@@ -209,6 +233,17 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
+- La venta de productos todavía no devenga el costo: la plantilla
+  `COSTO_VENTA_DEVENGADO` (DEBE costo de ventas / HABER inventarios) existe en
+  el plan, pero ningún writer la emite. El costo FIFO ya está persistido en las
+  asignaciones de lote de la venta, de modo que el devengo puede tomar esa
+  evidencia sin recalcular el costo.
+- La devolución de una venta de productos tampoco tiene asiento formal: la
+  plantilla `DEVOLUCION_VENTA` está diseñada para reponer inventario y costo
+  FIFO, y ningún writer la emite.
+- Ningún writer anula todavía un asiento formal por reversión (asiento inverso
+  inmutable): la reversión llega en un slice propio, junto con el cierre y la
+  apertura formal de período.
 - Los handlers legacy `handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts` y
   `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
   los endpoints activos delegan en servicios de mutación o emiten desde sus
@@ -224,5 +259,7 @@ La decisión y sus consecuencias están registradas en
   `src/features/contabilidad-formal/services/advance-posting-service.ts`
 - Servicio de emisión: `src/features/contabilidad-formal/services/settlement-posting-service.ts`
 - Inventario (merma y producción): `src/features/contabilidad-formal/services/inventory-adjustment-posting-service.ts`
+- Venta de productos: `src/features/contabilidad-formal/services/sale-posting-service.ts`
+- Valoración operativa compartida: `src/features/contabilidad-formal/lib/functional-valuation-resolver.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

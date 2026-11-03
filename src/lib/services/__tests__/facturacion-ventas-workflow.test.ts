@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { emitirEventoLiquidacion } from '@/features/contabilidad-formal/services/settlement-posting-service'
+import {
+  emitirVentaContado,
+  emitirVentaCredito
+} from '@/features/contabilidad-formal/services/sale-posting-service'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
 
-vi.mock('@/features/contabilidad-formal/services/settlement-posting-service', () => ({
-  emitirEventoLiquidacion: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+vi.mock('@/features/contabilidad-formal/services/sale-posting-service', () => ({
+  emitirVentaContado: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+  emitirVentaCredito: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
 }))
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
   exchangeRateProvider: { getRateAsOf: vi.fn() }
@@ -47,7 +51,8 @@ function createTxMock() {
 describe('facturacion-ventas-workflow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(emitirEventoLiquidacion).mockResolvedValue({ estado: 'OMITIDO' })
+    vi.mocked(emitirVentaContado).mockResolvedValue({ estado: 'OMITIDO' })
+    vi.mocked(emitirVentaCredito).mockResolvedValue({ estado: 'OMITIDO' })
     vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null)
   })
 
@@ -72,6 +77,7 @@ describe('facturacion-ventas-workflow', () => {
     const tx = createTxMock()
     tx.cuentaPorCobrar.upsert.mockResolvedValue({})
     tx.factura.update.mockResolvedValue({})
+    const fechaEmision = new Date('2026-02-10T09:00:00.000Z')
 
     const result = await applyFacturacionCobroWorkflow(tx as any, {
       ventaId: 'venta-1',
@@ -81,7 +87,8 @@ describe('facturacion-ventas-workflow', () => {
       usuarioId: 'user-1',
       tenantId: 'tenant-test',
       tipoVencimiento: 'fecha',
-      fechaVencimiento: '2026-03-01T00:00:00.000Z'
+      fechaVencimiento: '2026-03-01T00:00:00.000Z',
+      fechaEmision
     })
 
     expect(result).toEqual({
@@ -98,6 +105,18 @@ describe('facturacion-ventas-workflow', () => {
     )
     expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled()
     expect(tx.cuentaBancaria.update).not.toHaveBeenCalled()
+    // La venta a plazo abre la cuenta por cobrar en la capa formal; el cobro
+    // posterior la liquidara con su propio evento.
+    expect(emitirVentaCredito).toHaveBeenCalledWith(
+      tx,
+      { tenantId: 'tenant-test', userId: 'user-1' },
+      expect.objectContaining({
+        facturaId: 'factura-1',
+        monto: 1000,
+        fecha: fechaEmision,
+      }),
+    )
+    expect(emitirVentaContado).not.toHaveBeenCalled()
   })
 
   it('plazo crea CxC pendiente a 30 dias sin reconciliacion', async () => {
@@ -124,6 +143,15 @@ describe('facturacion-ventas-workflow', () => {
     })
     expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled()
     expect(tx.cuentaBancaria.update).not.toHaveBeenCalled()
+    expect(emitirVentaCredito).toHaveBeenCalledWith(
+      tx,
+      { tenantId: 'tenant-test', userId: 'user-1' },
+      expect.objectContaining({
+        facturaId: 'factura-1',
+        monto: 1000,
+      }),
+    )
+    expect(emitirVentaContado).not.toHaveBeenCalled()
 
     const upsertPayload = tx.cuentaPorCobrar.upsert.mock.calls[0]?.[0]
     const fechaCreate = upsertPayload?.create?.fechaVencimiento as Date
@@ -200,21 +228,19 @@ describe('facturacion-ventas-workflow', () => {
         tasaCambio: 1,
       }),
     }))
-    expect(emitirEventoLiquidacion).toHaveBeenCalledWith(
+    expect(emitirVentaContado).toHaveBeenCalledWith(
       tx,
       { tenantId: 'tenant-test', userId: 'user-1' },
       expect.objectContaining({
-        tipo: 'COBRO_CXC',
+        reconciliacionId: 'rec-1',
+        monto: 1000,
+        moneda: 'CUP',
+        montoFuncional: 1000,
+        monedaFuncional: 'CUP',
         treasuryAccountType: 'CORRIENTE',
-        reconciliacion: expect.objectContaining({
-          reconciliacionId: 'rec-1',
-          monto: 1000,
-          moneda: 'CUP',
-          montoConvertido: 1000,
-          functionalCurrency: 'CUP',
-        }),
       }),
     )
+    expect(emitirVentaCredito).not.toHaveBeenCalled()
     expect(tx.cuentaBancaria.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { cuentaId: 'cuenta-1' }
@@ -374,17 +400,16 @@ describe('facturacion-ventas-workflow', () => {
         fxCatalogRateId: 'rate-usd-cup'
       })
     }))
-    expect(emitirEventoLiquidacion).toHaveBeenCalledWith(
+    expect(emitirVentaContado).toHaveBeenCalledWith(
       tx,
       expect.anything(),
       expect.objectContaining({
-        tipo: 'COBRO_CXC',
-        reconciliacion: expect.objectContaining({
-          reconciliacionId: 'rec-usd-1',
-          montoConvertido: 3200,
-          tasaCambio: 320,
-          functionalCurrency: 'CUP'
-        })
+        reconciliacionId: 'rec-usd-1',
+        monto: 10,
+        moneda: 'USD',
+        montoFuncional: 3200,
+        tasaCambio: 320,
+        monedaFuncional: 'CUP'
       })
     )
   })
@@ -413,6 +438,7 @@ describe('facturacion-ventas-workflow', () => {
 
     expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled()
     expect(tx.cuentaBancaria.update).not.toHaveBeenCalled()
-    expect(emitirEventoLiquidacion).not.toHaveBeenCalled()
+    expect(emitirVentaContado).not.toHaveBeenCalled()
+    expect(emitirVentaCredito).not.toHaveBeenCalled()
   })
 })

@@ -638,6 +638,7 @@ export const VentaMutationService = {
             tipoVencimiento: parsed.tipoVencimiento || undefined,
             fechaVencimiento: parsed.fechaVencimiento || undefined,
             cuentaBancariaId: parsed.cuentaBancariaId || undefined,
+            fechaEmision: factura.fechaEmision,
           });
         }
       }

@@ -9,8 +9,7 @@
  *
  * @module src/features/contabilidad-formal/services/service-sale-posting-service
  */
-import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
-import { buildFunctionalValuation } from '../lib/functional-valuation';
+import { resolverValuacionOperativa } from '../lib/functional-valuation-resolver';
 import {
 	postEvento,
 	type ContextoPosting,
@@ -34,55 +33,6 @@ export interface VentaServicioPostingParams {
 }
 
 /**
- * @description Valora el importe de la venta en la moneda funcional del tenant
- * usando la tasa publicada vigente en la fecha de la operación.
- * @param {PostingTx} tx - Transacción Prisma del writer operativo.
- * @param {ContextoPosting} ctx - Tenant y usuario que originan el evento.
- * @param {number} monto - Importe positivo en la moneda de la operación.
- * @param {string} moneda - Moneda de la operación normalizada en mayúsculas.
- * @param {Date} fechaOperacion - Fecha efectiva del asiento.
- * @returns {Promise<{ monedaFuncional: string | null; montoFuncional: number | null; tasaCambio: number | null; fxEvidenceFingerprint: string | null }>} Valoración lista para el motor.
- */
-async function valorarVentaServicio(
-	tx: PostingTx,
-	ctx: ContextoPosting,
-	monto: number,
-	moneda: string,
-	fechaOperacion: Date,
-) {
-	const policy = await tx.tenantAccountingPolicy.findUnique({
-		where: { tenantId: ctx.tenantId },
-		select: { functionalCurrencyCode: true },
-	});
-	const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
-	const tasa = monedaFuncional && monedaFuncional !== moneda
-		? await exchangeRateProvider.getRateAsOf({
-			sourceCurrency: moneda,
-			targetCurrency: monedaFuncional,
-			boundaryAt: fechaOperacion,
-			client: tx,
-		})
-		: null;
-	const valoracion = buildFunctionalValuation({
-		monto,
-		moneda,
-		functionalCurrency: monedaFuncional,
-		tasaCambio: tasa?.tasa,
-		fechaOperacion,
-		fechaTasa: tasa?.fechaVigencia ?? fechaOperacion,
-		fxCatalogRateId: tasa?.tasaId,
-		source: 'service-sale-posting-service',
-	});
-
-	return {
-		monedaFuncional,
-		montoFuncional: valoracion.sameCurrency ? monto : valoracion.montoConvertido,
-		tasaCambio: valoracion.tasaCambio,
-		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
-	};
-}
-
-/**
  * @description Reconoce formalmente la venta de servicios: debita la cuenta por
  * cobrar y acredita el ingreso por servicios. El cobro posterior (o el anticipo
  * aplicado) liquida esa cuenta por cobrar con su propio evento.
@@ -101,7 +51,14 @@ export async function emitirVentaServicio(
 		return { estado: 'OMITIDO', motivo: 'MONTO_NO_POSITIVO' };
 	}
 	const moneda = params.moneda?.trim().toUpperCase() || 'CUP';
-	const valoracion = await valorarVentaServicio(tx, ctx, monto, moneda, params.fecha);
+	const valoracion = await resolverValuacionOperativa({
+		tx,
+		tenantId: ctx.tenantId,
+		monto,
+		moneda,
+		fechaOperacion: params.fecha,
+		source: 'service-sale-posting-service',
+	});
 
 	return postEvento(tx, ctx, {
 		tipo: 'VENTA_SERVICIO_CREDITO',

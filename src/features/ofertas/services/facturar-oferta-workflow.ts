@@ -270,7 +270,7 @@ export async function facturarOfertaWorkflow(
       fechaVencimiento: params.fechaVencimiento ? new Date(params.fechaVencimiento) : null,
       cuentaBancariaId: params.cuentaBancariaId ?? null,
     },
-    select: { idFactura: true },
+    select: { idFactura: true, fechaEmision: true },
   });
 
   const workflow = await applyFacturacionCobroWorkflow(tx, {
@@ -283,6 +283,7 @@ export async function facturarOfertaWorkflow(
     observaciones: params.observaciones,
     tipoVencimiento: params.tipoVencimiento,
     fechaVencimiento: params.fechaVencimiento,
+    fechaEmision: factura.fechaEmision,
     cuentaBancariaId: params.cuentaBancariaId,
   });
 
