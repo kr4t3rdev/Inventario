@@ -64,6 +64,15 @@ export const getValorInventarioFifoAction = withAction(async (_input: void, user
   const stockPorProducto = await getStockTotalProductosBatch(prisma, {
     productoIds: productos.map((p) => p.id),
   });
+  const asignacionesPorCompra = new Map<string, number>();
+  for (const allocation of allocPorLote) {
+    if (allocation.compraDocumentoItemId !== null) {
+      asignacionesPorCompra.set(
+        allocation.compraDocumentoItemId,
+        allocation._sum.cantidad ?? 0,
+      );
+    }
+  }
 
   return calcularValuacionFifo(
     lotes.map((l) => ({
@@ -72,7 +81,7 @@ export const getValorInventarioFifoAction = withAction(async (_input: void, user
       cantidad: l.cantidad,
       precioUnitario: l.precioUnitario,
     })),
-    new Map(allocPorLote.map((a) => [a.compraDocumentoItemId, a._sum.cantidad ?? 0])),
+    asignacionesPorCompra,
     productos.map((p) => ({
       productoId: p.id,
       precioCosto: Number(p.precioCosto),
