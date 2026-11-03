@@ -90,6 +90,8 @@ falla cerrado, sin inventar conversión.
 | `src/features/venta-servicios/actions.ts` → `createVentaServicioAction` | `VENTA_SERVICIO_CREDITO` | Reconoce el ingreso y la cuenta por cobrar al crear la venta (modo legacy y mixto), en la misma transacción |
 | `src/features/ventas/services/venta-mutation-service.ts` → `VentaMutationService.create` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO de la mercadería que sale del inventario, en la misma transacción de la venta |
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.entregarPedido` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO cuando el pedido se entrega y la mercadería sale del inventario |
+| `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.anularVentaPorEstado` | `REVERSO_ASIENTO` | Anula con su contraasiento los asientos de la venta anulada (ingreso, costo y cobro al contado) |
+| `src/features/compras-productos/actions.ts` → `anularCompraProductoAction` | `REVERSO_ASIENTO` | Anula con su contraasiento el reconocimiento de la compra anulada |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -193,6 +195,19 @@ ancla idempotente es la venta (`venta_costo:<id>`), de modo que el replay de la
 entrega no duplica el devengo. La devolución de la venta repone el inventario
 con su propio evento (`DEVOLUCION_VENTA`), que todavía no está conectado.
 
+Cuando un documento se anula, sus asientos formales no se borran ni se editan:
+se anulan con un **asiento inverso inmutable**, que conserva las líneas y la
+evidencia FX del original cambiando únicamente debe/haber. El original queda en
+estado `ANULADO` apuntando al inverso (`revertidoPorId`), de modo que la traza
+forense conserva ambos documentos. La reversa es idempotente: si el inverso ya
+existe y está contabilizado, la anulación lo reutiliza en lugar de duplicarlo;
+si el enlace no es consistente, la operación falla en lugar de ocultar la
+inconsistencia. El asiento inverso se fecha en el día de la anulación y se
+registra en el período abierto vigente; si el período original está cerrado, la
+reversa se asienta en el período actual. Hoy la reversa está conectada al
+anular una venta (ingreso reconocido, costo devengado y cobro al contado) y al
+anular una compra (reconocimiento).
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -258,9 +273,9 @@ La decisión y sus consecuencias están registradas en
   del inventario y la reversión del costo FIFO) existe en el plan, pero ningún
   writer la emite. El costo devengado se repone con ese evento, no con un
   ajuste del asiento original.
-- Ningún writer anula todavía un asiento formal por reversión (asiento inverso
-  inmutable): la reversión llega en un slice propio, junto con el cierre y la
-  apertura formal de período.
+- Ningún writer anula todavía el asiento formal de los gastos reconciliados ni
+  de la nómina: la reversa existe, pero solo está conectada al anular una venta
+  y una compra.
 - Los handlers legacy `handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts` y
   `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
   los endpoints activos delegan en servicios de mutación o emiten desde sus
@@ -279,5 +294,6 @@ La decisión y sus consecuencias están registradas en
 - Venta de productos: `src/features/contabilidad-formal/services/sale-posting-service.ts`
 - Valoración operativa compartida: `src/features/contabilidad-formal/lib/functional-valuation-resolver.ts`
 - Valoración del costo FIFO: `src/lib/services/fifo-allocation.ts` → `getCostoFifoVentaValorado`
+- Reversa formal (asiento inverso): `src/features/contabilidad-formal/services/reversal-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

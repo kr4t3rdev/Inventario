@@ -179,6 +179,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'SQL parametrizado incluye tenantId en cada tabla tenant-scoped.',
   },
   {
+    file: 'src/features/contabilidad-formal/services/reversal-service.ts',
+    occurrences: 1,
+    reason: 'Lock pesimista FOR UPDATE del asiento que se va a revertir, para que dos anulaciones concurrentes no generen dos contraasientos.',
+    tenantGuarantee: 'La consulta es parametrizada e incluye tenantId del contexto de la reversión, que ya viene del writer autenticado.',
+  },
+  {
     file: 'src/features/contabilidad-formal/services/shadow-outbox.ts',
     occurrences: 2,
     reason: 'Lectura de métricas y selección bloqueante de eventos del outbox mediante SQL etiquetado.',

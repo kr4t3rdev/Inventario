@@ -14,6 +14,10 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
+	getCostoFifoVentaValorado: vi.fn(),
+}));
+vi.mock('@/features/contabilidad-formal/services/reversal-service', () => ({
+	reverseFormalEntries: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -48,6 +52,7 @@ const { mockTx } = vi.hoisted(() => {
 		},
 		factura: { create: vi.fn(), update: vi.fn() },
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn() },
+		cuentaBancaria: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
@@ -73,6 +78,7 @@ import {
 	revertirMovimientosDeOrigen,
 } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ActionError } from '@/lib/server-actions';
@@ -380,6 +386,29 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 });
 
 describe('anularVentaPorEstado', () => {
+	it('anula los asientos formales de la venta con su contraasiento', async () => {
+		mirarVenta({
+			...ventaPedido,
+			estado: 'FACTURADA',
+			factura: { idFactura: 'fac-1', tenantId: 'tenant-1' },
+			reconciliaciones: [
+				{ reconciliacionId: 'rec-1', cuentaId: 'cuenta-1', moneda: 'CUP', monto: 1000 },
+			],
+		});
+
+		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
+
+		expect(reverseFormalEntries).toHaveBeenCalledWith(
+			expect.anything(),
+			{ tenantId: 'tenant-1', userId: 'user-1' },
+			[
+				{ tipo: 'factura', id: 'fac-1' },
+				{ tipo: 'venta_costo', id: 'venta-1' },
+				{ tipo: 'reconciliacion_venta', id: 'rec-1' },
+			],
+		);
+	});
+
 	it('anula un PEDIDO sin tocar stock, FIFO ni factura', async () => {
 		mirarVenta(ventaPedido);
 		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: 'error', user: adminUser });

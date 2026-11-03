@@ -22,6 +22,7 @@ import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
 import { emitirReconocimientoCompra } from '@/features/contabilidad-formal/services/purchase-posting-service';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { isCompatibleUnitConversion } from '@/lib/inventory-unit-conversion-compatibility';
 import { calculateUnitQuantityCost } from '@/lib/unit-quantity-cost';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
@@ -940,6 +941,12 @@ export const anularCompraProductoAction = withAction(async (input: { id: string;
     if (marcada.count !== 1) {
       throw new ActionError('La compra ya está anulada', 'VALIDATION_ERROR');
     }
+
+    // Capa de contabilidad formal: el reconocimiento de la compra se anula con
+    // su contraasiento. Con la capa apagada la reversa no hace nada.
+    await reverseFormalEntries(tx, { tenantId, userId: user.userId }, [
+      { tipo: 'compra_documento', id: compra.compraDocumentoId },
+    ]);
 
     if (compra.cuentaPorPagar) {
       const cxp = compra.cuentaPorPagar;
