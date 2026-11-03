@@ -19,6 +19,7 @@ de servicios (`COBRO_SERVICIO`), reconocimiento de compra a crédito
 | `PAGO_CXP` | 6 líneas (espejo del anterior) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `COBRO_SERVICIO` | Plantilla de cobro de servicios con ramas FX | `VENTAS` | `CXC_CLIENTES` |
 | `COMPRA_CREDITO` | Inventario contra cuentas por pagar | `COMPRAS` | `CXP_PROVEEDORES` |
+| `GASTO_CREDITO` | Gasto operativo contra cuentas por pagar (servicios recibidos) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `ANTICIPO_CLIENTE_RECIBIDO` | Tesorería contra anticipos de clientes | `VENTAS` | `ANTICIPOS_CLIENTES` |
 | `ANTICIPO_CLIENTE_APLICADO` | Anticipos de clientes contra CxC, con ramas FX | `VENTAS` | `CXC_CLIENTES` |
 | `ANTICIPO_PROVEEDOR_ENTREGADO` | Anticipos a proveedores contra tesorería | `COMPRAS` | `ANTICIPOS_PROVEEDORES` |
@@ -64,6 +65,7 @@ builder de pagos Cash.
 | `src/lib/services/pago-gastos-workflow.ts` → `applyPagoGastoWorkflow` | `PAGO_CXP` | Solo cuando la conciliación no queda `PENDIENTE` (una conciliación pendiente no mueve la tesorería) |
 | `src/features/productos/actions-restock.ts` → `handlePaymentInTransaction` | `PAGO_CXP` | Solo `PAGO_COMPLETO`; persiste evidencia FX y emite dentro de la transacción que registra el pago y descuenta la cuenta |
 | `src/features/compras-productos/actions.ts` → `createCompraProductoAction` | `COMPRA_CREDITO` | Reconoce compras a crédito, anticipadas y contado antes de liquidar cualquier pago; comparte la transacción |
+| `src/features/compras-servicios/actions.ts` → `createCompraServicioAction` | `GASTO_CREDITO` | Devenga el gasto operativo contra CxP al recibir el servicio; comparte la transacción y la valoración con la vía de anticipos |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -75,6 +77,16 @@ el evento de compra persiste la evidencia FX construida para la fecha de compra;
 el motor no inventa una valoración funcional cuando falta. Este reconocimiento
 usa el modo global `CONTABILIDAD_FORMAL_MODE`; no cambia los gates de emisor no
 Cash.
+
+Las compras de servicios devengan `GASTO_CREDITO` (gasto operativo contra CxP)
+en la misma transacción de creación, reconocidas antes de aplicar cualquier
+anticipo; la aplicación del anticipo ya emite `ANTICIPO_PROVEEDOR_APLICADO` desde
+el workflow de anticipos y el pago posterior desde Contabilidad emite `PAGO_CXP`
+por el workflow de gastos. La valoración reutiliza la tasa publicada del catálogo
+(vigencia e id de tasa quedan en la evidencia FX); si el servicio va en moneda
+extranjera y no hay tasa publicada, el reconocimiento queda sin valoración
+funcional y el motor falla cerrado — la vía de anticipos, además, rechaza la
+conciliación, igual que antes.
 
 ## Rollout
 

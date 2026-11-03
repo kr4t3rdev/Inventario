@@ -5,7 +5,7 @@ import {
 	type PostEventoResult,
 	type PostingTx,
 } from './posting-engine';
-import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { buildFunctionalValuation } from '../lib/functional-valuation';
 
 export interface PurchaseRecognitionParams {
 	compraDocumentoId: string;
@@ -33,35 +33,14 @@ export async function emitirReconocimientoCompra(
 	});
 	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
 	const currency = params.moneda.trim().toUpperCase();
-	const originalAmount = Number(params.monto);
-	let functionalAmount: number | DecimalInput | null = null;
-	let exchangeRate: number | null = null;
-	let fxEvidenceFingerprint: string | null = null;
-
-	if (functionalCurrency && currency === functionalCurrency) {
-		const evidence = buildAppliedFxEvidence({
-			originalAmount,
-			originalCurrency: currency,
-			functionalCurrency,
-			source: 'purchase-posting-service',
-		});
-		functionalAmount = params.monto;
-		exchangeRate = 1;
-		fxEvidenceFingerprint = evidence.fxEvidenceFingerprint;
-	} else if (functionalCurrency && params.tasaCambio != null) {
-		functionalAmount = originalAmount * params.tasaCambio;
-		exchangeRate = params.tasaCambio;
-		const evidence = buildAppliedFxEvidence({
-			originalAmount,
-			originalCurrency: currency,
-			functionalCurrency,
-			exchangeRate,
-			convertedAmount: Number(functionalAmount),
-			rateEffectiveAt: params.fecha,
-			source: 'purchase-posting-service',
-		});
-		fxEvidenceFingerprint = evidence.fxEvidenceFingerprint;
-	}
+	const valoracion = buildFunctionalValuation({
+		monto: Number(params.monto),
+		moneda: currency,
+		functionalCurrency,
+		tasaCambio: params.tasaCambio,
+		fechaOperacion: params.fecha,
+		source: 'purchase-posting-service',
+	});
 
 	return postEvento(tx, ctx, {
 		tipo: 'COMPRA_CREDITO',
@@ -70,9 +49,9 @@ export async function emitirReconocimientoCompra(
 		origen: { tipo: 'compra_documento', id: params.compraDocumentoId },
 		monto: params.monto,
 		moneda: currency,
-		montoFuncional: functionalAmount,
+		montoFuncional: valoracion.sameCurrency ? params.monto : valoracion.montoConvertido,
 		monedaFuncional: functionalCurrency,
-		tasaCambio: exchangeRate,
-		fxEvidenceFingerprint,
+		tasaCambio: valoracion.tasaCambio,
+		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
 	});
 }

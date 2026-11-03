@@ -18,6 +18,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { emitirReconocimientoCompraServicio } from '@/features/contabilidad-formal/services/service-purchase-posting-service';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -110,6 +111,40 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
     });
     let compraServicioResultado = compraServicio;
 
+    // Reconocimiento formal del gasto devengado (GASTO_CREDITO) dentro de la
+    // misma transacción: consume la tasa publicada sin recalcular moneda y deja
+    // la valoración funcional nula cuando falta, para que el motor falle cerrado.
+    const policyReconocimiento = await tx.tenantAccountingPolicy.findUnique({
+      where: { tenantId },
+      select: { functionalCurrencyCode: true },
+    });
+    const monedaFuncionalReconocimiento =
+      policyReconocimiento?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+    const monedaServicio = servicio.moneda.trim().toUpperCase();
+    let tasaServicio: { tasaId: string; tasa: number; fechaVigencia: Date } | null = null;
+    if (monedaServicio !== monedaFuncionalReconocimiento) {
+      tasaServicio = await exchangeRateProvider.getRateAsOf({
+        sourceCurrency: monedaServicio,
+        targetCurrency: monedaFuncionalReconocimiento,
+        boundaryAt: fechaServicio,
+        client: tx,
+      });
+    }
+
+    await emitirReconocimientoCompraServicio(
+      tx,
+      { tenantId, userId: user.userId || 'system' },
+      {
+        compraServicioId: compraServicio.compraServicioId,
+        fecha: fechaServicio,
+        monto: total,
+        moneda: monedaServicio,
+        tasaCambio: tasaServicio?.tasa,
+        fechaTasa: tasaServicio?.fechaVigencia,
+        fxCatalogRateId: tasaServicio?.tasaId,
+      },
+    );
+
     let allocationsResult: Awaited<ReturnType<typeof applyAnticipoAllocations>> = [];
     if (parsed.anticipos && parsed.anticipos.length > 0) {
       const tipoPagoDefault = await tx.tipoPago.findFirst({
@@ -129,11 +164,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         observaciones: `Anticipo aplicado a servicio recibido ${compraServicio.compraServicioId}`,
       });
 
-      const policy = await tx.tenantAccountingPolicy.findUnique({
-        where: { tenantId },
-        select: { functionalCurrencyCode: true },
-      });
-      const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+      const monedaFuncional = monedaFuncionalReconocimiento;
       const fechaPago = new Date();
       const tasasCambio = new Map<
         string,
@@ -167,8 +198,14 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         return tasa;
       };
 
-      const monedaServicio = servicio.moneda.trim().toUpperCase();
-      const tasaServicio = await getTasaFuncional(monedaServicio, fechaServicio);
+      // Reutiliza la valoración del reconocimiento; la vía de anticipos exige
+      // tasa publicada para no desviar el estado de pago.
+      if (monedaServicio !== monedaFuncionalReconocimiento && !tasaServicio) {
+        throw new ActionError(
+          `No hay tasa de cambio publicada para ${monedaServicio} → ${monedaFuncionalReconocimiento}; no se puede registrar la reconciliación`,
+          'VALIDATION_ERROR',
+        );
+      }
       const totalFuncional = total * (tasaServicio?.tasa ?? 1);
       type AnticipoAllocationSource = Pick<
         NonNullable<Awaited<ReturnType<typeof tx.anticipo.findUnique>>>,
