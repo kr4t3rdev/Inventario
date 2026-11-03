@@ -9,6 +9,7 @@ vi.mock('@/features/contabilidad/actions-exchange', () => ({
 }))
 
 vi.mock('@/components/ui/sidebar', () => ({
+  useSidebar: () => ({ isMobile: false, openMobile: false, open: true }),
   SidebarTrigger: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>Barra lateral</button>
   ),
@@ -35,6 +36,6 @@ describe('SiteHeader', () => {
   it('ofrece un control accesible de 44 px para la barra lateral', async () => {
     render(await SiteHeader())
 
-    expect(screen.getByRole('button', { name: 'Alternar barra lateral' })).toHaveClass('size-11')
+    expect(screen.getByRole('button', { name: 'Contraer barra lateral' })).toHaveClass('size-11')
   })
 })
