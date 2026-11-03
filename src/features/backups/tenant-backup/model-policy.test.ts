@@ -15,7 +15,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(157);
+    expect(schemaModelNames).toHaveLength(159);
     expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
@@ -28,7 +28,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 95,
+      'tenant-direct': 97,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -43,8 +43,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(111);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(111);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(113);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(113);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -68,9 +68,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(111);
+      .ineligibleBusinessModels).toHaveLength(113);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(111);
+      .missingBusinessModels).toHaveLength(113);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 
@@ -96,6 +96,19 @@ describe('tenant backup model policy contract', () => {
     expect(policy?.rationale).toContain('tenantId');
     expect(policy?.rationale).toContain('Producto');
     expect(policy?.rationale).toContain('Unidad');
+  });
+
+  it('registers lots and warehouse locations as tenant-owned business data', () => {
+    for (const model of ['Lote', 'Ubicacion']) {
+      const entry = TENANT_BACKUP_BUSINESS_MANIFEST.find((item) => item.model === model);
+      const policy = getModelPolicy(model);
+
+      expect(entry?.disposition).toBe('candidate');
+      expect(entry?.rationale.trim()).not.toBe('');
+      expect(entry?.productImpact.trim()).not.toBe('');
+      expect(policy?.kind).toBe('tenant-direct');
+      expect(policy?.ownerPath).toContain('tenantId');
+    }
   });
 
   it('classifies contract configuration as business data and records complete child paths', () => {

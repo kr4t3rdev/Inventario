@@ -11,6 +11,7 @@ function createSeedClient() {
     cuentaBancaria: { upsert: vi.fn() },
     categoria: { upsert: vi.fn() },
     unidad: { upsert: vi.fn() },
+    unidadConversion: { upsert: vi.fn() },
     vendor: { upsert: vi.fn() },
     cliente: {
       upsert: vi.fn(),
@@ -59,6 +60,29 @@ describe('demo sales totals seed', () => {
         total: 740,
       },
     });
+  });
+
+  it('professional seed registra una conversión aislada por tenant', async () => {
+    const client = createSeedClient();
+
+    await seedProfessionalExtras({ tenantId: 'tenant-pro' }, client as never);
+
+    expect(client.unidadConversion.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        tenantId_productoId_unidadId: expect.objectContaining({
+          tenantId: 'tenant-pro',
+          productoId: expect.stringContaining('tenant-pro'),
+          unidadId: expect.stringContaining('tenant-pro'),
+        }),
+      },
+      create: expect.objectContaining({
+        tenantId: 'tenant-pro',
+        productoId: expect.stringContaining('tenant-pro'),
+        baseUnidadId: expect.stringContaining('tenant-pro'),
+        unidadId: expect.stringContaining('tenant-pro'),
+        factorAStock: 4,
+      }),
+    }));
   });
 
   it('enterprise seed actualiza total y subtotal de ventas demo', async () => {

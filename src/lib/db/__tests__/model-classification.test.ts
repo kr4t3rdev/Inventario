@@ -51,6 +51,13 @@ describe('AS-01 contrato de clasificación de modelos', () => {
     expect(offenders, `Marcados scoped sin columna tenantId:\n${offenders.join('\n')}`).toEqual([]);
   });
 
+  it('clasifica lotes y ubicaciones como datos scoped del tenant', () => {
+    for (const model of ['Lote', 'Ubicacion']) {
+      expect(getModelScope(model)).toBe('scoped');
+      expect(MODEL_CLASSIFICATION[model].reason).toContain('tenantId');
+    }
+  });
+
   it('clasifica las conversiones de unidad como datos scoped del tenant', () => {
     const conversion = Prisma.dmmf.datamodel.models.find(
       (model) => model.name === 'UnidadConversion',

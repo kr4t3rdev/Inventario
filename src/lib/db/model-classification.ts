@@ -114,6 +114,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   GastoElemento: SCOPED(),
   GastosDE: SCOPED(),
   ListaPrecio: SCOPED(),
+  Lote: SCOPED('Lote tenant-owned con FK compuesta tenantId-productoId al producto.'),
   Merma: SCOPED(),
   MiEmpresa: SCOPED('Ficha de empresa del tenant (1:1 por tenant).'),
   Oferta: SCOPED(),
@@ -169,6 +170,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   UnidadConversion: SCOPED(
     'Conversión por tenant con FKs compuestas a Producto y Unidad del mismo tenant.',
   ),
+  Ubicacion: SCOPED('Ubicación tenant-owned con FK compuesta tenantId-almacenId al almacén.'),
   Unidad: SCOPED(),
   ValeSalida: SCOPED(),
   ValeSalidaItem: SCOPED('Ítem con tenantId propio denormalizado.'),

@@ -28,7 +28,7 @@ export interface TenantBackupBusinessManifestEntry {
 const DIRECT_TENANT_MODELS = [
   'Categoria', 'Unidad', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
-  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'UnidadConversion',
+  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'UnidadConversion', 'Lote',
   'StockUbicacion', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'Merma', 'Transferencia',
   'Empleado', 'Pagosalario', 'CierreContable', 'GastoCompra',
@@ -37,7 +37,7 @@ const DIRECT_TENANT_MODELS = [
   'PurchaseAllocation', 'Servicios', 'VentaServicios', 'CompraServicio',
   'GastoConcepto', 'GastoElemento', 'GastosDE', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda', 'CuentaBancaria',
-  'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio', 'ReconciliacionGasto',
+  'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio', 'ReconciliacionGasto', 'Ubicacion',
   'AjusteBancario', 'TransferenciaBancaria', 'CobroNota', 'Contrato',
   'Factura', 'SerieFacturacion', 'Oferta', 'CuentaPorCobrar',
   'CuentaPorPagar', 'DeudaCash', 'PrestamoCash', 'PagoCuentaPorPagar',
@@ -72,7 +72,7 @@ const BUSINESS_MODEL_NAMES = [
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
   'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto',
   'StockUbicacion', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
-  'StockMoveLine', 'Venta', 'VentaItem', 'Merma',
+  'StockMoveLine', 'Venta', 'VentaItem', 'Merma', 'Lote', 'Ubicacion',
   'Transferencia', 'Attendance', 'EmployeeWorkSchedule', 'VacationRequest',
   'VacationAccrual', 'Empleado', 'Pagosalario', 'CierreContable',
   'GastoCompra', 'CompraProducto', 'CompraDocumento', 'CompraDocumentoItem',
@@ -149,13 +149,22 @@ const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
       ? 'tenantId; exclude legacy NULL rows'
       : model === 'UnidadConversion'
         ? 'tenantId; composite Producto and Unidad foreign keys'
-        : 'tenantId',
+        : model === 'Lote'
+          ? 'tenantId; composite Producto foreign key'
+          : model === 'Ubicacion'
+            ? 'tenantId; composite Almacen and parent-location foreign keys'
+            : 'tenantId',
     rationale: model === 'TipoContratoCustom'
       ? 'Tenant-owned model; never infer tenant ownership for legacy NULL tenantId rows.'
       : model === 'UnidadConversion'
         ? 'Tenant-owned conversion with tenantId and composite same-tenant Producto and Unidad references; '
           + 'relation and field review still gates export and restore.'
-      : POLICY_RATIONALE['tenant-direct'],
+        : model === 'Lote'
+          ? 'Tenant-owned lot with a same-tenant Producto reference; export and restore remain gated by field review.'
+          : model === 'Ubicacion'
+            ? 'Tenant-owned warehouse location with same-tenant Almacen and parent references; '
+              + 'export and restore remain gated by relation review.'
+            : POLICY_RATIONALE['tenant-direct'],
     protectedEvidenceCandidate: PROTECTED_EVIDENCE_MODEL_SET.has(model),
   })),
   ...Object.entries(CHILD_OWNER_PATHS).map(([model, ownerPath]) => ({
@@ -197,7 +206,11 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
             'UnidadConversion is required to preserve tenant product-unit conversion state;',
             'include only after relation and field validation.',
           ].join(' ')
-      : 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
+        : model === 'Lote'
+          ? 'Lote preserves tenant product batch identity and expiry metadata; include only after relation and field validation.'
+          : model === 'Ubicacion'
+            ? 'Ubicacion preserves the tenant warehouse hierarchy; include only after parent and warehouse relation validation.'
+            : 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
     productImpact: model === 'TipoContratoCustom'
       ? 'Legacy unattributed custom types remain excluded; current tenant rows are candidates only.'
       : model === 'UnidadConversion'
@@ -205,7 +218,11 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
             'Omission can lose tenant conversion settings; export and restore eligibility remains',
             'blocked pending relation and ordering review.',
           ].join(' ')
-      : 'Omission can lose tenant operational, accounting, or historical data; eligibility is not yet approved.',
+        : model === 'Lote'
+          ? 'Omission can lose lot-level traceability and expiry data; restore eligibility is not yet approved.'
+          : model === 'Ubicacion'
+            ? 'Omission can lose warehouse hierarchy and location assignments; restore eligibility is not yet approved.'
+            : 'Omission can lose tenant operational, accounting, or historical data; eligibility is not yet approved.',
   }));
 }
 
