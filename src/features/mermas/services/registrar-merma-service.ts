@@ -12,7 +12,9 @@
  * @module features/mermas/services/registrar-merma-service
  */
 import { mapearMotivoLegacy, registrarMovimiento } from '@/features/inventario/movimientos';
+import { emitirReconocimientoMerma } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import type { PostingTx } from '@/features/contabilidad-formal/services/posting-engine';
 
 /** Parámetros de negocio del alta de merma (validados por el llamador). */
 export interface RegistrarMermaParams {
@@ -102,7 +104,7 @@ export async function registrarMermaEnTransaccion<
 
 	// Puente legacy: la merma produce su AjusteInventario espejo
 	// (documento unificado de valorización; no duplica kardex).
-	await tx.ajusteInventario.create({
+	const ajuste = await tx.ajusteInventario.create({
 		data: {
 			tenantId,
 			productoId,
@@ -118,6 +120,18 @@ export async function registrarMermaEnTransaccion<
 			origenMermaId: mermaId,
 			creadoPorId,
 		},
+	});
+	const ajusteRow = ajuste as { id?: unknown; createdAt?: unknown };
+	if (typeof ajusteRow.id !== 'string' || ajusteRow.id.length === 0) {
+		throw new Error('registrarMermaEnTransaccion: el ajuste debe devolver su id');
+	}
+	await emitirReconocimientoMerma(tx as unknown as PostingTx, {
+		tenantId,
+		userId: creadoPorId,
+	}, {
+		ajusteInventarioId: ajusteRow.id,
+		fecha: ajusteRow.createdAt instanceof Date ? ajusteRow.createdAt : new Date(),
+		costoTotal: -cantidad * costoUnitario,
 	});
 
 	return creada;

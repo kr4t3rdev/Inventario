@@ -10,7 +10,7 @@ const { prismaMock } = vi.hoisted(() => {
     almacen: { findFirst: vi.fn() },
     vendor: { findFirst: vi.fn() },
     stockUbicacion: { findUnique: vi.fn() },
-    ajusteInventario: { create: vi.fn(), updateMany: vi.fn() },
+    ajusteInventario: { create: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
   };
   prismaMock.$transaction = vi.fn((cb: any) => cb(prismaMock));
   return { prismaMock };
@@ -43,6 +43,12 @@ vi.mock('@/lib/notificaciones-utils', () => ({
   notificarMerma: vi.fn(async () => undefined),
 }));
 
+vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
+  emitirReconocimientoMerma: vi.fn(async () => ({ estado: 'OMITIDO' })),
+  emitirProduccionInventario: vi.fn(async () => ({ estado: 'OMITIDO' })),
+  revertirMermaContableEnTransaccion: vi.fn(async () => undefined),
+}));
+
 import { GET as getTransfers } from '../transfers/route';
 import { GET as getTransferById, DELETE as deleteTransfer } from '../transfers/[id]/route';
 import { GET as getMermas, POST as createMerma } from '../mermas/route';
@@ -54,6 +60,11 @@ import { notificarMerma } from '@/lib/notificaciones-utils';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
+
+beforeEach(() => {
+  prismaMock.ajusteInventario.create.mockResolvedValue({ id: 'aj-1', createdAt: new Date() });
+  prismaMock.ajusteInventario.findMany.mockResolvedValue([]);
+});
 
 const transferRow = {
   transferenciaId: 't1',

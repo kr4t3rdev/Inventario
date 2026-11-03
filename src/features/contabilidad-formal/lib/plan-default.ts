@@ -88,6 +88,7 @@ export type TipoEventoClave =
 	| 'INYECCION_CAPITAL'
 	| 'PAGO_DEUDA_CAPITAL'
 	| 'MERMA_INVENTARIO'
+	| 'MERMA_INVENTARIO_REVERSADA'
 	| 'PRODUCCION_SALIDA'
 	| 'GASTO_CON_ANTICIPO_PROVEEDOR'
 	| 'DIFERENCIA_CAMBIARIA'
@@ -147,6 +148,7 @@ export const DIARIO_POR_EVENTO: Record<TipoEventoClave, DiarioDefault['tipo']> =
 	TRANSFERENCIA_BANCARIA: 'BANCOS',
 	DIFERENCIA_CAMBIARIA: 'BANCOS',
 	MERMA_INVENTARIO: 'AJUSTES',
+	MERMA_INVENTARIO_REVERSADA: 'AJUSTES',
 	PRODUCCION_SALIDA: 'AJUSTES',
 	APERTURA_PERIODO: 'APERTURA_CIERRE',
 	CIERRE_PERIODO: 'APERTURA_CIERRE',
@@ -670,6 +672,10 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 	...plantilla('MERMA_INVENTARIO', [
 		{ lado: 'DEBE', rol: 'MERMAS', regla: 'TOTAL' },
 		{ lado: 'HABER', rol: 'INVENTARIOS', regla: 'TOTAL' },
+	]),
+	...plantilla('MERMA_INVENTARIO_REVERSADA', [
+		{ lado: 'DEBE', rol: 'INVENTARIOS', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'MERMAS', regla: 'TOTAL' },
 	]),
 	...plantilla('PRODUCCION_SALIDA', [
 		{ lado: 'DEBE', rol: 'INVENTARIOS', regla: 'TOTAL' },

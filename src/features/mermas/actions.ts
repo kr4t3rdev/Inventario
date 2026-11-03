@@ -18,6 +18,10 @@ import {
 	revertirMovimientosDeOrigen,
 } from "@/features/inventario/movimientos";
 import { registrarMermaEnTransaccion } from "./services/registrar-merma-service";
+import {
+	emitirReconocimientoMerma,
+	revertirMermaContableEnTransaccion,
+} from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -203,6 +207,10 @@ export const updateMermaAction = withAction(
 			}
 
 			const merma = await prisma.$transaction(async (tx: any) => {
+			await revertirMermaContableEnTransaccion(tx, {
+				tenantId,
+				userId: user.userId,
+			}, mermaId);
 			const updated = await tx.merma.update({
 				where: { mermaId },
 				data: {
@@ -287,7 +295,7 @@ export const updateMermaAction = withAction(
 					select: { cantidad: true },
 				}))?.cantidad ?? 0;
 
-			await tx.ajusteInventario.create({
+			const ajusteNuevo = await tx.ajusteInventario.create({
 				data: {
 					tenantId,
 					productoId,
@@ -303,6 +311,17 @@ export const updateMermaAction = withAction(
 					origenMermaId: mermaId,
 					creadoPorId: user.userId,
 				},
+			});
+			if (typeof ajusteNuevo?.id !== "string") {
+				throw new Error("El ajuste de merma no devolvió su identificador");
+			}
+			await emitirReconocimientoMerma(tx, {
+				tenantId,
+				userId: user.userId,
+			}, {
+				ajusteInventarioId: ajusteNuevo.id,
+				fecha: ajusteNuevo.createdAt instanceof Date ? ajusteNuevo.createdAt : new Date(),
+				costoTotal: -cantidad * (costoUnitarioNuevo ?? 0),
 			});
 
 			return updated;
@@ -339,6 +358,10 @@ export const deleteMermaAction = withAction(
 		if (!merma) throw new ActionError("Merma no encontrada", "NOT_FOUND");
 
 		await prisma.$transaction(async (tx: any) => {
+			await revertirMermaContableEnTransaccion(tx, {
+				tenantId,
+				userId: user.userId,
+			}, merma.mermaId);
 			await revertirMovimientosDeOrigen(tx, {
 				tenantId,
 				tipoOrigen: "MERMA",

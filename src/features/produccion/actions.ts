@@ -16,6 +16,7 @@ import {
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
 import { convertToBase } from "@/lib/utils/unit-converter";
+import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 // ==================== RECETAS ====================
@@ -543,21 +544,37 @@ export const completarOrdenProduccionAction = withAction(
 				);
 			}
 
-			// Calcular costo real de materiales
-			let costoMateriales = 0;
-			for (const ingrediente of orden.Receta.RecetaIngrediente) {
-				const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
-				const cantidadBase = convertToBase(
-					ingrediente.cantidad,
-					ingrediente.unidadSimbolo,
-				);
-				const cantidadUsada = cantidadBase * factorDesperdicio * orden.cantidad;
-
-				const producto = await tx.producto.findUnique({
-					where: { id: ingrediente.productoId },
-				});
-				if (producto) {
-					costoMateriales += producto.precioCosto * cantidadUsada;
+			// El costo de salida proviene del Kardex consumido al aprobar la orden;
+			// no se vuelve a valorar con precios que pudieron cambiar después.
+			const movimientosConsumo = await getMovimientosDeOrigen(tx as any, {
+				tenantId,
+				tipoOrigen: "PRODUCCION",
+				origenId: id,
+			});
+			const movimientosIngreso = movimientosConsumo.filter((movimiento) =>
+				movimiento.secuencia.startsWith("ING-"),
+			);
+			let costoMateriales = movimientosIngreso.reduce(
+				(total, movimiento) =>
+					total + Math.abs(movimiento.cantidad) * movimiento.costoUnitario,
+				0,
+			);
+			if (movimientosIngreso.length === 0) {
+				// Órdenes aprobadas antes de la trazabilidad de kardex: conservar
+				// la valoración histórica por receta para no completar con costo 0.
+				for (const ingrediente of orden.Receta.RecetaIngrediente) {
+					const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
+					const cantidadBase = convertToBase(
+						ingrediente.cantidad,
+						ingrediente.unidadSimbolo,
+					);
+					const cantidadUsada = cantidadBase * factorDesperdicio * orden.cantidad;
+					const producto = await tx.producto.findUnique({
+						where: { id: ingrediente.productoId },
+					});
+					if (producto) {
+						costoMateriales += producto.precioCosto * cantidadUsada;
+					}
 				}
 			}
 
@@ -613,6 +630,15 @@ export const completarOrdenProduccionAction = withAction(
 						},
 					},
 				},
+			});
+
+			await emitirProduccionInventario(tx, {
+				tenantId,
+				userId: user.userId,
+			}, {
+				ordenProduccionId: id,
+				fecha: new Date(),
+				costoMaterialesCUP: costoMateriales,
 			});
 
 			await tx.ordenProduccionHistorial.create({

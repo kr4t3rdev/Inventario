@@ -233,6 +233,7 @@ describe('seedPlantillasGlobales', () => {
 		const pares = [
 			['ANTICIPO_CLIENTE_APLICADO', 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'],
 			['ANTICIPO_PROVEEDOR_APLICADO', 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA'],
+			['MERMA_INVENTARIO', 'MERMA_INVENTARIO_REVERSADA'],
 		] as const;
 
 		for (const [original, reverso] of pares) {

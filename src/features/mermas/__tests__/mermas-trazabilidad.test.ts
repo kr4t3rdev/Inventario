@@ -9,12 +9,21 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
+vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
+  emitirReconocimientoMerma: vi.fn(async () => ({ estado: 'OMITIDO' })),
+  emitirProduccionInventario: vi.fn(async () => ({ estado: 'OMITIDO' })),
+  revertirMermaContableEnTransaccion: vi.fn(async () => undefined),
+}));
 
 const { mockTx } = vi.hoisted(() => ({
   mockTx: {
     merma: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     stockMoveLine: { upsert: vi.fn(), findMany: vi.fn().mockResolvedValue([]), count: vi.fn(), aggregate: vi.fn() },
-    ajusteInventario: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    ajusteInventario: {
+      create: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
     stockUbicacion: { findUnique: vi.fn().mockResolvedValue({ cantidad: 50 }) },
   },
 }));
@@ -43,6 +52,7 @@ const mockUser: AuthenticatedUser = {
 describe('CU-07 trazabilidad y costo de mermas (RED)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTx.ajusteInventario.create.mockResolvedValue({ id: 'aj-1', createdAt: new Date() });
   });
 
   it('create persiste creadoPorId del usuario autenticado', async () => {

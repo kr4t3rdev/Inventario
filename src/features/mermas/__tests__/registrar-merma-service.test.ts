@@ -15,12 +15,15 @@ vi.mock('@/features/inventario/movimientos', async () => ({
 	...(await vi.importActual('@/features/inventario/movimientos')),
 	registrarMovimiento: vi.fn(),
 }));
+vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
+	emitirReconocimientoMerma: vi.fn(),
+}));
 
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, mapearMotivoLegacy } from '@/features/inventario/movimientos';
+import { emitirReconocimientoMerma } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import { registrarMermaEnTransaccion } from '../services/registrar-merma-service';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const mockTx: any = {
 	merma: { create: vi.fn() },
 	ajusteInventario: { create: vi.fn() },
@@ -41,6 +44,17 @@ describe('registrarMermaEnTransaccion', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockTx.merma.create.mockResolvedValue({ mermaId: 'm-1' });
+		mockTx.ajusteInventario.create.mockResolvedValue({ id: 'aj-1', createdAt: new Date('2026-11-03T10:00:00.000Z') });
+	});
+
+	it('emite el evento formal anclado al ajuste persistido', async () => {
+		await registrarMermaEnTransaccion(mockTx, baseParams);
+
+		expect(emitirReconocimientoMerma).toHaveBeenCalledWith(
+			mockTx,
+			{ tenantId: 'tenant-1', userId: 'user-1' },
+			expect.objectContaining({ ajusteInventarioId: 'aj-1', costoTotal: -1500 }),
+		);
 	});
 
 	it('crea la merma con creadoPorId y costoTotal calculado', async () => {

@@ -28,10 +28,15 @@ de servicios (`COBRO_SERVICIO`), reconocimiento de compra a crédito
 | `ANTICIPO_CLIENTE_DEVUELTO` | Devolución de fondos disponibles al cliente, con diferencia FX | `VENTAS` | `ANTICIPOS_CLIENTES` / `CAJA_PRINCIPAL` |
 | `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | Asiento compensatorio de la aplicación | `COMPRAS` | `ANTICIPOS_PROVEEDORES` / `CXP_PROVEEDORES` |
 | `ANTICIPO_PROVEEDOR_REINTEGRADO` | Reintegro de fondos disponibles por el proveedor, con diferencia FX | `COMPRAS` | `CAJA_PRINCIPAL` / `ANTICIPOS_PROVEEDORES` |
+| `MERMA_INVENTARIO` | Merma contra inventarios | `AJUSTES` | `INVENTARIOS` |
+| `MERMA_INVENTARIO_REVERSADA` | Asiento compensatorio de una merma | `AJUSTES` | `INVENTARIOS` / `MERMAS` |
+| `PRODUCCION_SALIDA` | Reclasificación de materias primas a producto terminado | `AJUSTES` | `INVENTARIOS` (ambas líneas) |
 
-Las plantillas ya existían en `src/features/contabilidad-formal/lib/plan-default.ts`;
-lo nuevo es el **emisor**: el punto que traduce una conciliación operativa
-persistida en un evento formal.
+Las plantillas de CxC/CxP, servicios y anticipos ya existían en
+`src/features/contabilidad-formal/lib/plan-default.ts`; lo nuevo es el **emisor**:
+el punto que traduce una conciliación operativa persistida en un evento formal.
+La plantilla compensatoria `MERMA_INVENTARIO_REVERSADA` se añadió con el emisor
+de inventario y se siembra en la migración para bases existentes.
 
 ## Reglas de valoración
 
@@ -66,6 +71,10 @@ builder de pagos Cash.
 | `src/features/productos/actions-restock.ts` → `handlePaymentInTransaction` | `PAGO_CXP` | Solo `PAGO_COMPLETO`; persiste evidencia FX y emite dentro de la transacción que registra el pago y descuenta la cuenta |
 | `src/features/compras-productos/actions.ts` → `createCompraProductoAction` | `COMPRA_CREDITO` | Reconoce compras a crédito, anticipadas y contado antes de liquidar cualquier pago; comparte la transacción |
 | `src/features/compras-servicios/actions.ts` → `createCompraServicioAction` | `GASTO_CREDITO` | Devenga el gasto operativo contra CxP al recibir el servicio; comparte la transacción y la valoración con la vía de anticipos |
+| `src/features/mermas/services/registrar-merma-service.ts` → `registrarMermaEnTransaccion` | `MERMA_INVENTARIO` | Punto único de escritorio y móvil; ancla el asiento a la versión persistida de `AjusteInventario` |
+| `src/features/mermas/actions.ts` → `updateMermaAction` / `deleteMermaAction` | `MERMA_INVENTARIO_REVERSADA` + `MERMA_INVENTARIO` | Editar revierte la versión anterior y reconoce la nueva; eliminar solo revierte |
+| `src/app/api/mobile/mermas/[id]/route.ts` → `DELETE` | `MERMA_INVENTARIO_REVERSADA` | Mismo criterio que la eliminación de escritorio |
+| `src/features/produccion/actions.ts` → `completarOrdenProduccionAction` | `PRODUCCION_SALIDA` | Emite al completar, con el costo histórico de las líneas `ING-*` del kardex |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -87,6 +96,24 @@ por el workflow de gastos. La valoración reutiliza la tasa publicada del catál
 extranjera y no hay tasa publicada, el reconocimiento queda sin valoración
 funcional y el motor falla cerrado — la vía de anticipos, además, rechaza la
 conciliación, igual que antes.
+
+Las mermas y la producción usan el modo global `CONTABILIDAD_FORMAL_MODE`, no el
+gate `CONTABILIDAD_FORMAL_NO_CASH_MODE`. La merma se ancla a la fila concreta de
+`AjusteInventario` que la representa: crear emite `MERMA_INVENTARIO`; editar
+emite `MERMA_INVENTARIO_REVERSADA` sobre la versión anterior y reconoce la nueva
+versión con su propio `AjusteInventario`; eliminar solo revierte. La reversión se
+emite únicamente si el reconocimiento original quedó contabilizado (o simulado en
+la outbox cuando el modo es `shadow`), de modo que los datos legacy sin asiento
+no generan compensaciones huérfanas. Un monto de costo cero se omite sin romper
+la operación.
+
+La producción emite `PRODUCCION_SALIDA` al **completar** la orden, no al
+aprobarla. El importe sale de las líneas `ING-*` ya persistidas en el kardex al
+consumir las materias primas, que conservan el costo histórico real; las órdenes
+antiguas sin esas líneas caen al cálculo histórico por receta para no completar
+con costo cero. La plantilla reclasifica inventario de materias primas contra
+inventario de producto terminado, por lo que ambas líneas usan el rol
+`INVENTARIOS`.
 
 ## Rollout
 
@@ -152,5 +179,6 @@ La decisión y sus consecuencias están registradas en
 - Anticipos: `src/features/contabilidad-formal/lib/advance-event-builder.ts` y
   `src/features/contabilidad-formal/services/advance-posting-service.ts`
 - Servicio de emisión: `src/features/contabilidad-formal/services/settlement-posting-service.ts`
+- Inventario (merma y producción): `src/features/contabilidad-formal/services/inventory-adjustment-posting-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

@@ -3,6 +3,7 @@ import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
+import { revertirMermaContableEnTransaccion } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import { mapMerma } from '../route';
 
 export const dynamic = 'force-dynamic';
@@ -83,6 +84,10 @@ export async function DELETE(request: Request, context: RouteContext) {
     // kardex y restaurar stock. El kardex y el stock requieren ubicación
     // (almacenId); la anulación del espejo no y siempre aplica.
     await prisma.$transaction(async (tx: any) => {
+      await revertirMermaContableEnTransaccion(tx, {
+        tenantId,
+        userId: authResult.user.userId,
+      }, id);
       await tx.ajusteInventario.updateMany({
         where: { tenantId, origenMermaId: id },
         data: { estado: 'ANULADO' },

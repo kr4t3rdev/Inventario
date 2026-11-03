@@ -13,6 +13,9 @@ vi.mock('@/lib/utils/produccion', () => ({
 vi.mock('@/lib/utils/unit-converter', () => ({
 	convertToBase: vi.fn((cantidad) => cantidad),
 }));
+vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
+	emitirProduccionInventario: vi.fn(),
+}));
 
 const { mockTx } = vi.hoisted(() => ({
 	mockTx: {
@@ -55,6 +58,7 @@ vi.mock('@/lib/prisma', () => ({
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { emitirProduccionInventario } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import {
 	aprobarOrdenProduccionAction,
 	completarOrdenProduccionAction,
@@ -150,6 +154,11 @@ describe('Producción Server Actions', () => {
 		const result = await completarOrdenProduccionAction('op-1');
 
 		expect(result.success).toBe(true);
+		expect(emitirProduccionInventario).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+			expect.objectContaining({ ordenProduccionId: 'op-1', costoMaterialesCUP: 400 }),
+		);
 		expect(mockTx.producto.update).not.toHaveBeenCalled();
 		expect(upsertStockUbicacion).toHaveBeenCalledWith(
 			mockTx,
@@ -229,14 +238,31 @@ describe('Producción: kardex y cancelación', () => {
 				],
 			},
 		});
-		mockTx.producto.findUnique
-			.mockResolvedValueOnce({ id: 'prod-final', almacenId: 'alm-1', stock: 0 })
-			.mockResolvedValueOnce({ id: 'mat-1', precioCosto: 100 });
+		mockTx.producto.findUnique.mockResolvedValueOnce({
+			id: 'prod-final',
+			almacenId: 'alm-1',
+			stock: 0,
+		});
+		mockTx.stockMoveLine.findMany.mockResolvedValue([
+			{
+				productoId: 'mat-1',
+				cantidad: -4,
+				costoUnitario: 100,
+				secuencia: 'ING-0',
+				createdAt: new Date('2026-11-03T09:00:00.000Z'),
+				id: 'move-ing-1',
+			},
+		] as any);
 		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-1' });
 
 		const result = await completarOrdenProduccionAction('op-1');
 
 		expect(result.success).toBe(true);
+		expect(emitirProduccionInventario).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+			expect.objectContaining({ ordenProduccionId: 'op-1', costoMaterialesCUP: 400 }),
+		);
 		// Material: 2 uds * 2 = 4 a 100 cada una → costo 400 → producto 6 uds → 400/6 = 67
 		expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(
 			expect.objectContaining({

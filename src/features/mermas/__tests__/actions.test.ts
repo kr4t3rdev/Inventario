@@ -10,6 +10,11 @@ vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
+	emitirReconocimientoMerma: vi.fn(),
+	emitirProduccionInventario: vi.fn(),
+	revertirMermaContableEnTransaccion: vi.fn(),
+}));
 
 const { mockTx } = vi.hoisted(() => ({
 	mockTx: {
@@ -29,6 +34,7 @@ const { mockTx } = vi.hoisted(() => ({
 		},
 		ajusteInventario: {
 			create: vi.fn(),
+			findMany: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
 		stockUbicacion: {
@@ -65,6 +71,10 @@ import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { notificarMerma } from '@/lib/notificaciones-utils';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import {
+  emitirReconocimientoMerma,
+  revertirMermaContableEnTransaccion,
+} from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import {
   getMermasAction,
   getMermaByIdAction,
@@ -107,6 +117,8 @@ describe('Mermas Server Actions', () => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(prisma.almacen.findFirst).mockResolvedValue({ almacenId: 'alm-1' } as never);
+    vi.mocked(revertirMermaContableEnTransaccion).mockResolvedValue(undefined);
+    mockTx.ajusteInventario.create.mockResolvedValue({ id: 'aj-1', createdAt: new Date() });
   });
 
   describe('getMermasAction', () => {
@@ -271,10 +283,24 @@ describe('Mermas Server Actions', () => {
       vi.mocked(prisma.producto.findFirst).mockResolvedValue(mockProducto as any);
       vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 20 } as any);
       mockTx.merma.update.mockResolvedValue(mockMermaRow);
+      mockTx.ajusteInventario.create.mockResolvedValue({ id: 'aj-new', createdAt: new Date() });
 
       const result = await updateMermaAction({ mermaId: 'mer-1', cantidad: 7 });
 
       expect(result.success).toBe(true);
+      expect(revertirMermaContableEnTransaccion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+        'mer-1',
+      );
+      expect(revertirMermaContableEnTransaccion.mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(upsertStockUbicacion).mock.invocationCallOrder[0],
+      );
+      expect(emitirReconocimientoMerma).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+        expect.objectContaining({ ajusteInventarioId: 'aj-new', costoTotal: -7000 }),
+      );
       expect(mockTx.producto.update).not.toHaveBeenCalled();
       expect(upsertStockUbicacion).toHaveBeenCalledWith(
         mockTx,
@@ -396,6 +422,12 @@ describe('Mermas Server Actions', () => {
 
       const result = await deleteMermaAction('mer-1');
       expect(result.success).toBe(true);
+      expect(revertirMermaContableEnTransaccion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({ tenantId: 'tenant-test', userId: 'user-1' }),
+        'mer-1',
+      );
+      expect(emitirReconocimientoMerma).not.toHaveBeenCalled();
     });
 
     it('(RETIRE LEGACY) delete con almacén no escribe Producto.stock', async () => {
