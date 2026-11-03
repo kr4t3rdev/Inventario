@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { emitirEventoAnticipo } from '@/features/contabilidad-formal/services/advance-posting-service'
+import {
+  emitirEventoAnticipo,
+  emitirReversionAplicacionAnticipo,
+  emitirAplicacionAnticipo,
+} from '@/features/contabilidad-formal/services/advance-formal-posting-service'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
 
-vi.mock('@/features/contabilidad-formal/services/advance-posting-service', () => ({
+vi.mock('@/features/contabilidad-formal/services/advance-formal-posting-service', () => ({
   emitirEventoAnticipo: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+  emitirAplicacionAnticipo: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+  emitirDevolucionAnticipo: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+  emitirReversionAplicacionAnticipo: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
 }))
 
 import {
@@ -421,11 +428,11 @@ describe('anticipos-workflow', () => {
         tasaAplicada: 30,
       }),
     }))
-    expect(emitirEventoAnticipo).toHaveBeenCalledWith(
+    expect(emitirReversionAplicacionAnticipo).toHaveBeenCalledWith(
       tx,
       { tenantId: 'tenant-1', userId: 'user-1' },
       expect.objectContaining({
-        tipo: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
+        tipoReverso: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA',
         anticipoMovimientoId: 'reverse-1',
         monto: 40,
         montoFuncional: 1200,
@@ -665,11 +672,11 @@ describe('anticipos-workflow', () => {
       }),
       data: { saldoDisponible: { decrement: 40 } },
     }))
-    expect(emitirEventoAnticipo).toHaveBeenCalledWith(
+    expect(emitirAplicacionAnticipo).toHaveBeenCalledWith(
       tx,
       { tenantId: 'tenant-1', userId: 'user-1' },
       expect.objectContaining({
-        tipo: 'ANTICIPO_PROVEEDOR_APLICADO',
+        tipoEvento: 'ANTICIPO_PROVEEDOR_APLICADO',
         anticipoMovimientoId: 'mov-tenant',
         monto: 40,
         montoFuncional: 40,
