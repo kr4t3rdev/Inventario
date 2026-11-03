@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
+import { emitirVentaServicio } from '@/features/contabilidad-formal/services/service-sale-posting-service';
 import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
 import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
@@ -325,6 +326,18 @@ const createVentaServicioHandler = async (
         });
       }));
 
+      // S4(e): reconocimiento formal del ingreso por servicios. Cada fila de
+      // venta genera su propio evento (origen `venta_servicio`), de modo que
+      // la idempotencia no depende del lote ni de la clave de idempotencia.
+      for (const venta of created) {
+        await emitirVentaServicio(tx, { tenantId, userId: user.userId }, {
+          ventaServicioId: venta.ventaServicioId,
+          fecha: new Date(),
+          monto: Number(venta.total),
+          moneda: venta.moneda,
+        });
+      }
+
       // B-06: crédito en modo mixto → una CxC por línea (cada fila es una
       // venta); la atomicidad impide dejar una venta mixta parcial o duplicar
       // los efectos del crédito en un replay.
@@ -616,6 +629,17 @@ const createVentaServicioHandler = async (
         });
       }
     }
+
+    // S4(e): reconocimiento formal del ingreso por servicios. El importe es el
+    // total de la venta; el anticipo aplicado compensa parte de la cuenta por
+    // cobrar con su propio evento (`ANTICIPO_CLIENTE_APLICADO`) y el cobro
+    // posterior la liquida con `COBRO_SERVICIO`.
+    await emitirVentaServicio(tx, { tenantId, userId: user.userId }, {
+      ventaServicioId: ventaServicio.ventaServicioId,
+      fecha: new Date(),
+      monto: ventaTotal,
+      moneda: monedaServicio,
+    });
 
     return { ventaServicio, allocationsResult, replayed: false };
   });

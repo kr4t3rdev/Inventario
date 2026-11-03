@@ -27,6 +27,7 @@ import {
 	buildCobroCxcEvent,
 	buildCobroServicioEvent,
 	buildPagoCxpEvent,
+	type SettlementEvent,
 	type SettlementEventParams,
 } from '../lib/settlement-event-builder';
 
@@ -87,22 +88,23 @@ async function resolverMonedaFuncional(
 }
 
 /**
- * @description Emite el evento formal de liquidacion desde el writer operativo.
- * @param {PostingTx} tx - Transaccion Prisma del writer (misma atomicidad).
+ * @description Resuelve la valoracion funcional persistida y construye el evento
+ * formal de liquidacion.
+ *
+ * Es la base compartida por los emisores de liquidacion (el de gate no-Cash y
+ * el de modo global): ambos valoran igual y solo difieren en el modo de
+ * rollout que aplican al posteo.
+ *
+ * @param {PostingTx} tx - Transaccion Prisma del writer.
  * @param {ContextoPosting} ctx - Tenant y actor de la operacion.
  * @param {SettlementPostingParams} params - Conciliacion y datos de emision.
- * @returns {Promise<PostEventoResult>} Estado del posteo formal.
+ * @returns {Promise<SettlementEvent>} Evento formal listo para el motor.
  */
-export async function emitirEventoLiquidacion(
+export async function construirEventoLiquidacion(
 	tx: PostingTx,
 	ctx: ContextoPosting,
 	params: SettlementPostingParams,
-): Promise<PostEventoResult> {
-	const modo = resolveModoEmisorNoCash();
-	if (modo === 'off') {
-		return { estado: 'OMITIDO', motivo: 'EMISOR_NO_CASH_DESACTIVADO' };
-	}
-
+): Promise<SettlementEvent> {
 	const conciliacion = params.reconciliacion;
 	const monedaFuncional = (
 		params.functionalCurrency ??
@@ -140,12 +142,30 @@ export async function emitirEventoLiquidacion(
 		...(params.descripcion == null ? {} : { descripcion: params.descripcion }),
 	};
 
-	const evento =
-		params.tipo === 'COBRO_CXC'
-			? buildCobroCxcEvent(base)
-			: params.tipo === 'COBRO_SERVICIO'
-				? buildCobroServicioEvent(base)
-				: buildPagoCxpEvent(base);
+	return params.tipo === 'COBRO_CXC'
+		? buildCobroCxcEvent(base)
+		: params.tipo === 'COBRO_SERVICIO'
+			? buildCobroServicioEvent(base)
+			: buildPagoCxpEvent(base);
+}
 
+/**
+ * @description Emite el evento formal de liquidacion desde el writer operativo.
+ * @param {PostingTx} tx - Transaccion Prisma del writer (misma atomicidad).
+ * @param {ContextoPosting} ctx - Tenant y actor de la operacion.
+ * @param {SettlementPostingParams} params - Conciliacion y datos de emision.
+ * @returns {Promise<PostEventoResult>} Estado del posteo formal.
+ */
+export async function emitirEventoLiquidacion(
+	tx: PostingTx,
+	ctx: ContextoPosting,
+	params: SettlementPostingParams,
+): Promise<PostEventoResult> {
+	const modo = resolveModoEmisorNoCash();
+	if (modo === 'off') {
+		return { estado: 'OMITIDO', motivo: 'EMISOR_NO_CASH_DESACTIVADO' };
+	}
+
+	const evento = await construirEventoLiquidacion(tx, ctx, params);
 	return postEvento(tx, ctx, evento, { modo });
 }

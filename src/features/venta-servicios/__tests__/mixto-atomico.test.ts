@@ -8,6 +8,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/anticipos-workflow', () => ({ applyAnticipoAllocations: vi.fn() }));
+vi.mock('@/features/contabilidad-formal/services/service-sale-posting-service', () => ({
+  emitirVentaServicio: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
+}));
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
   exchangeRateProvider: { getRateAsOf: vi.fn() },
 }));
@@ -42,6 +45,7 @@ vi.mock('@/lib/prisma', () => {
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
+import { emitirVentaServicio } from '@/features/contabilidad-formal/services/service-sale-posting-service';
 import { createVentaServicioAction } from '@/features/venta-servicios/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 

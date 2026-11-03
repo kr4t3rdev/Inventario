@@ -9,7 +9,10 @@ pagos de gastos.
 Los writers conectados traducen cada conciliación operativa persistida en un
 evento formal: cobro de venta (`COBRO_CXC`), pago de gasto (`PAGO_CXP`), cobro
 de servicios (`COBRO_SERVICIO`), reconocimiento de compra a crédito
-(`COMPRA_CREDITO`) y recepción, entrega o aplicación de anticipos.
+(`COMPRA_CREDITO`) y recepción, entrega o aplicación de anticipos. Los
+reconocimientos de ingreso y gasto que no dependen de una conciliación
+—merma, producción, compra, gasto de servicio y venta de servicios— emiten
+desde el propio writer operativo, en su misma transacción.
 
 ## Qué emite
 
@@ -18,6 +21,7 @@ de servicios (`COBRO_SERVICIO`), reconocimiento de compra a crédito
 | `COBRO_CXC` | 6 líneas (3 ramas FX + 2 de diferencia + tesorería) | `VENTAS` | `CXC_CLIENTES` |
 | `PAGO_CXP` | 6 líneas (espejo del anterior) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `COBRO_SERVICIO` | Plantilla de cobro de servicios con ramas FX | `VENTAS` | `CXC_CLIENTES` |
+| `VENTA_SERVICIO_CREDITO` | Ingreso por servicios contra cuenta por cobrar | `VENTAS` | `CXC_CLIENTES` / `VENTAS_SERVICIOS` |
 | `COMPRA_CREDITO` | Inventario contra cuentas por pagar | `COMPRAS` | `CXP_PROVEEDORES` |
 | `GASTO_CREDITO` | Gasto operativo contra cuentas por pagar (servicios recibidos) | `COMPRAS` | `CXP_PROVEEDORES` |
 | `ANTICIPO_CLIENTE_RECIBIDO` | Tesorería contra anticipos de clientes | `VENTAS` | `ANTICIPOS_CLIENTES` |
@@ -57,6 +61,14 @@ builder de pagos Cash.
   valor funcional valuado con la tasa persistida, por lo que aplica la rama
   `SIN_DIFERENCIA_FX`.
 
+Los emisores de reconocimiento que no nacen de una conciliación (merma,
+producción, compra, gasto de servicio y venta de servicios) sí valoran el
+importe: toman la moneda funcional de `TenantAccountingPolicy` y la tasa
+publicada vigente en la fecha de la operación (`exchangeRateProvider`), y
+persisten la huella de esa evidencia. Si la moneda de la operación difiere de
+la funcional y no hay tasa publicada, el importe funcional queda nulo y el motor
+falla cerrado, sin inventar conversión.
+
 ## Writers conectados
 
 | Writer | Evento | Nota |
@@ -75,6 +87,7 @@ builder de pagos Cash.
 | `src/features/mermas/actions.ts` → `updateMermaAction` / `deleteMermaAction` | `MERMA_INVENTARIO_REVERSADA` + `MERMA_INVENTARIO` | Editar revierte la versión anterior y reconoce la nueva; eliminar solo revierte |
 | `src/app/api/mobile/mermas/[id]/route.ts` → `DELETE` | `MERMA_INVENTARIO_REVERSADA` | Mismo criterio que la eliminación de escritorio |
 | `src/features/produccion/actions.ts` → `completarOrdenProduccionAction` | `PRODUCCION_SALIDA` | Emite al completar, con el costo histórico de las líneas `ING-*` del kardex |
+| `src/features/venta-servicios/actions.ts` → `createVentaServicioAction` | `VENTA_SERVICIO_CREDITO` | Reconoce el ingreso y la cuenta por cobrar al crear la venta (modo legacy y mixto), en la misma transacción |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -115,6 +128,28 @@ con costo cero. La plantilla reclasifica inventario de materias primas contra
 inventario de producto terminado, por lo que ambas líneas usan el rol
 `INVENTARIOS`.
 
+La venta de servicios reconoce `VENTA_SERVICIO_CREDITO` al **crear** la venta,
+tanto en modo legacy (un servicio) como en modo mixto (una línea por venta): el
+importe es el total de la venta y el ancla idempotente es la fila de
+`VentaServicios` (`venta_servicio:<id>`), de modo que cada línea genera su
+propio evento y el replay de una venta idempotente no lo duplica. El
+reconocimiento usa el modo global `CONTABILIDAD_FORMAL_MODE`.
+
+La cuenta por cobrar que abre el asiento es la misma que liquida después el
+cobro (`COBRO_SERVICIO`): la venta no mueve tesorería al crearse, porque el
+importe se recibe en la conciliación posterior, también para las ventas al
+contado. Cuando la venta aplica anticipos, la parte cubierta por el anticipo
+queda compensada por `ANTICIPO_CLIENTE_APLICADO` (que acredita la cuenta por
+cobrar) y el remanente coincide con la cuenta por cobrar operativa que crea el
+writer; así el ingreso se reconoce una sola vez y la caja no se duplica. La
+plantilla `VENTA_SERVICIO` (cobro en el mismo instante) no se usa: el flujo
+operativo actual no cobra el servicio al crear la venta.
+
+La eliminación de una venta de servicios no emite todavía asiento
+compensatorio: la plantilla `DEVOLUCION_VENTA` está diseñada para ventas de
+productos (inventario y costo FIFO) y no aplica a servicios. Queda pendiente un
+evento de reverso propio para este writer.
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -124,6 +159,15 @@ CONTABILIDAD_FORMAL_NO_CASH_MODE=off     # por defecto: no se emite nada
 CONTABILIDAD_FORMAL_NO_CASH_MODE=shadow  # evidencia simulada en la outbox, sin asientos
 CONTABILIDAD_FORMAL_NO_CASH_MODE=enforce # se exige el asiento formal
 ```
+
+Los emisores de reconocimiento (compras, gastos de servicio, mermas,
+producción, anticipos y venta de servicios) no usan ese gate: respetan el modo
+global `CONTABILIDAD_FORMAL_MODE`, que sigue `off` por defecto. Las
+liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`, `PAGO_CXP`) conservan el gate no
+Cash. Para la convergencia futura existe `emitirLiquidacionFormal`
+(`src/features/contabilidad-formal/services/settlement-formal-posting-service.ts`):
+comparte con el emisor no Cash la resolución de la valoración, de modo que
+cambiar de emisor no altera el asiento y solo cambia el gate que lo gobierna.
 
 Procedimiento recomendado:
 
