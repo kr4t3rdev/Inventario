@@ -12,14 +12,15 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - T1 — S1-S2; Implementación: armazón compartido de Configuración y Mi Empresa; slice PR1; commit: `dc3d1a26`.
 - T2 — S1-S2; Implementación: Referidos; slice PR2; commit: `f6e0bfca`.
 - T3 — S1-S2; Implementación: Usuarios y Roles; slice PR3; commit: `5e182c67`.
-- T4 — S1-S2; Implementación: Configuración de Contratos; slice PR4; commit: pendiente.
-- T5 — S1-S3; Implementación: Licencias y Planes de administración; slice PR5; commit: pendiente.
-- T6 — S1-S4; Verificación funcional, responsive, reduced-motion y revisión visual; checks adjuntos a PR5; commit: pendiente.
+- T4 — S1-S2; Implementación: Configuración de Contratos; slice PR4; commit: `fbb07d62`.
+- T5 — S1-S3; Implementación: pantalla de Licencias en contexto de administración de plataforma; ruta delegada por paralelismo; slice PR5; commit: pendiente.
+- T6 — S1-S3; Implementación: pantalla de Planes en contexto de administración de plataforma; ruta delegada por paralelismo; slice PR6; commit: pendiente.
+- T7 — S1-S4; Verificación funcional, responsive, reduced-motion y revisión visual; checks adjuntos a PR6; commit: pendiente.
 
 ## Delivery strategy
 - Estrategia elegida por el usuario: `feature-branch-chain`.
 - `codex/sidebar-interfaz-compacta` actúa como rama tracker; los futuros PRs hijos irán en orden sobre la rama tracker/inmediato padre. No se crearán ramas, PRs, ni se publicará nada sin solicitud expresa.
-- Límites previstos: PR1=T1 (`dc3d1a26`); PR2=T2 (`f6e0bfca`); PR3=T3 (`5e182c67`); PR4=T4; PR5=T5 con la verificación transversal T6. Cada slice mantiene su comportamiento, tests y documentación juntos y se apunta a ~400 líneas cambiadas o menos; revisar el tamaño real al cerrar cada unidad.
+- Límites previstos: PR1=T1 (`dc3d1a26`); PR2=T2 (`f6e0bfca`); PR3=T3 (`5e182c67`); PR4=T4 (`fbb07d62`); PR5=T5 Licencias; PR6=T6 Planes con la verificación transversal T7. Cada slice mantiene su comportamiento, tests y documentación juntos y se apunta a ~400 líneas cambiadas o menos; revisar el tamaño real al cerrar cada unidad.
 
 ## Log
 - L1 — bien, ya revisado el trabajo de la rama actual quiero seguir con la implementacion del mismo, vamos con configuracion y sus opciones del menu sidebar, Mi empresa, referidos, usuarios y roles. Vas a unificar el patron de diseño entre todas estas pantallas q no coinciden en UX, organizacion dentro, colores, botones etc....usa la skill impeccable y animation designer
@@ -34,3 +35,8 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - L9 — T3: RED observado en los tests de encabezado común antes del cambio; GREEN con `pnpm exec vitest run src/features/admin/components/tenant-users-page.test.tsx src/features/roles/components/roles-manager.test.tsx` (3/3). ESLint focal y `git diff --check` pasan. LSP revisó 6 archivos, sin diagnósticos de error observados; la ejecución quedó inconclusa en 3 archivos y mostró sugerencias de diccionario en español. La lógica de datos, acciones y permisos permanece intacta.
 - L10 — T3 se cerró en `5e182c67` (`feat(configuracion): unifica usuarios y roles`). ASSESS devolvió `nativeRisk: unassessable` sin candidato porque hay archivos no rastreados sin declarar; `reviewDue` no fue informado y no se inició review. PR3 contiene el commit T3 como slice separado.
 - L11 — T4: RED observado antes del cambio; GREEN con `pnpm exec vitest run src/app/busy/configuracion/contratos/page.test.tsx` (1/1). ESLint focal y `git diff --check` pasan. LSP no reportó diagnósticos de error; solo sugerencias de diccionario en nombres/copy en español. La página usa `SettingsPageShell`; los movimientos del listado de tipos respetan reduced motion y el timing común; las acciones de formulario y navegación permanecen.
+- L12 — T4 se cerró en `fbb07d62` (`feat(configuracion): unifica configuración de contratos`). ASSESS devolvió `nativeRisk: unassessable` sin candidato debido a archivos no rastreados no declarados; `reviewDue` no fue informado y no se inició review. PR4 corresponde a este commit.
+- L13 — Para el paralelismo, T5 se desglosa en dos unidades independientes, Licencias (T5) y Planes (T6), con superficies de edición disjuntas; verificación transversal renumerada a T7. Los writers reciben instrucción de conservar el contexto de administración de plataforma y no tocar acciones, permisos ni lógica de negocio.
+- L14 — Se lanzaron en paralelo dos `gentle-ai-worker` acotados: T5 Licencias (`mw1w1wyv-3-1bgh`) y T6 Planes (`mw1w1wyz-4-tt4e`). Los edits permitidos están limitados a la página y su test correspondiente; ambos ejecutan Vitest, ESLint y `git diff --check`. No se crearán ramas ni PRs.
+- L15 — T5 Licencias: writer reportó Vitest 1/1, ESLint y diff check exitosos; su detector de diseño devolvió `[]`. Spot-check parental del Vitest focal: 1/1. RED no se observó. Self-review confirma que solo cambia presentación/animación de la página; acciones, permisos y flujos administrativos quedan intactos.
+- L16 — T6 Planes: writer reportó Vitest 1/1, ESLint y diff check exitosos; su detector de diseño devolvió `[]`. Spot-check parental del Vitest focal: 1/1. RED no se observó. Self-review confirma que solo se reemplazó el encabezado/layout por `SettingsPageShell`; los flujos de administración de planes permanecen intactos.
