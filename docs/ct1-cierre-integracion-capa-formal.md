@@ -92,8 +92,8 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 17 | `accounting-cash-operations-mutation-service.ts` → `PRESTAMO_OTORGADO` (origen `prestamo_cash`) | actions y rutas web/móvil de préstamos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 18 | `accounting-cash-operations-mutation-service.ts` → `DEUDA_RECIBIDA` (origen `deuda_cash`) | actions y rutas web/móvil de deudas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 19 | `accounting-cash-operations-mutation-service.ts` → `COBRO_PRESTAMO` / `PAGO_DEUDA` | actions y rutas web/móvil de pagos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
-| 20 | `accounting-operations-mutation-service.ts` (`createBankAdjustment`) → `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` (origen `ajuste_bancario`) | action, ruta web y ruta móvil de ajustes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts` |
-| 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts` |
+| 20 | `accounting-operations-mutation-service.ts` (`createBankAdjustment`) → `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` (origen `ajuste_bancario`) | action, ruta web y ruta móvil de ajustes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
+| 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
 | 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts` |
 | 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts` |
 | 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
@@ -111,7 +111,11 @@ Notas de la matriz:
   equivalencia.
 - **(h)**: solo las familias de caja (filas 17-19) y de ajustes e inyecciones
   (filas 20-21) tienen un failpoint físico en `main` (trigger de auditoría y
-  fallo de inserción del asiento). El resto de las filas tiene el rollback
+  fallo de inserción del asiento). En las filas 20-21 el failpoint se prueba
+  además en modo `enforce`: el asiento ya insertado se revierte junto con la
+  escritura operativa y con la auditoría
+  (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`).
+  El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
 - **(f)**: la garantía de no duplicar el asiento la da el origen único; la
@@ -139,7 +143,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en la familia de caja y en ajustes/inyecciones; falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en la familia de caja y en ajustes/inyecciones (incluido el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off` |
@@ -157,8 +161,9 @@ Ninguno de estos gates se cambió en CT-1:
 3. **Inyección de capital en moneda extranjera**: `InyeccionCapital` no
    persiste la tasa ni el importe funcional; su replay histórico en moneda
    extranjera no es reconstruible con fidelidad.
-4. **Rollback físico por canal**: extender los failpoints físicos a los writers
-   que hoy solo tienen rollback estructural.
+4. **Rollback físico por canal**: extendido a la familia de ajustes e inyecciones
+   (con el asiento formal en modo `enforce`); faltan las familias comercial
+   (ventas, compras, servicios), anticipos, inventario y liquidaciones.
 5. **Modo por tenant**: hoy el modo es global; falta el flag de licencia para
    activar `shadow`/`enforce` tenant a tenant.
 6. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
