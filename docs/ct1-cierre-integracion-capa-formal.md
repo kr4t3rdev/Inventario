@@ -96,8 +96,8 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 8 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICADO` / `ANTICIPO_PROVEEDOR_APLICADO` | workflow de aplicación | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
 | 9 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICACION_REVERSADA` / `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | workflow de reverso (gastos, nómina) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
 | 10 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_DEVUELTO` / `ANTICIPO_PROVEEDOR_REINTEGRADO` | action de devolución | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
-| 11 | `registrar-merma-service.ts` / `mermas/actions.ts` → `MERMA` (origen `ajuste_merma`) | action y route web/móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/mermas/__tests__/registrar-merma-service.test.ts`, `src/features/mermas/__tests__/actions.test.ts` |
-| 12 | `revertirMermaContableEnTransaccion` → reversa de merma (origen `ajuste_merma_reversado`) | action, route web y route móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/inventory-adjustment-posting-service.test.ts` |
+| 11 | `registrar-merma-service.ts` / `mermas/actions.ts` → `MERMA` (origen `ajuste_merma`) | action y route web/móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/mermas/__tests__/registrar-merma-service.test.ts`, `src/features/mermas/__tests__/actions.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
+| 12 | `revertirMermaContableEnTransaccion` → reversa de merma (origen `ajuste_merma_reversado`) | action, route web y route móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/inventory-adjustment-posting-service.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
 | 13 | `produccion/actions.ts` → `PRODUCCION` (origen `orden_produccion`) | action de producción | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/produccion/__tests__/actions.test.ts` |
 | 14 | `accounting-reconciliation-service.ts` (`reconcileSale`) → `COBRO_CXC` / `VENTA_CONTADO` (origen `reconciliacion_venta`) | action de reconciliación, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/services/__tests__/accounting-reconciliation-fx.test.ts` |
 | 15 | `accounting-reconciliation-service.ts` (`reconcileService`) → `COBRO_SERVICIO` (origen `reconciliacion_servicio`) | action, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts` |
@@ -124,10 +124,11 @@ Notas de la matriz:
   huella FX. En la compra, en moneda extranjera, el motor falla cerrado en vez
   de inventar una equivalencia.
 - **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
-  20-21), de ventas (filas 1-3), de compras (fila 4) y de devoluciones de venta
-  (fila 25) tienen un failpoint físico en `main` (trigger de auditoría y fallo
-  de inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
-  en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
+  20-21), de ventas (filas 1-3), de compras (fila 4), de mermas (filas 11-12) y
+  de devoluciones de venta (fila 25) tienen un failpoint físico en `main`
+  (trigger de auditoría y fallo de inserción del asiento). En las filas 20-21 y
+  25 el failpoint se prueba además en
+  modo `enforce`: el asiento ya insertado se revierte junto con la escritura
   operativa y con la auditoría
   (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`,
   `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts`).
@@ -140,6 +141,10 @@ Notas de la matriz:
   línea, el stock, el kardex, el gasto, la cuenta por pagar, la reconciliación
   del pago y el saldo bancario
   (`src/features/compras-productos/__integration__/compra-formal-rollback-postgres.test.ts`).
+  En las filas 11-12 el failpoint revierte la merma, su documento espejo, el
+  kardex y el stock; en la reversa, además, la anulación del ajuste, el
+  asiento inverso y la devolución del stock
+  (`src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -168,7 +173,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de mermas y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -179,9 +184,9 @@ Ninguno de estos gates se cambió en CT-1:
    `APERTURA_SALDOS_NO_VERIFICABLES`; la evidencia disponible no permite
    verificar todos los rubros ni su moneda.
 2. **Rollback físico por canal**: extendido a las familias de ajustes e
-   inyecciones, a la devolución de venta, a la venta y a la compra de productos
-   (con el asiento formal en modo `enforce`); faltan las familias de servicios
-   (gasto y venta de servicio), anticipos, inventario (mermas y producción) y
+   inyecciones, a la devolución de venta, a la venta, a la compra y a las
+   mermas (con el asiento formal en modo `enforce`); faltan las familias de
+   servicios (gasto y venta de servicio), anticipos, producción y
    liquidaciones.
 3. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
