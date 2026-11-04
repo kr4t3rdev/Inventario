@@ -1,6 +1,6 @@
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 
 const mockGetGlobalUsersAction = vi.fn()
 const mockGetPendingMembershipsAction = vi.fn()
@@ -63,5 +63,16 @@ describe('TenantUsersPage', () => {
     await waitFor(() => {
       expect(mockGetPendingMembershipsAction).toHaveBeenCalled()
     })
+  })
+
+  it('usa el encabezado común de Usuarios y copy neutro', async () => {
+    render(<TenantUsersPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Usuarios' })).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText('Gestiona las cuentas y solicitudes de acceso de tu empresa.'),
+    ).toBeInTheDocument()
   })
 })
