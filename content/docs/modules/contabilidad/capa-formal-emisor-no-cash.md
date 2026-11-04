@@ -324,7 +324,9 @@ evento, aunque el emisor no Cash esté en `enforce`.
 La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 
 - plan de cuentas sembrado (35 cuentas + 7 diarios + 25 roles) y las
-  plantillas globales activas;
+  plantillas globales activas; la siembra se activa desde la tarjeta de
+  contabilidad formal en `/busy/contabilidad/configuracion`
+  (`inicializarPlanContableAction`), que es idempotente;
 - `TenantAccountingPolicy.functionalCurrencyCode` configurada;
 - un período contable **abierto** para la fecha de la operación.
 
@@ -381,6 +383,31 @@ La decisión y sus consecuencias están registradas en
   replay reproduce el comportamiento del writer; la corrección del flujo
   pertenece a la capa operativa.
 
+## Infra global conciliada (S9)
+
+La rama de referencia quedó atrás de `main`, así que la infraestructura global
+se concilió contra la versión vigente de `main` (nunca contra la copia de la
+rama). Resultado por bloque:
+
+| Bloque | Estado en `main` | Decisión |
+| --- | --- | --- |
+| Esquema Prisma (modelos de la capa, permisos y banderas) | Vigente, con `Asiento`, `Diario`, `PeriodoContable`, `PlantillaAsiento`, `ReplayPreflight`, `ReplayApproval` y `ReplayRun` | Se conserva `main` |
+| Registro de permisos y matriz de paridad | `financiero.contabilidad.acceder` y `ventas.precio.override` ya registrados y en paridad | Se conserva `main` |
+| Clasificación de modelos | Los modelos de la capa ya están clasificados como `SCOPED`/`GLOBAL` | Se conserva `main` |
+| Allowlist de SQL crudo | Actualizada con las consultas de la capa (outbox shadow, verificador, digest) | Se conserva `main` |
+| Guardia de período contable | La versión de `main` es posterior y además corrige el voseo del mensaje | Se conserva `main` |
+| Esquemas y consultas de administración | Sin diferencias propias de la capa | Se conserva `main` |
+| Contrato OpenAPI móvil y su contract test | El contrato vigente ya cubre las rutas contables móviles | Se conserva `main` |
+| `package.json`, lockfile y `start.sh` | Sin dependencias ni scripts nuevos de la capa | Se conserva `main` |
+| Pruebas de renovación de licencia | `main` conserva su versión | Se conserva `main` |
+
+Lo único que faltaba era la **activación del plan de cuentas (CTA-0)**: el
+servicio de seed existía, pero no había Server Action ni interfaz para
+sembrarlo, así que un tenant no podía habilitar la capa desde la aplicación.
+Ahora la tarjeta de contabilidad formal vive en
+`/busy/contabilidad/configuracion` y siembra (o verifica) el plan de forma
+idempotente.
+
 ## Referencias
 
 - Motor: `src/features/contabilidad-formal/services/posting-engine.ts`
@@ -398,6 +425,7 @@ La decisión y sus consecuencias están registradas en
 - Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
 - Métricas del outbox shadow: `src/features/contabilidad-formal/actions-metricas-shadow.ts`
+- Activación del plan de cuentas: `src/features/contabilidad-formal/actions-plan-contable.ts` y `src/features/contabilidad-formal/components/plan-contable-card.tsx`
 - Emisor de ajustes bancarios e inyecciones de capital: `src/features/contabilidad-formal/services/capital-adjustment-posting-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
