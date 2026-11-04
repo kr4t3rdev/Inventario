@@ -96,6 +96,16 @@ falla cerrado, sin inventar conversión.
 | `src/features/empleados/payroll-reversal.ts` → `reversePayrollReconciliations` | `REVERSO_ASIENTO` | Al eliminar un pago de nómina, anula el asiento formal de la conciliación pagada |
 | `src/features/contabilidad/actions-periodos.ts` → `aprobarPeriodoAction` | `CIERRE_PERIODO` | Al aprobar el período, vacía sus cuentas de resultado contra la cuenta de resultado del período, en la misma transacción |
 | `src/features/contabilidad/actions-periodos.ts` → `cerrarPeriodoAction` (auto-aprobación de managers) | `CIERRE_PERIODO` | Cuando el cierre deja el período aprobado, genera el mismo asiento de cierre formal |
+| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createBankAdjustment` | `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` | El ajuste no liquida cuentas: el ingreso acredita otros ingresos y el egreso debita gastos financieros, con la valoración que el writer ya decidió |
+| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createCapitalInjection` | `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` | La inyección entra a la tesorería: el capital propio acredita el capital social y la deuda externa las deudas recibidas |
+
+Las rutas móviles de contabilidad (`src/app/api/mobile/v1/accounting/`) llegan a
+las mismas operaciones: los ajustes de banco y las inyecciones de capital
+delegan en `AccountingOperationsMutationService`, y los préstamos y deudas en
+efectivo en `AccountingCashOperationsMutationService` (que ya emitía
+`PRESTAMO_OTORGADO`, `DEUDA_RECIBIDA` y sus cobros y pagos). La capa formal
+alcanza por igual a escritorio y móvil porque ambos caminos comparten el
+servicio de mutación.
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -353,6 +363,10 @@ La decisión y sus consecuencias están registradas en
   derivada, y esa cadena no se puede reconstruir desde el movimiento aislado.
   Se incorpora por slices posteriores, con la misma regla: no se contabiliza una
   fuente que el writer vigente no habría emitido.
+- El recolector del replay todavía no cubre los ajustes de banco ni las
+  inyecciones de capital: el ajuste persiste su tasa (reconstruible ✓), pero la
+  inyección de capital no persiste la tasa ni el importe funcional, así que su
+  valoracion en moneda extranjera no se puede reconstruir con fidelidad.
 - La compra de productos en moneda extranjera no se puede reconstruir con
   fidelidad: el documento no persiste la tasa que aplicó el writer (la cuenta
   por pagar tampoco), así que esas fuentes se omiten con la causa

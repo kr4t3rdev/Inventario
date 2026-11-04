@@ -56,6 +56,9 @@ vi.mock('@/lib/prisma', () => {
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
     auditLog: { create: vi.fn(async () => ({})) },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn(async () => ({ functionalCurrencyCode: 'CUP' })),
+    },
   };
   return {
     prisma: {
