@@ -51,25 +51,9 @@ import type {
 } from "../lib/miEmpresaUtils";
 import { normalizeMiEmpresaFormValues } from "../lib/miEmpresaUtils";
 
-const containerVariants = {
-	hidden: { opacity: 0 },
-	visible: {
-		opacity: 1,
-		transition: {
-			staggerChildren: 0.08,
-			delayChildren: 0.1,
-		},
-	},
-};
-
 const itemVariants = {
 	hidden: { opacity: 0, y: 15 },
 	visible: { opacity: 1, y: 0 },
-};
-
-const cardVariants = {
-	hidden: { opacity: 0, scale: 0.97 },
-	visible: { opacity: 1, scale: 1 },
 };
 
 const miEmpresaSchema = z.object({
@@ -279,26 +263,15 @@ export function MiEmpresaForm({
 	};
 
 	return (
-		<motion.div
-			variants={cardVariants}
-			initial="hidden"
-			animate="visible"
-			transition={{ duration: 0.4 }}
-			whileHover={{ scale: 1.005, y: -2 }}
-		>
-			<Card>
-				<CardHeader>
-					<CardTitle>Configuración de Mi Empresa</CardTitle>
+		<>
+		<Card className="border-border/80 shadow-sm">
+				<CardHeader className="border-b border-border/70 bg-muted/20">
+					<CardTitle>Información de la empresa</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-							<motion.div
-								variants={containerVariants}
-								initial="hidden"
-								animate="visible"
-								className="space-y-5"
-							>
+							<div className="space-y-5">
 								<motion.div
 									variants={itemVariants}
 									className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -738,9 +711,9 @@ export function MiEmpresaForm({
 										)}
 									</motion.div>
 								</motion.div>
-							</motion.div>
-						</form>
-					</Form>
+						</div>
+					</form>
+				</Form>
 				</CardContent>
 			</Card>
 
@@ -773,6 +746,6 @@ export function MiEmpresaForm({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</motion.div>
+		</>
 	);
 }
