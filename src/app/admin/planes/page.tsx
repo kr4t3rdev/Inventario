@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
 	Plus,
 	Edit,
@@ -57,6 +56,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { SettingsPageShell } from "@/features/configuracion/components/settings-page-shell";
 import {
 	getAdminPlanesAction,
 	createAdminPlanAction,
@@ -285,19 +285,11 @@ export default function AdminPlanesPage() {
 	const totalFeatures = FEATURE_REGISTRY.length;
 
 	return (
-		<div className="space-y-6 p-6">
-			{/* Header */}
-			<motion.div
-				initial={{ opacity: 0, y: -10 }}
-				animate={{ opacity: 1, y: 0 }}
-				className="flex justify-between items-center"
-			>
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Planes</h1>
-					<p className="text-muted-foreground">
-						Gestión de planes de suscripción con módulos y límites
-					</p>
-				</div>
+		<SettingsPageShell
+			icon={Package}
+			title="Planes"
+			description="Gestión de planes de suscripción con módulos y límites"
+			actions={
 				<Button
 					onClick={() => {
 						resetForm();
@@ -307,8 +299,8 @@ export default function AdminPlanesPage() {
 					<Plus className="mr-2 h-4 w-4" />
 					Nuevo Plan
 				</Button>
-			</motion.div>
-
+			}
+		>
 			{/* Search */}
 			<div className="relative max-w-md">
 				<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -871,6 +863,6 @@ export default function AdminPlanesPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		</div>
+		</SettingsPageShell>
 	);
 }
