@@ -26,6 +26,8 @@ import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { resolverValuacionOperativa } from '../lib/functional-valuation-resolver';
 import { buildFunctionalValuation } from '../lib/functional-valuation';
+import { buildAnticipoEvent } from '../lib/advance-event-builder';
+import type { TipoEventoClave } from '../lib/plan-default';
 import { derivarMedioCobro } from '../lib/settlement-event-builder';
 import { construirEventoLiquidacion } from './settlement-posting-service';
 import type { EventoContableInput } from './posting-engine';
@@ -79,6 +81,27 @@ const CAUSA_VALORACION_NO_VERIFICABLE = 'VALORACION_FUNCIONAL_NO_VERIFICABLE';
 const CAUSA_TASA_NO_PERSISTIDA = 'TASA_CAMBIO_NO_PERSISTIDA';
 
 /**
+ * @description Deriva la diferencia de cambio residual de un movimiento de
+ * anticipo a partir de los dos valores funcionales que el movimiento persiste.
+ * @param {object} movimiento - Movimiento de anticipo persistido.
+ * @returns {number | undefined} Diferencia residual; undefined si falta un valor.
+ */
+function diferenciaFxPersistida(movimiento: {
+	valorAnticipoFuncional: Prisma.Decimal | null;
+	valorTesoreriaFuncional: Prisma.Decimal | null;
+}): number | undefined {
+	if (
+		movimiento.valorAnticipoFuncional === null ||
+		movimiento.valorTesoreriaFuncional === null
+	) {
+		return undefined;
+	}
+	return (
+		Number(movimiento.valorTesoreriaFuncional) - Number(movimiento.valorAnticipoFuncional)
+	);
+}
+
+/**
  * @description Reconstruye los candidatos a replay de un tenant leyendo las
  * fuentes operativas historicas y derivando el evento formal equivalente al
  * que emite el writer vigente.
@@ -121,6 +144,7 @@ export async function recolectarCandidatos(
 		compras,
 		comprasServicio,
 		ventasServicio,
+		movimientosAnticipo,
 		politica,
 	] = await Promise.all([
 		client.reconciliacionVenta.findMany({
@@ -213,6 +237,24 @@ export async function recolectarCandidatos(
 				total: true,
 				moneda: true,
 				createdAt: true,
+			},
+		}),
+		client.anticipoMovimiento.findMany({
+			where: { anticipo: { tenantId } },
+			select: {
+				movimientoId: true,
+				tipoMovimiento: true,
+				cuentaId: true,
+				monto: true,
+				moneda: true,
+				tasaAplicada: true,
+				montoFuncional: true,
+				functionalCurrency: true,
+				fxEvidenceFingerprint: true,
+				valorAnticipoFuncional: true,
+				valorTesoreriaFuncional: true,
+				createdAt: true,
+				anticipo: { select: { tipo: true, referenciaExterna: true } },
 			},
 		}),
 		client.tenantAccountingPolicy.findUnique({
@@ -525,6 +567,117 @@ export async function recolectarCandidatos(
 				tasaCambio: valoracion.tasaCambio,
 				fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
 			},
+			...(omision ? { causaOmision: omision } : {}),
+		});
+	}
+
+	// --- Anticipos (movimientos) ----------------------------------------------
+
+	for (const movimiento of movimientosAnticipo) {
+		const esCliente = movimiento.anticipo.tipo === 'COBRO';
+		// Un anticipo nacido de una nota de credito no genera asiento de
+		// aplicacion: el writer lo omite y aqui tampoco se propone.
+		const esSaldoNotaCredito =
+			movimiento.anticipo.referenciaExterna?.startsWith('NC:') ?? false;
+		const monto = Number(movimiento.monto);
+		if (!Number.isFinite(monto) || monto <= 0) continue;
+
+		let tipo: TipoEventoClave | null = null;
+		let montoFuncional: number | null = null;
+		let moneda = movimiento.moneda;
+		let treasuryAccountType: string | undefined;
+		let diferenciaFx: number | undefined;
+
+		switch (movimiento.tipoMovimiento) {
+			case 'RECEPCION':
+				tipo = 'ANTICIPO_CLIENTE_RECIBIDO';
+				montoFuncional = movimiento.montoFuncional === null
+					? 0
+					: Number(movimiento.montoFuncional);
+				treasuryAccountType = movimiento.cuentaId
+					? tipoCuentaPorCuenta.get(movimiento.cuentaId) ?? undefined
+					: undefined;
+				break;
+			case 'ENTREGA':
+				tipo = 'ANTICIPO_PROVEEDOR_ENTREGADO';
+				montoFuncional = movimiento.montoFuncional === null
+					? 0
+					: Number(movimiento.montoFuncional);
+				treasuryAccountType = movimiento.cuentaId
+					? tipoCuentaPorCuenta.get(movimiento.cuentaId) ?? undefined
+					: undefined;
+				break;
+			case 'EJECUCION':
+				if (esSaldoNotaCredito) continue;
+				tipo = esCliente ? 'ANTICIPO_CLIENTE_APLICADO' : 'ANTICIPO_PROVEEDOR_APLICADO';
+				montoFuncional = movimiento.montoFuncional === null
+					? null
+					: Number(movimiento.montoFuncional);
+				break;
+			case 'REVERSO':
+				if (esSaldoNotaCredito) continue;
+				tipo = esCliente
+					? 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'
+					: 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA';
+				montoFuncional = movimiento.montoFuncional === null
+					? null
+					: Number(movimiento.montoFuncional);
+				// El writer del reverso fija la moneda original en CUP.
+				moneda = 'CUP';
+				break;
+			case 'DEVOLUCION':
+				tipo = 'ANTICIPO_CLIENTE_DEVUELTO';
+				montoFuncional = movimiento.valorTesoreriaFuncional === null
+					? 0
+					: Number(movimiento.valorTesoreriaFuncional);
+				diferenciaFx = diferenciaFxPersistida(movimiento);
+				treasuryAccountType = movimiento.cuentaId
+					? tipoCuentaPorCuenta.get(movimiento.cuentaId) ?? undefined
+					: undefined;
+				break;
+			case 'REINTEGRO':
+				tipo = 'ANTICIPO_PROVEEDOR_REINTEGRADO';
+				montoFuncional = movimiento.valorTesoreriaFuncional === null
+					? 0
+					: Number(movimiento.valorTesoreriaFuncional);
+				diferenciaFx = diferenciaFxPersistida(movimiento);
+				treasuryAccountType = movimiento.cuentaId
+					? tipoCuentaPorCuenta.get(movimiento.cuentaId) ?? undefined
+					: undefined;
+				break;
+			default:
+				// CREACION_RESERVA y cualquier tipo desconocido no producen asiento.
+				continue;
+		}
+
+		const monedaFuncional = movimiento.functionalCurrency ?? 'CUP';
+		const omision = (tipo === 'ANTICIPO_CLIENTE_APLICADO' ||
+			tipo === 'ANTICIPO_PROVEEDOR_APLICADO' ||
+			tipo === 'ANTICIPO_CLIENTE_APLICACION_REVERSADA' ||
+			tipo === 'ANTICIPO_PROVEEDOR_APLICACION_REVERSADA') &&
+			(movimiento.montoFuncional === null || !movimiento.functionalCurrency)
+				? CAUSA_VALORACION_NO_VERIFICABLE
+				: undefined;
+
+		const evento = buildAnticipoEvent({
+			anticipoMovimientoId: movimiento.movimientoId,
+			tipo,
+			fecha: movimiento.createdAt,
+			monto,
+			moneda,
+			montoFuncional: montoFuncional ?? 0,
+			monedaFuncional,
+			tasaCambio: movimiento.tasaAplicada === null ? undefined : Number(movimiento.tasaAplicada),
+			fxEvidenceFingerprint: movimiento.fxEvidenceFingerprint ?? undefined,
+			...(diferenciaFx === undefined ? {} : { diferenciaFx }),
+			...(treasuryAccountType === undefined ? {} : { treasuryAccountType }),
+		});
+
+		candidatos.push({
+			origenTipo: evento.origen.tipo,
+			origenId: evento.origen.id,
+			fecha: evento.fecha,
+			evento,
 			...(omision ? { causaOmision: omision } : {}),
 		});
 	}

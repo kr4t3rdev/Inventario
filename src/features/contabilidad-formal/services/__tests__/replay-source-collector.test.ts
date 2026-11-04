@@ -49,6 +49,7 @@ describe('recolectarCandidatos', () => {
 			compraDocumento: { findMany: vi.fn().mockResolvedValue([]) },
 			compraServicio: { findMany: vi.fn().mockResolvedValue([]) },
 			ventaServicios: { findMany: vi.fn().mockResolvedValue([]) },
+			anticipoMovimiento: { findMany: vi.fn().mockResolvedValue([]) },
 			tasaCambio: { findFirst: vi.fn().mockResolvedValue(null) },
 			tenantAccountingPolicy: {
 				findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
@@ -484,6 +485,156 @@ describe('recolectarCandidatos', () => {
 						moneda: 'CUP',
 						createdAt: new Date('2026-10-06T00:00:00.000Z'),
 					},
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(0);
+	});
+
+	function movimiento(overrides: Record<string, unknown> = {}) {
+		return {
+			movimientoId: 'mov-1',
+			tipoMovimiento: 'RECEPCION',
+			cuentaId: 'cuenta-1',
+			monto: new Prisma.Decimal(70),
+			moneda: 'CUP',
+			tasaAplicada: null,
+			montoFuncional: new Prisma.Decimal(70),
+			functionalCurrency: 'CUP',
+			fxEvidenceFingerprint: null,
+			valorAnticipoFuncional: null,
+			valorTesoreriaFuncional: null,
+			createdAt: new Date('2026-10-07T00:00:00.000Z'),
+			anticipo: { tipo: 'COBRO', referenciaExterna: null },
+			...overrides,
+		};
+	}
+
+	it('reconoce la recepcion de un anticipo de cliente', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([movimiento()]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBeUndefined();
+		expect(candidatos[0]).toMatchObject({
+			origenTipo: 'anticipo_movimiento',
+			origenId: 'mov-1',
+			evento: {
+				tipo: 'ANTICIPO_CLIENTE_RECIBIDO',
+				origen: { tipo: 'anticipo_movimiento', id: 'mov-1' },
+				monto: 70,
+				monedaFuncional: 'CUP',
+				medioCobro: 'CAJA',
+			},
+		});
+	});
+
+	it('reconoce la entrega de un anticipo a proveedor', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({
+						tipoMovimiento: 'ENTREGA',
+						anticipo: { tipo: 'PAGO', referenciaExterna: null },
+					}),
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].evento.tipo).toBe('ANTICIPO_PROVEEDOR_ENTREGADO');
+	});
+
+	it('reconoce la aplicacion de un anticipo', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({ tipoMovimiento: 'EJECUCION', cuentaId: null }),
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBeUndefined();
+		expect(candidatos[0].evento.tipo).toBe('ANTICIPO_CLIENTE_APLICADO');
+	});
+
+	it('no propone asiento para la aplicacion de un anticipo nacido de nota de credito', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({
+						tipoMovimiento: 'EJECUCION',
+						cuentaId: null,
+						anticipo: { tipo: 'COBRO', referenciaExterna: 'NC:factura-9' },
+					}),
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(0);
+	});
+
+	it('reconoce el reverso de la aplicacion de un anticipo', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({
+						tipoMovimiento: 'REVERSO',
+						cuentaId: null,
+						moneda: 'USD',
+					}),
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].evento.tipo).toBe('ANTICIPO_CLIENTE_APLICACION_REVERSADA');
+		// El writer del reverso fija la moneda original en CUP.
+		expect(candidatos[0].evento.moneda).toBe('CUP');
+	});
+
+	it('reconoce la devolucion de un anticipo con su diferencia de cambio', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({
+						tipoMovimiento: 'DEVOLUCION',
+						valorAnticipoFuncional: new Prisma.Decimal(60),
+						valorTesoreriaFuncional: new Prisma.Decimal(65),
+					}),
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].evento.tipo).toBe('ANTICIPO_CLIENTE_DEVUELTO');
+		expect(candidatos[0].evento.auxiliares?.diferenciaFx).toBe(5);
+	});
+
+	it('no propone asiento para la reserva de un anticipo', async () => {
+		const client = crearClient({
+			anticipoMovimiento: {
+				findMany: vi.fn().mockResolvedValue([
+					movimiento({ tipoMovimiento: 'CREACION_RESERVA' }),
 				]),
 			},
 		});

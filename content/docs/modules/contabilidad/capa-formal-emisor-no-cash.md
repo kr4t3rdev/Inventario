@@ -269,6 +269,7 @@ misma evidencia persistida:
 | Documento de compra a plazo o a anticipo | `COMPRA_CREDITO` | `compra_documento` |
 | Compra de servicio | `GASTO_CREDITO` | `compra_servicio` |
 | Venta de servicio | `VENTA_SERVICIO_CREDITO` | `venta_servicio` |
+| Movimiento de anticipo (recepción, entrega, aplicación, reverso y devolución) | `ANTICIPO_CLIENTE_*` / `ANTICIPO_PROVEEDOR_*` | `anticipo_movimiento` |
 
 Cualquier fuente que no se puede reconstruir sin ambiguedad se omite dejando su
 causa (identidad ambigua, documento anulado, valoracion funcional no
@@ -305,7 +306,11 @@ Procedimiento recomendado:
 1. **off** (estado por defecto tras el despliegue): no cambia el comportamiento.
 2. **shadow**: se observa la outbox (`ShadowOutbox`) en los tenants con tráfico:
    `SIMULADO` = el asiento se habría contabilizado; `ERROR_SHADOW` = la causa
-   exacta del rechazo.
+   exacta del rechazo. La acción `getMetricasShadowAction`
+   (`src/features/contabilidad-formal/actions-metricas-shadow.ts`) resume la
+   outbox del tenant por evento, resultado y causa (conteo y latencia p95); la
+   exige la licencia de contabilidad formal y el permiso
+   `financiero.auditoria.ver`, y nunca acepta un tenant por parámetro.
 3. **enforce**: se exige el asiento. Si el motor rechaza (periodo cerrado, rol
    sin mapear, plantilla ausente, evidencia FX incompleta), la escritura
    operativa falla cerrada.
@@ -358,15 +363,14 @@ La decisión y sus consecuencias están registradas en
   rutas actuales. No se consideran writers activos pendientes de integración.
 - El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
   licencia para activar el emisor tenant a tenant.
-- El recolector del replay todavía no cubre los anticipos: el evento de un
-  anticipo depende del saldo libro del anticipo y de la diferencia de cambio
-  derivada, y esa cadena no se puede reconstruir desde el movimiento aislado.
-  Se incorpora por slices posteriores, con la misma regla: no se contabiliza una
-  fuente que el writer vigente no habría emitido.
 - El recolector del replay todavía no cubre los ajustes de banco ni las
   inyecciones de capital: el ajuste persiste su tasa (reconstruible ✓), pero la
   inyección de capital no persiste la tasa ni el importe funcional, así que su
   valoracion en moneda extranjera no se puede reconstruir con fidelidad.
+- Los movimientos de anticipo sí se reconstruyen (el movimiento persiste el
+  importe, la moneda, la tasa aplicada, la huella FX y los valores funcionales),
+  pero el anticipo nacido de una nota de crédito no genera asiento de
+  aplicación: el writer lo omite y el recolector también.
 - La compra de productos en moneda extranjera no se puede reconstruir con
   fidelidad: el documento no persiste la tasa que aplicó el writer (la cuenta
   por pagar tampoco), así que esas fuentes se omiten con la causa
@@ -393,5 +397,7 @@ La decisión y sus consecuencias están registradas en
 - Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
 - Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
+- Métricas del outbox shadow: `src/features/contabilidad-formal/actions-metricas-shadow.ts`
+- Emisor de ajustes bancarios e inyecciones de capital: `src/features/contabilidad-formal/services/capital-adjustment-posting-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

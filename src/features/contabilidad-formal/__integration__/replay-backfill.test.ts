@@ -73,6 +73,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				await tx.reconciliacionGasto.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.compraDocumento.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.ventaServicios.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.anticipo.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.servicios.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.vendor.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.cuentaPorCobrar.deleteMany({ where: { tenantId: fixture.tenantId } });
@@ -439,6 +440,37 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				createdAt: new Date('2026-03-08T12:00:00.000Z'),
 			},
 		});
+		const cliente = await prisma.cliente.findFirstOrThrow({
+			where: { tenantId: fixture.tenantId },
+		});
+		const anticipo = await prisma.anticipo.create({
+			data: {
+				tenantId: fixture.tenantId,
+				tipo: 'COBRO',
+				clienteId: cliente.clienteId,
+				montoOriginal: 45,
+				montoFinanciado: 45,
+				saldoDisponible: 45,
+				moneda: 'CUP',
+				createdById: fixture.requesterId,
+			},
+		});
+		await prisma.anticipoMovimiento.create({
+			data: {
+				anticipoId: anticipo.anticipoId,
+				tipoMovimiento: 'RECEPCION',
+				cuentaId: cuentaBancaria.cuentaId,
+				tipoPagoId: tipoPago.tipoId,
+				monto: 45,
+				moneda: 'CUP',
+				montoFuncional: 45,
+				functionalCurrency: 'CUP',
+				saldoAntes: 0,
+				saldoDespues: 45,
+				usuarioId: fixture.requesterId,
+				createdAt: new Date('2026-03-09T12:00:00.000Z'),
+			},
+		});
 	}
 
 	it('reconoce tambien los pagos de gastos, las compras y las ventas de servicios', async () => {
@@ -446,7 +478,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 		await agregarFuentesNoVentas(fixture);
 
 		const plan = await planBackfillContable(fixture.tenantId);
-		expect(plan.totalEvaluados).toBe(5);
+		expect(plan.totalEvaluados).toBe(6);
 		expect(plan.omitidos).toHaveLength(0);
 
 		const preflight = await crearPreflightBackfill(
@@ -467,7 +499,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 		});
 
 		expect(resultado.status).toBe('COMPLETED');
-		expect(resultado.contabilizados).toBe(5);
+		expect(resultado.contabilizados).toBe(6);
 		expect(resultado.reconciliation.status).toBe('CONFORME');
 
 		const origenes = await prisma.asiento.findMany({
@@ -475,6 +507,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 			select: { origenTipo: true },
 		});
 		expect(origenes.map((asiento) => asiento.origenTipo).sort()).toEqual([
+			'anticipo_movimiento',
 			'compra_documento',
 			'factura',
 			'reconciliacion_gasto',
