@@ -19,6 +19,8 @@
  *  - Ventas de servicios: `VENTA_SERVICIO_CREDITO` (venta de servicio).
  *  - Devoluciones de venta: `DEVOLUCION_VENTA` (devolucion registrada), con el
  *    desglose y el costo FIFO repuesto que el writer persistio.
+ *  - Ajustes bancarios: `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO`.
+ *  - Inyecciones de capital: `INYECCION_CAPITAL` / `DEUDA_RECIBIDA`.
  *
  * @module src/features/contabilidad-formal/services/replay-source-collector
  */
@@ -32,6 +34,12 @@ import { buildAnticipoEvent } from '../lib/advance-event-builder';
 import type { TipoEventoClave } from '../lib/plan-default';
 import { derivarMedioCobro } from '../lib/settlement-event-builder';
 import { construirEventoLiquidacion } from './settlement-posting-service';
+import {
+	construirEventoAjusteBancario,
+	construirEventoInyeccionCapital,
+	AJUSTE_BANCARIO_ORIGIN_TYPE,
+	INYECCION_CAPITAL_ORIGIN_TYPE,
+} from './capital-adjustment-posting-service';
 import {
 	construirEventoDevolucionVenta,
 	DEVOLUCION_VENTA_ORIGIN_TYPE,
@@ -135,6 +143,10 @@ function diferenciaFxPersistida(movimiento: {
  *  - La devolucion de venta registrada genera `DEVOLUCION_VENTA` con el
  *    desglose persistido (cuentas por cobrar, saldo a favor y reembolso) y el
  *    costo FIFO repuesto ya valorado; una devolucion anulada se omite.
+ *  - El ajuste bancario genera `AJUSTE_BANCARIO_ABONO` o
+ *    `AJUSTE_BANCARIO_CARGO` con la tasa que persistio.
+ *  - La inyeccion de capital genera `INYECCION_CAPITAL` o `DEUDA_RECIBIDA` con
+ *    la tasa y el importe convertido que persistio.
  *
  * @param {string} tenantId - Tenant propietario de las fuentes.
  * @param {ReplayDb} client - Cliente Prisma de lectura.
@@ -155,6 +167,8 @@ export async function recolectarCandidatos(
 		ventasServicio,
 		movimientosAnticipo,
 		devolucionesVenta,
+		ajustesBancarios,
+		inyeccionesCapital,
 		politica,
 	] = await Promise.all([
 		client.reconciliacionVenta.findMany({
@@ -282,6 +296,32 @@ export async function recolectarCandidatos(
 				costoFifoFuncional: true,
 				idempotencyKey: true,
 				createdAt: true,
+			},
+		}),
+		client.ajusteBancario.findMany({
+			where: { tenantId },
+			select: {
+				ajusteId: true,
+				tipo: true,
+				monto: true,
+				moneda: true,
+				tasaCambio: true,
+				descripcion: true,
+				idempotencyKey: true,
+				fechaOperacion: true,
+			},
+		}),
+		client.inyeccionCapital.findMany({
+			where: { tenantId },
+			select: {
+				id: true,
+				tipo: true,
+				montoRecibido: true,
+				moneda: true,
+				tasaCambio: true,
+				descripcion: true,
+				idempotencyKey: true,
+				fechaRegistro: true,
 			},
 		}),
 		client.tenantAccountingPolicy.findUnique({
@@ -636,6 +676,64 @@ export async function recolectarCandidatos(
 			origenTipo: DEVOLUCION_VENTA_ORIGIN_TYPE,
 			origenId: devolucion.devolucionId,
 			fecha: devolucion.createdAt,
+			evento,
+			...(omision ? { causaOmision: omision } : {}),
+		});
+	}
+
+	// --- Ajustes bancarios e inyecciones de capital --------------------------
+
+	for (const ajuste of ajustesBancarios) {
+		const monto = Number(ajuste.monto);
+		if (!Number.isFinite(monto) || monto <= 0) continue;
+		const evento = construirEventoAjusteBancario(
+			{
+				ajusteId: ajuste.ajusteId,
+				fecha: ajuste.fechaOperacion,
+				monto,
+				moneda: ajuste.moneda ?? 'CUP',
+				tasaCambio: ajuste.tasaCambio === null ? null : Number(ajuste.tasaCambio),
+				descripcion: ajuste.descripcion,
+				referencia: ajuste.idempotencyKey,
+				tipo: ajuste.tipo === 'egreso' ? 'egreso' : 'ingreso',
+			},
+			monedaFuncional,
+		);
+		const omision = evento.montoFuncional === null && evento.monedaFuncional !== evento.moneda
+			? CAUSA_TASA_NO_PERSISTIDA
+			: undefined;
+		candidatos.push({
+			origenTipo: AJUSTE_BANCARIO_ORIGIN_TYPE,
+			origenId: ajuste.ajusteId,
+			fecha: ajuste.fechaOperacion,
+			evento,
+			...(omision ? { causaOmision: omision } : {}),
+		});
+	}
+
+	for (const inyeccion of inyeccionesCapital) {
+		const monto = Number(inyeccion.montoRecibido);
+		if (!Number.isFinite(monto) || monto <= 0) continue;
+		const evento = construirEventoInyeccionCapital(
+			{
+				inyeccionId: inyeccion.id,
+				fecha: inyeccion.fechaRegistro,
+				monto,
+				moneda: inyeccion.moneda ?? 'CUP',
+				tasaCambio: inyeccion.tasaCambio === null ? null : Number(inyeccion.tasaCambio),
+				descripcion: inyeccion.descripcion,
+				referencia: inyeccion.idempotencyKey,
+				tipo: inyeccion.tipo === 'DEUDA_EXTERNA' ? 'DEUDA_EXTERNA' : 'CAPITAL_SOCIAL',
+			},
+			monedaFuncional,
+		);
+		const omision = evento.montoFuncional === null && evento.monedaFuncional !== evento.moneda
+			? CAUSA_TASA_NO_PERSISTIDA
+			: undefined;
+		candidatos.push({
+			origenTipo: INYECCION_CAPITAL_ORIGIN_TYPE,
+			origenId: inyeccion.id,
+			fecha: inyeccion.fechaRegistro,
 			evento,
 			...(omision ? { causaOmision: omision } : {}),
 		});

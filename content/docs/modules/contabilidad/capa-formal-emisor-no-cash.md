@@ -374,10 +374,6 @@ La decisión y sus consecuencias están registradas en
   rutas actuales. No se consideran writers activos pendientes de integración.
 - El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
   licencia para activar el emisor tenant a tenant.
-- El recolector del replay todavía no cubre los ajustes de banco ni las
-  inyecciones de capital: el ajuste persiste su tasa (reconstruible ✓), pero la
-  inyección de capital no persiste la tasa ni el importe funcional, así que su
-  valoracion en moneda extranjera no se puede reconstruir con fidelidad.
 - Los movimientos de anticipo sí se reconstruyen (el movimiento persiste el
   importe, la moneda, la tasa aplicada, la huella FX y los valores funcionales),
   pero el anticipo nacido de una nota de crédito no genera asiento de

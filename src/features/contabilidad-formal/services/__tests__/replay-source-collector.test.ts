@@ -51,6 +51,8 @@ describe('recolectarCandidatos', () => {
 			ventaServicios: { findMany: vi.fn().mockResolvedValue([]) },
 			anticipoMovimiento: { findMany: vi.fn().mockResolvedValue([]) },
 			devolucionVenta: { findMany: vi.fn().mockResolvedValue([]) },
+			ajusteBancario: { findMany: vi.fn().mockResolvedValue([]) },
+			inyeccionCapital: { findMany: vi.fn().mockResolvedValue([]) },
 			tasaCambio: { findFirst: vi.fn().mockResolvedValue(null) },
 			tenantAccountingPolicy: {
 				findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
@@ -275,6 +277,105 @@ describe('recolectarCandidatos', () => {
 		const client = crearClient({
 			devolucionVenta: {
 				findMany: vi.fn().mockResolvedValue([devolucion({ moneda: 'USD', tasaCambio: null })]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBe('TASA_CAMBIO_NO_PERSISTIDA');
+	});
+
+	it('reconoce el ajuste bancario con la tasa persistida', async () => {
+		const client = crearClient({
+			ajusteBancario: {
+				findMany: vi.fn().mockResolvedValue([
+					{
+						ajusteId: 'ajuste-1',
+						tipo: 'ingreso',
+						monto: new Prisma.Decimal(100),
+						moneda: 'CUP',
+						tasaCambio: new Prisma.Decimal(1),
+						descripcion: 'Ajuste de banco',
+						idempotencyKey: 'ajuste-key-1',
+						fechaOperacion: new Date('2026-10-14T00:00:00.000Z'),
+					},
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBeUndefined();
+		expect(candidatos[0]).toMatchObject({
+			origenTipo: 'ajuste_bancario',
+			origenId: 'ajuste-1',
+			evento: {
+				tipo: 'AJUSTE_BANCARIO_ABONO',
+				origen: { tipo: 'ajuste_bancario', id: 'ajuste-1' },
+				monto: 100,
+				moneda: 'CUP',
+				montoFuncional: 100,
+				medioCobro: 'BANCOS',
+				referencia: 'ajuste-key-1',
+			},
+		});
+	});
+
+	it('reconoce la inyeccion de capital con la tasa y el importe persistidos', async () => {
+		const client = crearClient({
+			inyeccionCapital: {
+				findMany: vi.fn().mockResolvedValue([
+					{
+						id: 'inyeccion-1',
+						tipo: 'DEUDA_EXTERNA',
+						montoRecibido: new Prisma.Decimal(120),
+						moneda: 'USD',
+						tasaCambio: new Prisma.Decimal(250),
+						descripcion: 'Deuda en dolares',
+						idempotencyKey: 'inyeccion-key-1',
+						fechaRegistro: new Date('2026-10-15T00:00:00.000Z'),
+					},
+				]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBeUndefined();
+		expect(candidatos[0]).toMatchObject({
+			origenTipo: 'inyeccion_capital',
+			origenId: 'inyeccion-1',
+			evento: {
+				tipo: 'DEUDA_RECIBIDA',
+				origen: { tipo: 'inyeccion_capital', id: 'inyeccion-1' },
+				monto: 120,
+				moneda: 'USD',
+				montoFuncional: 30000,
+				tasaCambio: 250,
+				medioCobro: 'BANCOS',
+			},
+		});
+		expect(candidatos[0].evento.fxEvidenceFingerprint).toBeTruthy();
+	});
+
+	it('omite el ajuste en moneda extranjera sin tasa persistida', async () => {
+		const client = crearClient({
+			ajusteBancario: {
+				findMany: vi.fn().mockResolvedValue([
+					{
+						ajusteId: 'ajuste-2',
+						tipo: 'egreso',
+						monto: new Prisma.Decimal(50),
+						moneda: 'USD',
+						tasaCambio: null,
+						descripcion: 'Ajuste sin tasa',
+						idempotencyKey: 'ajuste-key-2',
+						fechaOperacion: new Date('2026-10-16T00:00:00.000Z'),
+					},
+				]),
 			},
 		});
 
