@@ -229,6 +229,43 @@ describe('seedPlantillasGlobales', () => {
 		}
 	});
 
+	it('la devolución de venta compensa el ingreso revertido con las tres salidas reales', () => {
+		const lineas = PLANTILLAS_DEFAULT.filter((linea) => linea.evento === 'DEVOLUCION_VENTA');
+		expect(lineas.map((linea) => `${linea.lado}:${linea.rolCuenta}:${linea.montoRegla}`)).toEqual([
+			'DEBE:VENTAS_PRODUCTOS:TOTAL',
+			'HABER:CXC_CLIENTES:MONTO_APLICADO_CXC',
+			'HABER:ANTICIPOS_CLIENTES:MONTO_SALDO_FAVOR',
+			'HABER:CAJA_PRINCIPAL:MONTO_REEMBOLSADO',
+			'DEBE:INVENTARIOS:COSTO_FIFO',
+			'HABER:COSTO_VENTAS:COSTO_FIFO',
+		]);
+
+		// El desglose debe cuadrar siempre: las tres salidas suman el total
+		// revertido y el par FIFO se mueve por el mismo costo.
+		for (const [aplicado, saldo, reembolsado] of [[600, 250, 150], [1000, 0, 0], [0, 0, 1000]]) {
+			const total = aplicado + saldo + reembolsado;
+			const costoFifo = 400;
+			const debe = lineas
+				.filter((linea) => linea.lado === 'DEBE')
+				.reduce((suma, linea) => suma + (linea.montoRegla === 'TOTAL' ? total : costoFifo), 0);
+			const haber = lineas
+				.filter((linea) => linea.lado === 'HABER')
+				.reduce(
+					(suma, linea) => suma + (
+						linea.montoRegla === 'COSTO_FIFO'
+							? costoFifo
+							: linea.rolCuenta === 'CXC_CLIENTES'
+								? aplicado
+								: linea.rolCuenta === 'ANTICIPOS_CLIENTES'
+									? saldo
+									: reembolsado
+					),
+					0,
+				);
+			expect(debe).toBe(haber);
+		}
+	});
+
 	it('define plantillas compensatorias que invierten cada línea original', () => {
 		const pares = [
 			['ANTICIPO_CLIENTE_APLICADO', 'ANTICIPO_CLIENTE_APLICACION_REVERSADA'],

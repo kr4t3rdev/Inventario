@@ -1,4 +1,5 @@
 import { Prisma, EstadoCuentaPorPagar } from '@/generated/prisma';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { ActionError } from '@/lib/server-actions';
 
 export class PayrollDeletionError extends ActionError {
@@ -61,13 +62,27 @@ function selectPaymentsForReversal(
  * @param {Prisma.TransactionClient} tx - Cliente Prisma transaccional.
  * @param {readonly PayrollReconciliation[]} reconciliaciones - Movimientos enlazados.
  * @param {string} tenantId - Tenant dueño de los movimientos.
+ * @param {string} usuarioId - Usuario que revierte el pago de nómina.
  * @returns {Promise<void>} Completa la reversión o aborta toda la transacción.
  */
 export async function reversePayrollReconciliations(
   tx: Prisma.TransactionClient,
   reconciliaciones: readonly PayrollReconciliation[],
   tenantId: string,
+  usuarioId: string,
 ): Promise<void> {
+  // Capa formal: el asiento de la conciliación pagada se anula con su
+  // contraasiento antes de revertir los efectos operativos del pago.
+  if (reconciliaciones.length > 0) {
+    await reverseFormalEntries(
+      tx,
+      { tenantId, userId: usuarioId },
+      reconciliaciones.map(({ reconciliacionId }) => ({
+        tipo: 'reconciliacion_gasto',
+        id: reconciliacionId,
+      })),
+    );
+  }
   const accountTotals = new Map<string, number>();
   const payableTotals = new Map<string, number>();
 

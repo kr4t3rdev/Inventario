@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ManagementPageTitle } from "@/components/management-page-title";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -797,19 +798,11 @@ export function ProductosContent({
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.1, duration: 0.5 }}
 					>
-						<div className="flex items-center gap-3">
-							<motion.div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
-								<Boxes className="h-5 w-5 text-white" />
-							</motion.div>
-							<div>
-								<h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-									Productos
-								</h1>
-								<p className="text-muted-foreground text-sm">
-									Gestiona tu inventario de productos
-								</p>
-							</div>
-						</div>
+						<ManagementPageTitle
+							icon={Boxes}
+							title="Productos"
+							description="Gestiona tu inventario de productos"
+						/>
 						<div className="flex items-center gap-2">
 							{planFeatures?.["productos-stock-masivo"] === true && (
 								<Link href="/busy/products/bulk-stock-minimo">
@@ -821,7 +814,7 @@ export function ProductosContent({
 							)}
 							{puedeEditar && (
 								<Link href="/busy/products/new">
-									<Button className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90">
+									<Button className="gap-2 bg-primary hover:bg-primary/90">
 										<Plus className="h-4 w-4" />
 										Nuevo Producto
 									</Button>
@@ -837,7 +830,7 @@ export function ProductosContent({
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.16, duration: 0.45 }}
 					>
-						<Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
+						<Card className="border-dashed from-primary/6 to-transparent dark:from-primary/10 bg-muted/30">
 							<CardContent className="pt-4">
 								<p className="text-xs uppercase tracking-wide text-muted-foreground">
 									Productos visibles
@@ -847,7 +840,7 @@ export function ProductosContent({
 								</p>
 							</CardContent>
 						</Card>
-						<Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
+						<Card className="border-dashed from-primary/6 to-transparent dark:from-primary/10 bg-muted/30">
 							<CardContent className="pt-4">
 								<p className="text-xs uppercase tracking-wide text-muted-foreground">
 									Stock normal
@@ -857,7 +850,7 @@ export function ProductosContent({
 								</p>
 							</CardContent>
 						</Card>
-						<Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
+						<Card className="border-dashed from-primary/6 to-transparent dark:from-primary/10 bg-muted/30">
 							<CardContent className="pt-4">
 								<p className="text-xs uppercase tracking-wide text-muted-foreground">
 									Stock bajo
@@ -867,7 +860,7 @@ export function ProductosContent({
 								</p>
 							</CardContent>
 						</Card>
-						<Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
+						<Card className="border-dashed from-primary/6 to-transparent dark:from-primary/10 bg-muted/30">
 							<CardContent className="pt-4">
 								<p className="text-xs uppercase tracking-wide text-muted-foreground">
 									Sin stock
@@ -899,7 +892,7 @@ export function ProductosContent({
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.3, duration: 0.5 }}
 					>
-						<Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple/8 dark:from-primary/10 dark:to-purple/10">
+						<Card className="mb-4 border-dashed from-primary/5 via-background dark:from-primary/10 bg-muted/30">
 							<CardHeader className="pb-3">
 								<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 									<CardTitle className="flex items-center gap-2 text-lg">

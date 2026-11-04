@@ -98,6 +98,9 @@ export type TipoEventoClave =
 export type ReglaMontoClave =
 	| 'TOTAL'
 	| 'MONTO_PAGADO'
+	| 'MONTO_APLICADO_CXC'
+	| 'MONTO_SALDO_FAVOR'
+	| 'MONTO_REEMBOLSADO'
 	| 'COSTO_FIFO'
 	| 'INTERESES'
 	| 'INTERESES_MORATORIOS'
@@ -442,7 +445,9 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 	]),
 	...plantilla('DEVOLUCION_VENTA', [
 		{ lado: 'DEBE', rol: 'VENTAS_PRODUCTOS', regla: 'TOTAL' },
-		{ lado: 'HABER', rol: 'CAJA_PRINCIPAL', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'CXC_CLIENTES', regla: 'MONTO_APLICADO_CXC' },
+		{ lado: 'HABER', rol: 'ANTICIPOS_CLIENTES', regla: 'MONTO_SALDO_FAVOR' },
+		{ lado: 'HABER', rol: 'CAJA_PRINCIPAL', regla: 'MONTO_REEMBOLSADO' },
 		{ lado: 'DEBE', rol: 'INVENTARIOS', regla: 'COSTO_FIFO' },
 		{ lado: 'HABER', rol: 'COSTO_VENTAS', regla: 'COSTO_FIFO' },
 	]),

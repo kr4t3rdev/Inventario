@@ -269,7 +269,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-3 text-2xl">
-              <div className="p-2 bg-linear-to-br from-orange-500 to-red-600 rounded-lg shadow-sm">
+              <div className="p-2 bg-primary rounded-lg shadow-sm">
                 <Package className="h-6 w-6 text-white" />
               </div>
               {initialData ? "Editar Transferencia" : "Nueva Transferencia Múltiple"}

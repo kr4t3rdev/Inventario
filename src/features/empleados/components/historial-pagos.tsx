@@ -68,7 +68,7 @@ export function HistorialPagos({ pagos }: HistorialPagosProps) {
 
       <TabsContent value="historial" className="mt-4">
         <Card className="border-dashed">
-          <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
+          <div className="h-1 bg-primary" />
           <CardContent className="pt-6">
             <Table>
               <TableHeader>
@@ -127,7 +127,7 @@ export function HistorialPagos({ pagos }: HistorialPagosProps) {
 
       <TabsContent value="resumen" className="mt-4">
         <Card className="border-dashed">
-          <div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+          <div className="h-1 bg-primary" />
           <CardContent className="pt-6">
             <Table>
               <TableHeader>

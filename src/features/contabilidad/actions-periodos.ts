@@ -51,6 +51,7 @@ import {
 } from "@/features/contabilidad/services/period-close-reconciliation-guard";
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { insertarAsientoConNumeracion } from "@/features/contabilidad-formal/services/posting-engine";
+import { generarAsientoCierre } from "@/features/contabilidad-formal/services/cierre-formal-service";
 import { isFinancialV3CaptureEnabled } from "@/features/contabilidad/config/financial-v3-capture";
 import { getRequiredTenantAccountingPolicy } from "@/features/contabilidad/services/tenant-accounting-policy-service";
 import {
@@ -1189,6 +1190,17 @@ export const cerrarPeriodoAction = withAction(
 					tx,
 				);
 
+				// Un cierre con auto-aprobación deja el período APROBADO: el
+				// cierre formal se genera en la misma transacción, igual que en
+				// la aprobación explícita.
+				if (resultadoCierre.estado === EstadoPeriodo.APROBADO) {
+					await generarAsientoCierre(tx, {
+						periodoId: parsed.periodoId,
+						tenantId,
+						actorId: user.userId,
+					});
+				}
+
 				return { cerrado: resultadoCierre };
 			}, { isolationLevel: "Serializable" });
 
@@ -1294,10 +1306,22 @@ export const aprobarPeriodoAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
-		const aprobado = await PeriodoContableService.aprobarPeriodo(
-			parsed.periodoId,
-			user.userId,
-		);
+		// Aprobación y cierre formal en la misma transacción: el período no
+		// queda aprobado sin el asiento que vacía sus cuentas de resultado.
+		const aprobado = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const p = await PeriodoContableService.aprobarPeriodo(
+				parsed.periodoId,
+				user.userId,
+				tx,
+			);
+			await generarAsientoCierre(tx, {
+				periodoId: parsed.periodoId,
+				tenantId,
+				actorId: user.userId,
+			});
+			return p;
+		});
 
 		AuditLogService.log({
 			accion: "UPDATE",

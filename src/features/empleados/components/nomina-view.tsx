@@ -444,7 +444,7 @@ export function NominaView() {
               <Button
                 onClick={handleCalculatePayroll}
                 disabled={calculating}
-                className="h-11 w-full sm:w-auto bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md hover:shadow-lg transition-all"
+                className="h-11 w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
               >
                 {calculating ? (
                   <>

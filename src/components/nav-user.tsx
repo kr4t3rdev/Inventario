@@ -53,10 +53,11 @@ export function getNavUserFallbackLabel(
 }
 
 /**
- * @description Menú de usuario en el footer del sidebar con acciones de perfil, tema y cierre de sesión.
+ * @description Menú de usuario en el footer del sidebar o compacto en el encabezado.
+ * @param {{ compact?: boolean }} props - Presentación reducida para espacios de encabezado.
  * @returns {JSX.Element | null} Menú de usuario o null si no hay usuario autenticado.
  */
-export function NavUser() {
+export function NavUser({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname()
   const { isMobile } = useSidebar()
   const { setTheme, theme } = useTheme()
@@ -76,6 +77,8 @@ export function NavUser() {
 
   const displayName = user.name?.trim() || user.email || 'Usuario'
   const initials = getNavUserFallbackLabel(displayName, user.tenantRole, user.role)
+  const compactInitials = displayName.split(' ').filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+  const avatarFallback = compact ? compactInitials || 'US' : initials
 
   const avatarSrc = profile?.avatar || user.avatar || ''
 
@@ -88,22 +91,23 @@ export function NavUser() {
             <SidebarMenuButton
               size="lg"
               tooltip={displayName}
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+              aria-label={compact ? 'Menú de usuario' : undefined}
+              className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 ${compact ? '!size-11 justify-center rounded-full p-0' : ''}`}
             >
-              <Avatar className="h-8 w-8 rounded-lg group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7">
+              <Avatar className={`h-8 w-8 rounded-lg group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7 ${compact ? 'rounded-full' : ''}`}>
                 <AvatarImage src={avatarSrc} alt={displayName} />
-                <AvatarFallback className="rounded-lg">{<span>{initials}</span>}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{<span>{avatarFallback}</span>}</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+              {!compact && <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">{displayName}</span>
                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-              </div>
-              <MoreVerticalIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+              </div>}
+              {!compact && <MoreVerticalIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            side={compact || isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
@@ -111,11 +115,11 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={avatarSrc} alt={displayName} />
-                  <AvatarFallback className="rounded-lg">{<span>{initials}</span>}</AvatarFallback>                 
+                <AvatarFallback className="rounded-lg">{<span>{avatarFallback}</span>}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{displayName}</span>
-                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                  {!compact && <span className="truncate text-xs text-muted-foreground">{user.email}</span>}
                 </div>
               </div>
             </DropdownMenuLabel>

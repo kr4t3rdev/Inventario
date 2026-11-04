@@ -73,13 +73,13 @@ export function SubcategoriaNewPageClient(): ReactElement {
 
             <div className="flex items-center gap-3 mb-2">
               <motion.div
-                className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
+                className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg relative"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
                   {title}
                 </h1>
                 <p className="text-muted-foreground">

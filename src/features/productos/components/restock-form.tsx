@@ -311,8 +311,8 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
-        <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
+      <Card className="overflow-hidden border-dashed from-primary/[0.05] via-background dark:from-primary/10 bg-muted/30">
+        <CardHeader className="border-b from-primary/[0.04] dark:from-primary/10 bg-muted/30">
           <CardTitle className="flex items-center gap-3">
             {/* <div>
               <p className="text-lg font-semibold">Restock de Producto</p>
@@ -685,7 +685,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <Button
                 type="submit"
                 disabled={isLoading || cantidad <= 0}
-                className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
+                className="gap-2 bg-primary hover:bg-primary/90"
               >
                 {isLoading ? (
                   <>
@@ -733,11 +733,11 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <button
                 type="button"
                 onClick={() => handleTipoRestockSelect('nueva_instancia')}
-                className="w-full p-3 text-left border rounded-lg hover:border-purple hover:bg-purple/10 dark:hover:bg-purple/30 transition-colors group"
+                className="w-full p-3 text-left border rounded-lg transition-colors group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-purple/15 dark:bg-purple/25 flex items-center justify-center flex-shrink-0 group-hover:bg-purple/25 dark:group-hover:bg-purple/40 transition-colors">
-                    <Package className="h-5 w-5 text-purple dark:text-purple" />
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors">
+                    <Package className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-foreground">Crear nueva instancia</p>

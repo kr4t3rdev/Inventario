@@ -518,10 +518,17 @@ export class PeriodoContableService {
 	 *
 	 * @param {string} periodoId - ID del período.
 	 * @param {string} actor - ID del usuario que aprueba.
+	 * @param {Prisma.TransactionClient} [client] - Transacción opcional para
+	 *   atomicar la aprobación con la evidencia contable del mismo paso.
 	 * @returns {Promise<PeriodoContable>} El período aprobado.
 	 */
-	static async aprobarPeriodo(periodoId: string, actor: string) {
-		const periodo = await prisma.periodoContable.findUnique({
+	static async aprobarPeriodo(
+		periodoId: string,
+		actor: string,
+		client?: Prisma.TransactionClient,
+	) {
+		const db = client ?? prisma;
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -556,7 +563,7 @@ export class PeriodoContableService {
 		const esSegundaAprobacion =
 			periodo.aprobadoPor !== null && periodo.aprobadoPor !== undefined;
 
-		const aprobado = await prisma.periodoContable.update({
+		const aprobado = await db.periodoContable.update({
 			where: { periodoId },
 			data: {
 				estado: EstadoPeriodo.APROBADO,
@@ -578,7 +585,7 @@ export class PeriodoContableService {
 				cerradoPor: periodo.cerradoPor,
 				primeraAprobacionPor: periodo.aprobadoPor,
 			},
-		});
+		}, client);
 
 		return aprobado;
 	}

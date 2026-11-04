@@ -361,7 +361,7 @@ export function EnhancedAsistenciaForm() {
 													{empleado.apellido.charAt(0)}
 												</div>
 												<div className="flex flex-col text-left">
-													<span className="font-light text-sm from-orange-500 to-red-600">
+													<span className="font-light text-sm text-foreground">
 														{empleado.nombre} {empleado.apellido}
 													</span>
 													<span className="text-xs text-muted-foreground">

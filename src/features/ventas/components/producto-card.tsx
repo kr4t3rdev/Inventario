@@ -60,15 +60,15 @@ export function ProductoCard({ producto, onAddToCart, searchTerm, reduceMotion =
                   className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted"
                   whileHover={reduceMotion ? undefined : { scale: 1.05 }}
                 >
-                  <img 
-                    src={fotoUrl} 
+                  <img
+                    src={fotoUrl}
                     alt={producto.nombre}
                     className="w-full h-full object-cover"
                   />
                 </motion.div>
               ) : (
                 <motion.div
-                  className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0"
                   whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: 5 }}
                 >
                   <Package className="h-4 w-4 text-white" />
@@ -76,8 +76,8 @@ export function ProductoCard({ producto, onAddToCart, searchTerm, reduceMotion =
               )}
               <h3 className="font-medium line-clamp-2">{highlightText(producto.nombre, searchTerm)}</h3>
             </div>
-            <Badge 
-              variant={stockBadgeVariant} 
+            <Badge
+              variant={stockBadgeVariant}
               className="ml-2 whitespace-nowrap flex-shrink-0"
             >
               {producto.stock} {producto.unidad?.simbolo || "u"}
@@ -103,7 +103,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm, reduceMotion =
           {producto.descripcion && (
             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{producto.descripcion}</p>
           )}
-          <motion.p 
+          <motion.p
             className="text-lg font-bold text-primary"
             key={producto.precioVenta}
             initial={reduceMotion ? false : { scale: 1.1 }}
@@ -122,10 +122,10 @@ export function ProductoCard({ producto, onAddToCart, searchTerm, reduceMotion =
                   whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                   whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                 >
-                  <Button 
-                    onClick={onAddToCart} 
+                  <Button
+                    onClick={onAddToCart}
                     aria-label={`Añadir ${producto.nombre} al carrito`}
-                    className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white" 
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-white"
                     disabled={producto.stock === 0}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />

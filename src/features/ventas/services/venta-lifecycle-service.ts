@@ -8,6 +8,7 @@ import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inv
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import { modoActual } from '@/features/contabilidad-formal/services/posting-engine';
 import { emitirCostoVenta } from '@/features/contabilidad-formal/services/sale-posting-service';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { exigirLimiteCredito, lockCreditoCliente } from '@/features/crm/services/credito-enforcement';
 import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
@@ -680,6 +681,22 @@ export const VentaLifecycleService = {
       }
 
       const reconciliaciones = currentVenta.reconciliaciones ?? [];
+
+      // Capa de contabilidad formal: los asientos de la venta se anulan con su
+      // contraasiento (ingreso reconocido, costo devengado y cobro al contado)
+      // antes de retirar los documentos que los originaron. Con la capa
+      // apagada la reversa no hace nada.
+      await reverseFormalEntries(tx, { tenantId, userId: user.userId }, [
+        ...(currentVenta.factura?.idFactura
+          ? [{ tipo: 'factura', id: currentVenta.factura.idFactura }]
+          : []),
+        { tipo: 'venta_costo', id: parsed.ventaId },
+        ...reconciliaciones.map((reconciliacion) => ({
+          tipo: 'reconciliacion_venta',
+          id: reconciliacion.reconciliacionId,
+        })),
+      ]);
+
       await reverseReconciliations(tx, reconciliaciones, tenantId);
 
       if (reconciliaciones.length > 0) {

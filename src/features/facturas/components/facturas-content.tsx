@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Loader2 } from "lucide-react"
+import { ManagementPageTitle } from "@/components/management-page-title"
 import { formatCurrency } from "@/lib/utils"
 import type { FacturaRow } from "@/features/facturas/types"
 import { getAuthToken } from "@/lib/token"
@@ -268,14 +269,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <motion.div className="flex items-center gap-3" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-              <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center" whileHover={{ scale: 1.05 }}>
-                <FileSpreadsheet className="h-5 w-5 text-white" />
-              </motion.div>
-              <div>
-                <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Facturas</h1>
-              </div>
-            </motion.div>
+            <ManagementPageTitle icon={FileSpreadsheet} title="Facturas" description="Consulta y administra las facturas." />
             <div className="flex gap-2">
               <Button asChild variant="outline">
                 <Link href="/busy/invoice">

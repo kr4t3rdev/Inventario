@@ -572,6 +572,51 @@ describe('postEvento — generación de líneas', () => {
 			linea.cuenta.connect.tenantId_cuentaContableId.tenantId === TENANT)).toBe(true);
 	});
 
+	it('devolución de venta: reparte el ingreso revertido entre cxC, anticipo y reembolso', async () => {
+		await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'DEVOLUCION_VENTA',
+			monto: 1000,
+			montoFuncional: 1000,
+			auxiliares: {
+				montoAplicadoCxc: 600,
+				montoSaldoFavor: 250,
+				montoReembolsado: 150,
+				costoFifo: 400,
+			},
+		}));
+
+		const lineas = lineasDe(fixture.crearAsiento);
+		expect(lineas).toHaveLength(6);
+		expect(lineas[0].debe.toString()).toBe('1000');
+		expect(lineas[0].haber.toString()).toBe('0');
+		expect(lineas[1].haber.toString()).toBe('600');
+		expect(lineas[2].haber.toString()).toBe('250');
+		expect(lineas[3].haber.toString()).toBe('150');
+		expect(lineas[4].debe.toString()).toBe('400');
+		expect(lineas[5].haber.toString()).toBe('400');
+		const totalDebe = lineas.reduce((suma, linea) => suma.add(linea.debe), new Prisma.Decimal(0));
+		const totalHaber = lineas.reduce((suma, linea) => suma.add(linea.haber), new Prisma.Decimal(0));
+		expect(totalDebe.toString()).toBe(totalHaber.toString());
+	});
+
+	it('devolución de venta sin reembolso: omite la línea de caja que no aplica', async () => {
+		await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'DEVOLUCION_VENTA',
+			monto: 1000,
+			montoFuncional: 1000,
+			auxiliares: {
+				montoAplicadoCxc: 1000,
+				montoSaldoFavor: 0,
+				montoReembolsado: 0,
+				costoFifo: 400,
+			},
+		}));
+
+		const lineas = lineasDe(fixture.crearAsiento);
+		expect(lineas).toHaveLength(4);
+		expect(lineas[1].haber.toString()).toBe('1000');
+	});
+
 	it('rechaza rol sin mapear en enforce sin insertar', async () => {
 		fixture.setPlantillas([
 			{ evento: 'VENTA_CONTADO', orden: 1, lado: 'DEBE', rolCuenta: 'ROL_AUSENTE' as never, montoRegla: 'TOTAL' },
@@ -874,11 +919,15 @@ describe('postEvento — generación de líneas', () => {
 		await postEvento(
 			fixture.tx,
 			{ tenantId: TENANT, userId: 'u1' },
-			eventoBase({ tipo: 'DEVOLUCION_VENTA' }),
+			eventoBase({
+				tipo: 'DEVOLUCION_VENTA',
+				auxiliares: { montoAplicadoCxc: 1000 },
+			}),
 		);
 		const lineas = lineasDe(fixture.crearAsiento);
 		expect(lineas).toHaveLength(2);
 		expect(lineas.find((l) => l.cuentaId === 'cta-5.1')).toBeUndefined();
+		expect(lineas.find((l) => l.cuentaId === 'cta-5.1.01')?.debe.toString()).toBeUndefined();
 	});
 
 	it('la numeración continúa el máximo del diario+período bajo lock', async () => {

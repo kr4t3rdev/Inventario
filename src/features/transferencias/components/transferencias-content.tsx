@@ -4,16 +4,17 @@
  * @description Componente de contenido para Transferencias (Client Component).
  * Maneja toda la interactividad: listado, eliminación, diálogos de confirmación.
  * Los datos iniciales se reciben como props desde el Server Component (page.tsx).
- * 
+ *
  * @param {TransferenciasContentProps} props - Props del componente
  * @returns {JSX.Element} Interfaz de gestión de Transferencias
  */
 import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LazyMotion, m as motion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { Package, PlusCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ManagementPageTitle } from "@/components/management-page-title"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { toast } from "sonner"
 import {
@@ -40,6 +41,7 @@ interface TransferenciasContentProps {
 }
 
 export function TransferenciasContent({ initialTransferencias, isLoading: initialIsLoading, error: initialError }: TransferenciasContentProps) {
+  const reduceMotion = useReducedMotion()
   const router = useRouter()
   const [transferencias, setTransferencias] = useState<Transferencia[]>(initialTransferencias)
   const [isLoading, setIsLoading] = useState(initialIsLoading ?? false)
@@ -143,43 +145,30 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
   return (
     <SidebarProvider>
       <SidebarInset>
-        <motion.div 
+        <motion.div
           className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.div 
+          <motion.div
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
+            transition={{ delay: reduceMotion ? 0 : 0.1, duration: reduceMotion ? 0 : 0.5 }}
           >
-            <div className="flex items-center gap-4">
-              <motion.div
-                className="w-12 h-12 bg-linear-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <Package className="h-6 w-6 text-white" />
-              </motion.div>
-              <div>
-                <h1 className="text-3xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-                  Transferencias
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Gestiona las transferencias de inventario entre almacenes
-                </p>
-              </div>
-            </div>
+            <ManagementPageTitle
+              icon={Package}
+              title="Transferencias"
+              description="Gestiona las transferencias de inventario entre almacenes."
+            />
             <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
             >
-              <Button 
-                asChild 
-                className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-lg shadow-orange-500/25"
+              <Button
+                asChild
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg "
               >
                 <Link href="/busy/transferencias/new">
                   <PlusCircle className="mr-2 h-5 w-5" />
@@ -194,7 +183,7 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <TransferenciasTable 
+            <TransferenciasTable
               transferencias={transferencias}
               isLoading={isLoading}
               error={error}

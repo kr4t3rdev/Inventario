@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AccountingPolicyCard } from '@/features/contabilidad/components/accounting-policy-card';
+import { PlanContableCard } from '@/features/contabilidad-formal/components/plan-contable-card';
 
 ;
 
@@ -123,6 +124,7 @@ export default function ConfiguracionPage(): React.JSX.Element {
           {/* Main Content */}
           <motion.div variants={fadeInUp} className="space-y-6">
              <AccountingPolicyCard />
+             <PlanContableCard />
              <TiposPagoConfigPage />
           </motion.div>
         </motion.div>

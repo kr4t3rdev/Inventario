@@ -13,6 +13,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+vi.mock("@/features/contabilidad-formal/services/reversal-service", () => ({
+	reverseFormalEntries: vi.fn().mockResolvedValue([]),
+}));
 
 const mockTx = {
 	compraDocumento: {
@@ -42,6 +45,7 @@ vi.mock("@/lib/prisma", () => ({
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { reverseFormalEntries } from "@/features/contabilidad-formal/services/reversal-service";
 import { anularCompraProductoAction } from "@/features/compras-productos/actions";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
@@ -137,6 +141,17 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 				updatedById: "user-1",
 			}),
 		});
+	});
+
+	it("anula el reconocimiento formal de la compra con su contraasiento", async () => {
+		const result = await anularCompraProductoAction({ id: "cd-1" });
+
+		expect(result.success).toBe(true);
+		expect(reverseFormalEntries).toHaveBeenCalledWith(
+			mockTx,
+			{ tenantId: "tenant-test", userId: "user-1" },
+			[{ tipo: "compra_documento", id: "cd-1" }],
+		);
 	});
 
 	it("una segunda anulación concurrente se rechaza sin revertir stock dos veces", async () => {

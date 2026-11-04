@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, Info } from 'lucide-react';
+import { ManagementPageTitle } from '@/components/management-page-title';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +83,7 @@ export function AjustesPageClient({
 	ajustesIniciales,
 }: AjustesPageClientProps) {
 	const router = useRouter();
+	const reduceMotion = useReducedMotion();
 	const [mostrarFormulario, setMostrarFormulario] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -179,13 +182,24 @@ export function AjustesPageClient({
 
 	return (
 		<div className="space-y-4 p-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-semibold">Ajustes de inventario</h1>
+			<motion.div
+				className="flex items-center justify-between"
+				initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: reduceMotion ? 0 : 0.5 }}
+			>
+				<ManagementPageTitle icon={AlertTriangle} title="Ajustes de inventario" description="Consulta y registra ajustes de inventario." />
 				<Button onClick={() => setMostrarFormulario((v) => !v)}>
 					{mostrarFormulario ? 'Cerrar' : 'Nuevo ajuste'}
 				</Button>
-			</div>
+			</motion.div>
 
+			<motion.div
+				initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.3 }}
+				className="space-y-4"
+			>
 			{error && (
 				<p role="alert" className="text-sm text-destructive">
 					{error}
@@ -409,6 +423,7 @@ export function AjustesPageClient({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+			</motion.div>
 		</div>
 	);
 }

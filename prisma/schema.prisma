@@ -3299,6 +3299,8 @@ model DevolucionVenta {
   montoAplicadoCxc     Int                @default(0)
   montoSaldoFavor      Int                @default(0)
   montoReembolsado     Int                @default(0)
+  /// Costo FIFO repuesto en moneda funcional (evidencia del reingreso a inventario)
+  costoFifoFuncional   Decimal?           @db.Decimal(20, 4)
   idempotencyKey       String?
   createdById          String
   createdAt            DateTime           @default(now())
@@ -4158,6 +4160,9 @@ enum LadoAsiento {
 enum ReglaMontoEvento {
   TOTAL
   MONTO_PAGADO
+  MONTO_APLICADO_CXC
+  MONTO_SALDO_FAVOR
+  MONTO_REEMBOLSADO
   COSTO_FIFO
   INTERESES
   INTERESES_MORATORIOS

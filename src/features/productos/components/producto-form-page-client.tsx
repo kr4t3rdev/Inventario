@@ -95,11 +95,11 @@ export function ProductoFormPageClient({
         <motion.div className="container mx-auto py-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
           <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
             <div className="flex items-center gap-3 mb-2">
-              <motion.div className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
+              <motion.div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
                 <Boxes className="h-6 w-6 text-white" />
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold text-foreground">
                   {title}
                 </h1>
                 <p className="text-muted-foreground">{description}</p>
@@ -127,19 +127,19 @@ export function ProductoFormPageClient({
               </motion.div>
 
               <motion.div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-                <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+                <Card className="border-dashed from-primary/[0.06] to-transparent dark:from-primary/10 bg-muted/30">
                   <CardContent className="pt-5">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock actual</p>
                     <p className="mt-2 text-2xl font-semibold">{producto.stock} {producto.unidad?.simbolo || 'u'}</p>
                   </CardContent>
                 </Card>
-                <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+                <Card className="border-dashed from-primary/[0.06] to-transparent dark:from-primary/10 bg-muted/30">
                   <CardContent className="pt-5">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock mínimo</p>
                     <p className="mt-2 text-2xl font-semibold">{producto.stockMinimo > 0 ? producto.stockMinimo : 10} {producto.unidad?.simbolo || 'u'}</p>
                   </CardContent>
                 </Card>
-                <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+                <Card className="border-dashed from-primary/[0.06] to-transparent dark:from-primary/10 bg-muted/30">
                   <CardContent className="pt-5">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Estado</p>
                     <Badge variant={producto.stock === 0 ? 'destructive' : (producto.stock - (producto.stockMinimo > 0 ? producto.stockMinimo : 10)) <= 0 ? 'secondary' : 'default'} className="mt-2">
@@ -147,7 +147,7 @@ export function ProductoFormPageClient({
                     </Badge>
                   </CardContent>
                 </Card>
-                <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+                <Card className="border-dashed from-primary/[0.06] to-transparent dark:from-primary/10 bg-muted/30">
                   <CardContent className="pt-5">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Diferencia</p>
                     <p className={`mt-2 text-2xl font-semibold ${producto.stock - (producto.stockMinimo > 0 ? producto.stockMinimo : 10) >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
