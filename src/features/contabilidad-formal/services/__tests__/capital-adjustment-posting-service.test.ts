@@ -20,6 +20,7 @@ vi.mock('@/features/contabilidad-formal/services/posting-engine', async () => {
 import {
 	emitirAjusteBancario,
 	emitirInyeccionCapital,
+	construirEventoInyeccionCapital,
 } from '../capital-adjustment-posting-service';
 
 describe('emisores de ajustes bancarios e inyecciones de capital', () => {
@@ -175,5 +176,29 @@ describe('emisores de ajustes bancarios e inyecciones de capital', () => {
 				descripcion: 'Recepcion de deuda externa',
 			}),
 		);
+	});
+
+	it('el constructor puro produce el mismo evento que el emisor', async () => {
+		const tx = crearTx();
+		const params = {
+			inyeccionId: 'inyeccion-3',
+			fecha: new Date('2026-10-03T00:00:00.000Z'),
+			monto: 120,
+			moneda: 'USD',
+			tasaCambio: 250,
+			descripcion: 'Deuda en dolares',
+			referencia: 'capital-usd-key',
+			tipo: 'DEUDA_EXTERNA' as const,
+		};
+
+		await emitirInyeccionCapital(tx as never, { tenantId: 'tenant-1', userId: 'user-1' }, params);
+
+		const viaEmisor = postEvento.mock.calls[0][2];
+		const viaConstructor = construirEventoInyeccionCapital(params, 'CUP');
+		// El replay historico reconstruye el evento con este constructor: la
+		// huella FX y los importes deben coincidir con los del writer.
+		expect(viaConstructor).toEqual(viaEmisor);
+		expect(viaConstructor.montoFuncional).toBe(30000);
+		expect(viaConstructor.fxEvidenceFingerprint).toBeTruthy();
 	});
 });

@@ -745,6 +745,15 @@ export const AccountingOperationsMutationService = {
       const montoTotalDeuda = isDebt
         ? montoRecibido.add(montoInteres as Prisma.Decimal).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
         : null;
+      // La valoracion persistida es la evidencia que necesita el replay
+      // historico: sin ella una inyeccion en moneda extranjera no se puede
+      // reconstruir con fidelidad.
+      const monedaCUP = parsed.moneda.toUpperCase() === 'CUP';
+      const tasaCambioPersistida = monedaCUP
+        ? new Prisma.Decimal(1)
+        : parsed.tasaCambio
+          ? new Prisma.Decimal(parsed.tasaCambio)
+          : null;
 
       const created = await tx.inyeccionCapital.create({
         data: {
@@ -753,6 +762,12 @@ export const AccountingOperationsMutationService = {
           payloadFingerprint,
           montoRecibido,
           moneda: parsed.moneda,
+          tasaCambio: tasaCambioPersistida,
+          montoConvertido: monedaCUP
+            ? montoRecibido
+            : tasaCambioPersistida
+              ? montoRecibido.mul(tasaCambioPersistida)
+              : null,
           tipo: parsed.tipo,
           cuentaId: parsed.cuentaId,
           descripcion: parsed.descripcion,

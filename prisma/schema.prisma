@@ -100,6 +100,10 @@ model InyeccionCapital {
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
+  /// Tasa de cambio aplicada por el writer (1 en moneda funcional)
+  tasaCambio         Decimal?
+  /// Importe convertido con la tasa aplicada (evidencia del asiento formal)
+  montoConvertido    Decimal?
   tasaInteres        Decimal?
   montoInteres       Decimal?
   montoTotalDeuda    Decimal?

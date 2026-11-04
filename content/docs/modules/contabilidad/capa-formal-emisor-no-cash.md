@@ -97,7 +97,7 @@ falla cerrado, sin inventar conversión.
 | `src/features/contabilidad/actions-periodos.ts` → `aprobarPeriodoAction` | `CIERRE_PERIODO` | Al aprobar el período, vacía sus cuentas de resultado contra la cuenta de resultado del período, en la misma transacción |
 | `src/features/contabilidad/actions-periodos.ts` → `cerrarPeriodoAction` (auto-aprobación de managers) | `CIERRE_PERIODO` | Cuando el cierre deja el período aprobado, genera el mismo asiento de cierre formal |
 | `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createBankAdjustment` | `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` | El ajuste no liquida cuentas: el ingreso acredita otros ingresos y el egreso debita gastos financieros, con la valoración que el writer ya decidió |
-| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createCapitalInjection` | `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` | La inyección entra a la tesorería: el capital propio acredita el capital social y la deuda externa las deudas recibidas |
+| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createCapitalInjection` | `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` | La inyección entra a la tesorería: el capital propio acredita el capital social y la deuda externa las deudas recibidas. La inyección persiste su tasa y su importe convertido, de modo que el replay histórico reconstruye el asiento en moneda extranjera con la misma evidencia FX |
 
 Las rutas móviles de contabilidad (`src/app/api/mobile/v1/accounting/`) llegan a
 las mismas operaciones: los ajustes de banco y las inyecciones de capital

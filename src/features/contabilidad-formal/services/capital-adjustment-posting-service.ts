@@ -24,15 +24,19 @@ import {
 	postEvento,
 	type ContextoPosting,
 	type DecimalInput,
+	type EventoContableInput,
 	type PostEventoResult,
 	type PostingTx,
 } from './posting-engine';
 
 /** Origen idempotente del ajuste bancario. */
-const AJUSTE_BANCARIO_ORIGIN_TYPE = 'ajuste_bancario';
+export const AJUSTE_BANCARIO_ORIGIN_TYPE = 'ajuste_bancario';
 
 /** Origen idempotente de la inyeccion de capital. */
-const INYECCION_CAPITAL_ORIGIN_TYPE = 'inyeccion_capital';
+export const INYECCION_CAPITAL_ORIGIN_TYPE = 'inyeccion_capital';
+
+/** Fuente de la evidencia FX construida por estos emisores. */
+const EVIDENCE_SOURCE = 'capital-adjustment-posting-service';
 
 /** Sentido operativo del ajuste bancario. */
 export type TipoAjusteBancario = 'ingreso' | 'egreso';
@@ -81,6 +85,94 @@ export interface InyeccionCapitalPostingParams {
 }
 
 /**
+ * @description Construye el evento formal de un ajuste bancario.
+ *
+ * El constructor es puro y compartido: el writer y el replay historico
+ * construyen el evento con la misma funcion, de modo que el asiento
+ * reconstruido por el replay es el mismo que emitio el writer.
+ *
+ * @param {AjusteBancarioPostingParams} params - Ajuste persistido y su valoracion.
+ * @param {string | null} functionalCurrency - Moneda funcional del tenant.
+ * @returns {EventoContableInput} Evento formal listo para contabilizar.
+ */
+export function construirEventoAjusteBancario(
+	params: AjusteBancarioPostingParams,
+	functionalCurrency: string | null,
+): EventoContableInput {
+	const moneda = params.moneda.trim().toUpperCase();
+	const valoracion = buildFunctionalValuation({
+		monto: Number(params.monto),
+		moneda,
+		functionalCurrency,
+		tasaCambio:
+			params.tasaCambio === null || params.tasaCambio === undefined
+				? undefined
+				: Number(params.tasaCambio),
+		fechaOperacion: params.fecha,
+		source: EVIDENCE_SOURCE,
+	});
+
+	return {
+		tipo: params.tipo === 'ingreso' ? 'AJUSTE_BANCARIO_ABONO' : 'AJUSTE_BANCARIO_CARGO',
+		fecha: params.fecha,
+		descripcion: params.descripcion,
+		origen: { tipo: AJUSTE_BANCARIO_ORIGIN_TYPE, id: params.ajusteId },
+		monto: params.monto,
+		moneda,
+		montoFuncional: valoracion.sameCurrency ? params.monto : valoracion.montoConvertido,
+		monedaFuncional: functionalCurrency,
+		tasaCambio: valoracion.tasaCambio,
+		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
+		medioCobro: 'BANCOS',
+		...(params.referencia ? { referencia: params.referencia } : {}),
+	};
+}
+
+/**
+ * @description Construye el evento formal de una inyeccion de capital.
+ *
+ * @param {InyeccionCapitalPostingParams} params - Inyeccion persistida y su valoracion.
+ * @param {string | null} functionalCurrency - Moneda funcional del tenant.
+ * @returns {EventoContableInput} Evento formal listo para contabilizar.
+ */
+export function construirEventoInyeccionCapital(
+	params: InyeccionCapitalPostingParams,
+	functionalCurrency: string | null,
+): EventoContableInput {
+	const moneda = params.moneda.trim().toUpperCase();
+	const valoracion = buildFunctionalValuation({
+		monto: Number(params.monto),
+		moneda,
+		functionalCurrency,
+		tasaCambio:
+			params.tasaCambio === null || params.tasaCambio === undefined
+				? undefined
+				: Number(params.tasaCambio),
+		fechaOperacion: params.fecha,
+		source: EVIDENCE_SOURCE,
+	});
+
+	return {
+		tipo: params.tipo === 'DEUDA_EXTERNA' ? 'DEUDA_RECIBIDA' : 'INYECCION_CAPITAL',
+		fecha: params.fecha,
+		descripcion:
+			params.descripcion ??
+			(params.tipo === 'DEUDA_EXTERNA'
+				? 'Recepcion de deuda externa'
+				: 'Inyeccion de capital social'),
+		origen: { tipo: INYECCION_CAPITAL_ORIGIN_TYPE, id: params.inyeccionId },
+		monto: params.monto,
+		moneda,
+		montoFuncional: valoracion.sameCurrency ? params.monto : valoracion.montoConvertido,
+		monedaFuncional: functionalCurrency,
+		tasaCambio: valoracion.tasaCambio,
+		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
+		medioCobro: 'BANCOS',
+		...(params.referencia ? { referencia: params.referencia } : {}),
+	};
+}
+
+/**
  * @description Emite el asiento formal de un ajuste bancario.
  *
  * El ingreso al banco se acredita como otros ingresos y el egreso se debita
@@ -102,33 +194,12 @@ export async function emitirAjusteBancario(
 		select: { functionalCurrencyCode: true },
 	});
 	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
-	const moneda = params.moneda.trim().toUpperCase();
-	const valoracion = buildFunctionalValuation({
-		monto: Number(params.monto),
-		moneda,
-		functionalCurrency,
-		tasaCambio:
-			params.tasaCambio === null || params.tasaCambio === undefined
-				? undefined
-				: Number(params.tasaCambio),
-		fechaOperacion: params.fecha,
-		source: 'capital-adjustment-posting-service',
-	});
 
-	return postEvento(tx, ctx, {
-		tipo: params.tipo === 'ingreso' ? 'AJUSTE_BANCARIO_ABONO' : 'AJUSTE_BANCARIO_CARGO',
-		fecha: params.fecha,
-		descripcion: params.descripcion,
-		origen: { tipo: AJUSTE_BANCARIO_ORIGIN_TYPE, id: params.ajusteId },
-		monto: params.monto,
-		moneda,
-		montoFuncional: valoracion.sameCurrency ? params.monto : valoracion.montoConvertido,
-		monedaFuncional: functionalCurrency,
-		tasaCambio: valoracion.tasaCambio,
-		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
-		medioCobro: 'BANCOS',
-		...(params.referencia ? { referencia: params.referencia } : {}),
-	});
+	return postEvento(
+		tx,
+		ctx,
+		construirEventoAjusteBancario(params, functionalCurrency),
+	);
 }
 
 /**
@@ -152,35 +223,10 @@ export async function emitirInyeccionCapital(
 		select: { functionalCurrencyCode: true },
 	});
 	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
-	const moneda = params.moneda.trim().toUpperCase();
-	const valoracion = buildFunctionalValuation({
-		monto: Number(params.monto),
-		moneda,
-		functionalCurrency,
-		tasaCambio:
-			params.tasaCambio === null || params.tasaCambio === undefined
-				? undefined
-				: Number(params.tasaCambio),
-		fechaOperacion: params.fecha,
-		source: 'capital-adjustment-posting-service',
-	});
 
-	return postEvento(tx, ctx, {
-		tipo: params.tipo === 'DEUDA_EXTERNA' ? 'DEUDA_RECIBIDA' : 'INYECCION_CAPITAL',
-		fecha: params.fecha,
-		descripcion:
-			params.descripcion ??
-			(params.tipo === 'DEUDA_EXTERNA'
-				? 'Recepcion de deuda externa'
-				: 'Inyeccion de capital social'),
-		origen: { tipo: INYECCION_CAPITAL_ORIGIN_TYPE, id: params.inyeccionId },
-		monto: params.monto,
-		moneda,
-		montoFuncional: valoracion.sameCurrency ? params.monto : valoracion.montoConvertido,
-		monedaFuncional: functionalCurrency,
-		tasaCambio: valoracion.tasaCambio,
-		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
-		medioCobro: 'BANCOS',
-		...(params.referencia ? { referencia: params.referencia } : {}),
-	});
+	return postEvento(
+		tx,
+		ctx,
+		construirEventoInyeccionCapital(params, functionalCurrency),
+	);
 }
