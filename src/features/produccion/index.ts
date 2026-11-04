@@ -22,3 +22,16 @@ export { RecipeEditorDialog } from './components/recipe-editor-dialog'
 export { ProductoSalidaForm } from './components/producto-salida-form'
 
 export type { RecetaProduccion, OrdenProduccion } from './types'
+export {
+  BomError,
+  explodeBom,
+  validateBomAcyclic,
+} from './services/bom'
+export type {
+  BomExplosion,
+  BomIngredient,
+  BomMaterialRequirement,
+  BomRecipe,
+  BomRecipeIngredient,
+  BomSubrecipeRequirement,
+} from './services/bom'
