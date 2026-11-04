@@ -1,13 +1,16 @@
-import { MiEmpresaForm } from "@/features/mi-empresa/components/mi-empresa-form"
-import { getMiEmpresaPageData } from "@/features/mi-empresa/server/data"
-import {
-  mapMiEmpresaApiToFormValues,
-  filterActiveCuentasBancarias,
-} from "@/features/mi-empresa/lib/miEmpresaUtils"
-import { getCurrentUser } from "@/lib/server-actions"
-import { hasFeature } from "@/lib/services/tenant-scope"
+import { Building2 } from "lucide-react"
+
 import { getFiscalConfigAction } from "@/features/facturas/actions-fiscal-config"
 import { FiscalConfigForm } from "@/features/facturas/components/fiscal-config-form"
+import { MiEmpresaForm } from "@/features/mi-empresa/components/mi-empresa-form"
+import {
+  filterActiveCuentasBancarias,
+  mapMiEmpresaApiToFormValues,
+} from "@/features/mi-empresa/lib/miEmpresaUtils"
+import { getMiEmpresaPageData } from "@/features/mi-empresa/server/data"
+import { SettingsPageShell } from "@/features/configuracion/components/settings-page-shell"
+import { getCurrentUser } from "@/lib/server-actions"
+import { hasFeature } from "@/lib/services/tenant-scope"
 
 /**
  * @description Página de configuración de Mi Empresa.
@@ -48,26 +51,24 @@ export default async function MiEmpresaConfigPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mi Empresa</h1>
-        <p className="text-muted-foreground">
-          Configura los datos que aparecen como beneficiario en facturas y documentos
-        </p>
-      </div>
+    <SettingsPageShell
+      icon={Building2}
+      title="Mi Empresa"
+      description="Configura los datos que aparecen como beneficiario en facturas y documentos."
+    >
       <MiEmpresaForm initialData={initialData} cuentas={activeCuentas} />
 
       {showFiscal && (
         <section id="facturacion-fiscal" className="space-y-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Facturación fiscal</h2>
+          <header>
+            <h2 className="text-xl font-semibold tracking-tight">Facturación fiscal</h2>
             <p className="text-sm text-muted-foreground">
               Datos del emisor usados por la capa fiscal de la jurisdicción del tenant.
             </p>
-          </div>
+          </header>
           <FiscalConfigForm initial={fiscalInitial} />
         </section>
       )}
-    </div>
+    </SettingsPageShell>
   )
 }
