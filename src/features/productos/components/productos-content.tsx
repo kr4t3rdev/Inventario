@@ -211,7 +211,7 @@ export function ProductosContent({
 			});
 			if (!cancelled) {
 				if (result.success)
-					setProductosConStock((result.data ?? []) as ProductoConStock[]);
+					setProductosConStock((result.data ?? []) as unknown as ProductoConStock[]);
 				setIsLoadingStock(false);
 			}
 		}

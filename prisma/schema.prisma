@@ -243,6 +243,7 @@ model Tenant {
   piezasReparacion               PiezaReparacion[]
   prestamosCash                  PrestamoCash[]
   productos                      Producto[]
+  productoPlantillas              ProductoPlantilla[]
   puntosDeVenta                  PuntoDeVenta[]
   recetas                        Receta[]
   recetasIngredientes            RecetaIngrediente[]
@@ -549,6 +550,10 @@ model Producto {
   especificoCodigo     String?
   surtidoCodigo        String?
   dcCodigo             String?
+  plantillaId          String?
+  atributoJson         Json?
+  sku                  String?
+  esVariante           Boolean                   @default(false)
   fotos                String[]                  @default([])
   compraDocumentoItems CompraDocumentoItem[]
   ordenCompraItems     OrdenCompraItem[]
@@ -564,6 +569,7 @@ model Producto {
   categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Restrict)
   productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
   productosHijos       Producto[]                @relation("ProductoCompuesto")
+  plantilla            ProductoPlantilla?        @relation(fields: [tenantId, plantillaId], references: [tenantId, id], onDelete: Restrict, map: "Producto_plantilla_tenant_fkey")
   puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: SetNull)
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
@@ -586,10 +592,27 @@ model Producto {
   @@unique([tenantId, codigoNegocio])
   @@unique([tenantId, id])
   @@unique([tenantId, id, unidadId])
+  @@unique([tenantId, sku], map: "Producto_tenant_sku_key")
   @@index([tenantId])
   @@index([tenantId, categoriaId])
   @@index([tenantId, vendorId])
   @@index([tenantId, subcategoriaId])
+}
+
+/// Plantilla no vendible que agrupa productos vendibles por atributos.
+model ProductoPlantilla {
+  id        String     @id @default(cuid())
+  tenantId  String
+  nombre    String
+  atributos Json
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  productos Producto[]
+
+  @@unique([tenantId, id], map: "ProductoPlantilla_tenant_id_key")
+  @@index([tenantId, nombre])
+  @@map("producto_plantillas")
 }
 
 model UnidadConversion {
