@@ -9,6 +9,7 @@
  * @returns {JSX.Element} Panel de roles.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ import {
   deleteTenantRoleAction,
   assignCustomRoleAction,
 } from '@/features/roles/actions';
+import { SettingsPageShell } from '@/features/configuracion/components/settings-page-shell';
 import { PermissionMatrix } from './permission-matrix';
 
 interface RoleRow {
@@ -148,110 +150,149 @@ export function RolesManager() {
     await load();
   };
 
-  if (loading) return <p role="status">Cargando roles…</p>;
-
   return (
-    <div className="space-y-6">
-      {error && (
-        <p role="alert" className="rounded bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Roles personalizados</h2>
-        <Button onClick={openCreate}>Crear rol</Button>
-      </div>
-
-      {roles.length === 0 ? (
-        <p className="text-muted-foreground">
-          Aún no hay roles personalizados. Crea uno para combinar permisos a medida.
+    <SettingsPageShell
+      icon={ShieldCheck}
+      title="Roles"
+      description="Administra los roles personalizados y los permisos de tu equipo."
+      actions={!loading ? <Button onClick={openCreate}>Crear rol</Button> : undefined}
+    >
+      {loading ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border/80 bg-card p-4 text-sm text-muted-foreground shadow-sm"
+        >
+          Cargando roles…
         </p>
       ) : (
-        <ul className="space-y-2">
-          {roles.map((r) => (
-            <li key={r.roleId} className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <div className="font-medium">
-                  {r.nombre}
-                  {!r.isActive && (
-                    <Badge variant="outline" className="ml-2">
-                      Inactivo
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {Array.isArray(r.permissions) ? r.permissions.length : 0} permisos
-                  {r.descripcion ? ` · ${r.descripcion}` : ''}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => openEdit(r)}>
-                  Editar
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => remove(r)}>
-                  Eliminar
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        <>
+          {error && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
 
-      <section aria-label="Asignación de roles a usuarios">
-        <h3 className="text-lg font-semibold mb-2">Asignar rol a usuarios</h3>
-        <ul className="space-y-2">
-          {members.map((m) => (
-            <li key={m.membershipId} className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <div className="font-medium">{m.user?.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  Rol fijo: <Badge variant="secondary">{m.tenantRole}</Badge>
-                </div>
-              </div>
-              <Select
-                value={m.customRoleId ?? '__none__'}
-                onValueChange={(v) => assign(m.membershipId, v)}
-              >
-                <SelectTrigger className="w-56" aria-label={`Rol de ${m.user?.name}`}>
-                  <SelectValue placeholder="Rol personalizado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin rol personalizado</SelectItem>
-                  {roles
-                    .filter((r) => r.isActive)
-                    .map((r) => (
-                      <SelectItem key={r.roleId} value={r.roleId}>
-                        {r.nombre}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </li>
-          ))}
-        </ul>
-      </section>
+          {roles.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border/80 bg-card/60 p-6 text-sm text-muted-foreground">
+              Aún no hay roles personalizados. Crea uno para combinar permisos a medida.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {roles.map((r) => (
+                <li
+                  key={r.roleId}
+                  className="flex flex-col gap-4 rounded-xl border border-border/80 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium">
+                      {r.nombre}
+                      {!r.isActive && (
+                        <Badge variant="outline" className="ml-2">
+                          Inactivo
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {Array.isArray(r.permissions) ? r.permissions.length : 0} permisos
+                      {r.descripcion ? ` · ${r.descripcion}` : ''}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(r)}>
+                      Editar
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => remove(r)}>
+                      Eliminar
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <section
+            aria-label="Asignación de roles a usuarios"
+            className="space-y-4 rounded-xl border border-border/80 bg-card p-5 shadow-sm"
+          >
+            <div>
+              <h2 className="text-base font-semibold">Asignar rol a usuarios</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Selecciona el perfil que corresponde a cada miembro.
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {members.map((m) => (
+                <li
+                  key={m.membershipId}
+                  className="flex flex-col gap-3 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <div className="font-medium">{m.user?.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Rol fijo: <Badge variant="secondary">{m.tenantRole}</Badge>
+                    </div>
+                  </div>
+                  <Select
+                    value={m.customRoleId ?? '__none__'}
+                    onValueChange={(v) => assign(m.membershipId, v)}
+                  >
+                    <SelectTrigger
+                      className="w-full sm:w-56"
+                      aria-label={`Rol de ${m.user?.name}`}
+                    >
+                      <SelectValue placeholder="Rol personalizado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin rol personalizado</SelectItem>
+                      {roles
+                        .filter((r) => r.isActive)
+                        .map((r) => (
+                          <SelectItem key={r.roleId} value={r.roleId}>
+                            {r.nombre}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? `Editar rol: ${editing.nombre}` : 'Crear rol personalizado'}</DialogTitle>
+            <DialogTitle>
+              {editing ? `Editar rol: ${editing.nombre}` : 'Crear rol personalizado'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="rol-nombre">Nombre</Label>
-              <Input id="rol-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Cajero" />
+              <Input
+                id="rol-nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej. Cajero"
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="rol-descripcion">Descripción</Label>
-              <Textarea id="rol-descripcion" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+              <Textarea
+                id="rol-descripcion"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
               <Label>Permisos</Label>
               <PermissionMatrix selectedKeys={selectedKeys} onChange={setSelectedKeys} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancelar
+              </Button>
               <Button onClick={save} disabled={saving || !nombre.trim()}>
                 {saving ? 'Guardando…' : 'Guardar'}
               </Button>
@@ -259,6 +300,6 @@ export function RolesManager() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </SettingsPageShell>
   );
 }
