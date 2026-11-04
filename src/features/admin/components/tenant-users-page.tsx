@@ -1,18 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-	ShieldCheck,
-	Users,
-	UserPlus,
-	ChevronRight,
-} from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
-import Link from "next/link";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
+import { SettingsPageShell } from "@/features/configuracion/components/settings-page-shell";
 import {
 	approveMembershipAction,
 	getGlobalUsersAction,
@@ -51,7 +45,6 @@ interface PendingMembership {
  */
 export function TenantUsersPage() {
 	const { user } = useAuth();
-	const shouldReduceMotion = useReducedMotion();
 	const [activeTab, setActiveTab] = useState("usuarios");
 	const [selectedMembership, setSelectedMembership] =
 		useState<PendingMembership | null>(null);
@@ -218,129 +211,78 @@ export function TenantUsersPage() {
 
 	if (isLoading) {
 		return (
-			<div className="relative min-h-screen w-full">
-				<div className="flex flex-col gap-6 py-4 md:py-6">
-					<TenantUsersSkeleton />
-				</div>
-			</div>
+			<SettingsPageShell
+				icon={Users}
+				title="Usuarios"
+				description="Gestiona las cuentas y solicitudes de acceso de tu empresa."
+			>
+				<TenantUsersSkeleton />
+			</SettingsPageShell>
 		);
 	}
 
 	return (
-		<div className="relative min-h-screen w-full">
-			<div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-				<motion.div
-					className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
-					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
-				/>
-				<motion.div
-					className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
-					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
-					transition={{
-						duration: 10,
-						repeat: Infinity,
-						ease: "easeInOut",
-						delay: 1,
-					}}
-				/>
-			</div>
+		<SettingsPageShell
+			icon={Users}
+			title="Usuarios"
+			description="Gestiona las cuentas y solicitudes de acceso de tu empresa."
+		>
+			<TenantUsersStats
+				total={safeUsers.length}
+				active={activeUsers}
+				admins={adminUsers}
+				pending={pendingCount}
+			/>
 
-			<div className="flex flex-col gap-6 py-4 md:py-6">
-				{/* Header */}
-				<div className="flex items-center justify-between px-4 lg:px-6">
-					<div className="flex items-center gap-3">
-						<div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
-							<Users className="h-6 w-6 text-white" />
+			<Tabs value={activeTab} onValueChange={setActiveTab}>
+				<TabsList className="w-full justify-start sm:w-fit">
+					<TabsTrigger value="usuarios" className="flex items-center gap-2">
+						<Users className="h-4 w-4" />
+						Usuarios activos
+					</TabsTrigger>
+					<TabsTrigger
+						value="solicitudes"
+						className="relative flex items-center gap-2"
+					>
+						<UserPlus className="h-4 w-4" />
+						Solicitudes pendientes
+						{pendingBadge && (
+							<span className="absolute -right-1 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+								{pendingBadge}
+							</span>
+						)}
+					</TabsTrigger>
+				</TabsList>
 
-						</div>
-						<div>
-							{/* Breadcrumb */}
-							{/* <nav className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Link href="/busy/dashboard" className="hover:text-foreground transition-colors">
-                  Dashboard
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <Link href="/busy/configuracion" className="hover:text-foreground transition-colors">
-                  Configuración
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground font-medium">Usuarios</span>
-              </nav> */}
-							<h1 className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-								Gestión de Usuarios
-							</h1>
-							<p className="text-muted-foreground text-sm">
-								Administrá los usuarios y solicitudes de acceso de tu empresa
-							</p>
-						</div>
-					</div>
-				</div>
-
-				{/* Stats */}
-				<div className="px-4 lg:px-6">
-					<TenantUsersStats
-						total={safeUsers.length}
-						active={activeUsers}
-						admins={adminUsers}
-						pending={pendingCount}
+				<TabsContent value="usuarios" className="mt-4">
+					<TenantUsersTable
+						users={safeUsers.map((u: any) => ({
+							userId: u.userId,
+							name: u.name,
+							email: u.email,
+							tenantRole: u.tenantRole,
+							isActive: u.isActive,
+							createdAt: u.createdAt,
+						}))}
+						isLoading={usersLoading}
+						onRefresh={handleRefresh}
+						currentUserId={user?.userId}
+						onRoleChange={handleRoleChange}
+						onToggleActive={handleToggleActive}
 					/>
-				</div>
+				</TabsContent>
 
-				{/* Tabs */}
-				<div className="px-4 lg:px-6">
-					<Tabs value={activeTab} onValueChange={setActiveTab}>
-						<TabsList>
-							<TabsTrigger value="usuarios" className="flex items-center gap-2">
-								<Users className="h-4 w-4" />
-								Usuarios Activos
-							</TabsTrigger>
-							<TabsTrigger
-								value="solicitudes"
-								className="flex items-center gap-2 relative"
-							>
-								<UserPlus className="h-4 w-4" />
-								Solicitudes Pendientes
-								{pendingBadge && (
-									<span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-										{pendingBadge}
-									</span>
-								)}
-							</TabsTrigger>
-						</TabsList>
+				<TabsContent value="solicitudes" className="mt-4">
+					<PendingMembershipsTable
+						memberships={pendingMemberships}
+						isLoading={pendingLoading}
+						onRefresh={handleRefresh}
+						onApprove={handleApproveClick}
+						onReject={handleReject}
+					/>
+				</TabsContent>
+			</Tabs>
 
-						<TabsContent value="usuarios" className="mt-4">
-							<TenantUsersTable
-								users={safeUsers.map((u: any) => ({
-									userId: u.userId,
-									name: u.name,
-									email: u.email,
-									tenantRole: u.tenantRole,
-									isActive: u.isActive,
-									createdAt: u.createdAt,
-								}))}
-								isLoading={usersLoading}
-								onRefresh={handleRefresh}
-								currentUserId={user?.userId}
-								onRoleChange={handleRoleChange}
-								onToggleActive={handleToggleActive}
-							/>
-						</TabsContent>
-
-						<TabsContent value="solicitudes" className="mt-4">
-							<PendingMembershipsTable
-								memberships={pendingMemberships}
-								isLoading={pendingLoading}
-								onRefresh={handleRefresh}
-								onApprove={handleApproveClick}
-								onReject={handleReject}
-							/>
-						</TabsContent>
-					</Tabs>
-				</div>
-			</div>
-
-			{/* Approve Dialog */}
 			<MembershipActionDialog
 				membership={selectedMembership}
 				open={dialogOpen}
@@ -351,7 +293,6 @@ export function TenantUsersPage() {
 				onConfirm={handleConfirmApprove}
 			/>
 
-			{/* Role Change Dialog */}
 			<TenantUserRoleDialog
 				user={roleDialogUser}
 				open={roleDialogOpen}
@@ -361,6 +302,6 @@ export function TenantUsersPage() {
 				}}
 				onConfirm={handleRoleConfirm}
 			/>
-		</div>
+		</SettingsPageShell>
 	);
 }
