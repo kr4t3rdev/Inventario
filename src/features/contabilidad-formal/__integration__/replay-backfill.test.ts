@@ -70,6 +70,11 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				await tx.replayApproval.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.replayPreflight.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.reconciliacionVenta.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.reconciliacionGasto.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.compraDocumento.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.ventaServicios.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.servicios.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.vendor.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.cuentaPorCobrar.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.factura.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.ventaItem.deleteMany({ where: { venta: { tenantId: fixture.tenantId } } });
@@ -369,5 +374,112 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 			where: { tenantId: fixture.tenantId },
 		});
 		expect(asientos).toHaveLength(2);
+	});
+	/**
+	 * @description Agrega fuentes operativas que no son ventas de productos: el
+	 * pago de un gasto, una compra a plazo y una venta de servicios.
+	 * @param {Fixture} fixture - Fixture del tenant aislado.
+	 * @returns {Promise<void>} Resuelve cuando las fuentes quedaron persistidas.
+	 */
+	async function agregarFuentesNoVentas(fixture: Fixture): Promise<void> {
+		const cuentaBancaria = await prisma.cuentaBancaria.findFirstOrThrow({
+			where: { tenantId: fixture.tenantId },
+		});
+		const tipoPago = await prisma.tipoPago.findFirstOrThrow({
+			where: { tenantId: fixture.tenantId },
+		});
+		await prisma.reconciliacionGasto.create({
+			data: {
+				tenantId: fixture.tenantId,
+				tipoGasto: 'gastoDE',
+				referenciaId: 'gasto-replay-1',
+				cuentaId: cuentaBancaria.cuentaId,
+				tipoPagoId: tipoPago.tipoId,
+				monto: 40,
+				moneda: 'CUP',
+				montoConvertido: 40,
+				functionalCurrency: 'CUP',
+				fechaReconciliacion: new Date('2026-03-16T12:00:00.000Z'),
+				descripcion: 'Pago de gasto replay',
+				estado: 'PAGADA',
+				reconciliadoPor: fixture.requesterId,
+			},
+		});
+		const proveedor = await prisma.vendor.create({
+			data: { tenantId: fixture.tenantId, nombre: `Proveedor replay ${fixture.tenantId}` },
+		});
+		await prisma.compraDocumento.create({
+			data: {
+				tenantId: fixture.tenantId,
+				proveedorId: proveedor.vendorId,
+				numeroFactura: 'RP-COMP-0001',
+				formaPago: 'PAGO_PARCIAL',
+				moneda: 'CUP',
+				estado: 'RECIBIDA',
+				total: 60,
+				fechaCompra: new Date('2026-03-07T12:00:00.000Z'),
+			},
+		});
+		const servicio = await prisma.servicios.create({
+			data: {
+				tenantId: fixture.tenantId,
+				nombre: `Servicio replay ${fixture.tenantId}`,
+				precio: 25,
+				descripcion: 'Servicio de prueba',
+				moneda: 'CUP',
+			},
+		});
+		await prisma.ventaServicios.create({
+			data: {
+				tenantId: fixture.tenantId,
+				servicioId: servicio.servicioId,
+				cantidad: 1,
+				total: 25,
+				moneda: 'CUP',
+				createdAt: new Date('2026-03-08T12:00:00.000Z'),
+			},
+		});
+	}
+
+	it('reconoce tambien los pagos de gastos, las compras y las ventas de servicios', async () => {
+		const fixture = await crearFixture();
+		await agregarFuentesNoVentas(fixture);
+
+		const plan = await planBackfillContable(fixture.tenantId);
+		expect(plan.totalEvaluados).toBe(5);
+		expect(plan.omitidos).toHaveLength(0);
+
+		const preflight = await crearPreflightBackfill(
+			fixture.tenantId,
+			fixture.periodoId,
+			fixture.requesterId,
+		);
+		const approval = await aprobarPreflightBackfill(
+			fixture.tenantId,
+			preflight.replayPreflightId,
+			fixture.approverId,
+		);
+		const resultado = await ejecutarBackfillAutorizado({
+			tenantId: fixture.tenantId,
+			replayPreflightId: preflight.replayPreflightId,
+			replayApprovalId: approval.replayApprovalId,
+			actorId: fixture.approverId,
+		});
+
+		expect(resultado.status).toBe('COMPLETED');
+		expect(resultado.contabilizados).toBe(5);
+		expect(resultado.reconciliation.status).toBe('CONFORME');
+
+		const origenes = await prisma.asiento.findMany({
+			where: { tenantId: fixture.tenantId },
+			select: { origenTipo: true },
+		});
+		expect(origenes.map((asiento) => asiento.origenTipo).sort()).toEqual([
+			'compra_documento',
+			'factura',
+			'reconciliacion_gasto',
+			'reconciliacion_venta',
+			'venta_servicio',
+		]);
 	});
 });

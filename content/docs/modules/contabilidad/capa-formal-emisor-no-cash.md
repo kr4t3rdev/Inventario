@@ -246,10 +246,24 @@ en tres pasos que no pueden ocurrir por separado:
 
 La ejecucion es idempotente por origen: repetir el replay con un preflight
 nuevo no duplica asientos, los reconoce como ya posteados. El alcance del
-recolector es deliberado y conservador: hoy reconstruye el reconocimiento de
-ventas de productos (venta a credito, venta al contado y cobro de la cuenta por
-cobrar) y omite, con su causa, cualquier fuente ambigua (por ejemplo, una
-venta cobrada al contado con mas de una conciliacion).
+recolector es deliberado y conservador: reconstruye las fuentes que el writer
+vigente ya formaliza y de las que se puede reconstruir el mismo evento con la
+misma evidencia persistida:
+
+| Fuente operativa | Evento formal | Origen |
+| --- | --- | --- |
+| Factura de una venta a plazo | `VENTA_CREDITO` | `factura` |
+| Conciliacion de una venta a plazo | `COBRO_CXC` | `reconciliacion_venta` |
+| Conciliacion de una venta cobrada al contado | `VENTA_CONTADO` | `reconciliacion_venta` |
+| Conciliacion de gasto que movio la tesoreria | `PAGO_CXP` | `reconciliacion_gasto` |
+| Documento de compra a plazo o a anticipo | `COMPRA_CREDITO` | `compra_documento` |
+| Compra de servicio | `GASTO_CREDITO` | `compra_servicio` |
+| Venta de servicio | `VENTA_SERVICIO_CREDITO` | `venta_servicio` |
+
+Cualquier fuente que no se puede reconstruir sin ambiguedad se omite dejando su
+causa (identidad ambigua, documento anulado, valoracion funcional no
+verificable o tasa de cambio no persistida) en vez de contabilizar algo que el
+writer no habria escrito.
 
 El replay no depende del modo global `CONTABILIDAD_FORMAL_MODE`: es una
 operacion explicita y autorizada. Exige licencia con la funcion
@@ -334,12 +348,20 @@ La decisión y sus consecuencias están registradas en
   rutas actuales. No se consideran writers activos pendientes de integración.
 - El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
   licencia para activar el emisor tenant a tenant.
-- El recolector del replay todavía no cubre todas las fuentes operativas:
-  hoy reconstruye el reconocimiento de ventas de productos (venta a crédito,
-  venta al contado y cobro de la cuenta por cobrar). Las compras, los gastos de
-  servicio, las ventas de servicios y los anticipos se incorporan por
-  slices posteriores, con la misma regla: no se contabiliza una fuente que el
-  writer vigente no habría emitido.
+- El recolector del replay todavía no cubre los anticipos: el evento de un
+  anticipo depende del saldo libro del anticipo y de la diferencia de cambio
+  derivada, y esa cadena no se puede reconstruir desde el movimiento aislado.
+  Se incorpora por slices posteriores, con la misma regla: no se contabiliza una
+  fuente que el writer vigente no habría emitido.
+- La compra de productos en moneda extranjera no se puede reconstruir con
+  fidelidad: el documento no persiste la tasa que aplicó el writer (la cuenta
+  por pagar tampoco), así que esas fuentes se omiten con la causa
+  `TASA_CAMBIO_NO_PERSISTIDA` hasta que el documento persista esa evidencia.
+- La venta de servicios cobrada al contado no tiene cuenta por cobrar
+  operativa, pero el writer vigente sí emite `VENTA_SERVICIO_CREDITO`: el
+  asiento formal debita la cuenta por cobrar sin contrapartida operativa. El
+  replay reproduce el comportamiento del writer; la corrección del flujo
+  pertenece a la capa operativa.
 
 ## Referencias
 
@@ -355,6 +377,7 @@ La decisión y sus consecuencias están registradas en
 - Reversa formal (asiento inverso): `src/features/contabilidad-formal/services/reversal-service.ts`
 - Cierre formal del período: `src/features/contabilidad-formal/services/cierre-formal-service.ts`
 - Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
+- Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

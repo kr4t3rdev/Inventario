@@ -25,14 +25,8 @@
  */
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
-import {
-	replayEvento,
-	type EventoContableInput,
-} from './posting-engine';
+import { replayEvento } from './posting-engine';
 import { reconcileReplaySnapshot } from './replay-reconciliation';
-import { resolverValuacionOperativa } from '../lib/functional-valuation-resolver';
-import { construirEventoLiquidacion } from './settlement-posting-service';
-import { derivarMedioCobro } from '../lib/settlement-event-builder';
 import {
 	computeReplayPreflightDigest,
 	REPLAY_PREFLIGHT_DIGEST_VERSION,
@@ -44,8 +38,18 @@ import {
 	requireCurrentReplayEntitlement,
 	withReplayPostingCapability,
 } from './replay-posting-capability';
+import {
+	recolectarCandidatos,
+	type CandidatoReplay,
+	type ReplayDb,
+} from './replay-source-collector';
 
-/** Version del digest de preflight persistida en la fila de evidencia. */
+export {
+	recolectarCandidatos,
+	type CandidatoReplay,
+	type ReplayDb,
+} from './replay-source-collector';
+
 const REPLAY_DIGEST_VERSION = 2;
 
 /** Ventana de aprobacion del preflight: 24 horas. */
@@ -55,28 +59,7 @@ const REPLAY_TTL_MS = 24 * 60 * 60 * 1000;
 const REPLAY_TRANSACTION_MAX_ATTEMPTS = 3;
 
 /** Origen del reconocimiento de venta a credito: la factura. */
-const VENTA_CREDITO_ORIGIN_TYPE = 'factura';
-
 /** Origen del reconocimiento de venta al contado y del cobro: la conciliacion. */
-const RECONCILIACION_VENTA_ORIGIN_TYPE = 'reconciliacion_venta';
-
-/** Cliente Prisma que sirve tanto para lectura como para transaccion. */
-export type ReplayDb = typeof prisma | Prisma.TransactionClient;
-
-/** Candidato reconstruido con el evento formal listo para contabilizar. */
-export interface CandidatoReplay {
-	/** Tipo de origen del evento formal. */
-	origenTipo: string;
-	/** Identificador del documento que origina el evento. */
-	origenId: string;
-	/** Fecha de negocio del evento. */
-	fecha: Date;
-	/** Evento formal reconstruido. */
-	evento: EventoContableInput;
-	/** Causa de omision, cuando la fuente no puede contabilizarse. */
-	causaOmision?: string;
-}
-
 /** Periodo contable con su conteo de fuentes. */
 export interface PeriodoBackfill {
 	periodoId: string;
@@ -158,226 +141,6 @@ function decimalOrigen(value: unknown): Prisma.Decimal | null {
 	} catch {
 		return null;
 	}
-}
-
-/**
- * @description Reconstruye los candidatos a replay de un tenant leyendo las
- * fuentes operativas historicas y derivando el evento formal equivalente al
- * que emite el writer vigente.
- *
- * Reglas de clasificacion (conservadoras: ante duda la fuente se omite):
- *
- *  - La factura de una venta a plazo (con cuenta por cobrar) genera
- *    `VENTA_CREDITO`, valorado con la tasa publicada vigente en su fecha de
- *    emision.
- *  - La conciliacion de una venta a plazo liquida esa cuenta por cobrar:
- *    genera `COBRO_CXC` con la valoracion ya persistida.
- *  - La conciliacion de una venta cobrada al contado genera `VENTA_CONTADO`
- *    con la valoracion ya persistida; si la venta tiene mas de una
- *    conciliacion, la fuente se omite por identidad ambigua.
- *
- * @param {string} tenantId - Tenant propietario de las fuentes.
- * @param {ReplayDb} client - Cliente Prisma de lectura.
- * @returns {Promise<CandidatoReplay[]>} Candidatos con su fecha de negocio.
- */
-export async function recolectarCandidatos(
-	tenantId: string,
-	client: ReplayDb = prisma,
-): Promise<CandidatoReplay[]> {
-	const [reconciliaciones, facturas, cuentasPorCobrar, cuentasBancarias] = await Promise.all([
-		client.reconciliacionVenta.findMany({
-			where: { tenantId },
-			select: {
-				reconciliacionId: true,
-				ventaId: true,
-				cuentaId: true,
-				monto: true,
-				moneda: true,
-				montoConvertido: true,
-				functionalCurrency: true,
-				tasaCambio: true,
-				fxEvidenceFingerprint: true,
-				fechaReconciliacion: true,
-				observaciones: true,
-				idTransferencia: true,
-				venta: {
-					select: {
-						ventaId: true,
-						deletedAt: true,
-						factura: { select: { idFactura: true } },
-					},
-				},
-			},
-		}),
-		client.factura.findMany({
-			where: { tenantId, tipoDocumento: 'FACTURA' },
-			select: {
-				idFactura: true,
-				ventaId: true,
-				total: true,
-				estado: true,
-				fechaEmision: true,
-			},
-		}),
-		client.cuentaPorCobrar.findMany({
-			where: { tenantId },
-			select: {
-				id: true,
-				facturaId: true,
-				estado: true,
-			},
-		}),
-		client.cuentaBancaria.findMany({
-			where: { tenantId },
-			select: { cuentaId: true, tipoCuenta: true },
-		}),
-	]);
-
-	const tipoCuentaPorCuenta = new Map(
-		cuentasBancarias.map((cuenta) => [cuenta.cuentaId, cuenta.tipoCuenta]),
-	);
-	const cxPorFactura = new Map(
-		cuentasPorCobrar
-			.filter((cuenta) => cuenta.facturaId !== null)
-			.map((cuenta) => [cuenta.facturaId as string, cuenta]),
-	);
-
-	/**
-	 * @description Resuelve la cuenta por cobrar de una factura.
-	 * @param {string | null} facturaId - Identificador de la factura.
-	 * @returns {object | undefined} Cuenta por cobrar vigente de la factura.
-	 */
-	const cuentaPorCobrarDe = (
-		facturaId: string | null,
-	): { id: string; facturaId: string | null; estado: string } | undefined =>
-		facturaId ? cxPorFactura.get(facturaId) : undefined;
-
-	const reconciliacionesPorVenta = new Map<string, typeof reconciliaciones>();
-	for (const reconciliacion of reconciliaciones) {
-		if (!reconciliacion.ventaId) continue;
-		const lista = reconciliacionesPorVenta.get(reconciliacion.ventaId) ?? [];
-		lista.push(reconciliacion);
-		reconciliacionesPorVenta.set(reconciliacion.ventaId, lista);
-	}
-
-	const candidatos: CandidatoReplay[] = [];
-
-	for (const reconciliacion of reconciliaciones) {
-		const venta = reconciliacion.venta;
-		if (!reconciliacion.ventaId || !venta) continue;
-		// Las ventas directas (sin factura) no tienen contraparte formal en el
-		// flujo vigente: no se inventa un asiento que el writer no emitio.
-		const facturaId = venta.factura?.idFactura ?? null;
-		if (!facturaId) continue;
-
-		const cuentaPorCobrar = cuentaPorCobrarDe(facturaId);
-		const esVentaAPlazo = Boolean(cuentaPorCobrar) && cuentaPorCobrar?.estado !== 'ANULADA';
-		const tipoCuenta = tipoCuentaPorCuenta.get(reconciliacion.cuentaId) ?? null;
-		const omision = venta.deletedAt
-			? 'VENTA_ANULADA'
-			: reconciliacion.venta && reconciliacionesPorVenta.get(reconciliacion.ventaId)!.length > 1 && !esVentaAPlazo
-				? 'IDENTIDAD_AMBIGUA'
-				: undefined;
-
-		let evento: EventoContableInput;
-		if (esVentaAPlazo) {
-			const liquidacion = await construirEventoLiquidacion(
-				client as Prisma.TransactionClient,
-				{ tenantId, userId: 'replay-preflight' },
-				{
-					tipo: 'COBRO_CXC',
-					reconciliacion: {
-						reconciliacionId: reconciliacion.reconciliacionId,
-						monto: reconciliacion.monto,
-						moneda: reconciliacion.moneda,
-						montoConvertido: reconciliacion.montoConvertido,
-						functionalCurrency: reconciliacion.functionalCurrency,
-						tasaCambio: reconciliacion.tasaCambio,
-						fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
-						fechaReconciliacion: reconciliacion.fechaReconciliacion,
-					},
-					treasuryAccountType: tipoCuenta,
-					descripcion: reconciliacion.observaciones ?? 'Cobro de venta',
-				},
-			);
-			evento = liquidacion;
-		} else {
-			evento = {
-				tipo: 'VENTA_CONTADO',
-				fecha: reconciliacion.fechaReconciliacion,
-				descripcion: reconciliacion.observaciones ?? 'Cobro total por contra pago',
-				origen: {
-					tipo: RECONCILIACION_VENTA_ORIGIN_TYPE,
-					id: reconciliacion.reconciliacionId,
-				},
-				monto: reconciliacion.monto,
-				moneda: reconciliacion.moneda,
-				montoFuncional: reconciliacion.montoConvertido,
-				monedaFuncional: reconciliacion.functionalCurrency,
-				tasaCambio: reconciliacion.tasaCambio,
-				fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
-				medioCobro: derivarMedioCobro(tipoCuenta),
-				...(reconciliacion.idTransferencia
-					? { referencia: reconciliacion.idTransferencia }
-					: {}),
-			};
-		}
-
-		candidatos.push({
-			origenTipo: evento.origen.tipo,
-			origenId: evento.origen.id,
-			fecha: evento.fecha,
-			evento,
-			...(omision ? { causaOmision: omision } : {}),
-		});
-	}
-
-	for (const factura of facturas) {
-		if (!factura.ventaId) continue;
-		const cuentaPorCobrar = cuentaPorCobrarDe(factura.idFactura);
-		// Sin cuenta por cobrar la venta se cobro al contado: su reconocimiento
-		// es el evento del cobro, no uno de la factura.
-		if (!cuentaPorCobrar || cuentaPorCobrar.estado === 'ANULADA') continue;
-
-		const monto = Math.abs(Number(factura.total));
-		const valoracion = await resolverValuacionOperativa({
-			tx: client as Prisma.TransactionClient,
-			tenantId,
-			monto,
-			moneda: 'CUP',
-			fechaOperacion: factura.fechaEmision,
-			source: 'replay-backfill-service',
-		});
-		const omision = factura.estado === 'ANULADA' ? 'FACTURA_ANULADA' : undefined;
-		candidatos.push({
-			origenTipo: VENTA_CREDITO_ORIGIN_TYPE,
-			origenId: factura.idFactura,
-			fecha: factura.fechaEmision,
-			evento: {
-				tipo: 'VENTA_CREDITO',
-				fecha: factura.fechaEmision,
-				descripcion: `Venta a credito ${factura.idFactura}`,
-				origen: { tipo: VENTA_CREDITO_ORIGIN_TYPE, id: factura.idFactura },
-				monto,
-				moneda: 'CUP',
-				montoFuncional: valoracion.montoFuncional,
-				monedaFuncional: valoracion.monedaFuncional,
-				tasaCambio: valoracion.tasaCambio,
-				fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
-			},
-			...(omision ? { causaOmision: omision } : {}),
-		});
-	}
-
-	candidatos.sort((left, right) => {
-		const porFecha = left.fecha.getTime() - right.fecha.getTime();
-		if (porFecha !== 0) return porFecha;
-		if (left.origenTipo !== right.origenTipo) {
-			return left.origenTipo < right.origenTipo ? -1 : 1;
-		}
-		return left.origenId < right.origenId ? -1 : left.origenId > right.origenId ? 1 : 0;
-	});
-	return candidatos;
 }
 
 /**
