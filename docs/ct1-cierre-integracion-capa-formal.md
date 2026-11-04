@@ -33,6 +33,7 @@ base de datos.
 | D4 | Integrar por slices sobre ramas nuevas desde `origin/main` | Aplicada: un commit por slice, push directo a `origin/main` y CI verde en cada SHA |
 | D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`), la plantilla global de `DEVOLUCION_VENTA` refleja el desglose, el writer emite el asiento con la misma transacción que la devolución y el replay lo reconstruye con el mismo constructor de evento. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
 | D6 | El modo formal por tenant se aprueba en la licencia, no en el entorno: dos claves de override (`contabilidad-formal-shadow` / `contabilidad-formal-enforce`) sobre `TenantLicense.featureOverrides`, sin migración y apagadas por defecto | Aplicada: el mecanismo existe (`CONTABILIDAD_FORMAL_MODO_TENANT=1` habilita la aprobación por tenant; sin esa variable el modo global manda y no hay consultas extra). Ninguna licencia lo tiene activado: el gate sigue apagado |
+| D7 | El verificador forense es un CLI offline de solo lectura: recalcula los hashes del libro, re-deriva los saldos por cuenta y cruza el libro con la base operativa, con artefacto JSON reproducible | Aplicada: `scripts/accounting/verificador-forense.ts` (núcleo puro, sin base de datos) y `scripts/accounting/verificador-forense-report.ts` (CLI). No escribe nada; termina con código 1 cuando hay hallazgos |
 
 ## 3. Slices integrados (SHAs reales)
 
@@ -53,6 +54,14 @@ base de datos.
 | S7c | Replay de anticipos y métricas del outbox shadow | `1cfa16e3` | `41799724819` |
 | S9 | Activación del plan de cuentas (CTA-0) e infraestructura global conciliada | `7739ad05` | `41805169995` |
 | S10 | Cierre: matriz R0.5 por fila, registro final y verificación | `c4499227` | `41809661324` (head final `6132fdc5`) |
+| R6.1-a | Rollback físico formal de ajustes bancarios e inyecciones de capital | `0ae474a6` | `41827883217` |
+| D1a | Reglas de monto de la devolución de venta y plantilla global `DEVOLUCION_VENTA` | `ea75e47f` | `41849659638` |
+| D1b | Emisor formal `DEVOLUCION_VENTA` con costo FIFO funcional persistido | `2f3d3815` | `41868872545` |
+| D1c | Replay de la devolución de venta (mismo constructor de evento) | `dabf35d8` | `41873798367` |
+| D1d | Rollback físico formal de la devolución de venta | `d7a56e0b` | `41876058502` |
+| S8b-1 | Evidencia FX persistida de la inyección de capital | `551fe263` | `41878717237` (cancelado al mezclar un commit ajeno) |
+| S8b-2 | Replay de ajustes bancarios e inyecciones de capital | `b0b1cbbe`, `a52a4c29` | `41880980752` |
+| D6 | Aprobación del modo formal por tenant desde la licencia | `e9a35c48` | `41914417080` |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
 CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
@@ -167,9 +176,14 @@ Ninguno de estos gates se cambió en CT-1:
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
    su criterio de reversión y la ventana shadow— sigue siendo una tarea
    operacional: no hay ninguna licencia con las claves de override activadas.
-4. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
-   contabilizado (`replay-reconciliation.ts`), pero el verificador independiente
-   de CT-3 sigue pendiente.
+4. **Verificador forense autónomo**: cerrado con la decisión D7. El CLI
+   `scripts/accounting/verificador-forense-report.ts` recalcula la cadena de
+   hashes del libro, re-deriva los saldos por cuenta, comprueba el cuadre de
+   cada asiento y la evidencia FX de cada línea, y cruza el saldo formal de
+   cuentas por cobrar y por pagar con la base operativa. Es de solo lectura y
+   deja un artefacto JSON. Lo que queda del lado de CT-3 es la explotación
+   operativa del verificador (baseline por entorno y seguimiento de la ventana
+   shadow), no su construcción.
 
 La devolución de venta (`DEVOLUCION_VENTA`) quedó cerrada con la decisión D5:
 el motor admite las tres reglas de monto del desglose, la plantilla global

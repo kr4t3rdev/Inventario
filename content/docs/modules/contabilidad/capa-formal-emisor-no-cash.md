@@ -448,6 +448,44 @@ Ahora la tarjeta de contabilidad formal vive en
 `/busy/contabilidad/configuracion` y siembra (o verifica) el plan de forma
 idempotente.
 
+## Verificador forense autónomo (D3b)
+
+El replay compara el snapshot aprobado con lo que quedó contabilizado
+(`replay-reconciliation.ts`). Para auditar el libro sin depender de ese
+servicio —y sin confiar en los saldos que el propio motor dice haber escrito—,
+existe un verificador independiente de solo lectura:
+
+```bash
+pnpm exec tsx scripts/accounting/verificador-forense-report.ts --tenant <id> --out informe.json
+pnpm exec tsx scripts/accounting/verificador-forense-report.ts --all-tenants --out informe.json
+```
+
+Qué verifica:
+
+| Verificación | Qué significa |
+| --- | --- |
+| Cadena de hashes | Recalcula el hash de cada asiento desde sus líneas y valida la topología (una sola raíz, secuencia contigua, sin duplicados) |
+| Cuadre por asiento | La suma del debe debe igualar la del haber |
+| Coherencia de línea | Un solo lado por línea, importes no negativos |
+| Evidencia FX | Toda línea en moneda distinta de la funcional lleva tasa y huella FX |
+| Saldos por cuenta | Re-deriva el saldo de cada cuenta desde los asientos contabilizados (los anulados no suman: su inverso ya está contabilizado) |
+| Cruce operativo | Compara el saldo formal de cuentas por cobrar y por pagar con el saldo operativo del tenant |
+
+Reglas de lectura:
+
+- es de **solo lectura**: no escribe nada en la base de datos;
+- cuando la base operativa no tiene el importe funcional, el cruce queda
+  `NO_EVALUABLE`: el verificador no estima equivalencias;
+- un tenant sin asientos formales tampoco se cruza: no hay libro contra el que
+  comparar;
+- el informe es un artefacto JSON con el resumen, los saldos re-derivados, los
+  cruces y los hallazgos; el proceso termina con código 1 cuando hay hallazgos
+  y con 0 cuando el libro está íntegro.
+
+Los tipos de hallazgo son `CADENA_HASH_INVALIDA`, `ASIENTO_DESCUADRADO`,
+`ASIENTO_SIN_LINEAS`, `LINEA_AMBIGUA`, `MONTO_NEGATIVO`,
+`EVIDENCIA_FX_AUSENTE` y `CRUCE_OPERATIVO_DESBALANCEADO`.
+
 ## Referencias
 
 - Motor: `src/features/contabilidad-formal/services/posting-engine.ts`
@@ -464,6 +502,8 @@ idempotente.
 - Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
 - Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
+- Verificador forense autónomo (núcleo puro y CLI): `scripts/accounting/verificador-forense.ts` y `scripts/accounting/verificador-forense-report.ts`
+- Modo formal por tenant: `src/features/contabilidad-formal/lib/modo-tenant.ts`
 - Métricas del outbox shadow: `src/features/contabilidad-formal/actions-metricas-shadow.ts`
 - Activación del plan de cuentas: `src/features/contabilidad-formal/actions-plan-contable.ts` y `src/features/contabilidad-formal/components/plan-contable-card.tsx`
 - Emisor de ajustes bancarios e inyecciones de capital: `src/features/contabilidad-formal/services/capital-adjustment-posting-service.ts`
