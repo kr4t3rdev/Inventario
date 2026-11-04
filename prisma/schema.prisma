@@ -3066,23 +3066,27 @@ model Receta {
   Producto          Producto?           @relation(fields: [productoId], references: [id])
   tenant            Tenant              @relation(fields: [tenantId], references: [tenantId])
   RecetaIngrediente RecetaIngrediente[]
+  SubrecetasIngrediente RecetaIngrediente[] @relation("SubrecetaBOM")
 
   @@index([tenantId])
+  @@unique([tenantId, recetaId], map: "Receta_tenantId_recetaId_key")
 }
 
 model RecetaIngrediente {
-  recetaId      String
-  tenantId      String
-  productoId    String
-  cantidad      Float
-  desperdicio   Float    @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime
-  id            String   @id
-  unidadSimbolo String?
-  Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
-  tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
+  recetaId             String
+  tenantId             String
+  productoId           String
+  recetaIngredienteId  String?
+  cantidad             Float
+  desperdicio          Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+  id                   String   @id
+  unidadSimbolo        String?
+  Producto             Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  Receta               Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  Subreceta            Receta?  @relation("SubrecetaBOM", fields: [tenantId, recetaIngredienteId], references: [tenantId, recetaId], onDelete: Restrict)
+  tenant               Tenant   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
 }

@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: vi.fn(),
     receta: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -26,7 +27,9 @@ vi.mock('@/lib/prisma', () => ({
 
 // Mock auth middleware
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthPost: (handler: Function) => handler,
+  withAuthPost: (handler: (...args: any[]) => unknown) =>
+    (request: any, context: any, user?: any) =>
+      handler(request, context, user ?? { tenantId: 'tenant-1' }),
   withAuth: (handler: Function) => handler,
 }))
 
@@ -78,6 +81,7 @@ function buildRecetaBase({
 } = {}) {
   return {
     recetaId,
+    tenantId: 'tenant-1',
     nombre,
     rendimiento,
     costoUnitario,
@@ -101,6 +105,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never))
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
+    vi.mocked(prisma.receta.findMany).mockResolvedValue([] as any)
   })
 
   it('debe agregar ingredientes y recalcular costoUnitario', async () => {
@@ -548,6 +553,76 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     expect(response.status).toBe(403)
     expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('rechaza un cambio que crea el ciclo de subrecetas A → B → A sin persistirlo', async () => {
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
+      recetaId: 'A',
+    }) as any)
+    vi.mocked(prisma.receta.findMany).mockResolvedValueOnce([
+      {
+        recetaId: 'A', tenantId: 'tenant-1', productoId: 'producto-A', rendimiento: 1,
+        RecetaIngrediente: [],
+      },
+      {
+        recetaId: 'B', tenantId: 'tenant-1', productoId: 'producto-B', rendimiento: 1,
+        RecetaIngrediente: [
+          { recetaIngredienteId: 'A', productoId: 'producto-A', cantidad: 1, desperdicio: 0 },
+        ],
+      },
+    ] as any)
+
+    const request = createIngredientesRequest('A', [{
+      recetaIngredienteId: 'B',
+      cantidad: 1,
+      desperdicio: 0,
+    }])
+    const response = await setIngredientesHandler(request, { params: paramsFor('A') })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.code).toBe('BOM_CYCLE')
+    expect(prisma.recetaIngrediente.deleteMany).not.toHaveBeenCalled()
+    expect(prisma.recetaIngrediente.createMany).not.toHaveBeenCalled()
+  })
+
+  it('guarda la referencia a subreceta y conserva el producto terminado asociado', async () => {
+    const root = buildRecetaBase({ recetaId: 'P' })
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(root as any)
+    vi.mocked(prisma.producto.findMany)
+      .mockResolvedValueOnce([] as any)
+      .mockResolvedValueOnce([{ id: 'producto-S' }] as any)
+    vi.mocked(prisma.receta.findMany).mockResolvedValueOnce([
+      {
+        recetaId: 'P', tenantId: 'tenant-1', productoId: 'producto-P', rendimiento: 1,
+        RecetaIngrediente: [],
+      },
+      {
+        recetaId: 'S', tenantId: 'tenant-1', productoId: 'producto-S', rendimiento: 1,
+        nombre: 'Subreceta S', costoUnitario: 25, RecetaIngrediente: [],
+      },
+    ] as any)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce({
+      ...root,
+      costoUnitario: 25,
+      RecetaIngrediente: [],
+    } as any)
+
+    const request = createIngredientesRequest('P', [{
+      recetaIngredienteId: 'S',
+      cantidad: 2,
+      desperdicio: 0,
+    }])
+    const response = await setIngredientesHandler(request, { params: paramsFor('P') })
+
+    expect(response.status).toBe(200)
+    expect(prisma.recetaIngrediente.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({
+        productoId: 'producto-S',
+        recetaIngredienteId: 'S',
+        cantidad: 2,
+      })],
+    }))
   })
 
   it('debe rechazar ingredientes incompatibles con unitErrors y sin persistir cambios', async () => {

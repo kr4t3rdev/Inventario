@@ -15,6 +15,7 @@ import {
 	calcularCantidadRequeridaMaterial,
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
+import { BomError, explodeBom } from "@/features/produccion/services/bom";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -368,7 +369,43 @@ export const aprobarOrdenProduccionAction = withAction(
 				);
 			}
 
-			// Validar disponibilidad de materiales y descontar stock
+			const recetasAnidadas = await tx.receta.findMany({
+				where: { tenantId },
+				include: { RecetaIngrediente: true },
+			});
+			if (!recetasAnidadas.some((recipe) => recipe.recetaId === orden.recetaId)) {
+				throw new ActionError("Receta no encontrada", "NOT_FOUND");
+			}
+			const recetasBom = recetasAnidadas.map((recipe) => ({
+				recetaId: recipe.recetaId,
+				productoId: recipe.productoId,
+				rendimiento: recipe.rendimiento,
+				ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
+					ingredient.recetaIngredienteId
+						? {
+							recetaIngredienteId: ingredient.recetaIngredienteId,
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						}
+						: {
+							productoId: ingredient.productoId ?? '',
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						},
+				),
+			}));
+
+			let explosion;
+			try {
+				explosion = explodeBom(orden.recetaId, orden.cantidad, recetasBom);
+			} catch (error) {
+				if (error instanceof BomError) {
+					throw new ActionError(error.message, error.code);
+				}
+				throw error;
+			}
+
+			// Validar disponibilidad de materiales hoja y descontar el stock agregado.
 			const ingredientesConStock: Array<{
 				productoId: string;
 				cantidad: number;
@@ -378,9 +415,9 @@ export const aprobarOrdenProduccionAction = withAction(
 				producto?: { nombre: string; precioCosto: number; stock: number };
 			}> = [];
 
-			for (const ingrediente of orden.Receta.RecetaIngrediente) {
+			for (const material of explosion.materiales) {
 				const producto = await tx.producto.findUnique({
-					where: { id: ingrediente.productoId },
+					where: { id: material.productoId },
 					select: {
 						id: true,
 						nombre: true,
@@ -389,29 +426,28 @@ export const aprobarOrdenProduccionAction = withAction(
 						almacenId: true,
 					},
 				});
+				if (!producto) {
+					throw new ActionError(
+						`Producto ingrediente ${material.productoId} no encontrado`,
+						"NOT_FOUND",
+					);
+				}
 				const stockUbicacion = await tx.stockUbicacion.findUnique({
 					where: {
 						productoId_tipoUbicacion_ubicacionId: {
-							productoId: ingrediente.productoId,
+							productoId: material.productoId,
 							tipoUbicacion: "almacen",
-							ubicacionId: producto?.almacenId ?? '',
+							ubicacionId: producto.almacenId ?? '',
 						},
 					},
 					select: { cantidadDisponible: true },
 				});
 
-				if (!producto) {
-					throw new ActionError(
-						`Producto ingrediente ${ingrediente.productoId} no encontrado`,
-						"NOT_FOUND",
-					);
-				}
-
 				ingredientesConStock.push({
-					productoId: ingrediente.productoId,
-					cantidad: ingrediente.cantidad,
-					unidadSimbolo: ingrediente.unidadSimbolo ?? null,
-					desperdicio: ingrediente.desperdicio ?? 0,
+					productoId: material.productoId,
+					cantidad: material.cantidad,
+					unidadSimbolo: null,
+					desperdicio: 0,
 					almacenId: producto.almacenId,
 					producto: {
 						nombre: producto.nombre,
@@ -424,7 +460,7 @@ export const aprobarOrdenProduccionAction = withAction(
 			// Verificar que haya suficiente stock
 			const materialesFaltantes = validarDisponibilidadMateriales(
 				ingredientesConStock,
-				orden.cantidad,
+				1,
 			);
 
 			if (materialesFaltantes.length > 0) {
@@ -438,7 +474,7 @@ export const aprobarOrdenProduccionAction = withAction(
 			for (const [ingIdx, ing] of ingredientesConStock.entries()) {
 				const cantidadRequerida = calcularCantidadRequeridaMaterial(
 					ing,
-					orden.cantidad,
+					1,
 				);
 
 				if (ing.almacenId) {

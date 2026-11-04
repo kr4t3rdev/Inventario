@@ -176,22 +176,38 @@
 
 ## Fase 6 — P1 Variantes (Profesional)
 
-* [ ] 6.1 Migración: `ProductoPlantilla` + columnas en `Producto`:
-  `plantillaId?`, `atributoJson?`, `sku?`, `esVariante @default(false)`.
-* [ ] 6.2 `actions-variantes.ts` (flag `variantes`): crear plantilla,
-  generar variantes (producto cartesiano validado), bloquear venta de
-  plantilla.
-  - RED: plantilla no vende; variante M descuenta solo su stock.
-* [ ] 6.3 Precios/costos/stock independientes por variante; listas de
-  precios resuelven por `varianteId`.
-* [ ] 6.4 UI: `src/app/busy/inventario/variantes/*` (plantilla →
-  matriz de variantes con SKU/stock/precio).
+* [x] 6.1 Migración `20261113000000_add_product_variants`: `ProductoPlantilla`
+  tenant-scoped no vendible + `Producto.plantillaId`, `atributoJson`, `sku` y
+  `esVariante @default(false)`. FK compuesta protege el tenant; SKU es único
+  por tenant y un CHECK exige plantilla/atributos/SKU en cada variante.
+* [x] 6.2 `actions-variantes.ts` bajo el flag `variantes`: crea la plantilla y
+  genera el producto cartesiano en una transacción; valida atributos, SKU,
+  referencias tenant-scoped, permisos y cupo `maxProductos`. La venta rechaza
+  IDs de plantilla con `PLANTILLA_NO_VENDIBLE` antes de mutar stock.
+* [x] 6.3 Cada combinación es un `Producto` ordinario vendible con precio,
+  costo, listas y saldo propios. El resolver de ventas consume el precio de la
+  variante seleccionada; FIFO/kardex descuentan el `productoId` variante.
+  Búsqueda por SKU disponible en las lecturas compartidas de productos.
+* [x] 6.4 UI en `/busy/inventario/variantes`: alta de plantilla, generación de
+  matriz, edición de SKU/costo/precio y visualización del stock por variante;
+  las listas se editan desde el producto variante. Entrada lateral protegida
+  por flag/rol.
+  Verificación: 108/108 pruebas del feature Productos, integridad de precios
+  y menú; 13/13 pruebas de ventas con el caso variante; TypeScript, ESLint,
+  `prisma validate`, `prisma generate` y `git diff --check` correctos.
 
 ## Fase 7 — P2 Empresarial (MRP + trazabilidad + forecast)
 
-* [ ] 7.1 BOM multinivel: `RecetaIngrediente.recetaIngredienteId?`
-  (ingrediente = producto o subreceta) + validación anti-ciclos.
-  - RED: ciclo A→B→A rechazado; explosión 10 P = 20 S = 60 I.
+* [x] 7.1 BOM multinivel: `RecetaIngrediente.recetaIngredienteId?`
+  (ingrediente = producto o subreceta), relación FK compuesta tenant-scoped,
+  y validación anti-ciclos en la escritura serializable del BOM. La explosión
+  divide por el rendimiento de cada nivel, propaga desperdicio y agrega materiales
+  hoja; aprobar órdenes consume esos materiales en stock/Kardex.
+  - RED/GREEN: ciclo A→B→A rechazado antes de borrar/crear ingredientes;
+    explosión de 10 P requiere 20 S y 60 I. La migración legacy conserva los IDs
+    existentes de `RecetaIngrediente` al mover su PK física de `recetaIngredienteId`
+    a `id` antes de reutilizar la columna como referencia de subreceta.
+  - Verificación focalizada: BOM puro, acciones, API y contrato de migración.
 * [ ] 7.2 `planificarNecesidadesAction` (flag `mrp-avanzado`):
   explosión vs disponible + lotes reservados → sugiere OC y órdenes.
 * [ ] 7.3 Trazabilidad lote → documentos: `getTrazabilidadLoteAction`
