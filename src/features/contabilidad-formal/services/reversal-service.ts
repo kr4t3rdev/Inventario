@@ -22,9 +22,9 @@ import { PeriodoContableService } from '@/lib/services/periodo-contable-service'
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
 import {
 	insertarAsientoConNumeracion,
-	modoActual,
 	type ContextoPosting,
 } from './posting-engine';
+import { resolverModoTenant } from '../lib/modo-tenant';
 
 /** Origen de negocio cuyo asiento formal se debe anular si existe. */
 export interface FormalEntryOrigin {
@@ -50,7 +50,8 @@ export async function reverseFormalEntries(
 	contexto: ContextoPosting,
 	origenes: FormalEntryOrigin[],
 ): Promise<string[]> {
-	if (modoActual() === 'off') return [];
+	const modo = await resolverModoTenant(tx, contexto.tenantId);
+	if (modo === 'off') return [];
 
 	const unicos = [...new Map(origenes.map((origen) => [
 		`${origen.tipo}\u0000${origen.id}`,

@@ -6,7 +6,7 @@ import { requireFeature, requirePermission, requireTenant } from '@/lib/services
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
-import { modoActual } from '@/features/contabilidad-formal/services/posting-engine';
+import { resolverModoTenant } from '@/features/contabilidad-formal/lib/modo-tenant';
 import { emitirCostoVenta } from '@/features/contabilidad-formal/services/sale-posting-service';
 import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
@@ -234,7 +234,7 @@ export const VentaLifecycleService = {
 
       // Capa de contabilidad formal: la entrega del pedido compensa el
       // inventario con el costo FIFO real de los lotes consumidos.
-      if (modoActual() !== 'off') {
+      if ((await resolverModoTenant(tx, tenantId)) !== 'off') {
         const costoFifo = await getCostoFifoVentaValorado(tx, tenantId, ventaId);
         if (costoFifo && costoFifo.cantidad > 0) {
           await emitirCostoVenta(

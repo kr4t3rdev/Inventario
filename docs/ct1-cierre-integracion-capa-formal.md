@@ -14,6 +14,8 @@ La capa formal está integrada en `main` y **permanece apagada**:
 - `CONTABILIDAD_FORMAL_MODE=off` (modo global) — por defecto.
 - `CONTABILIDAD_FORMAL_NO_CASH_MODE=off` (modo de las liquidaciones no Cash) —
   por defecto.
+- `CONTABILIDAD_FORMAL_MODO_TENANT` sin definir (la aprobación de modo por
+  tenant está deshabilitada) — por defecto.
 - Ningún tenant tiene `shadow`, `enforce` ni replay activado. El replay es una
   operación explícita, autorizada y con preflight; no depende de los flags.
 
@@ -30,6 +32,7 @@ base de datos.
 | D3 | Excluir los artefactos Graphify del merge y regenerarlos al finalizar | Aplicada: el índice local se regeneró; los artefactos de `graphify-out/` no se mezclaron en los commits contables |
 | D4 | Integrar por slices sobre ramas nuevas desde `origin/main` | Aplicada: un commit por slice, push directo a `origin/main` y CI verde en cada SHA |
 | D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`), la plantilla global de `DEVOLUCION_VENTA` refleja el desglose, el writer emite el asiento con la misma transacción que la devolución y el replay lo reconstruye con el mismo constructor de evento. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
+| D6 | El modo formal por tenant se aprueba en la licencia, no en el entorno: dos claves de override (`contabilidad-formal-shadow` / `contabilidad-formal-enforce`) sobre `TenantLicense.featureOverrides`, sin migración y apagadas por defecto | Aplicada: el mecanismo existe (`CONTABILIDAD_FORMAL_MODO_TENANT=1` habilita la aprobación por tenant; sin esa variable el modo global manda y no hay consultas extra). Ninguna licencia lo tiene activado: el gate sigue apagado |
 
 ## 3. Slices integrados (SHAs reales)
 
@@ -149,7 +152,7 @@ Ninguno de estos gates se cambió en CT-1:
 | `R6-ROLLBACK` global | Abierto | El rollback físico está probado en la familia de caja, en ajustes/inyecciones y en la devolución de venta (los tres con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
-| `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off` |
+| `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
 
 ## 7. Pendientes que quedan fuera de CT-1
 
@@ -160,8 +163,10 @@ Ninguno de estos gates se cambió en CT-1:
    inyecciones y a la devolución de venta (con el asiento formal en modo
    `enforce`); faltan las familias comercial (ventas, compras, servicios),
    anticipos, inventario y liquidaciones.
-3. **Modo por tenant**: hoy el modo es global; falta el flag de licencia para
-   activar `shadow`/`enforce` tenant a tenant.
+3. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
+   licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
+   su criterio de reversión y la ventana shadow— sigue siendo una tarea
+   operacional: no hay ninguna licencia con las claves de override activadas.
 4. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
    contabilizado (`replay-reconciliation.ts`), pero el verificador independiente
    de CT-3 sigue pendiente.

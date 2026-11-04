@@ -26,7 +26,13 @@
 import { createHash } from 'node:crypto';
 import { assertReplayPostingCapability } from '@/features/contabilidad-formal/services/replay-posting-capability';
 import { Prisma } from '@/generated/prisma';
-import { resolveEffectivePlanFeatures } from '@/lib/plan-features';
+import { resolveEffectivePlanFeatures, sanitizeFeatureFlags } from '@/lib/plan-features';
+import {
+	modoActual,
+	overridePorTenantHabilitado,
+	resolverModoEfectivo,
+	type ModoFormal,
+} from '@/features/contabilidad-formal/lib/modo-tenant';
 import { decimalFuncional } from '@/features/contabilidad-formal/services/decimal-contable';
 import { intentarPosteoShadow } from '@/features/contabilidad-formal/services/shadow-savepoint';
 import { registrarResultadoShadow } from '@/features/contabilidad-formal/services/shadow-outbox';
@@ -45,7 +51,7 @@ import {
 } from '@/features/contabilidad-formal/lib/plan-default';
 
 /** Modos operativos del motor. */
-export type ModoMotorContable = 'off' | 'shadow' | 'enforce';
+export type ModoMotorContable = ModoFormal;
 
 /** Valores decimales aceptados como evidencia sin forzar conversión a IEEE-754. */
 export type DecimalInput = Prisma.Decimal | string | number;
@@ -192,12 +198,13 @@ function funcional(valor: DecimalInput): Prisma.Decimal {
 
 /**
  * @description Modo efectivo de la capa formal global: `off` por defecto.
+ *
+ * Es el valor por defecto de la flota. La aprobación explícita por tenant
+ * (R7.4) puede ajustarlo cuando el mecanismo por tenant está habilitado.
+ *
  * @returns {'off'|'shadow'|'enforce'} Modo configurado por entorno.
  */
-export function modoActual(): ModoMotorContable {
-	const modo = process.env.CONTABILIDAD_FORMAL_MODE;
-	return modo === 'shadow' || modo === 'enforce' ? modo : 'off';
-}
+export { modoActual };
 
 function logShadow(mensaje: string, extra?: Record<string, unknown>): void {
 	console.warn('[contabilidad-formal][shadow]', mensaje, extra ?? '');
@@ -609,8 +616,16 @@ export async function postEvento(
 	evento: EventoContableInput,
 	opciones?: OpcionesPostEvento,
 ): Promise<PostEventoResult> {
-	const modo = opciones?.modo ?? modoActual();
-	if (modo === 'off') return { estado: 'OMITIDO', motivo: 'MODO_OFF' };
+	// Un modo forzado por familia manda siempre: es el interruptor de rollout
+	// de los emisores con gate propio (por ejemplo el emisor no Cash).
+	const modoSolicitado = opciones?.modo;
+	let modo: ModoMotorContable = modoSolicitado ?? modoActual();
+	if (modoSolicitado === 'off') return { estado: 'OMITIDO', motivo: 'MODO_OFF' };
+	// Con el mecanismo por tenant apagado el modo global manda y no se consulta
+	// la licencia solo para resolver el modo (sin consultas extra).
+	if (modo === 'off' && !overridePorTenantHabilitado()) {
+		return { estado: 'OMITIDO', motivo: 'MODO_OFF' };
+	}
 	const inicio = performance.now();
 
 	try {
@@ -622,12 +637,21 @@ export async function postEvento(
 		});
 		if (!licencia) return { estado: 'OMITIDO', motivo: 'SIN_LICENCIA' };
 		const features = resolveEffectivePlanFeatures({
-			planFeatures: comoFeatures(licencia.plan?.features),
-			featureOverrides: comoFeatures(licencia.featureOverrides),
-			legacyLicenseFeatures: comoFeatures(licencia.features),
+			planFeatures: sanitizeFeatureFlags(licencia.plan?.features),
+			featureOverrides: sanitizeFeatureFlags(licencia.featureOverrides),
+			legacyLicenseFeatures: sanitizeFeatureFlags(licencia.features),
 		});
 		if (features['contabilidad-formal'] !== true) {
 			return { estado: 'OMITIDO', motivo: 'FLAG_INACTIVO' };
+		}
+		// La aprobacion por tenant (R7.4) solo aplica cuando el mecanismo esta
+		// habilitado; la flag de plan sigue siendo condicion necesaria.
+		if (modoSolicitado === undefined) {
+			modo = resolverModoEfectivo({
+				modoGlobal: modoActual(),
+				featureOverrides: sanitizeFeatureFlags(licencia.featureOverrides),
+			});
+			if (modo === 'off') return { estado: 'OMITIDO', motivo: 'MODO_OFF' };
 		}
 		validarEventoMonetario(evento);
 		await validarMonedaFuncionalTenant(tx, ctx.tenantId, evento);
@@ -668,15 +692,6 @@ export async function postEvento(
 		}
 		throw error;
 	}
-}
-
-/** @description Descarta valores JSON que no son mapas de flags booleanos. */
-function comoFeatures(valor: unknown): Record<string, boolean> | null {
-	if (!valor || typeof valor !== 'object' || Array.isArray(valor)) return null;
-	return Object.fromEntries(
-		Object.entries(valor).filter((entrada): entrada is [string, boolean] =>
-			typeof entrada[1] === 'boolean'),
-	);
 }
 
 /** Internal options; the bypass additionally requires verified runtime authority. */

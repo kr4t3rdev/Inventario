@@ -6,6 +6,7 @@ import {
 	type PostEventoResult,
 	type PostingTx,
 } from './posting-engine';
+import { resolverModoTenant } from '../lib/modo-tenant';
 
 const MERMA_ORIGIN_TYPE = 'ajuste_merma';
 const MERMA_REVERSAL_ORIGIN_TYPE = 'ajuste_merma_reversado';
@@ -128,8 +129,8 @@ export async function emitirReversionMermaSiContabilizada(
 	ctx: ContextoPosting,
 	params: MermaPostingParams,
 ): Promise<PostEventoResult | null> {
-	const mode = process.env.CONTABILIDAD_FORMAL_MODE;
-	if (mode !== 'shadow' && mode !== 'enforce') return null;
+	const modo = await resolverModoTenant(tx, ctx.tenantId);
+	if (modo !== 'shadow' && modo !== 'enforce') return null;
 
 	const origin = { tipo: MERMA_ORIGIN_TYPE, id: params.ajusteInventarioId };
 	const [asientoOriginal, shadowOriginal] = await Promise.all([

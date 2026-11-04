@@ -333,6 +333,40 @@ El flag global `contabilidad-formal` (habilitado para todos los planes) sigue
 siendo condición necesaria dentro del motor: sin él no se contabiliza ningún
 evento, aunque el emisor no Cash esté en `enforce`.
 
+### Aprobación del modo por tenant (R7.4)
+
+El modo global puede aprobarse también **por tenant**, de forma explícita y
+reversible. El mecanismo está apagado por defecto y no requiere migración: la
+licencia vigente del tenant lleva la aprobación en sus overrides.
+
+```bash
+CONTABILIDAD_FORMAL_MODO_TENANT=1   # sin esta variable, el modo global manda
+```
+
+Con el mecanismo habilitado, la licencia del tenant decide:
+
+| Clave en `TenantLicense.featureOverrides` | Modo efectivo del tenant |
+|---|---|
+| `contabilidad-formal-shadow: true` | `shadow` (evidencia simulada, sin asientos) |
+| `contabilidad-formal-enforce: true` | `enforce` (el asiento es exigible) |
+| ninguna | el modo global (`CONTABILIDAD_FORMAL_MODE`) |
+
+Reglas:
+
+- la aprobación del tenant prevalece sobre el modo global, también para bajarlo
+  (esa es la vía de reversión por tenant);
+- la flag de plan `contabilidad-formal` sigue siendo condición necesaria: sin
+  ella, ningún modo contabiliza;
+- quitar `CONTABILIDAD_FORMAL_MODO_TENANT` devuelve la flota al modo global
+  (interruptor de reversión global);
+- sin el mecanismo habilitado no se consulta la licencia solo para resolver el
+  modo: no hay consultas extra en el estado actual;
+- el emisor no Cash conserva su gate propio (`CONTABILIDAD_FORMAL_NO_CASH_MODE`):
+  un modo forzado por familia manda sobre la aprobación del tenant.
+
+La aprobación real de un tenant (con su criterio de reversión y la ventana
+shadow) es una decisión operacional; el repositorio no habilita ninguna.
+
 ## Precondiciones por tenant
 
 La capa falla cerrado; para que el emisor funcione, el tenant necesita:
@@ -372,8 +406,9 @@ La decisión y sus consecuencias están registradas en
   `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
   los endpoints activos delegan en servicios de mutación o emiten desde sus
   rutas actuales. No se consideran writers activos pendientes de integración.
-- El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
-  licencia para activar el emisor tenant a tenant.
+- El modo por tenant ya tiene su mecanismo (aprobación en la licencia, con
+  `CONTABILIDAD_FORMAL_MODO_TENANT=1`); lo que falta es la aprobación
+  operacional: ningún tenant está aprobado y la ventana shadow no se abrió.
 - Los movimientos de anticipo sí se reconstruyen (el movimiento persiste el
   importe, la moneda, la tasa aplicada, la huella FX y los valores funcionales),
   pero el anticipo nacido de una nota de crédito no genera asiento de

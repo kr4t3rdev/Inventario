@@ -5,7 +5,7 @@ import { hasPermission, requireFeature, requirePermission, requireTenant } from 
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
-import { modoActual } from '@/features/contabilidad-formal/services/posting-engine';
+import { resolverModoTenant } from '@/features/contabilidad-formal/lib/modo-tenant';
 import { emitirCostoVenta } from '@/features/contabilidad-formal/services/sale-posting-service';
 import { createVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
@@ -622,7 +622,7 @@ export const VentaMutationService = {
         // Capa de contabilidad formal: la mercaderia que sale del inventario se
         // compensa con su costo FIFO real. La devolucion de la venta repone el
         // inventario con su propio evento (`DEVOLUCION_VENTA`).
-        if (modoActual() !== 'off') {
+        if ((await resolverModoTenant(tx, tenantId)) !== 'off') {
           const costoFifo = await getCostoFifoVentaValorado(tx, tenantId, venta.ventaId);
           if (costoFifo && costoFifo.cantidad > 0) {
             await emitirCostoVenta(

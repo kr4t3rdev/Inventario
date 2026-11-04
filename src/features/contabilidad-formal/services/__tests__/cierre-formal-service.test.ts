@@ -9,11 +9,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../posting-engine', () => ({
 	insertarAsientoConNumeracion: vi.fn(),
-	modoActual: vi.fn(),
+}));
+vi.mock('../../lib/modo-tenant', () => ({
+	resolverModoTenant: vi.fn(),
 }));
 
 import { Prisma } from '@/generated/prisma';
-import { insertarAsientoConNumeracion, modoActual } from '../posting-engine';
+import { insertarAsientoConNumeracion } from '../posting-engine';
+import { resolverModoTenant } from '../../lib/modo-tenant';
 import { generarAsientoCierre } from '../cierre-formal-service';
 import type { CierreTx } from '../cierre-formal-service';
 
@@ -61,7 +64,7 @@ describe('generarAsientoCierre', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(modoActual).mockReturnValue('enforce');
+		vi.mocked(resolverModoTenant).mockResolvedValue('enforce');
 		vi.mocked(insertarAsientoConNumeracion).mockResolvedValue({
 			asientoId: 'asiento-cierre-1',
 			duplicado: false,
@@ -69,7 +72,7 @@ describe('generarAsientoCierre', () => {
 	});
 
 	it('no hace nada mientras la capa formal esta apagada', async () => {
-		vi.mocked(modoActual).mockReturnValue('off');
+		vi.mocked(resolverModoTenant).mockResolvedValue('off');
 		const tx = crearTxMock();
 
 		await expect(
@@ -81,7 +84,7 @@ describe('generarAsientoCierre', () => {
 	});
 
 	it('no escribe el asiento en modo observacion', async () => {
-		vi.mocked(modoActual).mockReturnValue('shadow');
+		vi.mocked(resolverModoTenant).mockResolvedValue('shadow');
 		const tx = crearTxMock();
 
 		await expect(

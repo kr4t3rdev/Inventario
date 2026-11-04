@@ -25,9 +25,9 @@ import { ActionError } from '@/lib/server-actions';
 import { decimalFuncional } from '@/features/contabilidad-formal/services/decimal-contable';
 import {
 	insertarAsientoConNumeracion,
-	modoActual,
 	type LineaAsientoResuelta,
 } from '@/features/contabilidad-formal/services/posting-engine';
+import { resolverModoTenant } from '@/features/contabilidad-formal/lib/modo-tenant';
 
 /** Tipos de cuenta que constituyen el resultado del período. */
 const TIPOS_RESULTADO = ['INGRESO', 'COSTO', 'GASTO'] as const;
@@ -124,7 +124,8 @@ export async function generarAsientoCierre(
 	tx: CierreTx,
 	params: ParamsCierreFormal,
 ): Promise<ResultadoCierreFormal> {
-	if (modoActual() !== 'enforce') {
+	const modo = await resolverModoTenant(tx, params.tenantId);
+	if (modo !== 'enforce') {
 		return { estado: 'OMITIDO', motivo: 'MODO_NO_ENFORCE' };
 	}
 

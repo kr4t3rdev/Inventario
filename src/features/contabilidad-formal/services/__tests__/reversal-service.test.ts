@@ -8,7 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../posting-engine', () => ({
 	insertarAsientoConNumeracion: vi.fn(),
-	modoActual: vi.fn(),
+}));
+vi.mock('../../lib/modo-tenant', () => ({
+	resolverModoTenant: vi.fn(),
 }));
 vi.mock('@/lib/services/periodo-contable-guard', () => ({
 	PeriodoGuard: { assertWritable: vi.fn() },
@@ -20,7 +22,8 @@ vi.mock('@/lib/services/periodo-contable-service', () => ({
 import { Prisma } from '@/generated/prisma';
 import { PeriodoContableService } from '@/lib/services/periodo-contable-service';
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
-import { insertarAsientoConNumeracion, modoActual } from '../posting-engine';
+import { insertarAsientoConNumeracion } from '../posting-engine';
+import { resolverModoTenant } from '../../lib/modo-tenant';
 import { reverseFormalEntries } from '../reversal-service';
 import type { PostingTx } from '../posting-engine';
 
@@ -76,7 +79,7 @@ describe('reversal service', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(modoActual).mockReturnValue('enforce');
+		vi.mocked(resolverModoTenant).mockResolvedValue('enforce');
 		vi.mocked(PeriodoGuard.assertWritable).mockResolvedValue({
 			permitido: true,
 		} as never);
@@ -91,7 +94,7 @@ describe('reversal service', () => {
 	});
 
 	it('no invierte nada mientras la capa formal esta apagada', async () => {
-		vi.mocked(modoActual).mockReturnValue('off');
+		vi.mocked(resolverModoTenant).mockResolvedValue('off');
 		const tx = crearTxMock();
 
 		await expect(
