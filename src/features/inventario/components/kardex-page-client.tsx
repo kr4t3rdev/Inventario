@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Download, FileText } from 'lucide-react';
 import { ManagementPageTitle } from '@/components/management-page-title';
 
@@ -107,6 +108,7 @@ export function KardexPageClient({
 	puntosVenta,
 	ubicacionesAvanzadasHabilitadas = false,
 }: KardexPageClientProps) {
+	const reduceMotion = useReducedMotion();
 	const [productoId, setProductoId] = useState('');
 	const [tipoUbicacion, setTipoUbicacion] = useState<string>('');
 	const [ubicacionId, setUbicacionId] = useState<string>('');
@@ -229,8 +231,20 @@ export function KardexPageClient({
 
 	return (
 		<div className="space-y-4 p-6">
-			<ManagementPageTitle icon={FileText} title="Kardex de inventario" description="Consulta los movimientos del inventario." />
+			<motion.div
+				initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: reduceMotion ? 0 : 0.5 }}
+			>
+				<ManagementPageTitle icon={FileText} title="Kardex de inventario" description="Consulta los movimientos del inventario." />
+			</motion.div>
 
+			<motion.div
+				initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.3 }}
+				className="space-y-4"
+			>
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-5">
 				<div className="md:col-span-2">
 					<label htmlFor="producto" className="mb-1 block text-sm font-medium">
@@ -432,6 +446,7 @@ export function KardexPageClient({
 					)}
 				</div>
 			)}
+			</motion.div>
 		</div>
 	);
 }

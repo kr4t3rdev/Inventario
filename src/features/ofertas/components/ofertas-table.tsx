@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Eye, Printer, Trash2, Receipt, Copy } from "lucide-react"
-import { ManagementPageTitle } from "@/components/management-page-title"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
@@ -321,17 +320,6 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
         animate="visible"
         variants={staggerContainer}
       >
-        <motion.div
-          className="flex items-center justify-between"
-          variants={fadeInUp}
-        >
-          <ManagementPageTitle
-            icon={Receipt}
-            title="Ofertas"
-            description="Consulta y administra las ofertas comerciales."
-          />
-        </motion.div>
-
         <motion.div
           className="flex items-center py-4"
           variants={fadeInUp}
