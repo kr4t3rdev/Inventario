@@ -55,6 +55,13 @@ describe('AppSidebarCompact', () => {
     expect(screen.getByRole('link', { name: 'Mi Empresa' })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('highlights the closest destination for nested routes', () => {
+    route.pathname = '/busy/gastosDE/conceptos/nuevo';
+    render(<AppSidebarCompact />);
+    expect(screen.getByRole('link', { name: 'Conceptos de Gastos' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Gastos DE' })).not.toHaveAttribute('aria-current');
+  });
+
   it('shows the section title as a tooltip in the rail', () => {
     sidebar.state = 'collapsed';
     render(<AppSidebarCompact />);

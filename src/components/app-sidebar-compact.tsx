@@ -35,8 +35,13 @@ export function AppSidebarCompact(props: React.ComponentProps<typeof Sidebar>): 
     isBusyRoute: pathname.startsWith('/busy'),
   }), [user, pathname]);
 
+  const matchesPath = (url: string) => Boolean(url) &&
+    (pathname === url || pathname.startsWith(`${url}/`));
+  const activeUrl = groups.flatMap((group) => group.items.flatMap((item) =>
+    [item, ...(item.subItems ?? [])]))
+    .map((item) => item.url).filter(matchesPath).sort((a, b) => b.length - a.length)[0];
   const activeGroupTitle = groups.find((group) => group.items.some((item) =>
-    (item.url && pathname === item.url) || item.subItems?.some((sub) => pathname === sub.url)))?.title;
+    item.url === activeUrl || item.subItems?.some((sub) => sub.url === activeUrl)))?.title;
 
   React.useEffect(() => {
     if (activeGroupTitle) setOpened((current) => current.includes(activeGroupTitle) ? current : [...current, activeGroupTitle]);
@@ -97,7 +102,7 @@ export function AppSidebarCompact(props: React.ComponentProps<typeof Sidebar>): 
       <SidebarContent className="gap-1 px-2 py-3">
         {!collapsed && favoriteItems.length > 0 && !normalizedQuery && <nav aria-label="Favoritos" className="mb-3 border-b border-sidebar-border pb-3">
           <div className="flex items-center gap-2 px-2 pb-1 text-xs font-semibold text-muted-foreground"><Star className="size-4" aria-hidden="true" /> Favoritos</div>
-          {favoriteItems.map((item) => <CompactItem key={item.url} item={item} pathname={pathname} favorites={favorites} onFavorite={toggleFavorite} />)}
+          {favoriteItems.map((item) => <CompactItem key={item.url} item={item} pathname={pathname} activeUrl={activeUrl} favorites={favorites} onFavorite={toggleFavorite} />)}
         </nav>}
         {groups.map((group) => {
           const items = normalizedQuery ? group.items.flatMap((item) => {
@@ -112,7 +117,7 @@ export function AppSidebarCompact(props: React.ComponentProps<typeof Sidebar>): 
               <span className="flex size-6 shrink-0 items-center justify-center text-primary">{group.items[0]?.icon && React.createElement(group.items[0].icon, { className: 'size-4', 'aria-hidden': true })}</span>
               {!collapsed && <><span className="min-w-0 flex-1 truncate">{group.title}</span><ChevronDown aria-hidden="true" className={cn('size-4 transition-transform', expanded && 'rotate-180')} /></>}
             </button>
-            {expanded && <nav aria-label={group.title} className="space-y-0.5 pb-2 pl-3">{items.map((item) => <CompactItem key={`${item.title}-${item.url}`} item={item} pathname={pathname} favorites={favorites} onFavorite={toggleFavorite} searchActive={Boolean(normalizedQuery)} />)}</nav>}
+            {expanded && <nav aria-label={group.title} className="space-y-0.5 pb-2 pl-3">{items.map((item) => <CompactItem key={`${item.title}-${item.url}`} item={item} pathname={pathname} activeUrl={activeUrl} favorites={favorites} onFavorite={toggleFavorite} searchActive={Boolean(normalizedQuery)} />)}</nav>}
           </section>;
         })}
         {normalizedQuery && !groups.some((group) => group.items.some((item) => item.title.toLocaleLowerCase('es').includes(normalizedQuery) || item.subItems?.some((sub) => sub.title.toLocaleLowerCase('es').includes(normalizedQuery)))) && <p className="px-2 py-3 text-sm text-muted-foreground">Sin resultados.</p>}
@@ -129,6 +134,7 @@ export function AppSidebarCompact(props: React.ComponentProps<typeof Sidebar>): 
 interface CompactItemProps {
   item: SidebarItemConfig;
   pathname: string;
+  activeUrl?: string;
   favorites: string[];
   onFavorite: (url: string) => void;
   searchActive?: boolean;
@@ -139,19 +145,19 @@ interface CompactItemProps {
  * @param {CompactItemProps} props - Destino y estado de navegación.
  * @returns {React.JSX.Element} Fila de navegación accesible.
  */
-function CompactItem({ item, pathname, favorites, onFavorite, searchActive = false }: CompactItemProps): React.JSX.Element {
-  const [open, setOpen] = React.useState(() => Boolean(item.subItems?.some((sub) => pathname === sub.url))); 
+function CompactItem({ item, pathname, activeUrl, favorites, onFavorite, searchActive = false }: CompactItemProps): React.JSX.Element {
+  const [open, setOpen] = React.useState(() => Boolean(item.subItems?.some((sub) => sub.url === activeUrl)));
   React.useEffect(() => {
-    if (item.subItems?.some((sub) => pathname === sub.url)) setOpen(true);
-  }, [pathname, item.subItems]);
+    if (item.subItems?.some((sub) => sub.url === activeUrl)) setOpen(true);
+  }, [activeUrl, item.subItems]);
   const hasChildren = Boolean(item.subItems?.length);
-  const active = Boolean(item.url) && pathname === item.url;
+  const active = Boolean(item.url) && item.url === activeUrl;
   return <div>
     <div className={cn('group/item flex min-h-11 items-center rounded-md text-sm hover:bg-sidebar-accent', active && 'bg-sidebar-accent text-primary')}>
       {item.url ? <Link href={item.url} aria-current={active ? 'page' : undefined} className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"><item.icon className="size-4 shrink-0" aria-hidden="true" /><span className="min-w-0 whitespace-normal break-words py-2 leading-5">{item.title}</span></Link> : <button type="button" onClick={() => setOpen(!open)} aria-expanded={open || searchActive} className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"><item.icon className="size-4 shrink-0" aria-hidden="true" /><span className="min-w-0 whitespace-normal break-words py-2 leading-5">{item.title}</span></button>}
       {item.url && <button type="button" aria-label={`${favorites.includes(item.url) ? 'Quitar' : 'Añadir'} ${item.title} ${favorites.includes(item.url) ? 'de' : 'a'} favoritos`} aria-pressed={favorites.includes(item.url)} onClick={() => onFavorite(item.url)} className="flex size-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"><Star className={cn('size-4', favorites.includes(item.url) ? 'fill-primary text-primary' : 'text-muted-foreground')} aria-hidden="true" /></button>}
       {hasChildren && item.url && <button type="button" aria-label={`${open ? 'Ocultar' : 'Mostrar'} submenú de ${item.title}`} aria-expanded={open || searchActive} onClick={() => setOpen(!open)} className="flex size-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"><ChevronDown className={cn('size-4', (open || searchActive) && 'rotate-180')} aria-hidden="true" /></button>}
     </div>
-    {hasChildren && (open || searchActive) && <div className="ml-4 border-l border-sidebar-border pl-2">{item.subItems?.map((sub) => <CompactItem key={`${sub.title}-${sub.url}`} item={sub} pathname={pathname} favorites={favorites} onFavorite={onFavorite} />)}</div>}
+    {hasChildren && (open || searchActive) && <div className="ml-4 border-l border-sidebar-border pl-2">{item.subItems?.map((sub) => <CompactItem key={`${sub.title}-${sub.url}`} item={sub} pathname={pathname} activeUrl={activeUrl} favorites={favorites} onFavorite={onFavorite} />)}</div>}
   </div>;
 }
