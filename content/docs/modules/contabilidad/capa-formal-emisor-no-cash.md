@@ -92,6 +92,8 @@ falla cerrado, sin inventar conversión.
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.entregarPedido` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO cuando el pedido se entrega y la mercadería sale del inventario |
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.anularVentaPorEstado` | `REVERSO_ASIENTO` | Anula con su contraasiento los asientos de la venta anulada (ingreso, costo y cobro al contado) |
 | `src/features/compras-productos/actions.ts` → `anularCompraProductoAction` | `REVERSO_ASIENTO` | Anula con su contraasiento el reconocimiento de la compra anulada |
+| `src/features/contabilidad/actions-periodos.ts` → `aprobarPeriodoAction` | `CIERRE_PERIODO` | Al aprobar el período, vacía sus cuentas de resultado contra la cuenta de resultado del período, en la misma transacción |
+| `src/features/contabilidad/actions-periodos.ts` → `cerrarPeriodoAction` (auto-aprobación de managers) | `CIERRE_PERIODO` | Cuando el cierre deja el período aprobado, genera el mismo asiento de cierre formal |
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -208,6 +210,19 @@ reversa se asienta en el período actual. Hoy la reversa está conectada al
 anular una venta (ingreso reconocido, costo devengado y cobro al contado) y al
 anular una compra (reconocimiento).
 
+Cuando un período contable queda **aprobado**, se genera su **asiento de cierre
+formal**: cada cuenta de resultado (ingreso, costo y gasto) del período vacía su
+saldo neto y la utilidad —o la pérdida— del período queda en la cuenta de
+resultado del período (`RESULTADO_PERIODO`). El asiento se construye
+programáticamente (las plantillas del plan no cubren `CIERRE_PERIODO`) y lleva
+el origen idempotente `cierre_periodo:<id>`, de modo que un segundo cierre del
+mismo período devuelve el asiento existente en lugar de duplicarlo. Se fecha el
+último día del período cuando la aprobación ocurre después de su cierre. La
+aprobación y el cierre se escriben en la misma transacción: el período no queda
+aprobado sin su asiento de cierre. En modo `enforce` el cierre falla cerrado
+(sin rol contable, sin diario de apertura/cierre o descuadre, la aprobación se
+rechaza); con la capa apagada o en modo `shadow` no se escribe nada.
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -220,8 +235,8 @@ CONTABILIDAD_FORMAL_NO_CASH_MODE=enforce # se exige el asiento formal
 
 Los emisores de reconocimiento (compras, gastos de servicio, mermas,
 producción, anticipos, venta de servicios y venta de productos —ingreso y costo
-FIFO—) no usan ese gate: respetan el modo global `CONTABILIDAD_FORMAL_MODE`,
-que sigue `off` por defecto. Las liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`,
+FIFO—, y el cierre formal del período) no usan ese gate: respetan el modo global
+`CONTABILIDAD_FORMAL_MODE`, que sigue `off` por defecto. Las liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`,
 `PAGO_CXP`) conservan el gate no Cash. Para la convergencia futura existe
 `emitirLiquidacionFormal`
 (`src/features/contabilidad-formal/services/settlement-formal-posting-service.ts`):
@@ -276,6 +291,13 @@ La decisión y sus consecuencias están registradas en
 - Ningún writer anula todavía el asiento formal de los gastos reconciliados ni
   de la nómina: la reversa existe, pero solo está conectada al anular una venta
   y una compra.
+- La apertura formal por traspaso (rollover) todavía no está conectada: el
+  asiento de apertura que hoy se genera al abrir un período es el de cuadre
+  manual aprobado (`apertura_manual`), y la derivación automática de los saldos
+  iniciales sigue bloqueada a propósito (`APERTURA_SALDOS_NO_VERIFICABLES`),
+  porque la evidencia disponible no permite verificar todos los rubros ni su
+  moneda. El cierre formal del período sí está conectado; su contrapartida de
+  apertura requiere primero esa evidencia verificable.
 - Los handlers legacy `handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts` y
   `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
   los endpoints activos delegan en servicios de mutación o emiten desde sus
@@ -295,5 +317,6 @@ La decisión y sus consecuencias están registradas en
 - Valoración operativa compartida: `src/features/contabilidad-formal/lib/functional-valuation-resolver.ts`
 - Valoración del costo FIFO: `src/lib/services/fifo-allocation.ts` → `getCostoFifoVentaValorado`
 - Reversa formal (asiento inverso): `src/features/contabilidad-formal/services/reversal-service.ts`
+- Cierre formal del período: `src/features/contabilidad-formal/services/cierre-formal-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
