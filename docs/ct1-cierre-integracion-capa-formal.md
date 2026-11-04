@@ -29,6 +29,7 @@ base de datos.
 | D2 | Incluir las rutas móviles contables en CT-1 | Aplicada: las rutas móviles ya existían y alcanzan los mismos servicios; S8 cerró el hueco de los ajustes bancarios y las inyecciones de capital |
 | D3 | Excluir los artefactos Graphify del merge y regenerarlos al finalizar | Aplicada: el índice local se regeneró; los artefactos de `graphify-out/` no se mezclaron en los commits contables |
 | D4 | Integrar por slices sobre ramas nuevas desde `origin/main` | Aplicada: un commit por slice, push directo a `origin/main` y CI verde en cada SHA |
+| D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`) y la plantilla global de `DEVOLUCION_VENTA` refleja el desglose. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
 
 ## 3. Slices integrados (SHAs reales)
 

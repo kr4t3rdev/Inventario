@@ -68,6 +68,12 @@ export interface AuxiliaresEvento {
 	interesesMoratorios?: DecimalInput;
 	/** Cobro/pago parcial efectivamente movido (funcional). */
 	montoPagado?: DecimalInput;
+	/** Parte de la devolución aplicada a cuentas por cobrar (funcional). */
+	montoAplicadoCxc?: DecimalInput;
+	/** Parte de la devolución que queda como saldo a favor del cliente (funcional). */
+	montoSaldoFavor?: DecimalInput;
+	/** Parte de la devolución que se reembolsa en efectivo (funcional). */
+	montoReembolsado?: DecimalInput;
 	/** Signo económico: > 0 favorable (ingreso cambiario), < 0 pérdida (funcional). */
 	diferenciaFx?: DecimalInput;
 }
@@ -529,6 +535,21 @@ function resolverMontos(
 				break;
 			case 'MONTO_PAGADO':
 				monto = funcional(evento.auxiliares?.montoPagado ?? total);
+				break;
+			case 'MONTO_APLICADO_CXC':
+				monto = evento.auxiliares?.montoAplicadoCxc == null
+					? null
+					: funcional(evento.auxiliares.montoAplicadoCxc);
+				break;
+			case 'MONTO_SALDO_FAVOR':
+				monto = evento.auxiliares?.montoSaldoFavor == null
+					? null
+					: funcional(evento.auxiliares.montoSaldoFavor);
+				break;
+			case 'MONTO_REEMBOLSADO':
+				monto = evento.auxiliares?.montoReembolsado == null
+					? null
+					: funcional(evento.auxiliares.montoReembolsado);
 				break;
 			case 'COSTO_FIFO':
 				monto = evento.auxiliares?.costoFifo == null ? null : funcional(evento.auxiliares.costoFifo);
