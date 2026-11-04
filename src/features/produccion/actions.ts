@@ -16,9 +16,74 @@ import {
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
 import { BomError, explodeBom } from "@/features/produccion/services/bom";
+import { planificarNecesidades } from "@/features/produccion/services/mrp";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+
+export const planificarNecesidadesAction = withAction(
+	async (input: { recetaId: string; cantidad: number }, user: AuthenticatedUser) => {
+		requireFeature(user, 'mrp-avanzado', 'planificar necesidades de materiales');
+		const tenantId = requireTenant(user);
+		if (!input?.recetaId || !Number.isFinite(input.cantidad) || input.cantidad <= 0) {
+			throw new ActionError('La receta y una cantidad mayor que cero son obligatorias', 'VALIDATION_ERROR');
+		}
+
+		const recetas = await prisma.receta.findMany({
+			where: { tenantId },
+			select: {
+				recetaId: true,
+				productoId: true,
+				rendimiento: true,
+				RecetaIngrediente: {
+					select: {
+						productoId: true,
+						recetaIngredienteId: true,
+						cantidad: true,
+						desperdicio: true,
+					},
+				},
+			},
+		});
+		const recipes = recetas.map((recipe) => ({
+			recetaId: recipe.recetaId,
+			productoId: recipe.productoId,
+			rendimiento: recipe.rendimiento,
+			ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
+				ingredient.recetaIngredienteId
+					? {
+						recetaIngredienteId: ingredient.recetaIngredienteId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					}
+					: {
+						productoId: ingredient.productoId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					},
+			),
+		}));
+		const explosion = explodeBom(input.recetaId, input.cantidad, recipes);
+		const recetaRaiz = recipes.find(({ recetaId }) => recetaId === input.recetaId);
+		const productoIdsConDemanda = [...new Set([
+			...explosion.materiales.map(({ productoId }) => productoId),
+			...explosion.subrecipes.map(({ productoId }) => productoId)
+				.filter((id): id is string => Boolean(id)),
+			...(recetaRaiz?.productoId ? [recetaRaiz.productoId] : []),
+		])];
+		const balances = productoIdsConDemanda.length
+			? await prisma.stockUbicacion.findMany({
+					where: {
+						tenantId,
+						productoId: { in: productoIdsConDemanda },
+					},
+					select: { productoId: true, cantidadDisponible: true },
+				})
+			: [];
+
+		return planificarNecesidades(input.recetaId, input.cantidad, recipes, balances);
+	},
+);
 
 // ==================== RECETAS ====================
 

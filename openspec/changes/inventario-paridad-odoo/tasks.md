@@ -208,8 +208,11 @@
     existentes de `RecetaIngrediente` al mover su PK física de `recetaIngredienteId`
     a `id` antes de reutilizar la columna como referencia de subreceta.
   - Verificación focalizada: BOM puro, acciones, API y contrato de migración.
-* [ ] 7.2 `planificarNecesidadesAction` (flag `mrp-avanzado`):
-  explosión vs disponible + lotes reservados → sugiere OC y órdenes.
+* [x] 7.2 `planificarNecesidadesAction` (flag `mrp-avanzado`):
+  explosión tenant-scoped vs `StockUbicacion.cantidadDisponible` (neto de
+  reservas) y disponibilidad de subrecetas → sugiere cantidades de compra y
+  órdenes de producción sin crearlas. Pruebas focalizadas de explosión,
+  neteo de stock, subreceta disponible y gating Empresarial.
 * [ ] 7.3 Trazabilidad lote → documentos: `getTrazabilidadLoteAction`
   (compras origen → ventas destino) + UI.
 * [ ] 7.4 Putaway simple: `ReglaPutaway { productoId?, categoriaId?,
