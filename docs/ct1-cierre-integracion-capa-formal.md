@@ -98,7 +98,7 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts` |
 | 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts` |
 | 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
-| 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts` |
+| 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts`, `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts` |
 
 Notas de la matriz:
 
@@ -111,14 +111,13 @@ Notas de la matriz:
   `InyeccionCapital` no persiste ni la tasa ni el importe funcional. En ambos
   casos, en moneda extranjera, el motor falla cerrado en vez de inventar una
   equivalencia.
-- **(h)**: solo las familias de caja (filas 17-19) y de ajustes e inyecciones
-  (filas 20-21) tienen un failpoint físico en `main` (trigger de auditoría y
-  fallo de inserción del asiento). En las filas 20-21 el failpoint se prueba
-  además en modo `enforce`: el asiento ya insertado se revierte junto con la
-  escritura operativa y con la auditoría
-  (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`).
-  La fila 25 (devolución de venta) comparte transacción con la escritura
-  operativa y su asiento, pero todavía sin failpoint físico.
+- **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
+  20-21) y de devoluciones de venta (fila 25) tienen un failpoint físico en
+  `main` (trigger de auditoría y fallo de inserción del asiento). En las filas
+  20-21 y 25 el failpoint se prueba además en modo `enforce`: el asiento ya
+  insertado se revierte junto con la escritura operativa y con la auditoría
+  (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`,
+  `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -147,7 +146,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en la familia de caja y en ajustes/inyecciones (incluido el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en la familia de caja, en ajustes/inyecciones y en la devolución de venta (los tres con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off` |
@@ -160,9 +159,10 @@ Ninguno de estos gates se cambió en CT-1:
 2. **Inyección de capital en moneda extranjera**: `InyeccionCapital` no
    persiste la tasa ni el importe funcional; su replay histórico en moneda
    extranjera no es reconstruible con fidelidad.
-3. **Rollback físico por canal**: extendido a la familia de ajustes e inyecciones
-   (con el asiento formal en modo `enforce`); faltan las familias comercial
-   (ventas, compras, servicios), anticipos, inventario y liquidaciones.
+3. **Rollback físico por canal**: extendido a las familias de ajustes e
+   inyecciones y a la devolución de venta (con el asiento formal en modo
+   `enforce`); faltan las familias comercial (ventas, compras, servicios),
+   anticipos, inventario y liquidaciones.
 4. **Modo por tenant**: hoy el modo es global; falta el flag de licencia para
    activar `shadow`/`enforce` tenant a tenant.
 5. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
