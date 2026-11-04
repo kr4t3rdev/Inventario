@@ -257,7 +257,12 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
 
   return (
     <div className="container mx-auto py-4">
-      <div className="flex justify-between items-center mb-6">
+      <motion.div
+        className="flex justify-between items-center mb-6"
+        initial={reduceMotion ? false : { opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5 }}
+      >
         <div className="flex min-w-0 items-center gap-3">
           <ManagementPageTitle
             icon={ShoppingCart}
@@ -274,33 +279,34 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
             <Plus className="mr-2 h-4 w-4" /> Nueva compra
           </Link>
         </Button>
-      </div>
-
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por factura, proveedor o producto..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div>
+      </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.5 }}
-        className="border rounded-lg border-dashed dark:border-gray-700"
+        transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.3 }}
       >
-        <DataTable
-          columns={columns}
-          data={compras}
-          pageCount={totalPages}
-          pagination={pagination}
-          onPaginationChange={handlePaginationChange}
-        />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por factura, proveedor o producto..."
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        <div className="border rounded-lg border-dashed dark:border-gray-700">
+          <DataTable
+            columns={columns}
+            data={compras}
+            pageCount={totalPages}
+            pagination={pagination}
+            onPaginationChange={handlePaginationChange}
+          />
+        </div>
       </motion.div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>

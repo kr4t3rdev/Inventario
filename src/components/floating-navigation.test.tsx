@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FloatingNavigationProvider, FloatingNavigationMenu, FloatingNavigationRail } from './floating-navigation';
 
@@ -45,6 +45,9 @@ describe('navegación flotante', () => {
     expect(screen.getByRole('link', { name: 'Productos' })).toHaveAttribute('title', 'Productos');
     fireEvent.click(screen.getByRole('button', { name: 'Acciones' }));
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar submenú de Gastos DE' }));
-    expect(screen.getByRole('link', { name: 'Gastos DE' })).toBeInTheDocument();
+    const menu = screen.getByRole('dialog');
+    expect(within(menu).getByRole('link', { name: 'Lista de Gastos' })).toBeInTheDocument();
+    expect(within(menu).getByRole('link', { name: 'Conceptos de Gastos' })).toBeInTheDocument();
+    expect(within(menu).getAllByRole('link')).toHaveLength(2);
   });
 });
