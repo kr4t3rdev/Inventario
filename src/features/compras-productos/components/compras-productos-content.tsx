@@ -4,9 +4,10 @@ import { useMemo, useState, useTransition, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Plus, ShoppingCart, Eye, Pencil, Trash2, Package, Loader2, Search, Ban } from 'lucide-react'
 import type { ColumnDef, PaginationState } from '@tanstack/react-table'
-import { LazyMotion, m as motion } from 'framer-motion'
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion'
 
 import { DataTable } from '@/components/data-table'
+import { ManagementPageTitle } from '@/components/management-page-title'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,7 @@ interface ComprasProductosContentProps {
 }
 
 export function ComprasProductosContent({ initialCompras, initialPagination }: ComprasProductosContentProps) {
+  const reduceMotion = useReducedMotion()
   const [compras, setCompras] = useState<any[]>(initialCompras)
   const [totalPages, setTotalPages] = useState(initialPagination?.totalPages ?? 1)
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
@@ -256,20 +258,17 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
   return (
     <div className="container mx-auto py-4">
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-            <ShoppingCart className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-              Compras de Productos
-            </h1>
-          </div>
-          {isPending && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+        <div className="flex min-w-0 items-center gap-3">
+          <ManagementPageTitle
+            icon={ShoppingCart}
+            title="Compras de Productos"
+            description="Consulta y administra las compras de productos."
+          />
+          {isPending && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Actualizando compras" />}
         </div>
         <Button
           asChild
-          className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Link href="/busy/compras-productos/new">
             <Plus className="mr-2 h-4 w-4" /> Nueva compra
@@ -290,9 +289,9 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5 }}
         className="border rounded-lg border-dashed dark:border-gray-700"
       >
         <DataTable

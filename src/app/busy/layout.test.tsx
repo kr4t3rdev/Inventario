@@ -9,6 +9,11 @@ vi.mock('next/headers', () => ({
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  usePathname: () => '/busy/dashboard',
+}))
+
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({ user: null }),
 }))
 
 vi.mock('@/lib/auth/server-route-identity', () => ({

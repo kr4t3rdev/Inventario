@@ -1,7 +1,13 @@
 import { getMonedasAction, getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "./theme-toggle"
+import {
+  FloatingAccount,
+  FloatingHeaderMenu,
+  SidebarHeaderFrame,
+  SidebarViewCollapse,
+  SidebarViewToggle,
+} from "./sidebar-view"
 import { PanelNotificaciones } from "@/features/notificaciones/components/panel-notificaciones"
 import { CurrencyIndicator } from "@/features/contabilidad/components/currency-indicator"
 import { PeriodoActivoIndicator } from "@/features/contabilidad/components/periodo-activo-indicator"
@@ -22,16 +28,15 @@ export async function SiteHeader() {
   
   return (
     <div>
-      <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-12 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b transition-[width,height] ease-linear">
+      <SidebarHeaderFrame>
         <div className="flex min-w-0 flex-1 items-center gap-1 px-4 lg:gap-2 lg:px-6">
-          <SidebarTrigger
-            aria-label="Alternar barra lateral"
-            className="-ml-1 size-11"
-          />
+          <SidebarViewCollapse />
+          <SidebarViewToggle />
           <Separator
             orientation="vertical"
             className="mx-2 data-[orientation=vertical]:h-4"
           />
+          <FloatingHeaderMenu />
           
           {/* Período Activo */}
           <PeriodoActivoIndicator />
@@ -41,10 +46,11 @@ export async function SiteHeader() {
         <CurrencyIndicator monedas={monedas} tasas={tasas} />
         
         <div className="flex items-center gap-2">
+          <FloatingAccount />
           <ThemeToggle/>
           <PanelNotificaciones/>        
         </div>
-      </header>
+      </SidebarHeaderFrame>
       
       {/* Breadcrumb Navigation */}
       <div className="px-4 lg:px-6 py-2">

@@ -42,7 +42,7 @@ export function EmpleadoCard({
 
 	return (
 		<Card className="border-dashed overflow-hidden group">
-			<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+			<div className="h-1 bg-primary" />
 			<CardHeader>
 				<div className="flex justify-between items-start">
 					<div>
@@ -52,7 +52,7 @@ export function EmpleadoCard({
 						<CardDescription>{empleado.cargo}</CardDescription>
 					</div>
 					<Avatar className="h-12 w-12 ring-2 ring-orange-500/20">
-						<AvatarFallback className="bg-linear-to-br from-orange-500/20 to-red-600/20 text-orange-500 font-semibold">
+						<AvatarFallback className="bg-primary/10 text-primary font-semibold">
 							{initials}
 						</AvatarFallback>
 					</Avatar>

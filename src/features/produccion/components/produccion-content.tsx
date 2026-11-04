@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Factory, Plus, Search, Package, ClipboardList, CheckCircle, XCircle, Clock, Trash2, Edit } from 'lucide-react'
+import { ManagementPageTitle } from '@/components/management-page-title'
 import { useRouter } from 'next/navigation'
 import { 
   getRecetasProduccionAction,
@@ -216,14 +217,8 @@ export function ProduccionContent({ initialRecetas, initialOrdenes }: Produccion
   return (
     <div className="container mx-auto py-4">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
-          <Factory className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Producción</h1>
-          <p className="text-muted-foreground text-sm">Gestiona recetas y órdenes de producción</p>
-        </div>
+      <div className="mb-6">
+        <ManagementPageTitle icon={Factory} title="Producción" description="Gestiona recetas y órdenes de producción." />
       </div>
 
       <Tabs defaultValue="recetas" className="w-full">

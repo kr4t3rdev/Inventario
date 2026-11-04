@@ -156,17 +156,17 @@ export function NominaEmpleadoSection({
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                 <Users className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-foreground">
                 Empleados y Nómina
               </h1>
             </div>
             {puedeEditar && (
               <Button
                 asChild
-                className="bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-primary text-primary-foreground"
               >
                 <Link href="/busy/empleados/new">
                   <Plus className="mr-2 h-4 w-4" /> Nuevo Empleado
@@ -201,10 +201,10 @@ export function NominaEmpleadoSection({
           {/* Historial de pagos */}
           <div className="mt-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <CreditCard className="h-4 w-4 text-white" />
               </div>
-              <h2 className="text-xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold text-foreground">
                 Historial de Pagos de Salario
               </h2>
             </div>
@@ -300,7 +300,7 @@ export function NominaEmpleadoSection({
               </Button>
               <Button
                 type="submit"
-                className="bg-linear-to-r from-orange-500 to-red-600 text-white"
+                className="bg-primary text-primary-foreground"
               >
                 Registrar Pago
               </Button>

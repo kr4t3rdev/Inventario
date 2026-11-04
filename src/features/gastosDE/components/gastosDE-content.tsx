@@ -16,6 +16,7 @@ import { deleteGastosDEAction, deleteGastosDEBulkAction, aprobarGastoDEAction, r
 import type { Vendor } from "@/app/models/model"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, AlertCircle, Download } from "lucide-react"
+import { ManagementPageTitle } from "@/components/management-page-title"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -371,18 +372,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <motion.div
-                className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <Receipt className="h-5 w-5 text-white" />
-              </motion.div>
-              <div className="relative">
-                <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-                  Gasto de Explotación
-                </h1>
-              </div>
+              <ManagementPageTitle icon={Receipt} title="Gasto de Explotación" description="Consulta y administra los gastos de explotación." />
             </motion.div>
             <div className="flex flex-wrap items-center gap-2">
               <motion.div
@@ -392,7 +382,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Button asChild className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
+                <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Link href="/busy/gastosDE/new">
                     <Plus className="mr-2 h-4 w-4" /> Nuevo Gasto
                   </Link>

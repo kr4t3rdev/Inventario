@@ -1,5 +1,7 @@
 'use client';
 
+import { ClipboardList } from 'lucide-react';
+import { ManagementPageTitle } from '@/components/management-page-title';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -229,7 +231,7 @@ export function ConteosPageClient({
 
 	return (
 		<div className="space-y-4 p-6">
-			<h1 className="text-2xl font-semibold">Conteos físicos</h1>
+			<ManagementPageTitle icon={ClipboardList} title="Conteos físicos" description="Consulta y administra los conteos de inventario." />
 
 			{error && (
 				<p role="alert" className="text-sm text-destructive">

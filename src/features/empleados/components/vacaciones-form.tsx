@@ -282,14 +282,14 @@ export function VacacionesForm() {
 				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 					{puedeEditar && (
 						<DialogTrigger asChild>
-							<Button className="w-full sm:w-auto bg-linear-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md hover:shadow-lg transition-all">
+							<Button className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
 								<Plus className="h-4 w-4 mr-2" />
 								Nueva Solicitud
 							</Button>
 						</DialogTrigger>
 					)}
 					<DialogContent className="sm:max-w-[600px] overflow-hidden">
-						<DialogHeader className="bg-linear-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 p-6 -mx-6 -mt-6 border-b mb-6">
+						<DialogHeader className="bg-muted p-6 -mx-6 -mt-6 border-b mb-6">
 							<DialogTitle className="flex items-center gap-2 text-2xl text-orange-700 dark:text-orange-400">
 								<Palmtree className="h-6 w-6" />
 								Solicitar Vacaciones
@@ -456,7 +456,7 @@ export function VacacionesForm() {
 								<Button
 									type="submit"
 									disabled={loading}
-									className="bg-linear-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+									className="bg-primary text-primary-foreground hover:bg-primary/90"
 								>
 									{loading ? "Enviando..." : "Enviar Solicitud"}
 								</Button>

@@ -104,7 +104,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className='p-3 bg-linear-to-br from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 rounded-xl shadow-lg shadow-orange-500/25'
+                className='p-3 bg-primary dark:from-orange-600 dark:to-red-700 rounded-xl shadow-lg '
               >
                 <Package className='h-6 w-6 text-white' />
               </motion.div>
@@ -298,7 +298,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                     <Button 
                       type='submit' 
                       disabled={isLoading}
-                      className='bg-linear-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 text-white shadow-lg shadow-orange-500/25 disabled:opacity-50'
+                      className='bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50'
                     >
                       {isLoading ? (
                         <>

@@ -63,7 +63,7 @@ export function GastoElementoForm({ conceptoId, conceptoNombre, initialData }: G
       <Card className="overflow-hidden border-dashed">
         <CardContent className="pt-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center gap-3 mb-6">
-            <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
+            <motion.div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
               <Layers className="h-5 w-5 text-white" />
             </motion.div>
             <div>
@@ -96,7 +96,7 @@ export function GastoElementoForm({ conceptoId, conceptoNombre, initialData }: G
                   <Button type="button" variant="destructive" onClick={() => router.push(`/busy/gastosDE/conceptos/${conceptoId}/elementos`)} disabled={isLoading} className="gap-2"><ArrowLeft className="h-4 w-4" /> Cancelar</Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
-                  <Button type="submit" disabled={isLoading} className="min-w-35 gap-2 bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
+                  <Button type="submit" disabled={isLoading} className="min-w-35 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                     {isLoading ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Loader2 className="h-4 w-4" /></motion.div>{initialData ? "Actualizando..." : "Creando..."}</>) : initialData ? "Actualizar elemento" : "Crear elemento"}
                   </Button>
                 </motion.div>

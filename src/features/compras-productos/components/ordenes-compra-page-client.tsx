@@ -1,5 +1,9 @@
 'use client';
 
+import { ManagementPageTitle } from '@/components/management-page-title'
+import { ShoppingCart } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -69,6 +73,7 @@ export function OrdenesCompraPageClient({
   showCreateForm = true,
 }: OrdenesCompraPageClientProps) {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [vendorId, setVendorId] = useState('');
   const [lines, setLines] = useState<DraftLine[]>([{ ...EMPTY_LINE }]);
   const [receiveOrderId, setReceiveOrderId] = useState('');
@@ -141,10 +146,19 @@ export function OrdenesCompraPageClient({
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-sm text-muted-foreground">Solicita mercancía, recibe parcialmente y conserva el backorder.</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5 }}
+      >
+        <ManagementPageTitle icon={ShoppingCart} title={title} description="Solicita mercancía, recibe parcialmente y conserva el backorder." />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.3 }}
+        className="space-y-6"
+      >
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
       {canManageOrders && showCreateForm && (
@@ -252,6 +266,7 @@ export function OrdenesCompraPageClient({
           )}
         </form>
       )}
+      </motion.div>
     </div>
   );
 }
