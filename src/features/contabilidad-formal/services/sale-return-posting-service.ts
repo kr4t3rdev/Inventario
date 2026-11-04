@@ -28,12 +28,13 @@ import {
 	postEvento,
 	type ContextoPosting,
 	type DecimalInput,
+	type EventoContableInput,
 	type PostEventoResult,
 	type PostingTx,
 } from './posting-engine';
 
 /** Origen idempotente de la devolución de venta. */
-const DEVOLUCION_VENTA_ORIGIN_TYPE = 'devolucion_venta';
+export const DEVOLUCION_VENTA_ORIGIN_TYPE = 'devolucion_venta';
 
 /** Fuente de la evidencia FX construida por este emisor. */
 const EVIDENCE_SOURCE = 'sale-return-posting-service';
@@ -97,33 +98,25 @@ function aMonedaFuncional(
 }
 
 /**
- * @description Emite el asiento formal de una devolución de venta.
+ * @description Construye el evento formal de la devolución de venta.
  *
- * El ingreso revertido se compensa con las tres salidas que el writer ya
- * resolvió (cuentas por cobrar, anticipo y reembolso) y la mercadería repuesta
- * reingresa al inventario por su costo FIFO.
+ * El constructor es puro y compartido: el writer y el replay histórico
+ * construyen el evento con la misma función, de modo que el asiento
+ * reconstruido por el replay es el mismo que emitió el writer.
  *
- * @param {PostingTx} tx - Transacción Prisma de la devolución.
- * @param {ContextoPosting} ctx - Tenant y usuario que registraron la devolución.
  * @param {DevolucionVentaPostingParams} params - Devolución persistida y su desglose.
- * @returns {Promise<PostEventoResult>} Resultado del motor contable formal.
+ * @param {string | null} functionalCurrency - Moneda funcional del tenant.
+ * @returns {EventoContableInput} Evento formal listo para contabilizar.
  */
-export async function emitirDevolucionVenta(
-	tx: PostingTx,
-	ctx: ContextoPosting,
+export function construirEventoDevolucionVenta(
 	params: DevolucionVentaPostingParams,
-): Promise<PostEventoResult> {
-	const policy = await tx.tenantAccountingPolicy.findUnique({
-		where: { tenantId: ctx.tenantId },
-		select: { functionalCurrencyCode: true },
-	});
-	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
+	functionalCurrency: string | null,
+): EventoContableInput {
 	const moneda = params.moneda.trim().toUpperCase();
 	const tasaCambio = params.tasaCambio == null ? null : Number(params.tasaCambio);
 
 	const total = Math.abs(Number(params.monto));
 	const aplicado = Math.abs(Number(params.montoAplicadoCxc));
-	const saldoFavor = Math.abs(Number(params.montoSaldoFavor));
 	const reembolsado = Math.abs(Number(params.montoReembolsado));
 
 	const totalFuncional = aMonedaFuncional(total, moneda, functionalCurrency, tasaCambio, params.fecha);
@@ -152,7 +145,7 @@ export async function emitirDevolucionVenta(
 		source: EVIDENCE_SOURCE,
 	});
 
-	return postEvento(tx, ctx, {
+	return {
 		tipo: 'DEVOLUCION_VENTA',
 		fecha: params.fecha,
 		descripcion: params.descripcion ?? `Devolucion de venta ${params.devolucionId}`,
@@ -170,5 +163,35 @@ export async function emitirDevolucionVenta(
 			...(params.costoFifo == null ? {} : { costoFifo: params.costoFifo }),
 		},
 		...(params.referencia ? { referencia: params.referencia } : {}),
+	};
+}
+
+/**
+ * @description Emite el asiento formal de una devolución de venta.
+ *
+ * El ingreso revertido se compensa con las tres salidas que el writer ya
+ * resolvió (cuentas por cobrar, anticipo y reembolso) y la mercadería repuesta
+ * reingresa al inventario por su costo FIFO.
+ *
+ * @param {PostingTx} tx - Transacción Prisma de la devolución.
+ * @param {ContextoPosting} ctx - Tenant y usuario que registraron la devolución.
+ * @param {DevolucionVentaPostingParams} params - Devolución persistida y su desglose.
+ * @returns {Promise<PostEventoResult>} Resultado del motor contable formal.
+ */
+export async function emitirDevolucionVenta(
+	tx: PostingTx,
+	ctx: ContextoPosting,
+	params: DevolucionVentaPostingParams,
+): Promise<PostEventoResult> {
+	const policy = await tx.tenantAccountingPolicy.findUnique({
+		where: { tenantId: ctx.tenantId },
+		select: { functionalCurrencyCode: true },
 	});
+	const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
+
+	return postEvento(
+		tx,
+		ctx,
+		construirEventoDevolucionVenta(params, functionalCurrency),
+	);
 }

@@ -50,6 +50,7 @@ describe('recolectarCandidatos', () => {
 			compraServicio: { findMany: vi.fn().mockResolvedValue([]) },
 			ventaServicios: { findMany: vi.fn().mockResolvedValue([]) },
 			anticipoMovimiento: { findMany: vi.fn().mockResolvedValue([]) },
+			devolucionVenta: { findMany: vi.fn().mockResolvedValue([]) },
 			tasaCambio: { findFirst: vi.fn().mockResolvedValue(null) },
 			tenantAccountingPolicy: {
 				findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }),
@@ -206,6 +207,81 @@ describe('recolectarCandidatos', () => {
 		const candidatos = await recolectarCandidatos('tenant-1', client as never);
 
 		expect(candidatos).toHaveLength(0);
+	});
+
+	function devolucion(overrides: Record<string, unknown> = {}) {
+		return {
+			devolucionId: 'dev-1',
+			ventaId: 'venta-1',
+			estado: 'REGISTRADA',
+			total: 1000,
+			moneda: 'CUP',
+			tasaCambio: new Prisma.Decimal(1),
+			montoAplicadoCxc: 600,
+			montoSaldoFavor: 250,
+			montoReembolsado: 150,
+			costoFifoFuncional: new Prisma.Decimal(400),
+			idempotencyKey: 'dev-key-1',
+			createdAt: new Date('2026-10-12T00:00:00.000Z'),
+			...overrides,
+		};
+	}
+
+	it('reconoce la devolucion de venta con el desglose que el writer persistio', async () => {
+		const client = crearClient({
+			devolucionVenta: { findMany: vi.fn().mockResolvedValue([devolucion()]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBeUndefined();
+		expect(candidatos[0]).toMatchObject({
+			origenTipo: 'devolucion_venta',
+			origenId: 'dev-1',
+			evento: {
+				tipo: 'DEVOLUCION_VENTA',
+				origen: { tipo: 'devolucion_venta', id: 'dev-1' },
+				monto: 1000,
+				moneda: 'CUP',
+				montoFuncional: 1000,
+				monedaFuncional: 'CUP',
+				descripcion: 'Devolucion de la venta venta-1',
+				referencia: 'dev-key-1',
+				auxiliares: {
+					montoAplicadoCxc: 600,
+					montoSaldoFavor: 250,
+					montoReembolsado: 150,
+					costoFifo: 400,
+				},
+			},
+		});
+	});
+
+	it('omite la devolucion anulada', async () => {
+		const client = crearClient({
+			devolucionVenta: {
+				findMany: vi.fn().mockResolvedValue([devolucion({ estado: 'ANULADA' })]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBe('DOCUMENTO_ANULADO');
+	});
+
+	it('omite la devolucion en moneda extranjera sin tasa persistida', async () => {
+		const client = crearClient({
+			devolucionVenta: {
+				findMany: vi.fn().mockResolvedValue([devolucion({ moneda: 'USD', tasaCambio: null })]),
+			},
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].causaOmision).toBe('TASA_CAMBIO_NO_PERSISTIDA');
 	});
 
 	it('ordena los candidatos por fecha de negocio', async () => {

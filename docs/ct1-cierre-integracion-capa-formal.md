@@ -29,7 +29,7 @@ base de datos.
 | D2 | Incluir las rutas móviles contables en CT-1 | Aplicada: las rutas móviles ya existían y alcanzan los mismos servicios; S8 cerró el hueco de los ajustes bancarios y las inyecciones de capital |
 | D3 | Excluir los artefactos Graphify del merge y regenerarlos al finalizar | Aplicada: el índice local se regeneró; los artefactos de `graphify-out/` no se mezclaron en los commits contables |
 | D4 | Integrar por slices sobre ramas nuevas desde `origin/main` | Aplicada: un commit por slice, push directo a `origin/main` y CI verde en cada SHA |
-| D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`) y la plantilla global de `DEVOLUCION_VENTA` refleja el desglose. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
+| D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`), la plantilla global de `DEVOLUCION_VENTA` refleja el desglose, el writer emite el asiento con la misma transacción que la devolución y el replay lo reconstruye con el mismo constructor de evento. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
 
 ## 3. Slices integrados (SHAs reales)
 
@@ -97,7 +97,8 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
 | 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts` |
 | 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts` |
-| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
+| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
+| 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts` |
 
 Notas de la matriz:
 
@@ -116,6 +117,8 @@ Notas de la matriz:
   además en modo `enforce`: el asiento ya insertado se revierte junto con la
   escritura operativa y con la auditoría
   (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`).
+  La fila 25 (devolución de venta) comparte transacción con la escritura
+  operativa y su asiento, pero todavía sin failpoint físico.
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -151,25 +154,25 @@ Ninguno de estos gates se cambió en CT-1:
 
 ## 7. Pendientes que quedan fuera de CT-1
 
-1. **`DEVOLUCION_VENTA`**: existe la plantilla, pero ningún writer la emite. La
-   devolución reparte el importe entre cuentas por cobrar, saldo a favor
-   (anticipo) y reembolso en efectivo, y la plantilla actual solo modela el
-   reembolso en efectivo. Emite falta decidir la contrapartida (o ampliar el
-   plan) antes de escribir el writer.
-2. **Apertura formal por traspaso (rollover)**: bloqueada a propósito por
+1. **Apertura formal por traspaso (rollover)**: bloqueada a propósito por
    `APERTURA_SALDOS_NO_VERIFICABLES`; la evidencia disponible no permite
    verificar todos los rubros ni su moneda.
-3. **Inyección de capital en moneda extranjera**: `InyeccionCapital` no
+2. **Inyección de capital en moneda extranjera**: `InyeccionCapital` no
    persiste la tasa ni el importe funcional; su replay histórico en moneda
    extranjera no es reconstruible con fidelidad.
-4. **Rollback físico por canal**: extendido a la familia de ajustes e inyecciones
+3. **Rollback físico por canal**: extendido a la familia de ajustes e inyecciones
    (con el asiento formal en modo `enforce`); faltan las familias comercial
    (ventas, compras, servicios), anticipos, inventario y liquidaciones.
-5. **Modo por tenant**: hoy el modo es global; falta el flag de licencia para
+4. **Modo por tenant**: hoy el modo es global; falta el flag de licencia para
    activar `shadow`/`enforce` tenant a tenant.
-6. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
+5. **Verificador forense autónomo**: el replay ya compara el snapshot con lo
    contabilizado (`replay-reconciliation.ts`), pero el verificador independiente
    de CT-3 sigue pendiente.
+
+La devolución de venta (`DEVOLUCION_VENTA`) quedó cerrada con la decisión D5:
+el motor admite las tres reglas de monto del desglose, la plantilla global
+refleja las tres salidas reales, el writer emite el asiento dentro de su
+transacción y el replay lo reconstruye con el mismo constructor de evento.
 
 ## 8. Archivos de referencia
 

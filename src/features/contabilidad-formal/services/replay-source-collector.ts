@@ -17,6 +17,8 @@
  *  - Compras de productos: `COMPRA_CREDITO` (documento de compra).
  *  - Compras de servicios: `GASTO_CREDITO` (compra de servicio).
  *  - Ventas de servicios: `VENTA_SERVICIO_CREDITO` (venta de servicio).
+ *  - Devoluciones de venta: `DEVOLUCION_VENTA` (devolucion registrada), con el
+ *    desglose y el costo FIFO repuesto que el writer persistio.
  *
  * @module src/features/contabilidad-formal/services/replay-source-collector
  */
@@ -30,6 +32,10 @@ import { buildAnticipoEvent } from '../lib/advance-event-builder';
 import type { TipoEventoClave } from '../lib/plan-default';
 import { derivarMedioCobro } from '../lib/settlement-event-builder';
 import { construirEventoLiquidacion } from './settlement-posting-service';
+import {
+	construirEventoDevolucionVenta,
+	DEVOLUCION_VENTA_ORIGIN_TYPE,
+} from './sale-return-posting-service';
 import type { EventoContableInput } from './posting-engine';
 
 /** Cliente Prisma que sirve tanto para lectura como para transaccion. */
@@ -126,6 +132,9 @@ function diferenciaFxPersistida(movimiento: {
  *    vigente en la fecha del servicio (la misma que resolvio el writer).
  *  - La venta de servicio genera `VENTA_SERVICIO_CREDITO` con la tasa
  *    publicada vigente en su fecha.
+ *  - La devolucion de venta registrada genera `DEVOLUCION_VENTA` con el
+ *    desglose persistido (cuentas por cobrar, saldo a favor y reembolso) y el
+ *    costo FIFO repuesto ya valorado; una devolucion anulada se omite.
  *
  * @param {string} tenantId - Tenant propietario de las fuentes.
  * @param {ReplayDb} client - Cliente Prisma de lectura.
@@ -145,6 +154,7 @@ export async function recolectarCandidatos(
 		comprasServicio,
 		ventasServicio,
 		movimientosAnticipo,
+		devolucionesVenta,
 		politica,
 	] = await Promise.all([
 		client.reconciliacionVenta.findMany({
@@ -257,12 +267,28 @@ export async function recolectarCandidatos(
 				anticipo: { select: { tipo: true, referenciaExterna: true } },
 			},
 		}),
+		client.devolucionVenta.findMany({
+			where: { tenantId },
+			select: {
+				devolucionId: true,
+				ventaId: true,
+				estado: true,
+				total: true,
+				moneda: true,
+				tasaCambio: true,
+				montoAplicadoCxc: true,
+				montoSaldoFavor: true,
+				montoReembolsado: true,
+				costoFifoFuncional: true,
+				idempotencyKey: true,
+				createdAt: true,
+			},
+		}),
 		client.tenantAccountingPolicy.findUnique({
 			where: { tenantId },
 			select: { functionalCurrencyCode: true },
 		}),
 	]);
-
 	const tipoCuentaPorCuenta = new Map(
 		cuentasBancarias.map((cuenta) => [cuenta.cuentaId, cuenta.tipoCuenta]),
 	);
@@ -567,6 +593,50 @@ export async function recolectarCandidatos(
 				tasaCambio: valoracion.tasaCambio,
 				fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
 			},
+			...(omision ? { causaOmision: omision } : {}),
+		});
+	}
+
+	// --- Devoluciones de venta ------------------------------------------------
+
+	for (const devolucion of devolucionesVenta) {
+		const total = Math.abs(Number(devolucion.total));
+		// El writer solo emite cuando el importe devuelto es positivo.
+		if (!Number.isFinite(total) || total <= 0) continue;
+		// El desglose y el costo FIFO repuesto se leen de lo que el writer
+		// persistio: el replay no recalcula nada que el asiento no registrara.
+		const evento = construirEventoDevolucionVenta(
+			{
+				devolucionId: devolucion.devolucionId,
+				fecha: devolucion.createdAt,
+				monto: total,
+				moneda: devolucion.moneda ?? 'CUP',
+				montoAplicadoCxc: devolucion.montoAplicadoCxc,
+				montoSaldoFavor: devolucion.montoSaldoFavor,
+				montoReembolsado: devolucion.montoReembolsado,
+				costoFifo: devolucion.costoFifoFuncional === null
+					? null
+					: Number(devolucion.costoFifoFuncional),
+				tasaCambio: devolucion.tasaCambio === null
+					? null
+					: Number(devolucion.tasaCambio),
+				descripcion: `Devolucion de la venta ${devolucion.ventaId}`,
+				referencia: devolucion.idempotencyKey,
+			},
+			monedaFuncional,
+		);
+		const omision = devolucion.estado === 'ANULADA'
+			? CAUSA_ANULADO
+			: evento.montoFuncional === null && evento.monedaFuncional !== evento.moneda
+				? devolucion.tasaCambio === null
+					? CAUSA_TASA_NO_PERSISTIDA
+					: CAUSA_VALORACION_NO_VERIFICABLE
+				: undefined;
+		candidatos.push({
+			origenTipo: DEVOLUCION_VENTA_ORIGIN_TYPE,
+			origenId: devolucion.devolucionId,
+			fecha: devolucion.createdAt,
+			evento,
 			...(omision ? { causaOmision: omision } : {}),
 		});
 	}

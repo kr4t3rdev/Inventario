@@ -206,8 +206,22 @@ compra o de la recepción). Si alguna porción no tiene tasa publicada, el costo
 funcional queda sin completar: el asiento no se emite con una tasa inferida y
 el motor falla cerrado en modo `enforce` (en `shadow` registra la causa). El
 ancla idempotente es la venta (`venta_costo:<id>`), de modo que el replay de la
-entrega no duplica el devengo. La devolución de la venta repone el inventario
-con su propio evento (`DEVOLUCION_VENTA`), que todavía no está conectado.
+entrega no duplica el devengo.
+
+La devolución de una venta de productos revierte el ingreso con el evento
+`DEVOLUCION_VENTA`, que reproduce el desglose que el writer ya resolvió: el
+importe devuelto se reparte entre la cuenta por cobrar aplicada, el saldo a
+favor del cliente (anticipo) y el reembolso en efectivo, y la mercadería
+repuesta reingresa al inventario con el par inverso del costo FIFO
+(`DEBE` inventarios / `HABER` costo de ventas). El asiento se ancla a la
+devolución (`devolucion_venta:<id>`) y consume el desglose persistido, no un
+cálculo paralelo. El costo FIFO repuesto se valora con la misma evidencia que
+el devengo original (la tasa publicada de cada fuente) y queda persistido en
+moneda funcional (`costoFifoFuncional`), de modo que el replay histórico
+reconstruye el mismo asiento sin recalcular tasas de un origen que no quedó
+registrado. El efectivo se reconoce al registrar la devolución: el reembolso
+queda pendiente en el turno y el efectivo físico sale al cerrarlo. El replay
+reconstruye la devolución con el mismo constructor de evento que usa el writer.
 
 Cuando un documento se anula, sus asientos formales no se borran ni se editan:
 se anulan con un **asiento inverso inmutable**, que conserva las líneas y la
@@ -347,11 +361,6 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
-- La devolución de una venta de productos todavía no tiene asiento formal: la
-  plantilla `DEVOLUCION_VENTA` (DEBE ventas / HABER tesorería, más el reintegro
-  del inventario y la reversión del costo FIFO) existe en el plan, pero ningún
-  writer la emite. El costo devengado se repone con ese evento, no con un
-  ajuste del asiento original.
 - La apertura formal por traspaso (rollover) todavía no está conectada: el
   asiento de apertura que hoy se genera al abrir un período es el de cuadre
   manual aprobado (`apertura_manual`), y la derivación automática de los saldos
