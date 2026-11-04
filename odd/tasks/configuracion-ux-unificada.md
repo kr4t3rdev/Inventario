@@ -14,13 +14,13 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - T3 — S1-S2; Implementación: Usuarios y Roles; slice PR3; commit: `5e182c67`.
 - T4 — S1-S2; Implementación: Configuración de Contratos; slice PR4; commit: `fbb07d62`.
 - T5 — S1-S3; Implementación: pantalla de Licencias en contexto de administración de plataforma; ruta delegada por paralelismo; slice PR5; commit: `07e96191`.
-- T6 — S1-S3; Implementación: pantalla de Planes en contexto de administración de plataforma; ruta delegada por paralelismo; slice PR6; commit: pendiente.
-- T7 — S1-S4; Verificación funcional, responsive, reduced-motion y revisión visual; checks adjuntos a PR6; commit: pendiente.
+- T6 — S1-S3; Implementación: pantalla de Planes en contexto de administración de plataforma; ruta delegada por paralelismo; slice PR6; commit: `118f4326`.
+- T7 — S1-S4; Verificación funcional, responsive, reduced-motion y revisión visual; checks adjuntos a PR6; commit asociado: `118f4326`; cierre sin prueba browser aceptado explícitamente por el usuario.
 
 ## Delivery strategy
 - Estrategia elegida por el usuario: `feature-branch-chain`.
 - `codex/sidebar-interfaz-compacta` actúa como rama tracker; los futuros PRs hijos irán en orden sobre la rama tracker/inmediato padre. No se crearán ramas, PRs, ni se publicará nada sin solicitud expresa.
-- Límites previstos: PR1=T1 (`dc3d1a26`); PR2=T2 (`f6e0bfca`); PR3=T3 (`5e182c67`); PR4=T4 (`fbb07d62`); PR5=T5 Licencias (`07e96191`); PR6=T6 Planes con la verificación transversal T7. Cada slice mantiene su comportamiento, tests y documentación juntos y se apunta a ~400 líneas cambiadas o menos; revisar el tamaño real al cerrar cada unidad.
+- Límites previstos: PR1=T1 (`dc3d1a26`); PR2=T2 (`f6e0bfca`); PR3=T3 (`5e182c67`); PR4=T4 (`fbb07d62`); PR5=T5 Licencias (`07e96191`); PR6=T6 Planes (`118f4326`) con la verificación transversal T7. Cada slice mantiene su comportamiento, tests y documentación juntos y se apunta a ~400 líneas cambiadas o menos; revisar el tamaño real al cerrar cada unidad.
 
 ## Log
 - L1 — bien, ya revisado el trabajo de la rama actual quiero seguir con la implementacion del mismo, vamos con configuracion y sus opciones del menu sidebar, Mi empresa, referidos, usuarios y roles. Vas a unificar el patron de diseño entre todas estas pantallas q no coinciden en UX, organizacion dentro, colores, botones etc....usa la skill impeccable y animation designer
@@ -41,3 +41,6 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - L15 — T5 Licencias: writer reportó Vitest 1/1, ESLint y diff check exitosos; su detector de diseño devolvió `[]`. Spot-check parental del Vitest focal: 1/1. RED no se observó. Self-review confirma que solo cambia presentación/animación de la página; acciones, permisos y flujos administrativos quedan intactos.
 - L16 — T6 Planes: writer reportó Vitest 1/1, ESLint y diff check exitosos; su detector de diseño devolvió `[]`. Spot-check parental del Vitest focal: 1/1. RED no se observó. Self-review confirma que solo se reemplazó el encabezado/layout por `SettingsPageShell`; los flujos de administración de planes permanecen intactos.
 - L17 — T5 se cerró en `07e96191` (`feat(configuracion): unifica pantalla admin de licencias`). ASSESS de su rango comprometido con `baseRef=fbb07d62` falló por archivos no rastreados sin declarar y no produjo candidato; no hubo `reviewDue` ni review. No se repitió la evaluación. Las verificaciones focales del writer y el spot-check parental pasaron.
+- L18 — T6 se cerró en `118f4326` (`feat(configuracion): unifica pantalla admin de planes`). Vitest focal del writer y spot-check parental: 1/1 cada uno; ESLint y diff check pasan. ASSESS con `baseRef=07e96191` no produjo candidato por archivos no rastreados no declarados; no se informó `reviewDue` y no se inició review.
+- L19 — T7: la única ejecución de Playwright no pudo iniciar `pnpm run dev`; `with_server.py` salió con código 1 tras 120 s porque el servidor no estuvo listo en el puerto 3100. No se obtuvieron capturas ni medidas de navegador y no se reintentó. QA visual/responsive quedó bloqueada hasta una decisión humana.
+- L20 — El usuario eligió «Accept tests without browser proof». T7 se cierra con la suite focal transversal (7 archivos, 8 tests aprobados) y el análisis estático de la shell; se acepta explícitamente la falta de evidencia visual/responsive en navegador.
