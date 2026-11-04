@@ -8,7 +8,9 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({
 }));
 vi.mock('@/lib/utils/produccion', () => ({
 	validarDisponibilidadMateriales: vi.fn(() => []),
-	calcularCantidadRequeridaMaterial: vi.fn(() => 4),
+	calcularCantidadRequeridaMaterial: vi.fn((ingrediente, cantidad) =>
+		Math.ceil(ingrediente.cantidad * cantidad),
+	),
 }));
 vi.mock('@/lib/utils/unit-converter', () => ({
 	convertToBase: vi.fn((cantidad) => cantidad),
@@ -25,6 +27,9 @@ const { mockTx } = vi.hoisted(() => ({
 		},
 		ordenProduccionHistorial: {
 			create: vi.fn(),
+		},
+		receta: {
+			findMany: vi.fn().mockResolvedValue([]),
 		},
 		producto: {
 			findUnique: vi.fn(),
@@ -84,14 +89,22 @@ describe('Producción Server Actions', () => {
 	it('(RETIRE LEGACY) aprobar orden con ingredientes en almacén no escribe Producto.stock', async () => {
 		mockTx.ordenProduccion.findUnique.mockResolvedValue({
 			ordenProduccionId: 'op-1',
+			recetaId: 'recipe-1',
 			estado: 'PENDIENTE',
 			cantidad: 2,
 			Receta: {
+				rendimiento: 1,
 				RecetaIngrediente: [
 					{ productoId: 'mat-1', cantidad: 2, unidadSimbolo: 'u', desperdicio: 0 },
 				],
 			},
 		});
+		mockTx.receta.findMany.mockResolvedValueOnce([{
+			recetaId: 'recipe-1', productoId: null, rendimiento: 1,
+			RecetaIngrediente: [
+				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'u' },
+			],
+		}]);
 		mockTx.producto.findUnique.mockResolvedValue({
 			id: 'mat-1',
 			nombre: 'Material 1',
@@ -195,14 +208,22 @@ describe('Producción: kardex y cancelación', () => {
 	it('aprobar orden registra consumo de ingredientes en kardex', async () => {
 		mockTx.ordenProduccion.findUnique.mockResolvedValue({
 			ordenProduccionId: 'op-1',
+			recetaId: 'recipe-1',
 			estado: 'PENDIENTE',
 			cantidad: 2,
 			Receta: {
+				rendimiento: 1,
 				RecetaIngrediente: [
 					{ productoId: 'mat-1', cantidad: 2, unidadSimbolo: 'u', desperdicio: 0 },
 				],
 			},
 		});
+		mockTx.receta.findMany.mockResolvedValueOnce([{
+			recetaId: 'recipe-1', productoId: null, rendimiento: 1,
+			RecetaIngrediente: [
+				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'u' },
+			],
+		}]);
 		mockTx.producto.findUnique.mockResolvedValue({
 			id: 'mat-1', nombre: 'Material 1', precioCosto: 100, stock: 999, almacenId: 'alm-1',
 		});
@@ -221,6 +242,48 @@ describe('Producción: kardex y cancelación', () => {
 					tipoOrigen: 'PRODUCCION',
 				}),
 			}),
+		);
+	});
+
+	it('aprueba una orden descontando materiales hoja de la BOM multinivel', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-bom',
+			recetaId: 'P',
+			estado: 'PENDIENTE',
+			cantidad: 10,
+			Receta: {
+				rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'product-S', recetaIngredienteId: 'S', cantidad: 2, desperdicio: 0 },
+				],
+			},
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([
+			{
+				recetaId: 'P', productoId: 'product-P', rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'product-S', recetaIngredienteId: 'S', cantidad: 2, desperdicio: 0 },
+				],
+			},
+			{
+				recetaId: 'S', productoId: 'product-S', rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'I', recetaIngredienteId: null, cantidad: 3, desperdicio: 0 },
+				],
+			},
+		]);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: 'I', nombre: 'Ingrediente I', precioCosto: 5, stock: 100, almacenId: 'alm-1',
+		});
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 100 });
+		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-bom' });
+
+		const result = await aprobarOrdenProduccionAction('op-bom');
+
+		expect(result.success).toBe(true);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ productoId: 'I', delta: -60 }),
 		);
 	});
 

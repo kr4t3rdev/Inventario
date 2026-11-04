@@ -6,19 +6,23 @@ import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 import { validateAndNormalizeIngredientUnit } from '@/lib/validators/production-units';
 import type { UnitError, UnitNormalization } from '@/lib/validators/production-units';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { BomError, validateBomAcyclic, type BomRecipe } from '@/features/produccion/services/bom';
 import { z } from 'zod';
 
+const ingredientSchema = z.object({
+  productoId: z.string().min(1).optional(),
+  recetaIngredienteId: z.string().min(1).optional(),
+  cantidad: z.number().positive(),
+  unidadSimbolo: z.string().optional().nullable(),
+  desperdicio: z.number().min(0).max(1).default(0),
+}).refine((ingredient) => Boolean(ingredient.productoId) !== Boolean(ingredient.recetaIngredienteId), {
+  message: 'Cada ingrediente debe apuntar a un producto o a una subreceta, pero no a ambos.',
+});
+
 const setIngredientesSchema = z.object({
-  ingredientes: z.array(
-    z.object({
-      productoId: z.string(),
-      cantidad: z.number().positive(),
-      unidadSimbolo: z.string().optional().nullable(),
-      desperdicio: z.number().min(0).max(1).default(0),
-    })
-  ),
+  ingredientes: z.array(ingredientSchema),
 });
 
 type IngredientValidationSuccess = {
@@ -49,6 +53,7 @@ export const POST = withAuthPost(async (
   try {
     const { id: recetaId } = await params;
     const { ingredientes } = setIngredientesSchema.parse(await request.json());
+    const tenantId = requireTenant(user);
 
     // Verificar que la receta existe
     const recetaExistente = await prisma.receta.findUnique({
@@ -56,16 +61,19 @@ export const POST = withAuthPost(async (
       include: { Producto: { select: { precioCosto: true } } },
     });
 
-    if (!recetaExistente) {
+    if (!recetaExistente || recetaExistente.tenantId !== tenantId) {
       return NextResponse.json({ error: 'Receta no encontrada.' }, { status: 404 });
     }
 
     // CRITICAL FIX #1: Fetch ALL product data in ONE query (no N+1 + race condition)
+    const productoIds = ingredientes.flatMap((ingredient) =>
+      ingredient.productoId ? [ingredient.productoId] : [],
+    );
     const productosInventarioRaw = await prisma.producto.findMany({
       where: {
-        tenantId: recetaExistente.tenantId,
+        tenantId,
         id: {
-          in: ingredientes.map((ing) => ing.productoId),
+          in: productoIds,
         },
       },
       select: {
@@ -94,6 +102,7 @@ export const POST = withAuthPost(async (
     }));
 
     const usaConversionPorProducto = ingredientes.some((ingrediente) => {
+      if (!ingrediente.productoId) return false;
       const producto = productosInventario.find((item) => item.id === ingrediente.productoId);
       return producto?.unidadesConversion.some(
         (conversion) => conversion.unidad.simbolo.trim().toLowerCase() ===
@@ -105,7 +114,7 @@ export const POST = withAuthPost(async (
     }
 
     // CRITICAL FIX #2: Validate that ALL products exist before proceeding
-    const ingredientesIds = ingredientes.map((ing) => ing.productoId);
+    const ingredientesIds = productoIds;
     const productosEncontradosIds = new Set(productosInventario.map((p) => p.id));
     const productosFaltantes = ingredientesIds.filter((id) => !productosEncontradosIds.has(id));
 
@@ -120,6 +129,14 @@ export const POST = withAuthPost(async (
     }
 
     const normalizedIngredientes: IngredientValidationResult[] = ingredientes.map((ing) => {
+      if (!ing.productoId) {
+        return {
+          isValid: true as const,
+          normalizedCantidad: ing.cantidad,
+          normalizedUnidadSimbolo: ing.unidadSimbolo ?? null,
+          normalization: null,
+        };
+      }
       const producto = productosInventario.find((p) => p.id === ing.productoId);
 
       if (!producto) {
@@ -135,7 +152,10 @@ export const POST = withAuthPost(async (
         };
       }
 
-      return validateAndNormalizeIngredientUnit(ing, producto) as IngredientValidationSuccess;
+      return validateAndNormalizeIngredientUnit(
+        { ...ing, productoId: ing.productoId },
+        producto,
+      ) as IngredientValidationSuccess;
     });
 
     const unitErrors = normalizedIngredientes
@@ -162,19 +182,99 @@ export const POST = withAuthPost(async (
 
     // CRITICAL FIX #3: Wrap entire operation in transaction for atomicity
     const recetaActualizada = await prisma.$transaction(async (tx) => {
+      const recipesFromTenant = await tx.receta.findMany({
+        where: { tenantId },
+        include: { RecetaIngrediente: true },
+      });
+      const recipesById = new Map(recipesFromTenant.map((recipe) => [recipe.recetaId, recipe]));
+      const graph: BomRecipe[] = recipesFromTenant.map((recipe) => ({
+        recetaId: recipe.recetaId,
+        productoId: recipe.productoId,
+        rendimiento: recipe.rendimiento,
+        ingredientes: recipe.RecetaIngrediente.flatMap<BomRecipe['ingredientes'][number]>((ingredient) => {
+          if (ingredient.recetaIngredienteId) {
+            return [{
+              recetaIngredienteId: ingredient.recetaIngredienteId,
+              cantidad: ingredient.cantidad,
+              desperdicio: ingredient.desperdicio,
+            }];
+          }
+          if (ingredient.productoId) {
+            return [{
+              productoId: ingredient.productoId,
+              cantidad: ingredient.cantidad,
+              desperdicio: ingredient.desperdicio,
+            }];
+          }
+          return [];
+        }),
+      }));
+      const graphWithCurrentRecipe = graph.some((recipe) => recipe.recetaId === recetaId)
+        ? graph
+        : [...graph, {
+            recetaId,
+            productoId: recetaExistente.productoId,
+            rendimiento: recetaExistente.rendimiento,
+            ingredientes: [],
+          }];
+      const proposedGraph = graphWithCurrentRecipe.map((recipe) => recipe.recetaId === recetaId
+        ? {
+            ...recipe,
+            ingredientes: ingredientes.map((ingredient) => ingredient.productoId
+              ? {
+                  productoId: ingredient.productoId,
+                  cantidad: ingredient.cantidad,
+                  desperdicio: ingredient.desperdicio,
+                }
+              : {
+                  recetaIngredienteId: ingredient.recetaIngredienteId!,
+                  cantidad: ingredient.cantidad,
+                  desperdicio: ingredient.desperdicio,
+                }),
+          }
+        : recipe);
+      validateBomAcyclic(proposedGraph);
+
+      const nestedOutputProductIds = ingredientes
+        .flatMap((ingredient) => ingredient.recetaIngredienteId
+          ? [recipesById.get(ingredient.recetaIngredienteId)?.productoId].filter(
+              (productId): productId is string => Boolean(productId),
+            )
+          : []);
+      const nestedOutputProducts = await tx.producto.findMany({
+        where: { tenantId, id: { in: nestedOutputProductIds } },
+        select: { id: true },
+      });
+      const nestedOutputProductIdsInTenant = new Set(nestedOutputProducts.map((product) => product.id));
+
+      const ingredientesPersistidos = ingredientes.map((ingredient) => {
+        if (ingredient.productoId) {
+          return { ...ingredient, productoId: ingredient.productoId };
+        }
+        const subrecipe = recipesById.get(ingredient.recetaIngredienteId!);
+        if (!subrecipe?.productoId || !nestedOutputProductIdsInTenant.has(subrecipe.productoId)) {
+          throw new BomError(
+            `La subreceta ${ingredient.recetaIngredienteId} debe tener un producto final del mismo tenant`,
+            'BOM_RECIPE_NOT_FOUND',
+          );
+        }
+        return { ...ingredient, productoId: subrecipe.productoId };
+      });
+
       // Step 1: Delete existing ingredients
       await tx.recetaIngrediente.deleteMany({
-        where: { recetaId },
+        where: { recetaId, tenantId },
       });
 
       // Step 2: Create new ingredients
       if (ingredientes.length > 0) {
         await tx.recetaIngrediente.createMany({
-          data: ingredientes.map((ing, index) => ({
+          data: ingredientesPersistidos.map((ing, index) => ({
             id: crypto.randomUUID(),
             recetaId,
-            tenantId: recetaExistente.tenantId,
+            tenantId,
             productoId: ing.productoId,
+            recetaIngredienteId: ing.recetaIngredienteId ?? null,
             cantidad: validNormalizedIngredientes[index].normalizedCantidad,
             unidadSimbolo: validNormalizedIngredientes[index].normalizedUnidadSimbolo,
             desperdicio: ing.desperdicio,
@@ -187,22 +287,33 @@ export const POST = withAuthPost(async (
       const precioCostoProductoFinal = recetaExistente.Producto?.precioCosto || 0;
 
       const productosAgregados = ingredientes.map((ing, index) => {
-        const producto = productosInventario.find((p) => p.id === ing.productoId);
+        const producto = ing.productoId
+          ? productosInventario.find((p) => p.id === ing.productoId)
+          : null;
+        const subreceta = ing.recetaIngredienteId
+          ? recipesFromTenant.find((recipe) => recipe.recetaId === ing.recetaIngredienteId)
+          : null;
         // CRITICAL FIX #4: Null check (guaranteed to exist after validation above, but defensive)
-        if (!producto) {
+        if (!producto && !subreceta) {
           throw new Error(`Producto ${ing.productoId} no encontrado (inconsistencia de datos)`);
         }
 
         const normalizedIngrediente = validNormalizedIngredientes[index];
 
         return {
-          productoId: ing.productoId,
+          productoId: producto?.id ?? subreceta?.productoId ?? subreceta?.recetaId ?? '',
           cantidad: convertToBase(
             normalizedIngrediente.normalizedCantidad,
             normalizedIngrediente.normalizedUnidadSimbolo
           ),
           unidadSimbolo: normalizedIngrediente.normalizedUnidadSimbolo,
-          producto,
+          producto: producto
+            ? { id: producto.id, nombre: producto.nombre, precioCosto: producto.precioCosto }
+            : {
+                id: subreceta!.productoId ?? subreceta!.recetaId,
+                nombre: subreceta!.nombre,
+                precioCosto: subreceta!.costoUnitario,
+              },
         };
       });
 
@@ -228,6 +339,7 @@ export const POST = withAuthPost(async (
               id: true,
               recetaId: true,
               productoId: true,
+              recetaIngredienteId: true,
               cantidad: true,
               unidadSimbolo: true,
               desperdicio: true,
@@ -245,7 +357,7 @@ export const POST = withAuthPost(async (
           },
         },
       });
-    });
+    }, { isolationLevel: 'Serializable' });
 
     // Return recipe + normalization info if any exist
     const response: any = recetaActualizada;
@@ -255,6 +367,9 @@ export const POST = withAuthPost(async (
 
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof BomError) {
+      return NextResponse.json({ error: error.message, code: error.code, path: error.path }, { status: 400 });
+    }
     if (error instanceof ActionError && error.code === 'FEATURE_NOT_AVAILABLE') {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }

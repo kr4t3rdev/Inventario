@@ -275,6 +275,19 @@ export const VentaMutationService = {
       },
     });
     const productoPrecioMap = new Map(productosParaPrecio.map((p) => [p.id, p]));
+    const productosNoEncontrados = productoIds.filter((productoId) => !productoPrecioMap.has(productoId));
+    if (productosNoEncontrados.length > 0) {
+      const plantillaNoVendible = await prisma.productoPlantilla.findFirst({
+        where: { tenantId, id: { in: productosNoEncontrados } },
+        select: { id: true },
+      });
+      if (plantillaNoVendible) {
+        throw new ActionError(
+          'Las plantillas no se pueden vender. Selecciona una variante del producto.',
+          'PLANTILLA_NO_VENDIBLE',
+        );
+      }
+    }
 
     const usaUnidadAlternativa = parsed.items.some((item) => {
       const producto = productoPrecioMap.get(item.productoId);

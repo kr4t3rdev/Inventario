@@ -135,6 +135,9 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   PiezaReparacion: SCOPED(),
   PrestamoCash: SCOPED(),
   Producto: SCOPED(),
+  ProductoPlantilla: SCOPED(
+    'Plantilla de variantes propiedad del tenant; sus productos variante mantienen el mismo tenantId.',
+  ),
   ProductoCostSheetTemplate: SCOPED('Plantilla de hoja de costo por tenant.'),
   PuntoDeVenta: SCOPED(),
   PurchaseAllocation: SCOPED('Asignación compra→venta dentro del tenant.'),

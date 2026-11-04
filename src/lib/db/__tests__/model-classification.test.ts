@@ -83,6 +83,11 @@ describe('AS-01 contrato de clasificación de modelos', () => {
     expect(MODEL_CLASSIFICATION.AperturaPeriodoSolicitud.reason).toContain('tenantId');
   });
 
+  it('clasifica las plantillas de variantes como datos scoped del tenant', () => {
+    expect(getModelScope('ProductoPlantilla')).toBe('scoped');
+    expect(MODEL_CLASSIFICATION.ProductoPlantilla.reason).toContain('tenant');
+  });
+
   it('los modelos child declaran padre y campo de resolución', () => {
     for (const [model, entry] of Object.entries(MODEL_CLASSIFICATION)) {
       if (entry.scope !== 'child') continue;

@@ -22,3 +22,8 @@ export {
 } from './actions-restock'
 export { getMastersHealthAction } from './actions-health'
 export type { MastersHealthMetrics } from './actions-health'
+export {
+  getPlantillasVariantesAction,
+  createPlantillaVariantesAction,
+  updateVarianteCatalogoAction,
+} from './actions-variantes'
