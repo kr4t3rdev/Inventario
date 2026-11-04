@@ -451,7 +451,7 @@ export async function deleteNominaHandler(
         },
       });
 
-      await reversePayrollReconciliations(tx, reconciliaciones, tenantId);
+      await reversePayrollReconciliations(tx, reconciliaciones, tenantId, user.userId);
 
       await tx.reconciliacionGasto.deleteMany({
         where: { tenantId, pgId: id },

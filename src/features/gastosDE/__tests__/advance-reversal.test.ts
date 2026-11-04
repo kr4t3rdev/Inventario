@@ -38,7 +38,12 @@ describe('reverseExpenseEffects advance applications', () => {
         tipoMovimiento: { in: ['EJECUCION', 'REVERSO'] },
         anticipo: { is: { tenantId: 'tenant-1' } },
       },
-      select: { anticipoId: true, tipoMovimiento: true, monto: true },
+      select: {
+        movimientoId: true,
+        anticipoId: true,
+        tipoMovimiento: true,
+        monto: true,
+      },
     })
     expect(reverseAnticipo).toHaveBeenCalledWith(tx, {
       anticipoId: 'advance-1',

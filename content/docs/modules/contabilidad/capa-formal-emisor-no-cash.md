@@ -92,6 +92,8 @@ falla cerrado, sin inventar conversión.
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.entregarPedido` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO cuando el pedido se entrega y la mercadería sale del inventario |
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.anularVentaPorEstado` | `REVERSO_ASIENTO` | Anula con su contraasiento los asientos de la venta anulada (ingreso, costo y cobro al contado) |
 | `src/features/compras-productos/actions.ts` → `anularCompraProductoAction` | `REVERSO_ASIENTO` | Anula con su contraasiento el reconocimiento de la compra anulada |
+| `src/features/gastosDE/reversal.ts` → `reverseExpenseEffects` | `REVERSO_ASIENTO` | Al eliminar un gasto o una compra de servicio, anula sus asientos formales (conciliación pagada, compra de servicio y aplicación del anticipo) |
+| `src/features/empleados/payroll-reversal.ts` → `reversePayrollReconciliations` | `REVERSO_ASIENTO` | Al eliminar un pago de nómina, anula el asiento formal de la conciliación pagada |
 | `src/features/contabilidad/actions-periodos.ts` → `aprobarPeriodoAction` | `CIERRE_PERIODO` | Al aprobar el período, vacía sus cuentas de resultado contra la cuenta de resultado del período, en la misma transacción |
 | `src/features/contabilidad/actions-periodos.ts` → `cerrarPeriodoAction` (auto-aprobación de managers) | `CIERRE_PERIODO` | Cuando el cierre deja el período aprobado, genera el mismo asiento de cierre formal |
 
@@ -207,8 +209,10 @@ si el enlace no es consistente, la operación falla en lugar de ocultar la
 inconsistencia. El asiento inverso se fecha en el día de la anulación y se
 registra en el período abierto vigente; si el período original está cerrado, la
 reversa se asienta en el período actual. Hoy la reversa está conectada al
-anular una venta (ingreso reconocido, costo devengado y cobro al contado) y al
-anular una compra (reconocimiento).
+anular una venta (ingreso reconocido, costo devengado y cobro al contado), al
+anular una compra (reconocimiento), al eliminar un gasto o una compra de
+servicio (conciliación pagada, compra de servicio y aplicación del anticipo) y
+al eliminar un pago de nómina (conciliación pagada).
 
 Cuando un período contable queda **aprobado**, se genera su **asiento de cierre
 formal**: cada cuenta de resultado (ingreso, costo y gasto) del período vacía su
@@ -288,9 +292,6 @@ La decisión y sus consecuencias están registradas en
   del inventario y la reversión del costo FIFO) existe en el plan, pero ningún
   writer la emite. El costo devengado se repone con ese evento, no con un
   ajuste del asiento original.
-- Ningún writer anula todavía el asiento formal de los gastos reconciliados ni
-  de la nómina: la reversa existe, pero solo está conectada al anular una venta
-  y una compra.
 - La apertura formal por traspaso (rollover) todavía no está conectada: el
   asiento de apertura que hoy se genera al abrir un período es el de cuadre
   manual aprobado (`apertura_manual`), y la derivación automática de los saldos
