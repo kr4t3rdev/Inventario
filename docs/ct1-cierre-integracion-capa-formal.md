@@ -89,7 +89,7 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 1 | `facturacion-workflow.ts` → `VENTA_CONTADO` (origen `reconciliacion_venta`) | action POS, ofertas, órdenes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/facturacion-ventas-workflow.test.ts`, `src/features/contabilidad-formal/services/__tests__/sale-posting-service.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
 | 2 | `facturacion-workflow.ts` → `VENTA_CREDITO` (origen `factura`) | action POS, ofertas, órdenes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/ventas/__tests__/venta-create-orquestacion.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
 | 3 | `venta-mutation-service.ts` / `venta-lifecycle-service.ts` → `COSTO_VENTA_DEVENGADO` (origen `venta_costo`) | action de venta, workflow de entrega | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/ventas/__tests__/venta-create-orquestacion.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
-| 4 | `compras-productos/actions.ts` → `COMPRA_CREDITO` (origen `compra_documento`) | action de compras | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ⚠️ | `src/features/compras-productos/__tests__/actions.test.ts` |
+| 4 | `compras-productos/actions.ts` → `COMPRA_CREDITO` (origen `compra_documento`) | action de compras | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/compras-productos/__tests__/actions.test.ts`, `src/features/compras-productos/__integration__/compra-formal-rollback-postgres.test.ts` |
 | 5 | `compras-servicios/actions.ts` → `GASTO_CREDITO` (origen `compra_servicio`) | action de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/compras-servicios/__tests__/actions.test.ts` |
 | 6 | `venta-servicios/actions.ts` → `VENTA_SERVICIO_CREDITO` (origen `venta_servicio`) | action de venta de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/venta-servicios/__tests__/reconocimiento-formal.test.ts` |
 | 7 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_RECIBIDO` / `ANTICIPO_PROVEEDOR_ENTREGADO` (origen `anticipo_movimiento`) | action de anticipos, workflow | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
@@ -124,10 +124,10 @@ Notas de la matriz:
   huella FX. En la compra, en moneda extranjera, el motor falla cerrado en vez
   de inventar una equivalencia.
 - **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
-  20-21), de ventas (filas 1-3) y de devoluciones de venta (fila 25) tienen un
-  failpoint físico en `main` (trigger de auditoría y fallo de inserción del
-  asiento). En las filas 20-21 y 25 el failpoint se prueba además en modo
-  `enforce`: el asiento ya insertado se revierte junto con la escritura
+  20-21), de ventas (filas 1-3), de compras (fila 4) y de devoluciones de venta
+  (fila 25) tienen un failpoint físico en `main` (trigger de auditoría y fallo
+  de inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
+  en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
   operativa y con la auditoría
   (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`,
   `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts`).
@@ -136,6 +136,10 @@ Notas de la matriz:
   la cuenta por cobrar o la reconciliación, el cobro en efectivo, la
   asignación FIFO y el consecutivo de la serie
   (`src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts`).
+  En la fila 4 el failpoint del asiento revierte el documento de compra, su
+  línea, el stock, el kardex, el gasto, la cuenta por pagar, la reconciliación
+  del pago y el saldo bancario
+  (`src/features/compras-productos/__integration__/compra-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -164,7 +168,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -175,9 +179,10 @@ Ninguno de estos gates se cambió en CT-1:
    `APERTURA_SALDOS_NO_VERIFICABLES`; la evidencia disponible no permite
    verificar todos los rubros ni su moneda.
 2. **Rollback físico por canal**: extendido a las familias de ajustes e
-   inyecciones, a la devolución de venta y a la venta de productos (con el
-   asiento formal en modo `enforce`); faltan las familias de compras y
-   servicios, anticipos, inventario (mermas y producción) y liquidaciones.
+   inyecciones, a la devolución de venta, a la venta y a la compra de productos
+   (con el asiento formal en modo `enforce`); faltan las familias de servicios
+   (gasto y venta de servicio), anticipos, inventario (mermas y producción) y
+   liquidaciones.
 3. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
    su criterio de reversión y la ventana shadow— sigue siendo una tarea
