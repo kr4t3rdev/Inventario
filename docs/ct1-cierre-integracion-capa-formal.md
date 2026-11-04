@@ -48,12 +48,16 @@ base de datos.
 | S8 | Ajustes bancarios e inyecciones de capital | `11cd1390` | `41795897719` |
 | S7c | Replay de anticipos y métricas del outbox shadow | `1cfa16e3` | `41799724819` |
 | S9 | Activación del plan de cuentas (CTA-0) e infraestructura global conciliada | `7739ad05` | `41805169995` |
-| S10 | Cierre: matriz R0.5 por fila, registro final y verificación | este commit | se anota al cerrar |
+| S10 | Cierre: matriz R0.5 por fila, registro final y verificación | `c4499227` | `41809661324` (head final `6132fdc5`) |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
 CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
 `a035c9f1`) se corrigieron con commits de seguimiento dentro del mismo slice;
 el estado final de cada slice está verde.
+
+La regeneración de Graphify (decisión D3) va en commits de artefactos separados
+(`e45f02e8`, `d2c3937f` y `6132fdc5`): ninguno toca código funcional ni la
+documentación del programa.
 
 ## 4. Matriz R0.5 por fila
 
@@ -92,7 +96,7 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts` |
 | 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts` |
 | 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts` |
-| 24 | `replay-backfill-service.ts` → 8 fuentes reconstruidas (ventas, pago de gasto, compra, compra de servicio, venta de servicio, anticipo y sus momentos) | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
+| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
 
 Notas de la matriz:
 
@@ -122,7 +126,7 @@ Notas de la matriz:
 | Suite de integración (PostgreSQL desechable) | 200 pruebas verdes (34 archivos) |
 | Typecheck (`tsc --noEmit`) | Limpio |
 | ESLint sobre los archivos del programa | Limpio |
-| CI del SHA final | Verde (los dos jobs de `main`) |
+| CI del estado final del programa | Verde: run `41809661324` sobre `6132fdc5` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
 
 La base de integración es desechable y local
 (`ALLOW_DISPOSABLE_TEST_DB=1`, base `tcp_test_*` en `127.0.0.1:5433`); la
