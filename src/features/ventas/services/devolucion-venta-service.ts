@@ -10,8 +10,13 @@ import {
 } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
+import {
+  restaurarAllocacionesFifo,
+  valorarCostoFifoFuentes,
+  type FuenteCostoFifo,
+} from '@/lib/services/fifo-allocation';
 import { createAnticipoDevolucion } from '@/lib/services/anticipos-workflow';
+import { emitirDevolucionVenta } from '@/features/contabilidad-formal/services/sale-return-posting-service';
 import {
   calcularMontosDevolucion,
   resolverTratamientoFinanciero,
@@ -203,6 +208,9 @@ export const DevolucionVentaService = {
 
         // 2) Efectos de inventario por línea (stock, kardex, FIFO parcial).
         const ventaItemPorId = new Map(actual.items.map((i) => [i.id, i]));
+        // Las fuentes del costo restituido se valoran después del recorrido,
+        // en moneda funcional, con la misma evidencia que el devengo original.
+        const fuentesCostoDevuelto: FuenteCostoFifo[] = [];
         for (const [idx, item] of montos.items.entries()) {
           const origen = ventaItemPorId.get(item.ventaItemId);
           if (!origen) {
@@ -211,11 +219,12 @@ export const DevolucionVentaService = {
               'ITEM_NO_PERTENECE',
             );
           }
-          const { restaurado, costoTotal } = await restaurarAllocacionesFifo(tx, {
+          const { restaurado, costoTotal, fuentes } = await restaurarAllocacionesFifo(tx, {
             tenantId,
             ventaItemId: item.ventaItemId,
             cantidad: item.cantidad,
           });
+          fuentesCostoDevuelto.push(...fuentes);
           const costoUnitario =
             restaurado > 0
               ? Math.round(costoTotal / restaurado)
@@ -385,6 +394,12 @@ export const DevolucionVentaService = {
           anticipoId = anticipo.anticipoId;
         }
 
+        // Capa de contabilidad formal: la devolución revierte el ingreso de la
+        // venta y repone la mercadería. El costo FIFO repuesto se valora en
+        // moneda funcional y queda persistido para que el replay histórico
+        // reconstruya el mismo asiento sin recalcular tasas.
+        const costoDevuelto = await valorarCostoFifoFuentes(tx, tenantId, fuentesCostoDevuelto);
+
         await tx.devolucionVenta.update({
           where: { devolucionId: devolucion.devolucionId },
           data: {
@@ -394,8 +409,29 @@ export const DevolucionVentaService = {
             montoAplicadoCxc: finanzas.aplicadoCxc,
             montoSaldoFavor: finanzas.saldoFavor,
             montoReembolsado: finanzas.reembolso,
+            costoFifoFuncional: costoDevuelto.montoFuncional,
           },
         });
+
+        // El asiento consume el desglose que el writer ya resolvió (cuentas por
+        // cobrar, anticipo y reembolso) y el costo FIFO repuesto.
+        await emitirDevolucionVenta(
+          tx,
+          { tenantId, userId: user.userId },
+          {
+            devolucionId: devolucion.devolucionId,
+            fecha: devolucion.createdAt,
+            monto: montos.total,
+            moneda: devolucion.moneda,
+            montoAplicadoCxc: finanzas.aplicadoCxc,
+            montoSaldoFavor: finanzas.saldoFavor,
+            montoReembolsado: finanzas.reembolso,
+            costoFifo: costoDevuelto.montoFuncional,
+            tasaCambio,
+            descripcion: `Devolucion de la venta ${actual.ventaId}`,
+            referencia: parsed.idempotencyKey,
+          },
+        );
 
         await AuditLogService.logStrict(
           {

@@ -3272,6 +3272,8 @@ model DevolucionVenta {
   montoAplicadoCxc     Int                @default(0)
   montoSaldoFavor      Int                @default(0)
   montoReembolsado     Int                @default(0)
+  /// Costo FIFO repuesto en moneda funcional (evidencia del reingreso a inventario)
+  costoFifoFuncional   Decimal?           @db.Decimal(20, 4)
   idempotencyKey       String?
   createdById          String
   createdAt            DateTime           @default(now())

@@ -39,7 +39,13 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			where: { id: 'a-nueva' },
 			data: { cantidad: 1 },
 		});
-		expect(r).toEqual({ restaurado: 2, costoTotal: 1 * 100 + 1 * 300 });
+		expect(r.restaurado).toBe(2);
+		expect(r.costoTotal).toBe(1 * 100 + 1 * 300);
+		// Las fuentes conservan la moneda y la fecha con las que se valora el
+		// costo restituido en moneda funcional.
+		expect(r.fuentes).toEqual([
+			{ moneda: 'CUP', fecha: new Date(0), costo: 400, cantidad: 2 },
+		]);
 	});
 
 	it('cantidad 0 no toca nada', async () => {
@@ -51,7 +57,7 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			ventaItemId: 'vi-1',
 			cantidad: 0,
 		});
-		expect(r).toEqual({ restaurado: 0, costoTotal: 0 });
+		expect(r).toEqual({ restaurado: 0, costoTotal: 0, fuentes: [] });
 		expect(tx.purchaseAllocation.findMany).not.toHaveBeenCalled();
 	});
 
@@ -68,7 +74,7 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			ventaItemId: 'vi-1',
 			cantidad: 2,
 		});
-		expect(r).toEqual({ restaurado: 0, costoTotal: 0 });
+		expect(r).toEqual({ restaurado: 0, costoTotal: 0, fuentes: [] });
 	});
 
 	it('restaura una allocation de recepción usando el snapshot conciliado', async () => {
@@ -95,7 +101,11 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			cantidad: 1,
 		});
 
-		expect(result).toEqual({ restaurado: 1, costoTotal: 125 });
+		expect(result.restaurado).toBe(1);
+		expect(result.costoTotal).toBe(125);
+		expect(result.fuentes).toEqual([
+			{ moneda: 'CUP', fecha: new Date(0), costo: 125, cantidad: 1 },
+		]);
 		expect(tx.purchaseAllocation.update).toHaveBeenCalledWith({
 			where: { id: 'allocation-recepcion' },
 			data: { cantidad: 1 },
