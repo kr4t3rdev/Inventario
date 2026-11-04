@@ -197,6 +197,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'No accede a tablas ni acepta identificadores o SQL dinámico; opera solo sobre el TransactionClient de un writer tenant-scoped.',
   },
   {
+    file: 'src/features/contabilidad-formal/services/replay-backfill-service.ts',
+    occurrences: 4,
+    reason: 'Lock advisory transaccional del periodo para que dos ejecuciones del replay no compitan, y savepoint con identificador literal fijo para aislar las contabilizaciones y conservar el resultado FAILED.',
+    tenantGuarantee: 'El lock parametrizado combina el tenantId y el periodoId del preflight aprobado; el savepoint no accede a tablas ni acepta SQL dinámico y opera sobre el TransactionClient de un writer tenant-scoped.',
+  },
+  {
     file: 'src/features/unidades/actions.ts',
     occurrences: 2,
     reason: 'Bloquea primero la unidad tenant-scoped para serializar cambios de dimensión y consulta solo indicadores booleanos de referencias globales de productos.',

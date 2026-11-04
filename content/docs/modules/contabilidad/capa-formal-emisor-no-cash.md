@@ -227,6 +227,35 @@ aprobado sin su asiento de cierre. En modo `enforce` el cierre falla cerrado
 (sin rol contable, sin diario de apertura/cierre o descuadre, la aprobación se
 rechaza); con la capa apagada o en modo `shadow` no se escribe nada.
 
+Cuando la capa formal se enciende, los periodos historicos que quedaron sin
+asiento se recuperan con el **replay historico**, que es un proceso gobernado
+en tres pasos que no pueden ocurrir por separado:
+
+1. **Preflight**: se construye un snapshot canonico de las fuentes del periodo
+   (identidad, fecha, descripcion y valoracion funcional) y se persiste su
+   digest SHA-256. El snapshot congela la valoracion; no es una nueva
+   estimacion. El preflight vive 24 horas.
+2. **Aprobacion independiente**: otro responsable contable activo aprueba ese
+   digest. El solicitante no puede aprobar su propio preflight, y si las
+   fuentes cambiaron entre los dos pasos, la aprobacion se rechaza.
+3. **Ejecucion**: se contabiliza exactamente el periodo aprobado (el motor
+   omite el bloqueo de periodo cerrado, porque el origen ya es deliberado) y
+   el **verificador forense** confronta el resultado con el snapshot
+   aprobado: cada fuente debe tener un unico asiento contabilizado en el
+   periodo, con las lineas cuadradas y la valoracion aprobada.
+
+La ejecucion es idempotente por origen: repetir el replay con un preflight
+nuevo no duplica asientos, los reconoce como ya posteados. El alcance del
+recolector es deliberado y conservador: hoy reconstruye el reconocimiento de
+ventas de productos (venta a credito, venta al contado y cobro de la cuenta por
+cobrar) y omite, con su causa, cualquier fuente ambigua (por ejemplo, una
+venta cobrada al contado con mas de una conciliacion).
+
+El replay no depende del modo global `CONTABILIDAD_FORMAL_MODE`: es una
+operacion explicita y autorizada. Exige licencia con la funcion
+`contabilidad-formal`, un responsable contable activo y el permiso
+`financiero.contabilidad.acceder`.
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -305,6 +334,12 @@ La decisión y sus consecuencias están registradas en
   rutas actuales. No se consideran writers activos pendientes de integración.
 - El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
   licencia para activar el emisor tenant a tenant.
+- El recolector del replay todavía no cubre todas las fuentes operativas:
+  hoy reconstruye el reconocimiento de ventas de productos (venta a crédito,
+  venta al contado y cobro de la cuenta por cobrar). Las compras, los gastos de
+  servicio, las ventas de servicios y los anticipos se incorporan por
+  slices posteriores, con la misma regla: no se contabiliza una fuente que el
+  writer vigente no habría emitido.
 
 ## Referencias
 
@@ -319,5 +354,7 @@ La decisión y sus consecuencias están registradas en
 - Valoración del costo FIFO: `src/lib/services/fifo-allocation.ts` → `getCostoFifoVentaValorado`
 - Reversa formal (asiento inverso): `src/features/contabilidad-formal/services/reversal-service.ts`
 - Cierre formal del período: `src/features/contabilidad-formal/services/cierre-formal-service.ts`
+- Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
+- Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
