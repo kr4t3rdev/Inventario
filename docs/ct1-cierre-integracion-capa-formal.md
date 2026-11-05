@@ -107,8 +107,8 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 19 | `accounting-cash-operations-mutation-service.ts` → `COBRO_PRESTAMO` / `PAGO_DEUDA` | actions y rutas web/móvil de pagos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 20 | `accounting-operations-mutation-service.ts` (`createBankAdjustment`) → `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` (origen `ajuste_bancario`) | action, ruta web y ruta móvil de ajustes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
 | 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
-| 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts` |
-| 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts` |
+| 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
+| 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts`, `src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts` |
 | 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA`, `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO`, `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
 | 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts`, `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts` |
 
@@ -125,11 +125,12 @@ Notas de la matriz:
   de inventar una equivalencia.
 - **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
   20-21), de ventas (filas 1-3), de compras (fila 4), de servicios (filas 5-6),
-  de mermas (filas 11-12), de anticipos (filas 7 y 10) y de devoluciones de
-  venta (fila 25) tienen un failpoint físico en `main` (trigger de auditoría y
-  fallo de inserción del asiento). En las filas 20-21 y 25 el failpoint se
-  prueba además en modo `enforce`: el asiento ya insertado se revierte junto
-  con la escritura operativa y con la auditoría
+  de mermas (filas 11-12), de anticipos (filas 7 y 10), de reversa formal (fila
+  22), de cierre de período (fila 23) y de devoluciones de venta (fila 25)
+  tienen un failpoint físico en `main` (trigger de auditoría y fallo de
+  inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
+  en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
+  operativa y con la auditoría
   (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`,
   `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts`).
   En las filas 1-3 el failpoint es el del insert del asiento: al fallar se
@@ -151,6 +152,12 @@ Notas de la matriz:
   En las filas 7 y 10 el failpoint revierte el anticipo, sus movimientos, el
   saldo disponible de tesorería y el saldo bancario
   (`src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts`).
+  En la fila 22 el failpoint del asiento inverso revierte la eliminación del
+  documento y la anulación del asiento original
+  (`src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts`).
+  En la fila 23 el failpoint del asiento de cierre revierte la aprobación del
+  período y su auditoría
+  (`src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -179,7 +186,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -191,10 +198,10 @@ Ninguno de estos gates se cambió en CT-1:
    verificar todos los rubros ni su moneda.
 2. **Rollback físico por canal**: extendido a las familias de ajustes e
    inyecciones, a la devolución de venta, a la venta, a la compra, a los
-   servicios (gasto y venta), a las mermas y a la recepción y devolución de
-   fondos de los anticipos (con el asiento formal en modo `enforce`); faltan la
-   aplicación y reverso de anticipos, producción, liquidaciones y la reversa
-   formal y el cierre de período.
+   servicios (gasto y venta), a las mermas, a la recepción y devolución de
+   fondos de los anticipos, a la reversa formal y al cierre de período (con el
+   asiento formal en modo `enforce`); faltan la aplicación y reverso de
+   anticipos, producción y liquidaciones.
 3. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
    su criterio de reversión y la ventana shadow— sigue siendo una tarea

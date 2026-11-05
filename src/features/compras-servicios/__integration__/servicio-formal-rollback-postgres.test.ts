@@ -30,7 +30,9 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-const { createCompraServicioAction } = await import('@/features/compras-servicios/actions');
+const { createCompraServicioAction, deleteCompraServicioAction } = await import(
+  '@/features/compras-servicios/actions'
+);
 const { createVentaServicioAction } = await import('@/features/venta-servicios/actions');
 
 const suffix = randomUUID().replaceAll('-', '');
@@ -365,6 +367,58 @@ describe(
             clienteId,
             condicionPago: 'CREDITO',
           }),
+        ledgerFailUserId,
+      );
+
+      expect(resultado.success).toBe(false);
+      expect(await readSnapshot()).toEqual(before);
+    });
+
+    it('elimina el servicio recibido con su asiento inverso', async () => {
+      const compra = await conActor(() =>
+        createCompraServicioAction({
+          servicioId,
+          proveedorId,
+          numeroFactura: `FS-${suffix}-REVERSA`,
+          costoUnitario: 150,
+          cantidad: 2,
+          formaPago: 'PAGO_PARCIAL',
+          estado: 'PENDIENTE',
+        }),
+      );
+      expect(compra.success).toBe(true);
+      const before = await readSnapshot();
+      const compraServicioId = before.compras.at(-1)?.id as string;
+
+      const resultado = await conActor(() => deleteCompraServicioAction(compraServicioId));
+
+      expect(resultado.success).toBe(true);
+      const after = await readSnapshot();
+      expect(after.compras).toHaveLength(before.compras.length - 1);
+      // El asiento inverso compensa el gasto devengado del servicio.
+      expect(after.ledger).toHaveLength(before.ledger.length + 1);
+      const inverso = after.ledger.at(-1);
+      expect(inverso?.origenTipo).toBe('REVERSO_ASIENTO');
+    });
+
+    it('revierte la eliminacion del servicio cuando falla el insert del asiento inverso', async () => {
+      const compra = await conActor(() =>
+        createCompraServicioAction({
+          servicioId,
+          proveedorId,
+          numeroFactura: `FS-${suffix}-REVERSA-FAIL`,
+          costoUnitario: 150,
+          cantidad: 1,
+          formaPago: 'PAGO_PARCIAL',
+          estado: 'PENDIENTE',
+        }),
+      );
+      expect(compra.success).toBe(true);
+      const before = await readSnapshot();
+      const compraServicioId = before.compras.at(-1)?.id as string;
+
+      const resultado = await conActor(
+        () => deleteCompraServicioAction(compraServicioId),
         ledgerFailUserId,
       );
 
