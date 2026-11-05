@@ -74,7 +74,6 @@ export async function createOrdenProduccion(payload: CreateOrdenProduccionPayloa
 
   try {
     const orden = await prisma.ordenProduccion.create({
-  // @ts-expect-error TODO: fix prisma create data type
       data: {
         ordenProduccionId: crypto.randomUUID(),
         tenantId,
@@ -82,6 +81,8 @@ export async function createOrdenProduccion(payload: CreateOrdenProduccionPayloa
         cantidad: payload.cantidad,
         observaciones: payload.observaciones || null,
         fechaProduccion: payload.fechaProduccion ? new Date(payload.fechaProduccion) : new Date(),
+        // `OrdenProduccion.updatedAt` no se administra sola en el esquema.
+        updatedAt: new Date(),
       },
       include: { Receta: { select: { nombre: true } } },
     })

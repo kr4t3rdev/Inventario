@@ -185,14 +185,17 @@ export const createRecetaProduccionAction = withAction(
 		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.create({
-			// @ts-expect-error TODO: fix prisma create data type
 			data: {
+				// `Receta.recetaId` y `Receta.updatedAt` no tienen valor por
+				// defecto en el esquema: sin ellos la escritura falla.
+				recetaId: crypto.randomUUID(),
 				nombre: input.nombre,
 				rendimiento: input.rendimiento ?? 1,
 				instrucciones: input.instrucciones ?? null,
 				tiempoPrep: input.tiempoPrep ?? null,
 				productoId: input.productoId ?? null,
 				tenantId,
+				updatedAt: new Date(),
 			},
 			include: { Producto: true, RecetaIngrediente: true },
 		});
@@ -224,7 +227,8 @@ export const updateRecetaProduccionAction = withAction(
 
 		const receta = await prisma.receta.update({
 			where: { recetaId },
-			data,
+			// `Receta.updatedAt` no se administra sola: hay que marcarla.
+			data: { ...data, updatedAt: new Date() },
 			include: { Producto: true, RecetaIngrediente: true },
 		});
 		revalidatePath("/busy/produccion");
@@ -251,7 +255,7 @@ export const setIngredientesRecetaProduccionAction = withAction(
 	async (
 		input: {
 			recetaId: string;
-			RecetaIngrediente: {
+			ingredientes: {
 				productoId: string;
 				cantidad: number;
 				unidad: string;
@@ -271,21 +275,23 @@ export const setIngredientesRecetaProduccionAction = withAction(
 
 		// Delete existing ingredients
 		await prisma.recetaIngrediente.deleteMany({
-			where: { recetaId: input.recetaId },
+			where: { recetaId: input.recetaId, tenantId },
 		});
 
 		// Create new ingredients
-		// @ts-expect-error TODO: fix input.ingredientes type
 		if (input.ingredientes.length > 0) {
 			await prisma.recetaIngrediente.createMany({
-				// @ts-expect-error TODO: fix prisma createMany data type
-				data: input.ingredientes.map((ing: any) => ({
+				data: input.ingredientes.map((ing) => ({
+					// `RecetaIngrediente.id` y `updatedAt` no tienen valor por
+					// defecto en el esquema: sin ellos la escritura falla.
+					id: crypto.randomUUID(),
 					recetaId: input.recetaId,
 					productoId: ing.productoId,
 					cantidad: ing.cantidad,
-					unidad: ing.unidad,
+					unidadSimbolo: ing.unidad,
 					desperdicio: ing.desperdicio,
 					tenantId,
+					updatedAt: new Date(),
 				})),
 			});
 		}
@@ -403,8 +409,10 @@ export const createOrdenProduccionAction = withAction(
 		}, 0);
 
 		const orden = await prisma.ordenProduccion.create({
-			// @ts-expect-error TODO: fix prisma create data type
 			data: {
+				// `OrdenProduccion.ordenProduccionId` y `updatedAt` no tienen
+				// valor por defecto en el esquema: sin ellos la escritura falla.
+				ordenProduccionId: crypto.randomUUID(),
 				recetaId: input.recetaId,
 				cantidad: input.cantidad,
 				observaciones: input.observaciones ?? null,
@@ -412,6 +420,7 @@ export const createOrdenProduccionAction = withAction(
 				estado: "PENDIENTE",
 				costoMateriales,
 				tenantId,
+				updatedAt: new Date(),
 			},
 			include: {
 				Receta: {

@@ -216,8 +216,8 @@ Notas de la matriz:
 
 | Comprobación | Resultado |
 |---|---|
-| Suite unitaria | 5809 pruebas verdes (858 archivos: 857 verdes y 1 omitido), 1 omitida, 2 pendientes |
-| Suite de integración (PostgreSQL desechable) | 243 pruebas verdes (45 archivos) |
+| Suite unitaria | 5843 pruebas verdes (872 archivos: 871 verdes y 1 omitido), 1 omitida, 2 pendientes |
+| Suite de integración (PostgreSQL desechable) | 252 pruebas verdes (48 archivos) |
 | Typecheck (`tsc --noEmit`) | Limpio |
 | ESLint sobre los archivos del programa | Limpio |
 | CI del estado final del programa | Verde: run `41937817962` sobre `212b8a49` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
@@ -260,12 +260,22 @@ Ninguno de estos gates se cambió en CT-1:
    (`src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`).
    Solo queda la apertura formal **por traspaso (rollover)**, que sigue
    bloqueada por diseño (punto 1).
-3. **Desajustes preexistentes del módulo de producción** (fuera de la capa
-   formal, pendientes de una slice propia): `Receta.costoUnitario` sigue
-   `INTEGER` en las migraciones mientras el esquema Prisma lo declara `Float`,
-   y las actions de receta y de orden de producción no escriben los campos
-   obligatorios `recetaId` y `updatedAt`. El test de rollback de producción
-   inserta la receta con SQL directo para no depender de esos desajustes.
+3. **Desajustes preexistentes del módulo de producción**: cerrados. La
+   migración `20261115000000_align_receta_costo_unitario` alinea
+   `Receta.costoUnitario` con el tipo declarado en el esquema (`Float`, que en
+   PostgreSQL es `DOUBLE PRECISION`); la conversión es exacta y no reescribe
+   datos. Sin ese ajuste, el costo unitario real de una receta —que se obtiene
+   al dividir el costo total entre el rendimiento— fallaba al escribirse
+   (`column costoUnitario is of type integer but expression is of type double
+   precision`). Además, las writers del módulo escriben ahora los campos que el
+   esquema declara obligatorios y sin valor por defecto (`Receta.recetaId`,
+   `OrdenProduccion.ordenProduccionId`, `RecetaIngrediente.id` y las marcas
+   `updatedAt`), que antes hacían fallar el alta en tiempo de ejecución; la
+   action de ingredientes también pasó a escribir la unidad normalizada
+   (`unidadSimbolo`) y a acotar el borrado al tenant. Evidencia:
+   `src/features/produccion/__integration__/produccion-esquema-alineado-postgres.test.ts`.
+   El test de rollback de producción ya no necesita insertar la receta con SQL
+   directo.
 4. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
    su criterio de reversión y la ventana shadow— sigue siendo una tarea

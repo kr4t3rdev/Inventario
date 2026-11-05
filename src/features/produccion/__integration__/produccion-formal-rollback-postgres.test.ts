@@ -270,19 +270,19 @@ describe(
           cantidadDisponible: 20,
         },
       });
-      // La receta se inserta con SQL directo: `Receta.costoUnitario` sigue
-      // INTEGER en las migraciones mientras el esquema Prisma lo declara Float,
-      // y el cliente generado no acepta ese desajuste al escribir la fila.
-      await prisma.$executeRawUnsafe(
-        `INSERT INTO "Receta" ("recetaId", "tenantId", "nombre", "rendimiento", "productoId", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, now())`,
-        `formal-receta-${suffix}`,
-        tenantId,
-        `Receta ${suffix}`,
-        1,
-        productoFinal.id,
-      );
-      recetaId = `formal-receta-${suffix}`;
+      // La receta se escribe con el cliente Prisma: el esquema y la base ya
+      // coinciden en el tipo de `costoUnitario` (Float / DOUBLE PRECISION).
+      const receta = await prisma.receta.create({
+        data: {
+          recetaId: `formal-receta-${suffix}`,
+          tenantId,
+          nombre: `Receta ${suffix}`,
+          rendimiento: 1,
+          productoId: productoFinal.id,
+          updatedAt: new Date(),
+        },
+      });
+      recetaId = receta.recetaId;
       await prisma.recetaIngrediente.create({
         data: {
           id: `formal-receta-ingrediente-${suffix}`,
