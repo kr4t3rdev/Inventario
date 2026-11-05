@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	construirOrigenTrazabilidad,
+	construirTrazabilidadLote,
 	type RegistroLoteTrazabilidad,
 } from '../trazabilidad-lote';
 
@@ -28,6 +29,25 @@ const recepcion = {
 	},
 };
 
+const asignaciones = [
+	{
+		id: 'alloc-1',
+		cantidad: 6,
+		costoUnitarioSnapshot: 100,
+		ventaItem: {
+			id: 'item-1',
+			cantidad: 6,
+			venta: {
+				ventaId: 'venta-1',
+				createdAt: new Date('2026-10-20'),
+				estado: 'FACTURADA',
+				cliente: { nombre: 'Cliente 1' },
+				factura: { numeroFactura: 'V-001' },
+			},
+		},
+	},
+];
+
 function registro(overrides: Partial<RegistroLoteTrazabilidad>): RegistroLoteTrazabilidad {
 	return {
 		id: 'lote-1',
@@ -39,6 +59,7 @@ function registro(overrides: Partial<RegistroLoteTrazabilidad>): RegistroLoteTra
 		producto: { nombre: 'Arroz' },
 		compraItem: compra,
 		recepcionItem: null,
+		allocations: [],
 		...overrides,
 	};
 }
@@ -75,5 +96,58 @@ describe('construirOrigenTrazabilidad', () => {
 		);
 
 		expect(origen).toBeNull();
+	});
+});
+
+describe('construirTrazabilidadLote', () => {
+	it('mapea las ventas destino y suma la cantidad asignada', () => {
+		const trazabilidad = construirTrazabilidadLote(registro({ allocations: asignaciones }));
+
+		expect(trazabilidad.lote).toMatchObject({
+			id: 'lote-1',
+			codigo: 'L-2026-001',
+			productoNombre: 'Arroz',
+			cantidadInicial: 10,
+			cantidadDisponible: 4,
+		});
+		expect(trazabilidad.cantidadAsignada).toBe(6);
+		expect(trazabilidad.destinos).toEqual([{
+			ventaId: 'venta-1',
+			ventaItemId: 'item-1',
+			fecha: new Date('2026-10-20'),
+			estado: 'FACTURADA',
+			cliente: 'Cliente 1',
+			numeroFactura: 'V-001',
+			cantidad: 6,
+			costoUnitario: 100,
+		}]);
+	});
+
+	it('devuelve destinos vacíos cuando el lote no fue consumido', () => {
+		const trazabilidad = construirTrazabilidadLote(registro({}));
+
+		expect(trazabilidad.destinos).toEqual([]);
+		expect(trazabilidad.cantidadAsignada).toBe(0);
+	});
+
+	it('usa cliente general y factura nula cuando la venta no los tiene', () => {
+		const trazabilidad = construirTrazabilidadLote(registro({
+			allocations: [{
+				...asignaciones[0],
+				ventaItem: {
+					...asignaciones[0].ventaItem,
+					venta: {
+						...asignaciones[0].ventaItem.venta,
+						cliente: null,
+						factura: null,
+					},
+				},
+			}],
+		}));
+
+		expect(trazabilidad.destinos[0]).toMatchObject({
+			cliente: 'Cliente general',
+			numeroFactura: null,
+		});
 	});
 });
