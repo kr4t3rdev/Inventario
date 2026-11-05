@@ -5,6 +5,7 @@ import type { FinancialLedgerLine } from './financial-ledger-balance';
 interface LedgerReadParams {
   tenantId: string;
   cutoffAt: Date;
+  from?: Date;
   client?: Prisma.TransactionClient;
 }
 
@@ -14,7 +15,12 @@ interface LedgerReadParams {
  * @returns {Promise<FinancialLedgerLine[]>} Líneas decimales para el cálculo formal.
  */
 export async function readFinancialLedger(params: LedgerReadParams): Promise<FinancialLedgerLine[]> {
-  if (!params.tenantId.trim() || !Number.isFinite(params.cutoffAt.getTime())) {
+  if (
+    !params.tenantId.trim() || !Number.isFinite(params.cutoffAt.getTime()) ||
+    (params.from && (
+      !Number.isFinite(params.from.getTime()) || params.from > params.cutoffAt
+    ))
+  ) {
     throw new Error('El tenant y el corte contable deben ser válidos');
   }
 
@@ -24,7 +30,7 @@ export async function readFinancialLedger(params: LedgerReadParams): Promise<Fin
       asiento: {
         tenantId: params.tenantId,
         estado: 'CONTABILIZADO',
-        fecha: { lte: params.cutoffAt },
+        fecha: { ...(params.from ? { gte: params.from } : {}), lte: params.cutoffAt },
       },
       cuenta: { tenantId: params.tenantId },
     },
