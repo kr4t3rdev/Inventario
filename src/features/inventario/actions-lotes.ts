@@ -49,7 +49,7 @@ export const getLotesInventarioAction = withAction(
 					cantidadDisponible: true,
 					producto: { select: { nombre: true } },
 				},
-				orderBy: [{ fechaVencimiento: 'asc' }, { codigo: 'asc' }],
+				orderBy: [{ fechaVencimiento: 'asc' }, { codigo: 'asc' }, { id: 'asc' }],
 				skip: (page - 1) * limit,
 				take: limit,
 			}),

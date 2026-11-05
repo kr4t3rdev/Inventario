@@ -61,6 +61,7 @@ describe('getLotesInventarioAction', () => {
 		expect(prisma.lote.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { tenantId: 'tenant-1' },
+				orderBy: [{ fechaVencimiento: 'asc' }, { codigo: 'asc' }, { id: 'asc' }],
 				skip: 10,
 				take: 10,
 			}),
