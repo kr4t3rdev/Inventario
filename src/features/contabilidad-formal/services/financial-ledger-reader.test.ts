@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const db = vi.hoisted(() => ({ asientoLinea: { findMany: vi.fn() } }));
+const db = vi.hoisted(() => ({
+  asiento: { findMany: vi.fn() },
+  asientoLinea: { findMany: vi.fn() },
+}));
 vi.mock('@/lib/prisma', () => ({ prisma: db }));
 
 import { readFinancialLedger } from './financial-ledger-reader';
@@ -61,17 +64,27 @@ describe('readFinancialLedger', () => {
     expect(db.asientoLinea.findMany).not.toHaveBeenCalled();
   });
 
-  it('excluye cierres solo al solicitar movimientos para estado de resultados', async () => {
+  it('excluye cierres y sus reversos al solicitar movimientos para estado de resultados', async () => {
     db.asientoLinea.findMany.mockResolvedValue([]);
+    db.asiento.findMany
+      .mockResolvedValueOnce([{ asientoId: 'cierre-1' }])
+      .mockResolvedValueOnce([{ asientoId: 'reverso-1' }])
+      .mockResolvedValueOnce([]);
     await readFinancialLedger({
       tenantId: 'tenant-a', cutoffAt: new Date('2026-12-31T23:59:59.000Z'),
       excludeClosingEntries: true,
     });
     expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
-        asiento: expect.objectContaining({ origenTipo: { not: 'cierre_periodo' } }),
+        asiento: expect.objectContaining({ asientoId: { notIn: ['cierre-1', 'reverso-1'] } }),
       }),
     }));
+  });
+
+  it('no resuelve el alcance de cierre en la lectura acumulada', async () => {
+    db.asientoLinea.findMany.mockResolvedValue([]);
+    await readFinancialLedger({ tenantId: 'tenant-a', cutoffAt: new Date('2026-12-31') });
+    expect(db.asiento.findMany).not.toHaveBeenCalled();
   });
 
   it('incluye originales revertidos para que el reverso no quede aislado', async () => {
