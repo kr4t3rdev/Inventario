@@ -174,7 +174,7 @@ export const deletePagoSalarioAction = withAction(
 					tasaCambio: true,
 				},
 			});
-			await reversePayrollReconciliations(tx, reconciliaciones, tenantId);
+			await reversePayrollReconciliations(tx, reconciliaciones, tenantId, user.userId);
 			await tx.reconciliacionGasto.deleteMany({
 				where: { tenantId, pgId: id },
 			});

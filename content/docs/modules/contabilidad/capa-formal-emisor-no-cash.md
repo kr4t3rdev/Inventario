@@ -76,6 +76,7 @@ falla cerrado, sin inventar conversión.
 | `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarVentaAction` | `COBRO_CXC` | Ya persistía la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileSale` | `COBRO_CXC` | Ahora persiste la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileService` | `COBRO_SERVICIO` | Un asiento por distribución, basado en su valoración persistida; comparte la transacción operativa |
+| `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarServicioAction` | `COBRO_SERVICIO` | Cobro de la action web: emite el mismo evento con la misma valoración persistida, dentro de la transacción que acredita la tesorería |
 | `src/app/api/contabilidad/reconciliacion/servicios/route.ts` (POST) | `COBRO_SERVICIO` | Conserva el cobro individual legacy; persiste la valoración funcional y emite en la misma transacción |
 | `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `VENTA_CONTADO` / `VENTA_CREDITO` | Reconoce el ingreso de la venta de productos: al contado debita la tesorería; a plazo abre la cuenta por cobrar que después liquida `COBRO_CXC` |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |
@@ -90,6 +91,22 @@ falla cerrado, sin inventar conversión.
 | `src/features/venta-servicios/actions.ts` → `createVentaServicioAction` | `VENTA_SERVICIO_CREDITO` | Reconoce el ingreso y la cuenta por cobrar al crear la venta (modo legacy y mixto), en la misma transacción |
 | `src/features/ventas/services/venta-mutation-service.ts` → `VentaMutationService.create` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO de la mercadería que sale del inventario, en la misma transacción de la venta |
 | `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.entregarPedido` | `COSTO_VENTA_DEVENGADO` | Devenga el costo FIFO cuando el pedido se entrega y la mercadería sale del inventario |
+| `src/features/ventas/services/venta-lifecycle-service.ts` → `VentaLifecycleService.anularVentaPorEstado` | `REVERSO_ASIENTO` | Anula con su contraasiento los asientos de la venta anulada (ingreso, costo y cobro al contado) |
+| `src/features/compras-productos/actions.ts` → `anularCompraProductoAction` | `REVERSO_ASIENTO` | Anula con su contraasiento el reconocimiento de la compra anulada |
+| `src/features/gastosDE/reversal.ts` → `reverseExpenseEffects` | `REVERSO_ASIENTO` | Al eliminar un gasto o una compra de servicio, anula sus asientos formales (conciliación pagada, compra de servicio y aplicación del anticipo) |
+| `src/features/empleados/payroll-reversal.ts` → `reversePayrollReconciliations` | `REVERSO_ASIENTO` | Al eliminar un pago de nómina, anula el asiento formal de la conciliación pagada |
+| `src/features/contabilidad/actions-periodos.ts` → `aprobarPeriodoAction` | `CIERRE_PERIODO` | Al aprobar el período, vacía sus cuentas de resultado contra la cuenta de resultado del período, en la misma transacción |
+| `src/features/contabilidad/actions-periodos.ts` → `cerrarPeriodoAction` (auto-aprobación de managers) | `CIERRE_PERIODO` | Cuando el cierre deja el período aprobado, genera el mismo asiento de cierre formal |
+| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createBankAdjustment` | `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` | El ajuste no liquida cuentas: el ingreso acredita otros ingresos y el egreso debita gastos financieros, con la valoración que el writer ya decidió |
+| `src/features/contabilidad/services/accounting-operations-mutation-service.ts` → `createCapitalInjection` | `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` | La inyección entra a la tesorería: el capital propio acredita el capital social y la deuda externa las deudas recibidas. La inyección persiste su tasa y su importe convertido, de modo que el replay histórico reconstruye el asiento en moneda extranjera con la misma evidencia FX |
+
+Las rutas móviles de contabilidad (`src/app/api/mobile/v1/accounting/`) llegan a
+las mismas operaciones: los ajustes de banco y las inyecciones de capital
+delegan en `AccountingOperationsMutationService`, y los préstamos y deudas en
+efectivo en `AccountingCashOperationsMutationService` (que ya emitía
+`PRESTAMO_OTORGADO`, `DEUDA_RECIBIDA` y sus cobros y pagos). La capa formal
+alcanza por igual a escritorio y móvil porque ambos caminos comparten el
+servicio de mutación.
 
 `PAGO_COMPLETO` exige cuenta bancaria y tipo de pago explícitos. La compra se
 reconoce contra CxP y `applyPagoGastoWorkflow` registra la conciliación, valida
@@ -190,8 +207,94 @@ compra o de la recepción). Si alguna porción no tiene tasa publicada, el costo
 funcional queda sin completar: el asiento no se emite con una tasa inferida y
 el motor falla cerrado en modo `enforce` (en `shadow` registra la causa). El
 ancla idempotente es la venta (`venta_costo:<id>`), de modo que el replay de la
-entrega no duplica el devengo. La devolución de la venta repone el inventario
-con su propio evento (`DEVOLUCION_VENTA`), que todavía no está conectado.
+entrega no duplica el devengo.
+
+La devolución de una venta de productos revierte el ingreso con el evento
+`DEVOLUCION_VENTA`, que reproduce el desglose que el writer ya resolvió: el
+importe devuelto se reparte entre la cuenta por cobrar aplicada, el saldo a
+favor del cliente (anticipo) y el reembolso en efectivo, y la mercadería
+repuesta reingresa al inventario con el par inverso del costo FIFO
+(`DEBE` inventarios / `HABER` costo de ventas). El asiento se ancla a la
+devolución (`devolucion_venta:<id>`) y consume el desglose persistido, no un
+cálculo paralelo. El costo FIFO repuesto se valora con la misma evidencia que
+el devengo original (la tasa publicada de cada fuente) y queda persistido en
+moneda funcional (`costoFifoFuncional`), de modo que el replay histórico
+reconstruye el mismo asiento sin recalcular tasas de un origen que no quedó
+registrado. El efectivo se reconoce al registrar la devolución: el reembolso
+queda pendiente en el turno y el efectivo físico sale al cerrarlo. El replay
+reconstruye la devolución con el mismo constructor de evento que usa el writer.
+
+Cuando un documento se anula, sus asientos formales no se borran ni se editan:
+se anulan con un **asiento inverso inmutable**, que conserva las líneas y la
+evidencia FX del original cambiando únicamente debe/haber. El original queda en
+estado `ANULADO` apuntando al inverso (`revertidoPorId`), de modo que la traza
+forense conserva ambos documentos. La reversa es idempotente: si el inverso ya
+existe y está contabilizado, la anulación lo reutiliza en lugar de duplicarlo;
+si el enlace no es consistente, la operación falla en lugar de ocultar la
+inconsistencia. El asiento inverso se fecha en el día de la anulación y se
+registra en el período abierto vigente; si el período original está cerrado, la
+reversa se asienta en el período actual. Hoy la reversa está conectada al
+anular una venta (ingreso reconocido, costo devengado y cobro al contado), al
+anular una compra (reconocimiento), al eliminar un gasto o una compra de
+servicio (conciliación pagada, compra de servicio y aplicación del anticipo) y
+al eliminar un pago de nómina (conciliación pagada).
+
+Cuando un período contable queda **aprobado**, se genera su **asiento de cierre
+formal**: cada cuenta de resultado (ingreso, costo y gasto) del período vacía su
+saldo neto y la utilidad —o la pérdida— del período queda en la cuenta de
+resultado del período (`RESULTADO_PERIODO`). El asiento se construye
+programáticamente (las plantillas del plan no cubren `CIERRE_PERIODO`) y lleva
+el origen idempotente `cierre_periodo:<id>`, de modo que un segundo cierre del
+mismo período devuelve el asiento existente en lugar de duplicarlo. Se fecha el
+último día del período cuando la aprobación ocurre después de su cierre. La
+aprobación y el cierre se escriben en la misma transacción: el período no queda
+aprobado sin su asiento de cierre. En modo `enforce` el cierre falla cerrado
+(sin rol contable, sin diario de apertura/cierre o descuadre, la aprobación se
+rechaza); con la capa apagada o en modo `shadow` no se escribe nada.
+
+Cuando la capa formal se enciende, los periodos historicos que quedaron sin
+asiento se recuperan con el **replay historico**, que es un proceso gobernado
+en tres pasos que no pueden ocurrir por separado:
+
+1. **Preflight**: se construye un snapshot canonico de las fuentes del periodo
+   (identidad, fecha, descripcion y valoracion funcional) y se persiste su
+   digest SHA-256. El snapshot congela la valoracion; no es una nueva
+   estimacion. El preflight vive 24 horas.
+2. **Aprobacion independiente**: otro responsable contable activo aprueba ese
+   digest. El solicitante no puede aprobar su propio preflight, y si las
+   fuentes cambiaron entre los dos pasos, la aprobacion se rechaza.
+3. **Ejecucion**: se contabiliza exactamente el periodo aprobado (el motor
+   omite el bloqueo de periodo cerrado, porque el origen ya es deliberado) y
+   el **verificador forense** confronta el resultado con el snapshot
+   aprobado: cada fuente debe tener un unico asiento contabilizado en el
+   periodo, con las lineas cuadradas y la valoracion aprobada.
+
+La ejecucion es idempotente por origen: repetir el replay con un preflight
+nuevo no duplica asientos, los reconoce como ya posteados. El alcance del
+recolector es deliberado y conservador: reconstruye las fuentes que el writer
+vigente ya formaliza y de las que se puede reconstruir el mismo evento con la
+misma evidencia persistida:
+
+| Fuente operativa | Evento formal | Origen |
+| --- | --- | --- |
+| Factura de una venta a plazo | `VENTA_CREDITO` | `factura` |
+| Conciliacion de una venta a plazo | `COBRO_CXC` | `reconciliacion_venta` |
+| Conciliacion de una venta cobrada al contado | `VENTA_CONTADO` | `reconciliacion_venta` |
+| Conciliacion de gasto que movio la tesoreria | `PAGO_CXP` | `reconciliacion_gasto` |
+| Documento de compra a plazo o a anticipo | `COMPRA_CREDITO` | `compra_documento` |
+| Compra de servicio | `GASTO_CREDITO` | `compra_servicio` |
+| Venta de servicio | `VENTA_SERVICIO_CREDITO` | `venta_servicio` |
+| Movimiento de anticipo (recepción, entrega, aplicación, reverso y devolución) | `ANTICIPO_CLIENTE_*` / `ANTICIPO_PROVEEDOR_*` | `anticipo_movimiento` |
+
+Cualquier fuente que no se puede reconstruir sin ambiguedad se omite dejando su
+causa (identidad ambigua, documento anulado, valoracion funcional no
+verificable o tasa de cambio no persistida) en vez de contabilizar algo que el
+writer no habria escrito.
+
+El replay no depende del modo global `CONTABILIDAD_FORMAL_MODE`: es una
+operacion explicita y autorizada. Exige licencia con la funcion
+`contabilidad-formal`, un responsable contable activo y el permiso
+`financiero.contabilidad.acceder`.
 
 ## Rollout
 
@@ -205,8 +308,8 @@ CONTABILIDAD_FORMAL_NO_CASH_MODE=enforce # se exige el asiento formal
 
 Los emisores de reconocimiento (compras, gastos de servicio, mermas,
 producción, anticipos, venta de servicios y venta de productos —ingreso y costo
-FIFO—) no usan ese gate: respetan el modo global `CONTABILIDAD_FORMAL_MODE`,
-que sigue `off` por defecto. Las liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`,
+FIFO—, y el cierre formal del período) no usan ese gate: respetan el modo global
+`CONTABILIDAD_FORMAL_MODE`, que sigue `off` por defecto. Las liquidaciones (`COBRO_CXC`, `COBRO_SERVICIO`,
 `PAGO_CXP`) conservan el gate no Cash. Para la convergencia futura existe
 `emitirLiquidacionFormal`
 (`src/features/contabilidad-formal/services/settlement-formal-posting-service.ts`):
@@ -218,7 +321,11 @@ Procedimiento recomendado:
 1. **off** (estado por defecto tras el despliegue): no cambia el comportamiento.
 2. **shadow**: se observa la outbox (`ShadowOutbox`) en los tenants con tráfico:
    `SIMULADO` = el asiento se habría contabilizado; `ERROR_SHADOW` = la causa
-   exacta del rechazo.
+   exacta del rechazo. La acción `getMetricasShadowAction`
+   (`src/features/contabilidad-formal/actions-metricas-shadow.ts`) resume la
+   outbox del tenant por evento, resultado y causa (conteo y latencia p95); la
+   exige la licencia de contabilidad formal y el permiso
+   `financiero.auditoria.ver`, y nunca acepta un tenant por parámetro.
 3. **enforce**: se exige el asiento. Si el motor rechaza (periodo cerrado, rol
    sin mapear, plantilla ausente, evidencia FX incompleta), la escritura
    operativa falla cerrada.
@@ -227,12 +334,48 @@ El flag global `contabilidad-formal` (habilitado para todos los planes) sigue
 siendo condición necesaria dentro del motor: sin él no se contabiliza ningún
 evento, aunque el emisor no Cash esté en `enforce`.
 
+### Aprobación del modo por tenant (R7.4)
+
+El modo global puede aprobarse también **por tenant**, de forma explícita y
+reversible. El mecanismo está apagado por defecto y no requiere migración: la
+licencia vigente del tenant lleva la aprobación en sus overrides.
+
+```bash
+CONTABILIDAD_FORMAL_MODO_TENANT=1   # sin esta variable, el modo global manda
+```
+
+Con el mecanismo habilitado, la licencia del tenant decide:
+
+| Clave en `TenantLicense.featureOverrides` | Modo efectivo del tenant |
+|---|---|
+| `contabilidad-formal-shadow: true` | `shadow` (evidencia simulada, sin asientos) |
+| `contabilidad-formal-enforce: true` | `enforce` (el asiento es exigible) |
+| ninguna | el modo global (`CONTABILIDAD_FORMAL_MODE`) |
+
+Reglas:
+
+- la aprobación del tenant prevalece sobre el modo global, también para bajarlo
+  (esa es la vía de reversión por tenant);
+- la flag de plan `contabilidad-formal` sigue siendo condición necesaria: sin
+  ella, ningún modo contabiliza;
+- quitar `CONTABILIDAD_FORMAL_MODO_TENANT` devuelve la flota al modo global
+  (interruptor de reversión global);
+- sin el mecanismo habilitado no se consulta la licencia solo para resolver el
+  modo: no hay consultas extra en el estado actual;
+- el emisor no Cash conserva su gate propio (`CONTABILIDAD_FORMAL_NO_CASH_MODE`):
+  un modo forzado por familia manda sobre la aprobación del tenant.
+
+La aprobación real de un tenant (con su criterio de reversión y la ventana
+shadow) es una decisión operacional; el repositorio no habilita ninguna.
+
 ## Precondiciones por tenant
 
 La capa falla cerrado; para que el emisor funcione, el tenant necesita:
 
 - plan de cuentas sembrado (35 cuentas + 7 diarios + 25 roles) y las
-  plantillas globales activas;
+  plantillas globales activas; la siembra se activa desde la tarjeta de
+  contabilidad formal en `/busy/contabilidad/configuracion`
+  (`inicializarPlanContableAction`), que es idempotente;
 - `TenantAccountingPolicy.functionalCurrencyCode` configurada;
 - un período contable **abierto** para la fecha de la operación.
 
@@ -253,20 +396,96 @@ La decisión y sus consecuencias están registradas en
 
 ## Pendiente (slices siguientes)
 
-- La devolución de una venta de productos todavía no tiene asiento formal: la
-  plantilla `DEVOLUCION_VENTA` (DEBE ventas / HABER tesorería, más el reintegro
-  del inventario y la reversión del costo FIFO) existe en el plan, pero ningún
-  writer la emite. El costo devengado se repone con ese evento, no con un
-  ajuste del asiento original.
-- Ningún writer anula todavía un asiento formal por reversión (asiento inverso
-  inmutable): la reversión llega en un slice propio, junto con el cierre y la
-  apertura formal de período.
+- La apertura formal por traspaso (rollover) todavía no está conectada: el
+  asiento de apertura que hoy se genera al abrir un período es el de cuadre
+  manual aprobado (`apertura_manual`), y la derivación automática de los saldos
+  iniciales sigue bloqueada a propósito (`APERTURA_SALDOS_NO_VERIFICABLES`),
+  porque la evidencia disponible no permite verificar todos los rubros ni su
+  moneda. El cierre formal del período sí está conectado; su contrapartida de
+  apertura requiere primero esa evidencia verificable.
 - Los handlers legacy `handlers-deudas-cash.ts`, `handlers-prestamos-cash.ts` y
   `handlers-reconciliacion-servicios.ts` no tienen callers detectados en `src`;
   los endpoints activos delegan en servicios de mutación o emiten desde sus
   rutas actuales. No se consideran writers activos pendientes de integración.
-- El modo `enforce` por tenant (hoy el modo es global): permitir un flag de
-  licencia para activar el emisor tenant a tenant.
+- El modo por tenant ya tiene su mecanismo (aprobación en la licencia, con
+  `CONTABILIDAD_FORMAL_MODO_TENANT=1`); lo que falta es la aprobación
+  operacional: ningún tenant está aprobado y la ventana shadow no se abrió.
+- Los movimientos de anticipo sí se reconstruyen (el movimiento persiste el
+  importe, la moneda, la tasa aplicada, la huella FX y los valores funcionales),
+  pero el anticipo nacido de una nota de crédito no genera asiento de
+  aplicación: el writer lo omite y el recolector también.
+- La compra de productos en moneda extranjera no se puede reconstruir con
+  fidelidad: el documento no persiste la tasa que aplicó el writer (la cuenta
+  por pagar tampoco), así que esas fuentes se omiten con la causa
+  `TASA_CAMBIO_NO_PERSISTIDA` hasta que el documento persista esa evidencia.
+- La venta de servicios cobrada al contado no tiene cuenta por cobrar
+  operativa, pero el writer vigente sí emite `VENTA_SERVICIO_CREDITO`: el
+  asiento formal debita la cuenta por cobrar sin contrapartida operativa. El
+  replay reproduce el comportamiento del writer; la corrección del flujo
+  pertenece a la capa operativa.
+
+## Infra global conciliada (S9)
+
+La rama de referencia quedó atrás de `main`, así que la infraestructura global
+se concilió contra la versión vigente de `main` (nunca contra la copia de la
+rama). Resultado por bloque:
+
+| Bloque | Estado en `main` | Decisión |
+| --- | --- | --- |
+| Esquema Prisma (modelos de la capa, permisos y banderas) | Vigente, con `Asiento`, `Diario`, `PeriodoContable`, `PlantillaAsiento`, `ReplayPreflight`, `ReplayApproval` y `ReplayRun` | Se conserva `main` |
+| Registro de permisos y matriz de paridad | `financiero.contabilidad.acceder` y `ventas.precio.override` ya registrados y en paridad | Se conserva `main` |
+| Clasificación de modelos | Los modelos de la capa ya están clasificados como `SCOPED`/`GLOBAL` | Se conserva `main` |
+| Allowlist de SQL crudo | Actualizada con las consultas de la capa (outbox shadow, verificador, digest) | Se conserva `main` |
+| Guardia de período contable | La versión de `main` es posterior y además corrige el voseo del mensaje | Se conserva `main` |
+| Esquemas y consultas de administración | Sin diferencias propias de la capa | Se conserva `main` |
+| Contrato OpenAPI móvil y su contract test | El contrato vigente ya cubre las rutas contables móviles | Se conserva `main` |
+| `package.json`, lockfile y `start.sh` | Sin dependencias ni scripts nuevos de la capa | Se conserva `main` |
+| Pruebas de renovación de licencia | `main` conserva su versión | Se conserva `main` |
+
+Lo único que faltaba era la **activación del plan de cuentas (CTA-0)**: el
+servicio de seed existía, pero no había Server Action ni interfaz para
+sembrarlo, así que un tenant no podía habilitar la capa desde la aplicación.
+Ahora la tarjeta de contabilidad formal vive en
+`/busy/contabilidad/configuracion` y siembra (o verifica) el plan de forma
+idempotente.
+
+## Verificador forense autónomo (D3b)
+
+El replay compara el snapshot aprobado con lo que quedó contabilizado
+(`replay-reconciliation.ts`). Para auditar el libro sin depender de ese
+servicio —y sin confiar en los saldos que el propio motor dice haber escrito—,
+existe un verificador independiente de solo lectura:
+
+```bash
+pnpm exec tsx scripts/accounting/verificador-forense-report.ts --tenant <id> --out informe.json
+pnpm exec tsx scripts/accounting/verificador-forense-report.ts --all-tenants --out informe.json
+```
+
+Qué verifica:
+
+| Verificación | Qué significa |
+| --- | --- |
+| Cadena de hashes | Recalcula el hash de cada asiento desde sus líneas y valida la topología (una sola raíz, secuencia contigua, sin duplicados) |
+| Cuadre por asiento | La suma del debe debe igualar la del haber |
+| Coherencia de línea | Un solo lado por línea, importes no negativos |
+| Evidencia FX | Toda línea en moneda distinta de la funcional lleva tasa y huella FX |
+| Saldos por cuenta | Re-deriva el saldo de cada cuenta desde los asientos contabilizados (los anulados no suman: su inverso ya está contabilizado) |
+| Cruce operativo | Compara el saldo formal de cuentas por cobrar y por pagar con el saldo operativo del tenant |
+
+Reglas de lectura:
+
+- es de **solo lectura**: no escribe nada en la base de datos;
+- cuando la base operativa no tiene el importe funcional, el cruce queda
+  `NO_EVALUABLE`: el verificador no estima equivalencias;
+- un tenant sin asientos formales tampoco se cruza: no hay libro contra el que
+  comparar;
+- el informe es un artefacto JSON con el resumen, los saldos re-derivados, los
+  cruces y los hallazgos; el proceso termina con código 1 cuando hay hallazgos
+  y con 0 cuando el libro está íntegro.
+
+Los tipos de hallazgo son `CADENA_HASH_INVALIDA`, `ASIENTO_DESCUADRADO`,
+`ASIENTO_SIN_LINEAS`, `LINEA_AMBIGUA`, `MONTO_NEGATIVO`,
+`EVIDENCIA_FX_AUSENTE` y `CRUCE_OPERATIVO_DESBALANCEADO`.
 
 ## Referencias
 
@@ -279,5 +498,15 @@ La decisión y sus consecuencias están registradas en
 - Venta de productos: `src/features/contabilidad-formal/services/sale-posting-service.ts`
 - Valoración operativa compartida: `src/features/contabilidad-formal/lib/functional-valuation-resolver.ts`
 - Valoración del costo FIFO: `src/lib/services/fifo-allocation.ts` → `getCostoFifoVentaValorado`
+- Reversa formal (asiento inverso): `src/features/contabilidad-formal/services/reversal-service.ts`
+- Cierre formal del período: `src/features/contabilidad-formal/services/cierre-formal-service.ts`
+- Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
+- Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
+- Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
+- Verificador forense autónomo (núcleo puro y CLI): `scripts/accounting/verificador-forense.ts` y `scripts/accounting/verificador-forense-report.ts`
+- Modo formal por tenant: `src/features/contabilidad-formal/lib/modo-tenant.ts`
+- Métricas del outbox shadow: `src/features/contabilidad-formal/actions-metricas-shadow.ts`
+- Activación del plan de cuentas: `src/features/contabilidad-formal/actions-plan-contable.ts` y `src/features/contabilidad-formal/components/plan-contable-card.tsx`
+- Emisor de ajustes bancarios e inyecciones de capital: `src/features/contabilidad-formal/services/capital-adjustment-posting-service.ts`
 - Gate de rollout: `src/features/contabilidad-formal/services/non-cash-emitter-gate.ts`
 - Plan de integración por slices: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`

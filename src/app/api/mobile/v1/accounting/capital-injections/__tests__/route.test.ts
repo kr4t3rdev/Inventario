@@ -53,6 +53,9 @@ vi.mock('@/lib/prisma', () => {
       })),
     },
     auditLog: { create: vi.fn(async () => ({})) },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn(async () => ({ functionalCurrencyCode: 'CUP' })),
+    },
   };
   return {
     prisma: {

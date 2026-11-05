@@ -142,6 +142,12 @@ vi.mock(
 );
 vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({ exchangeRateProvider: exchangeRateMocks }));
 
+const cierreFormalMocks = vi.hoisted(() => ({ generarAsientoCierre: vi.fn() }));
+vi.mock(
+	"@/features/contabilidad-formal/services/cierre-formal-service",
+	() => cierreFormalMocks,
+);
+
 // ── Imports bajo test ─────────────────────────────────────────────────────
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
@@ -1862,6 +1868,27 @@ describe("aprobarPeriodoAction", () => {
 
 		expect(result.success).toBe(false);
 		expect(expectActionFailure(result).error?.code).toBe("TRANSICION_INVALIDA");
+	});
+
+	it("genera el cierre formal del período en la misma transacción que lo aprueba", async () => {
+		const periodo = makePeriodo({ estado: EstadoPeriodo.CERRADO });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.APROBADO,
+			aprobadoPor: ACTOR,
+			aprobadoAt: new Date(),
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+
+		const result = await aprobarPeriodoAction({ periodoId: "p-1" });
+
+		expect(result.success).toBe(true);
+		expect(cierreFormalMocks.generarAsientoCierre).toHaveBeenCalledWith(
+			mockPrisma,
+			{ periodoId: "p-1", tenantId: TENANT, actorId: ACTOR },
+		);
 	});
 });
 

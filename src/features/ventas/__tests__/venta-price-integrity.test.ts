@@ -45,6 +45,7 @@ vi.mock("@/lib/prisma", () => ({
 		cliente: { findFirst: vi.fn() },
 		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
+		productoPlantilla: { findFirst: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
@@ -120,6 +121,7 @@ function mockHappyPath() {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.mocked(prisma.productoPlantilla.findFirst).mockResolvedValue(null as any);
 	// Defaults: PV sin lista, sin lista default, sin cliente, producto con precio base 500.
 	vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 		pvId: "pv-1",
@@ -133,6 +135,61 @@ beforeEach(() => {
 });
 
 describe("integridad de precios en createVentaAction", () => {
+	it("resuelve el precio por lista desde el producto variante seleccionado", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+		mockHappyPath();
+		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
+			pvId: "pv-1",
+			listaPrecioId: "lista-variantes",
+		} as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([
+			{
+				id: "variant-m-azul",
+				nombre: "Camiseta (M / Azul)",
+				precioVenta: 900,
+				precios: [{ listaPrecioId: "lista-variantes", precio: 850 }],
+			},
+		] as any);
+
+		const result = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			items: [{ productoId: "variant-m-azul", cantidad: 2, precioUnitario: 850 }],
+		});
+
+		expect(expectActionSuccess(result).data).toBeDefined();
+		expect(mockTx.venta.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				items: { create: expect.arrayContaining([
+					{ productoId: "variant-m-azul", cantidad: 2, precioUnitario: 850, total: 1700 },
+				]) },
+			}),
+		}));
+		expect(mockTx.stockUbicacion.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: expect.objectContaining({ productoId: "variant-m-azul" }),
+		}));
+		expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(expect.objectContaining({
+			create: expect.objectContaining({ productoId: "variant-m-azul", cantidad: -2 }),
+		}));
+	});
+
+	it("rechaza la venta de una plantilla sin tocar venta ni stock", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([] as any);
+		vi.mocked(prisma.productoPlantilla.findFirst).mockResolvedValue({ id: "template-1" } as any);
+
+		const result = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			items: [{ productoId: "template-1", cantidad: 1, precioUnitario: 500 }],
+		});
+
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe("PLANTILLA_NO_VENDIBLE");
+		expect(mockTx.venta.create).not.toHaveBeenCalled();
+		expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
+	});
+
 	it("rechaza con PRICE_MISMATCH un precio manipulado si el usuario no tiene override", async () => {
 		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
 

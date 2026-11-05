@@ -6,6 +6,10 @@ import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import {
+	emitirAjusteBancario,
+	emitirInyeccionCapital,
+} from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 
 const validateBankTransferSchema = z.object({
@@ -588,6 +592,25 @@ export const AccountingOperationsMutationService = {
         throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
       }
 
+      // Capa de contabilidad formal: el ajuste no liquida ninguna cuenta por
+      // cobrar ni paga una cuenta por pagar, pero mueve la tesoreria, asi que
+      // deja asiento formal (abono a otros ingresos o cargo a gastos
+      // financieros). La valoracion consume la que el writer ya persistio.
+      await emitirAjusteBancario(
+        tx,
+        { tenantId, userId: user.userId },
+        {
+          ajusteId: ajuste.ajusteId,
+          fecha: fechaOperacion,
+          monto: parsed.monto,
+          moneda: parsed.moneda,
+          tasaCambio: parsed.tasaCambio,
+          descripcion: parsed.descripcion,
+          referencia: idempotencyKey,
+          tipo: parsed.tipo,
+        },
+      );
+
       await AuditLogService.logStrict({
         accion: 'CREATE',
         entidad: 'AJUSTE_BANCARIO',
@@ -722,6 +745,15 @@ export const AccountingOperationsMutationService = {
       const montoTotalDeuda = isDebt
         ? montoRecibido.add(montoInteres as Prisma.Decimal).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
         : null;
+      // La valoracion persistida es la evidencia que necesita el replay
+      // historico: sin ella una inyeccion en moneda extranjera no se puede
+      // reconstruir con fidelidad.
+      const monedaCUP = parsed.moneda.toUpperCase() === 'CUP';
+      const tasaCambioPersistida = monedaCUP
+        ? new Prisma.Decimal(1)
+        : parsed.tasaCambio
+          ? new Prisma.Decimal(parsed.tasaCambio)
+          : null;
 
       const created = await tx.inyeccionCapital.create({
         data: {
@@ -730,6 +762,12 @@ export const AccountingOperationsMutationService = {
           payloadFingerprint,
           montoRecibido,
           moneda: parsed.moneda,
+          tasaCambio: tasaCambioPersistida,
+          montoConvertido: monedaCUP
+            ? montoRecibido
+            : tasaCambioPersistida
+              ? montoRecibido.mul(tasaCambioPersistida)
+              : null,
           tipo: parsed.tipo,
           cuentaId: parsed.cuentaId,
           descripcion: parsed.descripcion,
@@ -750,6 +788,24 @@ export const AccountingOperationsMutationService = {
         where: { cuentaId: parsed.cuentaId },
           data: { saldo: { increment: montoRecibido } },
       });
+
+      // Capa de contabilidad formal: la inyeccion de capital entra a la
+      // tesoreria, asi que deja asiento formal (capital social o deuda
+      // externa). El efectivo debita caja o bancos segun la cuenta destino.
+      await emitirInyeccionCapital(
+        tx,
+        { tenantId, userId: user.userId },
+        {
+          inyeccionId: created.id,
+          fecha: created.fechaRegistro,
+          monto: parsed.montoRecibido,
+          moneda: parsed.moneda,
+          tasaCambio: parsed.tasaCambio,
+          descripcion: parsed.descripcion,
+          referencia: idempotencyKey,
+          tipo: parsed.tipo,
+        },
+      );
 
       await AuditLogService.logStrict({
         accion: 'CREATE',

@@ -14,6 +14,7 @@ import {
 	ROLES_CUENTA_DEFAULT,
 	padreDeCodigo,
 } from '@/features/contabilidad-formal/lib/plan-default';
+import { RolCuenta } from '@/generated/prisma';
 
 /** Argumentos mínimos de un upsert compatibles con Prisma. */
 export interface SeedUpsertArgs {
@@ -39,7 +40,7 @@ export interface SeedTx {
 		}>;
 	};
 	cuentaRolTenant: {
-		findUnique(args: { where: { tenantId_rol: { tenantId: string; rol: string } } }):
+		findUnique(args: { where: { tenantId_rol: { tenantId: string; rol: RolCuenta } } }):
 			Promise<{ cuentaRolId: string } | null>;
 		upsert(args: SeedUpsertArgs): Promise<{ cuentaRolId: string }>;
 	};
@@ -114,8 +115,9 @@ export async function seedPlanContable(
 			},
 			update: {},
 		});
-		const rolMoratorio = cuenta.codigo === '4.6' ? 'INTERESES_MORATORIOS_GANADOS'
-			: cuenta.codigo === '6.6' ? 'GASTOS_MORATORIOS' : null;
+		const rolMoratorio: RolCuenta | null = cuenta.codigo === '4.6'
+			? RolCuenta.INTERESES_MORATORIOS_GANADOS
+			: cuenta.codigo === '6.6' ? RolCuenta.GASTOS_MORATORIOS : null;
 		if (rolMoratorio && (
 			!resultado.esDeSistema || resultado.tipo !== cuenta.tipo ||
 			resultado.naturaleza !== cuenta.naturaleza || !resultado.aceptaMovimiento ||

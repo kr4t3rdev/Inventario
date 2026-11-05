@@ -165,6 +165,26 @@ describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
     });
   });
 
+  it('la action web emite tambien el COBRO_SERVICIO con la valoracion persistida', async () => {
+    // La action web y la ruta movil comparten el mismo writer formal: sin
+    // esta emision el cobro de servicios no llegaba al libro mayor.
+    await reconciliarServicioAction(input);
+
+    expect(emitirEventoLiquidacion).toHaveBeenCalledTimes(1);
+    const [tx, context, params] = emitirEventoLiquidacion.mock.calls[0];
+    expect(tx).toBe(mockTx);
+    expect(context).toEqual({ tenantId: 'tenant-1', userId: 'user-1' });
+    expect(params).toMatchObject({
+      tipo: 'COBRO_SERVICIO',
+      treasuryAccountType: 'CORRIENTE',
+      reconciliacion: {
+        reconciliacionId: 'recon-servicio-1',
+        monto: 10000,
+        moneda: 'CUP',
+      },
+    });
+  });
+
   it('emite un asiento por cada distribución con la cuenta de tesorería correspondiente', async () => {
     const dosDistribuciones = {
       ...input,

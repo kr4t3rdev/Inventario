@@ -39,6 +39,19 @@ export function resolveEffectivePlanFeatures(
 }
 
 /**
+ * @description Descarta valores JSON que no son mapas de flags booleanos.
+ * @param {unknown} valor - Valor crudo del JSON de licencia o plan.
+ * @returns {Record<string, boolean> | null} Flags booleanos o null si no hay mapa válido.
+ */
+export function sanitizeFeatureFlags(valor: unknown): Record<string, boolean> | null {
+  if (!valor || typeof valor !== 'object' || Array.isArray(valor)) return null;
+  return Object.fromEntries(
+    Object.entries(valor).filter((entrada): entrada is [string, boolean] =>
+      typeof entrada[1] === 'boolean'),
+  );
+}
+
+/**
  * @description Calcula los overrides mínimos comparando snapshot legacy contra
  * features base del plan.
  * @param {{ planFeatures?: Record<string, boolean> | null; legacyLicenseFeatures?: Record<string, boolean> | null; }} input - Features base y snapshot legado.

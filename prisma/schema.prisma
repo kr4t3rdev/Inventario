@@ -100,6 +100,10 @@ model InyeccionCapital {
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
+  /// Tasa de cambio aplicada por el writer (1 en moneda funcional)
+  tasaCambio         Decimal?
+  /// Importe convertido con la tasa aplicada (evidencia del asiento formal)
+  montoConvertido    Decimal?
   tasaInteres        Decimal?
   montoInteres       Decimal?
   montoTotalDeuda    Decimal?
@@ -243,6 +247,7 @@ model Tenant {
   piezasReparacion               PiezaReparacion[]
   prestamosCash                  PrestamoCash[]
   productos                      Producto[]
+  productoPlantillas              ProductoPlantilla[]
   puntosDeVenta                  PuntoDeVenta[]
   recetas                        Receta[]
   recetasIngredientes            RecetaIngrediente[]
@@ -549,6 +554,10 @@ model Producto {
   especificoCodigo     String?
   surtidoCodigo        String?
   dcCodigo             String?
+  plantillaId          String?
+  atributoJson         Json?
+  sku                  String?
+  esVariante           Boolean                   @default(false)
   fotos                String[]                  @default([])
   compraDocumentoItems CompraDocumentoItem[]
   ordenCompraItems     OrdenCompraItem[]
@@ -564,6 +573,7 @@ model Producto {
   categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Restrict)
   productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
   productosHijos       Producto[]                @relation("ProductoCompuesto")
+  plantilla            ProductoPlantilla?        @relation(fields: [tenantId, plantillaId], references: [tenantId, id], onDelete: Restrict, map: "Producto_plantilla_tenant_fkey")
   puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: SetNull)
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
@@ -586,10 +596,27 @@ model Producto {
   @@unique([tenantId, codigoNegocio])
   @@unique([tenantId, id])
   @@unique([tenantId, id, unidadId])
+  @@unique([tenantId, sku], map: "Producto_tenant_sku_key")
   @@index([tenantId])
   @@index([tenantId, categoriaId])
   @@index([tenantId, vendorId])
   @@index([tenantId, subcategoriaId])
+}
+
+/// Plantilla no vendible que agrupa productos vendibles por atributos.
+model ProductoPlantilla {
+  id        String     @id @default(cuid())
+  tenantId  String
+  nombre    String
+  atributos Json
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  productos Producto[]
+
+  @@unique([tenantId, id], map: "ProductoPlantilla_tenant_id_key")
+  @@index([tenantId, nombre])
+  @@map("producto_plantillas")
 }
 
 model UnidadConversion {
@@ -3043,23 +3070,27 @@ model Receta {
   Producto          Producto?           @relation(fields: [productoId], references: [id])
   tenant            Tenant              @relation(fields: [tenantId], references: [tenantId])
   RecetaIngrediente RecetaIngrediente[]
+  SubrecetasIngrediente RecetaIngrediente[] @relation("SubrecetaBOM")
 
   @@index([tenantId])
+  @@unique([tenantId, recetaId], map: "Receta_tenantId_recetaId_key")
 }
 
 model RecetaIngrediente {
-  recetaId      String
-  tenantId      String
-  productoId    String
-  cantidad      Float
-  desperdicio   Float    @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime
-  id            String   @id
-  unidadSimbolo String?
-  Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
-  tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
+  recetaId             String
+  tenantId             String
+  productoId           String
+  recetaIngredienteId  String?
+  cantidad             Float
+  desperdicio          Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+  id                   String   @id
+  unidadSimbolo        String?
+  Producto             Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  Receta               Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  Subreceta            Receta?  @relation("SubrecetaBOM", fields: [tenantId, recetaIngredienteId], references: [tenantId, recetaId], onDelete: Restrict)
+  tenant               Tenant   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
 }
@@ -3272,6 +3303,8 @@ model DevolucionVenta {
   montoAplicadoCxc     Int                @default(0)
   montoSaldoFavor      Int                @default(0)
   montoReembolsado     Int                @default(0)
+  /// Costo FIFO repuesto en moneda funcional (evidencia del reingreso a inventario)
+  costoFifoFuncional   Decimal?           @db.Decimal(20, 4)
   idempotencyKey       String?
   createdById          String
   createdAt            DateTime           @default(now())
@@ -4131,6 +4164,9 @@ enum LadoAsiento {
 enum ReglaMontoEvento {
   TOTAL
   MONTO_PAGADO
+  MONTO_APLICADO_CXC
+  MONTO_SALDO_FAVOR
+  MONTO_REEMBOLSADO
   COSTO_FIFO
   INTERESES
   INTERESES_MORATORIOS

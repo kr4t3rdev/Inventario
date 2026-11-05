@@ -27,6 +27,7 @@ import {
 
 const TENANT = 'tenant-motor';
 const MODO_ENV = 'CONTABILIDAD_FORMAL_MODE';
+const MODO_TENANT_ENV = 'CONTABILIDAD_FORMAL_MODO_TENANT';
 
 const guardMock = vi.hoisted(() => vi.fn());
 const resolverMock = vi.hoisted(() => vi.fn());
@@ -209,6 +210,7 @@ describe('postEvento — modos y guardas', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		delete process.env[MODO_ENV];
+		delete process.env[MODO_TENANT_ENV];
 		fixture = crearFixture();
 		guardMock.mockResolvedValue({ permitido: true, modo: 'audit-only' });
 		resolverMock.mockResolvedValue({
@@ -251,6 +253,51 @@ describe('postEvento — modos y guardas', () => {
 		expect(fixture.tx.asiento.aggregate).not.toHaveBeenCalled();
 		expect(fixture.tx.asiento.findFirst).not.toHaveBeenCalled();
 		expect(registrarShadowMock).not.toHaveBeenCalled();
+	});
+
+	it('la aprobacion por tenant habilita shadow con el modo global apagado', async () => {
+		process.env[MODO_TENANT_ENV] = '1';
+		fixture.licencia.mockResolvedValue({
+			plan: { features: { 'contabilidad-formal': true } },
+			featureOverrides: { 'contabilidad-formal-shadow': true },
+			features: null,
+		});
+
+		const resultado = await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase());
+
+		expect(resultado.estado).toBe('SIMULADO');
+		expect(registrarShadowMock).toHaveBeenCalledWith(
+			fixture.tx,
+			expect.objectContaining({ estado: 'SIMULADO', tipoEvento: 'VENTA_CONTADO' }),
+		);
+	});
+
+	it('la aprobacion por tenant exige la flag de plan', async () => {
+		process.env[MODO_TENANT_ENV] = '1';
+		fixture.licencia.mockResolvedValue({
+			plan: { features: {} },
+			featureOverrides: { 'contabilidad-formal-enforce': true },
+			features: null,
+		});
+
+		const resultado = await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase());
+
+		expect(resultado).toEqual({ estado: 'OMITIDO', motivo: 'FLAG_INACTIVO' });
+		expect(fixture.crearAsiento).not.toHaveBeenCalled();
+	});
+
+	it('sin el mecanismo por tenant la licencia no altera el modo global', async () => {
+		fixture.licencia.mockResolvedValue({
+			plan: { features: { 'contabilidad-formal': true } },
+			featureOverrides: { 'contabilidad-formal-enforce': true },
+			features: null,
+		});
+
+		const resultado = await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase());
+
+		expect(resultado).toEqual({ estado: 'OMITIDO', motivo: 'MODO_OFF' });
+		expect(fixture.licencia).not.toHaveBeenCalled();
+		expect(fixture.crearAsiento).not.toHaveBeenCalled();
 	});
 
 	it('valoración ausente falla cerrado en enforce antes de crear asiento', async () => {
@@ -572,6 +619,51 @@ describe('postEvento — generación de líneas', () => {
 			linea.cuenta.connect.tenantId_cuentaContableId.tenantId === TENANT)).toBe(true);
 	});
 
+	it('devolución de venta: reparte el ingreso revertido entre cxC, anticipo y reembolso', async () => {
+		await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'DEVOLUCION_VENTA',
+			monto: 1000,
+			montoFuncional: 1000,
+			auxiliares: {
+				montoAplicadoCxc: 600,
+				montoSaldoFavor: 250,
+				montoReembolsado: 150,
+				costoFifo: 400,
+			},
+		}));
+
+		const lineas = lineasDe(fixture.crearAsiento);
+		expect(lineas).toHaveLength(6);
+		expect(lineas[0].debe.toString()).toBe('1000');
+		expect(lineas[0].haber.toString()).toBe('0');
+		expect(lineas[1].haber.toString()).toBe('600');
+		expect(lineas[2].haber.toString()).toBe('250');
+		expect(lineas[3].haber.toString()).toBe('150');
+		expect(lineas[4].debe.toString()).toBe('400');
+		expect(lineas[5].haber.toString()).toBe('400');
+		const totalDebe = lineas.reduce((suma, linea) => suma.add(linea.debe), new Prisma.Decimal(0));
+		const totalHaber = lineas.reduce((suma, linea) => suma.add(linea.haber), new Prisma.Decimal(0));
+		expect(totalDebe.toString()).toBe(totalHaber.toString());
+	});
+
+	it('devolución de venta sin reembolso: omite la línea de caja que no aplica', async () => {
+		await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'DEVOLUCION_VENTA',
+			monto: 1000,
+			montoFuncional: 1000,
+			auxiliares: {
+				montoAplicadoCxc: 1000,
+				montoSaldoFavor: 0,
+				montoReembolsado: 0,
+				costoFifo: 400,
+			},
+		}));
+
+		const lineas = lineasDe(fixture.crearAsiento);
+		expect(lineas).toHaveLength(4);
+		expect(lineas[1].haber.toString()).toBe('1000');
+	});
+
 	it('rechaza rol sin mapear en enforce sin insertar', async () => {
 		fixture.setPlantillas([
 			{ evento: 'VENTA_CONTADO', orden: 1, lado: 'DEBE', rolCuenta: 'ROL_AUSENTE' as never, montoRegla: 'TOTAL' },
@@ -874,11 +966,15 @@ describe('postEvento — generación de líneas', () => {
 		await postEvento(
 			fixture.tx,
 			{ tenantId: TENANT, userId: 'u1' },
-			eventoBase({ tipo: 'DEVOLUCION_VENTA' }),
+			eventoBase({
+				tipo: 'DEVOLUCION_VENTA',
+				auxiliares: { montoAplicadoCxc: 1000 },
+			}),
 		);
 		const lineas = lineasDe(fixture.crearAsiento);
 		expect(lineas).toHaveLength(2);
 		expect(lineas.find((l) => l.cuentaId === 'cta-5.1')).toBeUndefined();
+		expect(lineas.find((l) => l.cuentaId === 'cta-5.1.01')?.debe.toString()).toBeUndefined();
 	});
 
 	it('la numeración continúa el máximo del diario+período bajo lock', async () => {
