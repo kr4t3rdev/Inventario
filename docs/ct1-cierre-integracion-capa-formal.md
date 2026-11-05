@@ -68,9 +68,9 @@ base de datos.
 | R6.1-e | Rollback físico formal del anticipo (filas 7 y 10) | `9327b75a` | `41928847500` (el push propio quedó cancelado por concurrencia) |
 | R6.1-f | Rollback físico formal de los servicios (filas 5-6) | `926abe4b` | `41928847500` |
 | R6.1-g | Rollback físico formal de la reversa formal y del cierre de período (filas 22-23) | `76bf8d37` | `41930764304` |
-| R6.1-h | Rollback físico formal de las liquidaciones (filas 14-16) y emisor formal del cobro de servicios en la action web | `36509810` | pendiente de anotar |
-| R6.1-i | Rollback físico formal de la producción (fila 13) | pendiente de anotar | pendiente de anotar |
-| R6.1-j | Rollback físico formal de la aplicación y el reverso de anticipos (filas 8-9) | pendiente de anotar | pendiente de anotar |
+| R6.1-h | Rollback físico formal de las liquidaciones (filas 14-16) y emisor formal del cobro de servicios en la action web | `36509810` | `41934667095` |
+| R6.1-i | Rollback físico formal de la producción (fila 13) | `32676cb9` | `41936570894` |
+| R6.1-j | Rollback físico formal de la aplicación y el reverso de anticipos (filas 8-9) | `212b8a49` | `41937817962` |
 | D3b | Verificador forense autónomo del libro mayor | `18633ae4` | `41918768311` |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
@@ -202,11 +202,11 @@ Notas de la matriz:
 
 | Comprobación | Resultado |
 |---|---|
-| Suite unitaria | 5749 pruebas verdes (848 archivos), 1 omitida, 2 pendientes |
-| Suite de integración (PostgreSQL desechable) | 200 pruebas verdes (34 archivos) |
+| Suite unitaria | 5809 pruebas verdes (858 archivos: 857 verdes y 1 omitido), 1 omitida, 2 pendientes |
+| Suite de integración (PostgreSQL desechable) | 243 pruebas verdes (45 archivos) |
 | Typecheck (`tsc --noEmit`) | Limpio |
 | ESLint sobre los archivos del programa | Limpio |
-| CI del estado final del programa | Verde: run `41809661324` sobre `6132fdc5` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
+| CI del estado final del programa | Verde: run `41937817962` sobre `212b8a49` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
 
 La base de integración es desechable y local
 (`ALLOW_DISPOSABLE_TEST_DB=1`, base `tcp_test_*` en `127.0.0.1:5433`); la
