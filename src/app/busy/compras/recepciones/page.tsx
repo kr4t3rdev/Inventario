@@ -32,6 +32,9 @@ export default async function RecepcionesPage() {
   }
   const canManage = user ? hasFeature(user, 'ordenes-compra') : false;
   const canReceive = user ? hasFeature(user, 'recepciones') : false;
+  const canUseAdvancedLocations = user
+    ? user.role === 'admin' || hasFeature(user, 'ubicaciones-avanzadas')
+    : false;
   return (
     <OrdenesCompraPageClient
       vendors={vendors.success ? (vendors.data ?? []) as any[] : []}
@@ -39,6 +42,7 @@ export default async function RecepcionesPage() {
       orders={(orders.data?.items ?? []) as any[]}
       canManageOrders={canManage}
       canReceive={canReceive}
+      canUseAdvancedLocations={canUseAdvancedLocations}
       title="Recepciones de compra"
       showCreateForm={false}
     />

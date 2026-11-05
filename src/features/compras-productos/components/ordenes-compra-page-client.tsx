@@ -4,11 +4,13 @@ import { ManagementPageTitle } from '@/components/management-page-title'
 import { ShoppingCart } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getUbicacionSugeridaPutawayAction } from '@/features/inventario/actions-putaway';
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones';
 import {
   cancelarOrdenCompraAction,
   confirmarOrdenCompraAction,
@@ -26,10 +28,11 @@ interface OrderRow {
   proveedor?: { nombre: string };
   items: Array<{
     id: string;
+    productoId?: string;
     cantidadPedida: number;
     cantidadRecibida: number;
     precioUnitario: number;
-    producto?: { nombre: string };
+    producto?: { id?: string; nombre: string; almacenId?: string };
   }>;
 }
 interface DraftLine {
@@ -45,6 +48,8 @@ interface OrdenesCompraPageClientProps {
   canManageOrders?: boolean;
   /** Permite registrar recepciones (feature `recepciones`). */
   canReceive?: boolean;
+  /** Permite sugerir y seleccionar hojas del almacén durante la recepción. */
+  canUseAdvancedLocations?: boolean;
   title?: string;
   showCreateForm?: boolean;
 }
@@ -69,6 +74,7 @@ export function OrdenesCompraPageClient({
   orders,
   canManageOrders = true,
   canReceive = true,
+  canUseAdvancedLocations = false,
   title = 'Órdenes de compra',
   showCreateForm = true,
 }: OrdenesCompraPageClientProps) {
@@ -82,11 +88,52 @@ export function OrdenesCompraPageClient({
   const [receiveKey, setReceiveKey] = useState(nuevaClaveIdempotencia);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [ubicacionHijaId, setUbicacionHijaId] = useState('');
+  const [ubicaciones, setUbicaciones] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [sugerenciaPutaway, setSugerenciaPutaway] = useState<string | null>(null);
+  const [putawayError, setPutawayError] = useState<string | null>(null);
+  const [isLoadingPutaway, setIsLoadingPutaway] = useState(false);
 
   const receiveOrder = orders.find((order) => order.id === receiveOrderId);
   const receiveCandidates = receiveOrder?.items.filter(
     (item) => item.cantidadRecibida < item.cantidadPedida,
   ) ?? [];
+  const selectedReceiveItem = receiveOrder?.items.find((item) => item.id === receiveItemId);
+
+  useEffect(() => {
+    if (!receiveOrderId || !selectedReceiveItem || !canUseAdvancedLocations) return;
+    let active = true;
+    setPutawayError(null);
+    setSugerenciaPutaway(null);
+    setUbicaciones([]);
+    setUbicacionHijaId('');
+    setIsLoadingPutaway(true);
+
+    Promise.all([
+      getUbicacionSugeridaPutawayAction({
+        productoId: selectedReceiveItem.productoId ?? selectedReceiveItem.producto?.id ?? '',
+      }),
+      getUbicacionesHijasAction({ almacenId: selectedReceiveItem.producto?.almacenId ?? '' }),
+    ]).then(([suggestion, locations]) => {
+      if (!active) return;
+      const locationOptions = locations.success ? locations.data ?? [] : [];
+      if (locations.success) setUbicaciones(locationOptions);
+      else setPutawayError(locations.error?.message ?? 'No se pudieron consultar las ubicaciones.');
+      if (suggestion.success && suggestion.data) {
+        setSugerenciaPutaway(suggestion.data.nombre);
+        const isSelectable = locationOptions.some(({ id }) => id === suggestion.data?.ubicacionId);
+        setUbicacionHijaId(isSelectable ? suggestion.data.ubicacionId : '');
+      } else if (!suggestion.success) {
+        setPutawayError(suggestion.error?.message ?? 'No se pudo consultar la sugerencia.');
+      }
+    }).catch(() => {
+      if (active) setPutawayError('No se pudo consultar la ubicación sugerida.');
+    }).finally(() => {
+      if (active) setIsLoadingPutaway(false);
+    });
+
+    return () => { active = false; };
+  }, [canUseAdvancedLocations, receiveOrderId, selectedReceiveItem]);
 
   async function run(
     action: () => Promise<{ success: boolean; error?: { message?: string } | null }>,
@@ -132,7 +179,11 @@ export function OrdenesCompraPageClient({
     const ok = await run(() => registrarRecepcionAction({
       ordenId: receiveOrderId,
       claveIdempotencia: receiveKey,
-      items: [{ ordenItemId: receiveItemId, cantidad: Number(receiveQuantity) }],
+      items: [{
+          ordenItemId: receiveItemId,
+          cantidad: Number(receiveQuantity),
+          ...(ubicacionHijaId ? { ubicacionHijaId } : {}),
+        }],
     }));
     // Solo se cierra el panel si la recepción fue aceptada; ante error se
     // conserva línea y cantidad para que el usuario corrija.
@@ -239,7 +290,7 @@ export function OrdenesCompraPageClient({
         <form className="space-y-3 rounded-md border p-4" onSubmit={receiveOrderSubmit}>
           <h2 className="font-medium">Registrar recepción</h2>
           <label className="block space-y-1 text-sm">Línea de orden
-            <select aria-label="Línea de orden" className="h-9 w-full rounded-md border bg-background px-2" value={receiveItemId} onChange={(e) => setReceiveItemId(e.target.value)} required>
+             <select aria-label="Línea de orden" className="h-9 w-full rounded-md border bg-background px-2" value={receiveItemId} onChange={(e) => setReceiveItemId(e.target.value)} required>
               <option value="">Selecciona la línea</option>
               {(receiveOrder?.items ?? []).map((item) => {
                 const pendiente = item.cantidadPedida - item.cantidadRecibida;
@@ -250,7 +301,31 @@ export function OrdenesCompraPageClient({
                 );
               })}
             </select>
-          </label>
+           </label>
+          {canUseAdvancedLocations && (
+            <div className="space-y-1">
+              <label htmlFor="putaway-location" className="block text-sm">Ubicación de destino</label>
+              <select
+                id="putaway-location"
+                aria-label="Ubicación de destino"
+                className="h-9 w-full rounded-md border bg-background px-2"
+                value={ubicacionHijaId}
+                onChange={(event) => setUbicacionHijaId(event.target.value)}
+                disabled={isLoadingPutaway || ubicaciones.length === 0}
+              >
+                <option value="">Sin ubicación específica</option>
+                {ubicaciones.map((ubicacion) => (
+                  <option key={ubicacion.id} value={ubicacion.id}>{ubicacion.nombre}</option>
+                ))}
+              </select>
+              {isLoadingPutaway && <p role="status" className="text-sm">Consultando ubicación sugerida…</p>}
+              {sugerenciaPutaway && <p role="status" className="text-sm">Sugerencia: {sugerenciaPutaway}</p>}
+              {!isLoadingPutaway && !putawayError && !sugerenciaPutaway && (
+                <p className="text-sm text-muted-foreground">No hay una sugerencia para esta línea.</p>
+              )}
+              {putawayError && <p role="alert" className="text-sm text-destructive">{putawayError}</p>}
+            </div>
+          )}
           <label className="block space-y-1 text-sm">Cantidad a recibir
             <Input aria-label="Cantidad a recibir" type="number" min="1" value={receiveQuantity} onChange={(e) => setReceiveQuantity(e.target.value)} required />
           </label>

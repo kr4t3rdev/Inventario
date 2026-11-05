@@ -7,6 +7,12 @@ vi.mock('@/features/compras-productos/actions-oc', () => ({
   registrarRecepcionAction: vi.fn(),
   cancelarOrdenCompraAction: vi.fn(),
 }));
+vi.mock('@/features/inventario/actions-putaway', () => ({
+  getUbicacionSugeridaPutawayAction: vi.fn(),
+}));
+vi.mock('@/features/inventario/actions-ubicaciones', () => ({
+  getUbicacionesHijasAction: vi.fn(),
+}));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import {
@@ -16,6 +22,8 @@ import {
   registrarRecepcionAction,
 } from '@/features/compras-productos/actions-oc';
 import { OrdenesCompraPageClient } from '@/features/compras-productos/components/ordenes-compra-page-client';
+import { getUbicacionSugeridaPutawayAction } from '@/features/inventario/actions-putaway';
+import { getUbicacionesHijasAction } from '@/features/inventario/actions-ubicaciones';
 
 /**
  * @description Primer argumento de la n-esima llamada de un mock tipado.
@@ -49,6 +57,49 @@ const props = {
 
 describe('OrdenesCompraPageClient', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('muestra la sugerencia y permite elegir otra hoja para la recepción', async () => {
+    vi.mocked(getUbicacionSugeridaPutawayAction).mockResolvedValue({
+      success: true,
+      data: { ubicacionId: 'hoja-1', nombre: 'A-01', almacenId: 'alm-1', alcance: 'PRODUCTO' },
+    } as never);
+    vi.mocked(getUbicacionesHijasAction).mockResolvedValue({
+      success: true,
+      data: [{ id: 'hoja-1', nombre: 'A-01', parentId: null }, { id: 'hoja-2', nombre: 'B-01', parentId: null }],
+    } as never);
+    vi.mocked(registrarRecepcionAction).mockResolvedValue({ success: true, data: {} } as any);
+    render(<OrdenesCompraPageClient {...props} canUseAdvancedLocations orders={[{
+      id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },
+      items: [{ id: 'item-1', productoId: 'prod-1', producto: { id: 'prod-1', nombre: 'Producto 1', almacenId: 'alm-1' }, cantidadPedida: 5, cantidadRecibida: 0, precioUnitario: 20 }],
+      createdAt: new Date().toISOString(), total: 100,
+    }]} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /recibir/i }));
+    expect(await screen.findByText(/Sugerencia: A-01/i)).toBeInTheDocument();
+    const location = screen.getByLabelText(/ubicación de destino/i);
+    expect(location).toHaveValue('hoja-1');
+    fireEvent.change(location, { target: { value: 'hoja-2' } });
+    fireEvent.change(screen.getByLabelText(/cantidad a recibir/i), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
+
+    await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledWith(expect.objectContaining({
+      items: [{ ordenItemId: 'item-1', cantidad: 2, ubicacionHijaId: 'hoja-2' }],
+    })));
+  });
+
+  it('muestra fallback si no hay sugerencia y comunica errores de consulta', async () => {
+    vi.mocked(getUbicacionSugeridaPutawayAction).mockResolvedValue({ success: true, data: null } as never);
+    vi.mocked(getUbicacionesHijasAction).mockResolvedValue({ success: true, data: [] } as never);
+    render(<OrdenesCompraPageClient {...props} canUseAdvancedLocations orders={[{
+      id: 'oc-1', estado: 'CONFIRMADA', items: [{ id: 'item-1', productoId: 'prod-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 5, cantidadRecibida: 0, precioUnitario: 20 }], createdAt: '', total: 100,
+    }]} />);
+    fireEvent.click(screen.getByRole('button', { name: /recibir/i }));
+    expect(await screen.findByText(/No hay una sugerencia/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /cerrar/i }));
+    vi.mocked(getUbicacionesHijasAction).mockResolvedValue({ success: false, error: { message: 'Error consultando ubicaciones' } } as never);
+    fireEvent.click(screen.getByRole('button', { name: /recibir/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Error consultando ubicaciones');
+  });
 
   it('crea una orden con la línea capturada', async () => {
     vi.mocked(createOrdenCompraAction).mockResolvedValue({ success: true, data: {} } as any);

@@ -293,6 +293,19 @@ export const registrarRecepcionAction = withAction(
             'RECEPCION_EXCEDENTE',
           );
         }
+        if (inputItem.ubicacionHijaId) {
+          requireFeature(user, 'ubicaciones-avanzadas', 'recibir en una ubicación específica');
+          const hoja = await tx.ubicacion.findFirst({
+            where: {
+              id: inputItem.ubicacionHijaId,
+              tenantId,
+              almacenId: orderItem.producto.almacenId,
+              children: { none: {} },
+            },
+            select: { id: true },
+          });
+          if (!hoja) throw new ActionError('Ubicación de destino no válida', 'NOT_FOUND');
+        }
       }
 
       const recepcion = await tx.recepcion.create({
@@ -345,6 +358,7 @@ export const registrarRecepcionAction = withAction(
           productoId: orderItem.productoId,
           tipoUbicacion: 'almacen',
           ubicacionId: producto.almacenId,
+          ubicacionHijaId: inputItem.ubicacionHijaId,
           modo: 'increment',
           delta: inputItem.cantidad,
         });
@@ -355,6 +369,7 @@ export const registrarRecepcionAction = withAction(
           origenId: recepcion.id,
           tipoUbicacion: 'almacen',
           ubicacionId: producto.almacenId,
+          ubicacionHijaId: inputItem.ubicacionHijaId,
           cantidad: inputItem.cantidad,
           costoUnitario: orderItem.precioUnitario,
           secuencia: `ITEM-${index}`,

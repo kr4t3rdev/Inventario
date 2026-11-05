@@ -16,6 +16,7 @@ const recepcionItemSchema = z.object({
   cantidad: z.coerce.number().int().positive('La cantidad recibida debe ser mayor a 0'),
   codigoLote: z.string().trim().min(1).max(128).optional(),
   fechaVencimiento: z.coerce.date().optional(),
+  ubicacionHijaId: z.string().trim().min(1).optional(),
 });
 
 export const registrarRecepcionSchema = z.object({
