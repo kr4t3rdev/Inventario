@@ -62,7 +62,7 @@ Con matices declarados (esto no compensa las brechas de cobertura):
 | RL-1 | **Roles moratorios sin cuenta en el plan default.** Las plantillas de `COBRO_PRESTAMO`/`PAGO_DEUDA` usan `INTERESES_MORATORIOS_GANADOS`/`GASTOS_MORATORIOS`, roles sin cuenta default → un pago con mora > 0 en `enforce` daría `CUENTA_SIN_MAPEAR`. Divergencia semántica con el worktree (que eliminó el split moratorio en su decisión v1). | `lib/plan-default.ts` (23 roles mapeados de 25) vs plantillas de `posting-engine.ts` |
 | RL-2 | **Flag inexistente en el registry.** `contabilidad-formal` no está en `src/features/planes/feature-registry.ts`; la capa es inerte aunque cambie el modo. | Grep verificado en árbol local y en `origin/main` `f7268390` (2026-10-26): 0 coincidencias |
 | RL-3 | **Ventana shadow no valida nada con 3 writers.** El gate R7.3 exige ≥ 7 días con conciliación cruzada; con solo `COBRO_PRESTAMO`/`DEUDA_RECIBIDA`/`PAGO_DEUDA` no ejercita la matriz real. | `openspec/changes/contabilidad-capa-formal/tasks.md` (solo rama formal): R7.3/R7.4 abiertos |
-| RL-4 | **Manifiesto de comparación commiteado en ruta de código.** `src/lib/utils/prestamo-cash.ts` es un JSON de 912 rutas (comparación worktree vs main), agregado en el commit `6ce65e16`. Es un artefacto de proceso con extensión `.ts` dentro de `src/`; reubicar (p. ej. `docs/` o herramienta de build). | Lectura directa del archivo |
+| RL-4 | **Manifiesto de comparación commiteado en ruta de código.** `src/lib/utils/prestamo-cash.ts` es un JSON de 912 rutas (comparación worktree vs main), agregado en el commit `6ce65e16`. Es un artefacto de proceso con extensión `.ts` dentro de `src/`; reubicar (p. ej. `docs/` o herramienta de build). **Resuelto (2026-11-05)**: el manifiesto se retiró de `src/` (commit `b327cf7f9`, que devolvió al archivo su forma de utilidad real) y la comparación quedó congelada como artefacto de documentación (CT-6). | Lectura directa del archivo; copia congelada en `docs/artefactos/manifiesto-comparacion-rutas-rl4.json` (`sha256 b640dd41…a86cf4`) |
 | RL-5 | **Dualidad de fuentes históricas.** `CierreContable` legacy sigue aportando resultados acumulados cuando no hay snapshot aprobado del año; coexiste con `PeriodoContable` + snapshots v2/v3. | `services/current-balance-service.ts` |
 | RL-6 | **Divergencia creciente con la rama formal.** 135 rutas divergentes + 40 faltantes (de 912 relevantes) según el manifiesto RL-4; cada semana de evolución de main encarece el merge. Revisión 2026-10-26: hay ramas de reintento — `codex/contabilidad-merge-ci` (2026-10-18, ya sin deltas formales respecto de `origin/main`) y `codex/contabilidad-completar-integracion` (2026-10-24; pese a su nombre transporta los 5 commits F-1 de unidades, sin cambios formales) — y un inventario de merge no rastreado de ~130 rutas (`.tmp/merge-pending.json`) que incluye núcleo formal, servicios de caja y rutas móviles de contabilidad. La capa completa sigue solo en `feat/contabilidad-capa-formal` (`d1d06c4`). El worktree `contabilidad-correcciones` fue reasignado a `wip/codex-mobile-2026-10-12` (móvil sobre la misma línea). | `bloqueantes-merge-main-2026-10-13.md` (rama formal) + `git branch -a` + `.tmp/merge-pending.json` |
 
@@ -84,7 +84,7 @@ Con matices declarados (esto no compensa las brechas de cobertura):
 3. **CT-3 — Registrar el flag y el seed en main** tras CT-1/CT-2: `contabilidad-formal` en el feature-registry, action de inicialización del plan y seed idempotente.
 4. **CT-4 — Abrir la ventana shadow R7.3 solo con la matriz completa de writers** (RL-3); la conciliación cruzada sublibros↔mayor (existe en worktree) es el criterio objetivo de salida.
 5. **CT-5 — Migrar reportes al mayor formal como fuente única** cuando la ventana pase; hasta entonces mantener la doble lectura declarada (gerencial + formal) y no mezclar fuentes en un mismo informe.
-6. **CT-6 — Reubicar el manifiesto RL-4** fuera de `src/` y mantener la comparación como artefacto de docs.
+6. **CT-6 — Reubicar el manifiesto RL-4** fuera de `src/` y mantener la comparación como artefacto de docs. **Cerrado (2026-11-05)**: la copia congelada vive en `docs/artefactos/manifiesto-comparacion-rutas-rl4.json`, con su nota de origen, alcance y verificación en `docs/artefactos/README.md`.
 7. **CT-7 — Mantener los No-goals como series posteriores** (impuestos, extractos bancarios, activos, presupuestos, analítica), como declara el proposal CTA. La decisión de país fiscal — pendiente desde 2026-09-06 — condiciona impuestos y localización; no diseñar el motor fiscal sin ella.
 
 ## Correcciones a documentos previos
@@ -96,6 +96,13 @@ Con matices declarados (esto no compensa las brechas de cobertura):
 | Comparación 2026-09-06: "falta motor fiscal" | Sigue sin haber motor fiscal **contable**; el marco FE-T1..T5 es de facturación electrónica y no llena ese hueco. |
 
 ## Registro de revisión
+
+**2026-11-05 — CT-6 cerrado: el manifiesto RL-4 sale de `src/` y queda como artefacto congelado de documentación.**
+
+- `src/lib/utils/prestamo-cash.ts` ya no contenía el manifiesto: desde `b327cf7f9` es la utilidad real del módulo (42 líneas). Lo que quedaba de RL-4 era conservar la comparación de 912 rutas como artefacto legible fuera del árbol de código.
+- La comparación se recuperó verbatim del commit `6ce65e16` (912 entradas; `source_head` `d1d06c4` contra `pinned_main` `ea6084c5`; 495 `exact-present`, 242 `genuinely-new-source`, 40 `missing`, 135 `divergent-needs-review`) y quedó en `docs/artefactos/manifiesto-comparacion-rutas-rl4.json` (`sha256 b640dd413c2e1a7abd8adb457fc6b61f8b1dd458c10a722d131c27fc28a86cf4`).
+- `docs/artefactos/README.md` documenta el origen, el alcance, la comparación, los conteos y cómo verificar la copia (`git show 6ce65e16:src/lib/utils/prestamo-cash.ts`).
+- RL-4 queda cerrado. RL-6 sigue vigente: las cifras del manifiesto son la foto del 2026-10-23 y la divergencia con `main` ya cambió desde entonces; el manifiesto se conserva congelado y no se regenera.
 
 **2026-10-27 — re-verificación contra `origin/main` `e15017d1`: sin cambios contables.**
 
