@@ -23,7 +23,7 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - T9 — S5-S7; Aprobar el issue `#98` con `status:approved`; ruta: acción protegida autorizada; evidencia: label confirmado por read-back.
 - T10 — S5-S6; Dividir el slice de Usuarios y Roles en PRs cohesivos de hasta 400 líneas; ruta: `chained-pr`; commits: Usuarios `36dae2ae`, Roles `5df8496c`.
 - T11 — S5-S6; Publicar tracker y siete ramas hijas en cadena; ruta: Git/GitHub; publicada y verificada por read-back de los ocho heads remotos.
-- T12 — S6-S7; Crear PR tracker y PR1–PR7, con tipo, dependencia y referencia correctos; ruta: GitHub; PR #100–#106 mergeadas en sus bases feature. #99 ahora consolida toda la cadena hacia main; falta actualizarlo, esperar checks y mergear.
+- T12 — S6-S7; Crear PR tracker y PR1–PR7, con tipo, dependencia y referencia correctos; ruta: GitHub; completada. PR #100–#106 mergeadas en sus bases feature y tracker #99 consolidado y mergeado a `main`; issue #98 cerrado.
 
 ## Delivery strategy
 - Estrategia elegida por el usuario: `feature-branch-chain`.
@@ -66,3 +66,5 @@ Mantener intactos los flujos, acciones, permisos y contenido de negocio; armoniz
 - L29 — Por instrucción de la usuaria, PR #100–#106 se mergearon secuencialmente en sus bases feature. Los PRs cerraron, pero el feature completo no llegó a `main`: #99 permaneció draft sobre `main` y #98 siguió OPEN.
 - L30 — La usuaria autorizó consolidar la rama final `origin/feat/configuracion-licencias` dentro de `chore/configuracion-ux-tracker`, convertir #99 en la integración final a `main` y cerrar #98 allí. Aceptó explícitamente la excepción de tamaño para el diff agregado de 1,488 líneas.
 - L31 — Consolidación local creada sin conflictos en `d0908d2b6d6b886d5a3b5a5d595395bf9eae00ed`; `git diff --check origin/main...HEAD` pasó. Se integró después el `origin/main` vigente mediante `ab0d4da97` (`chore(configuracion): sync tracker with current main`), sin conflictos. El diff de #99 contra `main` continúa acotado a la cadena de Configuración: 27 archivos, 942 adiciones y 546 eliminaciones. PR #99 aún requiere actualizar su cuerpo/estado, CI y merge.
+- L32 — #99 quedó actualizado con `Closes #98`, `type:feature`, `size:exception` y el cuerpo final; se retiró de draft. ASSESS: riesgo medio, `reviewDue: false`, sin verifier adicional. Todos los checks del head `7d432f76` terminaron en SUCCESS y GitHub reportó `MERGEABLE/CLEAN`.
+- L33 — #99 fue mergeado a `main` con commit `4314b4c6aaa740446d80c8d4a7e1b24cb131f947` el 2026-11-05 01:27 UTC. Read-back confirmó PR #99–#106 en estado MERGED, `origin/main` apuntando al merge commit e issue #98 CLOSED a las 01:27:33 UTC.
