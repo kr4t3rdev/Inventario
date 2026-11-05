@@ -194,19 +194,19 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Banco</Label>
-                      <Input value={form.nombreBanco} onChange={e => setForm({...form, nombreBanco: e.target.value})} placeholder="Ej: Banco Nacional" />
+                      <Label htmlFor="create-bank-name">Banco</Label>
+                      <Input id="create-bank-name" value={form.nombreBanco} onChange={e => setForm({...form, nombreBanco: e.target.value})} placeholder="Ej: Banco Nacional" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Número de cuenta</Label>
-                      <Input value={form.numeroCuenta} onChange={e => setForm({...form, numeroCuenta: e.target.value})} placeholder="Ej: 123-456-789" />
+                      <Label htmlFor="create-account-number">Número de cuenta</Label>
+                      <Input id="create-account-number" value={form.numeroCuenta} onChange={e => setForm({...form, numeroCuenta: e.target.value})} placeholder="Ej: 123-456-789" />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Tipo</Label>
+                      <Label htmlFor="create-account-type">Tipo</Label>
                       <Select value={form.tipoCuenta} onValueChange={v => setForm({...form, tipoCuenta: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="create-account-type"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="AHORROS">Ahorros</SelectItem>
                           <SelectItem value="CORRIENTE">Corriente</SelectItem>
@@ -215,9 +215,9 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Moneda</Label>
+                      <Label htmlFor="create-account-currency">Moneda</Label>
                       <Select value={form.moneda} onValueChange={v => setForm({...form, moneda: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="create-account-currency"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CUP">CUP</SelectItem>
                           <SelectItem value="USD">USD</SelectItem>
@@ -377,19 +377,22 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                     onRetry={() => router.refresh()}
                   />
                 ) : cuentas.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No hay cuentas bancarias registradas.</div>
+                  <div role="status" className="text-center py-8 text-muted-foreground">
+                    No hay cuentas bancarias registradas.
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
+                      <caption className="sr-only">Cuentas bancarias</caption>
                       <thead>
                         <tr className="border-b text-left text-muted-foreground">
-                          <th className="pb-3 font-medium">Banco</th>
-                          <th className="pb-3 font-medium">Cuenta</th>
-                          <th className="pb-3 font-medium">Tipo</th>
-                          <th className="pb-3 font-medium">Moneda</th>
-                          <th className="pb-3 font-medium text-right">Saldo</th>
-                          <th className="pb-3 font-medium">Estado</th>
-                          <th className="pb-3 font-medium text-right">Acciones</th>
+                          <th scope="col" className="pb-3 font-medium">Banco</th>
+                          <th scope="col" className="pb-3 font-medium">Cuenta</th>
+                          <th scope="col" className="pb-3 font-medium">Tipo</th>
+                          <th scope="col" className="pb-3 font-medium">Moneda</th>
+                          <th scope="col" className="pb-3 font-medium text-right">Saldo</th>
+                          <th scope="col" className="pb-3 font-medium">Estado</th>
+                          <th scope="col" className="pb-3 font-medium text-right">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -398,12 +401,12 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                             key={cuenta.cuentaId}
                             className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                           >
-                            <td className="py-3">
+                            <th scope="row" className="py-3 text-left font-normal">
                               <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                                <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                                 <span className="font-medium">{cuenta.nombreBanco}</span>
                               </div>
-                            </td>
+                            </th>
                             <td className="py-3 font-mono text-xs">{cuenta.numeroCuenta}</td>
                             <td className="py-3">
                               <Badge variant="outline">{cuenta.tipoCuenta}</Badge>
@@ -417,10 +420,20 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                             </td>
                             <td className="py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => openEdit(cuenta)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  aria-label={`Editar cuenta ${cuenta.nombreBanco}`}
+                                  onClick={() => openEdit(cuenta)}
+                                >
                                   Editar
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={() => handleToggleStatus(cuenta)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  aria-label={`${cuenta.isActive ? 'Desactivar' : 'Activar'} cuenta ${cuenta.nombreBanco}`}
+                                  onClick={() => handleToggleStatus(cuenta)}
+                                >
                                   {cuenta.isActive ? 'Desactivar' : 'Activar'}
                                 </Button>
                               </div>
@@ -446,19 +459,19 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Banco</Label>
-                    <Input value={editForm.nombreBanco} onChange={e => setEditForm({...editForm, nombreBanco: e.target.value})} />
+                    <Label htmlFor="edit-bank-name">Banco</Label>
+                    <Input id="edit-bank-name" value={editForm.nombreBanco} onChange={e => setEditForm({...editForm, nombreBanco: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Número de cuenta</Label>
-                    <Input value={editForm.numeroCuenta} onChange={e => setEditForm({...editForm, numeroCuenta: e.target.value})} />
+                    <Label htmlFor="edit-account-number">Número de cuenta</Label>
+                    <Input id="edit-account-number" value={editForm.numeroCuenta} onChange={e => setEditForm({...editForm, numeroCuenta: e.target.value})} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Tipo</Label>
+                    <Label htmlFor="edit-account-type">Tipo</Label>
                     <Select value={editForm.tipoCuenta} onValueChange={v => setEditForm({...editForm, tipoCuenta: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="edit-account-type"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="AHORROS">Ahorros</SelectItem>
                         <SelectItem value="CORRIENTE">Corriente</SelectItem>
@@ -467,9 +480,9 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Moneda</Label>
+                    <Label htmlFor="edit-account-currency">Moneda</Label>
                     <Select value={editForm.moneda} onValueChange={v => setEditForm({...editForm, moneda: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="edit-account-currency"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="CUP">CUP</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>

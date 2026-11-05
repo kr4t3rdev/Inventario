@@ -87,6 +87,43 @@ describe('CuentasPageClient', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1);
   });
 
+  it('asocia etiquetas accesibles a los controles de creación', async () => {
+    render(<CuentasPageClient cuentas={cuentasMultiMoneda} />);
+    await userEvent.click(screen.getByRole('button', { name: /nueva cuenta/i }));
+
+    expect(screen.getByLabelText('Banco')).toBeInTheDocument();
+    expect(screen.getByLabelText('Número de cuenta')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tipo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Moneda')).toBeInTheDocument();
+  });
+
+  it('asocia etiquetas accesibles a los controles de edición', async () => {
+    render(<CuentasPageClient cuentas={cuentasMultiMoneda} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Editar cuenta Banco A' }));
+
+    expect(screen.getByLabelText('Banco')).toBeInTheDocument();
+    expect(screen.getByLabelText('Número de cuenta')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tipo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Moneda')).toBeInTheDocument();
+  });
+
+  it('nombra la tabla y las acciones con la cuenta correspondiente', () => {
+    render(<CuentasPageClient cuentas={cuentasMultiMoneda} />);
+
+    expect(screen.getByRole('table', { name: 'Cuentas bancarias' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar cuenta Banco A' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desactivar cuenta Banco A' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activar cuenta Banco C' })).toBeInTheDocument();
+  });
+
+  it('anuncia el estado vacío como estado', () => {
+    render(<CuentasPageClient cuentas={[]} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'No hay cuentas bancarias registradas.'
+    );
+  });
+
   it('sin error, no muestra estado de error', () => {
     render(<CuentasPageClient cuentas={cuentasMultiMoneda} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
