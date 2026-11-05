@@ -75,7 +75,7 @@ base de datos.
 | R6.1-k | Rollback físico formal del replay gobernado (fila 24) | `fcc74770` | `41991979544` |
 | R6.1-l | Rollback físico formal de la apertura contable manual aprobada | `490627dc` | `41998090101` |
 | PROD-1 | Alineación del módulo de producción con el esquema Prisma: migración de `Receta.costoUnitario` y campos obligatorios de sus writers | `a4980d9c` | `42001804406` |
-| CT-6 | Manifiesto de comparación de 912 rutas conservado como artefacto de documentación | `20038b65` | (se anota con el run del push) |
+| CT-6 | Manifiesto de comparación de 912 rutas conservado como artefacto de documentación | `20038b65` | `42003160064` |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
 CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
@@ -224,7 +224,7 @@ Notas de la matriz:
 | Suite de integración (PostgreSQL desechable) | 252 pruebas verdes (48 archivos) |
 | Typecheck (`tsc --noEmit`) | Limpio |
 | ESLint sobre los archivos del programa | Limpio |
-| CI del estado final del programa | Verde: run `41937817962` sobre `212b8a49` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
+| CI del estado final del programa | Verde: run `42003160064` sobre `069eda78` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
 
 La base de integración es desechable y local
 (`ALLOW_DISPOSABLE_TEST_DB=1`, base `tcp_test_*` en `127.0.0.1:5433`); la
