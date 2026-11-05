@@ -49,6 +49,8 @@ const { mockTx } = vi.hoisted(() => ({
 
 vi.mock('@/lib/prisma', () => ({
 	prisma: {
+		receta: { findMany: vi.fn() },
+		stockUbicacion: { findMany: vi.fn() },
 		ordenProduccion: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),
@@ -67,6 +69,7 @@ import { emitirProduccionInventario } from '@/features/contabilidad-formal/servi
 import {
 	aprobarOrdenProduccionAction,
 	completarOrdenProduccionAction,
+	planificarNecesidadesAction,
 } from '@/features/produccion/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -195,6 +198,61 @@ describe('Producción Server Actions', () => {
 		const result = await aprobarOrdenProduccionAction('op-1');
 		expect(result.success).toBe(false);
 		expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
+	});
+
+	it('planifica con stock neto y exige el flag MRP avanzado', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			planFeatures: { 'mrp-avanzado': true },
+		});
+		vi.mocked(prisma.receta.findMany).mockResolvedValue([{
+			recetaId: 'P', productoId: 'p', rendimiento: 1,
+			RecetaIngrediente: [{
+				productoId: 'I', recetaIngredienteId: null, cantidad: 3, desperdicio: 0,
+			}],
+		}] as never);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([{
+			productoId: 'I', cantidadDisponible: 2,
+		}] as never);
+
+		const result = await planificarNecesidadesAction({ recetaId: 'P', cantidad: 2 });
+
+		expect(expectActionSuccess(result).data).toEqual({
+			materiales: [{
+				productoId: 'I', cantidadRequerida: 6, cantidadDisponible: 2, cantidadComprar: 4,
+			}],
+			ordenesProduccion: [{ recetaId: 'P', productoId: 'p', cantidad: 2 }],
+		});
+		expect(prisma.receta.findMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: { tenantId: mockUser.tenantId },
+		}));
+	});
+
+	it('rechaza planificar MRP si el plan no incluye el flag avanzado', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			role: 'regularUser',
+			planFeatures: { produccion: true },
+		});
+		const result = await planificarNecesidadesAction({ recetaId: 'P', cantidad: 1 });
+
+		expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(prisma.receta.findMany).not.toHaveBeenCalled();
+	});
+
+	it('devuelve el error de dominio cuando la receta MRP no existe', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			planFeatures: { 'mrp-avanzado': true },
+		});
+		vi.mocked(prisma.receta.findMany).mockResolvedValue([] as never);
+
+		const result = await planificarNecesidadesAction({ recetaId: 'missing', cantidad: 1 });
+
+		expect(expectActionFailure(result).error).toMatchObject({
+			code: 'BOM_RECIPE_NOT_FOUND',
+			message: 'La receta missing no existe en el tenant',
+		});
 	});
 });
 

@@ -165,6 +165,13 @@ disponible, generando sugerencias de OC y órdenes de producción.
 * THEN el sistema exige 20 S y 60 I y descuenta disponible antes de
   sugerir compra o fabricación.
 
+#### Scenario: Stock disponible de subreceta y materiales
+
+* GIVEN la demanda requiere 20 S y 60 I, con 5 S disponibles y 18 I
+  disponibles luego de reservas
+* WHEN se planifican las necesidades
+* THEN sugiere fabricar 15 S y comprar 27 I, sin crear órdenes ni alterar stock.
+
 ## MODIFIED Requirements
 
 ### Requirement: Compras y FIFO respetan factor y lote

@@ -12,6 +12,7 @@ export {
   aprobarOrdenProduccionAction,
   completarOrdenProduccionAction,
   cancelarOrdenProduccionAction,
+  planificarNecesidadesAction,
 } from './actions'
 
 // Client Components
@@ -27,6 +28,13 @@ export {
   explodeBom,
   validateBomAcyclic,
 } from './services/bom'
+export { planificarNecesidades } from './services/mrp'
+export type {
+  MrpMaterialSuggestion,
+  MrpPlan,
+  MrpProductionSuggestion,
+  MrpStockBalance,
+} from './services/mrp'
 export type {
   BomExplosion,
   BomIngredient,

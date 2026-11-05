@@ -16,9 +16,92 @@ import {
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
 import { BomError, explodeBom } from "@/features/produccion/services/bom";
+import { planificarNecesidades } from "@/features/produccion/services/mrp";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+
+/**
+ * @description Convierte errores de validación BOM en errores de acción visibles para el cliente.
+ * @param {() => T} operacion - Cálculo de dominio que puede lanzar `BomError`.
+ * @returns {T} Resultado de la operación o error traducido.
+ */
+function ejecutarConErrorBom<T>(operacion: () => T): T {
+	try {
+		return operacion();
+	} catch (error) {
+		if (error instanceof BomError) throw new ActionError(error.message, error.code);
+		throw error;
+	}
+}
+
+export const planificarNecesidadesAction = withAction(
+	async (input: { recetaId: string; cantidad: number }, user: AuthenticatedUser) => {
+		requireFeature(user, 'mrp-avanzado', 'planificar necesidades de materiales');
+		const tenantId = requireTenant(user);
+		if (!input?.recetaId || !Number.isFinite(input.cantidad) || input.cantidad <= 0) {
+			throw new ActionError('La receta y una cantidad mayor que cero son obligatorias', 'VALIDATION_ERROR');
+		}
+
+		const recetas = await prisma.receta.findMany({
+			where: { tenantId },
+			select: {
+				recetaId: true,
+				productoId: true,
+				rendimiento: true,
+				RecetaIngrediente: {
+					select: {
+						productoId: true,
+						recetaIngredienteId: true,
+						cantidad: true,
+						desperdicio: true,
+					},
+				},
+			},
+		});
+		const recipes = recetas.map((recipe) => ({
+			recetaId: recipe.recetaId,
+			productoId: recipe.productoId,
+			rendimiento: recipe.rendimiento,
+			ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
+				ingredient.recetaIngredienteId
+					? {
+						recetaIngredienteId: ingredient.recetaIngredienteId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					}
+					: {
+						productoId: ingredient.productoId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					},
+			),
+		}));
+		const explosion = ejecutarConErrorBom(() =>
+			explodeBom(input.recetaId, input.cantidad, recipes),
+		);
+		const recetaRaiz = recipes.find(({ recetaId }) => recetaId === input.recetaId);
+		const productoIdsConDemanda = [...new Set([
+			...explosion.materiales.map(({ productoId }) => productoId),
+			...explosion.subrecipes.map(({ productoId }) => productoId)
+				.filter((id): id is string => Boolean(id)),
+			...(recetaRaiz?.productoId ? [recetaRaiz.productoId] : []),
+		])];
+		const balances = productoIdsConDemanda.length
+			? await prisma.stockUbicacion.findMany({
+					where: {
+						tenantId,
+						productoId: { in: productoIdsConDemanda },
+					},
+					select: { productoId: true, cantidadDisponible: true },
+				})
+			: [];
+
+		return ejecutarConErrorBom(() =>
+			planificarNecesidades(input.recetaId, input.cantidad, recipes, balances),
+		);
+	},
+);
 
 // ==================== RECETAS ====================
 
