@@ -45,6 +45,29 @@ export const trazabilidadLoteSelect = {
 			},
 		},
 	},
+	allocations: {
+		orderBy: { createdAt: 'asc' },
+		select: {
+			id: true,
+			cantidad: true,
+			costoUnitarioSnapshot: true,
+			ventaItem: {
+				select: {
+					id: true,
+					cantidad: true,
+					venta: {
+						select: {
+							ventaId: true,
+							createdAt: true,
+							estado: true,
+							cliente: { select: { nombre: true } },
+							factura: { select: { numeroFactura: true } },
+						},
+					},
+				},
+			},
+		},
+	},
 } satisfies Prisma.LoteSelect;
 
 /**
@@ -65,6 +88,38 @@ export type OrigenTrazabilidadLote = {
 	estado: string;
 	proveedor: string;
 	cantidad: number;
+};
+
+/**
+ * @description Venta que consumió unidades del lote mediante una asignación FIFO/FEFO.
+ */
+export type DestinoTrazabilidadLote = {
+	ventaId: string;
+	ventaItemId: string;
+	fecha: Date;
+	estado: string;
+	cliente: string;
+	numeroFactura: string | null;
+	cantidad: number;
+	costoUnitario: number | null;
+};
+
+/**
+ * @description Trazabilidad completa del lote: datos, documento de origen y ventas destino.
+ */
+export type TrazabilidadLote = {
+	lote: {
+		id: string;
+		codigo: string;
+		productoId: string;
+		productoNombre: string;
+		fechaVencimiento: Date | null;
+		cantidadInicial: number;
+		cantidadDisponible: number;
+	};
+	origen: OrigenTrazabilidadLote | null;
+	destinos: DestinoTrazabilidadLote[];
+	cantidadAsignada: number;
 };
 
 /**
@@ -100,4 +155,37 @@ export function construirOrigenTrazabilidad(
 		};
 	}
 	return null;
+}
+
+/**
+ * @description Construye la trazabilidad completa del lote: datos, origen y ventas destino.
+ * @param {RegistroLoteTrazabilidad} registro - Lote con origen y asignaciones cargadas.
+ * @returns {TrazabilidadLote} DTO de trazabilidad listo para la interfaz.
+ */
+export function construirTrazabilidadLote(registro: RegistroLoteTrazabilidad): TrazabilidadLote {
+	const destinos = registro.allocations.map((allocation) => ({
+		ventaId: allocation.ventaItem.venta.ventaId,
+		ventaItemId: allocation.ventaItem.id,
+		fecha: allocation.ventaItem.venta.createdAt,
+		estado: allocation.ventaItem.venta.estado,
+		cliente: allocation.ventaItem.venta.cliente?.nombre ?? 'Cliente general',
+		numeroFactura: allocation.ventaItem.venta.factura?.numeroFactura ?? null,
+		cantidad: allocation.cantidad,
+		costoUnitario: allocation.costoUnitarioSnapshot,
+	}));
+
+	return {
+		lote: {
+			id: registro.id,
+			codigo: registro.codigo,
+			productoId: registro.productoId,
+			productoNombre: registro.producto.nombre,
+			fechaVencimiento: registro.fechaVencimiento,
+			cantidadInicial: registro.cantidadInicial,
+			cantidadDisponible: registro.cantidadDisponible,
+		},
+		origen: construirOrigenTrazabilidad(registro),
+		destinos,
+		cantidadAsignada: destinos.reduce((total, destino) => total + destino.cantidad, 0),
+	};
 }
