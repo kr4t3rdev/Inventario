@@ -53,4 +53,29 @@ describe('planificarNecesidades', () => {
       ],
     });
   });
+
+  it('ignora residuos de precisión cuando el stock cubre exactamente la demanda', () => {
+    const recetaSubreceta: BomRecipe[] = [
+      {
+        recetaId: 'P', productoId: 'producto-P', rendimiento: 1,
+        ingredientes: [{ recetaIngredienteId: 'S', cantidad: 50, desperdicio: 0.1 }],
+      },
+      { recetaId: 'S', productoId: 'producto-S', rendimiento: 1, ingredientes: [] },
+    ];
+    const planSubreceta = planificarNecesidades('P', 1, recetaSubreceta, [
+      { productoId: 'producto-S', cantidadDisponible: 55 },
+    ]);
+
+    expect(planSubreceta.ordenesProduccion).toEqual([
+      { recetaId: 'P', productoId: 'producto-P', cantidad: 1 },
+    ]);
+
+    const recetaMaterial: BomRecipe[] = [{
+      recetaId: 'P', productoId: 'producto-P', rendimiento: 1,
+      ingredientes: [{ productoId: 'I', cantidad: 50, desperdicio: 0.1 }],
+    }];
+    expect(planificarNecesidades('P', 1, recetaMaterial, [
+      { productoId: 'I', cantidadDisponible: 55 },
+    ]).materiales[0].cantidadComprar).toBe(0);
+  });
 });

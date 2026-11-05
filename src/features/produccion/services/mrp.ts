@@ -1,5 +1,7 @@
 import { BomError, explodeBom, type BomRecipe } from './bom';
 
+const CANTIDAD_EPSILON = 1e-9;
+
 export interface MrpStockBalance {
   productoId: string;
   cantidadDisponible: number;
@@ -66,7 +68,7 @@ export function planificarNecesidades(
       disponiblePorProducto.set(receta.productoId, stockProducto - cantidadDisponible);
     }
     const cantidadProducir = cantidadNecesaria - cantidadDisponible;
-    if (cantidadProducir <= 0) return;
+    if (cantidadProducir <= CANTIDAD_EPSILON) return;
 
     const existing = ordenes.get(id);
     ordenes.set(id, {
@@ -91,12 +93,13 @@ export function planificarNecesidades(
       const disponible = disponiblePorProducto.get(productoId) ?? 0;
       const usado = Math.min(disponible, requerido);
       disponiblePorProducto.set(productoId, disponible - usado);
+      const deficit = requerido - usado;
       const actual = materiales.get(productoId);
       materiales.set(productoId, {
         productoId,
         cantidadRequerida: (actual?.cantidadRequerida ?? 0) + requerido,
         cantidadDisponible: (actual?.cantidadDisponible ?? 0) + usado,
-        cantidadComprar: (actual?.cantidadComprar ?? 0) + requerido - usado,
+        cantidadComprar: (actual?.cantidadComprar ?? 0) + (deficit <= CANTIDAD_EPSILON ? 0 : deficit),
       });
     }
   };
