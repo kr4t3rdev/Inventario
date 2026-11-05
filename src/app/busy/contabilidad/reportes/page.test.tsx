@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockReplace = vi.fn();
@@ -22,6 +22,21 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/contabilidad/components/reportes-analytics-page', () => ({
   ReportesAnalyticsPage: () => <div>analytics</div>,
+}));
+
+vi.mock('@/features/contabilidad/components/accounting-page-shell', () => ({
+  AccountingPageShell: ({ title, description, actions, children }: React.PropsWithChildren<{
+    title: string;
+    description: string;
+    actions?: React.ReactNode;
+  }>) => (
+    <main data-testid="accounting-page-shell">
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {actions}
+      {children}
+    </main>
+  ),
 }));
 
 import ReportesPage from './page';
@@ -61,5 +76,17 @@ describe('/busy/contabilidad/reportes page', () => {
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
     });
+  });
+
+  it('usa el shell contable y conserva la navegación de retorno', async () => {
+    useAuthMock.mockReturnValue({ user: { role: 'admin' }, loading: false });
+
+    render(<ReportesPage />);
+
+    expect(await screen.findByTestId('accounting-page-shell')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Volver a Contabilidad' })).toHaveAttribute(
+      'href',
+      '/busy/contabilidad',
+    );
   });
 });

@@ -6,13 +6,11 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { useEffect, useState } from 'react';
-import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BarChart3 } from 'lucide-react';
 
-import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-;
+import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
 import { ReportesShellLoader } from '@/features/reportes-financieros/components/reportes-shell-loader';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +26,6 @@ const ReportesAnalyticsPage = dynamic(
   },
 );
 
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const surfaceCardClass = cn(
   'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
   'dark:border-slate-800/60 dark:bg-slate-950/50',
@@ -43,7 +40,6 @@ const statusBadgeClass = cn(
  * @returns {JSX.Element} Vista de reportes y análisis.
  */
 export default function ReportesPage() {
-  const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
   const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -64,38 +60,6 @@ export default function ReportesPage() {
     }
   }, [isBlocked, router]);
 
-  const fadeIn = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        duration: shouldReduceMotion ? 0 : 0.45,
-        ease: EASE_OUT,
-      },
-    },
-  };
-
-  const fadeInUp = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 18 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: shouldReduceMotion ? 0 : 0.42,
-        ease: EASE_OUT,
-      },
-    },
-  };
-
-  const stagger = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.08,
-      },
-    },
-  };
-
   if (isBlocked) return null;
 
   if (!mounted) {
@@ -107,75 +71,40 @@ export default function ReportesPage() {
   }
 
   return (
-        <motion.div className="space-y-8 p-8" variants={fadeIn} initial="hidden" animate="show">
-          <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900" />
-            <div className="absolute -top-24 right-[-8%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-            <div className="absolute bottom-0 left-[-8%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-          </div>
-
-          {/* <motion.div variants={fadeInUp}>
-            <ContabilidadBreadcrumb />
-          </motion.div> */}
-
-          <motion.div
-            variants={fadeInUp}
-            className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    <AccountingPageShell
+      icon={BarChart3}
+      title="Reportes Financieros"
+      description="Analice indicadores contables y exporte reportes consolidados por período o cuenta."
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            asChild
           >
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  asChild
-                >
-                  <Link href="/busy/contabilidad" aria-label="Volver a contabilidad">
-                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
-                    <BarChart3 className="h-5 w-5" />
-                  </div>
-                  <h1 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300">
-                    Reportes Financieros
-                  </h1>
-                </div>
-              </div>
-              <p className="pl-11 text-muted-foreground">
-                Analice indicadores contables y exporte reportes consolidados por período o cuenta.
-              </p>
-            </div>
-
-            <Badge className={statusBadgeClass}>
-              Insights activos
-            </Badge>
-          </motion.div>
-
-          <motion.div variants={stagger} className="grid gap-3 md:grid-cols-3">
-            <motion.div variants={fadeInUp}>
-              <Badge variant="outline" className="h-9 px-3">
-                Resumen financiero consolidado
-              </Badge>
-            </motion.div>
-            <motion.div variants={fadeInUp}>
-              <Badge variant="outline" className="h-9 px-3">
-                Historial y trazabilidad de movimientos
-              </Badge>
-            </motion.div>
-            <motion.div variants={fadeInUp}>
-              <Badge variant="outline" className="h-9 px-3">
-                Exportación en CSV/PDF
-              </Badge>
-            </motion.div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <div className={surfaceCardClass}>
-              <ReportesAnalyticsPage />
-            </div>
-          </motion.div>
-        </motion.div>
+            <Link href="/busy/contabilidad" aria-label="Volver a Contabilidad">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+          <Badge className={statusBadgeClass}>Insights activos</Badge>
+        </>
+      }
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <Badge variant="outline" className="h-9 px-3">
+          Resumen financiero consolidado
+        </Badge>
+        <Badge variant="outline" className="h-9 px-3">
+          Historial y trazabilidad de movimientos
+        </Badge>
+        <Badge variant="outline" className="h-9 px-3">
+          Exportación en CSV/PDF
+        </Badge>
+      </div>
+      <div className={surfaceCardClass}>
+        <ReportesAnalyticsPage />
+      </div>
+    </AccountingPageShell>
   );
 }
