@@ -21,6 +21,20 @@ import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
+/**
+ * @description Convierte errores de validación BOM en errores de acción visibles para el cliente.
+ * @param {() => T} operacion - Cálculo de dominio que puede lanzar `BomError`.
+ * @returns {T} Resultado de la operación o error traducido.
+ */
+function ejecutarConErrorBom<T>(operacion: () => T): T {
+	try {
+		return operacion();
+	} catch (error) {
+		if (error instanceof BomError) throw new ActionError(error.message, error.code);
+		throw error;
+	}
+}
+
 export const planificarNecesidadesAction = withAction(
 	async (input: { recetaId: string; cantidad: number }, user: AuthenticatedUser) => {
 		requireFeature(user, 'mrp-avanzado', 'planificar necesidades de materiales');
@@ -63,7 +77,9 @@ export const planificarNecesidadesAction = withAction(
 					},
 			),
 		}));
-		const explosion = explodeBom(input.recetaId, input.cantidad, recipes);
+		const explosion = ejecutarConErrorBom(() =>
+			explodeBom(input.recetaId, input.cantidad, recipes),
+		);
 		const recetaRaiz = recipes.find(({ recetaId }) => recetaId === input.recetaId);
 		const productoIdsConDemanda = [...new Set([
 			...explosion.materiales.map(({ productoId }) => productoId),
@@ -81,7 +97,9 @@ export const planificarNecesidadesAction = withAction(
 				})
 			: [];
 
-		return planificarNecesidades(input.recetaId, input.cantidad, recipes, balances);
+		return ejecutarConErrorBom(() =>
+			planificarNecesidades(input.recetaId, input.cantidad, recipes, balances),
+		);
 	},
 );
 

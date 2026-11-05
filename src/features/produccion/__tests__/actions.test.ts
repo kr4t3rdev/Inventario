@@ -239,6 +239,21 @@ describe('Producción Server Actions', () => {
 		expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
 		expect(prisma.receta.findMany).not.toHaveBeenCalled();
 	});
+
+	it('devuelve el error de dominio cuando la receta MRP no existe', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			planFeatures: { 'mrp-avanzado': true },
+		});
+		vi.mocked(prisma.receta.findMany).mockResolvedValue([] as never);
+
+		const result = await planificarNecesidadesAction({ recetaId: 'missing', cantidad: 1 });
+
+		expect(expectActionFailure(result).error).toMatchObject({
+			code: 'BOM_RECIPE_NOT_FOUND',
+			message: 'La receta missing no existe en el tenant',
+		});
+	});
 });
 
 describe('Producción: kardex y cancelación', () => {
