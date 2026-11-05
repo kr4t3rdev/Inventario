@@ -11,9 +11,5 @@ export const metadata = {
 }
 
 export default function UsersConfigPage() {
-  return (
-    <div className="container mx-auto p-6 space-y-6">
-      <TenantUsersPage />
-    </div>
-  )
+  return <TenantUsersPage />
 }

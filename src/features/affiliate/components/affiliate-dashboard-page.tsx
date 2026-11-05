@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { Gift, Link2, Loader2, TicketPercent } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { SettingsPageShell } from '@/features/configuracion/components/settings-page-shell';
 import {
   generateReferralCodeAction,
   getAffiliateDashboardAction,
@@ -12,10 +20,6 @@ import {
   type AffiliateSummary,
   type ReferralPerkCatalogItem,
 } from '@/features/affiliate';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 /**
  * @description Dashboard tenant para el programa de referidos.
@@ -59,7 +63,7 @@ export function AffiliateDashboardPage() {
   const handleCopy = async () => {
     if (!summary) return;
     await navigator.clipboard.writeText(summary.referralLink);
-    toast.success('Link copiado');
+    toast.success('Enlace copiado');
   };
 
   const handleRequestPerk = async () => {
@@ -81,34 +85,61 @@ export function AffiliateDashboardPage() {
     await loadData();
   };
 
+  const currentTierLabel = summary?.currentTier.replace('tier-', 'Nivel ');
+
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <SettingsPageShell
+        icon={Gift}
+        title="Referidos"
+        description="Obtén crédito para tu próxima licencia y beneficios exclusivos del programa."
+      >
+        <section role="status" aria-label="Cargando programa de referidos" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="rounded-xl border bg-card p-5">
+                <Skeleton className="mb-4 h-4 w-28" />
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="mt-4 h-10 w-full" />
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+          </div>
+        </section>
+      </SettingsPageShell>
     );
   }
 
   if (!summary) {
-    return <div className="p-6 text-sm text-muted-foreground">No se pudo cargar el programa de referidos.</div>;
+    return (
+      <SettingsPageShell
+        icon={Gift}
+        title="Referidos"
+        description="Obtén crédito para tu próxima licencia y beneficios exclusivos del programa."
+      >
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          No se pudo cargar el programa de referidos.
+        </p>
+      </SettingsPageShell>
+    );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Programa de referidos</h1>
-        <p className="text-muted-foreground">
-          Ganá crédito para tu próxima licencia y perks exclusivos del programa.
-        </p>
-      </div>
-
+    <SettingsPageShell
+      icon={Gift}
+      title="Referidos"
+      description="Obtén crédito para tu próxima licencia y beneficios exclusivos del programa."
+    >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader><CardTitle className="text-sm">Código</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-md border px-3 py-2 font-mono text-sm">{summary.referralCode}</div>
             <Button variant="outline" onClick={handleCopy} className="w-full">
-              <Link2 className="mr-2 h-4 w-4" /> Copiar link
+              <Link2 className="mr-2 h-4 w-4" /> Copiar enlace
             </Button>
           </CardContent>
         </Card>
@@ -116,7 +147,7 @@ export function AffiliateDashboardPage() {
           <CardHeader><CardTitle className="text-sm">Ventas válidas</CardTitle></CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{summary.confirmedSalesCount}</div>
-            <p className="text-xs text-muted-foreground">Tramo actual: {summary.currentTier}</p>
+            <p className="text-xs text-muted-foreground">Nivel actual: {currentTierLabel}</p>
           </CardContent>
         </Card>
         <Card>
@@ -127,7 +158,7 @@ export function AffiliateDashboardPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Perks</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">Beneficios</CardTitle></CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{summary.pendingPerkSlots}</div>
             <p className="text-xs text-muted-foreground">
@@ -181,7 +212,7 @@ export function AffiliateDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Catálogo y solicitud custom</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Catálogo y solicitud personalizada</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               {catalog.map((item) => (
@@ -192,16 +223,20 @@ export function AffiliateDashboardPage() {
               ))}
             </div>
             <div className="space-y-2">
+              <Label htmlFor="referral-perk-title">Título de la idea</Label>
               <Input
+                id="referral-perk-title"
                 value={requestTitle}
                 onChange={(event) => setRequestTitle(event.target.value)}
-                placeholder="Título de la idea"
+                placeholder="Escribe el título"
               />
-              <textarea
+              <Label htmlFor="referral-perk-description">Descripción</Label>
+              <Textarea
+                id="referral-perk-description"
                 value={requestDescription}
                 onChange={(event) => setRequestDescription(event.target.value)}
-                placeholder="Describe el perk que quieres proponer"
-                className="min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm"
+                placeholder="Describe el beneficio que quieres proponer"
+                className="min-h-28"
               />
               <Button onClick={handleRequestPerk} disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -211,6 +246,6 @@ export function AffiliateDashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+  </SettingsPageShell>
   );
 }
