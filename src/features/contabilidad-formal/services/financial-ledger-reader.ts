@@ -11,7 +11,7 @@ interface LedgerReadParams {
 }
 
 /**
- * @description Lee líneas contabilizadas del tenant hasta el corte inclusivo.
+ * @description Lee movimientos del tenant, conservando originales con reverso, hasta el corte.
  * @param {LedgerReadParams} params - Tenant, fecha de corte y transacción opcional.
  * @returns {Promise<FinancialLedgerLine[]>} Líneas decimales para el cálculo formal.
  */
@@ -30,7 +30,7 @@ export async function readFinancialLedger(params: LedgerReadParams): Promise<Fin
       tenantId: params.tenantId,
       asiento: {
         tenantId: params.tenantId,
-        estado: 'CONTABILIZADO',
+        OR: [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }],
         fecha: { ...(params.from ? { gte: params.from } : {}), lte: params.cutoffAt },
         ...(params.excludeClosingEntries ? { origenTipo: { not: 'cierre_periodo' } } : {}),
       },

@@ -20,7 +20,11 @@ describe('readFinancialLedger', () => {
     expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         tenantId: 'tenant-a',
-        asiento: { tenantId: 'tenant-a', estado: 'CONTABILIZADO', fecha: { lte: cutoffAt } },
+        asiento: {
+          tenantId: 'tenant-a',
+          OR: [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }],
+          fecha: { lte: cutoffAt },
+        },
         cuenta: { tenantId: 'tenant-a' },
       },
     }));
@@ -66,6 +70,18 @@ describe('readFinancialLedger', () => {
     expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
         asiento: expect.objectContaining({ origenTipo: { not: 'cierre_periodo' } }),
+      }),
+    }));
+  });
+
+  it('incluye originales revertidos para que el reverso no quede aislado', async () => {
+    db.asientoLinea.findMany.mockResolvedValue([]);
+    await readFinancialLedger({ tenantId: 't', cutoffAt: new Date('2026-12-31') });
+    expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        asiento: expect.objectContaining({
+          OR: [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }],
+        }),
       }),
     }));
   });
