@@ -1,6 +1,7 @@
 export { getKardexAction } from './actions-kardex';
 export type { KardexInput } from './actions-kardex';
 export { getUbicacionesHijasAction } from './actions-ubicaciones';
+export { getUbicacionSugeridaPutawayAction } from './actions-putaway';
 export {
 	createAjusteAction,
 	anularAjusteAction,
