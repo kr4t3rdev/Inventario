@@ -24,7 +24,9 @@ model Categoria {
   tenant                Tenant      @relation(fields: [tenantId], references: [tenantId])
   productos             Producto[]
   productosSubcategoria Producto[]  @relation("ProductoSubcategoria")
+  reglasPutaway         ReglaPutaway[]
 
+  @@unique([tenantId, catId])
   @@index([clasSectionId])
   @@index([clasSpecificId])
   @@index([tenantId])
@@ -216,6 +218,7 @@ model Tenant {
   recepcionesCompra              Recepcion[]
   recepcionesCompraItems         RecepcionItem[]
   reglasReabastecimiento         ReglaReabastecimiento[]
+  reglasPutaway                  ReglaPutaway[]
   comprasServicio                CompraServicio[]
   contratos                      Contrato[]
   tiposContratosCustom           TipoContratoCustom[]
@@ -563,6 +566,7 @@ model Producto {
   ordenCompraItems     OrdenCompraItem[]
   recepcionItems       RecepcionItem[]
   reglasReabastecimiento ReglaReabastecimiento[]
+  reglasPutaway          ReglaPutaway[]
   compras              CompraProducto[]
   gastoCompras         GastoCompra[]
   mermas               Merma[]
@@ -1735,10 +1739,30 @@ model Ubicacion {
   movimientos StockMoveLine[] @relation("MovimientoUbicacionHija")
   ajustes AjusteInventario[] @relation("AjusteUbicacionHija")
   conteos ConteoInventario[] @relation("ConteoUbicacionHija")
+  reglasPutaway ReglaPutaway[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, almacenId, id])
   @@index([tenantId, almacenId, parentId])
+}
+
+/// Regla opcional de ubicación destino para recepción, por producto o categoría.
+model ReglaPutaway {
+  id          String     @id @default(cuid())
+  tenantId    String
+  productoId  String?
+  categoriaId String?
+  ubicacionId String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  tenant      Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  producto    Producto?  @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade)
+  categoria   Categoria? @relation(fields: [tenantId, categoriaId], references: [tenantId, catId], onDelete: Cascade)
+  ubicacion   Ubicacion  @relation(fields: [tenantId, ubicacionId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, productoId])
+  @@unique([tenantId, categoriaId])
+  @@index([tenantId, ubicacionId])
 }
 
 /// Saldo de inventario en una hoja de Ubicacion; StockUbicacion conserva el total agregado.

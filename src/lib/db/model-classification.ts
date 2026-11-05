@@ -152,6 +152,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Review: SCOPED('Reseña del tenant.'),
   ReviewPrompt: SCOPED('Solicitud de reseña del tenant.'),
   ReglaReabastecimiento: SCOPED('Regla min/max de inventario por tenant y ubicación.'),
+  ReglaPutaway: SCOPED('Regla de ubicación destino con referencias compuestas al tenant.'),
   ReplayApproval: SCOPED('Aprobación inmutable de replay con tenantId y FKs compuestas a preflight y membresías.'),
   ReplayPreflight: SCOPED('Snapshot de replay ligado por FKs compuestas al tenant, período y solicitante.'),
   ReplayRun: SCOPED('Ejecución de replay ligada por FKs compuestas a tenant, aprobación y actor.'),
