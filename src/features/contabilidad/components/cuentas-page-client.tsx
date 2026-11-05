@@ -15,15 +15,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
 import { PanelError } from '@/features/contabilidad/components/panel-states';
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { LazyMotion, m as motion } from "framer-motion"
+import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
 import {
   createCuentaBancariaAction,
   updateCuentaBancariaAction,
@@ -162,27 +160,25 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
   );
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-8 p-8">
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Link href="/busy/contabilidad">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                  Cuentas Bancarias
-                </h2>
-              </div>
-              <p className="pl-10 text-muted-foreground">
-                Administra los bancos, tipos de cuenta y saldos disponibles.
-              </p>
-            </div>
-
+    <AccountingPageShell
+      icon={Building2}
+      title="Cuentas Bancarias"
+      description="Administra los bancos, tipos de cuenta y saldos disponibles."
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            aria-label="Volver a Contabilidad"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          >
+            <Link href="/busy/contabilidad">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Volver a Contabilidad</span>
+            </Link>
+          </Button>
+          <div className="contents">
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="shadow-sm hover:shadow-md transition-all">
@@ -319,10 +315,12 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 </div>
               </DialogContent>
             </Dialog>
-          </motion.div>
-
+          </div>
+        </>
+      }
+    >
           {/* Stats Cards */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
             <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Cuentas</CardTitle>
@@ -363,10 +361,10 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
           {/* Table */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <section>
             <Card className={surfaceCardClass}>
               <CardHeader>
                 <CardTitle>Listado de Cuentas</CardTitle>
@@ -395,12 +393,9 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                         </tr>
                       </thead>
                       <tbody>
-                        {cuentas.map((cuenta: any, i: number) => (
-                          <motion.tr
+                        {cuentas.map((cuenta: any) => (
+                          <tr
                             key={cuenta.cuentaId}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.03 }}
                             className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                           >
                             <td className="py-3">
@@ -430,7 +425,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                                 </Button>
                               </div>
                             </td>
-                          </motion.tr>
+                          </tr>
                         ))}
                       </tbody>
                     </table>
@@ -438,8 +433,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 )}
               </CardContent>
             </Card>
-          </motion.div>
-        </motion.div>
+          </section>
 
         {/* Edit Dialog */}
         <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
@@ -494,7 +488,6 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
             )}
           </DialogContent>
         </Dialog>
-      </SidebarInset>
-    </SidebarProvider>
+    </AccountingPageShell>
   )
 }

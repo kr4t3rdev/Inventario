@@ -32,7 +32,7 @@ vi.mock('framer-motion', async (importOriginal) => {
 
 vi.mock('@/components/ui/sidebar', () => ({
   SidebarProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarInset: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarInset: ({ children }: { children: React.ReactNode }) => <main>{children}</main>,
 }));
 
 import { CuentasPageClient } from '@/features/contabilidad/components/cuentas-page-client';
@@ -68,6 +68,23 @@ describe('CuentasPageClient', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /intentar nuevamente/i }));
     expect(mocks.refresh).toHaveBeenCalled();
+  });
+
+  it('usa un encabezado principal y una navegación de regreso accesible', () => {
+    const { container } = render(<CuentasPageClient cuentas={cuentasMultiMoneda} />);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Cuentas Bancarias' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Volver a Contabilidad' })).toHaveAttribute(
+      'href',
+      '/busy/contabilidad'
+    );
+    expect(container.querySelector('header')).toBeInTheDocument();
+  });
+
+  it('no anida el landmark principal del layout ocupado', () => {
+    render(<main><CuentasPageClient cuentas={cuentasMultiMoneda} /></main>);
+
+    expect(screen.getAllByRole('main')).toHaveLength(1);
   });
 
   it('sin error, no muestra estado de error', () => {
