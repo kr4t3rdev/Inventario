@@ -1,11 +1,11 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { HandCoins, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
+
 import { getClientesAction } from "@/features/clientes"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
@@ -15,6 +15,7 @@ import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos
 import { PrestamoCashForm } from "@/features/contabilidad/components/prestamos-cash/prestamo-cash-form"
 import { PagoPrestamoModal } from "@/features/contabilidad/components/prestamos-cash/pago-prestamo-modal"
 import type { PrestamoCash } from "@/app/models/model"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import { useAuth } from "@/contexts/auth-context"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== "false"
@@ -73,36 +74,37 @@ function PrestamosCashContent() {
 
   if (!featureEnabled) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            El módulo de préstamos en efectivo está deshabilitado.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Contacte al administrador para habilitarlo.
-          </p>
-        </CardContent>
-      </Card>
+      <AccountingPageShell
+        icon={HandCoins}
+        title="Préstamos en Efectivo"
+        description="Gestione préstamos de dinero en efectivo a clientes"
+      >
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              El módulo de préstamos en efectivo está deshabilitado.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Contacte al administrador para habilitarlo.
+            </p>
+          </CardContent>
+        </Card>
+      </AccountingPageShell>
     )
   }
 
   return (
-    <>
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Préstamos en Efectivo</h1>
-          <p className="text-muted-foreground">
-            Gestione préstamos de dinero en efectivo a clientes
-          </p>
-        </div>
-        {canCreate && (
-          <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
-            <Plus className="h-4 w-4" />
-            Nuevo Préstamo
-          </Button>
-        )}
-      </div>
-
+    <AccountingPageShell
+      icon={HandCoins}
+      title="Préstamos en Efectivo"
+      description="Gestione préstamos de dinero en efectivo a clientes"
+      actions={canCreate ? (
+        <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
+          <Plus className="h-4 w-4" />
+          Nuevo Préstamo
+        </Button>
+      ) : undefined}
+    >
       <PrestamosCashTable
         prestamos={prestamos}
         isLoading={isLoading}
@@ -143,7 +145,7 @@ function PrestamosCashContent() {
         }))}
         onSuccess={handleSuccess}
       />
-    </>
+    </AccountingPageShell>
   )
 }
 
@@ -153,16 +155,8 @@ function PrestamosCashContent() {
  */
 export default function PrestamosCashPage() {
   return (
-    <PageTransition>
-      <StaggerContainer>
-        <StaggerItem>
-          <div className="container mx-auto py-6 space-y-6">
-            <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
-              <PrestamosCashContent />
-            </Suspense>
-          </div>
-        </StaggerItem>
-      </StaggerContainer>
-    </PageTransition>
+    <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
+      <PrestamosCashContent />
+    </Suspense>
   )
 }
