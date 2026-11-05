@@ -72,6 +72,10 @@ base de datos.
 | R6.1-i | Rollback físico formal de la producción (fila 13) | `32676cb9` | `41936570894` |
 | R6.1-j | Rollback físico formal de la aplicación y el reverso de anticipos (filas 8-9) | `212b8a49` | `41937817962` |
 | D3b | Verificador forense autónomo del libro mayor | `18633ae4` | `41918768311` |
+| R6.1-k | Rollback físico formal del replay gobernado (fila 24) | `fcc74770` | `41991979544` |
+| R6.1-l | Rollback físico formal de la apertura contable manual aprobada | `490627dc` | `41998090101` |
+| PROD-1 | Alineación del módulo de producción con el esquema Prisma: migración de `Receta.costoUnitario` y campos obligatorios de sus writers | `a4980d9c` | `42001804406` |
+| CT-6 | Manifiesto de comparación de 912 rutas conservado como artefacto de documentación | `20038b65` | (se anota con el run del push) |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
 CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
@@ -308,3 +312,6 @@ misma huella FX.
   `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`
   y
   `src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`
+- Artefacto congelado del manifiesto de comparación de 912 rutas (CT-6 de la
+  auditoría de contabilidad): `docs/artefactos/manifiesto-comparacion-rutas-rl4.json`
+  con su nota de origen y verificación en `docs/artefactos/README.md`
