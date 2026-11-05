@@ -104,7 +104,8 @@ export function TrazabilidadLotePanel({ loteId }: TrazabilidadLotePanelProps): R
 					<ul className="space-y-2">
 						{destinos.map((destino) => (
 							<li key={destino.ventaItemId} className="rounded-lg border p-3 text-sm">
-								{destino.numeroFactura ?? destino.ventaId} · {destino.cliente} · {destino.cantidad} unidades
+								{destino.numeroFactura ?? destino.ventaId} · {destino.cliente} · {destino.cantidad} unidades ·
+								 Costo unitario: {destino.costoUnitario ?? 'No disponible'}
 							</li>
 						))}
 					</ul>

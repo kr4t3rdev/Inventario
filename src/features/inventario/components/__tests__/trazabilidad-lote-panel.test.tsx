@@ -43,6 +43,7 @@ describe('TrazabilidadLotePanel', () => {
 		expect(await screen.findByText(/Lote L-2026-001/)).toBeInTheDocument();
 		expect(screen.getByText(/Compra F-001/)).toBeInTheDocument();
 		expect(screen.getByText(/V-001/)).toBeInTheDocument();
+		expect(screen.getByText(/Costo unitario: 100/)).toBeInTheDocument();
 	});
 
 	it('indica cuando el lote todavia no tiene ventas asociadas', async () => {
