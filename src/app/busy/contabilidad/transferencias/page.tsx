@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { TransferenciaBancaria } from '@/app/models/model';
 import { getTransferenciasBancariasAction } from '@/features/contabilidad/actions';
+import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
 import { cn, formatCurrency } from '@/lib/utils';
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import { Skeleton } from '@/components/ui/skeleton';
@@ -136,67 +137,45 @@ export default function TransferenciasBancariasPage(): React.JSX.Element | null 
   if (isBlocked) return null;
 
   return (
-        <motion.div 
-          className="space-y-8 p-8" 
-          variants={fadeIn} 
-          initial="hidden" 
-          animate="show"
-        >
-          <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
-            <div className="absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-            <div className="absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-          </div>
-
-          <motion.div
-            className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-            variants={fadeInUp}
+    <AccountingPageShell
+      icon={ArrowRightLeft}
+      title="Transferencias"
+      description="Gestiona transferencias entre cuentas con trazabilidad y comprobantes."
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                >
-                  <Link href="/busy/contabilidad">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                  Transferencias
-                </h2>
-              </div>
-              <p className="pl-10 text-muted-foreground">
-                Gestiona transferencias entre cuentas con trazabilidad y comprobantes.
-              </p>
-            </div>
-
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="shadow-sm hover:shadow-md transition-all">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nueva transferencia
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl backdrop-blur-xl bg-white/90 dark:bg-slate-500/10">
-                <DialogHeader>
-                  <DialogTitle>Crear nueva transferencia</DialogTitle>
-                  <DialogDescription>
-                    Complete los datos para registrar una transferencia entre cuentas.
-                  </DialogDescription>
-                </DialogHeader>
-                <TransferenciaBancariaForm
-                  onSuccess={handleCreateSuccess}
-                  onCancel={
-                  () => setIsCreateDialogOpen(false)
-                  }
-                />
-              </DialogContent>
-            </Dialog>
-          </motion.div>
-
+            <Link href="/busy/contabilidad" aria-label="Volver a Contabilidad">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="shadow-sm hover:shadow-md transition-all">
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva transferencia
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl backdrop-blur-xl bg-white/90 dark:bg-slate-500/10">
+              <DialogHeader>
+                <DialogTitle>Crear nueva transferencia</DialogTitle>
+                <DialogDescription>
+                  Complete los datos para registrar una transferencia entre cuentas.
+                </DialogDescription>
+              </DialogHeader>
+              <TransferenciaBancariaForm
+                onSuccess={handleCreateSuccess}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      }
+    >
           <motion.div className="space-y-6" variants={stagger}>
             <motion.div className="flex flex-wrap items-center gap-2" variants={fadeInUp}>
               <Badge variant="outline" className="h-8 px-3">Total: {transferenciasList.length}</Badge>
@@ -284,6 +263,6 @@ export default function TransferenciasBancariasPage(): React.JSX.Element | null 
               </CardContent>
             </Card>
           </motion.div>
-        </motion.div>
+    </AccountingPageShell>
   );
 }
