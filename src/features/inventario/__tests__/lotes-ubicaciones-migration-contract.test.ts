@@ -15,6 +15,7 @@ const receiptFifoMigrationPath = resolve(
   root,
   'prisma/migrations/20261109000000_receipt_lot_fifo_costs/migration.sql',
 )
+const putawayMigrationPath = resolve(root, 'prisma/migrations/20261115000000_putaway_rules/migration.sql')
 const schemaPath = resolve(root, 'prisma/schema.prisma')
 
 describe('lotes y ubicaciones jerárquicas migration contract', () => {
@@ -58,5 +59,17 @@ describe('lotes y ubicaciones jerárquicas migration contract', () => {
     expect(migration).toMatch(/PARTITION BY cdi\."tenantId", cd\."ordenCompraId", cdi\."productoId"/)
     expect(migration).toMatch(/"cantidadFacturada" = c\.cantidad/)
     expect(migration).toMatch(/"montoFacturado" = c\.monto/)
+  })
+
+  it('alinea las referencias tenant-scoped del putaway con los nombres mapeados en Prisma', () => {
+    const migration = readFileSync(putawayMigrationPath, 'utf8')
+    const schema = readFileSync(schemaPath, 'utf8')
+
+    expect(schema).toContain('@@map("tenants")')
+    expect(migration).toContain('REFERENCES "tenants"("tenantId")')
+    for (const name of ['producto_tenant', 'categoria_tenant', 'ubicacion_tenant']) {
+      expect(schema).toContain(`map: "ReglaPutaway_${name}_fkey"`)
+      expect(migration).toContain(`CONSTRAINT "ReglaPutaway_${name}_fkey"`)
+    }
   })
 })
