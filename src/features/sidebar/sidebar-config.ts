@@ -281,6 +281,7 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
         { title: "Mermas", url: "/busy/mermas", icon: AlertTriangle as LucideIcon },
         { title: "Kardex", url: "/busy/inventario/kardex", icon: History as LucideIcon },
         { title: "Variantes", url: "/busy/inventario/variantes", icon: Package as LucideIcon },
+        { title: "Lotes", url: "/busy/inventario/lotes", icon: Package as LucideIcon },
         { title: "Ajustes de Inventario", url: "/busy/inventario/ajustes", icon: SlidersHorizontal as LucideIcon },
         { title: "Conteo Físico", url: "/busy/inventario/conteos", icon: ClipboardList as LucideIcon },
         { title: "Transferencias", url: "/busy/transferencias", icon: ArrowRightLeft as LucideIcon },

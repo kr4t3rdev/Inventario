@@ -104,11 +104,11 @@ describe('buildVisibleSidebarGroups', () => {
     expect(professionalTitles).toContain('Recepciones')
     expect(professionalTitles).toContain('Reabastecimiento')
     expect(professionalTitles).toContain('Variantes')
+    expect(professionalTitles).toContain('Lotes')
     expect(professionalTitles).not.toContain('MRP Avanzado')
 
     expect(enterpriseTitles).toContain('Órdenes de Compra')
-    // Lotes y MRP siguen pendientes de sus fases de interfaz.
-    expect(enterpriseTitles).not.toContain('Lotes')
+    expect(enterpriseTitles).toContain('Lotes')
     expect(enterpriseTitles).toContain('Variantes')
     expect(enterpriseTitles).not.toContain('MRP Avanzado')
   })
@@ -124,7 +124,7 @@ describe('buildVisibleSidebarGroups', () => {
       const summary = toSummary(buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx))
 
       expect(summary).toContainEqual({ title: 'Gestión', itemCount: 7 })
-      expect(summary).toContainEqual({ title: 'Acciones', itemCount: 19 })
+      expect(summary).toContainEqual({ title: 'Acciones', itemCount: 20 })
       expect(summary).toContainEqual({ title: 'Configuración', itemCount: 7 })
       expect(summary).toContainEqual({ title: 'Contabilidad', itemCount: 20 })
       expect(summary).toContainEqual({ title: 'Reportes', itemCount: 7 })
