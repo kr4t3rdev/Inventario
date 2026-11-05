@@ -14,7 +14,7 @@ CREATE TABLE "ReglaPutaway" (
         ("productoId" IS NULL AND "categoriaId" IS NOT NULL)
     ),
     CONSTRAINT "ReglaPutaway_tenantId_fkey" FOREIGN KEY ("tenantId")
-        REFERENCES "Tenant"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE,
+        REFERENCES "tenants"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "ReglaPutaway_producto_tenant_fkey" FOREIGN KEY ("tenantId", "productoId")
         REFERENCES "Producto"("tenantId", "id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "ReglaPutaway_categoria_tenant_fkey" FOREIGN KEY ("tenantId", "categoriaId")

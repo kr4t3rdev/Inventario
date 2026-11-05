@@ -1755,10 +1755,10 @@ model ReglaPutaway {
   ubicacionId String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  tenant      Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
-  producto    Producto?  @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade)
-  categoria   Categoria? @relation(fields: [tenantId, categoriaId], references: [tenantId, catId], onDelete: Cascade)
-  ubicacion   Ubicacion  @relation(fields: [tenantId, ubicacionId], references: [tenantId, id], onDelete: Restrict)
+  tenant      Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade, map: "ReglaPutaway_tenantId_fkey")
+  producto    Producto?  @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade, map: "ReglaPutaway_producto_tenant_fkey")
+  categoria   Categoria? @relation(fields: [tenantId, categoriaId], references: [tenantId, catId], onDelete: Cascade, map: "ReglaPutaway_categoria_tenant_fkey")
+  ubicacion   Ubicacion  @relation(fields: [tenantId, ubicacionId], references: [tenantId, id], onDelete: Restrict, map: "ReglaPutaway_ubicacion_tenant_fkey")
 
   @@unique([tenantId, productoId])
   @@unique([tenantId, categoriaId])
