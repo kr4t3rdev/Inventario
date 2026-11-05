@@ -70,6 +70,7 @@ base de datos.
 | R6.1-g | Rollback físico formal de la reversa formal y del cierre de período (filas 22-23) | `76bf8d37` | `41930764304` |
 | R6.1-h | Rollback físico formal de las liquidaciones (filas 14-16) y emisor formal del cobro de servicios en la action web | `36509810` | pendiente de anotar |
 | R6.1-i | Rollback físico formal de la producción (fila 13) | pendiente de anotar | pendiente de anotar |
+| R6.1-j | Rollback físico formal de la aplicación y el reverso de anticipos (filas 8-9) | pendiente de anotar | pendiente de anotar |
 | D3b | Verificador forense autónomo del libro mayor | `18633ae4` | `41918768311` |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
@@ -102,8 +103,8 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 5 | `compras-servicios/actions.ts` → `GASTO_CREDITO` (origen `compra_servicio`) | action de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/compras-servicios/__tests__/actions.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
 | 6 | `venta-servicios/actions.ts` → `VENTA_SERVICIO_CREDITO` (origen `venta_servicio`) | action de venta de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/venta-servicios/__tests__/reconocimiento-formal.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
 | 7 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_RECIBIDO` / `ANTICIPO_PROVEEDOR_ENTREGADO` (origen `anticipo_movimiento`) | action de anticipos, workflow | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts` |
-| 8 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICADO` / `ANTICIPO_PROVEEDOR_APLICADO` | workflow de aplicación | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
-| 9 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICACION_REVERSADA` / `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | workflow de reverso (gastos, nómina) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/lib/services/__tests__/anticipos-workflow.test.ts` |
+| 8 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICADO` / `ANTICIPO_PROVEEDOR_APLICADO` | workflow de aplicación | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts` |
+| 9 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICACION_REVERSADA` / `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | workflow de reverso (gastos, nómina) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts` |
 | 10 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_DEVUELTO` / `ANTICIPO_PROVEEDOR_REINTEGRADO` | action de devolución | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts` |
 | 11 | `registrar-merma-service.ts` / `mermas/actions.ts` → `MERMA` (origen `ajuste_merma`) | action y route web/móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/mermas/__tests__/registrar-merma-service.test.ts`, `src/features/mermas/__tests__/actions.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
 | 12 | `revertirMermaContableEnTransaccion` → reversa de merma (origen `ajuste_merma_reversado`) | action, route web y route móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/inventory-adjustment-posting-service.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
@@ -136,7 +137,8 @@ Notas de la matriz:
   20-21), de ventas (filas 1-3), de compras (fila 4), de servicios (filas 5-6),
   de mermas (filas 11-12), de anticipos (filas 7 y 10), de reversa formal (fila
   22), de cierre de período (fila 23), de liquidaciones (filas 14-16), de
-  producción (fila 13) y de devoluciones de venta (fila 25)
+  producción (fila 13), de aplicación y reverso de anticipos (filas 8-9) y
+  de devoluciones de venta (fila 25)
   tienen un failpoint físico en `main` (trigger de auditoría y fallo de
   inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
   en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
@@ -162,6 +164,10 @@ Notas de la matriz:
   En las filas 7 y 10 el failpoint revierte el anticipo, sus movimientos, el
   saldo disponible de tesorería y el saldo bancario
   (`src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts`).
+  En las filas 8-9 el failpoint revierte la compra con anticipo, el stock, el
+  kardex y el saldo disponible del anticipo; en el reverso de la aplicación,
+  además, el movimiento de reverso y el saldo repuesto
+  (`src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts`).
   En la fila 22 el failpoint del asiento inverso revierte la eliminación del
   documento y la anulación del asiento original
   (`src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts`).
@@ -213,7 +219,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); cada familia con escritura operativa tiene ya su failpoint físico |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -228,8 +234,10 @@ Ninguno de estos gates se cambió en CT-1:
    servicios (gasto y venta), a las mermas, a la recepción y devolución de
    fondos de los anticipos, a la reversa formal, al cierre de período, a las
    liquidaciones (cobro de venta, cobro de servicio y pago de compra) y a la
-   producción (con el asiento formal en modo `enforce`); falta la aplicación y
-   el reverso de anticipos.
+   producción, a la aplicación y al reverso de anticipos (con el asiento
+   formal en modo `enforce`). Cada familia con escritura operativa tiene ya su
+   failpoint físico; queda la evidencia de rollback de la apertura formal y
+   del replay, que no escriben en la base operativa.
 3. **Desajustes preexistentes del módulo de producción** (fuera de la capa
    formal, pendientes de una slice propia): `Receta.costoUnitario` sigue
    `INTEGER` en las migraciones mientras el esquema Prisma lo declara `Float`,
