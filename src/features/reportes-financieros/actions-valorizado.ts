@@ -29,7 +29,7 @@ export const getValorizadoAFechaAction = withAction(
     const [productos, existencias, compras] = await Promise.all([
       prisma.producto.findMany({
         where: { tenantId },
-        select: { id: true, precioCosto: true },
+        select: { id: true, nombre: true, precioCosto: true },
       }),
       prisma.stockMoveLine.groupBy({
         by: ['productoId'],
@@ -77,7 +77,7 @@ export const getValorizadoAFechaAction = withAction(
         asignado.set(item.compraDocumentoItemId, item._sum.cantidad ?? 0);
       }
     }
-    return calcularValuacionFifo(
+    const valuacion = calcularValuacionFifo(
       compras.map((item) => ({
         id: item.compraDocumentoItemId, productoId: item.productoId,
         cantidad: item.cantidad, precioUnitario: item.precioUnitario,
@@ -89,5 +89,10 @@ export const getValorizadoAFechaAction = withAction(
         stockTotal: stock.get(producto.id) ?? 0,
       })),
     );
+    const nombres = new Map(productos.map((producto) => [producto.id, producto.nombre]));
+    return {
+      ...valuacion,
+      porProducto: valuacion.porProducto.map((item) => ({ ...item, productoNombre: nombres.get(item.productoId) ?? 'Sin nombre' })),
+    };
   },
 );
