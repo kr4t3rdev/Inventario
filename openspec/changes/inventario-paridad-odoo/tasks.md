@@ -215,6 +215,10 @@
   neteo de stock, subreceta disponible y gating Empresarial.
 * [ ] 7.3 Trazabilidad lote → documentos: `getTrazabilidadLoteAction`
   (compras origen → ventas destino) + UI.
+  - [x] 7.3a Backend: proyección tenant-scoped del origen (compra/recepción),
+    ventas destino y acción con gating `lotes-series`.
+  - [x] 7.3b UI: panel de trazabilidad con estados de carga, error y vacío.
+  - [ ] 7.3c Rutas: listado de lotes, página de detalle y navegación.
 * [ ] 7.4 Putaway simple: `ReglaPutaway { productoId?, categoriaId?,
   ubicacionId }` + sugerencia de ubicación en recepción.
 * [ ] 7.5 Reportes: valorizado oficial (CPP/FIFO a fecha), rotación y
