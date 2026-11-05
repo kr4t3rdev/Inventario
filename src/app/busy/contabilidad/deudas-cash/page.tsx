@@ -1,11 +1,11 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { BadgeDollarSign, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
+
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getDeudasCashAction } from "@/features/contabilidad/actions-deudas-cash"
@@ -14,6 +14,7 @@ import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/
 import { DeudaCashForm } from "@/features/contabilidad/components/deudas-cash/deuda-cash-form"
 import { PagoDeudaModal } from "@/features/contabilidad/components/deudas-cash/pago-deuda-modal"
 import type { DeudaCash } from "@/app/models/model"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import { useAuth } from "@/contexts/auth-context"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== "false"
@@ -65,36 +66,37 @@ function DeudasCashContent() {
 
   if (!featureEnabled) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            El módulo de deudas en efectivo está deshabilitado.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Contacte al administrador para habilitarlo.
-          </p>
-        </CardContent>
-      </Card>
+      <AccountingPageShell
+        icon={BadgeDollarSign}
+        title="Deudas en Efectivo"
+        description="Gestione deudas de dinero en efectivo con proveedores"
+      >
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              El módulo de deudas en efectivo está deshabilitado.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Contacte al administrador para habilitarlo.
+            </p>
+          </CardContent>
+        </Card>
+      </AccountingPageShell>
     )
   }
 
   return (
-    <>
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Deudas en Efectivo</h1>
-          <p className="text-muted-foreground">
-            Gestione deudas de dinero en efectivo con proveedores
-          </p>
-        </div>
-        {canCreate && (
-          <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva Deuda
-          </Button>
-        )}
-      </div>
-
+    <AccountingPageShell
+      icon={BadgeDollarSign}
+      title="Deudas en Efectivo"
+      description="Gestione deudas de dinero en efectivo con proveedores"
+      actions={canCreate ? (
+        <Button onClick={() => setOpenForm(true)} className="flex items-center space-x-2 mr-3">
+          <Plus className="mr-2 h-4 w-4" />
+          Nueva Deuda
+        </Button>
+      ) : undefined}
+    >
       <DeudasCashTable
         deudas={deudas}
         isLoading={isLoading}
@@ -133,8 +135,7 @@ function DeudasCashContent() {
         }))}
         onSuccess={handleSuccess}
       />
-    </>
-    
+    </AccountingPageShell>
   )
 }
 
@@ -144,16 +145,8 @@ function DeudasCashContent() {
  */
 export default function DeudasCashPage() {
   return (
-    <PageTransition>
-      <StaggerContainer>
-        <StaggerItem>
-          <div className="container mx-auto py-6 space-y-6">
-            <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
-              <DeudasCashContent />
-            </Suspense>
-          </div>
-        </StaggerItem>
-      </StaggerContainer>
-    </PageTransition>
+    <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
+      <DeudasCashContent />
+    </Suspense>
   )
 }
