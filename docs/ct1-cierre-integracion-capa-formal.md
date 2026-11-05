@@ -189,6 +189,12 @@ Notas de la matriz:
   no se tocan. La secuencia de intentos del trigger deja constancia de que el
   fallo ocurrió en el segundo insert, es decir, con un asiento ya escrito
   (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
+  Fuera de la matriz, la apertura contable manual aprobada tiene el mismo
+  tipo de evidencia: un failpoint en el insert del asiento de apertura
+  revierte el período, su auditoría, el asiento, el registro de apertura y el
+  consumo de la aprobación, y la misma solicitud puede abrir el período
+  después, sin residuos
+  (`src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -227,7 +233,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); cada familia con escritura operativa tiene ya su failpoint físico |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); además, el replay gobernado y la apertura contable manual aprobada tienen su propio failpoint físico |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -247,7 +253,12 @@ Ninguno de estos gates se cambió en CT-1:
    failpoint físico, y el replay gobernado también: su savepoint revierte el
    periodo contabilizado y deja el `ReplayRun` en `FAILED`
    (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
-   Solo queda la evidencia de rollback de la apertura formal, que sigue
+   La apertura contable manual aprobada también lo tiene: si falla el insert
+   del asiento de apertura, se revierten el período, su auditoría de timeline,
+   el asiento, el registro de apertura y el consumo de la aprobación, y la
+   misma solicitud puede abrir el período después, sin residuos
+   (`src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`).
+   Solo queda la apertura formal **por traspaso (rollover)**, que sigue
    bloqueada por diseño (punto 1).
 3. **Desajustes preexistentes del módulo de producción** (fuera de la capa
    formal, pendientes de una slice propia): `Receta.costoUnitario` sigue
@@ -283,3 +294,7 @@ misma huella FX.
 - Plan maestro: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
 - Inventario y decisiones: `docs/ct1-s0-inventario.md`
 - Tareas con los SHA reales: `openspec/changes/contabilidad-capa-formal/tasks.md`
+- Evidencias de rollback físico del replay y de la apertura manual:
+  `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`
+  y
+  `src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`

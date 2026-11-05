@@ -252,6 +252,16 @@ aprobado sin su asiento de cierre. En modo `enforce` el cierre falla cerrado
 (sin rol contable, sin diario de apertura/cierre o descuadre, la aprobación se
 rechaza); con la capa apagada o en modo `shadow` no se escribe nada.
 
+La **apertura contable manual** con cuadre aprobado es atomica por la misma
+razon: una sola transaccion crea el periodo, su auditoria de timeline, el
+asiento de apertura en el libro mayor (`apertura_manual`), el registro de
+apertura, consume la aprobacion y escribe la auditoria de la operacion. Si
+fallara la escritura del asiento, nada quedaria a medias —el periodo, el
+asiento, la apertura y el consumo de la aprobacion se revierten juntos— y la
+solicitud seguiria aprovada para reintentarlo. La apertura por traspaso
+(rollover) sigue deshabilitada: sus saldos no son verificables con la
+evidencia disponible.
+
 Cuando la capa formal se enciende, los periodos historicos que quedaron sin
 asiento se recuperan con el **replay historico**, que es un proceso gobernado
 en tres pasos que no pueden ocurrir por separado:
@@ -513,6 +523,7 @@ Los tipos de hallazgo son `CADENA_HASH_INVALIDA`, `ASIENTO_DESCUADRADO`,
 - Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
 - Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
 - Evidencia de rollback físico del replay: `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`
+- Evidencia de rollback físico de la apertura manual: `src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
 - Verificador forense autónomo (núcleo puro y CLI): `scripts/accounting/verificador-forense.ts` y `scripts/accounting/verificador-forense-report.ts`
 - Modo formal por tenant: `src/features/contabilidad-formal/lib/modo-tenant.ts`
