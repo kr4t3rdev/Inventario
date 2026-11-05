@@ -62,6 +62,14 @@ base de datos.
 | S8b-1 | Evidencia FX persistida de la inyección de capital | `551fe263` | `41878717237` (cancelado al mezclar un commit ajeno) |
 | S8b-2 | Replay de ajustes bancarios e inyecciones de capital | `b0b1cbbe`, `a52a4c29` | `41880980752` |
 | D6 | Aprobación del modo formal por tenant desde la licencia | `e9a35c48` | `41914417080` |
+| R6.1-b | Rollback físico formal de la venta de productos (filas 1-3) | `3de499da` | `41922031842` |
+| R6.1-c | Rollback físico formal de la compra de productos (fila 4) | `7e839156` | `41923889066` |
+| R6.1-d | Rollback físico formal de la merma y su reversa (filas 11-12) | `facf29e1` | `41925412231` |
+| R6.1-e | Rollback físico formal del anticipo (filas 7 y 10) | `9327b75a` | `41928847500` (el push propio quedó cancelado por concurrencia) |
+| R6.1-f | Rollback físico formal de los servicios (filas 5-6) | `926abe4b` | `41928847500` |
+| R6.1-g | Rollback físico formal de la reversa formal y del cierre de período (filas 22-23) | `76bf8d37` | `41930764304` |
+| R6.1-h | Rollback físico formal de las liquidaciones (filas 14-16) y emisor formal del cobro de servicios en la action web | pendiente de anotar | pendiente de anotar |
+| D3b | Verificador forense autónomo del libro mayor | `18633ae4` | `41918768311` |
 
 Los slices cumplen su condición de salida con un writer, un test focal y un
 CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
@@ -99,9 +107,9 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 11 | `registrar-merma-service.ts` / `mermas/actions.ts` → `MERMA` (origen `ajuste_merma`) | action y route web/móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/mermas/__tests__/registrar-merma-service.test.ts`, `src/features/mermas/__tests__/actions.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
 | 12 | `revertirMermaContableEnTransaccion` → reversa de merma (origen `ajuste_merma_reversado`) | action, route web y route móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/inventory-adjustment-posting-service.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
 | 13 | `produccion/actions.ts` → `PRODUCCION` (origen `orden_produccion`) | action de producción | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ⚠️ | `src/features/produccion/__tests__/actions.test.ts` |
-| 14 | `accounting-reconciliation-service.ts` (`reconcileSale`) → `COBRO_CXC` / `VENTA_CONTADO` (origen `reconciliacion_venta`) | action de reconciliación, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/services/__tests__/accounting-reconciliation-fx.test.ts` |
-| 15 | `accounting-reconciliation-service.ts` (`reconcileService`) → `COBRO_SERVICIO` (origen `reconciliacion_servicio`) | action, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts` |
-| 16 | `productos/actions-restock.ts` → `PAGO_CXP` (origen `reconciliacion_gasto`) | action de reingreso | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts` |
+| 14 | `accounting-reconciliation-service.ts` (`reconcileSale`) → `COBRO_CXC` / `VENTA_CONTADO` (origen `reconciliacion_venta`) | action de reconciliación, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/services/__tests__/accounting-reconciliation-fx.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
+| 15 | `accounting-reconciliation-service.ts` (`reconcileService`) → `COBRO_SERVICIO` (origen `reconciliacion_servicio`) | action, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/__tests__/reconcile-service-cierre-factura.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
+| 16 | `productos/actions-restock.ts` → `PAGO_CXP` (origen `reconciliacion_gasto`) | action de reingreso | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
 | 17 | `accounting-cash-operations-mutation-service.ts` → `PRESTAMO_OTORGADO` (origen `prestamo_cash`) | actions y rutas web/móvil de préstamos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 18 | `accounting-cash-operations-mutation-service.ts` → `DEUDA_RECIBIDA` (origen `deuda_cash`) | actions y rutas web/móvil de deudas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 19 | `accounting-cash-operations-mutation-service.ts` → `COBRO_PRESTAMO` / `PAGO_DEUDA` | actions y rutas web/móvil de pagos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
@@ -126,7 +134,8 @@ Notas de la matriz:
 - **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
   20-21), de ventas (filas 1-3), de compras (fila 4), de servicios (filas 5-6),
   de mermas (filas 11-12), de anticipos (filas 7 y 10), de reversa formal (fila
-  22), de cierre de período (fila 23) y de devoluciones de venta (fila 25)
+  22), de cierre de período (fila 23), de liquidaciones (filas 14-16) y de
+  devoluciones de venta (fila 25)
   tienen un failpoint físico en `main` (trigger de auditoría y fallo de
   inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
   en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
@@ -158,9 +167,23 @@ Notas de la matriz:
   En la fila 23 el failpoint del asiento de cierre revierte la aprobación del
   período y su auditoría
   (`src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts`).
+  En las filas 14-16 el failpoint revierte la reconciliación, el saldo
+  bancario y el estado de la cuenta por cobrar o por pagar; el gate del emisor
+  no Cash se enciende solo dentro del proceso de prueba
+  (`src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
+- **(i)**: la fila 15 tenía una divergencia entre adaptadores: solo
+  `AccountingReconciliationService.reconcileService` (ruta móvil) emitía el
+  evento formal `COBRO_SERVICIO`, mientras que la action web
+  `reconciliarServicioAction` cobraba la tesorería y cerraba el documento sin
+  postear el asiento. La action web ahora emite el mismo evento con el mismo
+  writer formal, de modo que el cobro de servicios llega al libro mayor por los
+  dos caminos; el gate del emisor no Cash lo mantiene inerte por defecto.
+  Evidencia:
+  `src/features/contabilidad/__tests__/reconcile-service-cierre-factura.test.ts`
+  y `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts`.
 - **(f)**: la garantía de no duplicar el asiento la da el origen único; la
   idempotencia de la fila operativa (no repetir la venta, la compra o el pago)
   depende del writer y solo está probada donde el test focal lo cubre.
@@ -186,7 +209,7 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
-| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones y de devoluciones de venta (todas con el asiento formal en modo `enforce`); falta el resto de canales |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
@@ -199,9 +222,10 @@ Ninguno de estos gates se cambió en CT-1:
 2. **Rollback físico por canal**: extendido a las familias de ajustes e
    inyecciones, a la devolución de venta, a la venta, a la compra, a los
    servicios (gasto y venta), a las mermas, a la recepción y devolución de
-   fondos de los anticipos, a la reversa formal y al cierre de período (con el
+   fondos de los anticipos, a la reversa formal, al cierre de período y a las
+   liquidaciones (cobro de venta, cobro de servicio y pago de compra, con el
    asiento formal en modo `enforce`); faltan la aplicación y reverso de
-   anticipos, producción y liquidaciones.
+   anticipos y la producción.
 3. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
    licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
    su criterio de reversión y la ventana shadow— sigue siendo una tarea

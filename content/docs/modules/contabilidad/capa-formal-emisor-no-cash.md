@@ -76,6 +76,7 @@ falla cerrado, sin inventar conversión.
 | `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarVentaAction` | `COBRO_CXC` | Ya persistía la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileSale` | `COBRO_CXC` | Ahora persiste la evidencia FX |
 | `src/features/contabilidad/services/accounting-reconciliation-service.ts` → `reconcileService` | `COBRO_SERVICIO` | Un asiento por distribución, basado en su valoración persistida; comparte la transacción operativa |
+| `src/features/contabilidad/actions-reconciliacion.ts` → `reconciliarServicioAction` | `COBRO_SERVICIO` | Cobro de la action web: emite el mismo evento con la misma valoración persistida, dentro de la transacción que acredita la tesorería |
 | `src/app/api/contabilidad/reconciliacion/servicios/route.ts` (POST) | `COBRO_SERVICIO` | Conserva el cobro individual legacy; persiste la valoración funcional y emite en la misma transacción |
 | `src/features/ventas/services/facturacion-workflow.ts` → `applyFacturacionCobroWorkflow` | `VENTA_CONTADO` / `VENTA_CREDITO` | Reconoce el ingreso de la venta de productos: al contado debita la tesorería; a plazo abre la cuenta por cobrar que después liquida `COBRO_CXC` |
 | `src/app/api/contabilidad/reconciliacion/ventas/route.ts` (POST) | `COBRO_CXC` | Ruta legacy: el valor funcional se toma del importe en CUP de la operación, porque ahí `montoConvertido` guarda el importe en la moneda del banco |

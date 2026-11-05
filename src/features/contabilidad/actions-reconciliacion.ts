@@ -733,6 +733,19 @@ export const reconciliarServicioAction = withAction(
 					);
 				}
 
+				// Tipo de tesorería por cuenta: lo exige el emisor formal para
+				// distinguir el asiento de cobro del saldo en cuenta corriente.
+				const cuentasTesoreria = await tx.cuentaBancaria.findMany({
+					where: {
+						tenantId,
+						cuentaId: { in: [...new Set(input.distribuciones.map((dist) => dist.cuentaId))] },
+					},
+					select: { cuentaId: true, tipoCuenta: true },
+				});
+				const tipoCuentaPorId = new Map(
+					cuentasTesoreria.map((cuenta) => [cuenta.cuentaId, cuenta.tipoCuenta]),
+				);
+
 				// Crear todas las reconciliaciones e incrementar saldos en una sola transacción
 				for (const dist of input.distribuciones) {
 					// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
@@ -764,7 +777,7 @@ export const reconciliarServicioAction = withAction(
 						distRateId,
 					);
 
-					await tx.reconciliacionServicio.create({
+					const reconciliacion = await tx.reconciliacionServicio.create({
 						data: {
 							ventaServicioId: input.ventaServicioId,
 							cuentaId: dist.cuentaId,
@@ -780,6 +793,29 @@ export const reconciliarServicioAction = withAction(
 							reconciliadoPor: user.userId,
 						},
 					});
+
+					// Emisor formal no Cash (COBRO_SERVICIO). El gate de rollout
+					// mantiene el comportamiento inerte por defecto. La action web
+					// comparte el mismo writer formal que la ruta movil.
+					await emitirEventoLiquidacion(
+						tx,
+						{ tenantId, userId: user.userId },
+						{
+							tipo: "COBRO_SERVICIO",
+							reconciliacion: {
+								reconciliacionId: reconciliacion.reconciliacionId,
+								monto: reconciliacion.monto,
+								moneda: reconciliacion.moneda,
+								montoConvertido: reconciliacion.montoConvertido,
+								functionalCurrency: reconciliacion.functionalCurrency,
+								tasaCambio: reconciliacion.tasaCambio,
+								fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+								fechaReconciliacion: reconciliacion.fechaReconciliacion,
+							},
+							treasuryAccountType: tipoCuentaPorId.get(dist.cuentaId),
+							descripcion: dist.observaciones ?? "Cobro de servicio",
+						},
+					);
 				}
 
 				// Marcar el servicio como reconciliado
