@@ -296,6 +296,16 @@ operacion explicita y autorizada. Exige licencia con la funcion
 `contabilidad-formal`, un responsable contable activo y el permiso
 `financiero.contabilidad.acceder`.
 
+La ejecucion es atomica: las contabilizaciones del periodo se envuelven en un
+savepoint dentro de la transaccion de la ejecucion. Si una de ellas falla, el
+savepoint revierte **todo** el periodo ya contabilizado —incluido el asiento
+que se habia escrito antes del fallo—, de modo que el libro nunca queda a
+medias. El intento fallido queda registrado de forma durable en `ReplayRun`
+con estado `FAILED` y el diagnostico del error, y las fuentes operativas del
+periodo no se modifican: el replay solo reconstruye el libro formal. Un
+replay posterior del mismo periodo contabiliza de nuevo desde cero, sin
+residuos ni numeros de asiento consumidos.
+
 ## Rollout
 
 El emisor tiene su propio modo, independiente del modo global de la capa:
@@ -502,6 +512,7 @@ Los tipos de hallazgo son `CADENA_HASH_INVALIDA`, `ASIENTO_DESCUADRADO`,
 - Cierre formal del período: `src/features/contabilidad-formal/services/cierre-formal-service.ts`
 - Replay histórico (orquestador): `src/features/contabilidad-formal/services/replay-backfill-service.ts`
 - Replay histórico (recolector de fuentes): `src/features/contabilidad-formal/services/replay-source-collector.ts`
+- Evidencia de rollback físico del replay: `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`
 - Verificador forense del replay: `src/features/contabilidad-formal/services/replay-reconciliation.ts`
 - Verificador forense autónomo (núcleo puro y CLI): `scripts/accounting/verificador-forense.ts` y `scripts/accounting/verificador-forense-report.ts`
 - Modo formal por tenant: `src/features/contabilidad-formal/lib/modo-tenant.ts`

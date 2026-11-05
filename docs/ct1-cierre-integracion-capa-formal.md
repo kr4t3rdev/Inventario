@@ -119,7 +119,7 @@ Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
 | 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
 | 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
 | 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts`, `src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts` |
-| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA`, `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO`, `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts` |
+| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA`, `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO`, `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts`, `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts` |
 | 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts`, `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts` |
 
 Notas de la matriz:
@@ -181,6 +181,14 @@ Notas de la matriz:
   En la fila 13 el failpoint revierte la orden, su historial, el stock del
   producto final y sus movimientos de kardex
   (`src/features/produccion/__integration__/produccion-formal-rollback-postgres.test.ts`).
+  En la fila 24 el failpoint del insert del asiento revierte **todo** el
+  periodo ya contabilizado dentro del replay: el servicio envuelve las
+  contabilizaciones en un savepoint, de modo que el asiento ya escrito y el
+  que provoca el fallo se revierten juntos, el `ReplayRun` queda durable en
+  `FAILED` con el diagnóstico del error y las fuentes operativas del periodo
+  no se tocan. La secuencia de intentos del trigger deja constancia de que el
+  fallo ocurrió en el segundo insert, es decir, con un asiento ya escrito
+  (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
   El resto de las filas tiene el rollback
   estructural por compartir transacción, sin failpoint físico: es la brecha
   conocida de la matriz.
@@ -236,8 +244,11 @@ Ninguno de estos gates se cambió en CT-1:
    liquidaciones (cobro de venta, cobro de servicio y pago de compra) y a la
    producción, a la aplicación y al reverso de anticipos (con el asiento
    formal en modo `enforce`). Cada familia con escritura operativa tiene ya su
-   failpoint físico; queda la evidencia de rollback de la apertura formal y
-   del replay, que no escriben en la base operativa.
+   failpoint físico, y el replay gobernado también: su savepoint revierte el
+   periodo contabilizado y deja el `ReplayRun` en `FAILED`
+   (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
+   Solo queda la evidencia de rollback de la apertura formal, que sigue
+   bloqueada por diseño (punto 1).
 3. **Desajustes preexistentes del módulo de producción** (fuera de la capa
    formal, pendientes de una slice propia): `Receta.costoUnitario` sigue
    `INTEGER` en las migraciones mientras el esquema Prisma lo declara `Float`,
