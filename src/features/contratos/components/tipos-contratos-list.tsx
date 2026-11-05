@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Archive, Loader2, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { LazyMotion, m as motion } from 'framer-motion'
+import { m as motion, useReducedMotion } from 'framer-motion'
 import { TiposContratosForm } from './tipos-contratos-form'
 
 interface TipoContrato {
@@ -54,6 +54,7 @@ export function TiposContratosList({
   const [tipos, setTipos] = useState<TipoContrato[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     fetchTipos()
@@ -135,17 +136,25 @@ export function TiposContratosList({
           <div className="flex items-center justify-center py-12">
             <motion.div
               className="flex flex-col items-center gap-3"
-              initial={{ opacity: 0 }}
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.5,
+                delay: shouldReduceMotion ? 0 : 0.3,
+              }}
             >
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground motion-reduce:animate-none" />
               <p className="text-sm text-muted-foreground">Cargando...</p>
             </motion.div>
           </div>
         ) : tipos.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.5,
+              delay: shouldReduceMotion ? 0 : 0.3,
+            }}
             className="flex items-center justify-center py-12 text-center"
           >
             <div>
@@ -159,9 +168,12 @@ export function TiposContratosList({
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.5,
+              delay: shouldReduceMotion ? 0 : 0.3,
+            }}
           >
             <div className="overflow-x-auto">
               <Table>
@@ -182,8 +194,12 @@ export function TiposContratosList({
                   {tipos.map((tipo) => (
                     <motion.tr
                       key={tipo.tipoCustomId}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={shouldReduceMotion ? false : { opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: shouldReduceMotion ? 0 : 0.5,
+                        delay: shouldReduceMotion ? 0 : 0.3,
+                      }}
                       className="border-b transition-colors hover:bg-muted/50"
                     >
                       <TableCell className="font-medium">
@@ -213,15 +229,15 @@ export function TiposContratosList({
                       </TableCell>
                       <TableCell className="text-right">
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
+                          whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+                          whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                           onClick={() => handleDelete(tipo.tipoCustomId)}
                           disabled={isDeletingId === tipo.tipoCustomId}
                           className="p-1 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                           title="Desactivar"
                         >
                           {isDeletingId === tipo.tipoCustomId ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                           ) : (
                             <Archive className="h-4 w-4" />
                           )}

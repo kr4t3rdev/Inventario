@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useCallback, useDeferredValue, useState, useEffect } from 'react'
-import { LazyMotion, m as motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   Key,
   Plus,
@@ -97,6 +97,7 @@ import {
   ACCOUNTING_OVERRIDE_FEATURES,
   buildAccountingFeatureToggleStates,
 } from '@/features/admin/license-feature-overrides'
+import { SettingsPageShell } from '@/features/configuracion/components/settings-page-shell'
 
 function SortIndicator({
   column,
@@ -121,6 +122,7 @@ function SortIndicator({
 }
 
 export default function AdminLicenciasPage() {
+  const reduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [limit] = useState(25)
   const [searchInput, setSearchInput] = useState('')
@@ -611,21 +613,17 @@ export default function AdminLicenciasPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center"
-      >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Licencias</h1>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <p>Gestión de licencias y activaciones</p>
-            {isRefreshing ? <span className="text-xs">Actualizando...</span> : null}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+    <SettingsPageShell
+      icon={Key}
+      title="Licencias"
+      description="Gestión de licencias y activaciones"
+      actions={
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+          {isRefreshing ? (
+            <span className="text-xs text-muted-foreground" role="status">
+              Actualizando...
+            </span>
+          ) : null}
           <Button variant="outline" onClick={handleCleanupExpiredDemos}>
             <RefreshCcw className="mr-2 h-4 w-4" />
             Limpiar Demos Expiradas
@@ -639,8 +637,8 @@ export default function AdminLicenciasPage() {
             Generar Licencias
           </Button>
         </div>
-      </motion.div>
-
+      }
+    >
       {/* Métricas */}
       <div className="grid gap-4 md:grid-cols-6">
         <Card>
@@ -758,8 +756,9 @@ export default function AdminLicenciasPage() {
       {/* Bulk Actions */}
       {selectedLicencias.size > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: reduceMotion ? 0 : -8 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.2 }}
           className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5"
           role="region"
           aria-label="Acciones masivas"
@@ -1166,7 +1165,7 @@ export default function AdminLicenciasPage() {
         state={confirmState}
         onClose={() => setConfirmState(null)}
       />
-    </div>
+    </SettingsPageShell>
   )
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
-import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -80,6 +80,7 @@ async function downloadFile(url: string, filename: string) {
  * @returns {JSX.Element} Componente de facturas
  */
 export function FacturasContent({ initialData }: FacturasContentProps) {
+  const reduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(50)
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")
@@ -266,8 +267,9 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
           {/* Header */}
           <motion.div
             className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-            initial={{ opacity: 0, y: -20 }}
+            initial={reduceMotion ? false : { opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.5 }}
           >
             <ManagementPageTitle icon={FileSpreadsheet} title="Facturas" description="Consulta y administra las facturas." />
             <div className="flex gap-2">
@@ -280,106 +282,113 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             </div>
           </motion.div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(totalsByStatus).map(([estado, total]) => (
-              <Card key={estado} className="p-4">
-                <CardContent className="p-0">
-                  <div className="text-sm text-muted-foreground">{estado.replace(/_/g, " ")}</div>
-                  <div className="text-2xl font-bold">{total}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <Input
-              placeholder="Buscar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-xs"
-            />
-            <Select value={estadoFilter} onValueChange={(v) => { setEstadoFilter(v); setPage(1) }}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos</SelectItem>
-                <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                <SelectItem value="PAGADA">Pagada</SelectItem>
-                <SelectItem value="VENCIDA">Vencida</SelectItem>
-                <SelectItem value="CANCELADA">Cancelada</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={tipoFilter} onValueChange={(v) => { setTipoFilter(v); setPage(1) }}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Tipo de documento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos los tipos</SelectItem>
-                <SelectItem value="FACTURA">Facturas</SelectItem>
-                <SelectItem value="NOTA_CREDITO">Notas de crédito</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Table */}
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.3 }}
+            className="space-y-4"
+          >
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(totalsByStatus).map(([estado, total]) => (
+                <Card key={estado} className="p-4">
+                  <CardContent className="p-0">
+                    <div className="text-sm text-muted-foreground">{estado.replace(/_/g, " ")}</div>
+                    <div className="text-2xl font-bold">{total}</div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ) : (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 items-center">
+              <Input
+                placeholder="Buscar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-xs"
+              />
+              <Select value={estadoFilter} onValueChange={(v) => { setEstadoFilter(v); setPage(1) }}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                  <SelectItem value="PAGADA">Pagada</SelectItem>
+                  <SelectItem value="VENCIDA">Vencida</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={tipoFilter} onValueChange={(v) => { setTipoFilter(v); setPage(1) }}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Tipo de documento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos los tipos</SelectItem>
+                  <SelectItem value="FACTURA">Facturas</SelectItem>
+                  <SelectItem value="NOTA_CREDITO">Notas de crédito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Table */}
+            {isLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : (
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className="h-24 text-center">
-                        No hay resultados.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          No hay resultados.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
 
-          {/* Pagination */}
-          {pagination && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Página {pagination.page} de {pagination.totalPages} ({pagination.total} total)
+            {/* Pagination */}
+            {pagination && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Página {pagination.page} de {pagination.totalPages} ({pagination.total} total)
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                    Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages}>
+                    Siguiente
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                  Anterior
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages}>
-                  Siguiente
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </motion.div>
         </div>
         {fiscalFacturaId !== null && (
           <FiscalPanelDialog facturaId={fiscalFacturaId} open onOpenChange={(v) => { if (!v) setFiscalFacturaId(null) }} />

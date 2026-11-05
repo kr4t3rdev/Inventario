@@ -30,14 +30,15 @@ interface OfertasPageContentProps {
 export function OfertasPageContent({ ofertas }: OfertasPageContentProps) {
   return (
         <div className="container mx-auto py-4">
-          {/* Header */}
-          <motion.div
-            className="flex justify-between items-center mb-6"
+          <motion.header
+            className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
+            <ManagementPageTitle icon={Tag} title="Ofertas" description="Consulta y administra las ofertas comerciales." />
             <motion.div
+              className="self-end sm:self-auto"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0, x: 20 }}
@@ -54,9 +55,7 @@ export function OfertasPageContent({ ofertas }: OfertasPageContentProps) {
                 </Link>
               </Button>
             </motion.div>
-          </motion.div>
-
-          <ManagementPageTitle icon={Tag} title="Ofertas" description="Consulta y administra las ofertas comerciales." />
+          </motion.header>
 
           {/* Table */}
           <motion.div
