@@ -78,6 +78,7 @@ model Vendor {
   vendorCode       String?           @db.VarChar(2)
   anticipos        Anticipo[]
   compraDocumentos CompraDocumento[]
+  devolucionesCompra DevolucionCompra[]
   ordenesCompra    OrdenCompra[]
   compras          CompraProducto[]
   compraServicios  CompraServicio[]
@@ -90,6 +91,7 @@ model Vendor {
   tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
 
   @@unique([tenantId, vendorCode])
+  @@unique([tenantId, vendorId])
   @@index([vendorCode])
   @@index([tenantId])
 }
@@ -267,6 +269,7 @@ model Tenant {
   vendors                        Vendor[]
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
+  devolucionesCompra             DevolucionCompra[]
   cobroNotas                     CobroNota[]
   ventasServicios                VentaServicios[]
   fiscalDocuments                FiscalDocument[]
@@ -565,6 +568,7 @@ model Producto {
   esVariante           Boolean                   @default(false)
   fotos                String[]                  @default([])
   compraDocumentoItems CompraDocumentoItem[]
+  devolucionCompraItems DevolucionCompraItem[]
   ordenCompraItems     OrdenCompraItem[]
   recepcionItems       RecepcionItem[]
   reglasReabastecimiento ReglaReabastecimiento[]
@@ -1536,7 +1540,9 @@ model CompraDocumento {
   updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId])
   items             CompraDocumentoItem[]
   ordenCompra       OrdenCompra?           @relation(fields: [tenantId, ordenCompraId], references: [tenantId, id], onDelete: NoAction, onUpdate: Cascade)
+  devoluciones      DevolucionCompra[]
 
+  @@unique([tenantId, compraDocumentoId])
   @@unique([tenantId, claveIdempotencia])
   @@index([tenantId])
   @@index([estado])
@@ -1572,6 +1578,7 @@ model CompraDocumentoItem {
   allocations           PurchaseAllocation[]
   receiptInvoiceAllocations PurchaseReceiptInvoiceAllocation[]
   lotes                 Lote[]
+  devoluciones          DevolucionCompraItem[]
 
   @@unique([tenantId, compraDocumentoItemId])
   @@index([tenantId])
@@ -3418,6 +3425,59 @@ model DevolucionVentaItem {
   @@map("devoluciones_venta_items")
 }
 
+/// Devolución operativa de mercancía a proveedor, sin efecto formal contable aún.
+model DevolucionCompra {
+  devolucionId      String   @id @default(cuid())
+  tenantId          String
+  numero            String
+  compraDocumentoId String
+  proveedorId       String
+  estado            String   @default("PENDIENTE")
+  /// IMPUTACION_CXP reduce deuda; SALDO_FAVOR conserva crédito a favor del tenant.
+  formaImputacion   String
+  motivo            String?
+  montoTotal        Int
+  montoImputado     Int      @default(0)
+  montoImputadoFuncional Decimal? @db.Decimal(20, 4)
+  saldoAFavor       Int      @default(0)
+  moneda            String   @default("CUP")
+  idempotencyKey    String?
+  creadoPorId       String
+  completadaAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId])
+  compraDocumento   CompraDocumento @relation(fields: [tenantId, compraDocumentoId], references: [tenantId, compraDocumentoId], onDelete: Restrict)
+  proveedor         Vendor   @relation(fields: [tenantId, proveedorId], references: [tenantId, vendorId], onDelete: Restrict)
+  items             DevolucionCompraItem[]
+
+  @@unique([tenantId, devolucionId])
+  @@unique([tenantId, numero])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, compraDocumentoId])
+  @@index([tenantId, proveedorId])
+  @@map("devoluciones_compra")
+}
+
+/// Detalle de mercancía devuelta, con cantidad/costo de la línea de compra origen.
+model DevolucionCompraItem {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  devolucionId          String
+  compraDocumentoItemId String
+  productoId            String
+  cantidad              Int
+  costoUnitario         Int
+  total                 Int
+  devolucion            DevolucionCompra    @relation(fields: [tenantId, devolucionId], references: [tenantId, devolucionId], onDelete: Cascade)
+  compraDocumentoItem   CompraDocumentoItem @relation(fields: [tenantId, compraDocumentoItemId], references: [tenantId, compraDocumentoItemId], onDelete: Restrict)
+  producto              Producto            @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([devolucionId, compraDocumentoItemId])
+  @@index([tenantId, compraDocumentoItemId])
+  @@map("devoluciones_compra_items")
+}
+
 /// Gap 4 — Documento fiscal emitido (CFDI/XML/timbré) asociado a una factura interna.
 model FiscalDocument {
   fiscalDocumentId String               @id @default(cuid())
@@ -4383,4 +4443,5 @@ enum TipoOrigenMovimiento {
   AJUSTE
   PRODUCCION
   CONTEO
+  DEVOLUCION_COMPRA
 }
