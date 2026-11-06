@@ -35,4 +35,25 @@ describe('readFinancialLedger', () => {
     await expect(readFinancialLedger({ tenantId: 't', cutoffAt: new Date('invalid') })).rejects.toThrow();
     expect(db.asientoLinea.findMany).not.toHaveBeenCalled();
   });
+
+  it('permite leer un intervalo de resultados con inicio inclusivo', async () => {
+    const from = new Date('2026-01-01T05:00:00.000Z');
+    const cutoffAt = new Date('2026-06-30T23:59:59.000Z');
+    db.asientoLinea.findMany.mockResolvedValue([]);
+    await readFinancialLedger({ tenantId: 'tenant-a', from, cutoffAt });
+    expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        asiento: expect.objectContaining({ fecha: { gte: from, lte: cutoffAt } }),
+      }),
+    }));
+  });
+
+  it('rechaza el inicio inválido o posterior al corte sin consultar', async () => {
+    const cutoffAt = new Date('2026-06-30T23:59:59.000Z');
+    await expect(readFinancialLedger({ tenantId: 't', cutoffAt, from: new Date('invalid') }))
+      .rejects.toThrow();
+    await expect(readFinancialLedger({ tenantId: 't', cutoffAt, from: new Date('2027-01-01') }))
+      .rejects.toThrow();
+    expect(db.asientoLinea.findMany).not.toHaveBeenCalled();
+  });
 });
