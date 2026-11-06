@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { BarChart3, Coins, Layers3, MapPinned, PackageSearch, Repeat2, TrendingUp } from 'lucide-react';
+import { BarChart3, CalendarClock, Coins, Layers3, MapPinned, PackageSearch, Repeat2, TrendingUp } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,7 @@ const TAB_LABELS: Record<string, string> = {
   movimientos: 'Movimientos',
   valorizado: 'Valorizado',
   rotacion: 'Rotación',
+  forecast: 'Quiebre',
 };
 
 interface ReportesInventarioProps {
@@ -77,6 +78,7 @@ const ReporteMovimientos = dynamic(
 );
 const ReporteValorizado = dynamic(() => import('./reporte-valorizado').then((mod) => ({ default: mod.ReporteValorizado })), { loading: () => <ReportesSectionLoader /> });
 const ReporteRotacion = dynamic(() => import('./reporte-rotacion').then((mod) => ({ default: mod.ReporteRotacion })), { loading: () => <ReportesSectionLoader /> });
+const ReporteForecast = dynamic(() => import('./reporte-forecast').then((mod) => ({ default: mod.ReporteForecast })), { loading: () => <ReportesSectionLoader /> });
 
 /**
  * @description Vista principal con pestañas para los reportes de inventario.
@@ -98,7 +100,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 Centro de Reportes
               </CardTitle>
               <CardDescription>
-                Selecciona una vista para revisar inventario, movimientos y rotación.
+                Consulta existencias, movimientos, rotación y riesgo de quiebre.
               </CardDescription>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -119,7 +121,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
         <Card className={SURFACE_CARD_CLASS}>
           <CardContent className='p-4 sm:p-5'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full space-y-4'>
-              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-6 dark:bg-slate-900/10'>
+              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-4 lg:grid-cols-7 dark:bg-slate-900/10'>
                 <TabsTrigger value='general' className={tabTriggerClass}>
                   <BarChart3 className='h-3.5 w-3.5' />
                   General
@@ -143,6 +145,10 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 <TabsTrigger value='rotacion' className={tabTriggerClass}>
                   <TrendingUp className='h-3.5 w-3.5' />
                   Rotación
+                </TabsTrigger>
+                <TabsTrigger value='forecast' className={tabTriggerClass}>
+                  <CalendarClock className='h-3.5 w-3.5' />
+                  Quiebre
                 </TabsTrigger>
               </TabsList>
 
@@ -195,6 +201,12 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
               <TabsContent value='rotacion' className='mt-0'>
                 <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}>
                   <ReporteRotacion />
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value='forecast' className='mt-0'>
+                <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}>
+                  <ReporteForecast />
                 </motion.div>
               </TabsContent>
             </Tabs>
