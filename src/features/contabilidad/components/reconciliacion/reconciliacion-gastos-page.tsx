@@ -21,11 +21,13 @@ import {
 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { GastosPendientesTable } from "../gastos-pendientes-table"
 import { ReconciliacionGastosForm } from "./reconciliacion-gastos-form"
 import { getGastosPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { GastoPendiente } from "@/app/models/model"
 import { cn } from "@/lib/utils"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import {
   StaggerContainer,
   StaggerItem,
@@ -163,47 +165,32 @@ export function ReconciliacionGastosPage() {
   }
 
   return (
-    <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
-      {/* Header */}
-      <StaggerItem>
-        <AnimatedCard>
-          <Card className={surfaceCardClass}>
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                    <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-300" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">Reconciliación de Gastos</h1>
-                    <p className="text-muted-foreground text-sm">
-                       Reconcilie salarios, gastos DE, compras, servicios y costos de servicios vendidos con sus cuentas bancarias
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <DateRangePicker
-                    value={dateRange}
-                    onChange={setDateRange}
-                    className="w-[300px]"
-                  />
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => loadGastos()}
-                      disabled={isLoading}
-                    >
-                      <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </AnimatedCard>
-      </StaggerItem>
+    <AccountingPageShell
+      icon={TrendingUp}
+      title="Reconciliación de Gastos"
+      description="Reconcilia salarios, gastos DE, compras, servicios y costos de servicios vendidos."
+      actions={(
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+          <DateRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            className="w-full sm:w-[300px]"
+          />
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => loadGastos()}
+              disabled={isLoading}
+              aria-label="Actualizar gastos"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </motion.div>
+        </div>
+      )}
+    >
+      <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
 
       {/* Summary Cards */}
       <StaggerItem>
@@ -402,13 +389,13 @@ export function ReconciliacionGastosPage() {
                   <span>
                     Mostrando gastos desde{" "}
                     <span className="font-medium">
-                      {format(dateRange.from, "dd 'de' MMMM, yyyy")}
+                      {format(dateRange.from, "dd 'de' MMMM, yyyy", { locale: es })}
                     </span>
                     {dateRange.to && (
                       <>
                         {" "}hasta{" "}
                         <span className="font-medium">
-                          {format(dateRange.to, "dd 'de' MMMM, yyyy")}
+                          {format(dateRange.to, "dd 'de' MMMM, yyyy", { locale: es })}
                         </span>
                       </>
                     )}
@@ -449,6 +436,7 @@ export function ReconciliacionGastosPage() {
           onSuccess={handleReconciliacionSuccess}
         />
       )}
-    </StaggerContainer>
+      </StaggerContainer>
+    </AccountingPageShell>
   )
 }
