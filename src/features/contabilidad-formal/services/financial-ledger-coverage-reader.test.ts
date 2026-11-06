@@ -1,0 +1,89 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const db = vi.hoisted(() => ({
+  asiento: { count: vi.fn() },
+  replayRun: { findFirst: vi.fn() },
+}));
+vi.mock('@/lib/prisma', () => ({ prisma: db }));
+
+import { readCoverageEvidence } from './financial-ledger-coverage-reader';
+
+describe('readCoverageEvidence', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    db.asiento.count.mockResolvedValue(4);
+    db.replayRun.findFirst.mockResolvedValue({
+      replayRunId: 'run-1',
+      status: 'COMPLETED',
+      omittedCount: 0,
+      ambiguousCount: 0,
+      noFxCount: 0,
+      noCostCount: 0,
+      outOfPeriodCount: 0,
+      diagnostic: {
+        reconciliation: {
+          scope: 'APPROVED_SOURCE_SNAPSHOT',
+          status: 'CONFORME',
+          expectedCount: 3,
+          matchedCount: 3,
+        },
+      },
+    });
+  });
+
+  it('reune la evidencia del replay y el libro del periodo', async () => {
+    const evidencia = await readCoverageEvidence({ tenantId: 'tenant-a', periodoId: 'periodo-1' });
+
+    expect(evidencia.asientosEnPeriodo).toBe(4);
+    expect(evidencia.replay?.replayRunId).toBe('run-1');
+    expect(evidencia.replay?.reconciliacion).toEqual({
+      status: 'CONFORME',
+      expectedCount: 3,
+      matchedCount: 3,
+    });
+  });
+
+  it('limita el replay al tenant y al periodo solicitados', async () => {
+    await readCoverageEvidence({ tenantId: 'tenant-a', periodoId: 'periodo-1' });
+
+    expect(db.replayRun.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { tenantId: 'tenant-a', preflight: { periodoId: 'periodo-1' } },
+    }));
+    expect(db.asiento.count).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-a', periodoId: 'periodo-1' },
+    });
+  });
+
+  it('devuelve evidencia sin replay cuando el periodo no fue reconstruido', async () => {
+    db.replayRun.findFirst.mockResolvedValue(null);
+
+    const evidencia = await readCoverageEvidence({ tenantId: 'tenant-a', periodoId: 'periodo-1' });
+
+    expect(evidencia.replay).toBeNull();
+    expect(evidencia.asientosEnPeriodo).toBe(4);
+  });
+
+  it('devuelve evidencia sin reconciliacion cuando el diagnostico no la contiene', async () => {
+    db.replayRun.findFirst.mockResolvedValue({
+      replayRunId: 'run-1',
+      status: 'COMPLETED',
+      omittedCount: 0,
+      ambiguousCount: 0,
+      noFxCount: 0,
+      noCostCount: 0,
+      outOfPeriodCount: 0,
+      diagnostic: { periodGuardBypass: {} },
+    });
+
+    const evidencia = await readCoverageEvidence({ tenantId: 'tenant-a', periodoId: 'periodo-1' });
+
+    expect(evidencia.replay?.reconciliacion).toBeNull();
+  });
+
+  it('rechaza tenant o periodo vacios antes de consultar', async () => {
+    await expect(readCoverageEvidence({ tenantId: '', periodoId: 'periodo-1' })).rejects.toThrow();
+    await expect(readCoverageEvidence({ tenantId: 'tenant-a', periodoId: '' })).rejects.toThrow();
+    expect(db.replayRun.findFirst).not.toHaveBeenCalled();
+    expect(db.asiento.count).not.toHaveBeenCalled();
+  });
+});
