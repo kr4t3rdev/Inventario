@@ -14,6 +14,8 @@ const inyeccionFindFirst = vi.fn();
 const inyeccionUpdate = vi.fn();
 const pagoCreate = vi.fn();
 const auditLogCreate = vi.fn();
+const policyFindUnique = vi.fn();
+const postEvento = vi.hoisted(() => vi.fn().mockResolvedValue({ estado: 'OMITIDO' }));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -30,6 +32,13 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: { log: vi.fn(), logStrict: auditLogCreate },
 }));
+
+vi.mock('@/features/contabilidad-formal/services/posting-engine', async () => {
+  const real = await vi.importActual<
+    typeof import('@/features/contabilidad-formal/services/posting-engine')
+  >('@/features/contabilidad-formal/services/posting-engine');
+  return { ...real, postEvento };
+});
 
 vi.mock('../accounting-tenant-lock-service', () => ({
   acquireAccountingTenantLock,
@@ -66,6 +75,8 @@ describe('AccountingOperationsMutationService', () => {
     capitalGlobalFindUnique.mockResolvedValue(null);
     adjustmentFindUnique.mockResolvedValue(null);
     auditLogCreate.mockResolvedValue({ id: 'audit-1' });
+    policyFindUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+    postEvento.mockResolvedValue({ estado: 'OMITIDO' });
     inyeccionFindFirst.mockResolvedValue({
       id: 'inyeccion-1',
       tipo: 'DEUDA_EXTERNA',
@@ -86,6 +97,7 @@ describe('AccountingOperationsMutationService', () => {
       },
       pagoDeuda: { create: pagoCreate },
       auditLog: { create: auditLogCreate },
+      tenantAccountingPolicy: { findUnique: policyFindUnique },
     }));
   });
 
@@ -579,5 +591,56 @@ describe('AccountingOperationsMutationService', () => {
     expect(pagoCreate).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
     expect(inyeccionUpdate).not.toHaveBeenCalled();
+  });
+  it('emite el asiento formal del ajuste bancario con su valoracion persistida', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input: {
+        cuentaId: 'account-1',
+        tipo: 'egreso',
+        monto: 100,
+        moneda: 'CUP',
+        descripcion: 'Correccion bancaria',
+        motivo: 'Diferencia conciliada',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(postEvento).toHaveBeenCalledWith(
+      expect.anything(),
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'AJUSTE_BANCARIO_CARGO',
+        origen: { tipo: 'ajuste_bancario', id: 'adjustment-1' },
+        montoFuncional: 100,
+      }),
+    );
+  });
+
+  it('emite el asiento formal de la inyeccion de capital', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio',
+        idempotencyKey: 'capital-formal-key',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(postEvento).toHaveBeenCalledWith(
+      expect.anything(),
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        tipo: 'INYECCION_CAPITAL',
+        origen: { tipo: 'inyeccion_capital', id: 'capital-1' },
+        montoFuncional: 250,
+      }),
+    );
   });
 });

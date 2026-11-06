@@ -37,6 +37,18 @@ export interface CostoFifoValorado {
 	fuentesSinTasa: string[];
 }
 
+/** Fuente de costo FIFO: la porción de costo y la moneda/fecha que la valoran. */
+export interface FuenteCostoFifo {
+	/** Moneda en la que está expresado el costo de la porción. */
+	moneda: string;
+	/** Fecha de la fuente (la de la compra o del lote). */
+	fecha: Date;
+	/** Costo total de la porción, en la moneda de la fuente. */
+	costo: number;
+	/** Unidades que compone la porción. */
+	cantidad: number;
+}
+
 /**
  * @description Calcula el costo unitario actual de una línea recibida,
  * combinando el costo facturado y el costo acordado para unidades pendientes.
@@ -477,18 +489,9 @@ export async function getCostoFifoVentaValorado(
 	});
 	if (asignaciones.length === 0) return null;
 
-	const policy = await tx.tenantAccountingPolicy.findUnique({
-		where: { tenantId },
-		select: { functionalCurrencyCode: true },
-	});
-	const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
-
 	// Una fuente por moneda y fecha: las porciones de la misma fuente comparten
 	// la tasa publicada vigente en su fecha.
-	const fuentes = new Map<
-		string,
-		{ moneda: string; fecha: Date; costo: number; cantidad: number }
-	>();
+	const fuentes = new Map<string, FuenteCostoFifo>();
 	let cantidadTotal = 0;
 	for (const asignacion of asignaciones) {
 		const cantidad = asignacion.cantidad;
@@ -507,12 +510,32 @@ export async function getCostoFifoVentaValorado(
 		cantidadTotal += cantidad;
 	}
 	if (cantidadTotal === 0) {
-		return { montoFuncional: 0, monedaFuncional, cantidad: 0, fuentesSinTasa: [] };
+		return { montoFuncional: 0, monedaFuncional: await monedaFuncionalDelTenant(tx, tenantId), cantidad: 0, fuentesSinTasa: [] };
 	}
 
+	return valorarCostoFifoFuentes(tx, tenantId, [...fuentes.values()]);
+}
+
+/**
+ * @description Valoración en moneda funcional de un conjunto de fuentes de costo
+ * FIFO. Cada fuente se convierte con la tasa publicada vigente en su fecha; una
+ * fuente sin tasa deja el importe funcional sin completar en lugar de estimarlo.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional del writer.
+ * @param {string} tenantId - Tenant propietario de las fuentes.
+ * @param {FuenteCostoFifo[]} fuentes - Fuentes de costo a valorar.
+ * @returns {Promise<CostoFifoValorado>} Costo valorado en moneda funcional.
+ */
+export async function valorarCostoFifoFuentes(
+	tx: Prisma.TransactionClient,
+	tenantId: string,
+	fuentes: FuenteCostoFifo[],
+): Promise<CostoFifoValorado> {
+	const monedaFuncional = await monedaFuncionalDelTenant(tx, tenantId);
 	const fuentesSinTasa: string[] = [];
 	let montoFuncional = 0;
-	for (const fuente of fuentes.values()) {
+	let cantidadTotal = 0;
+	for (const fuente of fuentes) {
+		cantidadTotal += fuente.cantidad;
 		if (!monedaFuncional) {
 			fuentesSinTasa.push(`${fuente.moneda}@${fuente.fecha.toISOString()}`);
 			continue;
@@ -543,6 +566,23 @@ export async function getCostoFifoVentaValorado(
 }
 
 /**
+ * @description Lee la moneda funcional declarada en la política contable del tenant.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional del writer.
+ * @param {string} tenantId - Tenant consultando su política.
+ * @returns {Promise<string | null>} Moneda funcional o null si no hay política.
+ */
+async function monedaFuncionalDelTenant(
+	tx: Prisma.TransactionClient,
+	tenantId: string,
+): Promise<string | null> {
+	const policy = await tx.tenantAccountingPolicy.findUnique({
+		where: { tenantId },
+		select: { functionalCurrencyCode: true },
+	});
+	return policy?.functionalCurrencyCode?.trim().toUpperCase() || null;
+}
+
+/**
  * @description Redondea un importe a la escala de la contabilidad funcional.
  * @param {number} valor - Importe a ajustar.
  * @returns {number} Importe con cuatro decimales.
@@ -557,15 +597,16 @@ function redondearEscalaFuncional(valor: number): number {
  * primero), descuenta la cantidad devuelta y devuelve el costo restaurado.
  * @param {Prisma.TransactionClient} tx - Cliente transaccional.
  * @param {object} params - tenantId, ventaItemId y cantidad a restaurar.
- * @returns {Promise<{ restaurado: number; costoTotal: number }>} Cantidad
- * restaurada y costo total acumulado (ponderado por lote).
+ * @returns {Promise<{ restaurado: number; costoTotal: number; fuentes: FuenteCostoFifo[] }>}
+ * Cantidad restaurada, costo total acumulado (ponderado por lote) y las
+ * fuentes de costo restituidas para su valoración en moneda funcional.
  */
 export async function restaurarAllocacionesFifo(
 	tx: Prisma.TransactionClient,
 	params: { tenantId: string; ventaItemId: string; cantidad: number },
-): Promise<{ restaurado: number; costoTotal: number }> {
+): Promise<{ restaurado: number; costoTotal: number; fuentes: FuenteCostoFifo[] }> {
 	const { tenantId, ventaItemId, cantidad } = params;
-	if (cantidad <= 0) return { restaurado: 0, costoTotal: 0 };
+	if (cantidad <= 0) return { restaurado: 0, costoTotal: 0, fuentes: [] };
 
 	const allocations = await tx.purchaseAllocation.findMany({
 		where: { tenantId, ventaItemId },
@@ -573,7 +614,13 @@ export async function restaurarAllocacionesFifo(
 			id: true,
 			cantidad: true,
 			costoUnitarioSnapshot: true,
-			compraDocumentoItem: { select: { createdAt: true, precioUnitario: true } },
+			compraDocumentoItem: {
+				select: {
+					createdAt: true,
+					precioUnitario: true,
+					compraDocumento: { select: { moneda: true, fechaCompra: true } },
+				},
+			},
 			recepcionItem: {
 				select: {
 					recepcion: { select: { fecha: true } },
@@ -591,6 +638,10 @@ export async function restaurarAllocacionesFifo(
 	let restante = cantidad;
 	let restaurado = 0;
 	let costoTotal = 0;
+	// Una fuente por moneda y fecha: la porción restituida conserva la moneda y
+	// la fecha con las que se valorado su costo, para que la reposición de
+	// inventario use la misma evidencia que el devengo original.
+	const fuentes = new Map<string, FuenteCostoFifo>();
 	for (const alloc of allocations) {
 		if (restante <= 0) break;
 		const devolver = Math.min(restante, alloc.cantidad);
@@ -608,9 +659,18 @@ export async function restaurarAllocacionesFifo(
 		costoTotal += devolver * costoUnitario;
 		restaurado += devolver;
 		restante -= devolver;
+
+		const compra = alloc.compraDocumentoItem?.compraDocumento ?? null;
+		const moneda = compra?.moneda?.trim().toUpperCase() || "CUP";
+		const fecha = compra?.fechaCompra ?? new Date(0);
+		const clave = `${moneda}|${fecha.toISOString()}`;
+		const fuente = fuentes.get(clave) ?? { moneda, fecha, costo: 0, cantidad: 0 };
+		fuente.costo += devolver * costoUnitario;
+		fuente.cantidad += devolver;
+		fuentes.set(clave, fuente);
 	}
 
-	return { restaurado, costoTotal };
+	return { restaurado, costoTotal, fuentes: [...fuentes.values()] };
 }
 
 /**

@@ -15,9 +15,93 @@ import {
 	calcularCantidadRequeridaMaterial,
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
+import { BomError, explodeBom } from "@/features/produccion/services/bom";
+import { planificarNecesidades } from "@/features/produccion/services/mrp";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+
+/**
+ * @description Convierte errores de validación BOM en errores de acción visibles para el cliente.
+ * @param {() => T} operacion - Cálculo de dominio que puede lanzar `BomError`.
+ * @returns {T} Resultado de la operación o error traducido.
+ */
+function ejecutarConErrorBom<T>(operacion: () => T): T {
+	try {
+		return operacion();
+	} catch (error) {
+		if (error instanceof BomError) throw new ActionError(error.message, error.code);
+		throw error;
+	}
+}
+
+export const planificarNecesidadesAction = withAction(
+	async (input: { recetaId: string; cantidad: number }, user: AuthenticatedUser) => {
+		requireFeature(user, 'mrp-avanzado', 'planificar necesidades de materiales');
+		const tenantId = requireTenant(user);
+		if (!input?.recetaId || !Number.isFinite(input.cantidad) || input.cantidad <= 0) {
+			throw new ActionError('La receta y una cantidad mayor que cero son obligatorias', 'VALIDATION_ERROR');
+		}
+
+		const recetas = await prisma.receta.findMany({
+			where: { tenantId },
+			select: {
+				recetaId: true,
+				productoId: true,
+				rendimiento: true,
+				RecetaIngrediente: {
+					select: {
+						productoId: true,
+						recetaIngredienteId: true,
+						cantidad: true,
+						desperdicio: true,
+					},
+				},
+			},
+		});
+		const recipes = recetas.map((recipe) => ({
+			recetaId: recipe.recetaId,
+			productoId: recipe.productoId,
+			rendimiento: recipe.rendimiento,
+			ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
+				ingredient.recetaIngredienteId
+					? {
+						recetaIngredienteId: ingredient.recetaIngredienteId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					}
+					: {
+						productoId: ingredient.productoId,
+						cantidad: ingredient.cantidad,
+						desperdicio: ingredient.desperdicio,
+					},
+			),
+		}));
+		const explosion = ejecutarConErrorBom(() =>
+			explodeBom(input.recetaId, input.cantidad, recipes),
+		);
+		const recetaRaiz = recipes.find(({ recetaId }) => recetaId === input.recetaId);
+		const productoIdsConDemanda = [...new Set([
+			...explosion.materiales.map(({ productoId }) => productoId),
+			...explosion.subrecipes.map(({ productoId }) => productoId)
+				.filter((id): id is string => Boolean(id)),
+			...(recetaRaiz?.productoId ? [recetaRaiz.productoId] : []),
+		])];
+		const balances = productoIdsConDemanda.length
+			? await prisma.stockUbicacion.findMany({
+					where: {
+						tenantId,
+						productoId: { in: productoIdsConDemanda },
+					},
+					select: { productoId: true, cantidadDisponible: true },
+				})
+			: [];
+
+		return ejecutarConErrorBom(() =>
+			planificarNecesidades(input.recetaId, input.cantidad, recipes, balances),
+		);
+	},
+);
 
 // ==================== RECETAS ====================
 
@@ -101,14 +185,17 @@ export const createRecetaProduccionAction = withAction(
 		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.create({
-			// @ts-expect-error TODO: fix prisma create data type
 			data: {
+				// `Receta.recetaId` y `Receta.updatedAt` no tienen valor por
+				// defecto en el esquema: sin ellos la escritura falla.
+				recetaId: crypto.randomUUID(),
 				nombre: input.nombre,
 				rendimiento: input.rendimiento ?? 1,
 				instrucciones: input.instrucciones ?? null,
 				tiempoPrep: input.tiempoPrep ?? null,
 				productoId: input.productoId ?? null,
 				tenantId,
+				updatedAt: new Date(),
 			},
 			include: { Producto: true, RecetaIngrediente: true },
 		});
@@ -140,7 +227,8 @@ export const updateRecetaProduccionAction = withAction(
 
 		const receta = await prisma.receta.update({
 			where: { recetaId },
-			data,
+			// `Receta.updatedAt` no se administra sola: hay que marcarla.
+			data: { ...data, updatedAt: new Date() },
 			include: { Producto: true, RecetaIngrediente: true },
 		});
 		revalidatePath("/busy/produccion");
@@ -167,7 +255,7 @@ export const setIngredientesRecetaProduccionAction = withAction(
 	async (
 		input: {
 			recetaId: string;
-			RecetaIngrediente: {
+			ingredientes: {
 				productoId: string;
 				cantidad: number;
 				unidad: string;
@@ -187,21 +275,23 @@ export const setIngredientesRecetaProduccionAction = withAction(
 
 		// Delete existing ingredients
 		await prisma.recetaIngrediente.deleteMany({
-			where: { recetaId: input.recetaId },
+			where: { recetaId: input.recetaId, tenantId },
 		});
 
 		// Create new ingredients
-		// @ts-expect-error TODO: fix input.ingredientes type
 		if (input.ingredientes.length > 0) {
 			await prisma.recetaIngrediente.createMany({
-				// @ts-expect-error TODO: fix prisma createMany data type
-				data: input.ingredientes.map((ing: any) => ({
+				data: input.ingredientes.map((ing) => ({
+					// `RecetaIngrediente.id` y `updatedAt` no tienen valor por
+					// defecto en el esquema: sin ellos la escritura falla.
+					id: crypto.randomUUID(),
 					recetaId: input.recetaId,
 					productoId: ing.productoId,
 					cantidad: ing.cantidad,
-					unidad: ing.unidad,
+					unidadSimbolo: ing.unidad,
 					desperdicio: ing.desperdicio,
 					tenantId,
+					updatedAt: new Date(),
 				})),
 			});
 		}
@@ -319,8 +409,10 @@ export const createOrdenProduccionAction = withAction(
 		}, 0);
 
 		const orden = await prisma.ordenProduccion.create({
-			// @ts-expect-error TODO: fix prisma create data type
 			data: {
+				// `OrdenProduccion.ordenProduccionId` y `updatedAt` no tienen
+				// valor por defecto en el esquema: sin ellos la escritura falla.
+				ordenProduccionId: crypto.randomUUID(),
 				recetaId: input.recetaId,
 				cantidad: input.cantidad,
 				observaciones: input.observaciones ?? null,
@@ -328,6 +420,7 @@ export const createOrdenProduccionAction = withAction(
 				estado: "PENDIENTE",
 				costoMateriales,
 				tenantId,
+				updatedAt: new Date(),
 			},
 			include: {
 				Receta: {
@@ -368,7 +461,43 @@ export const aprobarOrdenProduccionAction = withAction(
 				);
 			}
 
-			// Validar disponibilidad de materiales y descontar stock
+			const recetasAnidadas = await tx.receta.findMany({
+				where: { tenantId },
+				include: { RecetaIngrediente: true },
+			});
+			if (!recetasAnidadas.some((recipe) => recipe.recetaId === orden.recetaId)) {
+				throw new ActionError("Receta no encontrada", "NOT_FOUND");
+			}
+			const recetasBom = recetasAnidadas.map((recipe) => ({
+				recetaId: recipe.recetaId,
+				productoId: recipe.productoId,
+				rendimiento: recipe.rendimiento,
+				ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
+					ingredient.recetaIngredienteId
+						? {
+							recetaIngredienteId: ingredient.recetaIngredienteId,
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						}
+						: {
+							productoId: ingredient.productoId ?? '',
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						},
+				),
+			}));
+
+			let explosion;
+			try {
+				explosion = explodeBom(orden.recetaId, orden.cantidad, recetasBom);
+			} catch (error) {
+				if (error instanceof BomError) {
+					throw new ActionError(error.message, error.code);
+				}
+				throw error;
+			}
+
+			// Validar disponibilidad de materiales hoja y descontar el stock agregado.
 			const ingredientesConStock: Array<{
 				productoId: string;
 				cantidad: number;
@@ -378,9 +507,9 @@ export const aprobarOrdenProduccionAction = withAction(
 				producto?: { nombre: string; precioCosto: number; stock: number };
 			}> = [];
 
-			for (const ingrediente of orden.Receta.RecetaIngrediente) {
+			for (const material of explosion.materiales) {
 				const producto = await tx.producto.findUnique({
-					where: { id: ingrediente.productoId },
+					where: { id: material.productoId },
 					select: {
 						id: true,
 						nombre: true,
@@ -389,29 +518,28 @@ export const aprobarOrdenProduccionAction = withAction(
 						almacenId: true,
 					},
 				});
+				if (!producto) {
+					throw new ActionError(
+						`Producto ingrediente ${material.productoId} no encontrado`,
+						"NOT_FOUND",
+					);
+				}
 				const stockUbicacion = await tx.stockUbicacion.findUnique({
 					where: {
 						productoId_tipoUbicacion_ubicacionId: {
-							productoId: ingrediente.productoId,
+							productoId: material.productoId,
 							tipoUbicacion: "almacen",
-							ubicacionId: producto?.almacenId ?? '',
+							ubicacionId: producto.almacenId ?? '',
 						},
 					},
 					select: { cantidadDisponible: true },
 				});
 
-				if (!producto) {
-					throw new ActionError(
-						`Producto ingrediente ${ingrediente.productoId} no encontrado`,
-						"NOT_FOUND",
-					);
-				}
-
 				ingredientesConStock.push({
-					productoId: ingrediente.productoId,
-					cantidad: ingrediente.cantidad,
-					unidadSimbolo: ingrediente.unidadSimbolo ?? null,
-					desperdicio: ingrediente.desperdicio ?? 0,
+					productoId: material.productoId,
+					cantidad: material.cantidad,
+					unidadSimbolo: null,
+					desperdicio: 0,
 					almacenId: producto.almacenId,
 					producto: {
 						nombre: producto.nombre,
@@ -424,7 +552,7 @@ export const aprobarOrdenProduccionAction = withAction(
 			// Verificar que haya suficiente stock
 			const materialesFaltantes = validarDisponibilidadMateriales(
 				ingredientesConStock,
-				orden.cantidad,
+				1,
 			);
 
 			if (materialesFaltantes.length > 0) {
@@ -438,7 +566,7 @@ export const aprobarOrdenProduccionAction = withAction(
 			for (const [ingIdx, ing] of ingredientesConStock.entries()) {
 				const cantidadRequerida = calcularCantidadRequeridaMaterial(
 					ing,
-					orden.cantidad,
+					1,
 				);
 
 				if (ing.almacenId) {

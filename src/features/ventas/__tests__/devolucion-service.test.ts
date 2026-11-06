@@ -12,7 +12,20 @@ vi.mock('@/features/inventario/movimientos', () => ({
 	registrarMovimiento: vi.fn(),
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
-	restaurarAllocacionesFifo: vi.fn().mockResolvedValue({ restaurado: 2, costoTotal: 600 }),
+	restaurarAllocacionesFifo: vi.fn().mockResolvedValue({
+		restaurado: 2,
+		costoTotal: 600,
+		fuentes: [{ moneda: 'CUP', fecha: new Date('2026-01-01T00:00:00.000Z'), costo: 600, cantidad: 2 }],
+	}),
+	valorarCostoFifoFuentes: vi.fn().mockResolvedValue({
+		montoFuncional: 600,
+		monedaFuncional: 'CUP',
+		cantidad: 2,
+		fuentesSinTasa: [],
+	}),
+}));
+vi.mock('@/features/contabilidad-formal/services/sale-return-posting-service', () => ({
+	emitirDevolucionVenta: vi.fn().mockResolvedValue({ estado: 'OMITIDO' }),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -53,6 +66,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
 import { createAnticipoDevolucion } from '@/lib/services/anticipos-workflow';
+import { emitirDevolucionVenta } from '@/features/contabilidad-formal/services/sale-return-posting-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -97,7 +111,11 @@ function preparar(opts: { cxcSaldo?: number; turnoAbierto?: boolean } = {}) {
 	mockTx.venta.findUnique.mockResolvedValue(ventaEntregada as never);
 	mockTx.devolucionVenta.findFirst.mockResolvedValue(null);
 	mockTx.devolucionVentaItem.findMany.mockResolvedValue([]);
-	mockTx.devolucionVenta.create.mockResolvedValue({ devolucionId: 'dev-1' });
+	mockTx.devolucionVenta.create.mockResolvedValue({
+		devolucionId: 'dev-1',
+		moneda: 'CUP',
+		createdAt: new Date('2026-10-05T12:00:00.000Z'),
+	});
 	mockTx.devolucionVenta.update.mockResolvedValue({ devolucionId: 'dev-1' });
 	mockTx.serieFacturacion.findFirst.mockResolvedValue({
 		serieId: 's-nc',
@@ -167,6 +185,26 @@ describe('DevolucionVentaService.registrar (DNC-T3)', () => {
 		expect(createAnticipoDevolucion).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({ monto: 1000, clienteId: 'c-1', facturaId: 'nc-1' }),
+		);
+		expect(emitirDevolucionVenta).toHaveBeenCalledWith(
+			mockTx,
+			{ tenantId: 'tenant-1', userId: 'u-1' },
+			expect.objectContaining({
+				devolucionId: 'dev-1',
+				monto: 1000,
+				moneda: 'CUP',
+				montoAplicadoCxc: 0,
+				montoSaldoFavor: 1000,
+				montoReembolsado: 0,
+				costoFifo: 600,
+			}),
+		);
+		// El costo FIFO repuesto queda persistido en moneda funcional para que
+		// el replay reconstruya el mismo asiento.
+		expect(mockTx.devolucionVenta.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ costoFifoFuncional: 600 }),
+			}),
 		);
 		expect(AuditLogService.logStrict).toHaveBeenCalled();
 	});

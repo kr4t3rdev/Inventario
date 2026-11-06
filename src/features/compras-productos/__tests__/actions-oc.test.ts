@@ -19,6 +19,7 @@ const mockTx = {
   ordenCompraItem: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
   recepcion: { create: vi.fn() },
   recepcionItem: { create: vi.fn() },
+  ubicacion: { findFirst: vi.fn() },
   lote: { create: vi.fn() },
   producto: { findFirst: vi.fn() },
   stockMoveLine: { upsert: vi.fn() },
@@ -39,6 +40,7 @@ vi.mock('@/lib/prisma', () => ({
       updateMany: vi.fn(),
     },
     ordenCompraItem: { create: vi.fn(), update: vi.fn() },
+    ubicacion: { findFirst: vi.fn() },
     recepcion: { create: vi.fn(), findFirst: vi.fn() },
     recepcionItem: { create: vi.fn() },
     compraDocumento: { findMany: vi.fn() },
@@ -162,6 +164,44 @@ describe('Órdenes de compra y recepciones', () => {
     expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ tipoOrigen: 'COMPRA', cantidad: 60 }),
     }));
+  });
+
+  it('valida y registra la recepción en la hoja seleccionada del almacén del producto', async () => {
+    mockTx.ordenCompra.findFirst.mockResolvedValue({
+      id: 'oc-1', tenantId: 'tenant-1', estado: 'CONFIRMADA',
+      items: [{ id: 'item-1', productoId: 'prod-1', cantidadPedida: 5, cantidadRecibida: 0, precioUnitario: 10, producto: { almacenId: 'alm-1' } }],
+    });
+    mockTx.ubicacion.findFirst.mockResolvedValue({ id: 'hoja-1' });
+    mockTx.ordenCompraItem.findFirst.mockResolvedValue({ cantidadPedida: 5, cantidadRecibida: 2 });
+    mockTx.ordenCompraItem.findMany.mockResolvedValue([{ cantidadPedida: 5, cantidadRecibida: 2 }]);
+    mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await registrarRecepcionAction({
+      ordenId: 'oc-1', items: [{ ordenItemId: 'item-1', cantidad: 2, ubicacionHijaId: 'hoja-1' }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTx.ubicacion.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'hoja-1', tenantId: 'tenant-1', almacenId: 'alm-1' }),
+    }));
+    expect(upsertStockUbicacion).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      ubicacionHijaId: 'hoja-1',
+    }));
+  });
+
+  it('rechaza una ubicación hija que pertenece a otro almacén', async () => {
+    mockTx.ordenCompra.findFirst.mockResolvedValue({
+      id: 'oc-1', tenantId: 'tenant-1', estado: 'CONFIRMADA',
+      items: [{ id: 'item-1', productoId: 'prod-1', cantidadPedida: 5, cantidadRecibida: 0, precioUnitario: 10, producto: { almacenId: 'alm-1' } }],
+    });
+    mockTx.ubicacion.findFirst.mockResolvedValue(null);
+
+    const result = await registrarRecepcionAction({
+      ordenId: 'oc-1', items: [{ ordenItemId: 'item-1', cantidad: 2, ubicacionHijaId: 'hoja-otra' }],
+    });
+
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND');
+    expect(upsertStockUbicacion).not.toHaveBeenCalled();
   });
 
   it('es idempotente: reintentar con la misma clave no duplica recepción, stock ni kardex', async () => {

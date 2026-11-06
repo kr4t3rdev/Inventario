@@ -1,0 +1,317 @@
+# CT-1: cierre de la integración de la capa formal de contabilidad
+
+**Fecha de cierre:** 2026-11-04
+**Alcance:** integrar en `origin/main` la capa formal de contabilidad por slices
+verificables, **sin activarla**.
+**Plan:** `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
+**Inventario y decisiones de partida:** `docs/ct1-s0-inventario.md`
+**Documentación funcional:** `content/docs/modules/contabilidad/capa-formal-emisor-no-cash.md`
+
+## 1. Estado final
+
+La capa formal está integrada en `main` y **permanece apagada**:
+
+- `CONTABILIDAD_FORMAL_MODE=off` (modo global) — por defecto.
+- `CONTABILIDAD_FORMAL_NO_CASH_MODE=off` (modo de las liquidaciones no Cash) —
+  por defecto.
+- `CONTABILIDAD_FORMAL_MODO_TENANT` sin definir (la aprobación de modo por
+  tenant está deshabilitada) — por defecto.
+- Ningún tenant tiene `shadow`, `enforce` ni replay activado. El replay es una
+  operación explícita, autorizada y con preflight; no depende de los flags.
+
+La integración no cambió el comportamiento operativo de la aplicación: cada
+escritor emite el evento en modo `off`, el motor devuelve `OMITIDO` y no toca la
+base de datos.
+
+## 2. Decisiones aplicadas
+
+| ID | Decisión | Estado |
+|---|---|---|
+| D1 | Conservar el split moratorio de `main` (pagos a mora, interés ordinario y principal) | Aplicada |
+| D2 | Incluir las rutas móviles contables en CT-1 | Aplicada: las rutas móviles ya existían y alcanzan los mismos servicios; S8 cerró el hueco de los ajustes bancarios y las inyecciones de capital |
+| D3 | Excluir los artefactos Graphify del merge y regenerarlos al finalizar | Aplicada: el índice local se regeneró; los artefactos de `graphify-out/` no se mezclaron en los commits contables |
+| D4 | Integrar por slices sobre ramas nuevas desde `origin/main` | Aplicada: un commit por slice, push directo a `origin/main` y CI verde en cada SHA |
+| D5 | La devolución de venta se formaliza con su desglose real: el ingreso revertido se compensa contra la cuenta por cobrar aplicada, el anticipo (saldo a favor) y el reembolso en efectivo, y la mercadería reingresa por su costo FIFO | Aplicada: el motor admite las tres reglas de monto (`MONTO_APLICADO_CXC`, `MONTO_SALDO_FAVOR`, `MONTO_REEMBOLSADO`), la plantilla global de `DEVOLUCION_VENTA` refleja el desglose, el writer emite el asiento con la misma transacción que la devolución y el replay lo reconstruye con el mismo constructor de evento. El efectivo se reconoce al registrar la devolución; el efectivo físico sale al cerrar el turno (diferencia de timing documentada) |
+| D6 | El modo formal por tenant se aprueba en la licencia, no en el entorno: dos claves de override (`contabilidad-formal-shadow` / `contabilidad-formal-enforce`) sobre `TenantLicense.featureOverrides`, sin migración y apagadas por defecto | Aplicada: el mecanismo existe (`CONTABILIDAD_FORMAL_MODO_TENANT=1` habilita la aprobación por tenant; sin esa variable el modo global manda y no hay consultas extra). Ninguna licencia lo tiene activado: el gate sigue apagado |
+| D7 | El verificador forense es un CLI offline de solo lectura: recalcula los hashes del libro, re-deriva los saldos por cuenta y cruza el libro con la base operativa, con artefacto JSON reproducible | Aplicada: `scripts/accounting/verificador-forense.ts` (núcleo puro, sin base de datos) y `scripts/accounting/verificador-forense-report.ts` (CLI). No escribe nada; termina con código 1 cuando hay hallazgos |
+
+## 3. Slices integrados (SHAs reales)
+
+| Slice | Contenido | SHA | CI |
+|---|---|---|---|
+| S4(a) | Reconocimiento formal de la venta de productos | `63dc2e83` | `41715514976` |
+| S4(a)-2 | Devengo formal del costo FIFO de la venta | `84f8d617` | `41725826650` |
+| S5 | Libros contables formales y conciliación cruzada | `0ebf72ef` | `41671810424` |
+| S4(b) | Reconocimiento formal de mermas y producción | `68c26b26` | `41642227989` |
+| S4(d) | Emisor formal de anticipos (+ seguimiento `ba3a8aff`) | `7f50bf7c` | `41647462553` (el seguimiento) |
+| S4(e) | Emisor formal de liquidaciones y venta de servicios | `07f289a9`, `c6ead5fc` | `41659296288` |
+| S6(a) | Reversa formal con asiento inverso inmutable | `8e589c99` | `41738507653` |
+| S6(b) | Cierre formal del período contable | `c732fd6f` | `41776774116` |
+| S6(c) | Reversa formal en gastos reconciliados y nómina | `bab9d7a6` | `41778830292` |
+| S7 | Replay histórico gobernado (preflight, aprobación, ejecución) | `d0dfa212` | `41786262240` |
+| S7b | Reconstructor de pagos, compras y servicios en el replay | `6d224c0e` | `41789541385` |
+| S8 | Ajustes bancarios e inyecciones de capital | `11cd1390` | `41795897719` |
+| S7c | Replay de anticipos y métricas del outbox shadow | `1cfa16e3` | `41799724819` |
+| S9 | Activación del plan de cuentas (CTA-0) e infraestructura global conciliada | `7739ad05` | `41805169995` |
+| S10 | Cierre: matriz R0.5 por fila, registro final y verificación | `c4499227` | `41809661324` (head final `6132fdc5`) |
+| R6.1-a | Rollback físico formal de ajustes bancarios e inyecciones de capital | `0ae474a6` | `41827883217` |
+| D1a | Reglas de monto de la devolución de venta y plantilla global `DEVOLUCION_VENTA` | `ea75e47f` | `41849659638` |
+| D1b | Emisor formal `DEVOLUCION_VENTA` con costo FIFO funcional persistido | `2f3d3815` | `41868872545` |
+| D1c | Replay de la devolución de venta (mismo constructor de evento) | `dabf35d8` | `41873798367` |
+| D1d | Rollback físico formal de la devolución de venta | `d7a56e0b` | `41876058502` |
+| S8b-1 | Evidencia FX persistida de la inyección de capital | `551fe263` | `41878717237` (cancelado al mezclar un commit ajeno) |
+| S8b-2 | Replay de ajustes bancarios e inyecciones de capital | `b0b1cbbe`, `a52a4c29` | `41880980752` |
+| D6 | Aprobación del modo formal por tenant desde la licencia | `e9a35c48` | `41914417080` |
+| R6.1-b | Rollback físico formal de la venta de productos (filas 1-3) | `3de499da` | `41922031842` |
+| R6.1-c | Rollback físico formal de la compra de productos (fila 4) | `7e839156` | `41923889066` |
+| R6.1-d | Rollback físico formal de la merma y su reversa (filas 11-12) | `facf29e1` | `41925412231` |
+| R6.1-e | Rollback físico formal del anticipo (filas 7 y 10) | `9327b75a` | `41928847500` (el push propio quedó cancelado por concurrencia) |
+| R6.1-f | Rollback físico formal de los servicios (filas 5-6) | `926abe4b` | `41928847500` |
+| R6.1-g | Rollback físico formal de la reversa formal y del cierre de período (filas 22-23) | `76bf8d37` | `41930764304` |
+| R6.1-h | Rollback físico formal de las liquidaciones (filas 14-16) y emisor formal del cobro de servicios en la action web | `36509810` | `41934667095` |
+| R6.1-i | Rollback físico formal de la producción (fila 13) | `32676cb9` | `41936570894` |
+| R6.1-j | Rollback físico formal de la aplicación y el reverso de anticipos (filas 8-9) | `212b8a49` | `41937817962` |
+| D3b | Verificador forense autónomo del libro mayor | `18633ae4` | `41918768311` |
+| R6.1-k | Rollback físico formal del replay gobernado (fila 24) | `fcc74770` | `41991979544` |
+| R6.1-l | Rollback físico formal de la apertura contable manual aprobada | `490627dc` | `41998090101` |
+| PROD-1 | Alineación del módulo de producción con el esquema Prisma: migración de `Receta.costoUnitario` y campos obligatorios de sus writers | `a4980d9c` | `42001804406` |
+| CT-6 | Manifiesto de comparación de 912 rutas conservado como artefacto de documentación | `20038b65` | `42003160064` |
+
+Los slices cumplen su condición de salida con un writer, un test focal y un
+CI verde. Los slices cuyo primer push quedó en rojo (por ejemplo `7f50bf7c` y
+`a035c9f1`) se corrigieron con commits de seguimiento dentro del mismo slice;
+el estado final de cada slice está verde.
+
+La regeneración de Graphify (decisión D3) va en commits de artefactos separados
+(`e45f02e8`, `d2c3937f` y `6132fdc5`): ninguno toca código funcional ni la
+documentación del programa.
+
+## 4. Matriz R0.5 por fila
+
+Leyenda: **✅** evidencia explícita en el código citado; **⚠️** evidencia
+estructural o indirecta (no un failpoint físico en `main`); **➖** no aplica por
+diseño. La matriz es **evidencia de cobertura**, no un acta de aceptación:
+`R0.5-ACCEPT` sigue sin firma y depende de `R6`/`R7` (ver sección 6).
+
+Dimensiones: (a) actor/permiso del adaptador · (b) aislamiento por tenant ·
+(c) origen único del asiento · (d) moneda/FX con evidencia persistida ·
+(e) misma transacción que la escritura operativa · (f) idempotencia y reintento ·
+(g) posteo del asiento y auditoría · (h) rollback físico demostrado.
+
+| # | Writer (callsite → evento) | Adaptadores vivos | a | b | c | d | e | f | g | h | Evidencia focal |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `facturacion-workflow.ts` → `VENTA_CONTADO` (origen `reconciliacion_venta`) | action POS, ofertas, órdenes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/facturacion-ventas-workflow.test.ts`, `src/features/contabilidad-formal/services/__tests__/sale-posting-service.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
+| 2 | `facturacion-workflow.ts` → `VENTA_CREDITO` (origen `factura`) | action POS, ofertas, órdenes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/ventas/__tests__/venta-create-orquestacion.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
+| 3 | `venta-mutation-service.ts` / `venta-lifecycle-service.ts` → `COSTO_VENTA_DEVENGADO` (origen `venta_costo`) | action de venta, workflow de entrega | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/ventas/__tests__/venta-create-orquestacion.test.ts`, `src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts` |
+| 4 | `compras-productos/actions.ts` → `COMPRA_CREDITO` (origen `compra_documento`) | action de compras | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | `src/features/compras-productos/__tests__/actions.test.ts`, `src/features/compras-productos/__integration__/compra-formal-rollback-postgres.test.ts` |
+| 5 | `compras-servicios/actions.ts` → `GASTO_CREDITO` (origen `compra_servicio`) | action de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/compras-servicios/__tests__/actions.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
+| 6 | `venta-servicios/actions.ts` → `VENTA_SERVICIO_CREDITO` (origen `venta_servicio`) | action de venta de servicios | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/venta-servicios/__tests__/reconocimiento-formal.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
+| 7 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_RECIBIDO` / `ANTICIPO_PROVEEDOR_ENTREGADO` (origen `anticipo_movimiento`) | action de anticipos, workflow | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts` |
+| 8 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICADO` / `ANTICIPO_PROVEEDOR_APLICADO` | workflow de aplicación | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts` |
+| 9 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_APLICACION_REVERSADA` / `ANTICIPO_PROVEEDOR_APLICACION_REVERSADA` | workflow de reverso (gastos, nómina) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts` |
+| 10 | `anticipos-workflow.ts` → `ANTICIPO_CLIENTE_DEVUELTO` / `ANTICIPO_PROVEEDOR_REINTEGRADO` | action de devolución | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/lib/services/__tests__/anticipos-workflow.test.ts`, `src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts` |
+| 11 | `registrar-merma-service.ts` / `mermas/actions.ts` → `MERMA` (origen `ajuste_merma`) | action y route web/móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/mermas/__tests__/registrar-merma-service.test.ts`, `src/features/mermas/__tests__/actions.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
+| 12 | `revertirMermaContableEnTransaccion` → reversa de merma (origen `ajuste_merma_reversado`) | action, route web y route móvil de mermas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/inventory-adjustment-posting-service.test.ts`, `src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts` |
+| 13 | `produccion/actions.ts` → `PRODUCCION` (origen `orden_produccion`) | action de producción | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/produccion/__tests__/actions.test.ts`, `src/features/produccion/__integration__/produccion-formal-rollback-postgres.test.ts` |
+| 14 | `accounting-reconciliation-service.ts` (`reconcileSale`) → `COBRO_CXC` / `VENTA_CONTADO` (origen `reconciliacion_venta`) | action de reconciliación, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/services/__tests__/accounting-reconciliation-fx.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
+| 15 | `accounting-reconciliation-service.ts` (`reconcileService`) → `COBRO_SERVICIO` (origen `reconciliacion_servicio`) | action, ruta web, ruta móvil | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/__tests__/reconcile-service-cierre-factura.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
+| 16 | `productos/actions-restock.ts` → `PAGO_CXP` (origen `reconciliacion_gasto`) | action de reingreso | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/__tests__/settlement-posting-service.test.ts`, `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts` |
+| 17 | `accounting-cash-operations-mutation-service.ts` → `PRESTAMO_OTORGADO` (origen `prestamo_cash`) | actions y rutas web/móvil de préstamos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
+| 18 | `accounting-cash-operations-mutation-service.ts` → `DEUDA_RECIBIDA` (origen `deuda_cash`) | actions y rutas web/móvil de deudas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
+| 19 | `accounting-cash-operations-mutation-service.ts` → `COBRO_PRESTAMO` / `PAGO_DEUDA` | actions y rutas web/móvil de pagos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
+| 20 | `accounting-operations-mutation-service.ts` (`createBankAdjustment`) → `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO` (origen `ajuste_bancario`) | action, ruta web y ruta móvil de ajustes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
+| 21 | `accounting-operations-mutation-service.ts` (`createCapitalInjection`) → `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` (origen `inyeccion_capital`) | action, ruta web y ruta móvil de capital | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/capital-adjustment-posting-service.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-idempotency-postgres.test.ts`, `src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts` |
+| 22 | `reversal-service.ts` → asiento inverso (origen `REVERSO_ASIENTO`) | `gastosDE/reversal.ts`, `empleados/payroll-reversal.ts` | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/reversal-service.test.ts`, `src/features/gastosDE/__tests__/expense-formal-reversal.test.ts`, `src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts` |
+| 23 | `cierre-formal-service.ts` → `CIERRE_PERIODO` (origen `cierre_periodo`) | action de cierres | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/cierre-formal-service.test.ts`, `src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts` |
+| 24 | `replay-backfill-service.ts` → fuentes reconstruidas: `COBRO_CXC`, `VENTA_CONTADO`, `VENTA_CREDITO`, `PAGO_CXP`, `COMPRA_CREDITO`, `GASTO_CREDITO`, `VENTA_SERVICIO_CREDITO`, `DEVOLUCION_VENTA`, `AJUSTE_BANCARIO_ABONO` / `AJUSTE_BANCARIO_CARGO`, `INYECCION_CAPITAL` / `DEUDA_RECIBIDA` y los seis tipos de anticipo | actions de replay (preflight, aprobación, ejecución) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/contabilidad-formal/__integration__/replay-backfill.test.ts`, `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts` |
+| 25 | `devolucion-venta-service.ts` → `DEVOLUCION_VENTA` (origen `devolucion_venta`) | action de devoluciones de venta | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/sale-return-posting-service.test.ts`, `src/features/ventas/__tests__/devolucion-service.test.ts`, `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts` |
+
+Notas de la matriz:
+
+- **(b) y (c)**: el motor acota por `ctx.tenantId` y el asiento tiene la clave
+  única `(tenantId, origenTipo, origenId)`. Evidencia común:
+  `src/features/contabilidad-formal/__tests__/posting-engine.test.ts` y
+  `src/features/contabilidad-formal/__integration__/libros-aislamiento.test.ts`.
+- **(d)**: la fila 4 (compra de productos) marca ⚠️ porque la compra no persiste la tasa
+  de cambio. La inyección de capital (fila 21) ya no marca ⚠️: persiste la tasa
+  y el importe convertido, y el replay reconstruye el asiento con la misma
+  huella FX. En la compra, en moneda extranjera, el motor falla cerrado en vez
+  de inventar una equivalencia.
+- **(h)**: las familias de caja (filas 17-19), de ajustes e inyecciones (filas
+  20-21), de ventas (filas 1-3), de compras (fila 4), de servicios (filas 5-6),
+  de mermas (filas 11-12), de anticipos (filas 7 y 10), de reversa formal (fila
+  22), de cierre de período (fila 23), de liquidaciones (filas 14-16), de
+  producción (fila 13), de aplicación y reverso de anticipos (filas 8-9) y
+  de devoluciones de venta (fila 25)
+  tienen un failpoint físico en `main` (trigger de auditoría y fallo de
+  inserción del asiento). En las filas 20-21 y 25 el failpoint se prueba además
+  en modo `enforce`: el asiento ya insertado se revierte junto con la escritura
+  operativa y con la auditoría
+  (`src/features/contabilidad/services/__integration__/capital-adjustment-formal-rollback-postgres.test.ts`,
+  `src/features/ventas/__integration__/devolucion-formal-rollback-postgres.test.ts`).
+  En las filas 1-3 el failpoint es el del insert del asiento: al fallar se
+  revierten la venta, sus líneas, el descuento de stock, el kardex, la factura,
+  la cuenta por cobrar o la reconciliación, el cobro en efectivo, la
+  asignación FIFO y el consecutivo de la serie
+  (`src/features/ventas/__integration__/venta-formal-rollback-postgres.test.ts`).
+  En la fila 4 el failpoint del asiento revierte el documento de compra, su
+  línea, el stock, el kardex, el gasto, la cuenta por pagar, la reconciliación
+  del pago y el saldo bancario
+  (`src/features/compras-productos/__integration__/compra-formal-rollback-postgres.test.ts`).
+  En las filas 5-6 el failpoint revierte la compra o la venta del servicio y,
+  en la venta a crédito, la cuenta por cobrar del cliente
+  (`src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts`).
+  En las filas 11-12 el failpoint revierte la merma, su documento espejo, el
+  kardex y el stock; en la reversa, además, la anulación del ajuste, el
+  asiento inverso y la devolución del stock
+  (`src/features/mermas/__integration__/merma-formal-rollback-postgres.test.ts`).
+  En las filas 7 y 10 el failpoint revierte el anticipo, sus movimientos, el
+  saldo disponible de tesorería y el saldo bancario
+  (`src/features/contabilidad/__integration__/anticipo-formal-rollback-postgres.test.ts`).
+  En las filas 8-9 el failpoint revierte la compra con anticipo, el stock, el
+  kardex y el saldo disponible del anticipo; en el reverso de la aplicación,
+  además, el movimiento de reverso y el saldo repuesto
+  (`src/features/contabilidad/__integration__/anticipo-aplicacion-formal-rollback-postgres.test.ts`).
+  En la fila 22 el failpoint del asiento inverso revierte la eliminación del
+  documento y la anulación del asiento original
+  (`src/features/compras-servicios/__integration__/servicio-formal-rollback-postgres.test.ts`).
+  En la fila 23 el failpoint del asiento de cierre revierte la aprobación del
+  período y su auditoría
+  (`src/features/contabilidad/__integration__/cierre-formal-rollback-postgres.test.ts`).
+  En las filas 14-16 el failpoint revierte la reconciliación, el saldo
+  bancario y el estado de la cuenta por cobrar o por pagar; el gate del emisor
+  no Cash se enciende solo dentro del proceso de prueba
+  (`src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts`).
+  En la fila 13 el failpoint revierte la orden, su historial, el stock del
+  producto final y sus movimientos de kardex
+  (`src/features/produccion/__integration__/produccion-formal-rollback-postgres.test.ts`).
+  En la fila 24 el failpoint del insert del asiento revierte **todo** el
+  periodo ya contabilizado dentro del replay: el servicio envuelve las
+  contabilizaciones en un savepoint, de modo que el asiento ya escrito y el
+  que provoca el fallo se revierten juntos, el `ReplayRun` queda durable en
+  `FAILED` con el diagnóstico del error y las fuentes operativas del periodo
+  no se tocan. La secuencia de intentos del trigger deja constancia de que el
+  fallo ocurrió en el segundo insert, es decir, con un asiento ya escrito
+  (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
+  Fuera de la matriz, la apertura contable manual aprobada tiene el mismo
+  tipo de evidencia: un failpoint en el insert del asiento de apertura
+  revierte el período, su auditoría, el asiento, el registro de apertura y el
+  consumo de la aprobación, y la misma solicitud puede abrir el período
+  después, sin residuos
+  (`src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`).
+  El resto de las filas tiene el rollback
+  estructural por compartir transacción, sin failpoint físico: es la brecha
+  conocida de la matriz.
+- **(i)**: la fila 15 tenía una divergencia entre adaptadores: solo
+  `AccountingReconciliationService.reconcileService` (ruta móvil) emitía el
+  evento formal `COBRO_SERVICIO`, mientras que la action web
+  `reconciliarServicioAction` cobraba la tesorería y cerraba el documento sin
+  postear el asiento. La action web ahora emite el mismo evento con el mismo
+  writer formal, de modo que el cobro de servicios llega al libro mayor por los
+  dos caminos; el gate del emisor no Cash lo mantiene inerte por defecto.
+  Evidencia:
+  `src/features/contabilidad/__tests__/reconcile-service-cierre-factura.test.ts`
+  y `src/features/contabilidad/__integration__/liquidacion-formal-rollback-postgres.test.ts`.
+- **(f)**: la garantía de no duplicar el asiento la da el origen único; la
+  idempotencia de la fila operativa (no repetir la venta, la compra o el pago)
+  depende del writer y solo está probada donde el test focal lo cubre.
+
+## 5. Verificación final
+
+| Comprobación | Resultado |
+|---|---|
+| Suite unitaria | 5843 pruebas verdes (872 archivos: 871 verdes y 1 omitido), 1 omitida, 2 pendientes |
+| Suite de integración (PostgreSQL desechable) | 252 pruebas verdes (48 archivos) |
+| Typecheck (`tsc --noEmit`) | Limpio |
+| ESLint sobre los archivos del programa | Limpio |
+| CI del estado final del programa | Verde: run `42003160064` sobre `069eda78` (4 shards de test, integración PostgreSQL, typecheck, lint, cobertura y build) |
+
+La base de integración es desechable y local
+(`ALLOW_DISPOSABLE_TEST_DB=1`, base `tcp_test_*` en `127.0.0.1:5433`); la
+identidad `localhost` se rechaza a propósito por la política del repositorio.
+
+## 6. Gates de rollout (siguen abiertos)
+
+Ninguno de estos gates se cambió en CT-1:
+
+| Gate | Estado | Nota |
+|---|---|---|
+| `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
+| `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); además, el replay gobernado y la apertura contable manual aprobada tienen su propio failpoint físico |
+| `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
+| `R7` operacional (siete días) | Abierto | No se activó ningún modo |
+| `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
+
+## 7. Pendientes que quedan fuera de CT-1
+
+1. **Apertura formal por traspaso (rollover)**: bloqueada a propósito por
+   `APERTURA_SALDOS_NO_VERIFICABLES`; la evidencia disponible no permite
+   verificar todos los rubros ni su moneda.
+2. **Rollback físico por canal**: extendido a las familias de ajustes e
+   inyecciones, a la devolución de venta, a la venta, a la compra, a los
+   servicios (gasto y venta), a las mermas, a la recepción y devolución de
+   fondos de los anticipos, a la reversa formal, al cierre de período, a las
+   liquidaciones (cobro de venta, cobro de servicio y pago de compra) y a la
+   producción, a la aplicación y al reverso de anticipos (con el asiento
+   formal en modo `enforce`). Cada familia con escritura operativa tiene ya su
+   failpoint físico, y el replay gobernado también: su savepoint revierte el
+   periodo contabilizado y deja el `ReplayRun` en `FAILED`
+   (`src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`).
+   La apertura contable manual aprobada también lo tiene: si falla el insert
+   del asiento de apertura, se revierten el período, su auditoría de timeline,
+   el asiento, el registro de apertura y el consumo de la aprobación, y la
+   misma solicitud puede abrir el período después, sin residuos
+   (`src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`).
+   Solo queda la apertura formal **por traspaso (rollover)**, que sigue
+   bloqueada por diseño (punto 1).
+3. **Desajustes preexistentes del módulo de producción**: cerrados. La
+   migración `20261115000000_align_receta_costo_unitario` alinea
+   `Receta.costoUnitario` con el tipo declarado en el esquema (`Float`, que en
+   PostgreSQL es `DOUBLE PRECISION`); la conversión es exacta y no reescribe
+   datos. Sin ese ajuste, el costo unitario real de una receta —que se obtiene
+   al dividir el costo total entre el rendimiento— fallaba al escribirse
+   (`column costoUnitario is of type integer but expression is of type double
+   precision`). Además, las writers del módulo escriben ahora los campos que el
+   esquema declara obligatorios y sin valor por defecto (`Receta.recetaId`,
+   `OrdenProduccion.ordenProduccionId`, `RecetaIngrediente.id` y las marcas
+   `updatedAt`), que antes hacían fallar el alta en tiempo de ejecución; la
+   action de ingredientes también pasó a escribir la unidad normalizada
+   (`unidadSimbolo`) y a acotar el borrado al tenant. Evidencia:
+   `src/features/produccion/__integration__/produccion-esquema-alineado-postgres.test.ts`.
+   El test de rollback de producción ya no necesita insertar la receta con SQL
+   directo.
+4. **Aprobación operativa por tenant**: el mecanismo de D6 ya existe (la
+   licencia aprueba el modo por tenant), pero la aprobación real de R7.4 —con
+   su criterio de reversión y la ventana shadow— sigue siendo una tarea
+   operacional: no hay ninguna licencia con las claves de override activadas.
+5. **Verificador forense autónomo**: cerrado con la decisión D7. El CLI
+   `scripts/accounting/verificador-forense-report.ts` recalcula la cadena de
+   hashes del libro, re-deriva los saldos por cuenta, comprueba el cuadre de
+   cada asiento y la evidencia FX de cada línea, y cruza el saldo formal de
+   cuentas por cobrar y por pagar con la base operativa. Es de solo lectura y
+   deja un artefacto JSON. Lo que queda del lado de CT-3 es la explotación
+   operativa del verificador (baseline por entorno y seguimiento de la ventana
+   shadow), no su construcción.
+
+La devolución de venta (`DEVOLUCION_VENTA`) quedó cerrada con la decisión D5:
+el motor admite las tres reglas de monto del desglose, la plantilla global
+refleja las tres salidas reales, el writer emite el asiento dentro de su
+transacción y el replay lo reconstruye con el mismo constructor de evento.
+
+La inyección de capital en moneda extranjera también quedó cerrada: persiste
+la tasa y el importe convertido, y el replay reconstruye su asiento con la
+misma huella FX.
+
+## 8. Archivos de referencia
+
+- Documentación funcional: `content/docs/modules/contabilidad/capa-formal-emisor-no-cash.md`
+- Plan maestro: `docs/plan-ct1-integracion-capa-formal-2026-10-27.md`
+- Inventario y decisiones: `docs/ct1-s0-inventario.md`
+- Tareas con los SHA reales: `openspec/changes/contabilidad-capa-formal/tasks.md`
+- Evidencias de rollback físico del replay y de la apertura manual:
+  `src/features/contabilidad-formal/__integration__/replay-formal-rollback-postgres.test.ts`
+  y
+  `src/features/contabilidad/__integration__/apertura-manual-formal-rollback-postgres.test.ts`
+- Artefacto congelado del manifiesto de comparación de 912 rutas (CT-6 de la
+  auditoría de contabilidad): `docs/artefactos/manifiesto-comparacion-rutas-rl4.json`
+  con su nota de origen y verificación en `docs/artefactos/README.md`

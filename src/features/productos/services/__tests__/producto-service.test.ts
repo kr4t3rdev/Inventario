@@ -44,6 +44,24 @@ describe('ProductoService', () => {
       where: { productoId: { in: ['prod-1'] } },
       select: { productoId: true, cantidad: true },
     });
+    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.objectContaining({ sku: true, esVariante: true }) }),
+    );
+  });
+
+  it('permite encontrar variantes por su SKU en las búsquedas de productos', async () => {
+    vi.mocked(mockPrisma.producto.findMany).mockResolvedValue([] as never);
+
+    await ProductoService.list('tenant-1', { search: 'CAM-M-AZUL' });
+
+    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        tenantId: 'tenant-1',
+        OR: expect.arrayContaining([
+          { sku: { contains: 'CAM-M-AZUL', mode: 'insensitive' } },
+        ]),
+      }),
+    }));
   });
 
   it('returns a tenant-scoped product by id', async () => {

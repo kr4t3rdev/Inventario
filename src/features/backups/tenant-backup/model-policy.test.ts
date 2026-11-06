@@ -8,6 +8,7 @@ import {
   findUnsupportedRestoreCycles,
   matchesDeclaredChildOwnerPath,
   TENANT_BACKUP_BUSINESS_MANIFEST,
+  type TenantBackupModelPolicy,
 } from './model-policy';
 
 const schema = readFileSync(resolve(process.cwd(), 'prisma/schema.prisma'), 'utf8');
@@ -15,7 +16,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(160);
+    expect(schemaModelNames).toHaveLength(162);
     expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
@@ -28,7 +29,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 98,
+      'tenant-direct': 100,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -43,8 +44,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(114);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(114);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(116);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(116);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -68,9 +69,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(114);
+      .ineligibleBusinessModels).toHaveLength(116);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(114);
+      .missingBusinessModels).toHaveLength(116);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 
@@ -111,6 +112,18 @@ describe('tenant backup model policy contract', () => {
     }
   });
 
+  it('registers variant templates as tenant-owned business data without enabling restore', () => {
+    const entry = TENANT_BACKUP_BUSINESS_MANIFEST.find(
+      (item) => item.model === 'ProductoPlantilla',
+    );
+    const policy = getModelPolicy('ProductoPlantilla');
+
+    expect(entry?.disposition).toBe('candidate');
+    expect(entry?.rationale).toContain('non-sellable variant definitions');
+    expect(policy?.kind).toBe('tenant-direct');
+    expect(policy?.ownerPath).toContain('tenantId');
+  });
+
   it('classifies contract configuration as business data and records complete child paths', () => {
     expect(getModelPolicy('ConfiguracionContratos')?.kind).toBe('tenant-direct');
     expect(TENANT_BACKUP_BUSINESS_MANIFEST.some(
@@ -134,7 +147,9 @@ describe('tenant backup model policy contract', () => {
   it('requires an explicit owner path for child-owned models', () => {
     const children = schemaModelNames
       .map((name) => getModelPolicy(name))
-      .filter((policy) => policy?.kind === 'tenant-child');
+      .filter(
+        (policy): policy is TenantBackupModelPolicy => policy?.kind === 'tenant-child',
+      );
 
     expect(children.length).toBeGreaterThan(0);
     for (const policy of children) {

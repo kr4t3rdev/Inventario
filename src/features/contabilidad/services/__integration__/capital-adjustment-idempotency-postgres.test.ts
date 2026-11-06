@@ -16,6 +16,7 @@ const tenantAId = `it_capital_a_${suffix}`;
 const tenantBId = `it_capital_b_${suffix}`;
 const accountAId = `it_capital_bank_a_${suffix}`;
 const accountBId = `it_capital_bank_b_${suffix}`;
+const accountUsdId = `it_capital_bank_usd_${suffix}`;
 const actorA = `it_capital_actor_${suffix}`;
 const actorFail = `it_capital_fail_${suffix}`;
 const auditMarkerTable = `it_capital_audit_marker_${suffix}`;
@@ -71,6 +72,7 @@ describe('capital and bank-adjustment idempotency on isolated PostgreSQL', { tim
       data: [
         { cuentaId: accountAId, tenantId: tenantAId, nombreBanco: `capital-a-${suffix}`, numeroCuenta: `a-${suffix}`, tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 1000 },
         { cuentaId: accountBId, tenantId: tenantBId, nombreBanco: `capital-b-${suffix}`, numeroCuenta: `b-${suffix}`, tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldo: 1000 },
+        { cuentaId: accountUsdId, tenantId: tenantAId, nombreBanco: `capital-usd-${suffix}`, numeroCuenta: `usd-${suffix}`, tipoCuenta: 'CORRIENTE', moneda: 'USD', saldo: 0 },
       ],
     });
   });
@@ -82,7 +84,7 @@ describe('capital and bank-adjustment idempotency on isolated PostgreSQL', { tim
     await prisma.auditLog.deleteMany({ where: { usuarioId: { in: [actorA, actorFail] } } });
     await prisma.ajusteBancario.deleteMany({ where: { tenantId: { in: [tenantAId, tenantBId] } } });
     await prisma.inyeccionCapital.deleteMany({ where: { tenantId: { in: [tenantAId, tenantBId] } } });
-    await prisma.cuentaBancaria.deleteMany({ where: { cuentaId: { in: [accountAId, accountBId] } } });
+    await prisma.cuentaBancaria.deleteMany({ where: { cuentaId: { in: [accountAId, accountBId, accountUsdId] } } });
     await prisma.tenant.deleteMany({ where: { tenantId: { in: [tenantAId, tenantBId] } } });
     await prisma.$disconnect();
   });
@@ -110,6 +112,9 @@ describe('capital and bank-adjustment idempotency on isolated PostgreSQL', { tim
     expect(created.id).toBe(concurrentReplay.id);
     expect(created.montoInteres.toString()).toBe('10.13');
     expect(created.montoTotalDeuda.toString()).toBe('110.14');
+    // La valoracion persistida es la evidencia que necesita el replay.
+    expect(created.tasaCambio?.toString()).toBe('1');
+    expect(created.montoConvertido?.toString()).toBe('100.0123');
     expect(await prisma.inyeccionCapital.count({ where: { tenantId: tenantAId, idempotencyKey: key } })).toBe(1);
     expect((await accountBalance(accountAId)).toString()).toBe('1100.0123');
 
@@ -126,6 +131,28 @@ describe('capital and bank-adjustment idempotency on isolated PostgreSQL', { tim
       code: 'IDEMPOTENCY_CONFLICT',
     });
     expect((await accountBalance(accountAId)).toString()).toBe('1100.0123');
+  });
+
+  it('persiste la tasa y el importe convertido de una inyeccion en moneda extranjera', async () => {
+    const key = `capital-usd-${suffix}`;
+    const created = await createCapital({
+      montoRecibido: '250.5',
+      moneda: 'USD',
+      tipo: 'DEUDA_EXTERNA',
+      cuentaId: accountUsdId,
+      entidadPrestamista: `lender-${suffix}`,
+      tasaCambio: '24.5',
+      tasaInteres: '0',
+      plazoMeses: 12,
+      fechaOperacion: new Date('2026-10-01T12:00:00.000Z'),
+      descripcion: 'deuda en dolares',
+      idempotencyKey: key,
+    });
+
+    // La evidencia persistida es la que el replay historico necesita para
+    // reconstruir el asiento con la misma huella FX.
+    expect(created.tasaCambio?.toString()).toBe('24.5');
+    expect(created.montoConvertido?.toString()).toBe('6137.25');
   });
 
   it('compares complete adjustment identity and scopes the key to its tenant', async () => {

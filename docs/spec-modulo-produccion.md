@@ -24,15 +24,16 @@ El modelo Receta representa una fórmula de fabricación que define los ingredie
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| recetaId | String (CUID) | Sí | Identificador único de la receta |
+| recetaId | String (UUID) | Sí | Identificador único de la receta (lo genera la writer en cada alta) |
+| tenantId | String | Sí | Empresa a la que pertenece la receta |
 | nombre | String (160) | Sí | Nombre descriptivo de la receta |
 | rendimiento | Integer | Sí | Cantidad de unidades producidas con esta receta (por defecto 1) |
-| costoUnitario | Integer | Sí | Costo calculado por unidad de producción (por defecto 0) |
+| costoUnitario | Float (DOUBLE PRECISION) | Sí | Costo calculado por unidad de producción (por defecto 0). Admite decimales: se obtiene al dividir el costo total entre el rendimiento (por ejemplo, 100 / 3 = 33.33) |
 | instrucciones | String (4000) | No | Pasos o indicaciones para la preparación |
 | tiempoPrep | Integer | No | Tiempo estimado de preparación en minutos |
 | productoId | String | No | Identificador del producto del inventario asociado |
 | createdAt | DateTime | Sí | Fecha de creación del registro |
-| updatedAt | DateTime | Sí | Fecha de última modificación |
+| updatedAt | DateTime | Sí | Fecha de última modificación. El esquema no la administra sola: cada writer debe escribirla |
 
 **Relaciones:**
 
@@ -46,22 +47,27 @@ El modelo RecetaIngrediente define cada uno de los productos del inventario que 
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| recetaIngredienteId | String (CUID) | Sí | Identificador único del ingrediente en la receta |
+| id | String (UUID) | Sí | Identificador único del ingrediente (lo genera la writer en cada alta) |
 | recetaId | String | Sí | Identificador de la receta a la que pertenece |
 | productoId | String | Sí | Identificador del producto del inventario |
+| recetaIngredienteId | String | No | Subreceta referenciada por el ingrediente (BOM multinivel) |
+| tenantId | String | Sí | Empresa a la que pertenece el ingrediente |
 | cantidad | Float | Sí | Cantidad del producto necesaria |
+| unidadSimbolo | String | No | Símbolo de la unidad normalizada del ingrediente |
 | desperdicio | Float | Sí | Porcentaje de desperdicio estimado (por defecto 0) |
 | createdAt | DateTime | Sí | Fecha de creación |
-| updatedAt | DateTime | Sí | Fecha de última modificación |
+| updatedAt | DateTime | Sí | Fecha de última modificación. El esquema no la administra sola: cada writer debe escribirla |
 
 **Restricciones:**
 
-- La combinación de recetaId y productoId debe ser única (no se puede agregar el mismo producto dos veces a una receta)
+- El par (tenantId, recetaIngredienteId) no puede apuntar a dos ingredientes
+  distintos de la misma subreceta (BOM multinivel)
 
 **Relaciones:**
 
 - Cada RecetaIngrediente pertenece a una única Receta
 - Cada RecetaIngrediente referencia un único Producto del inventario
+- Cada RecetaIngrediente puede apuntar a una subreceta del mismo tenant
 
 ### 2.3 OrdenProduccion
 
@@ -69,16 +75,16 @@ El modelo OrdenProduccion representa una orden de fabricación que se crea para 
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| ordenProduccionId | String (CUID) | Sí | Identificador único de la orden de producción |
+| ordenProduccionId | String (UUID) | Sí | Identificador único de la orden de producción (lo genera la writer en cada alta) |
 | recetaId | String | Sí | Identificador de la receta a utilizar |
+| tenantId | String | Sí | Empresa a la que pertenece la orden |
 | cantidad | Integer | Sí | Cantidad de unidades a producir |
 | estado | EstadoProduccion | Sí | Estado actual de la orden (PENDIENTE, EN_PROCESO, COMPLETADA, CANCELADA) |
-| observaciones | String | No | Notas adicionales sobre la orden |
+| observaciones | String (1000) | No | Notas adicionales sobre la orden |
 | fechaProduccion | DateTime | Sí | Fecha de producción programada o real |
-| costoMateriales | Integer | No | Costo total de los materiales utilizados |
-| costoUnitario | Integer | No | Costo unitario de producción calculado |
+| costoMateriales | Float | No | Costo total de los materiales utilizados |
 | createdAt | DateTime | Sí | Fecha de creación de la orden |
-| updatedAt | DateTime | Sí | Fecha de última modificación |
+| updatedAt | DateTime | Sí | Fecha de última modificación. El esquema no la administra sola: cada writer debe escribirla |
 
 **Estados Posibles:**
 

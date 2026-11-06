@@ -28,12 +28,12 @@ export interface TenantBackupBusinessManifestEntry {
 const DIRECT_TENANT_MODELS = [
   'Categoria', 'Unidad', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
-  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'UnidadConversion', 'Lote',
+  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'ProductoPlantilla', 'UnidadConversion', 'Lote',
   'StockUbicacion', 'StockUbicacionDetalle', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'Merma', 'Transferencia',
   'Empleado', 'Pagosalario', 'CierreContable', 'GastoCompra',
   'CompraProducto', 'CompraDocumento', 'CompraDocumentoItem', 'OrdenCompra',
-  'OrdenCompraItem', 'Recepcion', 'RecepcionItem', 'ReglaReabastecimiento',
+  'OrdenCompraItem', 'Recepcion', 'RecepcionItem', 'ReglaReabastecimiento', 'ReglaPutaway',
   'PurchaseAllocation', 'Servicios', 'VentaServicios', 'CompraServicio',
   'GastoConcepto', 'GastoElemento', 'GastosDE', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda', 'CuentaBancaria',
@@ -70,14 +70,14 @@ const EXCLUDED_MODELS = [
 const BUSINESS_MODEL_NAMES = [
   'Categoria', 'Unidad', 'UnidadConversion', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
-  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto',
+  'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'ProductoPlantilla',
   'StockUbicacion', 'StockUbicacionDetalle', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'VentaItem', 'Merma', 'Lote', 'Ubicacion',
   'Transferencia', 'Attendance', 'EmployeeWorkSchedule', 'VacationRequest',
   'VacationAccrual', 'Empleado', 'Pagosalario', 'CierreContable',
   'GastoCompra', 'CompraProducto', 'CompraDocumento', 'CompraDocumentoItem',
   'OrdenCompra', 'OrdenCompraItem', 'Recepcion', 'RecepcionItem',
-  'ReglaReabastecimiento', 'PurchaseAllocation', 'Servicios', 'VentaServicios',
+  'ReglaReabastecimiento', 'ReglaPutaway', 'PurchaseAllocation', 'Servicios', 'VentaServicios',
   'CompraServicio', 'GastoConcepto', 'GastoElemento', 'GastosDE',
   'TenantAccountingPolicy', 'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda',
   'CuentaBancaria', 'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio',
@@ -147,7 +147,9 @@ const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
     kind: 'tenant-direct' as const,
     ownerPath: model === 'TipoContratoCustom'
       ? 'tenantId; exclude legacy NULL rows'
-      : model === 'UnidadConversion'
+      : model === 'ProductoPlantilla'
+        ? 'tenantId; variant products reference the template through a composite tenant FK'
+        : model === 'UnidadConversion'
         ? 'tenantId; composite Producto and Unidad foreign keys'
         : model === 'Lote'
           ? 'tenantId; composite Producto foreign key'
@@ -156,7 +158,9 @@ const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
             : 'tenantId',
     rationale: model === 'TipoContratoCustom'
       ? 'Tenant-owned model; never infer tenant ownership for legacy NULL tenantId rows.'
-      : model === 'UnidadConversion'
+      : model === 'ProductoPlantilla'
+        ? 'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; include only after relation and field validation.'
+        : model === 'UnidadConversion'
         ? 'Tenant-owned conversion with tenantId and composite same-tenant Producto and Unidad references; '
           + 'relation and field review still gates export and restore.'
         : model === 'Lote'
@@ -201,6 +205,8 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
     disposition: 'candidate',
     rationale: model === 'TipoContratoCustom'
       ? 'Tenant-owned model; include only validated non-null tenantId rows and never infer legacy NULL ownership.'
+      : model === 'ProductoPlantilla'
+        ? 'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; include only after relation and field validation.'
       : model === 'UnidadConversion'
         ? [
             'UnidadConversion is required to preserve tenant product-unit conversion state;',
@@ -213,6 +219,8 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
             : 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
     productImpact: model === 'TipoContratoCustom'
       ? 'Legacy unattributed custom types remain excluded; current tenant rows are candidates only.'
+      : model === 'ProductoPlantilla'
+        ? 'Omission can lose tenant variant attributes and catalog grouping; restore eligibility is not yet approved.'
       : model === 'UnidadConversion'
         ? [
             'Omission can lose tenant conversion settings; export and restore eligibility remains',

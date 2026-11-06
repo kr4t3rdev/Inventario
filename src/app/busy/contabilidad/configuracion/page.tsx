@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
 import { AccountingPolicyCard } from '@/features/contabilidad/components/accounting-policy-card';
+import { PlanContableCard } from '@/features/contabilidad-formal/components/plan-contable-card';
 
 // Dynamic imports with skeleton loaders
 const TiposPagoConfigPage = dynamic(
@@ -57,6 +58,7 @@ export default function ConfiguracionPage(): React.JSX.Element {
       }
     >
       <AccountingPolicyCard />
+      <PlanContableCard />
       <TiposPagoConfigPage />
     </AccountingPageShell>
   );
