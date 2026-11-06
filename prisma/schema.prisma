@@ -306,6 +306,7 @@ model Tenant {
   replayPreflights ReplayPreflight[]
   replayApprovals  ReplayApproval[]
   replayRuns       ReplayRun[]
+  checkpointsFormales CheckpointContableFormal[]
   shadowPosteos                  ShadowPosteoOutbox[]
   stockUbicacionDetalles         StockUbicacionDetalle[]
 
@@ -3450,6 +3451,7 @@ model PeriodoContable {
   snapshots          SaldoSnapshot[]
   snapshotPeriodos   SnapshotPeriodo[]
   asientos           Asiento[]
+  checkpointsFormales CheckpointContableFormal[]
   replayPreflights    ReplayPreflight[]
 
   @@unique([tenantId, codigo])
@@ -3725,11 +3727,38 @@ model ReplayRun {
   approval          ReplayApproval @relation(fields: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], references: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], onDelete: Restrict)
   actor             TenantMembership @relation("ReplayRunActor", fields: [tenantId, startedByUserId], references: [tenantId, userId], onDelete: Restrict)
   asientos          Asiento[]
+  checkpointsFormales CheckpointContableFormal[]
 
   @@unique([tenantId, replayRunId])
   @@index([tenantId, replayPreflightId, startedAt])
   @@index([tenantId, status, startedAt])
   @@map("contabilidad_replay_runs")
+}
+
+/// Checkpoint contable formal: evidencia durable del reporte con su procedencia en el mayor formal.
+model CheckpointContableFormal {
+  checkpointId   String   @id @default(cuid())
+  tenantId       String
+  periodoId      String
+  cutoffAt       DateTime
+  /// SHA-256 de la cadena de hashes del mayor formal hasta el corte.
+  ledgerHash     String
+  /// Ejecucion de replay que accredito la cobertura del periodo.
+  replayRunId    String?
+  /// Reporte formal persistido: balance por cuenta y resultado del periodo.
+  payload        Json
+  /// SHA-256 del payload persistido.
+  hashIntegridad String
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  periodo   PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  replayRun ReplayRun?      @relation(fields: [tenantId, replayRunId], references: [tenantId, replayRunId], onDelete: Restrict)
+
+  @@unique([tenantId, checkpointId])
+  @@index([tenantId, periodoId, cutoffAt])
+  @@map("contabilidad_checkpoints_formales")
 }
 
 
