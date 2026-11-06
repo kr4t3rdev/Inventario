@@ -55,10 +55,9 @@ describe('accion del reporte contable formal', () => {
 			tenantId: 'tenant-1',
 			periodoId: 'periodo-1',
 			cutoffAt: undefined,
+			});
 		});
-	});
-
-	it('propaga el corte solicitado', async () => {
+		it('propaga el corte solicitado', async () => {
 		await getFormalFinancialReportAction({
 			periodoId: 'periodo-1',
 			cutoffAt: '2026-12-31T23:59:59.000Z',
