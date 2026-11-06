@@ -10,14 +10,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/server-actions/get-current-user');
 
 const reporteMock = vi.hoisted(() => vi.fn());
+const periodosMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/contabilidad-formal/services/formal-financial-report-service', () => ({
 	getFormalFinancialReport: reporteMock,
 }));
 
+vi.mock('@/features/contabilidad-formal/services/formal-periods-service', () => ({
+	listFormalPeriods: periodosMock,
+}));
+
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { getFormalFinancialReportAction } from '@/features/contabilidad-formal/actions-reporte';
+import {
+	getFormalFinancialReportAction,
+	listarPeriodosFormalesAction,
+} from '@/features/contabilidad-formal/actions-reporte';
 
 const contador: AuthenticatedUser = {
 	userId: 'user-1',
@@ -101,5 +109,28 @@ describe('accion del reporte contable formal', () => {
 		if (resultado.success) throw new Error('Se esperaba un rechazo de validacion');
 		expect(resultado.error?.code).toBe('VALIDATION_ERROR');
 		expect(reporteMock).not.toHaveBeenCalled();
+	});
+
+	it('lista los periodos formales del tenant autenticado', async () => {
+		periodosMock.mockResolvedValue([{ periodoId: 'periodo-1' }]);
+
+		const resultado = await listarPeriodosFormalesAction();
+
+		expect(resultado.success).toBe(true);
+		expect(periodosMock).toHaveBeenCalledWith({ tenantId: 'tenant-1' });
+	});
+
+	it('el listado de periodos exige la licencia de contabilidad formal', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...contador,
+			planFeatures: { 'contabilidad-formal': false },
+		});
+
+		const resultado = await listarPeriodosFormalesAction();
+
+		expect(resultado.success).toBe(false);
+		if (resultado.success) throw new Error('Se esperaba un rechazo por licencia');
+		expect(resultado.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+		expect(periodosMock).not.toHaveBeenCalled();
 	});
 });
