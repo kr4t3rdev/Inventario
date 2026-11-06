@@ -56,4 +56,17 @@ describe('readFinancialLedger', () => {
       .rejects.toThrow();
     expect(db.asientoLinea.findMany).not.toHaveBeenCalled();
   });
+
+  it('excluye cierres solo al solicitar movimientos para estado de resultados', async () => {
+    db.asientoLinea.findMany.mockResolvedValue([]);
+    await readFinancialLedger({
+      tenantId: 'tenant-a', cutoffAt: new Date('2026-12-31T23:59:59.000Z'),
+      excludeClosingEntries: true,
+    });
+    expect(db.asientoLinea.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        asiento: expect.objectContaining({ origenTipo: { not: 'cierre_periodo' } }),
+      }),
+    }));
+  });
 });

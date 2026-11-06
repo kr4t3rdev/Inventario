@@ -6,6 +6,7 @@ interface LedgerReadParams {
   tenantId: string;
   cutoffAt: Date;
   from?: Date;
+  excludeClosingEntries?: boolean;
   client?: Prisma.TransactionClient;
 }
 
@@ -31,6 +32,7 @@ export async function readFinancialLedger(params: LedgerReadParams): Promise<Fin
         tenantId: params.tenantId,
         estado: 'CONTABILIZADO',
         fecha: { ...(params.from ? { gte: params.from } : {}), lte: params.cutoffAt },
+        ...(params.excludeClosingEntries ? { origenTipo: { not: 'cierre_periodo' } } : {}),
       },
       cuenta: { tenantId: params.tenantId },
     },
