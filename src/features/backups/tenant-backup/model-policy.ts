@@ -47,6 +47,7 @@ const DIRECT_TENANT_MODELS = [
   'ValeSalidaItem', 'ListaPrecio', 'Anticipo', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
+  'CheckpointContableFormal',
   'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
@@ -93,6 +94,7 @@ const BUSINESS_MODEL_NAMES = [
   'Anticipo', 'AnticipoMovimiento', 'DevolucionVenta', 'DevolucionVentaItem',
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
+  'CheckpointContableFormal',
   'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
 ] as const;
@@ -121,6 +123,7 @@ const PROTECTED_EVIDENCE_CANDIDATES = [
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'CashPaymentInterestAllocation',
   'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud',
+  'CheckpointContableFormal',
 ] as const;
 const PROTECTED_EVIDENCE_MODEL_SET: ReadonlySet<string> = new Set(PROTECTED_EVIDENCE_CANDIDATES);
 
