@@ -41,6 +41,7 @@ import {
   getHistorialReconciliacionServiciosAction,
 } from "@/features/contabilidad/actions-reconciliacion"
 import { cn } from "@/lib/utils"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import {
   StaggerContainer,
   StaggerItem,
@@ -194,35 +195,18 @@ export function ReconciliacionServiciosPage() {
   }
 
   return (
-    <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
-      {/* Header */}
-      <StaggerItem>
-        <AnimatedCard>
-          <Card className={surfaceCardClass}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">Reconciliación de Servicios</h1>
-                    <p className="text-muted-foreground text-sm">
-                      Gestiona la reconciliación de servicios prestados con cuentas bancarias
-                    </p>
-                  </div>
-                </div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button onClick={handleRefresh} variant="outline" className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Actualizar
-                  </Button>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
-        </AnimatedCard>
-      </StaggerItem>
+    <AccountingPageShell
+      icon={Wrench}
+      title="Reconciliación de Servicios"
+      description="Gestiona la reconciliación de servicios prestados con cuentas bancarias."
+      actions={(
+        <Button onClick={handleRefresh} variant="outline" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Actualizar
+        </Button>
+      )}
+    >
+      <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
 
       {/* Filters */}
       <StaggerItem>
@@ -348,6 +332,7 @@ export function ReconciliacionServiciosPage() {
           onSuccess={handleReconciliacionSuccess}
         />
       )}
-    </StaggerContainer>
+      </StaggerContainer>
+    </AccountingPageShell>
   )
 }
