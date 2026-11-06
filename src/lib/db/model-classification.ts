@@ -73,6 +73,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   BackupPlan: SCOPED('Plan de respaldos del tenant.'),
   Categoria: SCOPED(),
   CashPaymentInterestAllocation: SCOPED('Asignación de intereses por tenant y conciliación.'),
+  CheckpointContableFormal: SCOPED('Checkpoint contable formal con tenantId y FKs compuestas a tenant, período y replay.'),
   CierreContable: SCOPED(),
   Cliente: SCOPED(),
   CloudinaryAsset: SCOPED('Activo multimedia del tenant (ownerType/ownerId polimórfico + tenantId propio).'),
