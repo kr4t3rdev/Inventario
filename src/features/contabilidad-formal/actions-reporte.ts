@@ -16,6 +16,10 @@ import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { FormalFinancialReportResolution } from '@/features/contabilidad-formal/services/formal-financial-report-contract';
 import { getFormalFinancialReport } from '@/features/contabilidad-formal/services/formal-financial-report-service';
+import {
+	listFormalPeriods,
+	type FormalPeriodSummary,
+} from '@/features/contabilidad-formal/services/formal-periods-service';
 
 /** Feature de licencia que habilita la contabilidad formal. */
 const FEATURE = 'contabilidad-formal';
@@ -60,3 +64,17 @@ export const getFormalFinancialReportAction = withAction<
 		cutoffAt: parsed.cutoffAt ? new Date(parsed.cutoffAt) : undefined,
 	});
 });
+
+/**
+ * @description Lista los períodos del tenant con evidencia en el mayor formal.
+ * @param {void} _input - Sin entrada.
+ * @param {AuthenticatedUser} user - Usuario autenticado inyectado por withAction.
+ * @returns {Promise<FormalPeriodSummary[]>} Períodos consultables del reporte formal.
+ */
+export const listarPeriodosFormalesAction = withAction<void, FormalPeriodSummary[]>(
+	async (_input: void, user: AuthenticatedUser) => {
+		const tenantId = exigirTenant(user);
+		requireFeature(user, FEATURE, 'consultar el reporte contable formal');
+		return listFormalPeriods({ tenantId });
+	},
+);
