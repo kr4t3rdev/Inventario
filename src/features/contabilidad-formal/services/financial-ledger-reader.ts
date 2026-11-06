@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { FinancialLedgerLine } from './financial-ledger-balance';
+import { resolveClosingScope } from './financial-ledger-closing-scope';
 
 interface LedgerReadParams {
   tenantId: string;
@@ -25,14 +26,19 @@ export async function readFinancialLedger(params: LedgerReadParams): Promise<Fin
     throw new Error('El tenant y el corte contable deben ser válidos');
   }
 
-  const lines = await (params.client ?? prisma).asientoLinea.findMany({
+  const db = params.client ?? prisma;
+  const alcanceCierre = params.excludeClosingEntries
+    ? await resolveClosingScope({ tenantId: params.tenantId, client: params.client })
+    : [];
+
+  const lines = await db.asientoLinea.findMany({
     where: {
       tenantId: params.tenantId,
       asiento: {
         tenantId: params.tenantId,
         OR: [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }],
         fecha: { ...(params.from ? { gte: params.from } : {}), lte: params.cutoffAt },
-        ...(params.excludeClosingEntries ? { origenTipo: { not: 'cierre_periodo' } } : {}),
+        ...(alcanceCierre.length > 0 ? { asientoId: { notIn: alcanceCierre } } : {}),
       },
       cuenta: { tenantId: params.tenantId },
     },
