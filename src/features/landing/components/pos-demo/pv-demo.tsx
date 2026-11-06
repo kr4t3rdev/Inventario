@@ -428,7 +428,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					whileHover={reduceMotion ? undefined : { scale: 1.005 }}
 										className="flex items-center gap-4 p-3 border rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors"
 				>
-					<div className="w-12 h-12 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+					<div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
 						<Package className="h-5 w-5 text-white" />
 					</div>
 					<div className="flex-1 min-w-0">
@@ -646,11 +646,11 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					transition={{ duration: 0.5 }}
 				>
 					<Card className="overflow-hidden border-dashed">
-						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+						<div className="h-1 bg-linear-to-r from-blue-500 to-blue-600" />
 						<CardHeader className="px-4 pb-3 sm:px-5">
 							<div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
 								<motion.div
-									className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+									className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
 									whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: 5 }}
 									transition={{ type: 'spring', stiffness: 400, damping: 10 }}
 								>
@@ -820,7 +820,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					transition={{ duration: 0.5, delay: 0.2 }}
 				>
 					<Card className="overflow-hidden border-dashed">
-						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+						<div className="h-1 bg-linear-to-r from-blue-500 to-blue-600" />
 						<CardHeader className="px-4 pb-3 sm:px-5">
 							<div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-4">
 								{/* Cabecera de turno activo (mismo componente que el POS real) */}
@@ -859,7 +859,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 
 							<div className="flex min-w-0 items-center gap-2 sm:gap-3">
 								<motion.div
-									className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center shrink-0"
+									className="w-8 h-8 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shrink-0"
 									whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 								>
 									<Package className="h-4 w-4 text-white" />
@@ -940,11 +940,11 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					transition={{ duration: 0.5, delay: 0.3 }}
 				>
 						<Card className="overflow-hidden border-dashed md:sticky md:top-20">
-						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
+						<div className="h-1 bg-linear-to-r from-blue-500 to-blue-600" />
 						<CardHeader className="px-4 pb-3 sm:px-5">
 							<CardTitle className="flex flex-wrap items-center gap-2">
 								<motion.div
-										className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-orange-500 to-red-600"
+										className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-blue-500 to-blue-600"
 									whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 								>
 									<ShoppingCart className="h-4 w-4 text-white" />
@@ -1094,7 +1094,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 								whileTap={reduceMotion ? undefined : { scale: 0.98 }}
 							>
 								<Button
-									className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
+									className="w-full bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-600/90 text-white"
 									size="lg"
 									ref={checkoutButtonRef}
 									disabled={cart.length === 0 || isProcessing}
@@ -1213,7 +1213,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										whileTap={reduceMotion ? undefined : { scale: 0.98 }}
 									>
 										<Button
-											className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
+											className="w-full bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-600/90 text-white"
 											onClick={processDemoVenta}
 											disabled={isProcessing}
 										>
