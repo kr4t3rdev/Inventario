@@ -70,6 +70,7 @@ Subguias de contabilidad:
 - [Periodos Contables](./contabilidad/periodos-contables.md)
 - [Periodos Contables Full](./contabilidad/periodos-contables-full.md)
 - [Ajustes Bancarios, Anticipos, Deudas y Prestamos](./contabilidad/ajustes-bancarios.md)
+- [Reporte Contable Formal](./contabilidad/reporte-formal.md)
 
 ## Personas y RRHH
 
