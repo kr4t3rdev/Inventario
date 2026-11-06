@@ -62,6 +62,7 @@ Este módulo no es una sola pantalla sino un hub financiero completo. Desde el d
 - `src/features/contabilidad/actions-deudas-cash.ts`
 - `content/docs/modules/contabilidad/capa-formal-emisor-no-cash.md` (capa formal: asientos con partida doble para cobros y pagos)
 - `content/docs/modules/contabilidad/libros-formales.md` (libros contables formales: diario, mayor, balance de comprobación y conciliación cruzada)
+- `content/docs/modules/contabilidad/reporte-formal.md` (reporte contable formal: balance general y estado de resultados desde el mayor formal, con cobertura acreditada)
 
 ## En una frase
 
