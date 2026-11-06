@@ -91,6 +91,25 @@ describe('getFormalFinancialReport', () => {
 		expect(resolucion.reason).toBe('PERIODO_NO_ENCONTRADO');
 	});
 
+	it('usa el cierre del periodo como corte por defecto', async () => {
+		db.periodoContable.findFirst.mockResolvedValue({
+			periodoId: 'periodo-1',
+			fechaInicio: INICIO,
+			fechaFin: new Date('2026-12-31T23:59:59.000Z'),
+		});
+
+		const resolucion = await getFormalFinancialReport({
+			tenantId: 'tenant-a', periodoId: 'periodo-1',
+		});
+
+		expect(resolucion.status).toBe('AVAILABLE');
+		if (resolucion.status !== 'AVAILABLE') throw new Error('Se esperaba un reporte disponible');
+		expect(resolucion.cutoffAt).toBe('2026-12-31T23:59:59.000Z');
+		expect(mocks.readFormalReportData).toHaveBeenCalledWith(
+			expect.objectContaining({ cutoffAt: new Date('2026-12-31T23:59:59.000Z') }),
+		);
+	});
+
 	it.each([
 		['tenant', { ...PARAMETROS, tenantId: '' }],
 		['periodo', { ...PARAMETROS, periodoId: '' }],

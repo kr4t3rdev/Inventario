@@ -13,8 +13,8 @@ export interface FormalFinancialReportParams {
 	tenantId: string;
 	/** Período contable evaluado. */
 	periodoId: string;
-	/** Fecha de corte inclusiva del reporte. */
-	cutoffAt: Date;
+	/** Fecha de corte inclusiva; por defecto, el cierre del período. */
+	cutoffAt?: Date;
 	/** Cliente transaccional opcional para leer en el mismo contexto. */
 	client?: Prisma.TransactionClient;
 }
@@ -35,7 +35,7 @@ export async function getFormalFinancialReport(
 	if (
 		!params.tenantId.trim() ||
 		!params.periodoId.trim() ||
-		!Number.isFinite(params.cutoffAt.getTime())
+		(params.cutoffAt !== undefined && !Number.isFinite(params.cutoffAt.getTime()))
 	) {
 		throw new Error('El tenant, el período y el corte son obligatorios');
 	}
@@ -43,7 +43,7 @@ export async function getFormalFinancialReport(
 	const db = params.client ?? prisma;
 	const periodo = await db.periodoContable.findFirst({
 		where: { tenantId: params.tenantId, periodoId: params.periodoId },
-		select: { periodoId: true, fechaInicio: true },
+		select: { periodoId: true, fechaInicio: true, fechaFin: true },
 	});
 	if (!periodo) {
 		return {
@@ -79,17 +79,18 @@ export async function getFormalFinancialReport(
 		};
 	}
 
+	const cutoffAt = params.cutoffAt ?? periodo.fechaFin;
 	const datos = await readFormalReportData({
 		tenantId: params.tenantId,
 		from: periodo.fechaInicio,
-		cutoffAt: params.cutoffAt,
+		cutoffAt,
 		client: params.client,
 	});
 
 	return {
 		status: 'AVAILABLE',
 		periodoId: params.periodoId,
-		cutoffAt: params.cutoffAt.toISOString(),
+		cutoffAt: cutoffAt.toISOString(),
 		accounts: datos.accounts,
 		result: datos.result,
 		coverage,
