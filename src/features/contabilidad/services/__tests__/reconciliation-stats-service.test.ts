@@ -321,7 +321,7 @@ describe('getReconciliationStats', () => {
     await getReconciliationStats({ tenantId: 'tenant-a', db });
 
     expect(calls.ventaServicios).toHaveBeenCalledWith({
-      where: { tenantId: 'tenant-a', NOT: { reconciliado: true } },
+      where: { tenantId: 'tenant-a', reconciliado: null },
     });
     expect(calls.ventaServicios.mock.calls[0][0].where).not.toHaveProperty(
       'reconciliaciones',
