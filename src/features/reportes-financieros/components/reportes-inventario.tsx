@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { BarChart3, Coins, Layers3, MapPinned, PackageSearch, Repeat2 } from 'lucide-react';
+import { BarChart3, Coins, Layers3, MapPinned, PackageSearch, Repeat2, TrendingUp } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +39,7 @@ const TAB_LABELS: Record<string, string> = {
   ubicacion: 'Ubicación',
   movimientos: 'Movimientos',
   valorizado: 'Valorizado',
+  rotacion: 'Rotación',
 };
 
 interface ReportesInventarioProps {
@@ -75,6 +76,7 @@ const ReporteMovimientos = dynamic(
   { loading: () => <ReportesSectionLoader /> },
 );
 const ReporteValorizado = dynamic(() => import('./reporte-valorizado').then((mod) => ({ default: mod.ReporteValorizado })), { loading: () => <ReportesSectionLoader /> });
+const ReporteRotacion = dynamic(() => import('./reporte-rotacion').then((mod) => ({ default: mod.ReporteRotacion })), { loading: () => <ReportesSectionLoader /> });
 
 /**
  * @description Vista principal con pestañas para los reportes de inventario.
@@ -96,8 +98,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 Centro de Reportes
               </CardTitle>
               <CardDescription>
-                Selecciona una vista para revisar inventario global, categoría, ubicación y
-                movimientos.
+                Selecciona una vista para revisar inventario, movimientos y rotación.
               </CardDescription>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -118,7 +119,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
         <Card className={SURFACE_CARD_CLASS}>
           <CardContent className='p-4 sm:p-5'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full space-y-4'>
-              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-5 dark:bg-slate-900/10'>
+              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-6 dark:bg-slate-900/10'>
                 <TabsTrigger value='general' className={tabTriggerClass}>
                   <BarChart3 className='h-3.5 w-3.5' />
                   General
@@ -138,6 +139,10 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 <TabsTrigger value='valorizado' className={tabTriggerClass}>
                   <Coins className='h-3.5 w-3.5' />
                   Valorizado
+                </TabsTrigger>
+                <TabsTrigger value='rotacion' className={tabTriggerClass}>
+                  <TrendingUp className='h-3.5 w-3.5' />
+                  Rotación
                 </TabsTrigger>
               </TabsList>
 
@@ -184,6 +189,12 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
               <TabsContent value='valorizado' className='mt-0'>
                 <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}>
                   <ReporteValorizado />
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value='rotacion' className='mt-0'>
+                <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}>
+                  <ReporteRotacion />
                 </motion.div>
               </TabsContent>
             </Tabs>
