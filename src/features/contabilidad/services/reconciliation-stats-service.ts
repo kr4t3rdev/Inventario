@@ -528,7 +528,7 @@ export async function getReconciliationStats({
       buildPendingSalesCountQuery(tenantId),
     ).then((rows) => normalizeCount(rows[0]?.count)),
     database.ventaServicios.count({
-      where: { tenantId, NOT: { reconciliado: true } },
+      where: { tenantId, reconciliado: null },
     }),
     database.gastosDE.count({ where: buildPurchaseExpenseWhere(tenantId) }),
     database.gastoCompra.count({ where: buildGastoCompraWhere(tenantId) }),

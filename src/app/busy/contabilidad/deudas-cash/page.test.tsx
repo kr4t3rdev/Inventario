@@ -42,6 +42,21 @@ vi.mock('@/features/contabilidad/components/deudas-cash/pago-deuda-modal', () =>
   PagoDeudaModal: () => null,
 }));
 
+vi.mock('@/features/contabilidad/components/accounting-page-shell', () => ({
+  AccountingPageShell: ({ title, description, actions, children }: React.PropsWithChildren<{
+    title: string;
+    description: string;
+    actions?: React.ReactNode;
+  }>) => (
+    <main data-testid="accounting-page-shell">
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {actions}
+      {children}
+    </main>
+  ),
+}));
+
 import DeudasCashPage from './page';
 import { getDeudasCashAction } from '@/features/contabilidad/actions-deudas-cash';
 
@@ -64,5 +79,15 @@ describe('/busy/contabilidad/deudas-cash page', () => {
     await waitFor(() => expect(getDeudasCashAction).toHaveBeenCalled());
     expect(mockReplace).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /Nueva Deuda/i })).not.toBeInTheDocument();
+  });
+
+  it('usa el shell contable y conserva la acción para crear deudas', async () => {
+    useAuthMock.mockReturnValue({ user: { role: 'admin' } });
+
+    render(<DeudasCashPage />);
+
+    expect(await screen.findByTestId('accounting-page-shell')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Deudas en Efectivo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nueva Deuda' })).toBeInTheDocument();
   });
 });

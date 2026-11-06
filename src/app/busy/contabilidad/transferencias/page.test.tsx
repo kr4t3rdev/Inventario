@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockReplace = vi.fn();
@@ -31,6 +31,21 @@ vi.mock('@/features/contabilidad/components/transferencias-bancarias-table', () 
 
 vi.mock('@/features/contabilidad/components/transferencia-bancaria-form', () => ({
   TransferenciaBancariaForm: () => <div>form transferencia</div>,
+}));
+
+vi.mock('@/features/contabilidad/components/accounting-page-shell', () => ({
+  AccountingPageShell: ({ title, description, actions, children }: React.PropsWithChildren<{
+    title: string;
+    description: string;
+    actions?: React.ReactNode;
+  }>) => (
+    <main data-testid="accounting-page-shell">
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {actions}
+      {children}
+    </main>
+  ),
 }));
 
 vi.mock('@/components/ui/animated-number', () => ({
@@ -83,5 +98,15 @@ describe('/busy/contabilidad/transferencias page', () => {
     });
 
     expect(getTransferenciasBancariasActionMock).not.toHaveBeenCalled();
+  });
+
+  it('usa el shell contable y conserva las acciones de transferencia', async () => {
+    useAuthMock.mockReturnValue({ user: { role: 'admin' }, loading: false });
+
+    render(<TransferenciasBancariasPage />);
+
+    expect(await screen.findByTestId('accounting-page-shell')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Transferencias' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toBeInTheDocument();
   });
 });

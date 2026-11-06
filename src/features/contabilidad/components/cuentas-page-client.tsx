@@ -15,15 +15,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
 import { PanelError } from '@/features/contabilidad/components/panel-states';
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { LazyMotion, m as motion } from "framer-motion"
+import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
 import {
   createCuentaBancariaAction,
   updateCuentaBancariaAction,
@@ -162,27 +160,25 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
   );
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-8 p-8">
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Link href="/busy/contabilidad">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                  Cuentas Bancarias
-                </h2>
-              </div>
-              <p className="pl-10 text-muted-foreground">
-                Administra los bancos, tipos de cuenta y saldos disponibles.
-              </p>
-            </div>
-
+    <AccountingPageShell
+      icon={Building2}
+      title="Cuentas Bancarias"
+      description="Administra los bancos, tipos de cuenta y saldos disponibles."
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            aria-label="Volver a Contabilidad"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          >
+            <Link href="/busy/contabilidad">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Volver a Contabilidad</span>
+            </Link>
+          </Button>
+          <div className="contents">
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="shadow-sm hover:shadow-md transition-all">
@@ -198,19 +194,19 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Banco</Label>
-                      <Input value={form.nombreBanco} onChange={e => setForm({...form, nombreBanco: e.target.value})} placeholder="Ej: Banco Nacional" />
+                      <Label htmlFor="create-bank-name">Banco</Label>
+                      <Input id="create-bank-name" value={form.nombreBanco} onChange={e => setForm({...form, nombreBanco: e.target.value})} placeholder="Ej: Banco Nacional" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Número de cuenta</Label>
-                      <Input value={form.numeroCuenta} onChange={e => setForm({...form, numeroCuenta: e.target.value})} placeholder="Ej: 123-456-789" />
+                      <Label htmlFor="create-account-number">Número de cuenta</Label>
+                      <Input id="create-account-number" value={form.numeroCuenta} onChange={e => setForm({...form, numeroCuenta: e.target.value})} placeholder="Ej: 123-456-789" />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Tipo</Label>
+                      <Label htmlFor="create-account-type">Tipo</Label>
                       <Select value={form.tipoCuenta} onValueChange={v => setForm({...form, tipoCuenta: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="create-account-type"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="AHORROS">Ahorros</SelectItem>
                           <SelectItem value="CORRIENTE">Corriente</SelectItem>
@@ -219,9 +215,9 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Moneda</Label>
+                      <Label htmlFor="create-account-currency">Moneda</Label>
                       <Select value={form.moneda} onValueChange={v => setForm({...form, moneda: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="create-account-currency"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CUP">CUP</SelectItem>
                           <SelectItem value="USD">USD</SelectItem>
@@ -319,10 +315,12 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 </div>
               </DialogContent>
             </Dialog>
-          </motion.div>
-
+          </div>
+        </>
+      }
+    >
           {/* Stats Cards */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
             <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Cuentas</CardTitle>
@@ -363,10 +361,10 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
           {/* Table */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <section>
             <Card className={surfaceCardClass}>
               <CardHeader>
                 <CardTitle>Listado de Cuentas</CardTitle>
@@ -379,36 +377,36 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                     onRetry={() => router.refresh()}
                   />
                 ) : cuentas.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No hay cuentas bancarias registradas.</div>
+                  <div role="status" className="text-center py-8 text-muted-foreground">
+                    No hay cuentas bancarias registradas.
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
+                      <caption className="sr-only">Cuentas bancarias</caption>
                       <thead>
                         <tr className="border-b text-left text-muted-foreground">
-                          <th className="pb-3 font-medium">Banco</th>
-                          <th className="pb-3 font-medium">Cuenta</th>
-                          <th className="pb-3 font-medium">Tipo</th>
-                          <th className="pb-3 font-medium">Moneda</th>
-                          <th className="pb-3 font-medium text-right">Saldo</th>
-                          <th className="pb-3 font-medium">Estado</th>
-                          <th className="pb-3 font-medium text-right">Acciones</th>
+                          <th scope="col" className="pb-3 font-medium">Banco</th>
+                          <th scope="col" className="pb-3 font-medium">Cuenta</th>
+                          <th scope="col" className="pb-3 font-medium">Tipo</th>
+                          <th scope="col" className="pb-3 font-medium">Moneda</th>
+                          <th scope="col" className="pb-3 font-medium text-right">Saldo</th>
+                          <th scope="col" className="pb-3 font-medium">Estado</th>
+                          <th scope="col" className="pb-3 font-medium text-right">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {cuentas.map((cuenta: any, i: number) => (
-                          <motion.tr
+                        {cuentas.map((cuenta: any) => (
+                          <tr
                             key={cuenta.cuentaId}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.03 }}
                             className="border-b last:border-0 hover:bg-muted/30 transition-colors"
                           >
-                            <td className="py-3">
+                            <th scope="row" className="py-3 text-left font-normal">
                               <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                                <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                                 <span className="font-medium">{cuenta.nombreBanco}</span>
                               </div>
-                            </td>
+                            </th>
                             <td className="py-3 font-mono text-xs">{cuenta.numeroCuenta}</td>
                             <td className="py-3">
                               <Badge variant="outline">{cuenta.tipoCuenta}</Badge>
@@ -422,15 +420,25 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                             </td>
                             <td className="py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => openEdit(cuenta)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  aria-label={`Editar cuenta ${cuenta.nombreBanco}`}
+                                  onClick={() => openEdit(cuenta)}
+                                >
                                   Editar
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={() => handleToggleStatus(cuenta)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  aria-label={`${cuenta.isActive ? 'Desactivar' : 'Activar'} cuenta ${cuenta.nombreBanco}`}
+                                  onClick={() => handleToggleStatus(cuenta)}
+                                >
                                   {cuenta.isActive ? 'Desactivar' : 'Activar'}
                                 </Button>
                               </div>
                             </td>
-                          </motion.tr>
+                          </tr>
                         ))}
                       </tbody>
                     </table>
@@ -438,8 +446,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 )}
               </CardContent>
             </Card>
-          </motion.div>
-        </motion.div>
+          </section>
 
         {/* Edit Dialog */}
         <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
@@ -452,19 +459,19 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Banco</Label>
-                    <Input value={editForm.nombreBanco} onChange={e => setEditForm({...editForm, nombreBanco: e.target.value})} />
+                    <Label htmlFor="edit-bank-name">Banco</Label>
+                    <Input id="edit-bank-name" value={editForm.nombreBanco} onChange={e => setEditForm({...editForm, nombreBanco: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Número de cuenta</Label>
-                    <Input value={editForm.numeroCuenta} onChange={e => setEditForm({...editForm, numeroCuenta: e.target.value})} />
+                    <Label htmlFor="edit-account-number">Número de cuenta</Label>
+                    <Input id="edit-account-number" value={editForm.numeroCuenta} onChange={e => setEditForm({...editForm, numeroCuenta: e.target.value})} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Tipo</Label>
+                    <Label htmlFor="edit-account-type">Tipo</Label>
                     <Select value={editForm.tipoCuenta} onValueChange={v => setEditForm({...editForm, tipoCuenta: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="edit-account-type"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="AHORROS">Ahorros</SelectItem>
                         <SelectItem value="CORRIENTE">Corriente</SelectItem>
@@ -473,9 +480,9 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Moneda</Label>
+                    <Label htmlFor="edit-account-currency">Moneda</Label>
                     <Select value={editForm.moneda} onValueChange={v => setEditForm({...editForm, moneda: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="edit-account-currency"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="CUP">CUP</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
@@ -494,7 +501,6 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
             )}
           </DialogContent>
         </Dialog>
-      </SidebarInset>
-    </SidebarProvider>
+    </AccountingPageShell>
   )
 }

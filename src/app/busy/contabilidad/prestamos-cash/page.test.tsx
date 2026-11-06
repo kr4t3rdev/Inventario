@@ -34,6 +34,21 @@ vi.mock('@/features/contabilidad/actions-prestamos-cash', () => ({
   getPrestamosCashAction: vi.fn().mockResolvedValue({ success: true, data: { prestamos: [] } }),
 }));
 
+vi.mock('@/features/contabilidad/components/accounting-page-shell', () => ({
+  AccountingPageShell: ({ title, description, actions, children }: React.PropsWithChildren<{
+    title: string;
+    description: string;
+    actions?: React.ReactNode;
+  }>) => (
+    <main data-testid="accounting-page-shell">
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {actions}
+      {children}
+    </main>
+  ),
+}));
+
 import PrestamosCashPage from './page';
 import { getPrestamosCashAction } from '@/features/contabilidad/actions-prestamos-cash';
 
@@ -56,5 +71,15 @@ describe('/busy/contabilidad/prestamos-cash page', () => {
     await waitFor(() => expect(getPrestamosCashAction).toHaveBeenCalled());
     expect(mockReplace).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /Nuevo Préstamo/i })).not.toBeInTheDocument();
+  });
+
+  it('usa el shell contable y conserva la acción para crear préstamos', async () => {
+    useAuthMock.mockReturnValue({ user: { role: 'admin' } });
+
+    render(<PrestamosCashPage />);
+
+    expect(await screen.findByTestId('accounting-page-shell')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Préstamos en Efectivo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nuevo Préstamo' })).toBeInTheDocument();
   });
 });

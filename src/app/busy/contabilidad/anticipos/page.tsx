@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Plus } from "lucide-react"
+import { Coins, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
+
 import { getAnticiposAction, getAnticipoByIdAction } from "@/features/contabilidad/actions-anticipos"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
@@ -19,9 +19,12 @@ import { AnticipoDetail } from "@/features/contabilidad/components/anticipos/ant
 import { AnticipoFinanciarDialog } from "@/features/contabilidad/components/anticipos/anticipo-financiar-dialog"
 import { ReportesAnticipos } from "@/features/contabilidad/components/anticipos/reportes-anticipos"
 import { Anticipo } from "@/app/models/model"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import { useAuth } from "@/contexts/auth-context"
 
 const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
+const PAGE_TITLE = 'Gestión de Anticipos'
+const PAGE_DESCRIPTION = 'Administre pagos y cobros adelantados'
 
 interface ContratoAnticipo {
   contratoId: string
@@ -155,35 +158,37 @@ function AnticiposContent() {
   // Si el feature está deshabilitado, mostrar mensaje
   if (!anticiposFeatureEnabled) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            El módulo de anticipos está deshabilitado.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Contacte al administrador para habilitarlo.
-          </p>
-        </CardContent>
-      </Card>
+      <AccountingPageShell
+        icon={Coins}
+        title={PAGE_TITLE}
+        description={PAGE_DESCRIPTION}
+      >
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              El módulo de anticipos está deshabilitado.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Contacte al administrador para habilitarlo.
+            </p>
+          </CardContent>
+        </Card>
+      </AccountingPageShell>
     )
   }
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Anticipos</h1>
-          <p className="text-muted-foreground">
-            Administre pagos y cobros adelantados
-          </p>
-        </div>
+    <AccountingPageShell
+      icon={Coins}
+      title={PAGE_TITLE}
+      description={PAGE_DESCRIPTION}
+      actions={
         <Button onClick={() => setOpenForm(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Crear Anticipo
         </Button>
-      </div>
-
+      }
+    >
       {/* Tabs */}
       <Tabs value={tabActiva} onValueChange={setTabActiva}>
         <TabsList>
@@ -257,7 +262,7 @@ function AnticiposContent() {
         onOpenChange={setOpenFinanciar}
         onSuccess={handleSuccess}
       />
-    </>
+    </AccountingPageShell>
   )
 }
 
@@ -266,16 +271,8 @@ function AnticiposContent() {
  */
 export default function AnticiposPage() {
   return (
-    <PageTransition>
-      <StaggerContainer>
-        <StaggerItem>
-          <div className="container mx-auto py-6 space-y-6">
-            <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
-              <AnticiposContent />
-            </Suspense>
-          </div>
-        </StaggerItem>
-      </StaggerContainer>
-    </PageTransition>
+    <Suspense fallback={<Card><CardContent className="py-12">Cargando...</CardContent></Card>}>
+      <AnticiposContent />
+    </Suspense>
   )
 }
