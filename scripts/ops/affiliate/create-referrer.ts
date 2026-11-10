@@ -11,7 +11,11 @@ async function main() {
   const planName = process.env.PLAN_NAME || 'Profesional';
 
   const plan = await prisma.plan.findFirstOrThrow({ where: { nombre: planName } });
-  const pricing = resolveLicensePricing(Number(plan.precio), false);
+  const pricing = resolveLicensePricing(
+    Number(plan.precio),
+    false,
+    Number(plan.referralDiscountUsd),
+  );
   const user = await prisma.user.create({
     data: {
       name: `Referrer ${suffix}`,

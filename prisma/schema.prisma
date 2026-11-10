@@ -280,6 +280,7 @@ model Tenant {
   facturas                       Factura[]
   periodosContables              PeriodoContable[]
   purchaseAllocations            PurchaseAllocation[]
+  purchaseReceiptInvoiceAllocations PurchaseReceiptInvoiceAllocation[]
   lotes                          Lote[]
   ubicaciones                    Ubicacion[]
   reviewPrompts                  ReviewPrompt[]
@@ -681,6 +682,8 @@ model AjusteInventario {
   origenValeId         String?
   origenConteoId       String?
   compensaMovimientoId String?
+  mermaReversionFecha   DateTime?
+  mermaReversionRegistradaAt DateTime?
   creadoPorId          String?
   createdAt            DateTime      @default(now())
   tenant               Tenant        @relation(fields: [tenantId], references: [tenantId])
@@ -980,6 +983,7 @@ model Plan {
   nombre             String
   descripcion        String?
   precio             Decimal             @default(0)
+  referralDiscountUsd Decimal            @default(0) @db.Decimal(10, 2)
   duracionDias       Int
   maxUsuarios        Int                 @default(1)
   maxAlmacenes       Int                 @default(1)
@@ -1563,6 +1567,7 @@ model CompraDocumentoItem {
   producto              Producto             @relation(fields: [productoId], references: [id], onDelete: Cascade)
   tenant                Tenant               @relation(fields: [tenantId], references: [tenantId])
   allocations           PurchaseAllocation[]
+  receiptInvoiceAllocations PurchaseReceiptInvoiceAllocation[]
   lotes                 Lote[]
 
   @@unique([tenantId, compraDocumentoItemId])
@@ -1645,6 +1650,7 @@ model RecepcionItem {
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   lotes       Lote[]
   allocations PurchaseAllocation[]
+  invoiceAllocations PurchaseReceiptInvoiceAllocation[]
 
   @@unique([tenantId, id])
   @@index([tenantId, recepcionId])
@@ -1680,10 +1686,19 @@ model PurchaseAllocation {
   ventaItemId           String
   loteId                String?
   costoUnitarioSnapshot Int?
+  fifoMonedaOrigen      String?
+  fifoFechaFuente       DateTime?
+  fifoMonedaFuncional   String?
+  fifoCostoFuncional    Decimal?            @db.Decimal(20, 4)
+  fifoTasaCambio        Decimal?            @db.Decimal(20, 10)
+  fifoFechaTasa         DateTime?
+  fifoEvidenciaFx       String?
+  purchaseReceiptInvoiceAllocationId String?
   cantidad              Int
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
   compraDocumentoItem   CompraDocumentoItem? @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId], onDelete: Cascade)
+  purchaseReceiptInvoiceAllocation PurchaseReceiptInvoiceAllocation? @relation(fields: [tenantId, purchaseReceiptInvoiceAllocationId, recepcionItemId], references: [tenantId, id, recepcionItemId], onDelete: Restrict)
   recepcionItem         RecepcionItem?       @relation(fields: [tenantId, recepcionItemId], references: [tenantId, id], onDelete: Restrict)
   tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
   ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id], onDelete: Cascade)
@@ -1691,10 +1706,39 @@ model PurchaseAllocation {
 
   @@index([tenantId, loteId])
   @@index([tenantId, recepcionItemId])
+  @@index([tenantId, purchaseReceiptInvoiceAllocationId])
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
   @@index([tenantId])
   @@map("purchase_allocations")
+}
+
+/// Cost and FX evidence linking one invoice line to a physical receipt slice.
+model PurchaseReceiptInvoiceAllocation {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  compraDocumentoItemId String
+  recepcionItemId       String
+  cantidad              Int
+  costoUnitarioSnapshot Int?
+  fifoMonedaOrigen      String?
+  fifoFechaFuente       DateTime?
+  fifoMonedaFuncional   String?
+  fifoCostoFuncional    Decimal? @db.Decimal(20, 4)
+  fifoTasaCambio        Decimal? @db.Decimal(20, 10)
+  fifoFechaTasa         DateTime?
+  fifoEvidenciaFx       String?
+  createdAt             DateTime @default(now())
+  compraDocumentoItem   CompraDocumentoItem @relation(fields: [tenantId, compraDocumentoItemId], references: [tenantId, compraDocumentoItemId], onDelete: Restrict)
+  recepcionItem         RecepcionItem @relation(fields: [tenantId, recepcionItemId], references: [tenantId, id], onDelete: Restrict)
+  tenant                Tenant @relation(fields: [tenantId], references: [tenantId])
+  purchaseAllocations   PurchaseAllocation[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, id, recepcionItemId])
+  @@unique([tenantId, compraDocumentoItemId, recepcionItemId])
+  @@index([tenantId, recepcionItemId])
+  @@map("purchase_receipt_invoice_allocations")
 }
 
 /// Lote de inventario originado por una entrada de compra; FIFO/FEFO lo consume.
@@ -3055,6 +3099,7 @@ model OrdenProduccion {
   estado                   EstadoProduccion           @default(PENDIENTE)
   observaciones            String?                    @db.VarChar(1000)
   fechaProduccion          DateTime                   @default(now())
+  fechaContabilizacion     DateTime?
   createdAt                DateTime                   @default(now())
   updatedAt                DateTime
   costoMateriales          Float?

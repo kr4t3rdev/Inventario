@@ -53,6 +53,13 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'Solo lectura administrativa agrupada explícitamente por tenantId.',
   },
   {
+    file: 'scripts/ops/seed-ct1-gate-test-actors.ts',
+    occurrences: 1,
+    reason: 'Comprueba la identidad de la base local antes de sembrar usuarios sintéticos.',
+    tenantGuarantee: 'Lee solo current_database/current_user/puerto; '
+      + 'el guard exige loopback y tcp_test_* exacta.',
+  },
+  {
     file: 'src/app/api/contabilidad/reconciliacion/ventas/route.ts',
     occurrences: 5,
     reason: 'Paginación agregada y locks FOR UPDATE de ventas/cuentas.',
@@ -177,6 +184,13 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     occurrences: 3,
     reason: 'Locks FOR UPDATE sobre fuentes, CxP y cuentas bancarias.',
     tenantGuarantee: 'SQL parametrizado incluye tenantId en cada tabla tenant-scoped.',
+  },
+  {
+    file: 'src/features/contabilidad-formal/services/formal-financial-report-service.ts',
+    occurrences: 1,
+    reason: 'Verifica el nivel de aislamiento de la transacción antes de construir el reporte formal.',
+    tenantGuarantee: 'Solo consulta current_setting; no accede a tablas ni filas de tenants. '
+      + 'El reporte posterior exige tenantId y periodoId parametrizados.',
   },
   {
     file: 'src/features/contabilidad-formal/services/reversal-service.ts',

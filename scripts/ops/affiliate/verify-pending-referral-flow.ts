@@ -11,8 +11,16 @@ async function main() {
 
   const referrerPlan = await prisma.plan.findFirstOrThrow({ where: { nombre: 'Profesional' } });
   const referredPlan = await prisma.plan.findFirstOrThrow({ where: { nombre: 'Básico' } });
-  const referrerPricing = resolveLicensePricing(Number(referrerPlan.precio), false);
-  const referredPricing = resolveLicensePricing(Number(referredPlan.precio), true);
+  const referrerPricing = resolveLicensePricing(
+    Number(referrerPlan.precio),
+    false,
+    Number(referrerPlan.referralDiscountUsd),
+  );
+  const referredPricing = resolveLicensePricing(
+    Number(referredPlan.precio),
+    true,
+    Number(referredPlan.referralDiscountUsd),
+  );
 
   const referrerUser = await prisma.user.create({
     data: {
