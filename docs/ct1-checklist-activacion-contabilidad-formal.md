@@ -199,9 +199,9 @@ Validado por Zod en `scripts/ops/lib/accounting-policy-manifest.ts`.
    motor formal rechaza la operación completa (`VALORACION_MONETARIA_AUSENTE`)
    y la venta no se registra. En `shadow` la venta se registra y el fallo queda
    como telemetría. En la devolución, en cambio, solo se omite la línea de
-   costo. Decisión pendiente del responsable del tenant: facturar la recepción
-   antes de vender, o aceptar que ese producto no se venda con la capa
-   activa.
+   costo. **Política acordada:** facturar la recepción antes de vender el
+   producto cuando la capa esté en `enforce`. No se aceptan costos estimados
+   como evidencia contable.
 
 Detalle: `docs/ct1-r0-5-matriz-canonica.md`.
 
