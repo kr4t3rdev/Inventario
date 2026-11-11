@@ -6,6 +6,9 @@ ON "Vendor"("tenantId", "vendorId");
 CREATE UNIQUE INDEX "CompraDocumento_tenantId_compraDocumentoId_key"
 ON "CompraDocumento"("tenantId", "compraDocumentoId");
 
+CREATE UNIQUE INDEX "CompraDocumentoItem_tenantId_compraDocumentoItemId_key"
+ON "CompraDocumentoItem"("tenantId", "compraDocumentoItemId");
+
 CREATE TABLE "devoluciones_compra" (
     "devolucionId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,

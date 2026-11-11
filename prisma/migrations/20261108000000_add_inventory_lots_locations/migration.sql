@@ -1,7 +1,7 @@
 -- Lotes y ubicaciones jerárquicas para inventario Profesional.
 CREATE UNIQUE INDEX "Almacen_tenantId_almacenId_key"
   ON "Almacen"("tenantId", "almacenId");
-CREATE UNIQUE INDEX "CompraDocumentoItem_tenantId_compraDocumentoItemId_key"
+CREATE UNIQUE INDEX IF NOT EXISTS "CompraDocumentoItem_tenantId_compraDocumentoItemId_key"
   ON "CompraDocumentoItem"("tenantId", "compraDocumentoItemId");
 
 CREATE TABLE "Lote" (

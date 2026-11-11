@@ -252,4 +252,10 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Lock advisory transaccional por oferta: serializa la edición de ítems con la facturación y la conversión a pedido para que el snapshot de la venta coincida con el contenido persistido.',
     tenantGuarantee: 'SQL tagged parametriza JSON.stringify con ["oferta", tenantId, ofertaId]; ambos valores provienen del usuario autenticado y su tenant.',
   },
+  {
+    file: 'src/features/compras-productos/devoluciones.ts',
+    occurrences: 5,
+    reason: 'Locks FOR UPDATE para serializar numeración/reservas y completar o anular devoluciones a proveedores.',
+    tenantGuarantee: 'Cada query parametrizada filtra por tenantId; los IDs de devolución y CxP se resuelven dentro del mismo tenant.',
+  },
 ] as const;
