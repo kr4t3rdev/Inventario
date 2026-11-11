@@ -277,6 +277,8 @@ describe('F-1 direct purchase unit conversion — disposable PostgreSQL', () => 
           where: { productoId: { in: [...productIds] } },
         }));
         await attemptCleanup('unit conversions', () => prisma.unidadConversion.deleteMany({ where: { tenantId } }));
+        await attemptCleanup('supplier products', () =>
+          prisma.proveedorProducto.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase documents', () => prisma.compraDocumento.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase payables', () => prisma.cuentaPorPagar.deleteMany({ where: { tenantId } }));
         await attemptCleanup('purchase expenses', () => prisma.gastoCompra.deleteMany({ where: { tenantId } }));
