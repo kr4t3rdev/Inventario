@@ -89,6 +89,7 @@ model Vendor {
   gastosDE         GastosDE[]
   productos        Producto[]
   proveedorProductos ProveedorProducto[]
+  gastosRecurrentes GastoRecurrente[]
   tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
 
   @@unique([tenantId, vendorCode])
@@ -269,6 +270,7 @@ model Tenant {
   valesSalidaItem                ValeSalidaItem[]
   vendors                        Vendor[]
   proveedorProductos              ProveedorProducto[]
+  gastosRecurrentes                GastoRecurrente[]
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
   devolucionesCompra             DevolucionCompra[]
@@ -1396,7 +1398,10 @@ model Empleado {
   vacationRequests      VacationRequest[]
   ventas                Venta[]
   turnosPos             TurnoPuntoVenta[]
+  gastosEmpleado        GastosDE[]
+  gastosRecurrentesEmpleado GastoRecurrente[]
 
+  @@unique([tenantId, empleadoId])
   @@index([tenantId])
 }
 
@@ -1959,7 +1964,9 @@ model GastoConcepto {
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   elementos   GastoElemento[]
   gastosDE    GastosDE[]
+  gastosRecurrentes GastoRecurrente[]
 
+  @@unique([tenantId, conceptoId])
   @@unique([tenantId, nombre])
   @@index([tenantId])
 }
@@ -1976,7 +1983,10 @@ model GastoElemento {
   tenant      Tenant        @relation(fields: [tenantId], references: [tenantId])
   concepto    GastoConcepto @relation(fields: [conceptoId], references: [conceptoId], onDelete: Cascade)
   gastosDE    GastosDE[]
+  gastosRecurrentes GastoRecurrente[]
 
+  @@unique([tenantId, elementoId])
+  @@unique([tenantId, conceptoId, elementoId])
   @@unique([tenantId, conceptoId, nombre])
   @@index([tenantId])
 }
@@ -2000,17 +2010,59 @@ model GastosDE {
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   numeroFactura    String?
+  /// F-4: empleado asociado (viáticos) — opcional
+  empleadoId       String?
+  /// F-4: plantilla que generó este gasto recurrente
+  gastoRecurrenteId String?
+  /// F-4: clave idempotente por tenant y período
+  claveIdempotencia String?
   cuentaPorPagar   CuentaPorPagar?
   concepto         GastoConcepto?        @relation(fields: [conceptoId], references: [conceptoId])
   elemento         GastoElemento?        @relation(fields: [elementoId], references: [elementoId])
   proveedorVendor  Vendor?               @relation(fields: [proveedorId], references: [vendorId], onDelete: Restrict)
   aprobadoPor      User?                 @relation("GastosDEAprobador", fields: [aprobadoPorId], references: [userId])
+  empleado         Empleado?             @relation(fields: [tenantId, empleadoId], references: [tenantId, empleadoId], onDelete: Restrict)
+  gastoRecurrente  GastoRecurrente?      @relation(fields: [tenantId, gastoRecurrenteId], references: [tenantId, gastoRecurrenteId], onDelete: Restrict)
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   reconciliaciones ReconciliacionGasto[]
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([proveedorId])
+  @@index([empleadoId])
+  @@unique([tenantId, claveIdempotencia])
+}
+
+/// F-4 — Plantilla que genera GastosDE idempotentes por período.
+model GastoRecurrente {
+  gastoRecurrenteId String         @id @default(cuid())
+  tenantId          String
+  nombre            String
+  conceptoId        String?
+  elementoId        String?
+  proveedorId       String?
+  empleadoId        String?
+  /// Monto guardado en centavos.
+  monto             Int
+  moneda            String         @default("CUP")
+  frecuencia        String
+  diaGeneracion     Int
+  proximaGeneracion DateTime
+  activo            Boolean        @default(true)
+  notas             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  concepto          GastoConcepto? @relation(fields: [tenantId, conceptoId], references: [tenantId, conceptoId])
+  elemento          GastoElemento? @relation(fields: [tenantId, elementoId], references: [tenantId, elementoId])
+  proveedorVendor   Vendor?        @relation(fields: [tenantId, proveedorId], references: [tenantId, vendorId], onDelete: Restrict)
+  empleado          Empleado?      @relation(fields: [tenantId, empleadoId], references: [tenantId, empleadoId], onDelete: Restrict)
+  tenant            Tenant         @relation(fields: [tenantId], references: [tenantId])
+  gastos            GastosDE[]
+
+  @@index([tenantId, activo])
+  @@index([tenantId, proximaGeneracion])
+  @@unique([tenantId, gastoRecurrenteId])
+  @@map("gastos_recurrentes")
 }
 
 model Moneda {

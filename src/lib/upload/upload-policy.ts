@@ -12,6 +12,7 @@ export type UploadKey =
   | 'reparaciones.orden-photo'
   | 'contratos.attachment'
   | 'contratos.version'
+  | 'gastosDE.attachment'
   | 'deudasCash.receipt'
 
 export interface UploadIntentInput {
@@ -164,6 +165,15 @@ export function resolveUploadPolicy({
       provider = 'uploadthing'
       const contratoId = ensureEntityId(entityId, 'Se requiere el id del contrato para subir versiones')
       folder = `${tenantId}/contratos/${contratoId}/versiones`
+      resourceType = 'raw'
+      maxBytes = 10 * 1024 * 1024
+      allowedMimeTypes = CONTRACT_MIME_TYPES
+      break
+    }
+    case 'gastosDE.attachment': {
+      requireFeature(user, 'gastos', 'adjuntar comprobantes a gastos')
+      const gastoId = ensureEntityId(entityId, 'Se requiere el id del gasto para adjuntar comprobantes')
+      folder = `${tenantId}/gastosDE/${gastoId}/comprobantes`
       resourceType = 'raw'
       maxBytes = 10 * 1024 * 1024
       allowedMimeTypes = CONTRACT_MIME_TYPES

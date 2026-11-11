@@ -88,4 +88,36 @@ describe('resolveUploadPolicy', () => {
       })
     ).toThrow(/permisos|plan actual|authorized|permission|funcionalidad/i)
   })
+
+  it('allows bounded PDF/image receipts for a tenant expense', () => {
+    const policy = resolveUploadPolicy({
+      uploadKey: 'gastosDE.attachment' as never,
+      user: { ...baseUser, role: 'regularUser', planFeatures: { gastos: true } },
+      input: {
+        filename: 'factura.pdf',
+        mimeType: 'application/pdf',
+        bytes: 100_000,
+        entityId: 'gasto-1',
+      },
+    })
+
+    expect(policy.provider).toBe('cloudinary')
+    expect(policy.resourceType).toBe('raw')
+    expect(policy.folder).toBe('tenant-1/gastosDE/gasto-1/comprobantes')
+    expect(policy.maxBytes).toBe(10 * 1024 * 1024)
+  })
+
+  it('rejects missing expense ids and files outside the receipt allowlist', () => {
+    const user = { ...baseUser, role: 'regularUser' as const, planFeatures: { gastos: true } }
+    expect(() => resolveUploadPolicy({
+      uploadKey: 'gastosDE.attachment' as never,
+      user,
+      input: { filename: 'factura.pdf', mimeType: 'application/pdf', bytes: 100, },
+    })).toThrow(/id del gasto/i)
+    expect(() => resolveUploadPolicy({
+      uploadKey: 'gastosDE.attachment' as never,
+      user,
+      input: { filename: 'payload.exe', mimeType: 'application/x-msdownload', bytes: 100, entityId: 'gasto-1' },
+    })).toThrow(/tipo de archivo/i)
+  })
 })

@@ -18,11 +18,13 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, AlertCircle, Download } from "lucide-react"
 import { ManagementPageTitle } from "@/components/management-page-title"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { MotionConfig, m as motion } from "framer-motion"
 import Link from "next/link"
+import { getEmpleadosAction } from '@/features/empleados/actions'
+import { GastosRecurrentesPanel } from './gastos-recurrentes-panel'
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))
 
@@ -38,6 +40,8 @@ interface GastoDE {
   descripcion: string | null
   periodo: string
   numeroFactura: string | null
+  empleadoId?: string | null
+  empleado?: { nombre: string; apellido: string } | null
   createdAt: string
   concepto?: { nombre: string } | null
   elemento?: { nombre: string } | null
@@ -55,12 +59,21 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
   const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
   const [gastosDEToBulkDelete, setGastosDEToBulkDelete] = useState<string[] | null>(null)
   const [filterProveedor, setFilterProveedor] = useState<string>('')
+  const [filterEmpleado, setFilterEmpleado] = useState<string>('')
+  const [empleados, setEmpleados] = useState<Array<{ empleadoId: string; nombre: string; apellido: string }>>([])
+
+  useEffect(() => {
+    getEmpleadosAction(undefined).then((result) => {
+      if (result.success) setEmpleados((result.data ?? []) as typeof empleados)
+    })
+  }, [])
 
   // Simular vendors desde props (en lugar del hook useVendors)
   const vendors = initialVendors
 
   const filteredGastosDE = gastosDE?.filter((gasto: GastoDE) => {
     if (filterProveedor && gasto.proveedor !== filterProveedor) return false
+    if (filterEmpleado && gasto.empleadoId !== filterEmpleado) return false
     return true
   }) || []
 
@@ -421,7 +434,8 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="flex gap-4 mb-4">
+            <GastosRecurrentesPanel vendors={vendors.filter((vendor): vendor is Vendor & { vendorId: string } => Boolean(vendor.vendorId))} />
+            <div className="my-4 flex flex-wrap gap-4">
               <select
                 value={filterProveedor}
                 onChange={(e) => setFilterProveedor(e.target.value)}
@@ -436,6 +450,10 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
                     </option>
                   )
                 ))}
+              </select>
+              <select value={filterEmpleado} onChange={(e) => setFilterEmpleado(e.target.value)} aria-label="Filtrar por empleado" className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                <option value="">Todos los empleados</option>
+                {empleados.map((empleado) => <option key={empleado.empleadoId} value={empleado.empleadoId}>{empleado.nombre} {empleado.apellido}</option>)}
               </select>
             </div>
             <DataTable

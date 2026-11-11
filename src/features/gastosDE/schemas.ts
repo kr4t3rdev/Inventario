@@ -9,6 +9,7 @@ export const gastosDESchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser mayor a 0'),
   descripcion: z.string().min(1, 'La descripción es requerida'),
   numeroFactura: z.string().optional().nullable(),
+  empleadoId: z.string().optional().nullable(),
   periodo: z.string().regex(/^\d{4}-\d{2}$/, 'Formato YYYY-MM').optional(),
 }).refine(
   (data) => !!data.proveedorId || !!data.proveedor?.trim(),
@@ -24,6 +25,7 @@ export const gastosDEUpdateSchema = z.object({
   monto: z.coerce.number().positive().optional(),
   descripcion: z.string().min(1).optional(),
   numeroFactura: z.string().optional().nullable(),
+  empleadoId: z.string().optional().nullable(),
   periodo: z.string().optional(),
 });
 export type GastosDEInput = z.infer<typeof gastosDESchema>;
