@@ -35,6 +35,7 @@ import {
 	ejecutarBackfillAutorizado,
 	planBackfillContable,
 } from '@/features/contabilidad-formal/services/replay-backfill-service';
+import { aplicarBackfillVentaCostoFecha } from '@/features/contabilidad-formal/services/venta-costo-fecha-backfill';
 
 const auth = vi.hoisted(() => ({ user: null as AuthenticatedUser | null }));
 vi.mock('@/lib/server-actions/get-current-user', () => ({
@@ -328,6 +329,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 			fechaDevengo: Date | null;
 			conDevolucion?: boolean;
 			asignacionLegacy?: boolean;
+			fechaActualizacion?: Date | null;
 		},
 	): Promise<{ ventaId: string }> {
 		const almacen = await prisma.almacen.create({
@@ -387,6 +389,9 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				total: 100,
 				estado: 'ENTREGADA',
 				createdAt: params.fechaCreacion,
+				...(params.fechaActualizacion
+					? { updatedAt: params.fechaActualizacion }
+					: {}),
 				...(params.fechaDevengo ? { costoVentaFecha: params.fechaDevengo } : {}),
 			},
 		});
@@ -814,6 +819,52 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 		});
 		expect(run?.status).toBe('COMPLETED');
 		expect(run?.postedCount).toBe(2);
+	});
+
+	it('repone con backfill la fecha de devengo de las ventas legacy y las deja acreditables', async () => {
+		const fixture = await crearFixture();
+		const fechaCreacion = new Date('2026-02-20T12:00:00.000Z');
+		// Venta legacy POS: creada y entregada en el acto, nunca modificada.
+		const { ventaId: ventaLegacy } = await crearVentaConCostoFifo(fixture, {
+			fechaCreacion,
+			fechaDevengo: null,
+			fechaActualizacion: fechaCreacion,
+		});
+		// Venta legacy PVE: creada antes y modificada al entregarse. Su fecha de
+		// devengo real es desconocida y no se puede inventar.
+		const { ventaId: ventaPveLegacy } = await crearVentaConCostoFifo(fixture, {
+			fechaCreacion,
+			fechaDevengo: null,
+			fechaActualizacion: new Date('2026-03-05T09:30:00.000Z'),
+		});
+
+		const antesDelBackfill = await recolectarCandidatos(fixture.tenantId);
+		expect(antesDelBackfill.find((item) =>
+			item.origenTipo === 'venta_costo' && item.origenId === ventaLegacy)?.causaOmision,
+		).toBe('FECHA_COSTO_FIFO_NO_PERSISTIDA');
+
+		const resumen = await aplicarBackfillVentaCostoFecha(prisma as never, { simular: false });
+		expect(resumen.repostas).toBeGreaterThanOrEqual(1);
+
+		const ventaLegacyRepuesta = await prisma.venta.findUniqueOrThrow({
+			where: { ventaId: ventaLegacy },
+		});
+		expect(ventaLegacyRepuesta.costoVentaFecha).toEqual(fechaCreacion);
+
+		// La venta PVE legacy conserva la fecha desconocida: el replay la omite.
+		const ventaPveSinBackfill = await prisma.venta.findUniqueOrThrow({
+			where: { ventaId: ventaPveLegacy },
+		});
+		expect(ventaPveSinBackfill.costoVentaFecha).toBeNull();
+
+		const despuesDelBackfill = await recolectarCandidatos(fixture.tenantId);
+		const candidatoRepuesto = despuesDelBackfill.find((item) =>
+			item.origenTipo === 'venta_costo' && item.origenId === ventaLegacy);
+		expect(candidatoRepuesto?.causaOmision).toBeUndefined();
+		expect(candidatoRepuesto?.evento.montoFuncional).toBe(50);
+		expect(despuesDelBackfill.find((item) =>
+			item.origenTipo === 'venta_costo' && item.origenId === ventaPveLegacy)?.causaOmision,
+		).toBe('FECHA_COSTO_FIFO_NO_PERSISTIDA');
 	});
 
 	it('atribuye el costo FIFO de una venta PVE a la fecha de devengo persistida', async () => {

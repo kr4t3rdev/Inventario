@@ -38,7 +38,7 @@ Referencia: `src/features/contabilidad-formal/lib/modo-tenant.ts`.
 
 ## 2. Antes de tocar un tenant real
 
-Siete checks. Si uno falla, **no se sigue**.
+Ocho checks. Si uno falla, **no se sigue**.
 
 - [ ] **Backup restaurable y probado** (un restore verificado, no solo un dump).
 - [ ] **Migraciones observadas** en ese entorno. En producción **no se aplican
@@ -46,6 +46,27 @@ Siete checks. Si uno falla, **no se sigue**.
       migraciones registradas como `rolled_back_at` que un
       `prisma migrate deploy` intentaría re-aplicar. Verificar el estado real,
       no asumirlo.
+- [ ] **Fecha de devengo del costo de venta repuesta.** La columna
+      `Venta.costoVentaFecha` la persiste el writer desde el despliegue de esta
+      capa; las ventas anteriores no la tienen y el replay las omite con
+      `FECHA_COSTO_FIFO_NO_PERSISTIDA`. El backfill repone la fecha solo de las
+      ventas cuyo devengo ocurrió en el acto de crearse (la fila nunca fue
+      modificada después): es la misma población que el criterio anterior
+      admitía. El resto se deja sin fecha a propósito, porque su devengo real
+      es desconocido.
+
+      ```bash
+      # simulación (no escribe)
+      DATABASE_URL="$DATABASE_URL_<ENTORNO>" \
+        pnpm exec tsx scripts/ops/backfill-venta-costo-fecha.ts
+      # aplicación (idempotente)
+      DATABASE_URL="$DATABASE_URL_<ENTORNO>" \
+        pnpm exec tsx scripts/ops/backfill-venta-costo-fecha.ts --apply
+      ```
+
+      El script hace falta aunque las migraciones se apliquen: el sincronizado
+      de esquema por defecto del proyecto es `prisma db push`, que **no ejecuta
+      el SQL de las migraciones** (`scripts/run-prisma-schema-sync.sh`).
 - [ ] **Configuración efectiva observada** (no inferida): los 3 interruptores
       y los overrides de licencia de los tenants afectados.
 - [ ] **Ventana acordada** y responsables de ejecutar y de aprobar **distintos**.
@@ -173,6 +194,14 @@ Validado por Zod en `scripts/ops/lib/accounting-policy-manifest.ts`.
    ni `fechaContabilizacion`**.
 4. `TRANSFERENCIA_BANCARIA` y `PAGO_DEUDA_CAPITAL`: sin writer.
 5. 8 tipos de movimiento con disposición "solo plantilla".
+6. **Costo FIFO sin factura trazada.** En modo `enforce`, la venta de un
+   producto recibido **sin factura de compra trazada** no se puede valorar, el
+   motor formal rechaza la operación completa (`VALORACION_MONETARIA_AUSENTE`)
+   y la venta no se registra. En `shadow` la venta se registra y el fallo queda
+   como telemetría. En la devolución, en cambio, solo se omite la línea de
+   costo. Decisión pendiente del responsable del tenant: facturar la recepción
+   antes de vender, o aceptar que ese producto no se venda con la capa
+   activa.
 
 Detalle: `docs/ct1-r0-5-matriz-canonica.md`.
 
