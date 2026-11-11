@@ -281,6 +281,70 @@ describe('recalcularAgregadosFacturadosDeOrden', () => {
     })
   })
 
+  it('conserva la procedencia persistida al anular una factura que no es la última', async () => {
+    const tx = createMockTx()
+    // La factura anulada ya no aparece entre las activas: solo queda la segunda,
+    // que conserva la recepción que le asignó el FIFO original.
+    tx.compraDocumentoItem.findMany.mockResolvedValue([{
+      compraDocumentoItemId: 'active-line-2',
+      productoId: 'prod-1',
+      cantidad: 3,
+      precioUnitario: 130,
+      compraDocumento: { createdAt: new Date('2026-01-03T00:00:00.000Z') },
+      receiptInvoiceAllocations: [{ recepcionItemId: 'receipt-2', cantidad: 3 }],
+    }])
+    tx.recepcionItem.findMany.mockResolvedValue([
+      {
+        id: 'receipt-1', productoId: 'prod-1', cantidad: 4,
+        cantidadFacturada: 4, montoFacturado: 480,
+        recepcion: { fecha: new Date('2026-01-01T00:00:00.000Z') },
+      },
+      {
+        id: 'receipt-2', productoId: 'prod-1', cantidad: 3,
+        cantidadFacturada: 3, montoFacturado: 390,
+        recepcion: { fecha: new Date('2026-01-02T00:00:00.000Z') },
+      },
+    ])
+
+    await recalcularAgregadosFacturadosDeOrden(tx as any, {
+      tenantId: 'tenant-1',
+      ordenId: 'oc-1',
+    })
+
+    // Las unidades liberadas por la factura anulada no se re-planifican: la
+    // factura activa conserva su procedencia persistida.
+    expect(tx.recepcionItem.updateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: 'receipt-1', tenantId: 'tenant-1', cantidadFacturada: 4, montoFacturado: 480 },
+      data: { cantidadFacturada: 0, montoFacturado: 0 },
+    })
+    expect(tx.recepcionItem.updateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: 'receipt-2', tenantId: 'tenant-1', cantidadFacturada: 3, montoFacturado: 390 },
+      data: { cantidadFacturada: 3, montoFacturado: 390 },
+    })
+  })
+
+  it('rechaza una procedencia persistida que no cubre la cantidad facturada', async () => {
+    const tx = createMockTx()
+    tx.compraDocumentoItem.findMany.mockResolvedValue([{
+      compraDocumentoItemId: 'active-line-1',
+      productoId: 'prod-1',
+      cantidad: 3,
+      precioUnitario: 120,
+      compraDocumento: { createdAt: new Date('2026-01-02T00:00:00.000Z') },
+      receiptInvoiceAllocations: [{ recepcionItemId: 'receipt-1', cantidad: 2 }],
+    }])
+    tx.recepcionItem.findMany.mockResolvedValue([{
+      id: 'receipt-1', productoId: 'prod-1', cantidad: 4,
+      cantidadFacturada: 2, montoFacturado: 240,
+      recepcion: { fecha: new Date('2026-01-01T00:00:00.000Z') },
+    }])
+
+    await expect(recalcularAgregadosFacturadosDeOrden(tx as any, {
+      tenantId: 'tenant-1', ordenId: 'oc-1',
+    })).rejects.toMatchObject({ code: 'FACTURA_PROVENIENCIA_INCONSISTENTE' })
+    expect(tx.recepcionItem.updateMany).not.toHaveBeenCalled()
+  })
+
   it('rejects active invoice quantities above physical receipts without updating counters', async () => {
     const tx = createMockTx()
     tx.compraDocumentoItem.findMany.mockResolvedValue([{

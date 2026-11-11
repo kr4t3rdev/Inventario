@@ -101,14 +101,22 @@ export async function recalcularAgregadosFacturadosDeOrden(
   ])
 
   const recepcionesPorProducto = new Map<string, typeof recepciones>()
+  const recepcionesPorId = new Map<string, (typeof recepciones)[number]>()
   const objetivos = new Map<string, AgregadoRecepcionFacturada>()
   for (const recepcion of recepciones) {
     const grupo = recepcionesPorProducto.get(recepcion.productoId) ?? []
     grupo.push(recepcion)
     recepcionesPorProducto.set(recepcion.productoId, grupo)
+    recepcionesPorId.set(recepcion.id, recepcion)
     objetivos.set(recepcion.id, { cantidadFacturada: 0, montoFacturado: 0 })
   }
 
+  // La procedencia persistida es la fuente de verdad: la asignación se resolvió
+  // por FIFO cuando se emitió la factura y no debe re-planificarse. Anular una
+  // factura libera unidades y desplazaría un plan recalculado desde cero, que
+  // es lo que hacía inválida la anulación de cualquier factura que no fuese la
+  // última de su orden.
+  const lineasSinProcedencia: typeof lineasActivas = []
   for (const linea of lineasActivas) {
     if (
       !Number.isSafeInteger(linea.cantidad) || linea.cantidad <= 0 ||
@@ -117,8 +125,47 @@ export async function recalcularAgregadosFacturadosDeOrden(
       throw new ActionError('Una factura activa contiene cantidades o costos inválidos', 'FACTURA_ORIGEN_NO_VERIFICABLE')
     }
 
+    const persistidas = linea.receiptInvoiceAllocations
+    if (persistidas.length === 0) {
+      lineasSinProcedencia.push(linea)
+      continue
+    }
+
+    const cantidadPersistida = persistidas.reduce((total, item) => total + item.cantidad, 0)
+    if (cantidadPersistida !== linea.cantidad) {
+      throw new ActionError('La procedencia persistida no cubre la cantidad facturada', 'FACTURA_PROVENIENCIA_INCONSISTENTE')
+    }
+    for (const asignacion of persistidas) {
+      if (!Number.isSafeInteger(asignacion.cantidad) || asignacion.cantidad <= 0) {
+        throw new ActionError('La procedencia persistida contiene cantidades inválidas', 'FACTURA_PROVENIENCIA_INCONSISTENTE')
+      }
+      const recepcion = recepcionesPorId.get(asignacion.recepcionItemId)
+      const objetivo = objetivos.get(asignacion.recepcionItemId)
+      if (!recepcion || !objetivo || recepcion.productoId !== linea.productoId) {
+        throw new ActionError('La procedencia persistida no pertenece a esta orden', 'FACTURA_PROVENIENCIA_INCONSISTENTE')
+      }
+      const monto = asignacion.cantidad * linea.precioUnitario
+      if (!Number.isSafeInteger(monto) || !Number.isSafeInteger(objetivo.montoFacturado + monto)) {
+        throw new ActionError('El agregado facturado excede la precisión permitida', 'FACTURA_ORIGEN_NO_VERIFICABLE')
+      }
+      objetivo.cantidadFacturada += asignacion.cantidad
+      objetivo.montoFacturado += monto
+    }
+  }
+
+  for (const recepcion of recepciones) {
+    const objetivo = objetivos.get(recepcion.id)
+    if (!objetivo) continue
+    if (objetivo.cantidadFacturada > recepcion.cantidad) {
+      throw new ActionError('Las facturas activas exceden las cantidades recibidas', 'FACTURA_EXCEDE_RECEPCION')
+    }
+  }
+
+  // Las líneas sin procedencia persistida (facturas emitidas antes de existir la
+  // capa de procedencia) se planifican por FIFO sobre la capacidad que queda
+  // libre, en el mismo orden estable con el que se emitieron.
+  for (const linea of lineasSinProcedencia) {
     let restante = linea.cantidad
-    const asignacionesPlanificadas: Array<{ recepcionItemId: string; cantidad: number }> = []
     for (const recepcion of recepcionesPorProducto.get(linea.productoId) ?? []) {
       if (restante === 0) break
       const objetivo = objetivos.get(recepcion.id)
@@ -133,22 +180,9 @@ export async function recalcularAgregadosFacturadosDeOrden(
       objetivo.cantidadFacturada += asignada
       objetivo.montoFacturado += monto
       restante -= asignada
-      asignacionesPlanificadas.push({ recepcionItemId: recepcion.id, cantidad: asignada })
     }
     if (restante > 0) {
       throw new ActionError('Las facturas activas exceden las cantidades recibidas', 'FACTURA_EXCEDE_RECEPCION')
-    }
-
-    if (linea.receiptInvoiceAllocations.length > 0) {
-      const persistidas = linea.receiptInvoiceAllocations
-        .map((item) => ({ recepcionItemId: item.recepcionItemId, cantidad: item.cantidad }))
-        .sort((a, b) => a.recepcionItemId.localeCompare(b.recepcionItemId))
-      const plan = asignacionesPlanificadas
-        .map((item) => ({ ...item }))
-        .sort((a, b) => a.recepcionItemId.localeCompare(b.recepcionItemId))
-      if (JSON.stringify(persistidas) !== JSON.stringify(plan)) {
-        throw new ActionError('La procedencia de una factura activa no coincide con FIFO', 'FACTURA_PROVENIENCIA_INCONSISTENTE')
-      }
     }
   }
 
