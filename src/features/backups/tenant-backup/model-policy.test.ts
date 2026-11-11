@@ -16,7 +16,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(168);
+    expect(schemaModelNames).toHaveLength(169);
     expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
@@ -29,7 +29,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 106,
+      'tenant-direct': 107,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -44,8 +44,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(122);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(122);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(123);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(123);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -69,9 +69,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(122);
+      .ineligibleBusinessModels).toHaveLength(123);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(122);
+      .missingBusinessModels).toHaveLength(123);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 

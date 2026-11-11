@@ -24,5 +24,5 @@ CREATE TABLE "NominaConfig" (
 
 ALTER TABLE "NominaConfig"
   ADD CONSTRAINT "NominaConfig_tenantId_fkey"
-  FOREIGN KEY ("tenantId") REFERENCES "Tenant"("tenantId")
+  FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId")
   ON DELETE RESTRICT ON UPDATE CASCADE;
