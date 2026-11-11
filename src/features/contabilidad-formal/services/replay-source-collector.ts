@@ -502,7 +502,7 @@ export async function recolectarCandidatos(
 				ventaId: true,
 				estado: true,
 				createdAt: true,
-				updatedAt: true,
+				costoVentaFecha: true,
 				items: { select: { cantidad: true, productoId: true, allocations: { select: {
 					cantidad: true,
 					compraDocumentoItemId: true,
@@ -694,7 +694,9 @@ export async function recolectarCandidatos(
 	}
 
 	for (const venta of ventasConCosto) {
-		const fecha = venta.createdAt;
+		// La fecha efectiva del devengo la persiste el writer; sin ella no se
+		// puede atribuir el costo a un periodo y la fuente queda omitida.
+		const fecha = venta.costoVentaFecha ?? venta.createdAt;
 		const asignaciones = venta.items.flatMap((item) => item.allocations.map((asignacion) => ({
 			...asignacion,
 			productoIdVenta: item.productoId,
@@ -724,7 +726,6 @@ export async function recolectarCandidatos(
 					lineaCapa.compraDocumentoItemId === capaRecepcion.compraDocumentoItemId &&
 					lineaCapa.tenantId === tenantId && lineaCapa.productoId === item.productoIdVenta &&
 					lineaCapa.compraDocumento.tenantId === tenantId &&
-					lineaCapa.compraDocumento.estado !== 'ANULADA' &&
 					lineaCapa.compraDocumento.deletedAt === null &&
 					item.costoUnitarioSnapshot === capaRecepcion.costoUnitarioSnapshot &&
 					item.fifoMonedaOrigen?.trim().toUpperCase() ===
@@ -739,7 +740,7 @@ export async function recolectarCandidatos(
 					hasReceipt === hasInvoiceLayer;
 			});
 		const tieneDevoluciones = devolucionesVenta.some((item) => item.ventaId === venta.ventaId);
-		const fechaPersistida = venta.updatedAt.getTime() === fecha.getTime();
+		const fechaPersistida = venta.costoVentaFecha != null;
 		const costo = !tieneDevoluciones && fechaPersistida && asignacionesVerificables
 			? await getCostoFifoVentaValorado(client as Prisma.TransactionClient, tenantId, venta.ventaId)
 			: null;

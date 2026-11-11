@@ -77,11 +77,11 @@ describe('recolectarCandidatos', () => {
 		};
 	}
 
-	it('reconstruye costo FIFO histórico solo con asignaciones persistidas y venta sin cambios', async () => {
+	it('reconstruye costo FIFO histórico con la fecha de devengo persistida en la venta', async () => {
 		const fecha = new Date('2026-10-12T12:00:00.000Z');
 		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
 			ventaId: 'venta-fifo', estado: 'ENTREGADA', deletedAt: null,
-			createdAt: fecha, updatedAt: fecha,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
 			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{ cantidad: 2, compraDocumentoItemId: 'linea-compra',
 				recepcionItemId: null, purchaseReceiptInvoiceAllocationId: null,
 				costoUnitarioSnapshot: 50, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha,
@@ -205,7 +205,7 @@ describe('recolectarCandidatos', () => {
 		};
 		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
 			ventaId: 'venta-recepcion-fifo', estado: 'ENTREGADA', deletedAt: null,
-			createdAt: fecha, updatedAt: fecha,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
 			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{
 				cantidad: 2, compraDocumentoItemId: null, recepcionItemId: 'recepcion-1',
 				purchaseReceiptInvoiceAllocationId: layer.id, costoUnitarioSnapshot: 50,
@@ -230,12 +230,73 @@ describe('recolectarCandidatos', () => {
 		expect(getCostoFifoVentaValorado).toHaveBeenCalledWith(client, 'tenant-1', 'venta-recepcion-fifo');
 	});
 
+	it('atribuye el costo FIFO a la fecha de devengo persistida y no a la de creación', async () => {
+		const fechaCreacion = new Date('2026-10-12T12:00:00.000Z');
+		const fechaDevengo = new Date('2026-10-13T09:30:00.000Z');
+		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
+			ventaId: 'venta-pve-entregada', estado: 'ENTREGADA', deletedAt: null,
+			createdAt: fechaCreacion, updatedAt: fechaDevengo, costoVentaFecha: fechaDevengo,
+			items: [{ cantidad: 1, productoId: 'producto-1', allocations: [{ cantidad: 1,
+				compraDocumentoItemId: 'linea-compra', recepcionItemId: null,
+				purchaseReceiptInvoiceAllocationId: null,
+				costoUnitarioSnapshot: 50, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fechaCreacion,
+				fifoMonedaFuncional: 'CUP', fifoCostoFuncional: new Prisma.Decimal(50),
+				fifoEvidenciaFx: '{"evidence":"persisted"}', compraDocumentoItem: {
+					compraDocumentoItemId: 'linea-compra', tenantId: 'tenant-1', productoId: 'producto-1',
+					compraDocumento: { tenantId: 'tenant-1', estado: 'PAGADA', deletedAt: null },
+				} }] }],
+		}]) } });
+		getCostoFifoVentaValorado.mockResolvedValue({ montoFuncional: 50, monedaFuncional: 'CUP',
+			cantidad: 1, fuentesSinTasa: [] });
+
+		const candidato = (await recolectarCandidatos('tenant-1', client as never))
+			.find((item) => item.origenTipo === 'venta_costo');
+
+		expect(candidato?.fecha).toBe(fechaDevengo);
+		expect(candidato?.evento.fecha).toBe(fechaDevengo);
+		expect(candidato).not.toHaveProperty('causaOmision');
+	});
+
+	it('reconstruye el costo FIFO aunque la factura de la capa se anulara despues', async () => {
+		const fecha = new Date('2026-10-12T12:00:00.000Z');
+		const layer = {
+			id: 'capa-factura-anulada', tenantId: 'tenant-1',
+			compraDocumentoItemId: 'linea-factura', recepcionItemId: 'recepcion-1', cantidad: 2,
+			costoUnitarioSnapshot: 50, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha,
+			fifoMonedaFuncional: 'CUP', fifoCostoFuncional: new Prisma.Decimal(100),
+			fifoEvidenciaFx: '{"evidence":"persisted"}',
+			compraDocumentoItem: { compraDocumentoItemId: 'linea-factura', tenantId: 'tenant-1',
+				productoId: 'producto-1', compraDocumento: { tenantId: 'tenant-1', estado: 'ANULADA',
+					deletedAt: null } },
+		};
+		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
+			ventaId: 'venta-recepcion-anulada', estado: 'ENTREGADA', deletedAt: null,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
+			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{
+				cantidad: 2, compraDocumentoItemId: null, recepcionItemId: 'recepcion-1',
+				purchaseReceiptInvoiceAllocationId: layer.id, costoUnitarioSnapshot: 50,
+				fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha, fifoMonedaFuncional: 'CUP',
+				fifoCostoFuncional: new Prisma.Decimal(100), fifoEvidenciaFx: '{"evidence":"persisted"}',
+				purchaseReceiptInvoiceAllocation: layer,
+			}] }],
+		}]) } });
+		getCostoFifoVentaValorado.mockResolvedValue({ montoFuncional: 100, monedaFuncional: 'CUP',
+			cantidad: 2, fuentesSinTasa: [] });
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		const costosVenta = candidatos.filter((item) => item.origenTipo === 'venta_costo');
+		expect(costosVenta).toHaveLength(1);
+		expect(costosVenta[0]).not.toHaveProperty('causaOmision');
+	});
+
 	it('omite costo FIFO histórico cuando hay devoluciones que alteraron las asignaciones', async () => {
 		const fecha = new Date('2026-10-12T12:00:00.000Z');
 		const client = crearClient({
 			venta: { findMany: vi.fn().mockResolvedValue([{
 				ventaId: 'venta-devuelta', estado: 'ENTREGADA', deletedAt: null,
-				createdAt: fecha, updatedAt: fecha, items: [{ cantidad: 2, allocations: [] }],
+				createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
+				items: [{ cantidad: 2, allocations: [] }],
 			}]) },
 			devolucionVenta: { findMany: vi.fn().mockResolvedValue([devolucion({ ventaId: 'venta-devuelta' })]) },
 		});
@@ -251,7 +312,8 @@ describe('recolectarCandidatos', () => {
 		const fecha = new Date('2026-10-12T12:00:00.000Z');
 		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
 			ventaId: 'venta-entregada-despues', estado: 'ENTREGADA', deletedAt: null,
-			createdAt: fecha, updatedAt: new Date('2026-10-13T12:00:00.000Z'), items: [],
+			createdAt: fecha, updatedAt: new Date('2026-10-13T12:00:00.000Z'),
+			costoVentaFecha: null, items: [],
 		}]) } });
 
 		const candidato = (await recolectarCandidatos('tenant-1', client as never))
@@ -265,7 +327,7 @@ describe('recolectarCandidatos', () => {
 		const fecha = new Date('2026-10-12T12:00:00.000Z');
 		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
 			ventaId: 'venta-fx-incompleto', estado: 'ENTREGADA', deletedAt: null,
-			createdAt: fecha, updatedAt: fecha,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
 			items: [{ cantidad: 1, allocations: [{ cantidad: 1, compraDocumentoItemId: 'linea-compra',
 				recepcionItemId: null, purchaseReceiptInvoiceAllocationId: null,
 				costoUnitarioSnapshot: 50, fifoMonedaOrigen: 'USD', fifoFechaFuente: fecha,
@@ -284,7 +346,7 @@ describe('recolectarCandidatos', () => {
 		const fecha = new Date('2026-10-12T12:00:00.000Z');
 		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
 			ventaId: 'venta-factura-anulada', estado: 'ENTREGADA', deletedAt: null,
-			createdAt: fecha, updatedAt: fecha,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
 			items: [{ cantidad: 1, productoId: 'producto-1', allocations: [{
 				cantidad: 1, compraDocumentoItemId: 'linea-anulada', recepcionItemId: null,
 				purchaseReceiptInvoiceAllocationId: null, costoUnitarioSnapshot: 50,

@@ -124,6 +124,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				await tx.vendor.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.cuentaPorCobrar.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.factura.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.devolucionVenta.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.ventaItem.deleteMany({ where: { venta: { tenantId: fixture.tenantId } } });
 				await tx.venta.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.serieFacturacion.deleteMany({ where: { tenantId: fixture.tenantId } });
@@ -132,6 +133,7 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				await tx.cuentaBancaria.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.puntoDeVenta.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.producto.deleteMany({ where: { tenantId: fixture.tenantId } });
+				await tx.categoria.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.almacen.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.cuentaRolTenant.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.cuentaContable.deleteMany({ where: { tenantId: fixture.tenantId } });
@@ -309,6 +311,145 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 		});
 		fixture.reconciliacionId = reconciliacion.reconciliacionId;
 		return fixture;
+	}
+
+	/**
+	 * @description Crea una venta de producto con su asignación FIFO persistida
+	 * para reconstruir el costo histórico desde PostgreSQL.
+	 * @param {Fixture} fixture - Tenant al que pertenece la venta.
+	 * @param {object} params - Fecha de creación, fecha de devengo persistida,
+	 * marca de devolución y modo legacy de la asignación.
+	 * @returns {Promise<{ ventaId: string }>} Identificador de la venta creada.
+	 */
+	async function crearVentaConCostoFifo(
+		fixture: Fixture,
+		params: {
+			fechaCreacion: Date;
+			fechaDevengo: Date | null;
+			conDevolucion?: boolean;
+			asignacionLegacy?: boolean;
+		},
+	): Promise<{ ventaId: string }> {
+		const almacen = await prisma.almacen.create({
+			data: { tenantId: fixture.tenantId, nombre: 'Almacén replay FIFO' },
+		});
+		const categoria = await prisma.categoria.create({
+			data: { tenantId: fixture.tenantId, nombre: 'Categoría replay FIFO' },
+		});
+		const producto = await prisma.producto.create({
+			data: {
+				tenantId: fixture.tenantId,
+				nombre: `Producto FIFO ${fixture.tenantId}`,
+				precioCosto: 50,
+				precioVenta: 100,
+				stock: 10,
+				categoriaId: categoria.catId,
+				almacenId: almacen.almacenId,
+			},
+		});
+		const proveedor = await prisma.vendor.create({
+			data: { tenantId: fixture.tenantId, nombre: 'Proveedor replay FIFO' },
+		});
+		const fechaCompra = new Date('2026-02-10T12:00:00.000Z');
+		const compra = await prisma.compraDocumento.create({
+			data: {
+				tenantId: fixture.tenantId,
+				proveedorId: proveedor.vendorId,
+				formaPago: 'CONTADO',
+				moneda: 'CUP',
+				estado: 'PAGADA',
+				fechaCompra,
+				total: 50,
+			},
+		});
+		const lineaCompra = await prisma.compraDocumentoItem.create({
+			data: {
+				tenantId: fixture.tenantId,
+				compraDocumentoId: compra.compraDocumentoId,
+				productoId: producto.id,
+				cantidad: 1,
+				precioUnitario: 50,
+				totalLinea: 50,
+			},
+		});
+		const puntoDeVenta = await prisma.puntoDeVenta.findFirstOrThrow({
+			where: { tenantId: fixture.tenantId },
+		});
+		const cliente = await prisma.cliente.findFirstOrThrow({
+			where: { tenantId: fixture.tenantId },
+		});
+		const venta = await prisma.venta.create({
+			data: {
+				tenantId: fixture.tenantId,
+				cantidad: 1,
+				puntoDeVentaId: puntoDeVenta.pvId,
+				clienteId: cliente.clienteId,
+				total: 100,
+				estado: 'ENTREGADA',
+				createdAt: params.fechaCreacion,
+				...(params.fechaDevengo ? { costoVentaFecha: params.fechaDevengo } : {}),
+			},
+		});
+		const ventaItem = await prisma.ventaItem.create({
+			data: {
+				ventaId: venta.ventaId,
+				productoId: producto.id,
+				cantidad: 1,
+				precioUnitario: 100,
+				total: 100,
+			},
+		});
+		const evidencia = buildAppliedFxEvidence({
+			originalAmount: 50,
+			originalCurrency: 'CUP',
+			functionalCurrency: 'CUP',
+			exchangeRate: 1,
+			convertedAmount: 50,
+			rateEffectiveAt: null,
+			fxCatalogRateId: null,
+			source: 'fifo-allocation',
+		});
+		await prisma.purchaseAllocation.create({
+			data: {
+				tenantId: fixture.tenantId,
+				compraDocumentoItemId: lineaCompra.compraDocumentoItemId,
+				ventaItemId: ventaItem.id,
+				cantidad: 1,
+				// La asignación legacy no conserva evidencia FX ni snapshot de
+				// origen: su costo solo se puede derivar de la factura.
+				...(params.asignacionLegacy
+					? {}
+					: {
+							costoUnitarioSnapshot: 50,
+							fifoMonedaOrigen: 'CUP',
+							fifoFechaFuente: fechaCompra,
+							fifoMonedaFuncional: 'CUP',
+							fifoCostoFuncional: 50,
+							fifoTasaCambio: null,
+							fifoFechaTasa: null,
+							fifoEvidenciaFx: JSON.stringify({
+								...evidencia,
+								rawConvertedAmount: 50,
+								rawExchangeRate: null,
+							}),
+						}),
+			},
+		});
+		if (params.conDevolucion) {
+			await prisma.devolucionVenta.create({
+				data: {
+					tenantId: fixture.tenantId,
+					ventaId: venta.ventaId,
+					estado: 'REGISTRADA',
+					subtotal: 100,
+					descuento: 0,
+					total: 100,
+					moneda: 'CUP',
+					createdById: fixture.requesterId,
+				},
+			});
+		}
+		return { ventaId: venta.ventaId };
 	}
 
 	it('lee una merma aplicada desde PostgreSQL para el replay', async () => {
@@ -673,6 +814,66 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 		});
 		expect(run?.status).toBe('COMPLETED');
 		expect(run?.postedCount).toBe(2);
+	});
+
+	it('atribuye el costo FIFO de una venta PVE a la fecha de devengo persistida', async () => {
+		const fixture = await crearFixture();
+		const fechaCreacion = new Date('2026-02-20T12:00:00.000Z');
+		const fechaDevengo = new Date('2026-03-05T09:30:00.000Z');
+		const { ventaId } = await crearVentaConCostoFifo(fixture, {
+			fechaCreacion,
+			fechaDevengo,
+		});
+
+		const candidato = (await recolectarCandidatos(fixture.tenantId))
+			.find((item) => item.origenTipo === 'venta_costo' && item.origenId === ventaId);
+
+		// El devengo ocurre en la entrega, no en la creación del pedido: el
+		// replay debe atribuir el costo al periodo de la fecha persistida.
+		expect(candidato?.fecha).toEqual(fechaDevengo);
+		expect(candidato?.evento).toMatchObject({
+			tipo: 'COSTO_VENTA_DEVENGADO',
+			fecha: fechaDevengo,
+			monto: 50,
+			moneda: 'CUP',
+			montoFuncional: 50,
+			monedaFuncional: 'CUP',
+		});
+		expect(candidato?.causaOmision).toBeUndefined();
+	});
+
+	it('omite el costo FIFO de una venta sin fecha de devengo persistida', async () => {
+		const fixture = await crearFixture();
+		const { ventaId } = await crearVentaConCostoFifo(fixture, {
+			fechaCreacion: new Date('2026-02-20T12:00:00.000Z'),
+			fechaDevengo: null,
+		});
+
+		const candidato = (await recolectarCandidatos(fixture.tenantId))
+			.find((item) => item.origenTipo === 'venta_costo' && item.origenId === ventaId);
+
+		// Sin fecha persistida no hay forma de atribuir el costo a un periodo:
+		// la fuente queda fuera del libro en vez de imputarse por defecto.
+		expect(candidato?.causaOmision).toBe('FECHA_COSTO_FIFO_NO_PERSISTIDA');
+		expect(candidato?.evento.montoFuncional).toBeNull();
+	});
+
+	it('no reconstruye el costo FIFO de una venta con devolución sobre asignación legacy', async () => {
+		const fixture = await crearFixture();
+		const { ventaId } = await crearVentaConCostoFifo(fixture, {
+			fechaCreacion: new Date('2026-02-20T12:00:00.000Z'),
+			fechaDevengo: new Date('2026-03-05T09:30:00.000Z'),
+			conDevolucion: true,
+			asignacionLegacy: true,
+		});
+
+		const candidato = (await recolectarCandidatos(fixture.tenantId))
+			.find((item) => item.origenTipo === 'venta_costo' && item.origenId === ventaId);
+
+		// La devolución alteró las asignaciones: el replay no puede reconstruir
+		// el costo original, ni siquiera desde una asignación legacy.
+		expect(candidato?.causaOmision).toBe('DEVOLUCION_FIFO_NO_RECONSTRUIBLE');
+		expect(candidato?.evento.montoFuncional).toBeNull();
 	});
 
 	it('reconstruye producción con fecha exacta mediante replay aprobado y conciliado', async () => {

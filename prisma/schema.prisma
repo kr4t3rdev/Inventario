@@ -797,6 +797,9 @@ model Venta {
   cambioDevuelto        Int?
   /// Ciclo de vida del pedido de venta (PVE): PEDIDO -> ENTREGADA -> FACTURADA; ANULADA terminal.
   estado             EstadoVenta           @default(ENTREGADA)
+  /// Fecha efectiva del devengo del costo de venta (CT-1). Se persiste en el
+  /// writer para que el replay historico reconstruya el mismo periodo.
+  costoVentaFecha    DateTime?
   metodoPago         MetodoPagoVenta?
   montoCredito       Int?
   montoEfectivo      Int?
