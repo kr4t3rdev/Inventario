@@ -244,24 +244,42 @@ export async function planBackfillContable(tenantId: string): Promise<PlanBackfi
 }
 
 /**
- * @description Produce una fila canonica por identidad de fuente para el digest.
- * @param {ReplayDb} client - Cliente Prisma de lectura.
- * @param {string} tenantId - Tenant del periodo.
- * @param {string} periodoId - Periodo contable a reconstruir.
- * @returns {Promise<ReplayPreflightDigestSnapshot>} Snapshot canonico del periodo.
+ * @description Contexto de reconstruccion compartido por varios periodos.
+ * Recolectar las fuentes del tenant es la parte cara del snapshot: si se
+ * comparte, el costo deja de multiplicarse por el numero de periodos.
  */
-export async function snapshotPeriodo(
+export interface ContextoSnapshotPeriodo {
+	/** Candidatos repondidos por el colector para el tenant. */
+	candidatos: CandidatoReplay[];
+	/** Identidades ya contabilizadas en el libro mayor del tenant. */
+	posteados: Set<string>;
+	/** Consultas del colector ejecutadas (evidencia del manifiesto). */
+	executedQueryIds: Set<string>;
+}
+
+/**
+ * @description Contexto perezoso: las fuentes del tenant se recolectan una
+ * sola vez y solo si algun periodo lo necesita.
+ */
+export interface ContextoSnapshotPeriodoLazy {
+	/**
+	 * @description Resuelve el contexto compartido (memoizado).
+	 * @returns {Promise<ContextoSnapshotPeriodo>} Contexto reconstruido.
+	 */
+	obtener(): Promise<ContextoSnapshotPeriodo>;
+}
+
+/**
+ * @description Reconstruye las fuentes del tenant y las identidades ya
+ * contabilizadas que necesita el snapshot canonico de cualquier periodo.
+ * @param {ReplayDb} client - Cliente Prisma de lectura.
+ * @param {string} tenantId - Tenant cuyas fuentes se reconstruyen.
+ * @returns {Promise<ContextoSnapshotPeriodo>} Contexto compartido.
+ */
+export async function contextoSnapshotPeriodo(
 	client: ReplayDb,
 	tenantId: string,
-	periodoId: string,
-	options: { exigirFuentesValidas?: boolean } = {},
-): Promise<ReplayPreflightDigestSnapshot> {
-	const periodo = await client.periodoContable.findFirst({
-		where: { tenantId, periodoId },
-		select: { periodoId: true, fechaInicio: true, fechaFin: true },
-	});
-	if (!periodo) throw new Error('Período contable no encontrado para el tenant');
-
+): Promise<ContextoSnapshotPeriodo> {
 	const executedQueryIds = new Set<string>();
 	const [candidatos, asientos] = await Promise.all([
 		recolectarCandidatos(tenantId, client, (queryId) => executedQueryIds.add(queryId)),
@@ -270,9 +288,55 @@ export async function snapshotPeriodo(
 			select: { origenTipo: true, origenId: true },
 		}),
 	]);
-	const posteados = new Set(
-		asientos.map((asiento) => `${asiento.origenTipo}:${asiento.origenId}`),
-	);
+	return {
+		candidatos,
+		posteados: new Set(
+			asientos.map((asiento) => `${asiento.origenTipo}:${asiento.origenId}`),
+		),
+		executedQueryIds,
+	};
+}
+
+/**
+ * @description Crea un contexto perezoso y memoizado para un tenant.
+ * @param {ReplayDb} client - Cliente Prisma de lectura.
+ * @param {string} tenantId - Tenant cuyas fuentes se reconstruyen.
+ * @returns {ContextoSnapshotPeriodoLazy} Contexto perezoso reutilizable.
+ */
+export function contextoSnapshotPeriodoLazy(
+	client: ReplayDb,
+	tenantId: string,
+): ContextoSnapshotPeriodoLazy {
+	let promesa: Promise<ContextoSnapshotPeriodo> | null = null;
+	return {
+		obtener: () => (promesa ??= contextoSnapshotPeriodo(client, tenantId)),
+	};
+}
+
+/**
+ * @description Produce una fila canonica por identidad de fuente para el digest.
+ * @param {ReplayDb} client - Cliente Prisma de lectura.
+ * @param {string} tenantId - Tenant del periodo.
+ * @param {string} periodoId - Periodo contable a reconstruir.
+ * @param {ContextoSnapshotPeriodoLazy} contexto - Contexto compartido opcional.
+ * @returns {Promise<ReplayPreflightDigestSnapshot>} Snapshot canonico del periodo.
+ */
+export async function snapshotPeriodo(
+	client: ReplayDb,
+	tenantId: string,
+	periodoId: string,
+	contexto?: ContextoSnapshotPeriodoLazy,
+): Promise<ReplayPreflightDigestSnapshot> {
+	const periodo = await client.periodoContable.findFirst({
+		where: { tenantId, periodoId },
+		select: { periodoId: true, fechaInicio: true, fechaFin: true },
+	});
+	if (!periodo) throw new Error('Período contable no encontrado para el tenant');
+
+	const fuente = contexto ? await contexto.obtener() : await contextoSnapshotPeriodo(client, tenantId);
+	const executedQueryIds = fuente.executedQueryIds;
+	const candidatos = fuente.candidatos;
+	const posteados = fuente.posteados;
 	const grupos = new Map<string, CandidatoReplay[]>();
 	for (const candidato of candidatos) {
 		if (candidato.fecha < periodo.fechaInicio || candidato.fecha > periodo.fechaFin) continue;
@@ -285,8 +349,13 @@ export async function snapshotPeriodo(
 		const candidato = grupo[0];
 		const cause = grupo.length > 1 ? 'IDENTIDAD_AMBIGUA' : candidato.causaOmision ?? null;
 		const alreadyPosted = posteados.has(clave);
+		// Regla unica de clasificacion: una fuente con causa que todavia no esta
+		// contabilizada queda OMITIDA; si ya esta en el libro, sigue acreditada
+		// por el asiento existente. El digest se calcula siempre con esta misma
+		// regla: el preflight que lo aprueba y la lectura que lo verifica tienen
+		// que clasificar igual o la cobertura jamas cuadra.
 		const omitted = cause === 'IDENTIDAD_AMBIGUA' ||
-			(cause !== null && (options.exigirFuentesValidas || !alreadyPosted));
+			(cause !== null && !alreadyPosted);
 		const originalAmount = decimalOrigen(candidato.evento.monto);
 		const functionalAmount = decimalOrigen(candidato.evento.montoFuncional);
 		const rate = decimalOrigen(candidato.evento.tasaCambio);

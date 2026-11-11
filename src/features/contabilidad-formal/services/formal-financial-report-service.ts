@@ -2,6 +2,7 @@ import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { evaluateCoverageEvidence } from './financial-ledger-coverage';
 import { readCoverageEvidence } from './financial-ledger-coverage-reader';
+import { contextoSnapshotPeriodoLazy } from './replay-backfill-service';
 import { verifyReversalIntegrity } from './financial-ledger-reversal-integrity';
 import { resolveFormalAvailability } from './formal-financial-report-availability';
 import type { FormalFinancialReportResolution } from './formal-financial-report-contract';
@@ -42,11 +43,17 @@ export async function getFormalFinancialReport(
 	if (!params.client) {
 		return prisma.$transaction(
 			(client) => getFormalFinancialReport({ ...params, client }),
-			{ isolationLevel: 'RepeatableRead' },
+			// El reporte reconstruye la cobertura de todos los periodos previos:
+			// el timeout por defecto de Prisma (5 s) abortaria la lectura con
+			// P2028 en tenants con historia larga.
+			{ isolationLevel: 'RepeatableRead', maxWait: 10_000, timeout: 120_000 },
 		);
 	}
 
 	const db = params.client;
+	// Las fuentes del tenant se reconstruyen una sola vez para todos los
+	// periodos evaluados: el costo no se multiplica por el numero de periodos.
+	const contexto = contextoSnapshotPeriodoLazy(db, params.tenantId);
 	const [aislamiento] = await db.$queryRaw<Array<{ isolation: string }>>`
 		SELECT current_setting('transaction_isolation') AS isolation
 	`;
@@ -73,6 +80,7 @@ export async function getFormalFinancialReport(
 			tenantId: params.tenantId,
 			periodoId: params.periodoId,
 			client: params.client,
+			contexto,
 		}),
 	);
 	const cutoffAt = params.cutoffAt ?? periodo.fechaFin;
@@ -88,6 +96,7 @@ export async function getFormalFinancialReport(
 	for (const anterior of periodosPreviosAlCorte) {
 		const evidencia = await readCoverageEvidence({
 			tenantId: params.tenantId, periodoId: anterior.periodoId, client: params.client,
+			contexto,
 		});
 		const resultado = evaluateCoverageEvidence(anterior.periodoId, evidencia);
 		if (resultado.estado !== 'CUBIERTA') {

@@ -5,7 +5,9 @@ const db = vi.hoisted(() => ({
   replayRun: { findFirst: vi.fn() },
   ordenProduccion: { count: vi.fn(), findMany: vi.fn() },
 }));
+const snapshotPeriodo = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/prisma', () => ({ prisma: db }));
+vi.mock('./replay-backfill-service', () => ({ snapshotPeriodo }));
 
 import { readCoverageEvidence } from './financial-ledger-coverage-reader';
 
@@ -100,5 +102,31 @@ describe('readCoverageEvidence', () => {
     await expect(readCoverageEvidence({ tenantId: 'tenant-a', periodoId: '' })).rejects.toThrow();
     expect(db.replayRun.findFirst).not.toHaveBeenCalled();
     expect(db.asiento.count).not.toHaveBeenCalled();
+  });
+
+  it('reconstruye el snapshot con el contexto compartido de fuentes', async () => {
+    db.replayRun.findFirst.mockResolvedValue({
+      replayRunId: 'run-1',
+      status: 'COMPLETED',
+      omittedCount: 0,
+      ambiguousCount: 0,
+      noFxCount: 0,
+      noCostCount: 0,
+      outOfPeriodCount: 0,
+      diagnostic: {},
+      preflight: { snapshot: { sources: [] }, digest: 'digest-1', digestVersion: 2 },
+    });
+    snapshotPeriodo.mockResolvedValue({ sources: [] });
+    const contexto = { obtener: vi.fn() };
+
+    await readCoverageEvidence({
+      tenantId: 'tenant-a', periodoId: 'periodo-1', contexto: contexto as never,
+    });
+
+    // La lectura comparte el contexto con el resto de periodos evaluados: las
+    // fuentes del tenant no se recolectan una vez por periodo.
+    expect(snapshotPeriodo).toHaveBeenCalledWith(
+      db, 'tenant-a', 'periodo-1', contexto,
+    );
   });
 });

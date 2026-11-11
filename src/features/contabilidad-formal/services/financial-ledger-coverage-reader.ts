@@ -2,7 +2,7 @@ import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { EvidenciaCobertura, EvidenciaReplay } from './financial-ledger-coverage';
 import { verifyCurrentSources, verifySnapshotCoverage } from './snapshot-coverage-integrity';
-import { snapshotPeriodo } from './replay-backfill-service';
+import { snapshotPeriodo, type ContextoSnapshotPeriodoLazy } from './replay-backfill-service';
 import { isReplayManifestSnapshotComplete } from './replay-source-manifest';
 
 /** Parámetros de lectura de la evidencia de cobertura. */
@@ -13,6 +13,11 @@ export interface CoverageEvidenceParams {
 	periodoId: string;
 	/** Cliente transaccional opcional para leer en el mismo contexto. */
 	client?: Prisma.TransactionClient;
+	/**
+	 * Contexto de reconstrucción compartido: evita que cada período evaluado
+	 * recolecte de nuevo todas las fuentes del tenant.
+	 */
+	contexto?: ContextoSnapshotPeriodoLazy;
 }
 
 /**
@@ -92,7 +97,7 @@ export async function readCoverageEvidence(
 		include: { lineas: true },
 	}) : [];
 	const actual = run?.preflight ? await snapshotPeriodo(
-		db, params.tenantId, params.periodoId, { exigirFuentesValidas: true },
+		db, params.tenantId, params.periodoId, params.contexto,
 	) : null;
 
 	return {

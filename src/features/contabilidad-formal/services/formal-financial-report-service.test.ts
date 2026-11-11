@@ -62,7 +62,9 @@ describe('getFormalFinancialReport', () => {
 
 	it('lee cobertura y datos en una instantanea repeatable read', async () => {
 		await getFormalFinancialReport(PARAMETROS);
-		expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: 'RepeatableRead' });
+		expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			isolationLevel: 'RepeatableRead', maxWait: 10_000, timeout: 120_000,
+		});
 		expect(mocks.readFormalReportData).toHaveBeenCalledWith(expect.objectContaining({ client: db }));
 	});
 
