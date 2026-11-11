@@ -65,6 +65,7 @@ export {
 	createCuentaPorCobrarAction,
 	updateCuentaPorCobrarAction,
 	getCxcMetricsAction,
+	getEstadoDeCuentaClienteAction,
 } from "./actions-cuentas";
 
 // Server Actions — Cuentas por Pagar
@@ -80,4 +81,5 @@ export type {
 	CxcMetrics,
 	CuentaPorPagarEnriquecida,
 	GetCuentasPorPagarResult,
+	EstadoDeCuentaClienteData,
 } from "./actions-cuentas";

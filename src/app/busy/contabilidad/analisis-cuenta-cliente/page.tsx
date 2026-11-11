@@ -40,9 +40,11 @@ import { useAuth } from "@/contexts/auth-context"
 import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 
 import { useClientes } from "@/features/clientes/hooks/use-clientes"
-import { getCuentasPorCobrarAction } from "@/features/contabilidad"
+import { getCuentasPorCobrarAction, getEstadoDeCuentaClienteAction } from "@/features/contabilidad"
+import { exportEstadoDeCuentaPdf } from "@/features/contabilidad/utils/estado-cuenta-pdf"
 import { getFacturasAction } from "@/features/facturas/actions"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"
+import { toast } from "sonner"
 import Link from "next/link"
 
 export default function AnalisisCuentaClientePage() {
@@ -170,6 +172,33 @@ export default function AnalisisCuentaClientePage() {
     'dark:border-slate-800/60 dark:bg-slate-900/10',
   );
 
+  /**
+   * F-6: descarga el estado de cuenta compuesto server-side y genera el PDF.
+   * El botón deja de ser decorativo: falla cerrada con toast si el action no
+   * tiene éxito y no se genera el documento.
+   */
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportPDF = async () => {
+    if (!selectedClientId || isExporting) return;
+    setIsExporting(true);
+    try {
+      const r = await getEstadoDeCuentaClienteAction({ clienteId: selectedClientId });
+      if (!r.success) {
+        toast.error(r.error?.message ?? "No se pudo generar el estado de cuenta");
+        return;
+      }
+      if (!r.data) {
+        toast.error("No se pudo generar el estado de cuenta");
+        return;
+      }
+      exportEstadoDeCuentaPdf(r.data);
+    } catch {
+      toast.error("No se pudo generar el estado de cuenta");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isBlocked) {
     return null
   }
@@ -197,9 +226,13 @@ export default function AnalisisCuentaClientePage() {
               </div>
               {selectedClientId && (
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline">
+                  <Button
+                    variant="outline"
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                  >
                     <Download className="mr-2 h-4 w-4" />
-                    Exportar PDF
+                    {isExporting ? "Generando..." : "Exportar PDF"}
                   </Button>
                 </div>
               )}

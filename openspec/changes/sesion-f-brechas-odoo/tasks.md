@@ -162,19 +162,36 @@
 
 ## 6. F-6 — Estado de cuenta imprimible
 
-- [ ] 6.1 [RED] `getEstadoDeCuentaClienteAction`({ clienteId, desde? })`:
-  compone empresa, cliente, resumen (deudaTotal, deudaVencida, saldoAFavor =
-  anticipos COBRO activos + NC saldo a favor, saldoNeto), CxC enriquecidas,
-  anticipos, NC, facturas y pagos — todo tenant-scoped.
-- [ ] 6.2 [GREEN] Action en `src/features/contabilidad/actions-cuentas.ts`
-  (reusa `enriquecerCuentaPorCobrar`).
-- [ ] 6.3 [RED] UI: el botón "Exportar PDF" de
-  `analisis-cuenta-cliente/page.tsx` llama al action y genera PDF (jsPDF +
-  autotable, patrón `export-utils.ts`); test de componente del disparo con
-  datos mockeados.
-- [ ] 6.4 [GREEN] Handler real del botón + documento (encabezado empresa/
-  cliente, resumen, tablas CxC / anticipos+NC / historial, saldo neto, firma).
-- [ ] 6.5 Verificación + commit `F-6:`.
+> Ejecutado con TDD. Nota de entorno: el Popover de Radix en jsdom abre con
+> `fireEvent.pointerDown` + `click` (userEvent no dispara su apertura); el
+> patrón quedó en el test de la página.
+
+- [x] 6.1 [RED] `getEstadoDeCuentaClienteAction({ clienteId, desde? })`:
+  compone empresa, cliente, resumen separado por moneda (deudaTotal, deudaVencida,
+  saldoAFavorAnticipos/NotasCredito, saldoAFavor, saldoNeto), CxC
+  enriquecidas, anticipos COBRO activos, NC saldo a favor, facturas y pagos —
+  todo tenant-scoped (6 tests en
+  `src/features/contabilidad/__tests__/estado-cuenta-cliente.test.ts`,
+  incluida la verificación del scenario del spec: 1000/300/700).
+- [x] 6.2 [GREEN] Action en `src/features/contabilidad/actions-cuentas.ts`
+  (reusa `enriquecerCuentaPorCobrar` + `ACTIVE_RECEIVABLE_STATES`; resultado
+  serializable con montos ya resueltos server-side; `desde` filtra CxC
+  createdAt, facturas fechaEmision y pagos fechaReconciliacion; VALIDATION_ERROR
+  en `desde` inválido).
+- [x] 6.3 [RED] UI: test de componente del disparo en
+  `analisis-cuenta-cliente/page.test.tsx` — selecciona cliente y pulsa
+  "Exportar PDF"; verifica llamada al action con clienteId + invocación de
+  `exportEstadoDeCuentaPdf` con el dataset, y que con action fallido NO se
+  genera el PDF.
+- [x] 6.4 [GREEN] Botón cableado en `analisis-cuenta-cliente/page.tsx`
+  (fail-closed con toast, estado "Generando...") + generador
+  `src/features/contabilidad/utils/estado-cuenta-pdf.ts` (jsPDF+autotable,
+  patrón facturas-vencidas: encabezado empresa/cliente, tabla resumen, CxC,
+  anticipos+NC, historial facturas, historial pagos, saldo neto y línea de
+  firma). Importes del resumen y de cada detalle se muestran con su moneda; no
+  se agregan saldos CUP/USD en un total ficticio.
+- [x] 6.5 Verificación (10/10 pruebas F-6 focalizadas; typecheck 0; ESLint
+  focalizado 0) + commit separado `F-6:`.
 
 ## 7. F-7 — Lotes/FEFO (`lotes-series`)
 
