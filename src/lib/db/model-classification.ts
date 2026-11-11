@@ -187,6 +187,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   ValeSalida: SCOPED(),
   ValeSalidaItem: SCOPED('Ítem con tenantId propio denormalizado.'),
   Vendor: SCOPED(),
+  ProveedorProducto: SCOPED('Costo y condiciones de compra por proveedor y producto del mismo tenant.'),
   Venta: SCOPED(),
   VentaServicios: SCOPED(),
 
