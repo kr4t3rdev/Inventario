@@ -211,7 +211,7 @@ Detalle: `docs/ct1-r0-5-matriz-canonica.md`.
 
 | Qué | Dónde |
 |---|---|
-| Rama de la capa formal | `feature/contabilidad-capa-formal-ct1` · PR #192 (<https://github.com/kr4t3rdev/Inventario/pull/192>) |
+| Rama de la capa formal | `main` · merge commit `04cc55b5` (PR #192 fusionado: <https://github.com/kr4t3rdev/Inventario/pull/192>) |
 | Manifiesto de evidencia | `../ct1-evidencias/manifest-r6-local-20261110.md` (§11 = ronda de remediación) |
 | Logs de los gates | `../ct1-evidencias/logs/` (todos `EXIT=0`) |
 | Producción | `https://financemdm.kr4t3rdev.xyz` (Railway) · Env `FinanceMDM / production` |
