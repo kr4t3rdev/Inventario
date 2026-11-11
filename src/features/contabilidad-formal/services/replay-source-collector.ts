@@ -53,6 +53,10 @@ import {
 	construirEventoDevolucionVenta,
 	DEVOLUCION_VENTA_ORIGIN_TYPE,
 } from './sale-return-posting-service';
+import {
+	construirEventoDevolucionCompra,
+	DEVOLUCION_COMPRA_ORIGIN_TYPE,
+} from './supplier-return-posting-service';
 import type { EventoContableInput } from './posting-engine';
 
 /** Cliente Prisma que sirve tanto para lectura como para transaccion. */
@@ -71,6 +75,7 @@ const QUERY_ID_BY_MODEL = {
 	ventaServicios: 'ventaServicios',
 	anticipoMovimiento: 'anticipoMovimiento',
 	devolucionVenta: 'devolucionVenta',
+	devolucionCompra: 'devolucionCompra',
 	ajusteBancario: 'ajusteBancario',
 	inyeccionCapital: 'inyeccionCapital',
 	deudaCash: 'deudaCash',
@@ -241,6 +246,7 @@ export async function recolectarCandidatos(
 		ventasServicio,
 		movimientosAnticipo,
 		devolucionesVenta,
+		devolucionesCompra,
 		ajustesBancarios,
 		inyeccionesCapital,
 		deudasCash,
@@ -432,6 +438,23 @@ export async function recolectarCandidatos(
 				costoFifoFuncional: true,
 				idempotencyKey: true,
 				createdAt: true,
+			},
+		}),
+		client.devolucionCompra.findMany({
+			where: { tenantId },
+			select: {
+				devolucionId: true,
+				estado: true,
+				montoTotal: true,
+				montoImputado: true,
+				montoImputadoFuncional: true,
+				saldoAFavor: true,
+				moneda: true,
+				idempotencyKey: true,
+				createdAt: true,
+				compraDocumento: {
+					select: { cuentaPorPagar: { select: { tasaCambio: true } } },
+				},
 			},
 		}),
 		client.ajusteBancario.findMany({
@@ -1298,6 +1321,39 @@ export async function recolectarCandidatos(
 				tasaCambio: valoracionVerificable ? tasaCambio : null,
 				referencia: transferencia.numeroComprobante,
 			},
+			...(causaOmision ? { causaOmision } : {}),
+		});
+	}
+
+	// --- Devoluciones de venta ------------------------------------------------
+
+	for (const devolucion of devolucionesCompra) {
+		if (devolucion.estado === 'PENDIENTE') continue;
+		const total = Math.abs(Number(devolucion.montoTotal));
+		if (!Number.isFinite(total) || total <= 0) continue;
+		const tasaCambio = devolucion.compraDocumento?.cuentaPorPagar?.tasaCambio;
+		const evento = construirEventoDevolucionCompra({
+			devolucionId: devolucion.devolucionId,
+			fecha: devolucion.createdAt,
+			montoTotal: total,
+			montoImputado: Number(devolucion.montoImputado),
+			montoImputadoFuncional: devolucion.montoImputadoFuncional === null
+				? null
+				: Number(devolucion.montoImputadoFuncional),
+			saldoAFavor: Number(devolucion.saldoAFavor),
+			moneda: devolucion.moneda,
+			tasaCambio: tasaCambio === null ? null : Number(tasaCambio),
+		}, monedaFuncional);
+		const causaOmision = devolucion.estado === 'ANULADA'
+			? CAUSA_ANULADO
+			: evento.montoFuncional === null && evento.monedaFuncional !== evento.moneda
+				? tasaCambio === null ? CAUSA_TASA_NO_PERSISTIDA : CAUSA_VALORACION_NO_VERIFICABLE
+				: undefined;
+		candidatos.push({
+			origenTipo: DEVOLUCION_COMPRA_ORIGIN_TYPE,
+			origenId: devolucion.devolucionId,
+			fecha: devolucion.createdAt,
+			evento,
 			...(causaOmision ? { causaOmision } : {}),
 		});
 	}

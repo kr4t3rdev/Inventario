@@ -8,7 +8,7 @@ export const REPLAY_SOURCE_COLLECTOR_ID = 'replay-source-collector';
 export const REPLAY_COLLECTOR_QUERY_IDS = [
 	'reconciliacionVenta', 'reconciliacionServicio', 'transferenciaBancaria', 'factura',
 	'cuentaPorCobrar', 'cuentaBancaria', 'reconciliacionGasto', 'compraDocumento',
-	'compraServicio', 'ventaServicios', 'anticipoMovimiento', 'devolucionVenta',
+	'compraServicio', 'ventaServicios', 'anticipoMovimiento', 'devolucionVenta', 'devolucionCompra',
 	'ajusteBancario', 'inyeccionCapital', 'deudaCash', 'prestamoCash', 'ajusteInventarioMerma',
 	'asientoMerma', 'cuentaRolTenantMerma', 'fxEvidenceMermaReversada', 'tenantAccountingPolicy',
 	'ventaConCosto', 'ordenProduccion',
@@ -32,6 +32,7 @@ export const REPLAY_SOURCE_MANIFEST = {
 	COBRO_CXC: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_venta'], collectorQueryIds: ['reconciliacionVenta', 'factura', 'cuentaPorCobrar', 'cuentaBancaria'] },
 	COSTO_VENTA_DEVENGADO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['venta_costo'], collectorQueryIds: ['ventaConCosto', 'tenantAccountingPolicy'] },
 	DEVOLUCION_VENTA: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['devolucion_venta'], collectorQueryIds: ['devolucionVenta', 'tenantAccountingPolicy'] },
+	DEVOLUCION_COMPRA: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['devolucion_compra'], collectorQueryIds: ['devolucionCompra', 'tenantAccountingPolicy'] },
 	VENTA_SERVICIO: { disposition: 'template-only', originTypes: [] },
 	VENTA_SERVICIO_CREDITO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['venta_servicio'], collectorQueryIds: ['ventaServicios'] },
 	COBRO_SERVICIO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_servicio'], collectorQueryIds: ['reconciliacionServicio', 'cuentaBancaria'] },

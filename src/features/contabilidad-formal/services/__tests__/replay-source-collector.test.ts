@@ -55,6 +55,7 @@ describe('recolectarCandidatos', () => {
 			transferenciaBancaria: { findMany: vi.fn().mockResolvedValue([]) },
 			reconciliacionGasto: { findMany: vi.fn().mockResolvedValue([]) },
 			compraDocumento: { findMany: vi.fn().mockResolvedValue([]) },
+			devolucionCompra: { findMany: vi.fn().mockResolvedValue([]) },
 			compraServicio: { findMany: vi.fn().mockResolvedValue([]) },
 			ventaServicios: { findMany: vi.fn().mockResolvedValue([]) },
 			venta: { findMany: vi.fn().mockResolvedValue([]) },
@@ -100,6 +101,39 @@ describe('recolectarCandidatos', () => {
 			origenTipo: 'venta_costo', origenId: 'venta-fifo', fecha,
 			evento: expect.objectContaining({ tipo: 'COSTO_VENTA_DEVENGADO', monto: 100,
 				moneda: 'CUP', montoFuncional: 100, monedaFuncional: 'CUP' }),
+		}));
+	});
+
+	it('reconstruye el asiento formal de una devolución a proveedor registrada', async () => {
+		const fecha = new Date('2026-11-10T12:00:00.000Z');
+		const client = crearClient({
+			devolucionCompra: { findMany: vi.fn().mockResolvedValue([{
+				devolucionId: 'devolucion-compra-1',
+				estado: 'COMPLETADA',
+				montoTotal: 100,
+				montoImputado: 60,
+				montoImputadoFuncional: 60,
+				saldoAFavor: 40,
+				moneda: 'CUP',
+				idempotencyKey: 'return-key',
+				createdAt: fecha,
+				compraDocumento: { cuentaPorPagar: { tasaCambio: null } },
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toContainEqual(expect.objectContaining({
+			origenTipo: 'devolucion_compra',
+			origenId: 'devolucion-compra-1',
+			fecha,
+			evento: expect.objectContaining({
+				tipo: 'DEVOLUCION_COMPRA',
+				monto: 100,
+				moneda: 'CUP',
+				montoFuncional: 100,
+				auxiliares: { montoAplicadoCxc: 60, montoSaldoFavor: 40 },
+			}),
 		}));
 	});
 

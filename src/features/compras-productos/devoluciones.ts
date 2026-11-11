@@ -11,6 +11,9 @@ import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Prisma } from '@/generated/prisma';
+import { emitirDevolucionCompra } from '@/features/contabilidad-formal/services/supplier-return-posting-service';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
+import type { PostingTx } from '@/features/contabilidad-formal/services/posting-engine';
 
 const IMPUTACIONES = ['IMPUTACION_CXP', 'SALDO_FAVOR'] as const;
 
@@ -26,6 +29,40 @@ const crearSchema = z.object({
 });
 
 type CrearInput = z.input<typeof crearSchema>;
+
+/**
+ * @description Consulta devoluciones recientes y compras que pueden originar una devolución.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Devoluciones y compras visibles dentro del tenant.
+ */
+export const getDevolucionesCompraDataAction = withAction(
+	async (_input: void, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requirePermission(user, 'compras.compras.gestionar', 'consultar devoluciones a proveedores');
+		const [devoluciones, compras] = await Promise.all([
+			prisma.devolucionCompra.findMany({
+				where: { tenantId },
+				include: {
+					proveedor: { select: { nombre: true } },
+					compraDocumento: { select: { numeroFactura: true } },
+					items: { include: { producto: { select: { nombre: true } } } },
+				},
+				orderBy: { createdAt: 'desc' },
+				take: 50,
+			}),
+			prisma.compraDocumento.findMany({
+				where: { tenantId, deletedAt: null, estado: { not: 'ANULADA' } },
+				include: {
+					proveedor: { select: { nombre: true } },
+					items: { include: { producto: { select: { nombre: true } } } },
+				},
+				orderBy: { fechaCompra: 'desc' },
+				take: 50,
+			}),
+		]);
+		return { devoluciones, compras };
+	},
+);
 
 /**
  * @description Genera un consecutivo anual por tenant. El tenant se bloquea antes
@@ -302,7 +339,7 @@ export const completarDevolucionCompraAction = withAction(
 				});
 			}
 
-			return tx.devolucionCompra.update({
+			const completada = await tx.devolucionCompra.update({
 				where: { devolucionId },
 				data: {
 					estado: 'COMPLETADA',
@@ -313,6 +350,22 @@ export const completarDevolucionCompraAction = withAction(
 				},
 				include: { items: true },
 			});
+
+			await emitirDevolucionCompra(tx as unknown as PostingTx, { tenantId, userId: user.userId }, {
+				devolucionId,
+				fecha: completada.completadaAt ?? new Date(),
+				montoTotal: completada.montoTotal,
+				montoImputado: completada.montoImputado,
+				montoImputadoFuncional: completada.montoImputadoFuncional == null
+					? null
+					: Number(completada.montoImputadoFuncional),
+				saldoAFavor: completada.saldoAFavor,
+				moneda: completada.moneda,
+				tasaCambio: devolucion.compraDocumento?.cuentaPorPagar?.tasaCambio == null
+					? null
+					: Number(devolucion.compraDocumento.cuentaPorPagar.tasaCambio),
+			});
+			return completada;
 		});
 
 		revalidatePath('/busy/compras-productos');
@@ -359,6 +412,9 @@ export const anularDevolucionCompraAction = withAction(
 						);
 					}
 				}
+				await reverseFormalEntries(tx, { tenantId, userId: user.userId }, [
+					{ tipo: 'devolucion_compra', id: devolucionId },
+				]);
 
 				for (const item of devolucion.items) {
 					const producto = await tx.producto.findUnique({
@@ -397,12 +453,12 @@ export const anularDevolucionCompraAction = withAction(
 					await tx.cuentaPorPagar.update({
 						where: { cuentaPorPagarId: cxpId },
 						data: {
-						montoDeuda: nuevaDeuda,
-						...(nuevaDeudaFuncional === undefined ? {} : { montoDeudaFuncional: nuevaDeudaFuncional }),
-						saldoPendiente: nuevoSaldo,
-						estado: nuevoSaldo === 0
-							? 'PAGADA'
-							: Number(cxp.montoPagado) === 0 ? 'PENDIENTE' : 'PARCIAL',
+							montoDeuda: nuevaDeuda,
+							...(nuevaDeudaFuncional === undefined ? {} : { montoDeudaFuncional: nuevaDeudaFuncional }),
+							saldoPendiente: nuevoSaldo,
+							estado: nuevoSaldo === 0
+								? 'PAGADA'
+								: Number(cxp.montoPagado) === 0 ? 'PENDIENTE' : 'PARCIAL',
 						},
 					});
 				}

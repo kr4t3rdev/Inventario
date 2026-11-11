@@ -31,9 +31,9 @@ const ROOT = resolve(process.cwd());
 const SOURCE_ROOT = join(ROOT, 'src');
 const MATRIX_PATH = join(ROOT, 'docs/ct1-r0-5-matriz-canonica.md');
 const POSTING_ENGINE_PATH = 'src/features/contabilidad-formal/services/posting-engine.ts';
-const EXPECTED_CALLSITES = 23;
-const EXPECTED_CALLSITE_FILES = 12;
-const EXPECTED_MANIFEST_TYPES = 39;
+const EXPECTED_CALLSITES = 24;
+const EXPECTED_CALLSITE_FILES = 13;
+const EXPECTED_MANIFEST_TYPES = 40;
 const EXPECTED_ORPHAN_ROWS = 4;
 const ORPHAN_KINDS = ['modulo-huerfano', 'funcion-sin-invocador', 'invocacion-interna'];
 const CALLSITES_ANCHOR =
@@ -262,7 +262,7 @@ describe('matriz canónica R0.5 de writers', () => {
 		}
 	});
 
-	it('resuelve los 39 tipos del manifiesto formal con su disposición exacta', () => {
+	it('resuelve los 40 tipos del manifiesto formal con su disposición exacta', () => {
 		const matrix = readFileSync(MATRIX_PATH, 'utf8');
 		const section = extractSection(matrix, MANIFEST_ANCHOR);
 		const rowList = parseTableRowList(section, /^[A-Z][A-Z0-9_]+$/);
