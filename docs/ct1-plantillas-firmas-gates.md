@@ -1,5 +1,11 @@
 # Plantillas para firmar gates contables
 
+> **Para operar, no para el trámite:** la vía operativa mínima (interruptores,
+> comandos, checks previos y plan de reversión) está en
+> `docs/ct1-checklist-activacion-contabilidad-formal.md`, que es mucho más
+> corta y no exige firmas. Estas plantillas son solo para el caso en que se
+> requiera un acta formal con firmas nominales.
+
 **Uso:** copiar la plantilla necesaria, completarla con datos verificados y
 adjuntarla al paquete de evidencias. Los campos entre `<...>` son obligatorios.
 No completar con defaults del código, valores inferidos ni datos de otro

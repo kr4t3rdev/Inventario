@@ -371,4 +371,6 @@ Ninguna de estas brechas se resuelve con configuración: requieren decisión
 - `scripts/ops/verify-formal-postings-production.ts` (solo lectura)
 - `scripts/ops/accounting-policy-rollout.ts` (preflight, dry-run, apply con gates)
 - `scripts/ops/accounting-reports-monitor.ts` (`pnpm ops:monitor:accounting-reports`)
-- `docs/ct1-plantillas-firmas-gates.md` (plantillas A-E)
+- `docs/ct1-checklist-activacion-contabilidad-formal.md` (**checklist corto
+  operativo**: interruptores, comandos, checks previos, reversión)
+- `docs/ct1-plantillas-firmas-gates.md` (plantillas A-E, solo para el acto formal)
