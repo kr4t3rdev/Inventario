@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
-import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
+import { restaurarAllocacionesFifo, valorarCostoFifoFuentes } from '@/lib/services/fifo-allocation';
 
 function alloc(id: string, cantidad: number, fecha: string, costo: number) {
 	return {
@@ -192,17 +192,31 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 		expect(r).toEqual({ restaurado: 0, costoTotal: 0, fuentes: [] });
 	});
 
-	it('rechaza una recepción cuyo costo snapshot carece de moneda y fecha', async () => {
+	it('repone una recepción sin factura trazada como fuente estimada no acreditable', async () => {
+		const fechaRecepcion = new Date('2026-09-01T00:00:00.000Z');
 		const tx = {
+			tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }) },
 			purchaseAllocation: {
 				findMany: vi.fn().mockResolvedValue([{
 					id: 'allocation-recepcion',
+					tenantId: 't-1',
+					recepcionItemId: 'ri-1',
+					purchaseReceiptInvoiceAllocationId: null,
 					cantidad: 2,
 					costoUnitarioSnapshot: 125,
+					fifoMonedaOrigen: null,
+					fifoFechaFuente: null,
+					fifoMonedaFuncional: null,
+					fifoCostoFuncional: null,
+					fifoTasaCambio: null,
+					fifoFechaTasa: null,
+					fifoEvidenciaFx: null,
 					compraDocumentoItem: null,
 					recepcionItem: {
-						recepcion: { fecha: new Date('2026-09-01T00:00:00.000Z') },
-						ordenItem: { createdAt: new Date('2026-08-25T00:00:00.000Z'), precioUnitario: 100 },
+						id: 'ri-1', tenantId: 't-1', productoId: 'p-1',
+						recepcion: { fecha: fechaRecepcion },
+						ordenItem: { createdAt: new Date('2026-08-25T00:00:00.000Z'), precioUnitario: 100,
+							tenantId: 't-1', ordenId: 'oc-1', productoId: 'p-1' },
 					},
 				}]),
 				update: vi.fn(),
@@ -210,19 +224,53 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			},
 		};
 
-		await expect(restaurarAllocacionesFifo(tx as never, {
+		const resultado = await restaurarAllocacionesFifo(tx as never, {
 			tenantId: 't-1',
 			ventaItemId: 'vi-recepcion',
 			cantidad: 1,
-		})).rejects.toThrow('PROCEDENCIA_FIFO_NO_VERIFICABLE');
-		expect(tx.purchaseAllocation.update).not.toHaveBeenCalled();
+		});
+
+		// La reposición operativa del inventario no se bloquea: la unidad vuelve
+		// al lote y el costo estimado se conserva para el kardex.
+		expect(resultado.restaurado).toBe(1);
+		expect(resultado.costoTotal).toBe(125);
+		expect(tx.purchaseAllocation.update).toHaveBeenCalledWith({
+			where: { id: 'allocation-recepcion' },
+			data: { cantidad: 1 },
+		});
+		// Pero la fuente queda marcada como estimada: no es acreditable en el libro.
+		expect(resultado.fuentes[0]).toMatchObject({
+			moneda: 'CUP', fecha: fechaRecepcion, costo: 125, cantidad: 1, verificable: false,
+		});
 	});
 
-	it('rechaza revertir una recepción sin procedencia de factura antes de escribir', async () => {
+	it('no acredita en el libro formal el costo de una fuente estimada', async () => {
 		const tx = {
+			tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }) },
+		};
+
+		const valoracion = await valorarCostoFifoFuentes(tx as never, 't-1', [{
+			moneda: 'CUP',
+			fecha: new Date('2026-09-01T00:00:00.000Z'),
+			costo: 125,
+			cantidad: 1,
+			verificable: false,
+		}]);
+
+		expect(valoracion.montoFuncional).toBeNull();
+		expect(valoracion.fuentesSinTasa).toContain('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+	});
+
+	it('restituye una recepción estimada sin costo snapshot con el precio de la orden', async () => {
+		const fechaRecepcion = new Date('2026-09-01T00:00:00.000Z');
+		const tx = {
+			tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }) },
 			purchaseAllocation: {
 				findMany: vi.fn().mockResolvedValue([{
 					id: 'allocation-recepcion-sin-factura',
+					tenantId: 't-1',
+					recepcionItemId: 'ri-1',
+					purchaseReceiptInvoiceAllocationId: null,
 					cantidad: 2,
 					costoUnitarioSnapshot: null,
 					fifoMonedaOrigen: null,
@@ -234,8 +282,10 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 					fifoEvidenciaFx: null,
 					compraDocumentoItem: null,
 					recepcionItem: {
-						recepcion: { fecha: new Date('2026-09-01T00:00:00.000Z') },
-						ordenItem: { createdAt: new Date('2026-08-25T00:00:00.000Z'), precioUnitario: 100 },
+						id: 'ri-1', tenantId: 't-1', productoId: 'p-1',
+						recepcion: { fecha: fechaRecepcion },
+						ordenItem: { createdAt: new Date('2026-08-25T00:00:00.000Z'), precioUnitario: 100,
+							tenantId: 't-1', ordenId: 'oc-1', productoId: 'p-1' },
 					},
 				}]),
 				update: vi.fn(),
@@ -243,10 +293,14 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			},
 		};
 
-		await expect(restaurarAllocacionesFifo(tx as never, {
+		const resultado = await restaurarAllocacionesFifo(tx as never, {
 			tenantId: 't-1', ventaItemId: 'vi-recepcion', cantidad: 1,
-		})).rejects.toThrow('PROCEDENCIA_FIFO_NO_VERIFICABLE');
-		expect(tx.purchaseAllocation.update).not.toHaveBeenCalled();
+		});
+
+		expect(resultado.restaurado).toBe(1);
+		expect(resultado.costoTotal).toBe(100);
+		expect(resultado.fuentes[0]?.verificable).toBe(false);
+		expect(tx.purchaseAllocation.update).toHaveBeenCalled();
 		expect(tx.purchaseAllocation.delete).not.toHaveBeenCalled();
 	});
 
@@ -311,6 +365,68 @@ describe('restaurarAllocacionesFifo (DNC-T3)', () => {
 			where: { id: 'sale-layer-1' },
 			data: expect.objectContaining({ cantidad: 1, fifoCostoFuncional: 3000 }),
 		}));
+	});
+
+	it('conserva la procedencia consumida aunque la factura se anule después', async () => {
+		const date = new Date('2026-09-01T00:00:00.000Z');
+		const sourceEvidence = buildAppliedFxEvidence({
+			originalAmount: 240, originalCurrency: 'USD', functionalCurrency: 'CUP',
+			exchangeRate: 25, convertedAmount: 6000, rateEffectiveAt: date,
+			fxCatalogRateId: null, source: 'purchase-receipt-invoice-allocation',
+		});
+		const saleEvidence = buildAppliedFxEvidence({
+			originalAmount: 240, originalCurrency: 'USD', functionalCurrency: 'CUP',
+			exchangeRate: 25, convertedAmount: 6000, rateEffectiveAt: date,
+			fxCatalogRateId: null, source: 'fifo-allocation',
+		});
+		const tx = {
+			tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }) },
+			purchaseAllocation: {
+				findMany: vi.fn().mockResolvedValue([{
+					id: 'sale-layer-anulada', tenantId: 't-1', cantidad: 2,
+					recepcionItemId: 'ri-1',
+					purchaseReceiptInvoiceAllocationId: 'invoice-layer-1',
+					costoUnitarioSnapshot: 120, fifoMonedaOrigen: 'USD', fifoFechaFuente: date,
+					fifoMonedaFuncional: 'CUP', fifoCostoFuncional: 6000,
+					fifoTasaCambio: 25, fifoFechaTasa: date,
+					fifoEvidenciaFx: JSON.stringify({ ...saleEvidence,
+						rawConvertedAmount: 6000, rawExchangeRate: 25 }),
+					compraDocumentoItem: null,
+					recepcionItem: {
+						id: 'ri-1', tenantId: 't-1', productoId: 'p-1', recepcion: { fecha: date },
+						ordenItem: { createdAt: date, tenantId: 't-1', ordenId: 'oc-1', productoId: 'p-1' },
+					},
+					purchaseReceiptInvoiceAllocation: {
+						id: 'invoice-layer-1', tenantId: 't-1', recepcionItemId: 'ri-1',
+						compraDocumentoItemId: 'invoice-line-1', cantidad: 2,
+						costoUnitarioSnapshot: 120, fifoMonedaOrigen: 'USD', fifoFechaFuente: date,
+						fifoMonedaFuncional: 'CUP', fifoCostoFuncional: 6000,
+						fifoTasaCambio: 25, fifoFechaTasa: date,
+						fifoEvidenciaFx: JSON.stringify({ ...sourceEvidence,
+							rawConvertedAmount: 6000, rawExchangeRate: 25 }),
+						compraDocumentoItem: {
+							compraDocumentoItemId: 'invoice-line-1', tenantId: 't-1', productoId: 'p-1',
+							cantidad: 2, precioUnitario: 120,
+							// La factura fue anulada despues de la venta: anular libera
+							// unidades, pero no invalida la procedencia ya consumida.
+							compraDocumento: { tenantId: 't-1', ordenCompraId: 'oc-1', estado: 'ANULADA',
+								deletedAt: null, moneda: 'USD', fechaCompra: date },
+						},
+					},
+				}]),
+				update: vi.fn(), delete: vi.fn(),
+			},
+		};
+
+		const result = await restaurarAllocacionesFifo(tx as never, {
+			tenantId: 't-1', ventaItemId: 'v-1', cantidad: 1,
+		});
+
+		expect(result).toMatchObject({
+			restaurado: 1, costoTotal: 120,
+			fuentes: [{ moneda: 'USD', fecha: date, costo: 120, cantidad: 1, montoFuncional: 3000 }],
+		});
+		expect(tx.purchaseAllocation.update).toHaveBeenCalled();
 	});
 
 	it('rechaza una relación de factura sin ID de recepción antes de escribir', async () => {

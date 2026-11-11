@@ -252,7 +252,7 @@ describe("allocateFifoForVentaItem", () => {
 		});
 	});
 
-	it("consume lotes de una recepción sin asignar un costo formal sin factura vinculada", async () => {
+	it("consume lotes de una recepción sin factura vinculada con el costo estimado de la orden", async () => {
 		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
 		tx.recepcionItem.findMany.mockResolvedValue([
 			{
@@ -284,6 +284,9 @@ describe("allocateFifoForVentaItem", () => {
 			cantidad: 3,
 		});
 
+		// Sin factura vinculada no hay capa de procedencia: la asignación conserva
+		// el costo estimado de la orden para la reposición operativa, pero no
+		// llega a ser acreditable en el libro formal.
 		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
 			data: [{
 				tenantId: "t1",
@@ -291,6 +294,7 @@ describe("allocateFifoForVentaItem", () => {
 				recepcionItemId: "ri-1",
 				ventaItemId: "v-rec",
 				loteId: "lote-rec-1",
+				costoUnitarioSnapshot: 120,
 				cantidad: 3,
 			}],
 		});

@@ -50,6 +50,12 @@ export interface FuenteCostoFifo {
 	cantidad: number;
 	/** Valor funcional ya capturado, si la fuente tiene snapshot FX verificable. */
 	montoFuncional?: number;
+	/**
+	 * `false` cuando la porción se apoya en una recepción sin factura trazada.
+	 * Su costo es una estimación operativa: repone inventario, pero no es
+	 * acreditable en el libro formal (falla cerrado en modo `enforce`).
+	 */
+	verificable?: boolean;
 }
 
 interface FifoRateContext {
@@ -107,6 +113,19 @@ interface ReceiptSourceIdentity {
 
 const FIFO_EVIDENCE_SOURCE = "fifo-allocation";
 
+/**
+ * @description Valida la cadena de procedencia factura → línea → recepción → orden.
+ *
+ * La factura **anulada** no invalida la procedencia ya consumida: anular un
+ * documento libera las unidades facturadas, pero no borra el hecho de que
+ * esas unidades se vendieron contra esa línea. Solo la factura eliminada
+ * (`deletedAt`) deja de ser una fuente verificable.
+ *
+ * @param {ReceiptInvoiceSourceIdentity} source - Capa de factura persistida.
+ * @param {ReceiptSourceIdentity} receipt - Recepción física de la unidad.
+ * @param {string} tenantId - Tenant propietario de la cadena.
+ * @returns {boolean} True si la cadena es coherente y verificable.
+ */
 function isCurrentReceiptInvoiceSource(
 	source: ReceiptInvoiceSourceIdentity,
 	receipt: ReceiptSourceIdentity,
@@ -118,7 +137,7 @@ function isCurrentReceiptInvoiceSource(
 		source.recepcionItemId === receipt.id &&
 		line.tenantId === tenantId && invoice.tenantId === tenantId &&
 		line.compraDocumentoItemId === source.compraDocumentoItemId &&
-		invoice.estado !== "ANULADA" && invoice.deletedAt === null &&
+		invoice.deletedAt === null &&
 		invoice.ordenCompraId === receipt.ordenItem.ordenId &&
 		line.productoId === receipt.productoId && receipt.productoId === receipt.ordenItem.productoId &&
 		source.fifoMonedaOrigen?.trim().toUpperCase() === invoice.moneda.trim().toUpperCase() &&
@@ -424,6 +443,7 @@ export async function allocateFifoForVentaItem(
 		recepcionItemId: string;
 		cantidadDisponible: number;
 		fechaRecepcion: Date;
+		costoUnitarioEstimado: number;
 		lot: (typeof receiptLots)[number];
 	}>>();
 	const receiptOrderProducts = new Set<string>();
@@ -436,6 +456,9 @@ export async function allocateFifoForVentaItem(
 				recepcionItemId: receiptItem.id,
 				cantidadDisponible: Math.min(receiptItem.cantidad, lot.cantidadDisponible),
 				fechaRecepcion: receiptItem.recepcion.fecha,
+				// Las unidades aún no facturadas se estiman con el precio acordado
+				// en la orden de compra: es el costo operativo de reposición.
+				costoUnitarioEstimado: receiptItem.ordenItem.precioUnitario,
 				lot,
 			});
 		}
@@ -539,6 +562,7 @@ export async function allocateFifoForVentaItem(
 					recepcionItemId: string;
 					cantidadDisponible: number;
 					fechaRecepcion: Date;
+					costoUnitarioEstimado: number;
 					lot: (typeof receiptLots)[number];
 				}>;
 			};
@@ -707,12 +731,17 @@ export async function allocateFifoForVentaItem(
 				unassigned -= layerQuantity;
 			}
 			if (unassigned > 0) {
+				// Unidades recibidas que ninguna factura activa respalda: la
+				// asignación conserva un costo estimado (precio de la OC) para la
+				// reposición operativa, pero queda sin capa de procedencia y por
+				// tanto no es acreditable en el libro formal.
 				allocations.push({
 					tenantId,
 					compraDocumentoItemId: null,
 					recepcionItemId: entry.recepcionItemId,
 					ventaItemId,
 					loteId: entry.lot.id,
+					costoUnitarioSnapshot: entry.costoUnitarioEstimado,
 					cantidad: unassigned,
 				});
 			}
@@ -884,6 +913,8 @@ export async function getCostoFifoVentaValorado(
 		const hasReceiptSource = asignacion.recepcionItemId != null;
 		const hasInvoiceLayer = asignacion.purchaseReceiptInvoiceAllocationId != null;
 		if (hasReceiptSource !== hasInvoiceLayer) {
+			// Recepción sin factura trazada (fuente estimada) o capa sin
+			// recepción: el costo no es acreditable en el libro formal.
 			fuenteNoVerificable = true;
 			continue;
 		}
@@ -975,6 +1006,11 @@ export async function getCostoFifoVentaValorado(
  * @description Valoración en moneda funcional de un conjunto de fuentes de costo
  * FIFO. Cada fuente se convierte con la tasa publicada vigente en su fecha; una
  * fuente sin tasa deja el importe funcional sin completar en lugar de estimarlo.
+ *
+ * Una fuente marcada como no verificable (porción estimada sobre una recepción
+ * sin factura trazada) deja el importe funcional sin completar con la causa
+ * `PROCEDENCIA_FIFO_NO_VERIFICABLE`: el costo estimado nunca llega al libro.
+ *
  * @param {Prisma.TransactionClient} tx - Cliente transaccional del writer.
  * @param {string} tenantId - Tenant propietario de las fuentes.
  * @param {FuenteCostoFifo[]} fuentes - Fuentes de costo a valorar.
@@ -991,6 +1027,12 @@ export async function valorarCostoFifoFuentes(
 	let cantidadTotal = 0;
 	for (const fuente of fuentes) {
 		cantidadTotal += fuente.cantidad;
+		if (fuente.verificable === false) {
+			// Fuente estimada (recepción sin factura trazada): su costo repone
+			// inventario, pero no puede acreditarse en el libro formal.
+			fuentesSinTasa.push('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+			continue;
+		}
 		if (!monedaFuncional) {
 			fuentesSinTasa.push(`${fuente.moneda}@${fuente.fecha.toISOString()}`);
 			continue;
@@ -1131,6 +1173,10 @@ export async function restaurarAllocacionesFifo(
 	// Verifica todas las filas afectadas antes de hacer cualquier escritura. Una
 	// fuente inválida posterior no debe dejar borrados parciales en esta transacción.
 	const verifiedSnapshots = new Map<string, ValidatedFifoSnapshot>();
+	// Asignaciones cuya recepción no tiene factura trazada: son fuentes
+	// estimadas. Reponen inventario (no invalidan la devolución operativa),
+	// pero su costo no es acreditable en el libro formal.
+	const estimaciones = new Set<string>();
 	let remainingToValidate = cantidad;
 	let functionalCurrency: string | null | undefined;
 	for (const alloc of allocations) {
@@ -1140,8 +1186,15 @@ export async function restaurarAllocacionesFifo(
 		}
 		const hasReceiptSource = alloc.recepcionItemId != null || alloc.recepcionItem != null;
 		const hasInvoiceLayer = alloc.purchaseReceiptInvoiceAllocationId != null;
-		if (hasReceiptSource !== hasInvoiceLayer) {
+		if (hasInvoiceLayer && !hasReceiptSource) {
+			// La capa de factura siempre referencia una recepción: sin ella la
+			// fila es inconsistente y no se puede restaurar.
 			throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+		}
+		if (hasReceiptSource && !hasInvoiceLayer) {
+			estimaciones.add(alloc.id);
+			remainingToValidate -= Math.min(remainingToValidate, alloc.cantidad);
+			continue;
 		}
 		if (hasReceiptSource && hasInvoiceLayer) {
 			const source = alloc.purchaseReceiptInvoiceAllocation;
@@ -1195,8 +1248,9 @@ export async function restaurarAllocacionesFifo(
 	const fuentes = new Map<string, FuenteCostoFifo>();
 	for (const alloc of allocations) {
 		if (restante <= 0) break;
-		const tieneSnapshotOrigen = alloc.costoUnitarioSnapshot != null ||
-			alloc.fifoMonedaOrigen != null || alloc.fifoFechaFuente != null;
+		const esEstimada = estimaciones.has(alloc.id);
+		const tieneSnapshotOrigen = !esEstimada && (alloc.costoUnitarioSnapshot != null ||
+			alloc.fifoMonedaOrigen != null || alloc.fifoFechaFuente != null);
 		const snapshot = verifiedSnapshots.get(alloc.id) ?? null;
 		const devolver = Math.min(restante, alloc.cantidad);
 		const cantidadRestante = alloc.cantidad - devolver;
@@ -1240,19 +1294,27 @@ export async function restaurarAllocacionesFifo(
 		restante -= devolver;
 
 		const compra = alloc.compraDocumentoItem?.compraDocumento ?? null;
-		const moneda = tieneSnapshotOrigen
-			? alloc.fifoMonedaOrigen!.trim().toUpperCase()
-			: compra?.moneda?.trim().toUpperCase() || 'CUP';
-		const fecha = tieneSnapshotOrigen
-			? alloc.fifoFechaFuente!
-			: compra?.fechaCompra ?? new Date(0);
-		const clave = `${moneda}|${fecha.toISOString()}|${snapshot ? 'captured' : tieneSnapshotOrigen ? 'source' : 'legacy'}`;
+		// Una fuente estimada no tiene factura que le dé moneda y fecha propias:
+		// se identifica con la fecha real de recepción y queda marcada como no
+		// verificable, de modo que nunca se valorice contra una tasa.
+		const moneda = esEstimada
+			? compra?.moneda?.trim().toUpperCase() || 'CUP'
+			: tieneSnapshotOrigen
+				? alloc.fifoMonedaOrigen!.trim().toUpperCase()
+				: compra?.moneda?.trim().toUpperCase() || 'CUP';
+		const fecha = esEstimada
+			? alloc.recepcionItem?.recepcion.fecha ?? alloc.recepcionItem?.ordenItem.createdAt ?? new Date(0)
+			: tieneSnapshotOrigen
+				? alloc.fifoFechaFuente!
+				: compra?.fechaCompra ?? new Date(0);
+		const clave = `${moneda}|${fecha.toISOString()}|${snapshot ? 'captured' : esEstimada ? 'estimada' : tieneSnapshotOrigen ? 'source' : 'legacy'}`;
 		const fuente = fuentes.get(clave) ?? {
 			moneda,
 			fecha,
 			costo: 0,
 			cantidad: 0,
 			...(snapshot ? { montoFuncional: 0 } : {}),
+			...(esEstimada ? { verificable: false } : {}),
 		};
 		fuente.costo += devolver * costoUnitario;
 		fuente.cantidad += devolver;
