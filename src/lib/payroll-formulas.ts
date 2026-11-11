@@ -14,16 +14,37 @@ export const STANDARD_MONTHLY_HOURS = 192
 export const OVERTIME_RATE_MULTIPLIER = 1.5
 
 /**
+ * Valores de horas extra que un tenant puede sobrescribir vía `NominaConfig`
+ * (F-5). Ambos opcionales: los ausentes caen a los defaults vigentes.
+ */
+export interface HorasExtrasConfig {
+  tarifaHoraExtra: number
+  horasMensualesEstandar: number
+}
+
+/**
  * @description Calcula el dinero a pagar por horas extras. Las horas NUNCA se
  * suman directamente al salario: se multiplican por la tarifa horaria del
  * salario base y el multiplicador legal.
  * @param {number} horas - Cantidad de horas extras trabajadas.
  * @param {number} salarioBase - Salario base mensual del empleado.
+ * @param {Partial<HorasExtrasConfig>} [config] - Config del tenant
+ * (`NominaConfig`): tarifa y horas mensuales estándar. Sin config el cálculo
+ * es idéntico byte-a-byte al histórico (1.5 / 192); config inválida cae a 0
+ * (fail-closed, nunca inventa dinero).
  * @returns {number} Monto entero (los salarios se persisten como Int).
  */
-export function calcularMontoHorasExtras(horas: number, salarioBase: number): number {
+export function calcularMontoHorasExtras(
+  horas: number,
+  salarioBase: number,
+  config?: Partial<HorasExtrasConfig>,
+): number {
   if (!horas || !salarioBase || horas <= 0 || salarioBase <= 0) return 0
-  return Math.round(horas * (salarioBase / STANDARD_MONTHLY_HOURS) * OVERTIME_RATE_MULTIPLIER)
+  const horasMensuales = config?.horasMensualesEstandar ?? STANDARD_MONTHLY_HOURS
+  const tarifa = config?.tarifaHoraExtra ?? OVERTIME_RATE_MULTIPLIER
+  if (!Number.isFinite(horasMensuales) || horasMensuales <= 0) return 0
+  if (!Number.isFinite(tarifa) || tarifa < 0) return 0
+  return Math.round(horas * (salarioBase / horasMensuales) * tarifa)
 }
 
 const DEFAULT_PAYROLL_CONFIG: PayrollConfig = {

@@ -15,6 +15,8 @@ import {
 } from "@/features/empleados/actions";
 import { updatePagoSalarioAction } from "@/features/pago-salario/actions";
 import { calcularMontoHorasExtras } from "@/lib/payroll-formulas";
+import type { HorasExtrasConfig } from '@/lib/payroll-formulas';
+import { getNominaConfigAction } from '@/features/empleados/actions-nomina-config';
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
@@ -52,12 +54,14 @@ function EditPayrollDialog({
   open, 
   onOpenChange, 
   record, 
-  onSave 
+  onSave,
+  horasExtrasConfig,
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void; 
   record: PayrollRecord | null; 
   onSave: (id: string, updates: Partial<PayrollRecord>) => void; 
+  horasExtrasConfig?: Partial<HorasExtrasConfig>;
 }) {
   const [bonificaciones, setBonificaciones] = useState(0);
   const [deducciones, setDeducciones] = useState(0);
@@ -79,11 +83,15 @@ function EditPayrollDialog({
       // Estimación en vivo: las horas se pagan a 1.5× la tarifa del salario base
       // (constantes compartidas en @/lib/payroll-formulas; la hora NUNCA vale 1 peso).
       // El servidor recalcula y persiste el monto al guardar.
-      const overtimePay = calcularMontoHorasExtras(horasExtras, record.empleado.salarioBases);
+      const overtimePay = calcularMontoHorasExtras(
+        horasExtras,
+        record.empleado.salarioBases,
+        horasExtrasConfig,
+      );
       const net = record.salario + bonificaciones + overtimePay - deducciones;
       setNetSalary(Math.round(net));
     }
-  }, [bonificaciones, deducciones, horasExtras, record]);
+  }, [bonificaciones, deducciones, horasExtras, record, horasExtrasConfig]);
 
   const handleSave = () => {
     if (record) {
@@ -204,6 +212,15 @@ export function NominaView() {
   
   const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [horasExtrasConfig, setHorasExtrasConfig] = useState<Partial<HorasExtrasConfig>>();
+
+  useEffect(() => {
+    getNominaConfigAction().then((result) => {
+      if (result.success && result.data?.config) {
+        setHorasExtrasConfig(result.data.config);
+      }
+    });
+  }, []);
 
   // Cargar registros de nómina
   useEffect(() => {
@@ -580,11 +597,12 @@ export function NominaView() {
         </div>
       </Card>
       
-      <EditPayrollDialog 
-        open={isEditDialogOpen} 
-        onOpenChange={setIsEditDialogOpen} 
-        record={editingRecord} 
-        onSave={handleSaveEdit} 
+      <EditPayrollDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        record={editingRecord}
+        onSave={handleSaveEdit}
+        horasExtrasConfig={horasExtrasConfig}
       />
     </div>
   );

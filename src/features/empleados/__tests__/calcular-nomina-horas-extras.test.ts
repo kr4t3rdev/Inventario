@@ -27,6 +27,9 @@ vi.mock('@/lib/prisma', () => ({
     attendance: {
       findMany: vi.fn(),
     },
+    nominaConfig: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -137,6 +140,36 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
       deducciones: 461,
       horasExtrasHoras: 0,
       montoHorasExtras: 0,
+    });
+  });
+
+  it('usa la NominaConfig del tenant para las horas extras (F-5) sin tocar el devengado', async () => {
+    // Misma asistencia que el primer test (40 h extras, 160 h base), pero con
+    // tarifaHoraExtra 2.0 del tenant: el devengado/salario/deducciones se
+    // mantienen y solo cambia montoHorasExtras (40 × 10 × 2 = 800).
+    vi.mocked(prisma.attendance.findMany).mockResolvedValue(
+      attendanceRows(10, 20) as never,
+    );
+    vi.mocked(prisma.nominaConfig.findUnique).mockResolvedValue({
+      tenantId: 'tenant-test',
+      tarifaHoraExtra: 2,
+      horasMensualesEstandar: 192,
+      monedaPago: 'CUP',
+    } as never);
+
+    const result = await calculateNominaAction({
+      periodo: '2026-08',
+      includeVacationAccrual: false,
+      forceRecalculate: false,
+    });
+
+    expect(result.success).toBe(true);
+    const createCall = vi.mocked(prisma.pagosalario.create).mock.calls[0][0];
+    expect(createCall.data).toMatchObject({
+      salario: 1745,
+      deducciones: 384,
+      horasExtrasHoras: 40,
+      montoHorasExtras: 800,
     });
   });
 });

@@ -274,6 +274,8 @@ model Tenant {
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
   devolucionesCompra             DevolucionCompra[]
+  /// F-5: configuración de nómina (1:1).
+  nominaConfig                   NominaConfig?
   cobroNotas                     CobroNota[]
   ventasServicios                VentaServicios[]
   fiscalDocuments                FiscalDocument[]
@@ -937,6 +939,8 @@ model User {
   lockedUntil                    DateTime?
   loginAttempts                  Int                          @default(0)
   googleId                       String?                      @unique
+  /// F-5: empleado vinculado (1:1 opcional con Empleado.userId).
+  empleado                        Empleado?
   anticiposCreados               Anticipo[]
   compraDocumentosEditados       CompraDocumento[]            @relation("CompraDocumentoActualizado")
   contratosAprobados             Contrato[]                   @relation("AprobadorContrato")
@@ -1376,6 +1380,13 @@ model Empleado {
   nombre                String
   apellido              String
   telefono              String?
+  /// F-5: datos personales opcionales para la ficha del empleado.
+  ci                    String?
+  email                 String?
+  banco                 String?
+  /// F-5: usuario del sistema vinculado (único por empleado; un user solo
+  /// puede estar vinculado a un empleado a la vez vía validación server).
+  userId                String?                @unique
   cargo                 String
   salarioBases          Int
   /// Gap 5: porcentaje de comisión por ventas cobradas (0-100) y meta mensual
@@ -1390,6 +1401,7 @@ model Empleado {
   vacationDaysAccrued   Float                  @default(0)
   vacationDaysUsed      Float                  @default(0)
   attendances           Attendance[]
+  user                  User?                  @relation(fields: [userId], references: [userId], onDelete: SetNull)
   tenant                Tenant                 @relation(fields: [tenantId], references: [tenantId])
   workSchedules         EmployeeWorkSchedule[]
   ordenesAsignadas      OrdenReparacion[]
@@ -1425,6 +1437,19 @@ model Pagosalario {
   ReconciliacionGasto ReconciliacionGasto[]
 
   @@index([tenantId])
+}
+
+/// F-5: configuración de nómina por tenant (1:1, patrón TenantAccountingPolicy).
+/// Sin fila, las fórmulas usan los defaults vigentes (1.5 / 192 / CUP).
+model NominaConfig {
+  tenantId               String   @id
+  tarifaHoraExtra        Float    @default(1.5)
+  horasMensualesEstandar Int      @default(192)
+  monedaPago             String   @default("CUP")
+  updatedBy              String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  tenant                 Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 }
 
 model CierreContable {
