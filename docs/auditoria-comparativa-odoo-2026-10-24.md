@@ -26,6 +26,34 @@ La lectura más precisa es: el reporte consolida avances desde septiembre, pero 
 
 ## Cómo leer los estados
 
+### Actualización de seguimiento — 2026-11-06
+
+La tabla de esta auditoría conserva el corte histórico del 24 de octubre. En
+`main` se integraron después las capacidades de UdM, lotes/FEFO, ubicaciones y
+variantes (ver `openspec/changes/inventario-paridad-odoo/tasks.md`, fases 4–6).
+Putaway se integró mediante los PR #130–#132; los reportes de valorizado,
+rotación y forecast quedaron integrados con #111–#115 (último PR #168).
+
+La rama original de la sesión F sigue siendo una fuente histórica, no una
+lista de funcionalidades integradas. Para cerrar su alcance aún se necesita
+revisar y llevar a `main`, según corresponda:
+
+- F-1: el checklist de inventario documenta conversión por producto en recetas
+  y consumo en unidad de stock (4.3). Contrastar sus pruebas y compatibilidad
+  con recetas legacy; hay selectores en compra y POS, pero falta verificar todos
+  los criterios históricos, incluida la visualización del factor.
+- F-2: devolución a proveedor, sus movimientos y reversión, asiento formal e UI.
+- F-3: catálogo/precios por proveedor, sincronización y vista 360.
+- F-4: recurrencias, adjuntos y flujo completo de viáticos.
+- F-5: configuración de nómina, vínculo usuario-empleado y sus interfaces.
+- F-6: contrastar el estado de cuenta imprimible compuesto con el alcance de F.
+
+Los nombres de modelos y acciones F-2–F-5 de la rama histórica no se localizaron
+en el esquema/código revisado de `main`; esto no descarta funciones equivalentes
+con otros nombres. Los checkboxes históricos de F no certifican su integración.
+La matriz visual por plan y el estado de migraciones en el entorno de destino
+siguen por verificar; véase el checklist de inventario.
+
 - **Presente en código:** símbolo, modelo o flujo localizado en la referencia indicada. No asegura cobertura integral.
 - **Integrado:** el cambio está contenido semánticamente en `origin/main`; no basta el nombre de una rama o el cierre de sus tareas.
 - **Desplegado:** requiere evidencia de despliegue/runtime ligada a un SHA. Aquí producción en `9883783` es dato reportado, no una comprobación nueva.

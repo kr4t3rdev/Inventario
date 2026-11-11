@@ -219,10 +219,19 @@
     ventas destino y acción con gating `lotes-series`.
   - [x] 7.3b UI: panel de trazabilidad con estados de carga, error y vacío.
   - [x] 7.3c Rutas: listado de lotes, página de detalle y navegación.
-* [ ] 7.4 Putaway simple: `ReglaPutaway { productoId?, categoriaId?,
-  ubicacionId }` + sugerencia de ubicación en recepción.
-* [ ] 7.5 Reportes: valorizado oficial (CPP/FIFO a fecha), rotación y
-  forecast de quiebre; exportables. Reutiliza kardex, no reconstruye.
+* [x] 7.4 Putaway simple: reglas por producto/categoría y sugerencia de
+  ubicación en recepción. PRs #130–#132 integrados; cierre #109–#110.
+* [x] 7.5 Reportes: valorizado oficial a fecha, rotación y forecast de
+  quiebre, con vistas y exportación CSV. PRs #134, #140, #149, #162,
+  #164 y #168 integrados; issues #111–#115 cerrados.
+
+### Pendientes de cierre
+
+* [ ] 8.3 Completar la comprobación visual de la matriz por plan y navegación;
+  revisar los detalles y las limitaciones documentados en la sección inferior.
+* [ ] Verificar en el entorno de destino la aplicación de las migraciones
+  de inventario; el checklist de 5.3 documenta una migración pendiente de
+  aplicar, sin evidencia aquí de su estado actual en ese entorno.
 
 ## Fase 8 — Verificación y archivo
 
