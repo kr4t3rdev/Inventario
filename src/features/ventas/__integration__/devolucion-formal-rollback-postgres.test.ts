@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { withTestTenant } from '@/lib/db/tenant-context';
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import {
   seedPlanContable,
@@ -160,10 +161,47 @@ async function crearVentaDeControl(): Promise<{ ventaId: string; ventaItemId: st
   });
   const ventaItem = venta.items[0];
 
+  const createAllocation = (
+    compraDocumentoItemId: string,
+    cantidad: number,
+    costoUnitario: number,
+    fechaFuente: Date,
+  ) => {
+    const functionalAmount = cantidad * costoUnitario;
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: functionalAmount,
+      originalCurrency: 'CUP',
+      functionalCurrency: 'CUP',
+      exchangeRate: 1,
+      convertedAmount: functionalAmount,
+      rateEffectiveAt: null,
+      fxCatalogRateId: null,
+      source: 'fifo-allocation',
+    });
+    return {
+      tenantId,
+      compraDocumentoItemId,
+      ventaItemId: ventaItem.id,
+      cantidad,
+      costoUnitarioSnapshot: costoUnitario,
+      fifoMonedaOrigen: 'CUP',
+      fifoFechaFuente: fechaFuente,
+      fifoMonedaFuncional: 'CUP',
+      fifoCostoFuncional: functionalAmount,
+      fifoTasaCambio: null,
+      fifoFechaTasa: null,
+      fifoEvidenciaFx: JSON.stringify({
+        ...evidence,
+        rawConvertedAmount: functionalAmount,
+        rawExchangeRate: null,
+      }),
+    };
+  };
+
   await prisma.purchaseAllocation.createMany({
     data: [
-      { tenantId, compraDocumentoItemId: itemA.compraDocumentoItemId, ventaItemId: ventaItem.id, cantidad: 3 },
-      { tenantId, compraDocumentoItemId: itemB.compraDocumentoItemId, ventaItemId: ventaItem.id, cantidad: 1 },
+      createAllocation(itemA.compraDocumentoItemId, 3, 100, itemA.createdAt),
+      createAllocation(itemB.compraDocumentoItemId, 1, 300, itemB.createdAt),
     ],
   });
 
@@ -448,6 +486,21 @@ describe(
       expect(devolucion.montoAplicadoCxc).toBe(1000);
       expect(devolucion.montoSaldoFavor).toBe(0);
       expect(devolucion.montoReembolsado).toBe(0);
+
+      const allocationRestante = await prisma.purchaseAllocation.findFirstOrThrow({
+        where: { tenantId, ventaItemId, compraDocumentoItemId: { not: null } },
+        orderBy: { fifoFechaFuente: 'asc' },
+      });
+      expect(allocationRestante.cantidad).toBe(1);
+      expect(Number(allocationRestante.fifoCostoFuncional)).toBe(100);
+      const evidenciaRestante = JSON.parse(allocationRestante.fifoEvidenciaFx ?? '{}') as {
+        functionalCurrency?: string;
+        fxEvidenceFingerprint?: string;
+        rawConvertedAmount?: number;
+      };
+      expect(evidenciaRestante.functionalCurrency).toBe('CUP');
+      expect(evidenciaRestante.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/);
+      expect(evidenciaRestante.rawConvertedAmount).toBe(100);
     });
 
     it('revierte la escritura operativa y el libro mayor cuando falla el insert del asiento', async () => {

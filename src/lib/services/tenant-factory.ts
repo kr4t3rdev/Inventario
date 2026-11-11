@@ -199,6 +199,7 @@ export async function createTenantForUser(
         ...resolveLicensePricing(
           Number(plan!.precio),
           Boolean(referralOwner),
+          Number(plan!.referralDiscountUsd),
         ),
       }
     })

@@ -16,7 +16,10 @@ import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { crearLoteDesdeEntrada, deriveLoteCodigo } from '@/features/inventario/lotes';
-import { reconciliarCostosRecepcionConFactura } from '@/lib/services/reconciliar-costos-recepcion';
+import {
+  recalcularAgregadosFacturadosDeOrden,
+  reconciliarCostosRecepcionConFactura,
+} from '@/lib/services/reconciliar-costos-recepcion';
 import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
@@ -463,7 +466,11 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         await reconciliarCostosRecepcionConFactura(tx, {
           tenantId,
           ordenId: parsed.ordenCompraId,
-          items: itemsNormalizados.map((item) => ({
+          fechaFactura: compra.fechaCompra,
+          moneda: parsed.moneda,
+          tasaCambio: parsed.tasaCambio,
+          items: itemsNormalizados.map((item, index) => ({
+            compraDocumentoItemId: compraItems[index].compraDocumentoItemId,
             productoId: item.productoId,
             cantidad: item.cantidad,
             precioUnitario: item.precioCosto,
@@ -940,6 +947,13 @@ export const anularCompraProductoAction = withAction(async (input: { id: string;
     });
     if (marcada.count !== 1) {
       throw new ActionError('La compra ya está anulada', 'VALIDATION_ERROR');
+    }
+
+    if (compra.ordenCompraId) {
+      await recalcularAgregadosFacturadosDeOrden(tx, {
+        tenantId,
+        ordenId: compra.ordenCompraId,
+      });
     }
 
     // Capa de contabilidad formal: el reconocimiento de la compra se anula con

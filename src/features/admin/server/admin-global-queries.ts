@@ -24,7 +24,7 @@ function resolveLicenseDurationDays(planDurationDays: number | null | undefined,
   return resolved;
 }
 function resolveLicensePricing(price: number, _isDemo: boolean) {
-  return { precio: price };
+  return { listPriceUsd: price, finalPriceUsd: price };
 }
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { normalizeUserRole } from "@/lib/auth/roles";

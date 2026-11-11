@@ -1,6 +1,9 @@
 import type { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import type { EvidenciaCobertura, EvidenciaReplay } from './financial-ledger-coverage';
+import { verifyCurrentSources, verifySnapshotCoverage } from './snapshot-coverage-integrity';
+import { snapshotPeriodo } from './replay-backfill-service';
+import { isReplayManifestSnapshotComplete } from './replay-source-manifest';
 
 /** Parámetros de lectura de la evidencia de cobertura. */
 export interface CoverageEvidenceParams {
@@ -54,7 +57,7 @@ export async function readCoverageEvidence(
 	}
 
 	const db = params.client ?? prisma;
-	const [run, asientosEnPeriodo] = await Promise.all([
+	const [run, asientosEnPeriodo, fuentesProduccionNoEvaluables] = await Promise.all([
 		db.replayRun.findFirst({
 			where: { tenantId: params.tenantId, preflight: { periodoId: params.periodoId } },
 			orderBy: { startedAt: 'desc' },
@@ -67,15 +70,34 @@ export async function readCoverageEvidence(
 				noCostCount: true,
 				outOfPeriodCount: true,
 				diagnostic: true,
+				preflight: { select: { snapshot: true, digest: true, digestVersion: true } },
 			},
 		}),
 		db.asiento.count({
 			where: { tenantId: params.tenantId, periodoId: params.periodoId },
 		}),
+		db.ordenProduccion.count({
+			where: {
+				tenantId: params.tenantId,
+				estado: 'COMPLETADA',
+				fechaContabilizacion: null,
+			},
+		}),
 	]);
+	const entries = run ? await db.asiento.findMany({
+		where: {
+			tenantId: params.tenantId, periodoId: params.periodoId,
+			OR: [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }],
+		},
+		include: { lineas: true },
+	}) : [];
+	const actual = run?.preflight ? await snapshotPeriodo(
+		db, params.tenantId, params.periodoId, { exigirFuentesValidas: true },
+	) : null;
 
 	return {
 		asientosEnPeriodo,
+		fuentesProduccionNoEvaluables,
 		replay: run
 			? {
 				replayRunId: run.replayRunId,
@@ -86,6 +108,16 @@ export async function readCoverageEvidence(
 				noCostCount: run.noCostCount,
 				outOfPeriodCount: run.outOfPeriodCount,
 				reconciliacion: leerReconciliacion(run.diagnostic),
+				snapshotAcreditado: Boolean(run.preflight && verifySnapshotCoverage({
+					tenantId: params.tenantId, periodoId: params.periodoId, replayRunId: run.replayRunId,
+					snapshot: run.preflight.snapshot, digest: run.preflight.digest,
+					digestVersion: run.preflight.digestVersion, entries,
+				})),
+				fuentesActualesAcreditadas: Boolean(run.preflight && actual &&
+					verifyCurrentSources(run.preflight.snapshot, actual, run.preflight.digest)),
+				manifiestoAcreditado: Boolean(run.preflight && isReplayManifestSnapshotComplete(
+					(run.preflight.snapshot as { manifest?: unknown }).manifest,
+				)),
 			}
 			: null,
 	};

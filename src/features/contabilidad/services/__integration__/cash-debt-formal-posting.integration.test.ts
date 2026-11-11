@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { withTestTenant } from '@/lib/db/tenant-context';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { AccountingCashOperationsMutationService } from '../accounting-cash-operations-mutation-service';
+import { recolectarCandidatos } from '@/features/contabilidad-formal/services/replay-source-collector';
 import { construirHashAsientoV2 } from '@/features/contabilidad-formal/services/posting-engine';
 import { validateHashChain } from '@/features/contabilidad-formal/services/hash-chain-integrity';
 import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
@@ -454,6 +455,12 @@ describe('cash debt payment formal posting on isolated PostgreSQL', () => {
     const second = await withTestTenant(tenantId, () =>
       AccountingCashOperationsMutationService.registerCashDebtPayment({ input, user }),
     );
+    const candidatos = await withTestTenant(tenantId, () => recolectarCandidatos(tenantId));
+    const candidato = candidatos.find((item) => item.origenTipo === 'reconciliacion_gasto' &&
+      item.origenId === first.reconciliacionId);
+    expect(candidato).toMatchObject({ evento: { tipo: 'PAGO_DEUDA',
+      origen: { tipo: 'reconciliacion_gasto', id: first.reconciliacionId } } });
+    expect(candidato?.causaOmision).toBeUndefined();
     const asiento = await prisma.asiento.findUnique({
       where: {
         tenantId_origenTipo_origenId: {
@@ -515,6 +522,12 @@ describe('cash debt payment formal posting on isolated PostgreSQL', () => {
     const second = await withTestTenant(tenantId, () =>
       AccountingCashOperationsMutationService.registerCashLoanPayment({ input, user }),
     );
+    const candidatos = await withTestTenant(tenantId, () => recolectarCandidatos(tenantId));
+    const candidato = candidatos.find((item) => item.origenTipo === 'reconciliacion_venta' &&
+      item.origenId === first.reconciliacionId);
+    expect(candidato).toMatchObject({ evento: { tipo: 'COBRO_PRESTAMO',
+      origen: { tipo: 'reconciliacion_venta', id: first.reconciliacionId } } });
+    expect(candidato?.causaOmision).toBeUndefined();
     const asiento = await prisma.asiento.findUnique({
       where: {
         tenantId_origenTipo_origenId: {

@@ -1,7 +1,5 @@
 /**
- * @description Actualiza el precio base de los planes Básico, Profesional y
- * Empresarial al nuevo precio de lista (40/80/110 USD). El descuento por
- * referido ($5 USD) se calcula en código, no se persiste en el plan.
+ * @description Actualiza los precios de lista y por referido de los tres planes.
  *
  * Uso:
  *   DATABASE_URL=... pnpm tsx scripts/ops/update-plan-prices.ts
@@ -11,18 +9,18 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-const NEW_PRICE_BY_PLAN_NAME: Record<string, number> = {
-  Básico: 40,
-  Profesional: 80,
-  Empresarial: 110,
+const PRICES_BY_PLAN_NAME: Record<string, { price: number; referralDiscount: number }> = {
+  Básico: { price: 30, referralDiscount: 5 },
+  Profesional: { price: 60, referralDiscount: 10 },
+  Empresarial: { price: 90, referralDiscount: 15 },
 };
 
 /**
  * @description Devuelve el nuevo precio base por nombre de plan.
  * @returns {Record<string, number>} Precios canónicos.
  */
-export function getCanonicalPlanPrices(): Record<string, number> {
-  return NEW_PRICE_BY_PLAN_NAME;
+export function getCanonicalPlanPrices(): Record<string, { price: number; referralDiscount: number }> {
+  return PRICES_BY_PLAN_NAME;
 }
 
 async function main() {
@@ -45,23 +43,23 @@ async function main() {
     }>('SELECT "planId", nombre, precio FROM "Plan" ORDER BY precio ASC');
 
     for (const plan of rows) {
-      const newPrice = NEW_PRICE_BY_PLAN_NAME[plan.nombre];
+      const prices = PRICES_BY_PLAN_NAME[plan.nombre];
 
-      if (!newPrice) {
+      if (!prices) {
         console.warn(`⚠️ Plan omitido sin precio canónico: ${plan.nombre}`);
         continue;
       }
 
-      await pool.query('UPDATE "Plan" SET precio = $1::numeric WHERE "planId" = $2', [
-        newPrice,
-        plan.planId,
-      ]);
+      await pool.query(
+        'UPDATE "Plan" SET precio = $1::numeric, "referralDiscountUsd" = $2::numeric WHERE "planId" = $3',
+        [prices.price, prices.referralDiscount, plan.planId],
+      );
 
-      console.log(`✓ ${plan.nombre}: $${plan.precio} → $${newPrice}.`);
+      console.log(`✓ ${plan.nombre}: $${plan.precio} → $${prices.price} (referido: $${prices.price - prices.referralDiscount}).`);
     }
 
     console.log(
-      '✅ Precios base actualizados. Descuento por referido ($5 USD) se aplica en código.',
+      '✅ Precios de lista y por referido actualizados en los planes.',
     );
   } finally {
     await pool.end();

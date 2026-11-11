@@ -30,6 +30,9 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 const { completarOrdenProduccionAction } = await import('@/features/produccion/actions');
+const { recolectarCandidatos } = await import(
+  '@/features/contabilidad-formal/services/replay-source-collector'
+);
 
 const suffix = randomUUID().replaceAll('-', '');
 const tenantId = `formal_produccion_${suffix}`;
@@ -71,7 +74,12 @@ async function readSnapshot() {
   const [ordenes, historial, ubicaciones, detalles, kardex, asientos, lineas] = await Promise.all([
     prisma.ordenProduccion.findMany({
       where: { tenantId },
-      select: { ordenProduccionId: true, estado: true, costoMateriales: true },
+	      select: {
+	        ordenProduccionId: true,
+	        estado: true,
+	        costoMateriales: true,
+	        fechaContabilizacion: true,
+	      },
       orderBy: { ordenProduccionId: 'asc' },
     }),
     prisma.ordenProduccionHistorial.count({ where: { tenantId } }),
@@ -126,8 +134,9 @@ async function readSnapshot() {
   return {
     ordenes: ordenes.map((row) => ({
       id: row.ordenProduccionId,
-      estado: row.estado,
-      costoMateriales: row.costoMateriales,
+	      estado: row.estado,
+	      costoMateriales: row.costoMateriales,
+	      fechaContabilizacion: row.fechaContabilizacion?.toISOString() ?? null,
     })),
     historial,
     ubicaciones: ubicaciones.map((row) => ({
@@ -308,6 +317,38 @@ describe(
         `DROP TRIGGER IF EXISTS "${ledgerFailureTrigger}" ON public."asientos"`,
       );
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS public."${ledgerFailureFunction}"()`);
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE "StockMoveLine" DISABLE TRIGGER "stock_move_line_no_delete"',
+      );
+      try {
+        await prisma.stockMoveLine.deleteMany({ where: { tenantId } });
+      } finally {
+        await prisma.$executeRawUnsafe(
+          'ALTER TABLE "StockMoveLine" ENABLE TRIGGER "stock_move_line_no_delete"',
+        );
+      }
+      await prisma.stockUbicacionDetalle.deleteMany({ where: { tenantId } });
+      await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
+      await prisma.asientoLinea.deleteMany({ where: { tenantId } });
+      await prisma.asiento.deleteMany({ where: { tenantId } });
+      await prisma.auditoriaPeriodo.deleteMany({ where: { tenantId } });
+      await prisma.periodoContable.deleteMany({ where: { tenantId } });
+      await prisma.periodoCache.deleteMany({ where: { tenantId } });
+      await prisma.ordenProduccionHistorial.deleteMany({ where: { tenantId } });
+      await prisma.ordenProduccion.deleteMany({ where: { tenantId } });
+      await prisma.recetaIngrediente.deleteMany({ where: { tenantId } });
+      await prisma.receta.deleteMany({ where: { tenantId } });
+      await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
+      await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
+      await prisma.diario.deleteMany({ where: { tenantId } });
+      await prisma.cuentaContable.deleteMany({ where: { tenantId } });
+      await prisma.tenantLicense.deleteMany({ where: { tenantId } });
+      await prisma.ubicacion.deleteMany({ where: { tenantId } });
+      await prisma.producto.deleteMany({ where: { tenantId } });
+      await prisma.categoria.deleteMany({ where: { tenantId } });
+      await prisma.almacen.deleteMany({ where: { tenantId } });
+      await prisma.tenant.deleteMany({ where: { tenantId } });
+      await prisma.user.deleteMany({ where: { userId: { in: [userId, ledgerFailUserId] } } });
       if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
       else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
       auth.user = null;
@@ -343,8 +384,8 @@ describe(
       expect(resultado.success).toBe(true);
       const after = await readSnapshot();
       const orden = after.ordenes.find((row) => row.id === ordenId);
-      expect(orden?.estado).toBe('COMPLETADA');
-      expect(orden?.costoMateriales).toBe(200);
+	      expect(orden?.estado).toBe('COMPLETADA');
+	      expect(orden?.costoMateriales).toBe(200);
       expect(after.historial).toBe(before.historial + 1);
       expect(after.ledger).toHaveLength(before.ledger.length + 1);
 
@@ -359,6 +400,14 @@ describe(
         include: { lineas: { orderBy: { orden: 'asc' } } },
       });
       expect(asiento.estado).toBe('CONTABILIZADO');
+      expect(orden?.fechaContabilizacion).toBe(asiento.fecha.toISOString());
+      const candidatoProduccion = (await recolectarCandidatos(tenantId)).find(
+        (candidato) => candidato.origenTipo === 'orden_produccion' && candidato.origenId === ordenId,
+      );
+      expect(candidatoProduccion).toMatchObject({
+        fecha: asiento.fecha,
+        evento: { tipo: 'PRODUCCION_SALIDA', monto: 200, moneda: 'CUP' },
+      });
       expect(asiento.hash).toMatch(/^[a-f0-9]{64}$/);
       expect(asiento.lineas).toHaveLength(2);
       const debe = asiento.lineas.reduce(

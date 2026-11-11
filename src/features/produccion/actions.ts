@@ -732,12 +732,17 @@ export const completarOrdenProduccionAction = withAction(
 				});
 			}
 
+			// Persistir la misma fecha que se usará para el asiento formal; el
+			// replay necesita reconstruir la fecha efectiva sin aproximaciones.
+			const fechaContabilizacion = new Date();
+
 			// Actualizar orden
 			const ordenActualizada = await tx.ordenProduccion.update({
 				where: { ordenProduccionId: id },
 				data: {
 					estado: PRODUCTION_STATES.COMPLETADA,
 					costoMateriales,
+					fechaContabilizacion,
 				},
 				include: {
 					Receta: {
@@ -765,7 +770,7 @@ export const completarOrdenProduccionAction = withAction(
 				userId: user.userId,
 			}, {
 				ordenProduccionId: id,
-				fecha: new Date(),
+				fecha: fechaContabilizacion,
 				costoMaterialesCUP: costoMateriales,
 			});
 

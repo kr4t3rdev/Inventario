@@ -10,6 +10,12 @@ import { describe, expect, it } from 'vitest';
 import { Prisma } from '@/generated/prisma';
 import { reconcileReplaySnapshot, type ReplayLedgerEvidence } from '../replay-reconciliation';
 import type { ReplayPreflightDigestSnapshot } from '../replay-preflight-digest';
+import {
+	buildReplayManifestEvidence,
+	REPLAY_COLLECTOR_QUERY_IDS,
+} from '../replay-source-manifest';
+
+const { complete: _complete, ...manifest } = buildReplayManifestEvidence([], REPLAY_COLLECTOR_QUERY_IDS);
 
 const snapshot: ReplayPreflightDigestSnapshot = {
 	tenantId: 'tenant-1',
@@ -17,8 +23,8 @@ const snapshot: ReplayPreflightDigestSnapshot = {
 		periodId: 'periodo-1',
 		startsAt: new Date('2026-10-01T00:00:00.000Z'),
 		endsAt: new Date('2026-10-31T00:00:00.000Z'),
-	},
-	sources: [
+		},
+		sources: [
 		{
 			identity: { sourceType: 'factura', sourceId: 'factura-1' },
 			classification: 'REPLAYABLE',
@@ -45,7 +51,8 @@ const snapshot: ReplayPreflightDigestSnapshot = {
 				fxEvidenceFingerprint: null,
 			},
 		},
-	],
+		],
+		manifest,
 };
 
 function entrada(overrides: Partial<ReplayLedgerEvidence> = {}): ReplayLedgerEvidence {

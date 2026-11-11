@@ -9,7 +9,6 @@ vi.mock('@/lib/prisma', () => ({
 
 import { prisma } from '@/lib/prisma';
 import {
-  REFERRAL_DISCOUNT_USD,
   getReferralPrice,
   isTenantReferred,
   resolveLicensePricing,
@@ -22,38 +21,38 @@ describe('plan-pricing', () => {
   });
 
   describe('getReferralPrice', () => {
-    it('aplica $5 USD de descuento al precio base', () => {
-      expect(getReferralPrice(40)).toBe(35);
-      expect(getReferralPrice(80)).toBe(75);
-      expect(getReferralPrice(110)).toBe(105);
+    it('usa el descuento específico del plan', () => {
+      expect(getReferralPrice(30, 5)).toBe(25);
+      expect(getReferralPrice(60, 10)).toBe(50);
+      expect(getReferralPrice(90, 15)).toBe(75);
     });
 
     it('nunca devuelve un precio negativo', () => {
-      expect(getReferralPrice(3)).toBe(0);
-      expect(getReferralPrice(0)).toBe(0);
-    });
-
-    it('respeta el descuento configurado', () => {
-      expect(REFERRAL_DISCOUNT_USD).toBe(5);
+      expect(getReferralPrice(3, 5)).toBe(0);
+      expect(getReferralPrice(0, 5)).toBe(0);
     });
   });
 
   describe('resolveLicensePricing', () => {
     it('usa el precio base cuando el tenant no es referido', () => {
-      expect(resolveLicensePricing(40, false)).toEqual({
-        listPriceUsd: 40,
-        finalPriceUsd: 40,
+      expect(resolveLicensePricing(30, false, 5)).toEqual({
+        listPriceUsd: 30,
+        finalPriceUsd: 30,
       });
     });
 
     it('mantiene el precio base como listPrice y descuenta solo el final cuando es referido', () => {
-      expect(resolveLicensePricing(40, true)).toEqual({
-        listPriceUsd: 40,
-        finalPriceUsd: 35,
+      expect(resolveLicensePricing(30, true, 5)).toEqual({
+        listPriceUsd: 30,
+        finalPriceUsd: 25,
       });
-      expect(resolveLicensePricing(110, true)).toEqual({
-        listPriceUsd: 110,
-        finalPriceUsd: 105,
+      expect(resolveLicensePricing(60, true, 10)).toEqual({
+        listPriceUsd: 60,
+        finalPriceUsd: 50,
+      });
+      expect(resolveLicensePricing(90, true, 15)).toEqual({
+        listPriceUsd: 90,
+        finalPriceUsd: 75,
       });
     });
   });

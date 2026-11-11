@@ -318,6 +318,7 @@ export function GastosPendientesTable({
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
+                    aria-label="Buscar gastos"
                     placeholder="Buscar gastos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -350,7 +351,7 @@ export function GastosPendientesTable({
                     Pendientes: {filteredGastos?.filter((g: GastoPendiente) => g.reconciliado !== true).length}
                   </Badge>
                   <Badge variant="secondary" className="gap-1">
-                    Página {localCurrentPage} de {totalPages}
+                    Página {totalPages === 0 ? 0 : localCurrentPage} de {totalPages}
                   </Badge>
                 </div>
               </div>

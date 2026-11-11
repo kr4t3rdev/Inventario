@@ -43,6 +43,7 @@ import {
 	type CandidatoReplay,
 	type ReplayDb,
 } from './replay-source-collector';
+import { buildReplayManifestEvidence } from './replay-source-manifest';
 
 export {
 	recolectarCandidatos,
@@ -249,10 +250,11 @@ export async function planBackfillContable(tenantId: string): Promise<PlanBackfi
  * @param {string} periodoId - Periodo contable a reconstruir.
  * @returns {Promise<ReplayPreflightDigestSnapshot>} Snapshot canonico del periodo.
  */
-async function snapshotPeriodo(
+export async function snapshotPeriodo(
 	client: ReplayDb,
 	tenantId: string,
 	periodoId: string,
+	options: { exigirFuentesValidas?: boolean } = {},
 ): Promise<ReplayPreflightDigestSnapshot> {
 	const periodo = await client.periodoContable.findFirst({
 		where: { tenantId, periodoId },
@@ -260,8 +262,9 @@ async function snapshotPeriodo(
 	});
 	if (!periodo) throw new Error('Período contable no encontrado para el tenant');
 
+	const executedQueryIds = new Set<string>();
 	const [candidatos, asientos] = await Promise.all([
-		recolectarCandidatos(tenantId, client),
+		recolectarCandidatos(tenantId, client, (queryId) => executedQueryIds.add(queryId)),
 		client.asiento.findMany({
 			where: { tenantId },
 			select: { origenTipo: true, origenId: true },
@@ -282,7 +285,8 @@ async function snapshotPeriodo(
 		const candidato = grupo[0];
 		const cause = grupo.length > 1 ? 'IDENTIDAD_AMBIGUA' : candidato.causaOmision ?? null;
 		const alreadyPosted = posteados.has(clave);
-		const omitted = cause === 'IDENTIDAD_AMBIGUA' || (!alreadyPosted && cause !== null);
+		const omitted = cause === 'IDENTIDAD_AMBIGUA' ||
+			(cause !== null && (options.exigirFuentesValidas || !alreadyPosted));
 		const originalAmount = decimalOrigen(candidato.evento.monto);
 		const functionalAmount = decimalOrigen(candidato.evento.montoFuncional);
 		const rate = decimalOrigen(candidato.evento.tasaCambio);
@@ -321,6 +325,13 @@ async function snapshotPeriodo(
 		}
 		return left.identity.sourceId < right.identity.sourceId ? -1 : 1;
 	});
+	const manifestEvidence = buildReplayManifestEvidence(candidatos.map((candidato) => ({
+		tipo: candidato.evento.tipo,
+		origenTipo: candidato.origenTipo,
+	})), [...executedQueryIds]);
+	if (!manifestEvidence.complete) {
+		throw new Error(`REPLAY_SOURCE_MANIFEST_INCOMPLETE:${manifestEvidence.unclassifiedCount}`);
+	}
 
 	return {
 		tenantId,
@@ -330,6 +341,15 @@ async function snapshotPeriodo(
 			endsAt: periodo.fechaFin,
 		},
 		sources,
+		manifest: {
+			version: manifestEvidence.version,
+			fingerprint: manifestEvidence.fingerprint,
+			requiredEventTypes: manifestEvidence.requiredEventTypes,
+			evaluatedEventTypes: manifestEvidence.evaluatedEventTypes,
+			requiredQueryIds: manifestEvidence.requiredQueryIds,
+			evaluatedQueryIds: manifestEvidence.evaluatedQueryIds,
+			unclassifiedCount: manifestEvidence.unclassifiedCount,
+		},
 	};
 }
 

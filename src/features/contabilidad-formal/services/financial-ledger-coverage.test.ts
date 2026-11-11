@@ -4,6 +4,9 @@ import { evaluateCoverageEvidence, type EvidenciaReplay } from './financial-ledg
 function crearReplay(overrides: Partial<EvidenciaReplay> = {}): EvidenciaReplay {
 	return {
 		replayRunId: 'run-1',
+		snapshotAcreditado: true,
+		fuentesActualesAcreditadas: true,
+		manifiestoAcreditado: true,
 		status: 'COMPLETED',
 		omittedCount: 0,
 		ambiguousCount: 0,
@@ -15,8 +18,16 @@ function crearReplay(overrides: Partial<EvidenciaReplay> = {}): EvidenciaReplay 
 	};
 }
 
-function evaluar(replay: EvidenciaReplay | null, asientosEnPeriodo = 2) {
-	return evaluateCoverageEvidence('periodo-1', { replay, asientosEnPeriodo });
+function evaluar(
+  replay: EvidenciaReplay | null,
+  asientosEnPeriodo = 2,
+  fuentesProduccionNoEvaluables = 0,
+) {
+  return evaluateCoverageEvidence('periodo-1', {
+    replay,
+    asientosEnPeriodo,
+    fuentesProduccionNoEvaluables,
+  });
 }
 
 describe('evaluateCoverageEvidence', () => {
@@ -31,11 +42,46 @@ describe('evaluateCoverageEvidence', () => {
 		});
 	});
 
-	it('no acredita cobertura sin evidencia de replay para el periodo', () => {
+  it('no acredita cobertura sin evidencia de replay para el periodo', () => {
 		const resultado = evaluar(null);
 
 		expect(resultado.estado).toBe('NO_CUBIERTA');
 		expect(resultado.motivos).toContain('REPLAY_AUSENTE');
+  });
+
+  it('no acredita cobertura si hay órdenes históricas de producción sin fecha efectiva', () => {
+    const resultado = evaluar(crearReplay(), 2, 1);
+
+    expect(resultado.estado).toBe('NO_CUBIERTA');
+    expect(resultado.motivos).toContain('FUENTES_NO_EVALUADAS');
+  });
+
+	it('no acredita el mayor cuando el snapshot no explica sus asientos', () => {
+		const resultado = evaluar(crearReplay({ snapshotAcreditado: false }));
+		expect(resultado.estado).toBe('NO_CUBIERTA');
+		expect(resultado.motivos).toContain('ASIENTOS_NO_ACREDITADOS');
+	});
+
+	it('no acredita cobertura si el replay no evaluó el manifiesto global completo', () => {
+		const resultado = evaluar(crearReplay({ manifiestoAcreditado: false }));
+		expect(resultado.estado).toBe('NO_CUBIERTA');
+		expect(resultado.motivos).toContain('MANIFIESTO_INCOMPLETO');
+	});
+
+	it('no acredita un replay sin fuentes cuando el periodo contiene asientos', () => {
+		const resultado = evaluar(crearReplay({
+			reconciliacion: { status: 'CONFORME', expectedCount: 0, matchedCount: 0 },
+		}), 1);
+		expect(resultado.estado).toBe('NO_CUBIERTA');
+		expect(resultado.motivos).toContain('REPLAY_SIN_FUENTES');
+	});
+
+	it.each([
+		{ omittedCount: -1 },
+		{ noFxCount: 0.5 },
+		{ reconciliacion: { status: 'CONFORME', expectedCount: 1, matchedCount: 2 } },
+	])('rechaza contadores contradictorios o invalidos: %o', (override) => {
+		expect(evaluar(crearReplay(override)).estado).toBe('NO_CUBIERTA');
 	});
 
 	it('no acredita cobertura si el replay no se completo', () => {

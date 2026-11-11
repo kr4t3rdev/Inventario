@@ -18,12 +18,14 @@ vi.mock("@/features/contabilidad-formal/services/reversal-service", () => ({
 }));
 
 const mockTx = {
+	ordenCompra: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 	compraDocumento: {
 		findFirst: vi.fn(),
 		update: vi.fn(),
 		updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 	},
-	compraDocumentoItem: { create: vi.fn() },
+	compraDocumentoItem: { create: vi.fn(), findMany: vi.fn() },
+	recepcionItem: { findMany: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 	gastoCompra: { update: vi.fn() },
 	cuentaPorPagar: { delete: vi.fn() },
 	stockMoveLine: { upsert: vi.fn(), findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
@@ -89,6 +91,10 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		// Re-establecer tras clearAllMocks: el caso concurrente pisa este mock.
 		mockTx.compraDocumento.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.compraDocumento.update.mockResolvedValue({});
+		mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
+		mockTx.compraDocumentoItem.findMany.mockResolvedValue([]);
+		mockTx.recepcionItem.findMany.mockResolvedValue([]);
+		mockTx.recepcionItem.updateMany.mockResolvedValue({ count: 1 });
 		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 		vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue(compraBase as never);
 		vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue(null as never);
@@ -243,12 +249,45 @@ describe("anularCompraProductoAction (B-02.2)", () => {
 		expect(result.success).toBe(true);
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+	});
+
+	it("recalcula los agregados de recepción dentro de la transacción al anular una factura", async () => {
+		vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+			...compraBase,
+			ordenCompraId: "oc-1",
+		} as never);
+		mockTx.compraDocumentoItem.findMany.mockResolvedValue([{
+			compraDocumentoItemId: "active-invoice-line",
+			productoId: "prod-1",
+			cantidad: 4,
+			precioUnitario: 75,
+			compraDocumento: { createdAt: new Date("2026-11-07T00:00:00.000Z") },
+			receiptInvoiceAllocations: [],
+		}] as never);
+		mockTx.recepcionItem.findMany.mockResolvedValue([{
+			id: "receipt-1",
+			productoId: "prod-1",
+			cantidad: 10,
+			cantidadFacturada: 10,
+			montoFacturado: 4000,
+			recepcion: { fecha: new Date("2026-11-01T00:00:00.000Z") },
+		}] as never);
+
+		const result = await anularCompraProductoAction({ id: "cd-1" });
+
+		expect(expectActionSuccess(result).success).toBe(true);
+		expect(mockTx.recepcionItem.updateMany).toHaveBeenCalledWith({
+			where: {
+				id: "receipt-1",
+				tenantId: "tenant-test",
+				cantidadFacturada: 10,
+				montoFacturado: 4000,
+			},
+			data: { cantidadFacturada: 4, montoFacturado: 300 },
+		});
+		expect(mockTx.compraDocumento.updateMany).toHaveBeenCalled();
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		// Pero sí revierte lo contable y marca el documento (CAS).
-		expect(mockTx.compraDocumento.updateMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ estado: "ANULADA" }),
-			}),
-		);
 	});
 
 	it("compra inexistente devuelve NOT_FOUND", async () => {

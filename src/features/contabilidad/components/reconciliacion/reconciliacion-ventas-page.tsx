@@ -27,6 +27,7 @@ import { createCuentaPorCobrarAction, getCuentasPorCobrarAction } from "@/featur
 import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell"
 import { toast } from "sonner"
 import { buildCreateCuentaPorCobrarInputFromVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
 import {
@@ -211,35 +212,18 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   }
 
   return (
-    <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
-      {/* Header */}
-      <StaggerItem>
-        <AnimatedCard>
-          <Card className={surfaceCardClass}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                    <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">Reconciliación de Ventas</h1>
-                    <p className="text-muted-foreground text-sm">
-                      Gestiona la reconciliación de ventas con cuentas bancarias
-                    </p>
-                  </div>
-                </div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button onClick={handleRefresh} variant="outline" className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Actualizar
-                  </Button>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
-        </AnimatedCard>
-      </StaggerItem>
+    <AccountingPageShell
+      icon={TrendingUp}
+      title="Reconciliación de Ventas"
+      description="Gestiona la reconciliación de ventas con cuentas bancarias."
+      actions={(
+        <Button onClick={handleRefresh} variant="outline" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Actualizar
+        </Button>
+      )}
+    >
+      <StaggerContainer className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
 
       {/* Filters */}
       <StaggerItem>
@@ -479,6 +463,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
           </div>
         </div>
       )}
-    </StaggerContainer>
+      </StaggerContainer>
+    </AccountingPageShell>
   )
 }

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const db = vi.hoisted(() => ({
-  asiento: { count: vi.fn() },
+  asiento: { count: vi.fn(), findMany: vi.fn() },
   replayRun: { findFirst: vi.fn() },
+  ordenProduccion: { count: vi.fn(), findMany: vi.fn() },
 }));
 vi.mock('@/lib/prisma', () => ({ prisma: db }));
 
@@ -12,6 +13,8 @@ describe('readCoverageEvidence', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     db.asiento.count.mockResolvedValue(4);
+    db.ordenProduccion.count.mockResolvedValue(0);
+    db.asiento.findMany.mockResolvedValue([]);
     db.replayRun.findFirst.mockResolvedValue({
       replayRunId: 'run-1',
       status: 'COMPLETED',
@@ -41,6 +44,18 @@ describe('readCoverageEvidence', () => {
       expectedCount: 3,
       matchedCount: 3,
     });
+  });
+
+  it('detecta órdenes históricas completadas sin fecha efectiva, sin leer importes', async () => {
+    db.ordenProduccion.count.mockResolvedValue(1);
+
+    const evidencia = await readCoverageEvidence({ tenantId: 'tenant-a', periodoId: 'periodo-1' });
+
+    expect(evidencia.fuentesProduccionNoEvaluables).toBe(1);
+    expect(db.ordenProduccion.count).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-a', estado: 'COMPLETADA', fechaContabilizacion: null },
+    });
+    expect(db.ordenProduccion.findMany).not.toHaveBeenCalled();
   });
 
   it('limita el replay al tenant y al periodo solicitados', async () => {

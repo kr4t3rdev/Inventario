@@ -12,6 +12,8 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { emitirReversionMermaSiContabilizada } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
+import { recolectarCandidatos } from '@/features/contabilidad-formal/services/replay-source-collector';
 import {
   seedPlanContable,
   seedPlantillasGlobales,
@@ -324,6 +326,17 @@ describe(
       expect(after.ledger).toHaveLength(before.ledger.length + 1);
       const inverso = after.ledger.at(-1);
       expect(inverso?.origenTipo).toBe('ajuste_merma_reversado');
+      const ajuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: mermaId } });
+      const asiento = await prisma.asiento.findFirstOrThrow({ where: {
+        tenantId, origenTipo: 'ajuste_merma_reversado', origenId: ajuste.id,
+      } });
+      expect(ajuste.mermaReversionFecha).toEqual(asiento.fecha);
+      expect(ajuste.mermaReversionRegistradaAt).toEqual(asiento.fecha);
+      const candidato = (await recolectarCandidatos(tenantId))
+        .find((item) => item.origenTipo === 'ajuste_merma_reversado' && item.origenId === ajuste.id);
+      expect(candidato).toMatchObject({ fecha: asiento.fecha,
+        evento: { tipo: 'MERMA_INVENTARIO_REVERSADA', montoFuncional: Math.abs(ajuste.costoTotal) } });
+      expect(candidato?.causaOmision).toBeUndefined();
     });
 
     it('revierte la eliminacion de la merma cuando falla el insert del asiento inverso', async () => {
@@ -342,6 +355,88 @@ describe(
 
       expect(eliminada.success).toBe(false);
       expect(await readSnapshot()).toEqual(before);
+      const ajuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: mermaId } });
+      expect(ajuste.mermaReversionFecha).toBeNull();
+      expect(ajuste.mermaReversionRegistradaAt).toBeNull();
+    });
+
+    it('no duplica stock ni asiento al eliminar la misma merma concurrentemente', async () => {
+      const creada = await registrarMerma({ productoId, cantidad: 1, motivo: 'Carrera local', almacenId });
+      expect(creada.success).toBe(true);
+      const mermaId = (creada as { data?: { mermaId?: string } }).data?.mermaId as string;
+      const ajuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: mermaId } });
+      const before = await readSnapshot();
+      auth.user = userFor(userId);
+      const resultados = await Promise.all([deleteMermaAction(mermaId), deleteMermaAction(mermaId)]);
+      expect(resultados.filter((resultado) => resultado.success)).toHaveLength(1);
+      const after = await readSnapshot();
+      expect(after.stock[0].cantidad).toBe(before.stock[0].cantidad + 1);
+      expect(after.stock[0].disponible).toBe(before.stock[0].disponible + 1);
+      expect(await prisma.asiento.count({ where: {
+        tenantId, origenTipo: 'ajuste_merma_reversado', origenId: ajuste.id,
+      } })).toBe(1);
+    });
+
+    it('revierte la fecha provisional si ya existía un asiento inverso', async () => {
+      const creada = await registrarMerma({ productoId, cantidad: 1, motivo: 'Reverso previo', almacenId });
+      expect(creada.success).toBe(true);
+      const mermaId = (creada as { data?: { mermaId?: string } }).data?.mermaId as string;
+      const ajuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: mermaId } });
+      await prisma.$transaction((tx) => emitirReversionMermaSiContabilizada(tx, { tenantId, userId }, {
+        ajusteInventarioId: ajuste.id, fecha: new Date(), costoTotal: ajuste.costoTotal,
+        fechaValoracionOriginal: ajuste.createdAt,
+      }));
+      const before = await readSnapshot();
+      auth.user = userFor(userId);
+      const resultado = await deleteMermaAction(mermaId);
+      expect(resultado.success).toBe(false);
+      expect(await readSnapshot()).toEqual(before);
+      const despues = await prisma.ajusteInventario.findUniqueOrThrow({ where: { id: ajuste.id } });
+      expect(despues.mermaReversionFecha).toBeNull();
+      expect(despues.mermaReversionRegistradaAt).toBeNull();
+    });
+
+    it('conserva evidencia FX de la reversión con moneda funcional USD', async () => {
+      const tasa = await prisma.tasaCambio.create({ data: { monedaOrigenId: 'CUP', monedaDestino: 'USD',
+        tasa: 0.04, fechaVigencia: new Date(Date.now() - 60_000) } });
+      try {
+        await prisma.tenantAccountingPolicy.update({ where: { tenantId }, data: { functionalCurrencyCode: 'USD' } });
+        const creada = await registrarMerma({ productoId, cantidad: 1, motivo: 'Merma FX local', almacenId });
+        expect(creada.success).toBe(true);
+        const mermaId = (creada as { data?: { mermaId?: string } }).data?.mermaId as string;
+        const ajuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: mermaId } });
+        auth.user = userFor(userId);
+        expect((await deleteMermaAction(mermaId)).success).toBe(true);
+        const evidencia = await prisma.fxEvidence.findFirstOrThrow({ where: {
+          tenantId, sourceType: 'ajuste_merma_reversado', sourceId: ajuste.id,
+        } });
+        const asiento = await prisma.asiento.findFirstOrThrow({ where: {
+          tenantId, origenTipo: 'ajuste_merma_reversado', origenId: ajuste.id,
+        }, include: { lineas: true } });
+        expect(evidencia.functionalCurrency).toBe('USD');
+        expect(evidencia.fxCatalogRateId).toBe(tasa.tasaId);
+        expect(evidencia.cutoffAt).toEqual(ajuste.createdAt);
+        expect(asiento.lineas.every((linea) => linea.fxEvidenceFingerprint === evidencia.evidenceFingerprint)).toBe(true);
+        const candidato = (await recolectarCandidatos(tenantId))
+          .find((item) => item.origenTipo === 'ajuste_merma_reversado' && item.origenId === ajuste.id);
+        expect(candidato?.causaOmision).toBeUndefined();
+        expect(candidato?.evento).toMatchObject({ montoFuncional: 100 * 0.04,
+          monedaFuncional: 'USD', fxEvidenceFingerprint: evidencia.evidenceFingerprint });
+
+        const otra = await registrarMerma({ productoId, cantidad: 1, motivo: 'Rollback FX local', almacenId });
+        expect(otra.success).toBe(true);
+        const otraId = (otra as { data?: { mermaId?: string } }).data?.mermaId as string;
+        const otroAjuste = await prisma.ajusteInventario.findFirstOrThrow({ where: { tenantId, origenMermaId: otraId } });
+        auth.user = userFor(ledgerFailUserId);
+        expect((await deleteMermaAction(otraId)).success).toBe(false);
+        expect(await prisma.fxEvidence.count({ where: { tenantId,
+          sourceType: 'ajuste_merma_reversado', sourceId: otroAjuste.id } })).toBe(0);
+        const trasFallo = await prisma.ajusteInventario.findUniqueOrThrow({ where: { id: otroAjuste.id } });
+        expect(trasFallo.mermaReversionFecha).toBeNull();
+      } finally {
+        await prisma.tenantAccountingPolicy.update({ where: { tenantId }, data: { functionalCurrencyCode: 'CUP' } });
+        await prisma.tasaCambio.delete({ where: { tasaId: tasa.tasaId } });
+      }
     });
   },
 );

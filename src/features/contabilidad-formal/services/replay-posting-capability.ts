@@ -9,6 +9,7 @@ import {
   computeReplayPreflightDigest,
   type ReplayPreflightDigestSnapshot,
 } from './replay-preflight-digest';
+import { isReplayManifestSnapshotComplete } from './replay-source-manifest';
 
 type ReplayDb = Pick<Prisma.TransactionClient, 'tenantMembership' | 'tenantLicense'>;
 const REPLAY_PERMISSION = 'financiero.contabilidad.acceder';
@@ -62,9 +63,10 @@ export async function withReplayPostingCapability<T>(
     approval.digestVersion !== run.digestVersion || approval.digest !== run.digest
   ) invalidCapability();
   const snapshot = preflight.snapshot as unknown as ReplayPreflightDigestSnapshot;
-  try {
-    if (snapshot.tenantId !== scope.tenantId || snapshot.period.periodId !== scope.periodoId ||
-      computeReplayPreflightDigest(snapshot) !== run.digest) invalidCapability();
+	try {
+		if (snapshot.tenantId !== scope.tenantId || snapshot.period.periodId !== scope.periodoId ||
+			!isReplayManifestSnapshotComplete(snapshot.manifest) ||
+			computeReplayPreflightDigest(snapshot) !== run.digest) invalidCapability();
   } catch { invalidCapability(); }
   await requireCurrentReplayEntitlement(tx, scope.tenantId);
   await requireCurrentReplayPermission(tx, scope.tenantId, scope.userId);

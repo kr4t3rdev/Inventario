@@ -1,11 +1,21 @@
 import { prisma } from '@/lib/prisma';
 
+const REFERRAL_DISCOUNT_BY_PLAN_NAME: Record<string, number> = {
+  'básico': 5,
+  basico: 5,
+  profesional: 10,
+  empresarial: 15,
+  enterprise: 15,
+};
+
 /**
- * @description Descuento por referido en USD, aplicado al precio base de cada
- * plan cuando el tenant se registró por un link de referido. Precios de lista:
- * Básico $40 → $35, Profesional $80 → $75, Empresarial $110 → $105.
+ * @description Devuelve el descuento de referido definido para un plan comercial.
+ * @param {string} planName - Nombre del plan.
+ * @returns {number} Descuento en USD o cero para planes no reconocidos.
  */
-export const REFERRAL_DISCOUNT_USD = 5;
+export function getPlanReferralDiscountUsd(planName: string): number {
+  return REFERRAL_DISCOUNT_BY_PLAN_NAME[planName.trim().toLowerCase()] ?? 0;
+}
 
 /**
  * @description Redondea un monto a 2 decimales.
@@ -17,30 +27,35 @@ export function roundCurrency(value: number): number {
 }
 
 /**
- * @description Calcula el precio con descuento por referido.
+ * @description Calcula el precio con el descuento específico del plan.
  * @param {number} planPrecio - Precio base del plan en USD.
+ * @param {number} referralDiscountUsd - Descuento por referido del plan.
  * @returns {number} Precio referido (nunca negativo).
  */
-export function getReferralPrice(planPrecio: number): number {
-  return roundCurrency(Math.max(0, planPrecio - REFERRAL_DISCOUNT_USD));
+export function getReferralPrice(planPrecio: number, referralDiscountUsd: number): number {
+  return roundCurrency(Math.max(0, planPrecio - referralDiscountUsd));
 }
 
 /**
  * @description Resuelve el precio de lista y final que debe registrarse en una
  * licencia según si el tenant es referido o no. El precio de lista es siempre
  * el precio base del plan (la comisión se calcula sobre este); el precio final
- * aplica el descuento por referido. Ejemplo Básico: {40, 35} si es referido.
+ * aplica el descuento por referido.
  * @param {number} planPrecio - Precio base del plan en USD.
  * @param {boolean} isReferred - Indica si el tenant se registró por referido.
+ * @param {number} referralDiscountUsd - Descuento por referido del plan.
  * @returns {{ listPriceUsd: number; finalPriceUsd: number }} Precios para la licencia.
  */
 export function resolveLicensePricing(
   planPrecio: number,
   isReferred: boolean,
+  referralDiscountUsd: number,
 ): { listPriceUsd: number; finalPriceUsd: number } {
   return {
     listPriceUsd: roundCurrency(planPrecio),
-    finalPriceUsd: isReferred ? getReferralPrice(planPrecio) : roundCurrency(planPrecio),
+    finalPriceUsd: isReferred
+      ? getReferralPrice(planPrecio, referralDiscountUsd)
+      : roundCurrency(planPrecio),
   };
 }
 

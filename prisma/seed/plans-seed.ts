@@ -9,7 +9,7 @@ import { PrismaClient } from "../../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
-/* ─── Plan 1: Básico — $40/mes (referido: $35/mes) ─── */
+/* ─── Plan 1: Básico — $30/mes (referido: $25/mes) ─── */
 
 export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Inventario
@@ -102,7 +102,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"api-integraciones": false,
 };
 
-/* ─── Plan 2: Profesional — $80/mes (referido: $75/mes) ─── */
+/* ─── Plan 2: Profesional — $60/mes (referido: $50/mes) ─── */
 
 export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	...PLAN_BASICO_FEATURES,
@@ -141,7 +141,7 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"mrp-avanzado": false,
 };
 
-/* ─── Plan 3: Empresarial — $110/mes (referido: $105/mes) ─── */
+/* ─── Plan 3: Empresarial — $90/mes (referido: $75/mes) ─── */
 
 export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	...PLAN_PROFESIONAL_FEATURES,
@@ -192,7 +192,8 @@ export async function seedPlans() {
 				nombre: "Básico",
 				descripcion:
 					"Base sólida para arrancar tu negocio. Incluye productos con código, almacenes, POS, contabilidad en CUP y backups semanales.",
-				precio: 40,
+				precio: 30,
+				referralDiscountUsd: 5,
 				duracionDias: 30,
 				maxUsuarios: 3,
 				maxAlmacenes: 2,
@@ -208,7 +209,8 @@ export async function seedPlans() {
 				nombre: "Profesional",
 				descripcion:
 					"PYME en crecimiento con facturación, multi-moneda, cuentas por cobrar y pagar, empleados, clientes y backups diarios.",
-				precio: 80,
+				precio: 60,
+				referralDiscountUsd: 10,
 				duracionDias: 30,
 				maxUsuarios: 5,
 				maxAlmacenes: 5,
@@ -224,7 +226,8 @@ export async function seedPlans() {
 				nombre: "Empresarial",
 				descripcion:
 					"Máxima potencia con producción, nómina, generación EAN-13 y backups cada hora + restauración point-in-time.",
-				precio: 110,
+				precio: 90,
+				referralDiscountUsd: 15,
 				duracionDias: 30,
 				maxUsuarios: 10,
 				maxAlmacenes: 999,
@@ -240,7 +243,8 @@ export async function seedPlans() {
 	});
 
 	console.log(
-		"✅ Planes: Básico ($40), Profesional ($80) y Empresarial ($110) creados. Descuento por referido: $5 USD.",
+		"✅ Planes: Básico ($30/$25), Profesional ($60/$50) y Empresarial ($90/$75) creados (lista/referido).",
+
 	);
 }
 
