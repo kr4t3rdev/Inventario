@@ -190,6 +190,9 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
         const vendor = row.original as any
         return (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild aria-label={`Ver 360 de ${vendor.nombre}`}>
+              <Link href={`/busy/vendor/${vendor.vendorId}/detalle`}>Ver 360</Link>
+            </Button>
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 variant='outline' 

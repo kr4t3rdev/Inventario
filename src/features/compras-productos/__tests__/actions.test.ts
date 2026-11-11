@@ -37,6 +37,7 @@ vi.mock("@/lib/services/reconciliar-costos-recepcion", () => ({
 
 const mockTx = {
 	$queryRaw: vi.fn(),
+	proveedorProducto: { upsert: vi.fn() },
 	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
 	compraDocumentoItem: { create: vi.fn() },
 	lote: { create: vi.fn() },
