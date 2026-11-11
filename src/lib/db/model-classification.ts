@@ -113,6 +113,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   FinancialAuxiliaryCheckpoint: SCOPED('Checkpoint auxiliar contable por tenant.'),
   FxEvidence: SCOPED('Evidencia FX por tenant (clave única incluye tenantId).'),
   GastoCompra: SCOPED(),
+  GastoRecurrente: SCOPED('Plantilla de gasto recurrente con referencias opcionales dentro del tenant.'),
   GastoConcepto: SCOPED(),
   GastoElemento: SCOPED(),
   GastosDE: SCOPED(),
