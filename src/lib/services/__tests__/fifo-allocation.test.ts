@@ -2,6 +2,11 @@
  * @description Tests unitarios para el servicio de asignación FIFO.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
+	exchangeRateProvider: { getRateAsOf: vi.fn() },
+}));
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import {
 	allocateFifoForVentaItem,
 	getAvailableStock,
@@ -28,6 +33,8 @@ function createMockTx() {
 			createMany: vi.fn(),
 			findMany: vi.fn(),
 		},
+		purchaseReceiptInvoiceAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+		tenantAccountingPolicy: { findUnique: vi.fn() },
 		ventaItem: {
 			findMany: vi.fn(),
 		},
@@ -42,6 +49,73 @@ describe("allocateFifoForVentaItem", () => {
 	beforeEach(() => {
 		tx = createMockTx();
 		tx.lote.findMany.mockResolvedValue([]);
+		tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: "CUP" });
+		vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null);
+	});
+
+	it("conserva costo, moneda y fecha de una compra directa al asignar FIFO", async () => {
+		const fecha = new Date("2026-10-01T00:00:00.000Z");
+		tx.compraDocumentoItem.findMany.mockResolvedValue([{
+			compraDocumentoItemId: "c1", cantidad: 3, precioUnitario: 120, createdAt: fecha,
+			compraDocumento: { ordenCompraId: null, moneda: "USD", fechaCompra: fecha },
+		}]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+		await allocateFifoForVentaItem(tx as any, { tenantId: "t1", ventaItemId: "v1", productoId: "p1", cantidad: 2 });
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({
+			compraDocumentoItemId: "c1", cantidad: 2, costoUnitarioSnapshot: 120,
+			fifoMonedaOrigen: "USD", fifoFechaFuente: fecha,
+		})] });
+	});
+
+	it("persiste la valoración y evidencia FX de una asignación directa", async () => {
+		const fecha = new Date("2026-10-01T00:00:00.000Z");
+		tx.compraDocumentoItem.findMany.mockResolvedValue([{
+			compraDocumentoItemId: "c-fx", cantidad: 3, precioUnitario: 25, createdAt: fecha,
+			compraDocumento: { ordenCompraId: null, moneda: "USD", fechaCompra: fecha },
+		}]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+		vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+			tasaId: "rate-fx", tasa: 0.04, fechaVigencia: fecha,
+		});
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1", ventaItemId: "v1", productoId: "p1", cantidad: 2,
+		});
+
+		expect(exchangeRateProvider.getRateAsOf).toHaveBeenCalledWith({
+			sourceCurrency: "USD", targetCurrency: "CUP", boundaryAt: fecha, client: tx,
+		});
+		const allocation = vi.mocked(tx.purchaseAllocation.createMany).mock.calls[0][0].data[0];
+		expect(allocation).toMatchObject({
+			cantidad: 2, costoUnitarioSnapshot: 25, fifoMonedaOrigen: "USD",
+			fifoFechaFuente: fecha, fifoMonedaFuncional: "CUP", fifoCostoFuncional: 2,
+			fifoTasaCambio: 0.04, fifoFechaTasa: fecha,
+		});
+		const evidence = JSON.parse(allocation.fifoEvidenciaFx as string) as Record<string, unknown>;
+		expect(evidence).toMatchObject({
+			fxCatalogRateId: "rate-fx", fxEvidenceVersion: 1,
+			fxEvidenceFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/),
+			rawConvertedAmount: 2, rawExchangeRate: 0.04,
+		});
+	});
+
+	it("mantiene incompleta la valoración cuando falta la tasa histórica", async () => {
+		const fecha = new Date("2026-10-01T00:00:00.000Z");
+		tx.compraDocumentoItem.findMany.mockResolvedValue([{
+			compraDocumentoItemId: "c-no-rate", cantidad: 1, precioUnitario: 25, createdAt: fecha,
+			compraDocumento: { ordenCompraId: null, moneda: "USD", fechaCompra: fecha },
+		}]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1", ventaItemId: "v1", productoId: "p1", cantidad: 1,
+		});
+
+		const allocation = vi.mocked(tx.purchaseAllocation.createMany).mock.calls[0][0].data[0];
+		expect(allocation).toMatchObject({ fifoMonedaOrigen: "USD", fifoFechaFuente: fecha });
+		expect(allocation.fifoMonedaFuncional).toBeUndefined();
+		expect(allocation.fifoCostoFuncional).toBeUndefined();
+		expect(allocation.fifoEvidenciaFx).toBeUndefined();
 	});
 
 	it("prioriza el vencimiento más próximo dentro de FIFO y cruza al siguiente lote", async () => {
@@ -178,7 +252,7 @@ describe("allocateFifoForVentaItem", () => {
 		});
 	});
 
-	it("consume lotes de una recepción antes de facturar y guarda su costo estimado", async () => {
+	it("consume lotes de una recepción sin factura vinculada con el costo estimado de la orden", async () => {
 		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
 		tx.recepcionItem.findMany.mockResolvedValue([
 			{
@@ -210,6 +284,9 @@ describe("allocateFifoForVentaItem", () => {
 			cantidad: 3,
 		});
 
+		// Sin factura vinculada no hay capa de procedencia: la asignación conserva
+		// el costo estimado de la orden para la reposición operativa, pero no
+		// llega a ser acreditable en el libro formal.
 		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
 			data: [{
 				tenantId: "t1",
@@ -221,6 +298,60 @@ describe("allocateFifoForVentaItem", () => {
 				cantidad: 3,
 			}],
 		});
+	});
+
+	it('assigns a received lot from its linked invoice line and captured FX snapshot', async () => {
+		const invoiceDate = new Date('2026-01-03T00:00:00.000Z');
+		const fx = buildAppliedFxEvidence({
+			originalAmount: 600,
+			originalCurrency: 'USD',
+			functionalCurrency: 'CUP',
+			exchangeRate: 25,
+			convertedAmount: 15000,
+			rateEffectiveAt: invoiceDate,
+			fxCatalogRateId: null,
+			source: 'purchase-receipt-invoice-allocation',
+		});
+		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
+		tx.recepcionItem.findMany.mockResolvedValue([{
+			id: 'ri-linked', cantidad: 5, ordenItemId: 'oi-1',
+			ordenItem: { id: 'oi-1', ordenId: 'oc-1', precioUnitario: 100 },
+			recepcion: { fecha: new Date('2026-01-02T00:00:00.000Z') },
+			lotes: [{ id: 'lote-linked', cantidadDisponible: 5, fechaVencimiento: null,
+				createdAt: new Date('2026-01-02T00:00:00.000Z') }],
+		}]);
+		tx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([{
+			id: 'invoice-receipt-allocation-1',
+			tenantId: 't1', recepcionItemId: 'ri-linked', cantidad: 5,
+			costoUnitarioSnapshot: 120, fifoMonedaOrigen: 'USD', fifoFechaFuente: invoiceDate,
+			fifoMonedaFuncional: 'CUP', fifoCostoFuncional: 15000,
+			fifoTasaCambio: 25, fifoFechaTasa: invoiceDate,
+			fifoEvidenciaFx: JSON.stringify({ ...fx, rawConvertedAmount: 15000, rawExchangeRate: 25 }),
+		}]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: 't1', ventaItemId: 'v-linked', productoId: 'p1', cantidad: 3,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({
+			recepcionItemId: 'ri-linked',
+			purchaseReceiptInvoiceAllocationId: 'invoice-receipt-allocation-1',
+			cantidad: 3,
+			costoUnitarioSnapshot: 120,
+			fifoMonedaOrigen: 'USD',
+			fifoFechaFuente: invoiceDate,
+			fifoMonedaFuncional: 'CUP',
+			fifoCostoFuncional: 9000,
+			fifoTasaCambio: 25,
+			fifoFechaTasa: invoiceDate,
+			fifoEvidenciaFx: expect.stringContaining('fifo-allocation'),
+		})] });
+		expect(tx.purchaseReceiptInvoiceAllocation.findMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: expect.objectContaining({
+				compraDocumentoItem: { compraDocumento: { estado: { not: 'ANULADA' }, deletedAt: null } },
+			}),
+		}));
 	});
 
 	it("no vuelve a asignar la línea de factura cuando el lote recibido ya se agotó", async () => {

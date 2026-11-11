@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
+import type { ReplayManifestSnapshot } from './replay-source-manifest';
 
 /** Canonical digest format version embedded in every replay preflight hash. */
-export const REPLAY_PREFLIGHT_DIGEST_VERSION = 'r5-preflight-v2';
+export const REPLAY_PREFLIGHT_DIGEST_VERSION = 'r5-preflight-v4';
 
 /** Period identity and its exact UTC-normalized boundaries. */
 export interface ReplayPreflightPeriodSnapshot {
@@ -46,6 +47,7 @@ export interface ReplayPreflightDigestSnapshot {
 	tenantId: string;
 	period: ReplayPreflightPeriodSnapshot;
 	sources: ReplayPreflightSourceSnapshot[];
+	manifest: ReplayManifestSnapshot;
 }
 
 interface CanonicalSource {
@@ -80,6 +82,7 @@ interface CanonicalSnapshot {
 	tenantId: string;
 	period: { periodId: string; startsAt: string; endsAt: string };
 	sources: CanonicalSource[];
+	manifest: ReplayManifestSnapshot;
 }
 
 /**
@@ -111,6 +114,27 @@ function canonicalizeSnapshot(
 	const tenantId = requiredString(snapshot.tenantId, 'tenantId');
 	if (!isRecord(snapshot.period)) throw new TypeError('Preflight period must be an object');
 	if (!Array.isArray(snapshot.sources)) throw new TypeError('Preflight sources must be an array');
+	if (!isRecord(snapshot.manifest)) throw new TypeError('Preflight manifest must be an object');
+	const requiredEventTypes = canonicalStrings(
+		snapshot.manifest.requiredEventTypes,
+		'manifest.requiredEventTypes',
+	);
+	const evaluatedEventTypes = canonicalStrings(
+		snapshot.manifest.evaluatedEventTypes,
+		'manifest.evaluatedEventTypes',
+	);
+	const requiredQueryIds = canonicalStrings(
+		snapshot.manifest.requiredQueryIds,
+		'manifest.requiredQueryIds',
+	);
+	const evaluatedQueryIds = canonicalStrings(
+		snapshot.manifest.evaluatedQueryIds,
+		'manifest.evaluatedQueryIds',
+	);
+	const unclassifiedCount = snapshot.manifest.unclassifiedCount;
+	if (!Number.isSafeInteger(unclassifiedCount) || Number(unclassifiedCount) < 0) {
+		throw new TypeError('manifest.unclassifiedCount must be a non-negative integer');
+	}
 
 	const sources = snapshot.sources.map(canonicalizeSource);
 	sources.sort((left, right) => compareIdentity(left.identity, right.identity));
@@ -129,7 +153,24 @@ function canonicalizeSnapshot(
 			endsAt: canonicalDate(snapshot.period.endsAt, 'period.endsAt'),
 		},
 		sources,
+		manifest: {
+			version: requiredString(snapshot.manifest.version, 'manifest.version'),
+			fingerprint: requiredString(snapshot.manifest.fingerprint, 'manifest.fingerprint'),
+			requiredEventTypes,
+			evaluatedEventTypes,
+			requiredQueryIds,
+			evaluatedQueryIds,
+			unclassifiedCount: Number(unclassifiedCount),
+		},
 	};
+}
+
+/** @description Validates, deduplicates and sorts event identifiers for digesting. */
+function canonicalStrings(value: unknown, field: string): string[] {
+	if (!Array.isArray(value)) throw new TypeError(`${field} must be an array`);
+	const strings = value.map((item, index) => requiredString(item, `${field}[${index}]`)).sort();
+	if (new Set(strings).size !== strings.length) throw new TypeError(`${field} must not contain duplicates`);
+	return strings;
 }
 
 /**

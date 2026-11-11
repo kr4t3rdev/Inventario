@@ -1,4 +1,6 @@
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import type { Prisma } from '@/generated/prisma';
 import { buildFunctionalValuation } from '../lib/functional-valuation';
 import {
 	postEvento,
@@ -73,6 +75,8 @@ async function valorarCostoInventario(
 		montoFuncional: valoracion.sameCurrency ? montoCUP : valoracion.montoConvertido,
 		tasaCambio: valoracion.tasaCambio,
 		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
+		fechaTasa: tasa?.fechaVigencia ?? null,
+		catalogoTasaId: tasa?.tasaId ?? null,
 	};
 }
 
@@ -169,7 +173,7 @@ export async function emitirReversionMermaSiContabilizada(
 		'inventory-adjustment-posting-service',
 	);
 
-	return postEvento(tx, ctx, {
+	const resultado = await postEvento(tx, ctx, {
 		tipo: 'MERMA_INVENTARIO_REVERSADA',
 		fecha: params.fecha,
 		descripcion: `Reversión de merma ${params.ajusteInventarioId}`,
@@ -181,6 +185,28 @@ export async function emitirReversionMermaSiContabilizada(
 		tasaCambio: valoracion.tasaCambio,
 		fxEvidenceFingerprint: valoracion.fxEvidenceFingerprint,
 	});
+	if ((resultado.estado === 'CONTABILIZADO' || resultado.estado === 'SIMULADO') &&
+		valoracion.monedaFuncional && valoracion.monedaFuncional !== 'CUP' &&
+		valoracion.montoFuncional !== null && valoracion.tasaCambio !== null && valoracion.fechaTasa) {
+		const source = 'inventory-adjustment-posting-service';
+		const evidencia = buildAppliedFxEvidence({ originalAmount: monto, originalCurrency: 'CUP',
+			functionalCurrency: valoracion.monedaFuncional, exchangeRate: valoracion.tasaCambio,
+			convertedAmount: valoracion.montoFuncional, rateEffectiveAt: valoracion.fechaTasa,
+			fxCatalogRateId: valoracion.catalogoTasaId, source });
+		if (evidencia.fxEvidenceFingerprint !== valoracion.fxEvidenceFingerprint) {
+			throw new Error('MERMA_REVERSION_FX_EVIDENCIA_CONFLICTO');
+		}
+		await tx.fxEvidence.create({ data: { tenantId: ctx.tenantId, sourceType: MERMA_REVERSAL_ORIGIN_TYPE,
+			sourceId: params.ajusteInventarioId, originalAmount: monto, originalCurrency: 'CUP',
+			functionalAmount: valoracion.montoFuncional, functionalCurrency: valoracion.monedaFuncional,
+			exchangeRate: valoracion.tasaCambio, rateEffectiveAt: valoracion.fechaTasa, cutoffAt: fechaValoracion,
+			fxCatalogRateId: valoracion.catalogoTasaId, provenance: evidencia.fxProvenanceKind,
+			source: evidencia.fxProvenanceSource,
+			evidence: { ...evidencia, rawConvertedAmount: valoracion.montoFuncional,
+				rawExchangeRate: valoracion.tasaCambio } as Prisma.InputJsonValue,
+			evidenceFingerprint: evidencia.fxEvidenceFingerprint, evidenceVersion: evidencia.fxEvidenceVersion } });
+	}
+	return resultado;
 }
 
 /**
@@ -204,12 +230,30 @@ export async function revertirMermaContableEnTransaccion(
 	const fecha = new Date();
 
 	for (const ajuste of ajustes) {
-		await emitirReversionMermaSiContabilizada(tx, ctx, {
+		const registro = await tx.ajusteInventario.updateMany({
+			where: { id: ajuste.id, tenantId: ctx.tenantId, origenMermaId: mermaId,
+				estado: 'APLICADO', mermaReversionFecha: null },
+			data: { mermaReversionFecha: fecha, mermaReversionRegistradaAt: fecha },
+		});
+		if (registro.count !== 1) {
+			throw new Error('MERMA_REVERSION_EVIDENCIA_CONFLICTO');
+		}
+		const resultado = await emitirReversionMermaSiContabilizada(tx, ctx, {
 			ajusteInventarioId: ajuste.id,
 			fecha,
 			costoTotal: ajuste.costoTotal,
 			fechaValoracionOriginal: ajuste.createdAt,
 		});
+		if (resultado?.estado === 'YA_EXISTENTE') {
+			throw new Error('MERMA_REVERSION_EVIDENCIA_CONFLICTO');
+		}
+		if (!resultado || (resultado.estado !== 'CONTABILIZADO' && resultado.estado !== 'SIMULADO')) {
+			const limpieza = await tx.ajusteInventario.updateMany({
+				where: { id: ajuste.id, tenantId: ctx.tenantId, mermaReversionFecha: fecha },
+				data: { mermaReversionFecha: null, mermaReversionRegistradaAt: null },
+			});
+			if (limpieza.count !== 1) throw new Error('MERMA_REVERSION_EVIDENCIA_CONFLICTO');
+		}
 	}
 }
 

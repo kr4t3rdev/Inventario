@@ -142,6 +142,10 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   ProductoCostSheetTemplate: SCOPED('Plantilla de hoja de costo por tenant.'),
   PuntoDeVenta: SCOPED(),
   PurchaseAllocation: SCOPED('Asignación compra→venta dentro del tenant.'),
+  PurchaseReceiptInvoiceAllocation: SCOPED(
+    'Asignación de una línea de factura a un corte de recepción, con tenantId propio '
+    + 'y relaciones compuestas del mismo tenant.',
+  ),
   Receta: SCOPED(),
   RecetaIngrediente: SCOPED('Ingrediente con tenantId propio denormalizado.'),
   Recepcion: SCOPED('Recepción de orden de compra por tenant.'),

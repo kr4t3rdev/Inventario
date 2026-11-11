@@ -71,8 +71,9 @@ export interface PlanDisplay {
   name: string
   description: string | null
   price: number
-  /** Precio con descuento por referido (precio base - $5 USD). */
+  /** Precio con el descuento por referido configurado para el plan. */
   referralPrice: number
+  referralDiscountUsd: number
   /** Labels de features habilitados agrupados por categoría */
   featuresByCategory: Record<string, string[]>
   /** Lista plana de bullets para la UI */

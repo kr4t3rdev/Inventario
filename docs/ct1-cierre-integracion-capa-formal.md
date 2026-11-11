@@ -88,6 +88,37 @@ documentación del programa.
 
 ## 4. Matriz R0.5 por fila
 
+### 4.0 Reconciliación de conteos y matriz canónica
+
+Esta tabla es la vista **por writer de negocio**: 25 filas que agrupan 39 tipos
+de evento, **no** una correspondencia 1:1 entre filas y tipos. No es el
+inventario de callsites técnicos. El conteo vigente de invocaciones de
+`postEvento()` es **23 callsites en 12 archivos** (excluidas la definición, las
+pruebas y la integración), frente a los 31 callsites en 19 archivos del corte
+2026-10-11 de la rama `feat/contabilidad-capa-formal`: el posting se movió de
+las rutas y writers a servicios `*-posting-service.ts`; **18 de los 19 archivos
+históricos** ya no postean inline (16 delegan en un emisor y 2 dejaron de emitir
+sin delegar), `accounting-cash-operations-mutation-service.ts` sigue siendo
+emisor técnico y las dos brechas de adaptadores están en el documento canónico
+§6.1. Los números no son intercambiables:
+
+| Denominador | Unidad | Valor |
+|---|---|---|
+| Callsites históricos | invocaciones técnicas de `postEvento()` (corte 2026-10-11) | 31 en 19 archivos |
+| Filas de esta tabla | writers de negocio agrupados | 25 |
+| Tipos del contrato formal | `TipoEventoClave` del plan | 39 |
+| **Callsites vigentes** | **invocaciones técnicas de `postEvento()`** | **23 en 12 archivos** |
+
+La matriz canónica versionada —una fila por callsite actual, la resolución de
+los 39 tipos (29 replay —28 con writer vivo y `TRANSFERENCIA_BANCARIA` sin
+writer—, 2 programáticos y 8 solo plantilla), los emisores huérfanos, el
+crosswalk de los 19 archivos históricos y las dos brechas de adaptadores— es
+`docs/ct1-r0-5-matriz-canonica.md`. La regresión
+`src/features/contabilidad-formal/__tests__/writers-matrix.test.ts` falla si
+aparece un `postEvento()` no inventariado, si cambia el conteo por archivo, si
+un tipo del manifiesto queda sin fila o si se cablea un emisor declarado
+huérfano.
+
 Leyenda: **✅** evidencia explícita en el código citado; **⚠️** evidencia
 estructural o indirecta (no un failpoint físico en `main`); **➖** no aplica por
 diseño. La matriz es **evidencia de cobertura**, no un acta de aceptación:
@@ -218,6 +249,8 @@ Notas de la matriz:
 
 ## 5. Verificación final
 
+### 5.1 Cierre del programa (2026-11-04)
+
 | Comprobación | Resultado |
 |---|---|
 | Suite unitaria | 5843 pruebas verdes (872 archivos: 871 verdes y 1 omitido), 1 omitida, 2 pendientes |
@@ -230,6 +263,72 @@ La base de integración es desechable y local
 (`ALLOW_DISPOSABLE_TEST_DB=1`, base `tcp_test_*` en `127.0.0.1:5433`); la
 identidad `localhost` se rechaza a propósito por la política del repositorio.
 
+### 5.2 R6 local/CI (2026-11-10) — VERDE
+
+Reejecución local sobre el checkout `spike/better-auth-migration`, con los
+cambios de la sesión en el commit
+`feat(contabilidad): cierra el R6 local/CI con la evidencia de los gates CT-1`
+(base `4b7c4b7c6c9ad3d6c773de603bd8e45fc6433e1b`). Los logs completos y el
+manifiesto viven fuera del repositorio en `../ct1-evidencias/`.
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Matriz de writers | `pnpm exec vitest run src/features/contabilidad-formal/__tests__/writers-matrix.test.ts` | 3/3 |
+| Unitarias completas | `pnpm run test:run` | 906 archivos verdes, 1 omitido; 6.088 pruebas verdes, 1 omitida, 2 todo; 0 fallos |
+| Integración PostgreSQL (aislada) | `pnpm run test:integration` con `CONTABILIDAD_FORMAL_MODE=enforce` | 50 archivos, 267/267 |
+| Typecheck | `pnpm run typecheck` | Limpio (`EXIT=0`) |
+| ESLint | `pnpm run lint` | 0 errores, 679 warnings no bloqueantes (`EXIT=0`) |
+| Build de producción | `pnpm run build` | Exit 0; 10 warnings de Turbopack y avisos `DYNAMIC_SERVER_USAGE` no bloqueantes |
+| Contratos de CI | `pnpm run test:ci:contracts` | 31/31 |
+| Node | `pnpm run test:node` | 6/6 |
+| Diff focal | `git diff --check` sobre los 7 archivos focales | Limpio |
+| Verificador forense (sintético) | `scripts/accounting/verificador-forense-report.ts` | Código 0; 0 asientos, 0 hallazgos |
+
+**Correcciones focales aplicadas:** `PurchaseReceiptInvoiceAllocation`
+clasificado como `scoped` con política de backup `tenant-direct` y evidencia FIFO/FX
+marcada como protegida; consulta de aislamiento de
+`formal-financial-report-service.ts` inventariada en la allowlist SQL; fixture de
+`tenant-factory` completada con `referralDiscountUsd`; scripts de afiliados
+actualizados para pasar el descuento persistido del plan a `resolveLicensePricing`.
+
+**Conjunto commiteado.** El checkout tenía trabajo **sin trackear** que era
+dependencia directa del diff, y CI prepara la base con
+`pnpm exec prisma migrate deploy` (`.github/workflows/integration.yml:62`).
+Un commit parcial rompe la integración aunque las pruebas locales pasen. El
+commit incluye, además del diff focal:
+
+- `scripts/ops/seed-ct1-gate-test-actors.ts`, referenciado por
+  `src/lib/db/raw-sql-allowlist.ts`. El allowlist es un inventario cerrado: sin
+  ese script, CI falla con "Entradas raw SQL obsoletas".
+- Cuatro migraciones: `20261103000000_update_plan_prices` (crea
+  `Plan.referralDiscountUsd`, que usa el diff), `20261109100000_fifo_invoice_receipt_provenance`
+  (crea la tabla `purchase_receipt_invoice_allocations` del modelo clasificado),
+  `20261109120000_add_production_posting_date` y `20261117000000_accounting_source_evidence`.
+  `prisma/schema.prisma` (+45 líneas) es coherente con las cuatro.
+- `src/features/contabilidad-formal/__tests__/writers-matrix.test.ts`, que
+  produce la evidencia 3/3 de la matriz de writers, y los módulos que el
+  working tree ya importaba (`replay-source-manifest.ts`,
+  `snapshot-coverage-integrity.ts`, `cash-payment-allocation-fingerprint.ts`).
+- La documentación CT-1 (`docs/ct1-preparacion-firmas-gates.md`,
+  `docs/ct1-plantillas-firmas-gates.md`, `docs/ct1-r0-5-matriz-canonica.md`,
+  `odd/tasks/cobertura-familias-contables.md`).
+
+El manifiesto `../ct1-evidencias/manifest-r6-local-20261110.md` §6.2 enumera el
+conjunto y §1 fija el SHA final.
+
+**Nota sobre una corrida no reproducible.** Una primera ejecución de la
+integración lanzándose **en paralelo** con la suite unitaria terminó con 267/267
+pruebas verdes pero 1 archivo marcado como fallido: el fallo estaba en el
+`afterAll` (teardown), por timeout de la transacción interactiva de Prisma
+(límite 5.000 ms, 5.921 ms consumidos) con el load average del host saturado
+(88 en 8 cores). Reejecutado **aislado**, ese archivo pasó 3/3 en 1,96 s. Se
+conservan ambos logs: `integration-test-run-parallel-saturation-20261110.log` y
+`integration-test-run-isolated-20261110.log`. La integración debe correr
+aislada.
+
+**Límite.** Este verde es local/CI. No acredita ningún entorno real, no
+sustituye el baseline por entorno y no implica firma de R6.
+
 ## 6. Gates de rollout (siguen abiertos)
 
 Ninguno de estos gates se cambió en CT-1:
@@ -237,10 +336,74 @@ Ninguno de estos gates se cambió en CT-1:
 | Gate | Estado | Nota |
 |---|---|---|
 | `R0.5-ACCEPT` | Sin firma | La matriz de la sección 4 documenta la cobertura; el acta global depende de R6/R7 |
+| `R6` local/CI | **Verde** (2026-11-10) | Sección 5.2: suites, typecheck, lint, build y contratos verdes sobre base desechable. Es preparación técnica: no sustituye el baseline por entorno ni constituye firma |
 | `R6-ROLLBACK` global | Abierto | El rollback físico está probado en las familias de caja, de ajustes e inyecciones, de ventas, de compras, de servicios, de mermas, de anticipos, de reversa formal, de cierre de período, de liquidaciones, de producción y de devoluciones de venta (todas con el asiento formal en modo `enforce`); además, el replay gobernado y la apertura contable manual aprobada tienen su propio failpoint físico |
 | `R6-BASELINE` por entorno | Abierto | Requiere el inventario de saldos por entorno |
 | `R7` operacional (siete días) | Abierto | No se activó ningún modo |
 | `shadow` / `enforce` por tenant | Apagado | `CONTABILIDAD_FORMAL_MODE=off` y `CONTABILIDAD_FORMAL_NO_CASH_MODE=off`. El mecanismo de aprobación por tenant existe (D6) pero está deshabilitado: `CONTABILIDAD_FORMAL_MODO_TENANT` no está definido y ninguna licencia tiene las claves de override |
+
+**Distinción obligatoria al reportar R6.** "R6 local/CI verde" y "R6 global
+cerrado" no son lo mismo. El primero acredita que el código y las pruebas
+funcionan; el segundo exige, por cada entorno objetivo, baseline fechado,
+backup restaurable probado, configuración remota observada, reversión probada
+y aceptación nominal. Un verde local nunca sustituye un baseline por entorno y
+nunca implica firma.
+
+**Advertencia de migraciones para el baseline por entorno.** En producción el
+comportamiento de migraciones no es el de CI: `start.sh` solo las aplica si
+`PRISMA_SCHEMA_SYNC_ON_START=true` (opt-in, por defecto no definido), así que
+un deploy no aplica migraciones por sí solo. Además hay 4 migraciones
+registradas como `rolled_back_at` que un `prisma migrate deploy` intentaría
+re-aplicar. Quien ejecute R6-BASELINE debe observar y adjuntar el estado real
+de migraciones del entorno objetivo, en lugar de asumir que el commit aplicó
+el esquema.
+
+### Plan de evidencia y responsables para cerrar gates (sin autorización de apply)
+
+Este plan separa la evidencia local de la aceptación operativa. Los responsables
+se definen por función, no por nombre: las personas titulares y suplentes deben
+ser nominadas por el dueño de cada entorno antes de ejecutar ese gate. El
+registro de código no demuestra el estado actual de un ambiente remoto.
+
+| Alcance | Evidencia requerida | Responsable de producir | Responsable de aceptar | Estado verificable aquí |
+|---|---|---|---|---|
+| Local/CI (preparación R6) | Commit SHA y esquema/migraciones; matriz de writers; suites unitarias e integración en DB desechable; prueba física de rollback; salida del verificador forense sintética | Dueño técnico de Contabilidad Formal + QA | Responsable de Contabilidad/Finanzas | Parcialmente cubierto por el repo y CI. No sustituye baseline de ningún entorno |
+| Staging/preproducción (R6-BASELINE) | Inventario fechado de saldos por tenant y moneda antes/después del corte; conciliación forense; conteo de fuentes/omisiones; backup y restauración probados; configuración efectiva de flags adjunta, redacted | Dueño de plataforma/SRE del entorno + DBA | Controller/Finanzas del entorno, separado del ejecutor | Pendiente; no se consultó ni modificó staging |
+| Producción (R6-BASELINE y R6-ROLLBACK) | Mismo inventario/conciliación por entorno; plan de reversión probado y ventana de ejecución; dashboard/alertas; referencia inmutable del backup y evidencia de restauración; acta firmada de aceptación global | SRE/DBA de producción + dueño técnico | Controller global + release approver | Pendiente; no se consultó ni modificó producción |
+| Cada tenant (R7.4) | ID del tenant, modo anterior y solicitado, baseline conciliado, approval explícita, ventana de observación y criterios medibles de reversión acordados, actor y hora de cada transición; prueba de revertir solo ese tenant sin afectar otros | Operador de rollout + administrador/owner del tenant | Aprobador de Finanzas del tenant, distinto del ejecutor | Pendiente; sin tenant ni licencia real seleccionados |
+| Aceptación global (R0.5-ACCEPT) | Matriz completa de writers y dimensiones, excepciones aceptadas, R6 por cada entorno objetivo, R7/R7.4 firmados, navegación/UX revisada, acta con aprobadores y alcance/versionado | Dueño técnico recopila; QA adjunta evidencia | Controller global + propietario de producto/operación | Sin firma; no se infiere de pruebas locales |
+
+**Criterio de salida R6.** Para cada ambiente objetivo, el paquete contiene una
+línea base reproducible, diffs explicados/cerrados por Finanzas, backup
+restaurable, rollback ensayado y responsables titulares/suplentes; la aceptación
+global nombra explícitamente qué tenants y versiones cubre. Una prueba local o
+un default del código no cuenta como evidencia de configuración remota.
+
+**Criterio de salida R7/R7.4.** Solo después de autorización explícita: completar
+la ventana shadow operacional acordada y adjuntar conciliaciones y alertas; para
+cada tenant, registrar consentimiento, umbrales/condiciones de reversión,
+ejecutor y aprobador diferentes y demostrar que el rollback es aislado. Los
+umbrales no están definidos en los artefactos consultados y quedan como decisión
+del Controller/Finanzas, no como un valor inventado por este plan.
+
+**Procedimiento de preparación.** El runbook operativo con fases, comandos de
+solo lectura, criterios de no firma y brechas a declarar es
+`docs/ct1-preparacion-firmas-gates.md`; las plantillas de nominación, paquete R6,
+bitácora R7, piloto R7.4 y acta global están en
+`docs/ct1-plantillas-firmas-gates.md`. Ninguno de los dos firma ni ejecuta nada
+por sí mismo.
+
+**Verificación de estado y navegación (solo checkout local).** La última nota de
+estado de los gates en este documento indica `R0.5-ACCEPT` sin firma, `R6` abierto,
+`R7` abierto y overrides por tenant apagados; no se tiene observación remota
+actual para ratificar esos valores. La ruta está en
+`src/features/sidebar/sidebar-config.ts` como “Reportes Contables” →
+`/busy/contabilidad/reportes`; la página ofrece retorno a `/busy/contabilidad`.
+`page.test.tsx` y `build-visible-groups.test.ts` pasaron 24/24. Esto verifica el
+checkout (path, gating y retorno), no la navegación en un deployment remoto.
+
+No se ejecutó dry-run/apply, cambio de flags, rollout, aprobación por tenant,
+consulta autenticada, backup ni reversión en un entorno o tenant real.
 
 ## 7. Pendientes que quedan fuera de CT-1
 
@@ -315,3 +478,35 @@ misma huella FX.
 - Artefacto congelado del manifiesto de comparación de 912 rutas (CT-6 de la
   auditoría de contabilidad): `docs/artefactos/manifiesto-comparacion-rutas-rl4.json`
   con su nota de origen y verificación en `docs/artefactos/README.md`
+
+## 9. Cobertura del balance acumulado
+
+Para el reporte formal se acepta provisionalmente el primer período registrado
+del tenant como inicio del historial. Esta decisión no acredita saldos ni
+actividad anteriores a ese período: la línea base R6 sigue pendiente.
+
+El balance se bloquea si falta cobertura de un período registrado anterior,
+hay huecos o solapamientos entre períodos, el corte queda fuera del período
+seleccionado o un asiento leído no corresponde a las fechas de su período.
+Un período sin asientos no se considera acreditado por estar vacío. El reporte
+lee la cobertura y el mayor en una misma transacción `Repeatable Read`; si recibe
+un cliente transaccional externo, este debe usar `Repeatable Read` o
+`Serializable`.
+
+Un replay cuya reconciliación no contiene fuentes tampoco acredita un período
+con asientos: el reporte queda no disponible con `REPLAY_SIN_FUENTES`.
+
+El reporte vuelve a verificar el digest del snapshot aprobado y concilia sus
+identidades, valores y linaje con todos los asientos relevantes del período.
+Si un asiento no está acreditado, queda no disponible con
+`ASIENTOS_NO_ACREDITADOS`. Cierres, reversos, aperturas o costos que no estén
+representados en el snapshot también bloquean el reporte hasta disponer de
+evidencia específica; la etiqueta de origen no basta para acreditar cobertura.
+La lectura también reconstruye las fuentes que conoce el recolector y rechaza
+el reporte si alguna aparece, desaparece o cambia desde la aprobación. Esto
+no prueba la ausencia de familias operativas que el recolector todavía no
+contempla; esa cobertura global sigue pendiente de inventario y validación.
+
+La reconciliación del replay verifica las fuentes de su snapshot aprobado;
+no acredita por sí sola que ese snapshot abarque todas las familias contables.
+El inicio provisional y estas comprobaciones no sustituyen la aceptación R6.

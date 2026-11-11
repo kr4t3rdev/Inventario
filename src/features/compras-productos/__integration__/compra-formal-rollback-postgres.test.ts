@@ -35,10 +35,12 @@ const suffix = randomUUID().replaceAll('-', '');
 const tenantId = `formal_compra_${suffix}`;
 const userId = `formal_user_${suffix}`;
 const ledgerFailUserId = `formal_ledger_fail_${suffix}`;
+const paymentFailUserId = `formal_payment_fail_${suffix}`;
 const bancoId = `formal_compra_bank_${suffix}`;
 const ledgerFailureFunction = `formal_compra_ledger_failure_${suffix}`;
 const ledgerFailureTrigger = `formal_compra_ledger_trigger_${suffix}`;
 const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+const previousNonCashMode = process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
 
 let productoId = '';
 let proveedorId = '';
@@ -154,6 +156,7 @@ describe(
   () => {
     beforeAll(async () => {
       process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+      process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = 'enforce';
       const identity = await prisma.$queryRaw<Array<{
         databaseName: string;
         roleName: string;
@@ -174,7 +177,7 @@ describe(
       });
       // Los actores existen como usuarios reales: el kardex los referencia por
       // clave foranea y el trigger los distingue por su identificador.
-      for (const actorId of [userId, ledgerFailUserId]) {
+      for (const actorId of [userId, ledgerFailUserId, paymentFailUserId]) {
         await prisma.user.create({
           data: {
             userId: actorId,
@@ -257,7 +260,7 @@ describe(
       productoId = producto.id;
 
       await prisma.$executeRawUnsafe(
-        `CREATE FUNCTION public."${ledgerFailureFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."tenantId" = '${tenantId}' AND NEW."createdBy" LIKE 'formal_ledger_fail_%' THEN RAISE EXCEPTION 'forced asiento failure' USING ERRCODE = '23514'; END IF; RETURN NEW; END $$`,
+        `CREATE FUNCTION public."${ledgerFailureFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."tenantId" = '${tenantId}' AND (NEW."createdBy" = '${ledgerFailUserId}' OR (NEW."createdBy" = '${paymentFailUserId}' AND NEW."origenTipo" = 'reconciliacion_gasto')) THEN RAISE EXCEPTION 'forced asiento failure' USING ERRCODE = '23514'; END IF; RETURN NEW; END $$`,
       );
       await prisma.$executeRawUnsafe(
         `CREATE TRIGGER "${ledgerFailureTrigger}" BEFORE INSERT ON public."asientos" FOR EACH ROW EXECUTE FUNCTION public."${ledgerFailureFunction}"()`,
@@ -271,6 +274,8 @@ describe(
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS public."${ledgerFailureFunction}"()`);
       if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
       else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
+      if (previousNonCashMode === undefined) delete process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
+      else process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = previousNonCashMode;
       auth.user = null;
     });
 
@@ -297,7 +302,9 @@ describe(
       expect(after.cxps).toBe(before.cxps + 1);
       expect(after.reconciliaciones).toBe(before.reconciliaciones + 1);
       expect(Number(after.banco)).toBe(Number(before.banco) - 300);
-      expect(after.ledger).toHaveLength(before.ledger.length + 1);
+      expect(after.ledger).toHaveLength(before.ledger.length + 2);
+      expect(after.ledger.slice(before.ledger.length).map((entry) => entry.origenTipo))
+        .toEqual(['compra_documento', 'reconciliacion_gasto']);
 
       const documento = await prisma.compraDocumento.findFirstOrThrow({
         where: { tenantId, numeroFactura: `FA-${suffix}-OK` },
@@ -311,7 +318,7 @@ describe(
             origenId: documento.compraDocumentoId,
           },
         },
-        include: { lineas: { orderBy: { orden: 'asc' } } },
+        include: { lineas: { orderBy: { orden: 'asc' }, include: { cuenta: true } } },
       });
       expect(asiento.estado).toBe('CONTABILIZADO');
       expect(asiento.hash).toMatch(/^[a-f0-9]{64}$/);
@@ -326,6 +333,17 @@ describe(
       );
       expect(debe.toString()).toBe('300');
       expect(haber.toString()).toBe('300');
+      expect(asiento.lineas.map((linea) => [linea.cuenta.codigo, linea.debe.toString(), linea.haber.toString()]))
+        .toEqual([['1.3.01', '300', '0'], ['2.1.01', '0', '300']]);
+
+      const pago = await prisma.asiento.findUniqueOrThrow({
+        where: { asientoId: after.ledger[before.ledger.length + 1].id },
+        include: { lineas: { orderBy: { orden: 'asc' }, include: { cuenta: true } } },
+      });
+      expect(pago.estado).toBe('CONTABILIZADO');
+      expect(pago.hashAnterior).toBe(asiento.hash);
+      expect(pago.lineas.map((linea) => [linea.cuenta.codigo, linea.debe.toString(), linea.haber.toString()]))
+        .toEqual([['2.1.01', '300', '0'], ['1.1.01', '0', '300']]);
     });
 
     it('revierte la escritura operativa y el libro mayor cuando falla el insert del asiento', async () => {
@@ -342,6 +360,22 @@ describe(
         },
         ledgerFailUserId,
       );
+
+      expect(resultado.success).toBe(false);
+      expect(await readSnapshot()).toEqual(before);
+    });
+
+    it('revierte la compra y su asiento cuando falla el asiento del pago', async () => {
+      const before = await readSnapshot();
+      const resultado = await registrarCompra({
+        proveedorId,
+        numeroFactura: `FA-${suffix}-PAY-FAIL`,
+        formaPago: 'PAGO_COMPLETO',
+        estado: 'PAGADA',
+        cuentaId: bancoId,
+        tipoPagoId,
+        items: [{ productoId, cantidad: 5, precioCosto: 100 }],
+      }, paymentFailUserId);
 
       expect(resultado.success).toBe(false);
       expect(await readSnapshot()).toEqual(before);

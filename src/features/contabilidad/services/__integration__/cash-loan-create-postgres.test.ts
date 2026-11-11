@@ -53,7 +53,7 @@ type CreateOverrides = {
   montoCapital?: number;
   moneda?: string;
   tasaCambioAlCrear?: number;
-  idempotencyKey: string;
+  idempotencyKey?: string;
   userId?: string;
 };
 
@@ -864,5 +864,14 @@ describe('cash-loan create on isolated PostgreSQL', () => {
       `SELECT count(*)::bigint AS count FROM "${markerTable}"`,
     );
     expect(debtMarkerAfter).toEqual(debtMarkerBefore);
+  });
+  it('vincula el desembolso al préstamo incluso sin clave de idempotencia', async () => {
+    const prestamo = await createLoan({ montoCapital: 1 });
+    const desembolso = await prisma.reconciliacionVenta.findFirst({
+      where: { tenantId: tenantAId, prestamoCashId: prestamo.id,
+        tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO' },
+    });
+    expect(desembolso).not.toBeNull();
+    expect(desembolso?.idempotencyKey).toBeNull();
   });
 });

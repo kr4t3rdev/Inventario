@@ -2,10 +2,9 @@
  * @description Corrige los planes en BD usando la URL pública de Railway.
  * Uso: node scripts/fix-plans-production.mjs
  */
-import pg from "pg";
-import { v4 as uuidv4 } from "uuid";
+import { PrismaClient } from "../src/generated/prisma/index.js";
 
-const { Pool } = pg;
+const prisma = new PrismaClient();
 
 // Leer DATABASE_URL del entorno o usar la pública de Railway
 // railway variables -s Postgres --json | jq -r '.DATABASE_PUBLIC_URL'
@@ -107,10 +106,11 @@ const PLAN_EMPRESARIAL_FEATURES = {
 	"api-integraciones": false,
 };
 
-const pool = new Pool({
-	connectionString: PUBLIC_URL,
-	ssl: { rejectUnauthorized: false },
-});
+if (!PUBLIC_URL) {
+	throw new Error("DATABASE_URL o DATABASE_PUBLIC_URL es requerida");
+}
+
+process.env.DATABASE_URL = PUBLIC_URL;
 
 const now = new Date();
 const planes = [
@@ -119,6 +119,7 @@ const planes = [
 		descripcion:
 			"Base sólida para arrancar tu negocio. Incluye productos, almacenes, POS, contabilidad en CUP y backups semanales.",
 		precio: 30,
+		referralDiscountUsd: 5,
 		duracionDias: 30,
 		maxUsuarios: 3,
 		maxAlmacenes: 2,
@@ -134,7 +135,8 @@ const planes = [
 		nombre: "Profesional",
 		descripcion:
 			"PYME en crecimiento con facturación electrónica, multi-moneda, empleados, clientes y backups diarios.",
-		precio: 70,
+		precio: 60,
+		referralDiscountUsd: 10,
 		duracionDias: 30,
 		maxUsuarios: 5,
 		maxAlmacenes: 5,
@@ -150,7 +152,8 @@ const planes = [
 		nombre: "Empresarial",
 		descripcion:
 			"Máxima potencia con producción, nómina, generación EAN-13, cuentas por cobrar/pagar y backups cada hora.",
-		precio: 100,
+		precio: 90,
+		referralDiscountUsd: 15,
 		duracionDias: 30,
 		maxUsuarios: 10,
 		maxAlmacenes: 999,
@@ -164,34 +167,22 @@ const planes = [
 	},
 ];
 
-const cols = `"planId", nombre, descripcion, precio, "duracionDias", "maxUsuarios", "maxAlmacenes", "maxProductos", "maxClientes", "maxPuntosVenta", "maxFacturasMes", "maxContratos", "incluyeBackups", features, "createdAt", "updatedAt"`;
-const vals = `$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16`;
-
 try {
-	for (const p of planes) {
-		await pool.query(`INSERT INTO "Plan" (${cols}) VALUES (${vals})`, [
-			uuidv4(),
-			p.nombre,
-			p.descripcion,
-			p.precio,
-			p.duracionDias,
-			p.maxUsuarios,
-			p.maxAlmacenes,
-			p.maxProductos,
-			p.maxClientes,
-			p.maxPuntosVenta,
-			p.maxFacturasMes,
-			p.maxContratos,
-			p.incluyeBackups,
-			JSON.stringify(p.features),
-			now,
-			now,
-		]);
-		console.log("✅ Creado:", p.nombre, "- $" + p.precio + "/mes");
+	for (const plan of planes) {
+		await prisma.plan.create({
+			data: {
+				...plan,
+				features: plan.features,
+				createdAt: now,
+				updatedAt: now,
+			},
+		});
+		console.log("✅ Creado:", plan.nombre, "- $" + plan.precio + "/mes");
 	}
 	console.log("\n✅ Seed completado. 3 planes correctos.");
-} catch (e) {
-	console.error("Error:", e.message);
+} catch (error) {
+	console.error("Error:", error instanceof Error ? error.message : error);
+	process.exitCode = 1;
 } finally {
-	await pool.end();
+	await prisma.$disconnect();
 }

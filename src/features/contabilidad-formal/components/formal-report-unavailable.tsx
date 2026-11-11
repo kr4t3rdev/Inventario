@@ -21,6 +21,13 @@ const MOTIVOS_COBERTURA: Record<string, string> = {
 	RECONCILIACION_NO_CONFORME: 'La reconciliación del replay no resultó conforme.',
 	RECONCILIACION_INCOMPLETA: 'La reconciliación no cubrió todas las fuentes esperadas.',
 	LIBRO_VACIO: 'El período no tiene asientos en el mayor formal.',
+	PERIODOS_NO_CONTIGUOS: 'Hay períodos contables anteriores con intervalos incompletos o superpuestos.',
+	CORTE_FUERA_DE_PERIODO: 'La fecha de corte no pertenece al período seleccionado.',
+	ASIENTOS_FUERA_DE_PERIODO: 'Hay asientos fuera de las fechas de su período contable.',
+	CONTADORES_INVALIDOS: 'La evidencia de cobertura contiene valores inconsistentes.',
+	REPLAY_SIN_FUENTES: 'El replay no verificó fuentes para un período que tiene asientos.',
+	ASIENTOS_NO_ACREDITADOS: 'El snapshot aprobado no acredita todos los asientos del período.',
+	FUENTES_CAMBIARON: 'Las fuentes actuales no coinciden con el snapshot aprobado.',
 };
 
 interface FormalReportUnavailableProps {

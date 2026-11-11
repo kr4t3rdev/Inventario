@@ -238,6 +238,54 @@ describe(
         `DROP TRIGGER IF EXISTS "${ledgerFailureTrigger}" ON public."asientos"`,
       );
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS public."${ledgerFailureFunction}"()`);
+      // Limpieza tenant-scoped: la prueba crea tenant, actores, período,
+      // plan contable, inventario y asientos. Sin este bloque la base
+      // desechable conserva residuos sintéticos entre corridas.
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE "fx_evidence" DISABLE TRIGGER "fx_evidence_immutable_delete"',
+      );
+      try {
+        await prisma.fxEvidence.deleteMany({ where: { tenantId } });
+      } finally {
+        await prisma.$executeRawUnsafe(
+          'ALTER TABLE "fx_evidence" ENABLE TRIGGER "fx_evidence_immutable_delete"',
+        );
+      }
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE "StockMoveLine" DISABLE TRIGGER "stock_move_line_no_delete"',
+      );
+      try {
+        await prisma.stockMoveLine.deleteMany({ where: { tenantId } });
+      } finally {
+        await prisma.$executeRawUnsafe(
+          'ALTER TABLE "StockMoveLine" ENABLE TRIGGER "stock_move_line_no_delete"',
+        );
+      }
+      await prisma.stockUbicacionDetalle.deleteMany({ where: { tenantId } });
+      await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
+      await prisma.ajusteInventario.deleteMany({ where: { tenantId } });
+      await prisma.merma.deleteMany({ where: { tenantId } });
+      await prisma.asientoLinea.deleteMany({ where: { tenantId } });
+      await prisma.asiento.deleteMany({ where: { tenantId } });
+      await prisma.auditoriaPeriodo.deleteMany({ where: { tenantId } });
+      await prisma.periodoContable.deleteMany({ where: { tenantId } });
+      await prisma.periodoCache.deleteMany({ where: { tenantId } });
+      await prisma.auditLog.deleteMany({
+        where: { usuarioId: { in: [userId, ledgerFailUserId] } },
+      });
+      await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
+      await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
+      await prisma.diario.deleteMany({ where: { tenantId } });
+      await prisma.cuentaContable.deleteMany({ where: { tenantId } });
+      await prisma.ubicacion.deleteMany({ where: { tenantId } });
+      await prisma.tenantLicense.deleteMany({ where: { tenantId } });
+      await prisma.producto.deleteMany({ where: { tenantId } });
+      await prisma.categoria.deleteMany({ where: { tenantId } });
+      await prisma.almacen.deleteMany({ where: { tenantId } });
+      await prisma.tenant.deleteMany({ where: { tenantId } });
+      await prisma.user.deleteMany({
+        where: { userId: { in: [userId, ledgerFailUserId] } },
+      });
       if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
       else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
       auth.user = null;

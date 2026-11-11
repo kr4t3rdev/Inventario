@@ -3,6 +3,10 @@ import { Prisma } from '@/generated/prisma';
 import type { EventoContableInput } from '@/features/contabilidad-formal/services/posting-engine';
 import { computeReplayPreflightDigest } from '@/features/contabilidad-formal/services/replay-preflight-digest';
 import {
+	buildReplayManifestEvidence,
+	REPLAY_COLLECTOR_QUERY_IDS,
+} from '@/features/contabilidad-formal/services/replay-source-manifest';
+import {
   assertReplayPostingCapability,
   withReplayPostingCapability,
 } from '@/features/contabilidad-formal/services/replay-posting-capability';
@@ -12,6 +16,7 @@ const event: EventoContableInput = {
   origen: { tipo: 'reconciliacion_venta', id: 'sale' }, monto: '10', moneda: 'CUP',
   montoFuncional: '10', monedaFuncional: 'CUP',
 };
+const { complete: _complete, ...manifest } = buildReplayManifestEvidence([], REPLAY_COLLECTOR_QUERY_IDS);
 const snapshot = {
   tenantId: 'tenant',
   period: { periodId: 'period', startsAt: '2026-09-01T00:00:00Z', endsAt: '2026-09-30T23:59:59Z' },
@@ -28,6 +33,7 @@ const snapshot = {
       functionalCurrency: 'CUP', fxRate: null, fxEvidenceFingerprint: null,
     },
   }],
+  manifest,
 };
 const digest = computeReplayPreflightDigest(snapshot);
 const findUnique = vi.fn();
@@ -121,6 +127,23 @@ describe('runtime historical replay capability', () => {
       findUnique.mockResolvedValue(invalid);
       await expect(withReplayPostingCapability(tx, input, vi.fn())).rejects.toThrow();
     }
+  });
+
+  it('does not mint a capability for a preflight with an incomplete family manifest', async () => {
+    const run = approvedRun();
+    const incompleteSnapshot = {
+      ...run.preflight.snapshot,
+      manifest: { ...manifest, evaluatedEventTypes: [] },
+    };
+    const incompleteDigest = computeReplayPreflightDigest(incompleteSnapshot);
+    findUnique.mockResolvedValue({
+      ...run,
+      digest: incompleteDigest,
+      preflight: { ...run.preflight, snapshot: incompleteSnapshot, digest: incompleteDigest },
+      approval: { ...run.approval, digest: incompleteDigest },
+    });
+
+    await expect(withReplayPostingCapability(tx, input, vi.fn())).rejects.toThrow();
   });
 
   it('rejects missing proof and expires a capability during its scope', async () => {

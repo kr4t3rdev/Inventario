@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AccountingPageShell } from "@/features/contabilidad/components/accounting-page-shell";
 import { getReconciliacionStatsAction } from "@/features/contabilidad/actions-reconciliacion";
 import { useAuth } from "@/contexts/auth-context";
 import { shouldHideBasicAccountingItem } from "@/lib/plan-access";
@@ -107,14 +107,7 @@ const progressTrackClass = cn("bg-slate-200/70 dark:bg-slate-800/70");
 
 function ReconciliacionHubSkeleton() {
 	return (
-		<div className="space-y-8 p-8">
-			<div className="flex items-center gap-4">
-				<Skeleton className="h-10 w-20" />
-				<div>
-					<Skeleton className="mb-2 h-8 w-64" />
-					<Skeleton className="h-4 w-96" />
-				</div>
-			</div>
+		<div className="space-y-6">
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 				{[1, 2, 3].map((i) => (
 					<Skeleton key={i} className="h-[260px] w-full" />
@@ -244,29 +237,36 @@ export function ReconciliacionHubClient({
 
 	if (isLoading)
 		return (
-			<SidebarProvider>
-				<SidebarInset className="bg-background">
-					<ReconciliacionHubSkeleton />
-				</SidebarInset>
-			</SidebarProvider>
+			<AccountingPageShell
+				icon={Calculator}
+				title="Reconciliación"
+				description="Supervisa pendientes de ventas, servicios y gastos en una sola vista."
+			>
+				<ReconciliacionHubSkeleton />
+			</AccountingPageShell>
 		);
 
 	if (error)
 		return (
-			<SidebarProvider>
-				<SidebarInset className="bg-background">
-					<motion.div
-						className="relative space-y-6 p-8"
-						variants={fadeIn}
-						initial="hidden"
-						animate="show"
-					>
-						<Button variant="ghost" size="sm" asChild>
-							<Link href="/busy/contabilidad">
-								<ArrowLeft className="mr-2 h-4 w-4" />
-								Volver
-							</Link>
-						</Button>
+			<AccountingPageShell
+				icon={Calculator}
+				title="Reconciliación"
+				description="Supervisa pendientes de ventas, servicios y gastos en una sola vista."
+				actions={(
+					<Button variant="ghost" size="sm" asChild>
+						<Link href="/busy/contabilidad">
+							<ArrowLeft className="mr-2 h-4 w-4" />
+							Volver
+						</Link>
+					</Button>
+				)}
+			>
+				<motion.div
+					className="relative space-y-6"
+					variants={fadeIn}
+					initial="hidden"
+					animate="show"
+				>
 						<Card className={staticCardClass}>
 							<CardContent className="py-10 text-center">
 								<p className="text-sm text-red-600">
@@ -274,16 +274,31 @@ export function ReconciliacionHubClient({
 								</p>
 							</CardContent>
 						</Card>
-					</motion.div>
-				</SidebarInset>
-			</SidebarProvider>
+				</motion.div>
+			</AccountingPageShell>
 		);
 
 	return (
-		<SidebarProvider>
-			<SidebarInset className="bg-background">
+			<AccountingPageShell
+				icon={Calculator}
+				title="Reconciliación"
+				description="Supervisa pendientes de ventas, servicios y gastos en una sola vista."
+				actions={(
+					<div className="flex flex-wrap gap-2">
+						<Badge className={metaBadgeClass}>Pendientes: {stats.totalPending}</Badge>
+						<Badge className={metaBadgeClass}>Completados hoy: {stats.completedToday}</Badge>
+						<Badge className={metaBadgeClass}>Eficiencia: {stats.efficiency}%</Badge>
+						<Button variant="ghost" size="sm" asChild>
+							<Link href="/busy/contabilidad">
+								<ArrowLeft className="mr-2 h-4 w-4" />
+								Volver
+							</Link>
+						</Button>
+					</div>
+				)}
+			>
 				<motion.div
-					className="relative space-y-8 p-8"
+					className="relative space-y-8"
 					variants={fadeIn}
 					initial="hidden"
 					animate="show"
@@ -294,41 +309,6 @@ export function ReconciliacionHubClient({
 						animate="show"
 						className="space-y-8"
 					>
-						<motion.section
-							variants={fadeInUp}
-							className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
-						>
-							<div className="flex items-start gap-4">
-								<Button variant="ghost" size="sm" asChild className="mt-1">
-									<Link href="/busy/contabilidad">
-										<ArrowLeft className="mr-2 h-4 w-4" />
-										Volver
-									</Link>
-								</Button>
-								<div className="space-y-1">
-									<p className={sectionKickerClass}>Centro operativo</p>
-									<h1 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-semibold tracking-tight text-transparent dark:from-white dark:to-slate-300">
-										Reconciliación
-									</h1>
-									<p className={bodyTextClass}>
-										Supervisa pendientes de ventas, servicios y gastos en una
-										sola vista.
-									</p>
-								</div>
-							</div>
-							<div className="flex flex-wrap gap-2">
-								<Badge className={metaBadgeClass}>
-									Pendientes: {stats.totalPending}
-								</Badge>
-								<Badge className={metaBadgeClass}>
-									Completados hoy: {stats.completedToday}
-								</Badge>
-								<Badge className={metaBadgeClass}>
-									Eficiencia: {stats.efficiency}%
-								</Badge>
-							</div>
-						</motion.section>
-
 						<motion.section className="space-y-4" variants={fadeInUp}>
 							<div className="space-y-1">
 								<p className={sectionKickerClass}>Módulos</p>
@@ -520,7 +500,6 @@ export function ReconciliacionHubClient({
 						</motion.section>
 					</motion.div>
 				</motion.div>
-			</SidebarInset>
-		</SidebarProvider>
+			</AccountingPageShell>
 	);
 }

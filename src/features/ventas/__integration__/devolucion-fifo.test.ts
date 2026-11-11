@@ -179,7 +179,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
     await prisma.$disconnect();
   });
 
-  it('devuelve 2 unidades y aplica toda la cadena de efectos', async () => {
+  it('devuelve parcialmente y luego agota FIFO sin perder idempotencia', async () => {
     const { tenantId, user, venta } = await crearEscenario();
 
     const userCtx = {
@@ -262,5 +262,50 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
       where: { tenantId, origenId: r1.devolucionId },
     });
     expect(kardexTotal).toBe(1);
+
+    // Dos devoluciones concurrentes consumen el remanente sin sobre-restaurar
+    // inventario ni borrar más cantidad FIFO de la existente.
+    const idempotencyKeys = [crypto.randomUUID(), crypto.randomUUID()];
+    const concurrentes = await Promise.allSettled([1, 1].map((cantidad, index) =>
+      DevolucionVentaService.registrar({
+        input: {
+          ventaId: venta.ventaId,
+          items: [{ ventaItemId: venta.items[0].id, cantidad }],
+          motivo: `Devolución concurrente ${index + 2}`,
+          preferenciaFinanciera: 'SALDO_FAVOR',
+          idempotencyKey: idempotencyKeys[index],
+        },
+        user: userCtx,
+      }),
+    ));
+    expect(concurrentes.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(concurrentes.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const rejectedIndex = concurrentes.findIndex((result) => result.status === 'rejected');
+    const retry = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: venta.items[0].id, cantidad: 1 }],
+        motivo: `Reintento devolución concurrente ${rejectedIndex + 2}`,
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: idempotencyKeys[rejectedIndex],
+      },
+      user: userCtx,
+    });
+    expect(retry.devolucionId).toBeTruthy();
+
+    const asignacionesRestantes = await prisma.purchaseAllocation.findMany({
+      where: { tenantId, ventaItemId: venta.items[0].id },
+    });
+    expect(asignacionesRestantes).toHaveLength(0);
+    expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(3);
+    expect(await prisma.stockMoveLine.aggregate({
+      where: { tenantId, tipoOrigen: 'VENTA' },
+      _sum: { cantidad: true },
+    })).toMatchObject({ _sum: { cantidad: 4 } });
+
+    const restoredStock = await prisma.stockUbicacion.findFirstOrThrow({
+      where: { tenantId, tipoUbicacion: 'punto_venta', ubicacionId: venta.puntoDeVentaId },
+    });
+    expect(restoredStock.cantidadDisponible).toBe(5);
   });
 });

@@ -374,6 +374,23 @@ describe(
       // asiento de la venta a credito.
       expect(after.ledger).toHaveLength(before.ledger.length + 2);
       expect(after.allocations).toHaveLength(before.allocations.length + 1);
+      const allocation = await prisma.purchaseAllocation.findFirstOrThrow({
+        where: { tenantId, ventaItem: { ventaId: venta.ventaId } },
+        include: { compraDocumentoItem: { include: { compraDocumento: true } } },
+      });
+      expect(allocation.costoUnitarioSnapshot).toBe(100);
+      expect(allocation.fifoMonedaOrigen).toBe(allocation.compraDocumentoItem?.compraDocumento.moneda);
+      expect(allocation.fifoFechaFuente).toEqual(allocation.compraDocumentoItem?.compraDocumento.fechaCompra);
+      expect(allocation.fifoMonedaFuncional).toBe('CUP');
+      expect(Number(allocation.fifoCostoFuncional)).toBe(200);
+      const fifoEvidence = JSON.parse(allocation.fifoEvidenciaFx ?? '{}') as {
+        functionalCurrency?: string;
+        fxEvidenceFingerprint?: string;
+        rawConvertedAmount?: number;
+      };
+      expect(fifoEvidence.functionalCurrency).toBe('CUP');
+      expect(fifoEvidence.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/);
+      expect(fifoEvidence.rawConvertedAmount).toBe(200);
 
       const costo = await prisma.asiento.findUniqueOrThrow({
         where: {

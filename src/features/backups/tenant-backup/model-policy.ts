@@ -34,7 +34,8 @@ const DIRECT_TENANT_MODELS = [
   'Empleado', 'Pagosalario', 'CierreContable', 'GastoCompra',
   'CompraProducto', 'CompraDocumento', 'CompraDocumentoItem', 'OrdenCompra',
   'OrdenCompraItem', 'Recepcion', 'RecepcionItem', 'ReglaReabastecimiento', 'ReglaPutaway',
-  'PurchaseAllocation', 'Servicios', 'VentaServicios', 'CompraServicio',
+  'PurchaseAllocation', 'PurchaseReceiptInvoiceAllocation',
+  'Servicios', 'VentaServicios', 'CompraServicio',
   'GastoConcepto', 'GastoElemento', 'GastosDE', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda', 'CuentaBancaria',
   'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio', 'ReconciliacionGasto', 'Ubicacion',
@@ -78,7 +79,8 @@ const BUSINESS_MODEL_NAMES = [
   'VacationAccrual', 'Empleado', 'Pagosalario', 'CierreContable',
   'GastoCompra', 'CompraProducto', 'CompraDocumento', 'CompraDocumentoItem',
   'OrdenCompra', 'OrdenCompraItem', 'Recepcion', 'RecepcionItem',
-  'ReglaReabastecimiento', 'ReglaPutaway', 'PurchaseAllocation', 'Servicios', 'VentaServicios',
+  'ReglaReabastecimiento', 'ReglaPutaway', 'PurchaseAllocation',
+  'PurchaseReceiptInvoiceAllocation', 'Servicios', 'VentaServicios',
   'CompraServicio', 'GastoConcepto', 'GastoElemento', 'GastosDE',
   'TenantAccountingPolicy', 'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda',
   'CuentaBancaria', 'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio',
@@ -124,6 +126,7 @@ const PROTECTED_EVIDENCE_CANDIDATES = [
   'FiscalDocument', 'FiscalEmisionEvent', 'CashPaymentInterestAllocation',
   'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud',
   'CheckpointContableFormal',
+  'PurchaseAllocation', 'PurchaseReceiptInvoiceAllocation',
 ] as const;
 const PROTECTED_EVIDENCE_MODEL_SET: ReadonlySet<string> = new Set(PROTECTED_EVIDENCE_CANDIDATES);
 
@@ -144,34 +147,43 @@ const POLICY_RATIONALE: Record<TenantBackupPolicyKind, string> = {
   excluded: 'Control, security, external, or unsafe state is explicitly excluded from tenant artifacts.',
 };
 
+const DIRECT_OWNER_PATH_OVERRIDES: Readonly<Record<string, string>> = {
+  TipoContratoCustom: 'tenantId; exclude legacy NULL rows',
+  ProductoPlantilla:
+    'tenantId; variant products reference the template through a composite tenant FK',
+  UnidadConversion: 'tenantId; composite Producto and Unidad foreign keys',
+  Lote: 'tenantId; composite Producto foreign key',
+  Ubicacion: 'tenantId; composite Almacen and parent-location foreign keys',
+  PurchaseReceiptInvoiceAllocation:
+    'tenantId; composite CompraDocumentoItem and RecepcionItem foreign keys',
+};
+
+const DIRECT_RATIONALE_OVERRIDES: Readonly<Record<string, string>> = {
+  TipoContratoCustom:
+    'Tenant-owned model; never infer tenant ownership for legacy NULL tenantId rows.',
+  ProductoPlantilla:
+    'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; '
+    + 'include only after relation and field validation.',
+  UnidadConversion:
+    'Tenant-owned conversion with tenantId and composite same-tenant Producto and Unidad references; '
+    + 'relation and field review still gates export and restore.',
+  Lote:
+    'Tenant-owned lot with a same-tenant Producto reference; '
+    + 'export and restore remain gated by field review.',
+  Ubicacion:
+    'Tenant-owned warehouse location with same-tenant Almacen and parent references; '
+    + 'export and restore remain gated by relation review.',
+  PurchaseReceiptInvoiceAllocation:
+    'Tenant-owned invoice-to-receipt allocation with same-tenant CompraDocumentoItem and RecepcionItem references; '
+    + 'export and restore remain gated by relation and field review.',
+};
+
 const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
   ...DIRECT_TENANT_MODELS.map((model) => ({
     model,
     kind: 'tenant-direct' as const,
-    ownerPath: model === 'TipoContratoCustom'
-      ? 'tenantId; exclude legacy NULL rows'
-      : model === 'ProductoPlantilla'
-        ? 'tenantId; variant products reference the template through a composite tenant FK'
-        : model === 'UnidadConversion'
-        ? 'tenantId; composite Producto and Unidad foreign keys'
-        : model === 'Lote'
-          ? 'tenantId; composite Producto foreign key'
-          : model === 'Ubicacion'
-            ? 'tenantId; composite Almacen and parent-location foreign keys'
-            : 'tenantId',
-    rationale: model === 'TipoContratoCustom'
-      ? 'Tenant-owned model; never infer tenant ownership for legacy NULL tenantId rows.'
-      : model === 'ProductoPlantilla'
-        ? 'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; include only after relation and field validation.'
-        : model === 'UnidadConversion'
-        ? 'Tenant-owned conversion with tenantId and composite same-tenant Producto and Unidad references; '
-          + 'relation and field review still gates export and restore.'
-        : model === 'Lote'
-          ? 'Tenant-owned lot with a same-tenant Producto reference; export and restore remain gated by field review.'
-          : model === 'Ubicacion'
-            ? 'Tenant-owned warehouse location with same-tenant Almacen and parent references; '
-              + 'export and restore remain gated by relation review.'
-            : POLICY_RATIONALE['tenant-direct'],
+    ownerPath: DIRECT_OWNER_PATH_OVERRIDES[model] ?? 'tenantId',
+    rationale: DIRECT_RATIONALE_OVERRIDES[model] ?? POLICY_RATIONALE['tenant-direct'],
     protectedEvidenceCandidate: PROTECTED_EVIDENCE_MODEL_SET.has(model),
   })),
   ...Object.entries(CHILD_OWNER_PATHS).map(([model, ownerPath]) => ({
@@ -197,6 +209,45 @@ const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [
   })),
 ];
 
+const MANIFEST_RATIONALE_OVERRIDES: Readonly<Record<string, string>> = {
+  TipoContratoCustom:
+    'Tenant-owned model; include only validated non-null tenantId rows and never infer legacy NULL ownership.',
+  ProductoPlantilla:
+    'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; '
+    + 'include only after relation and field validation.',
+  UnidadConversion:
+    'UnidadConversion is required to preserve tenant product-unit conversion state; '
+    + 'include only after relation and field validation.',
+  Lote:
+    'Lote preserves tenant product batch identity and expiry metadata; '
+    + 'include only after relation and field validation.',
+  Ubicacion:
+    'Ubicacion preserves the tenant warehouse hierarchy; '
+    + 'include only after parent and warehouse relation validation.',
+  PurchaseReceiptInvoiceAllocation:
+    'PurchaseReceiptInvoiceAllocation preserves invoice-to-receipt FIFO cost and FX provenance evidence; '
+    + 'include only after relation and field validation.',
+};
+
+const MANIFEST_PRODUCT_IMPACT_OVERRIDES: Readonly<Record<string, string>> = {
+  TipoContratoCustom:
+    'Legacy unattributed custom types remain excluded; current tenant rows are candidates only.',
+  ProductoPlantilla:
+    'Omission can lose tenant variant attributes and catalog grouping; '
+    + 'restore eligibility is not yet approved.',
+  UnidadConversion:
+    'Omission can lose tenant conversion settings; export and restore eligibility remains '
+    + 'blocked pending relation and ordering review.',
+  Lote:
+    'Omission can lose lot-level traceability and expiry data; restore eligibility is not yet approved.',
+  Ubicacion:
+    'Omission can lose warehouse hierarchy and location assignments; '
+    + 'restore eligibility is not yet approved.',
+  PurchaseReceiptInvoiceAllocation:
+    'Omission can lose invoice-to-receipt FIFO cost and FX provenance evidence; '
+    + 'restore eligibility is not yet approved.',
+};
+
 /**
  * @description Independently maintained business coverage expectation, separate from policy rows.
  * @param modelNames - Reviewed tenant-business model names from the policy inventory.
@@ -206,34 +257,10 @@ function buildBusinessManifest(modelNames: readonly string[]): TenantBackupBusin
   return modelNames.map((model) => ({
     model,
     disposition: 'candidate',
-    rationale: model === 'TipoContratoCustom'
-      ? 'Tenant-owned model; include only validated non-null tenantId rows and never infer legacy NULL ownership.'
-      : model === 'ProductoPlantilla'
-        ? 'ProductoPlantilla stores tenant-owned, non-sellable variant definitions; include only after relation and field validation.'
-      : model === 'UnidadConversion'
-        ? [
-            'UnidadConversion is required to preserve tenant product-unit conversion state;',
-            'include only after relation and field validation.',
-          ].join(' ')
-        : model === 'Lote'
-          ? 'Lote preserves tenant product batch identity and expiry metadata; include only after relation and field validation.'
-          : model === 'Ubicacion'
-            ? 'Ubicacion preserves the tenant warehouse hierarchy; include only after parent and warehouse relation validation.'
-            : 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
-    productImpact: model === 'TipoContratoCustom'
-      ? 'Legacy unattributed custom types remain excluded; current tenant rows are candidates only.'
-      : model === 'ProductoPlantilla'
-        ? 'Omission can lose tenant variant attributes and catalog grouping; restore eligibility is not yet approved.'
-      : model === 'UnidadConversion'
-        ? [
-            'Omission can lose tenant conversion settings; export and restore eligibility remains',
-            'blocked pending relation and ordering review.',
-          ].join(' ')
-        : model === 'Lote'
-          ? 'Omission can lose lot-level traceability and expiry data; restore eligibility is not yet approved.'
-          : model === 'Ubicacion'
-            ? 'Omission can lose warehouse hierarchy and location assignments; restore eligibility is not yet approved.'
-            : 'Omission can lose tenant operational, accounting, or historical data; eligibility is not yet approved.',
+    rationale: MANIFEST_RATIONALE_OVERRIDES[model]
+      ?? 'Tenant business data is expected to be represented; model-specific field and relation review is pending.',
+    productImpact: MANIFEST_PRODUCT_IMPACT_OVERRIDES[model]
+      ?? 'Omission can lose tenant operational, accounting, or historical data; eligibility is not yet approved.',
   }));
 }
 

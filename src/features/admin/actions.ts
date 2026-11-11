@@ -250,7 +250,7 @@ export const updateUserAction = withAction(
 		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
 
-		const updateData: Record<string, any> = {};
+		const updateData: Prisma.UserUpdateManyMutationInput = {};
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.email !== undefined) updateData.email = data.email;
 		if (data.role !== undefined) updateData.role = data.role;
@@ -1339,7 +1339,7 @@ export const convertDemoToPaidPlanAction = withAction(
 				maxClientes: plan.maxClientes,
 				features: Prisma.JsonNull,
 				featureOverrides: {},
-				...resolveLicensePricing(Number(plan.precio), referred),
+				...resolveLicensePricing(Number(plan.precio), referred, Number(plan.referralDiscountUsd)),
 			},
 		});
 
@@ -1396,7 +1396,7 @@ export const changePlanAction = withAction(
 				maxClientes: newPlan.maxClientes,
 				features: Prisma.JsonNull,
 				featureOverrides: {},
-				...resolveLicensePricing(Number(newPlan.precio), referred),
+				...resolveLicensePricing(Number(newPlan.precio), referred, Number(newPlan.referralDiscountUsd)),
 			},
 		});
 
@@ -1516,7 +1516,7 @@ export const renewLicenciaAction = withAction(
 					maxClientes: newPlan.maxClientes,
 					features: samePlan ? (license.features as Prisma.InputJsonValue) : Prisma.JsonNull,
 					featureOverrides: samePlan ? (license.featureOverrides ?? {}) : {},
-					...resolveLicensePricing(Number(newPlan.precio), referred),
+					...resolveLicensePricing(Number(newPlan.precio), referred, Number(newPlan.referralDiscountUsd)),
 				},
 			});
 

@@ -9,6 +9,10 @@ import { Prisma } from '@/generated/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { withReplayPostingCapability } from '@/features/contabilidad-formal/services/replay-posting-capability';
 import { computeReplayPreflightDigest } from '@/features/contabilidad-formal/services/replay-preflight-digest';
+import {
+	buildReplayManifestEvidence,
+	REPLAY_COLLECTOR_QUERY_IDS,
+} from '@/features/contabilidad-formal/services/replay-source-manifest';
 
 import {
 	PLANTILLAS_DEFAULT,
@@ -739,6 +743,9 @@ describe('postEvento — generación de líneas', () => {
 
 	it('rejects detached replay after capability revocation at the final insert boundary', async () => {
 		const event = eventoBase();
+		const { complete: _complete, ...manifest } = buildReplayManifestEvidence(
+			[], REPLAY_COLLECTOR_QUERY_IDS,
+		);
 		const snapshot = {
 			tenantId: TENANT,
 			period: { periodId: 'per-1', startsAt: '2026-09-01T00:00:00Z', endsAt: '2026-09-30T23:59:59Z' },
@@ -755,6 +762,7 @@ describe('postEvento — generación de líneas', () => {
 					functionalCurrency: 'CUP', fxRate: null, fxEvidenceFingerprint: null,
 				},
 			}],
+			manifest,
 		};
 		const digest = computeReplayPreflightDigest(snapshot);
 		const generatedAt = new Date();

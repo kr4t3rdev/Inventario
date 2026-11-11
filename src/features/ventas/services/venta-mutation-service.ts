@@ -540,6 +540,12 @@ export const VentaMutationService = {
         numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, '0')}`;
       }
 
+      // Fecha efectiva del devengo del costo de venta. En POS el costo se
+      // devenga en la creacion (la mercaderia sale del inventario en ese
+      // momento); en PVE el devengo ocurre en la entrega, que la persiste
+      // aparte. La fecha se fija aqui para que el replay historico reconstruya
+      // el mismo periodo sin re-derivirla de marcas de tiempo mutables.
+      const fechaCostoVenta = new Date();
       const venta = await tx.venta.create({
         data: {
           tenantId,
@@ -547,6 +553,7 @@ export const VentaMutationService = {
           clienteId: parsed.clienteId ?? null,
           empleadoId: parsed.empleadoId ?? null,
           turnoId,
+          ...(esPedido ? {} : { costoVentaFecha: fechaCostoVenta }),
           // PVE: el pedido nace sin pago; el cobro se define al facturar.
           estado: esPedido
             ? 'PEDIDO'

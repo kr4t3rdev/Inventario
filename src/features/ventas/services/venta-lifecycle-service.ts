@@ -189,9 +189,13 @@ export const VentaLifecycleService = {
         }
       }
 
+      // Fecha efectiva del devengo del costo de venta: la entrega es el hecho
+      // que compensa el inventario. Se persiste en la misma transicion para
+      // que el replay historico atribuya el costo al mismo periodo.
+      const fechaCostoVenta = new Date();
       const claimed = await tx.venta.updateMany({
         where: { ventaId, tenantId, estado: 'PEDIDO', deletedAt: null },
-        data: { estado: 'ENTREGADA' },
+        data: { estado: 'ENTREGADA', costoVentaFecha: fechaCostoVenta },
       });
       if (claimed.count !== 1) {
         throw new ActionError(
@@ -242,7 +246,7 @@ export const VentaLifecycleService = {
             { tenantId, userId: user.userId },
             {
               ventaId,
-              fecha: new Date(),
+              fecha: fechaCostoVenta,
               costoFifo: costoFifo.montoFuncional,
               monedaFuncional: costoFifo.monedaFuncional,
             },

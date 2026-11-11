@@ -16,7 +16,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(163);
+    expect(schemaModelNames).toHaveLength(164);
     expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
@@ -29,7 +29,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 101,
+      'tenant-direct': 102,
       'tenant-child': 16,
       'reference-only': 10,
       excluded: 36,
@@ -44,8 +44,8 @@ describe('tenant backup model policy contract', () => {
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
-    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(117);
-    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(117);
+    expect(TENANT_BACKUP_BUSINESS_MANIFEST).toHaveLength(118);
+    expect(new Set(TENANT_BACKUP_BUSINESS_MANIFEST.map((entry) => entry.model)).size).toBe(118);
     for (const entry of TENANT_BACKUP_BUSINESS_MANIFEST) {
       const policy = getModelPolicy(entry.model);
       expect(policy, entry.model).toBeDefined();
@@ -69,9 +69,9 @@ describe('tenant backup model policy contract', () => {
     }));
 
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, excludedPolicies)
-      .ineligibleBusinessModels).toHaveLength(117);
+      .ineligibleBusinessModels).toHaveLength(118);
     expect(inspectBusinessManifestCoverage(TENANT_BACKUP_BUSINESS_MANIFEST, [])
-      .missingBusinessModels).toHaveLength(117);
+      .missingBusinessModels).toHaveLength(118);
     expect(getModelPolicy('UnreviewedFutureModel')).toBeUndefined();
   });
 
@@ -97,6 +97,22 @@ describe('tenant backup model policy contract', () => {
     expect(policy?.rationale).toContain('tenantId');
     expect(policy?.rationale).toContain('Producto');
     expect(policy?.rationale).toContain('Unidad');
+  });
+
+  it('registers invoice-to-receipt allocations as tenant-owned business data with FIFO/FX provenance', () => {
+    const entry = TENANT_BACKUP_BUSINESS_MANIFEST.find(
+      ({ model }) => model === 'PurchaseReceiptInvoiceAllocation',
+    );
+    const policy = getModelPolicy('PurchaseReceiptInvoiceAllocation');
+
+    expect(entry?.disposition).toBe('candidate');
+    expect(entry?.rationale).toContain('PurchaseReceiptInvoiceAllocation');
+    expect(entry?.rationale).toContain('FIFO');
+    expect(entry?.productImpact).toContain('restore');
+    expect(policy?.kind).toBe('tenant-direct');
+    expect(policy?.ownerPath).toContain('CompraDocumentoItem');
+    expect(policy?.ownerPath).toContain('RecepcionItem');
+    expect(policy?.protectedEvidenceCandidate).toBe(true);
   });
 
   it('registers lots and warehouse locations as tenant-owned business data', () => {

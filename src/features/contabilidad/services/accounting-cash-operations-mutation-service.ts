@@ -9,6 +9,7 @@ import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-se
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
 import { buildCashPaymentEvent } from '@/features/contabilidad-formal/lib/cash-payment-event-builder';
+import { cashPaymentAllocationFingerprint } from '@/features/contabilidad-formal/lib/cash-payment-allocation-fingerprint';
 import { calculateCashObligationPaymentAllocation } from '@/features/contabilidad-formal/lib/cash-obligation-payment-allocation';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
@@ -76,7 +77,7 @@ function buildCashInterestAllocationRecord(input: {
   fxEvidenceFingerprint: string | null;
 }) {
   const { interestAllocation: calculation } = input;
-  return {
+  const record = {
     tenantId: input.tenantId,
     reconciliacionId: input.reconciliationId,
     asientoId: input.asientoId,
@@ -109,24 +110,8 @@ function buildCashInterestAllocationRecord(input: {
     principalFunctional: input.principalFunctional,
     functionalCurrency: input.functionalCurrency,
     fxEvidenceFingerprint: input.fxEvidenceFingerprint,
-    eventFingerprint: cashCreatePayloadHash({
-      reconciliationId: input.reconciliationId,
-      obligationType: input.obligationType,
-      policyVersion: 1,
-      paymentDate: calculation.paymentDate.toISOString().slice(0, 10),
-      principalBefore: calculation.principalBefore.toFixed(4),
-      ordinaryAnnualRate: calculation.ordinaryAnnualRate.toFixed(10),
-      moratoryAnnualRate: calculation.moratoryAnnualRate.toFixed(10),
-      ordinaryCarryBefore: calculation.ordinaryCarryBefore.toString(),
-      moratoryCarryBefore: calculation.moratoryCarryBefore.toString(),
-      paymentAmount: input.paymentAmount.toFixed(4),
-      functionalAmount: input.functionalAmount.toFixed(4),
-      fxEvidenceFingerprint: input.fxEvidenceFingerprint,
-      ordinaryAllocated: calculation.allocation.allocated.ordinaryInterest.toFixed(4),
-      moratoryAllocated: calculation.allocation.allocated.moratoryInterest.toFixed(4),
-      principalAllocated: calculation.allocation.allocated.principal.toFixed(4),
-    }),
   };
+  return { ...record, eventFingerprint: cashPaymentAllocationFingerprint(record) };
 }
 
 export function validateCashPaymentAmount(amount: number): Prisma.Decimal {
@@ -503,12 +488,10 @@ export const AccountingCashOperationsMutationService = {
         data: prestamoData,
         include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
       });
-      if (idempotencyKey) {
-        await tx.reconciliacionVenta.update({
-          where: { reconciliacionId: reconciliacion.reconciliacionId },
-          data: { prestamoCashId: createdLoan.id },
-        });
-      }
+      await tx.reconciliacionVenta.update({
+        where: { reconciliacionId: reconciliacion.reconciliacionId },
+        data: { prestamoCashId: createdLoan.id },
+      });
       await postEvento(tx, { tenantId, userId: user.userId }, {
         tipo: 'PRESTAMO_OTORGADO',
         fecha: reconciliacion.fechaReconciliacion,

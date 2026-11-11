@@ -13,6 +13,7 @@ import {
 	emitirProduccionInventario,
 	emitirReconocimientoMerma,
 	emitirReversionMermaSiContabilizada,
+	revertirMermaContableEnTransaccion,
 } from '../inventory-adjustment-posting-service';
 import type { PostingTx } from '../posting-engine';
 
@@ -21,6 +22,8 @@ describe('inventory adjustment posting service', () => {
 		tenantAccountingPolicy: { findUnique: vi.fn() },
 		asiento: { findFirst: vi.fn() },
 		shadowPosteoOutbox: { findFirst: vi.fn() },
+		ajusteInventario: { findMany: vi.fn(), updateMany: vi.fn() },
+		fxEvidence: { create: vi.fn() },
 	};
 	const tx = txMock as unknown as PostingTx;
 	const ctx = { tenantId: 'tenant-1', userId: 'user-1' };
@@ -33,6 +36,43 @@ describe('inventory adjustment posting service', () => {
 		txMock.asiento.findFirst.mockResolvedValue(null);
 		txMock.shadowPosteoOutbox.findFirst.mockResolvedValue(null);
 		vi.mocked(postEvento).mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'asiento-1' });
+		txMock.ajusteInventario.findMany.mockResolvedValue([]);
+		txMock.ajusteInventario.updateMany.mockResolvedValue({ count: 1 });
+	});
+
+	it('registra una fecha de reversión por versión sin sobrescribir evidencia', async () => {
+		txMock.ajusteInventario.findMany.mockResolvedValue([{ id: 'ajuste-1', costoTotal: -1250, createdAt: fecha }]);
+		txMock.asiento.findFirst.mockResolvedValue({ asientoId: 'asiento-1' });
+		await revertirMermaContableEnTransaccion(tx, ctx, 'merma-1');
+		expect(txMock.ajusteInventario.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+			where: expect.objectContaining({ id: 'ajuste-1', tenantId: ctx.tenantId,
+				estado: 'APLICADO', mermaReversionFecha: null }),
+			data: expect.objectContaining({ mermaReversionFecha: expect.any(Date), mermaReversionRegistradaAt: expect.any(Date) }),
+		}));
+		const registro = txMock.ajusteInventario.updateMany.mock.calls[0][0].data;
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({ fecha: registro.mermaReversionFecha }));
+	});
+
+	it('rechaza la reversión cuando otra operación ya reclamó la evidencia', async () => {
+		txMock.ajusteInventario.findMany.mockResolvedValue([{ id: 'ajuste-1', costoTotal: -1250, createdAt: fecha }]);
+		txMock.ajusteInventario.updateMany.mockResolvedValue({ count: 0 });
+		await expect(revertirMermaContableEnTransaccion(tx, ctx, 'merma-1')).rejects.toThrow();
+		expect(postEvento).not.toHaveBeenCalled();
+	});
+
+	it('no conserva fecha formal cuando no existe asiento original', async () => {
+		txMock.ajusteInventario.findMany.mockResolvedValue([{ id: 'ajuste-1', costoTotal: -1250, createdAt: fecha }]);
+		await revertirMermaContableEnTransaccion(tx, ctx, 'merma-1');
+		expect(txMock.ajusteInventario.updateMany).toHaveBeenLastCalledWith(expect.objectContaining({
+			data: { mermaReversionFecha: null, mermaReversionRegistradaAt: null },
+		}));
+	});
+
+	it('rechaza un reverso preexistente cuya fecha no puede inferirse', async () => {
+		txMock.ajusteInventario.findMany.mockResolvedValue([{ id: 'ajuste-1', costoTotal: -1250, createdAt: fecha }]);
+		txMock.asiento.findFirst.mockResolvedValue({ asientoId: 'asiento-1' });
+		vi.mocked(postEvento).mockResolvedValue({ estado: 'YA_EXISTENTE', asientoId: 'asiento-2' });
+		await expect(revertirMermaContableEnTransaccion(tx, ctx, 'merma-1')).rejects.toThrow('MERMA_REVERSION_EVIDENCIA_CONFLICTO');
 	});
 
 	it('emite MERMA_INVENTARIO anclada a la versión del ajuste', async () => {
@@ -66,6 +106,21 @@ describe('inventory adjustment posting service', () => {
 			monto: 1250,
 			montoFuncional: 1250,
 		}));
+	});
+
+	it('persiste la evidencia FX utilizada para el reverso en la misma transacción', async () => {
+		txMock.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'USD' });
+		txMock.asiento.findFirst.mockResolvedValue({ asientoId: 'asiento-1' });
+		vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({ tasaId: 'rate-1', tasa: 0.04, fechaVigencia: fecha });
+		await emitirReversionMermaSiContabilizada(tx, ctx, {
+			ajusteInventarioId: 'ajuste-1', fecha, costoTotal: 1250, fechaValoracionOriginal: fecha,
+		});
+		expect(txMock.fxEvidence.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+			tenantId: ctx.tenantId, sourceType: 'ajuste_merma_reversado', sourceId: 'ajuste-1',
+			originalAmount: 1250, originalCurrency: 'CUP', functionalAmount: 50, functionalCurrency: 'USD',
+			exchangeRate: 0.04, rateEffectiveAt: fecha, cutoffAt: fecha, fxCatalogRateId: 'rate-1',
+			evidenceFingerprint: expect.any(String), evidence: expect.objectContaining({ rawConvertedAmount: 50 }),
+		}) });
 	});
 
 	it('no emite reverso cuando no existe asiento original', async () => {

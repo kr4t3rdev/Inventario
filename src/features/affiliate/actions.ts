@@ -705,7 +705,10 @@ export const applyAffiliateCreditsToLicensePreviewAction = withAction(
     const availableCreditUsd = await getAvailableCreditForTenant(tenantLicense.tenantId);
     const referred = await isTenantReferred(tenantLicense.tenantId);
     const listPriceUsd = referred
-      ? getReferralPrice(toNumber(tenantLicense.plan?.precio ?? 0))
+      ? getReferralPrice(
+          toNumber(tenantLicense.plan?.precio ?? 0),
+          toNumber(tenantLicense.plan?.referralDiscountUsd ?? 0),
+        )
       : toNumber(tenantLicense.plan?.precio ?? 0);
     const snapshot = buildAffiliateCreditSnapshot({
       listPriceUsd,

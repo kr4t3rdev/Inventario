@@ -27,10 +27,19 @@
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
+import { resolveAppliedReconciliationAmount } from '@/features/contabilidad/domain/applied-reconciliation-amount';
+import { verifyAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { resolverValuacionOperativa } from '../lib/functional-valuation-resolver';
+import {
+	buildReplayManifestEvidence,
+	type ReplayCollectorQueryId,
+} from './replay-source-manifest';
 import { buildFunctionalValuation } from '../lib/functional-valuation';
 import { buildAnticipoEvent } from '../lib/advance-event-builder';
+import { buildCashPaymentEvent } from '../lib/cash-payment-event-builder';
+import { cashPaymentAllocationFingerprint } from '../lib/cash-payment-allocation-fingerprint';
+import { getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import type { TipoEventoClave } from '../lib/plan-default';
 import { derivarMedioCobro } from '../lib/settlement-event-builder';
 import { construirEventoLiquidacion } from './settlement-posting-service';
@@ -48,6 +57,63 @@ import type { EventoContableInput } from './posting-engine';
 
 /** Cliente Prisma que sirve tanto para lectura como para transaccion. */
 export type ReplayDb = typeof prisma | Prisma.TransactionClient;
+
+const QUERY_ID_BY_MODEL = {
+	reconciliacionVenta: 'reconciliacionVenta',
+	reconciliacionServicio: 'reconciliacionServicio',
+	transferenciaBancaria: 'transferenciaBancaria',
+	factura: 'factura',
+	cuentaPorCobrar: 'cuentaPorCobrar',
+	cuentaBancaria: 'cuentaBancaria',
+	reconciliacionGasto: 'reconciliacionGasto',
+	compraDocumento: 'compraDocumento',
+	compraServicio: 'compraServicio',
+	ventaServicios: 'ventaServicios',
+	anticipoMovimiento: 'anticipoMovimiento',
+	devolucionVenta: 'devolucionVenta',
+	ajusteBancario: 'ajusteBancario',
+	inyeccionCapital: 'inyeccionCapital',
+	deudaCash: 'deudaCash',
+	prestamoCash: 'prestamoCash',
+	ajusteInventario: 'ajusteInventarioMerma',
+	asiento: 'asientoMerma',
+	cuentaRolTenant: 'cuentaRolTenantMerma',
+	fxEvidence: 'fxEvidenceMermaReversada',
+	tenantAccountingPolicy: 'tenantAccountingPolicy',
+	venta: 'ventaConCosto',
+	ordenProduccion: 'ordenProduccion',
+} as const satisfies Record<string, ReplayCollectorQueryId>;
+
+/**
+ * @description Observes source-query model operations without changing the Prisma client.
+ * @param {ReplayDb} db - Prisma client used by the collector.
+ * @param {(queryId: ReplayCollectorQueryId) => void} onQuery - Query evidence sink.
+ * @returns {ReplayDb} Prisma proxy that records invoked source queries.
+ */
+function trackSourceQueries(
+	db: ReplayDb,
+	onQuery: (queryId: ReplayCollectorQueryId) => void,
+): ReplayDb {
+	return new Proxy(db, {
+		get(target, model, receiver) {
+			const delegate = Reflect.get(target, model, receiver);
+			const queryId = QUERY_ID_BY_MODEL[String(model) as keyof typeof QUERY_ID_BY_MODEL];
+			if (!queryId || !delegate || typeof delegate !== 'object') return delegate;
+			return new Proxy(delegate, {
+				get(queryTarget, method, queryReceiver) {
+					const operation = Reflect.get(queryTarget, method, queryReceiver);
+					if ((method !== 'findMany' && method !== 'findUnique') ||
+						typeof operation !== 'function') return operation;
+					return (...args: unknown[]) => {
+						const result = Reflect.apply(operation, queryTarget, args);
+						onQuery(queryId);
+						return result;
+					};
+				},
+			});
+		},
+	});
+}
 
 /** Candidato reconstruido con el evento formal listo para contabilizar. */
 export interface CandidatoReplay {
@@ -154,10 +220,18 @@ function diferenciaFxPersistida(movimiento: {
  */
 export async function recolectarCandidatos(
 	tenantId: string,
-	client: ReplayDb = prisma,
+	db: ReplayDb = prisma,
+	onQueryExecuted: (queryId: ReplayCollectorQueryId) => void = () => undefined,
 ): Promise<CandidatoReplay[]> {
+	const executedQueryIds = new Set<ReplayCollectorQueryId>();
+	let client = trackSourceQueries(db, (queryId) => {
+		executedQueryIds.add(queryId);
+		onQueryExecuted(queryId);
+	});
 	const [
 		reconciliacionesVenta,
+		reconciliacionesServicio,
+		transferenciasBancarias,
 		facturas,
 		cuentasPorCobrar,
 		cuentasBancarias,
@@ -169,7 +243,15 @@ export async function recolectarCandidatos(
 		devolucionesVenta,
 		ajustesBancarios,
 		inyeccionesCapital,
+		deudasCash,
+		prestamosCash,
+		ajustesMerma,
+		originalesMerma,
+		rolesMerma,
+		fxReversosMerma,
 		politica,
+		ventasConCosto,
+		ordenesProduccion,
 	] = await Promise.all([
 		client.reconciliacionVenta.findMany({
 			where: { tenantId },
@@ -183,9 +265,21 @@ export async function recolectarCandidatos(
 				functionalCurrency: true,
 				tasaCambio: true,
 				fxEvidenceFingerprint: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceVersion: true,
 				fechaReconciliacion: true,
 				observaciones: true,
 				idTransferencia: true,
+				deudaCashId: true,
+				prestamoCashId: true,
+				idempotencyKey: true,
+				tipoReconciliacion: true,
+				cashInterestAllocation: { include: { asiento: {
+					select: { tenantId: true, origenTipo: true, origenId: true },
+				} } },
 				venta: {
 					select: {
 						ventaId: true,
@@ -193,6 +287,48 @@ export async function recolectarCandidatos(
 						factura: { select: { idFactura: true } },
 					},
 				},
+			},
+		}),
+		client.reconciliacionServicio.findMany({
+			where: { tenantId },
+			select: {
+				reconciliacionId: true,
+				ventaServicioId: true,
+				cuentaId: true,
+				monto: true,
+				moneda: true,
+				montoConvertido: true,
+				functionalCurrency: true,
+				tasaCambio: true,
+				fxEvidenceFingerprint: true,
+				rateEffectiveAt: true,
+				fxProvenanceKind: true,
+				fxProvenanceSource: true,
+				fxCatalogRateId: true,
+				fxEvidenceVersion: true,
+				fechaReconciliacion: true,
+				observaciones: true,
+			},
+		}),
+		client.transferenciaBancaria.findMany({
+			where: { tenantId },
+			select: {
+				transferenciaId: true,
+				tenantId: true,
+				numeroComprobante: true,
+				cuentaOrigenId: true,
+				cuentaDestinoId: true,
+				montoOrigen: true,
+				monedaOrigen: true,
+				montoDestino: true,
+				monedaDestino: true,
+				tasaCambio: true,
+				motivo: true,
+				descripcion: true,
+				fechaTransferencia: true,
+				existe: true,
+				cuentaOrigen: { select: { cuentaId: true, tenantId: true, moneda: true } },
+				cuentaDestino: { select: { cuentaId: true, tenantId: true, moneda: true } },
 			},
 		}),
 		client.factura.findMany({
@@ -324,11 +460,89 @@ export async function recolectarCandidatos(
 				fechaRegistro: true,
 			},
 		}),
+		client.deudaCash.findMany({
+			where: { tenantId },
+			select: {
+				id: true, tenantId: true, proveedorId: true, montoCapital: true, moneda: true,
+				observaciones: true, deletedAt: true, cashInterestGrantDate: true, createdAt: true,
+			},
+		}),
+		client.prestamoCash.findMany({
+			where: { tenantId },
+			select: {
+				id: true, tenantId: true, clienteId: true, montoCapital: true, moneda: true,
+				observaciones: true, deletedAt: true, cashInterestGrantDate: true, fechaOtorgamiento: true,
+			},
+		}),
+		client.ajusteInventario.findMany({
+			where: { tenantId, origenMermaId: { not: null } },
+			select: { id: true, tenantId: true, origenMermaId: true, estado: true, costoTotal: true, createdAt: true,
+				mermaReversionFecha: true, mermaReversionRegistradaAt: true },
+		}),
+		client.asiento.findMany({ where: { tenantId, origenTipo: 'ajuste_merma' },
+			select: { origenId: true, fecha: true, estado: true, lineas: { select: {
+				cuentaId: true, debe: true, haber: true, monedaOriginal: true, montoOriginal: true, tasaCambio: true,
+				fxEvidenceFingerprint: true,
+			} } } }),
+		client.cuentaRolTenant.findMany({ where: { tenantId, rol: { in: ['MERMAS', 'INVENTARIOS'] } },
+			select: { rol: true, cuentaId: true } }),
+		client.fxEvidence.findMany({ where: { tenantId, sourceType: 'ajuste_merma_reversado' } }),
 		client.tenantAccountingPolicy.findUnique({
 			where: { tenantId },
 			select: { functionalCurrencyCode: true },
 		}),
-	]);
+			client.venta.findMany({
+			where: {
+				tenantId,
+				deletedAt: null,
+				estado: { in: ['ENTREGADA', 'FACTURADA'] },
+				items: { some: {} },
+			},
+			select: {
+				ventaId: true,
+				estado: true,
+				createdAt: true,
+				costoVentaFecha: true,
+				items: { select: { cantidad: true, productoId: true, allocations: { select: {
+					cantidad: true,
+					compraDocumentoItemId: true,
+					recepcionItemId: true,
+					purchaseReceiptInvoiceAllocationId: true,
+					costoUnitarioSnapshot: true,
+					fifoMonedaOrigen: true,
+					fifoFechaFuente: true,
+					fifoMonedaFuncional: true,
+					fifoCostoFuncional: true,
+					fifoEvidenciaFx: true,
+					purchaseReceiptInvoiceAllocation: { select: {
+						id: true, tenantId: true, compraDocumentoItemId: true, recepcionItemId: true,
+						cantidad: true, costoUnitarioSnapshot: true, fifoMonedaOrigen: true,
+						fifoFechaFuente: true, fifoMonedaFuncional: true, fifoCostoFuncional: true,
+						fifoEvidenciaFx: true,
+						compraDocumentoItem: { select: {
+							compraDocumentoItemId: true, tenantId: true, productoId: true,
+							compraDocumento: { select: { tenantId: true, estado: true, deletedAt: true } },
+						} },
+					} },
+					compraDocumentoItem: { select: {
+						compraDocumentoItemId: true,
+						tenantId: true,
+						productoId: true,
+						compraDocumento: { select: { tenantId: true, estado: true, deletedAt: true } },
+					} },
+				} } } } },
+			}),
+			client.ordenProduccion.findMany({
+				where: { tenantId, estado: 'COMPLETADA', fechaContabilizacion: { not: null } },
+				select: {
+					ordenProduccionId: true,
+					tenantId: true,
+					fechaContabilizacion: true,
+					costoMateriales: true,
+				},
+			}),
+		]);
+	client = db;
 	const tipoCuentaPorCuenta = new Map(
 		cuentasBancarias.map((cuenta) => [cuenta.cuentaId, cuenta.tipoCuenta]),
 	);
@@ -338,6 +552,87 @@ export async function recolectarCandidatos(
 			.map((cuenta) => [cuenta.facturaId as string, cuenta]),
 	);
 	const monedaFuncional = politica?.functionalCurrencyCode?.trim().toUpperCase() || null;
+	const candidatosMerma: CandidatoReplay[] = ajustesMerma.map((ajuste) => {
+		const monto = Math.abs(Number(ajuste.costoTotal));
+		const duplicado = ajustesMerma.some((otro) => otro.id !== ajuste.id && otro.estado === 'APLICADO' &&
+			ajuste.estado === 'APLICADO' && otro.origenMermaId === ajuste.origenMermaId);
+		const causa = ajuste.tenantId !== tenantId || !ajuste.origenMermaId ? 'IDENTIDAD_NO_VERIFICABLE' :
+			ajuste.estado !== 'APLICADO' ? CAUSA_ANULADO : duplicado ? 'IDENTIDAD_AMBIGUA' :
+			!Number.isFinite(monto) || monto <= 0 ? 'MONTO_NO_POSITIVO' :
+			monedaFuncional !== 'CUP' ? CAUSA_VALORACION_NO_VERIFICABLE : undefined;
+		const valoracion = Number.isFinite(monto) && monto > 0 && monedaFuncional === 'CUP' ? buildFunctionalValuation({ monto, moneda: 'CUP', functionalCurrency: monedaFuncional,
+			fechaOperacion: ajuste.createdAt, fechaTasa: ajuste.createdAt, source: 'inventory-adjustment-posting-service' }) : null;
+		return { origenTipo: 'ajuste_merma', origenId: ajuste.id, fecha: ajuste.createdAt,
+			evento: { tipo: 'MERMA_INVENTARIO', fecha: ajuste.createdAt,
+				descripcion: `Reconocimiento de merma ${ajuste.id}`, origen: { tipo: 'ajuste_merma', id: ajuste.id },
+				monto, moneda: 'CUP', montoFuncional: monedaFuncional === 'CUP' ? monto : null,
+				monedaFuncional, tasaCambio: valoracion?.tasaCambio ?? null, fxEvidenceFingerprint: valoracion?.fxEvidenceFingerprint ?? null },
+			...(causa ? { causaOmision: causa } : {}) };
+	});
+	for (const ajuste of ajustesMerma) {
+		const fecha = ajuste.mermaReversionFecha;
+		if (!fecha) continue;
+		const monto = Math.abs(Number(ajuste.costoTotal));
+		const original = originalesMerma.find((asiento) => asiento.origenId === ajuste.id);
+		const cuentaMerma = rolesMerma.find((rol) => rol.rol === 'MERMAS')?.cuentaId;
+		const cuentaInventario = rolesMerma.find((rol) => rol.rol === 'INVENTARIOS')?.cuentaId;
+		const registrosFx = fxReversosMerma.filter((item) => item.sourceId === ajuste.id);
+		const fx = registrosFx.length === 1 ? registrosFx[0] : null;
+		const detalleFx = fx?.evidence && typeof fx.evidence === 'object' && !Array.isArray(fx.evidence)
+			? fx.evidence as Prisma.JsonObject : null;
+		const montoSinRedondear = typeof detalleFx?.rawConvertedAmount === 'number'
+			? detalleFx.rawConvertedAmount : null;
+		const tasaSinRedondear = typeof detalleFx?.rawExchangeRate === 'number' ? detalleFx.rawExchangeRate : null;
+		const fxValido = Boolean(fx && fx.tenantId === tenantId && fx.originalCurrency === 'CUP' &&
+			fx.functionalCurrency === monedaFuncional && fx.source === 'inventory-adjustment-posting-service' &&
+			fx.originalAmount.equals(monto) && fx.cutoffAt.getTime() === ajuste.createdAt.getTime() &&
+			montoSinRedondear !== null && Number.isFinite(montoSinRedondear) &&
+			tasaSinRedondear !== null && Number.isFinite(tasaSinRedondear) &&
+			new Prisma.Decimal(montoSinRedondear).toDecimalPlaces(8, Prisma.Decimal.ROUND_HALF_UP).equals(fx.functionalAmount) &&
+			new Prisma.Decimal(tasaSinRedondear).toDecimalPlaces(10, Prisma.Decimal.ROUND_HALF_UP).equals(fx.exchangeRate) &&
+			fx.rateEffectiveAt <= fx.cutoffAt && verifyAppliedFxEvidence({ originalAmount: monto,
+				originalCurrency: fx.originalCurrency, functionalCurrency: fx.functionalCurrency,
+				convertedAmount: montoSinRedondear, exchangeRate: tasaSinRedondear,
+				rateEffectiveAt: fx.rateEffectiveAt, fxProvenanceKind: fx.provenance, fxProvenanceSource: fx.source,
+				fxCatalogRateId: fx.fxCatalogRateId, fxEvidenceFingerprint: fx.evidenceFingerprint,
+				fxEvidenceVersion: fx.evidenceVersion }));
+		const valorFuncional = monedaFuncional === 'CUP' ? monto : fxValido ? montoSinRedondear : null;
+		const importe = new Prisma.Decimal(valorFuncional ?? 0).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+		const importeOriginal = new Prisma.Decimal(monto);
+		const lineaValida = (cuentaId: string | undefined, lado: 'debe' | 'haber') =>
+			Boolean(cuentaId && original?.lineas.some((linea) => linea.cuentaId === cuentaId &&
+				linea[lado].equals(importe) && linea[lado === 'debe' ? 'haber' : 'debe'].isZero() &&
+				linea.monedaOriginal === 'CUP' && linea.montoOriginal.equals(importeOriginal) &&
+				(monedaFuncional === 'CUP' ? (linea.tasaCambio === null || linea.tasaCambio.equals(1)) :
+					Boolean(fx && linea.tasaCambio?.equals(fx.exchangeRate) && linea.fxEvidenceFingerprint === fx.evidenceFingerprint))));
+		const originalValido = original?.estado === 'CONTABILIZADO' &&
+			original.fecha.getTime() === ajuste.createdAt.getTime() && original.lineas.length === 2 &&
+			cuentaMerma !== cuentaInventario && lineaValida(cuentaMerma, 'debe') && lineaValida(cuentaInventario, 'haber');
+		if (monedaFuncional !== 'CUP' && fxValido && fx && originalValido) {
+			const indice = candidatosMerma.findIndex((item) => item.origenTipo === 'ajuste_merma' && item.origenId === ajuste.id);
+			if (indice >= 0) {
+				const candidatoOriginal = candidatosMerma[indice];
+				candidatosMerma[indice] = { ...candidatoOriginal, evento: { ...candidatoOriginal.evento,
+					montoFuncional: valorFuncional, tasaCambio: tasaSinRedondear,
+					fxEvidenceFingerprint: fx.evidenceFingerprint } };
+			}
+		}
+		const causa = ajuste.tenantId !== tenantId || !ajuste.origenMermaId || ajuste.estado !== 'ANULADO' ||
+			!ajuste.mermaReversionRegistradaAt || ajuste.mermaReversionRegistradaAt.getTime() !== fecha.getTime() ||
+			fecha < ajuste.createdAt ? 'REVERSION_NO_VERIFICABLE' :
+			!Number.isFinite(monto) || monto <= 0 ? 'MONTO_NO_POSITIVO' :
+			valorFuncional === null ? CAUSA_VALORACION_NO_VERIFICABLE :
+			!originalValido ? 'ORIGINAL_NO_VERIFICABLE' : undefined;
+		const valoracion = !causa && monedaFuncional === 'CUP' ? buildFunctionalValuation({ monto, moneda: 'CUP', functionalCurrency: monedaFuncional,
+			fechaOperacion: fecha, fechaTasa: ajuste.createdAt, source: 'inventory-adjustment-posting-service' }) : null;
+		candidatosMerma.push({ origenTipo: 'ajuste_merma_reversado', origenId: ajuste.id, fecha,
+			evento: { tipo: 'MERMA_INVENTARIO_REVERSADA', fecha, descripcion: `Reversión de merma ${ajuste.id}`,
+				origen: { tipo: 'ajuste_merma_reversado', id: ajuste.id }, monto, moneda: 'CUP',
+				montoFuncional: valorFuncional, monedaFuncional,
+				tasaCambio: valoracion?.tasaCambio ?? (fxValido ? tasaSinRedondear : null),
+				fxEvidenceFingerprint: valoracion?.fxEvidenceFingerprint ?? (fxValido && fx ? fx.evidenceFingerprint : null) },
+			...(causa ? { causaOmision: causa } : {}) });
+	}
 
 	/**
 	 * @description Resuelve la cuenta por cobrar de una factura.
@@ -357,7 +652,251 @@ export async function recolectarCandidatos(
 		reconciliacionesPorVenta.set(reconciliacion.ventaId, lista);
 	}
 
-	const candidatos: CandidatoReplay[] = [];
+	const candidatos: CandidatoReplay[] = [...candidatosMerma];
+
+	for (const orden of ordenesProduccion) {
+		const fecha = orden.fechaContabilizacion;
+		if (!fecha || orden.tenantId !== tenantId) continue;
+		const monto = Math.abs(Number(orden.costoMateriales));
+		const valoracion = Number.isFinite(monto) && monto > 0
+			? await resolverValuacionOperativa({
+				tx: client as Prisma.TransactionClient,
+				tenantId,
+				monto,
+				moneda: 'CUP',
+				fechaOperacion: fecha,
+				source: 'inventory-adjustment-posting-service',
+			})
+			: null;
+		const omision = !Number.isFinite(monto) || monto <= 0
+			? 'MONTO_NO_POSITIVO'
+			: !valoracion?.monedaFuncional || valoracion.montoFuncional === null
+				? CAUSA_VALORACION_NO_VERIFICABLE
+				: undefined;
+		candidatos.push({
+			origenTipo: 'orden_produccion',
+			origenId: orden.ordenProduccionId,
+			fecha,
+			evento: {
+				tipo: 'PRODUCCION_SALIDA',
+				fecha,
+				descripcion: `Reclasificación de costo de producción ${orden.ordenProduccionId}`,
+				origen: { tipo: 'orden_produccion', id: orden.ordenProduccionId },
+				monto,
+				moneda: 'CUP',
+				montoFuncional: valoracion?.montoFuncional ?? null,
+				monedaFuncional: valoracion?.monedaFuncional ?? null,
+				tasaCambio: valoracion?.tasaCambio ?? null,
+				fxEvidenceFingerprint: valoracion?.fxEvidenceFingerprint ?? null,
+			},
+			...(omision ? { causaOmision: omision } : {}),
+		});
+	}
+
+	for (const venta of ventasConCosto) {
+		// La fecha efectiva del devengo la persiste el writer; sin ella no se
+		// puede atribuir el costo a un periodo y la fuente queda omitida.
+		const fecha = venta.costoVentaFecha ?? venta.createdAt;
+		const asignaciones = venta.items.flatMap((item) => item.allocations.map((asignacion) => ({
+			...asignacion,
+			productoIdVenta: item.productoId,
+		})));
+		const cantidadEsperada = venta.items.reduce((total, item) => total + item.cantidad, 0);
+		const cantidadAsignada = asignaciones.reduce((total, item) => total + item.cantidad, 0);
+		const asignacionesVerificables = cantidadEsperada > 0 && asignaciones.length > 0 &&
+			cantidadAsignada === cantidadEsperada && asignaciones.every((item) => {
+				const hasReceipt = item.recepcionItemId !== null;
+				const hasInvoiceLayer = item.purchaseReceiptInvoiceAllocationId !== null;
+				const compraDirecta = item.compraDocumentoItem;
+				const fuenteDirectaVerificable = !hasReceipt && Boolean(compraDirecta &&
+					compraDirecta.compraDocumentoItemId === item.compraDocumentoItemId &&
+					compraDirecta.tenantId === tenantId && compraDirecta.productoId === item.productoIdVenta &&
+					compraDirecta.compraDocumento.tenantId === tenantId &&
+					compraDirecta.compraDocumento.estado !== 'ANULADA' &&
+					compraDirecta.compraDocumento.deletedAt === null);
+				const capaRecepcion = item.purchaseReceiptInvoiceAllocation;
+				const lineaCapa = capaRecepcion?.compraDocumentoItem;
+				const fuenteRecepcionVerificable = hasReceipt && Boolean(capaRecepcion && lineaCapa &&
+					item.compraDocumentoItemId === null && capaRecepcion.id === item.purchaseReceiptInvoiceAllocationId &&
+					capaRecepcion.tenantId === tenantId && capaRecepcion.recepcionItemId === item.recepcionItemId &&
+					capaRecepcion.cantidad >= item.cantidad && capaRecepcion.costoUnitarioSnapshot !== null &&
+					capaRecepcion.fifoMonedaOrigen?.trim() && capaRecepcion.fifoFechaFuente &&
+					capaRecepcion.fifoMonedaFuncional?.trim() && capaRecepcion.fifoCostoFuncional !== null &&
+					capaRecepcion.fifoEvidenciaFx &&
+					lineaCapa.compraDocumentoItemId === capaRecepcion.compraDocumentoItemId &&
+					lineaCapa.tenantId === tenantId && lineaCapa.productoId === item.productoIdVenta &&
+					lineaCapa.compraDocumento.tenantId === tenantId &&
+					lineaCapa.compraDocumento.deletedAt === null &&
+					item.costoUnitarioSnapshot === capaRecepcion.costoUnitarioSnapshot &&
+					item.fifoMonedaOrigen?.trim().toUpperCase() ===
+						capaRecepcion.fifoMonedaOrigen.trim().toUpperCase() &&
+					item.fifoFechaFuente?.getTime() === capaRecepcion.fifoFechaFuente.getTime());
+				return Number.isSafeInteger(item.cantidad) && item.cantidad > 0 &&
+					item.costoUnitarioSnapshot !== null && item.fifoMonedaOrigen?.trim() &&
+					item.fifoFechaFuente && item.fifoMonedaFuncional?.trim() &&
+					item.fifoCostoFuncional !== null && item.fifoEvidenciaFx &&
+					((hasReceipt ? fuenteRecepcionVerificable :
+						item.compraDocumentoItemId !== null && fuenteDirectaVerificable)) &&
+					hasReceipt === hasInvoiceLayer;
+			});
+		const tieneDevoluciones = devolucionesVenta.some((item) => item.ventaId === venta.ventaId);
+		const fechaPersistida = venta.costoVentaFecha != null;
+		const costo = !tieneDevoluciones && fechaPersistida && asignacionesVerificables
+			? await getCostoFifoVentaValorado(client as Prisma.TransactionClient, tenantId, venta.ventaId)
+			: null;
+		const causa = tieneDevoluciones ? 'DEVOLUCION_FIFO_NO_RECONSTRUIBLE' :
+			!fechaPersistida ? 'FECHA_COSTO_FIFO_NO_PERSISTIDA' :
+			!asignacionesVerificables ? 'ASIGNACION_FIFO_NO_VERIFICABLE' :
+			!costo || costo.cantidad !== cantidadEsperada || costo.montoFuncional === null ||
+			!costo.monedaFuncional || !Number.isFinite(costo.montoFuncional) || costo.montoFuncional <= 0
+				? CAUSA_VALORACION_NO_VERIFICABLE : undefined;
+		const monto = costo?.montoFuncional ?? 0;
+		const moneda = costo?.monedaFuncional ?? monedaFuncional;
+		candidatos.push({
+			origenTipo: 'venta_costo',
+			origenId: venta.ventaId,
+			fecha,
+			evento: {
+				tipo: 'COSTO_VENTA_DEVENGADO',
+				fecha,
+				descripcion: 'Costo FIFO histórico de venta ' + venta.ventaId,
+				origen: { tipo: 'venta_costo', id: venta.ventaId },
+				monto,
+				moneda,
+				montoFuncional: causa ? null : monto,
+				monedaFuncional: moneda,
+				tasaCambio: null,
+				fxEvidenceFingerprint: null,
+				...(causa ? {} : { auxiliares: { costoFifo: monto } }),
+			},
+			...(causa ? { causaOmision: causa } : {}),
+		});
+	}
+
+	// Los desembolsos Cash solo se acreditan con su conciliación original.
+	const obligaciones = [
+		...deudasCash.map((deuda) => ({
+			...deuda, tipoOrigen: 'deuda_cash' as const, tipoEvento: 'DEUDA_RECIBIDA' as const,
+			tipoConciliacion: 'DEUDA_CASH_DESEMBOLSO', parteId: deuda.proveedorId,
+			textoPredeterminado: `Desembolso de deuda cash para proveedor ${deuda.proveedorId}`,
+			fechaAlternativa: deuda.cashInterestGrantDate ?? deuda.createdAt,
+		})),
+		...prestamosCash.map((prestamo) => ({
+			...prestamo, tipoOrigen: 'prestamo_cash' as const, tipoEvento: 'PRESTAMO_OTORGADO' as const,
+			tipoConciliacion: 'PRESTAMO_CASH_DESEMBOLSO', parteId: prestamo.clienteId,
+			textoPredeterminado: `Desembolso de préstamo cash para cliente ${prestamo.clienteId}`,
+			fechaAlternativa: prestamo.cashInterestGrantDate ?? prestamo.fechaOtorgamiento,
+		})),
+	];
+	for (const deuda of obligaciones) {
+		const desembolsos = reconciliacionesVenta.filter((item) =>
+			(item.deudaCashId === deuda.id && deuda.tipoOrigen === 'deuda_cash' ||
+				item.prestamoCashId === deuda.id && deuda.tipoOrigen === 'prestamo_cash') &&
+			item.tipoReconciliacion === deuda.tipoConciliacion);
+		const desembolso = desembolsos.length === 1 ? desembolsos[0] : null;
+		const moneda = deuda.moneda.trim().toUpperCase();
+		const funcional = desembolso?.functionalCurrency?.trim().toUpperCase() || null;
+		const monto = new Prisma.Decimal(deuda.montoCapital);
+		const mismoMonto = desembolso && monto.equals(desembolso.monto);
+		const mismaMoneda = desembolso && moneda === desembolso.moneda.trim().toUpperCase();
+		const valor = desembolso?.montoConvertido;
+		const descripcionGuardada = desembolso?.observaciones;
+		const descripcionAmbigua = !descripcionGuardada || descripcionGuardada === deuda.textoPredeterminado;
+		const fxValido = funcional && funcional === monedaFuncional && desembolso &&
+			resolveAppliedReconciliationAmount(desembolso) !== null;
+		const causa = deuda.tenantId !== tenantId || deuda.deletedAt ? 'DEUDA_NO_VERIFICABLE' :
+			desembolsos.length > 1 ? 'IDENTIDAD_AMBIGUA' :
+			!desembolso || !monto.greaterThan(0) || !mismoMonto || !mismaMoneda ? 'DESEMBOLSO_NO_VERIFICABLE' :
+			!fxValido ? 'VALORACION_FUNCIONAL_NO_VERIFICABLE' :
+			descripcionAmbigua ? 'DESCRIPCION_NO_VERIFICABLE' : undefined;
+		const fecha = desembolso?.fechaReconciliacion ?? deuda.fechaAlternativa;
+		candidatos.push({
+			origenTipo: deuda.tipoOrigen, origenId: deuda.id, fecha,
+			evento: {
+				tipo: deuda.tipoEvento, fecha,
+				descripcion: descripcionGuardada || 'Descripción de deuda no verificable',
+				origen: { tipo: deuda.tipoOrigen, id: deuda.id }, monto: deuda.montoCapital, moneda,
+				montoFuncional: valor ?? null, monedaFuncional: funcional,
+				tasaCambio: desembolso?.tasaCambio ?? null,
+				fxEvidenceFingerprint: desembolso?.fxEvidenceFingerprint ?? null, medioCobro: 'BANCOS',
+				...(deuda.tipoOrigen === 'prestamo_cash' && desembolso
+					? { referencia: desembolso.idempotencyKey ?? desembolso.reconciliacionId } : {}),
+			},
+			...(causa ? { causaOmision: causa } : {}),
+		});
+	}
+	for (const desembolso of reconciliacionesVenta) {
+		const esDeuda = desembolso.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO';
+		const esPrestamo = desembolso.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO';
+		if ((!esDeuda && !esPrestamo) || (esDeuda && deudasCash.some((deuda) => deuda.id === desembolso.deudaCashId)) ||
+			(esPrestamo && prestamosCash.some((prestamo) => prestamo.id === desembolso.prestamoCashId))) continue;
+		const tipoOrigen = esDeuda ? 'desembolso_deuda_no_verificado' : 'desembolso_prestamo_no_verificado';
+		candidatos.push({
+			origenTipo: tipoOrigen, origenId: desembolso.reconciliacionId,
+			fecha: desembolso.fechaReconciliacion, causaOmision: 'DESEMBOLSO_NO_VERIFICABLE',
+			evento: {
+				tipo: esDeuda ? 'DEUDA_RECIBIDA' : 'PRESTAMO_OTORGADO', fecha: desembolso.fechaReconciliacion,
+				descripcion: 'Desembolso Cash no verificable',
+				origen: { tipo: tipoOrigen, id: desembolso.reconciliacionId },
+				monto: desembolso.monto, moneda: desembolso.moneda,
+				montoFuncional: desembolso.montoConvertido, monedaFuncional: desembolso.functionalCurrency,
+				tasaCambio: desembolso.tasaCambio, fxEvidenceFingerprint: desembolso.fxEvidenceFingerprint,
+				medioCobro: 'BANCOS',
+			},
+		});
+	}
+
+	// Pagos Cash usan conciliaciones de venta, incluso cuando el origen contable es gasto.
+	for (const pago of reconciliacionesVenta) {
+		const esDeuda = pago.tipoReconciliacion === 'DEUDA_CASH';
+		const esPrestamo = pago.tipoReconciliacion === 'PRESTAMO_CASH';
+		if (!esDeuda && !esPrestamo) continue;
+		const origenTipo = esDeuda ? 'reconciliacion_gasto' : 'reconciliacion_venta';
+		const asignacion = pago.cashInterestAllocation;
+		const obligacion = esDeuda
+			? deudasCash.find((item) => item.id === pago.deudaCashId)
+			: prestamosCash.find((item) => item.id === pago.prestamoCashId);
+		const tipoCuenta = tipoCuentaPorCuenta.get(pago.cuentaId);
+		const componentes = asignacion && [asignacion.moratoryAllocated, asignacion.ordinaryAllocated,
+			asignacion.principalAllocated, asignacion.moratoryFunctional, asignacion.ordinaryFunctional,
+			asignacion.principalFunctional];
+		const asientoValido = asignacion && (!asignacion.asientoId || (
+			asignacion.asiento?.tenantId === tenantId && asignacion.asiento.origenTipo === origenTipo &&
+			asignacion.asiento.origenId === pago.reconciliacionId));
+		const evidenciaValida = Boolean(asignacion && obligacion && !obligacion.deletedAt && tipoCuenta &&
+			(esDeuda ? Boolean(pago.deudaCashId) && !pago.prestamoCashId :
+				Boolean(pago.prestamoCashId) && !pago.deudaCashId) &&
+			asignacion.tenantId === tenantId && asignacion.obligationType === (esDeuda ? 'debt' : 'loan') &&
+			asignacion.policyVersion === 1 && asignacion.paymentDate.toISOString().slice(0, 10) ===
+				pago.fechaReconciliacion.toISOString().slice(0, 10) &&
+			asignacion.paymentAmount.equals(pago.monto) && pago.montoConvertido &&
+			asignacion.functionalAmount.equals(pago.montoConvertido) &&
+			asignacion.functionalCurrency === pago.functionalCurrency && pago.functionalCurrency === monedaFuncional &&
+			asignacion.fxEvidenceFingerprint === pago.fxEvidenceFingerprint &&
+			resolveAppliedReconciliationAmount(pago) !== null &&
+			componentes?.every((valor) => valor.isFinite() && !valor.isNegative()) &&
+			pago.tasaCambio && asignacion.moratoryFunctional.equals(
+				asignacion.moratoryAllocated.mul(pago.tasaCambio).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP)) &&
+			asignacion.ordinaryFunctional.equals(
+				asignacion.ordinaryAllocated.mul(pago.tasaCambio).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP)) &&
+			asignacion.moratoryAllocated.plus(asignacion.ordinaryAllocated).plus(asignacion.principalAllocated)
+				.equals(asignacion.paymentAmount) &&
+			asignacion.moratoryFunctional.plus(asignacion.ordinaryFunctional).plus(asignacion.principalFunctional)
+				.equals(asignacion.functionalAmount) && asientoValido &&
+			cashPaymentAllocationFingerprint(asignacion) === asignacion.eventFingerprint);
+		const evento = buildCashPaymentEvent({
+			obligation: esDeuda ? 'debt' : 'loan', reconciliationId: pago.reconciliacionId,
+			amount: pago.monto, currency: pago.moneda, functionalAmount: pago.montoConvertido ?? 0,
+			functionalCurrency: pago.functionalCurrency ?? '', exchangeRate: pago.tasaCambio,
+			fxEvidenceFingerprint: pago.fxEvidenceFingerprint, interest: asignacion?.ordinaryAllocated,
+			moratoryInterest: asignacion?.moratoryAllocated, treasuryAccountType: tipoCuenta,
+			fecha: pago.fechaReconciliacion, reference: pago.idempotencyKey ?? pago.reconciliacionId,
+		});
+		candidatos.push({
+			origenTipo, origenId: pago.reconciliacionId, fecha: pago.fechaReconciliacion, evento,
+			...(!evidenciaValida ? { causaOmision: 'ASIGNACION_NO_VERIFICABLE' } : {}),
+		});
+	}
 
 	// --- Ventas de productos -------------------------------------------------
 
@@ -637,6 +1176,132 @@ export async function recolectarCandidatos(
 		});
 	}
 
+	// --- Cobros de servicios ---------------------------------------------------
+
+	for (const reconciliacion of reconciliacionesServicio) {
+		const monto = new Prisma.Decimal(reconciliacion.monto);
+		const moneda = reconciliacion.moneda.trim().toUpperCase();
+		const monedaFuncional = reconciliacion.functionalCurrency?.trim().toUpperCase() ?? null;
+		const montoFuncional = reconciliacion.montoConvertido === null
+			? null : new Prisma.Decimal(reconciliacion.montoConvertido);
+		const tasaCambio = reconciliacion.tasaCambio === null
+			? null : new Prisma.Decimal(reconciliacion.tasaCambio);
+		const mismaMoneda = monedaFuncional === moneda;
+		const evidenciaFxValida = mismaMoneda
+			? montoFuncional !== null && montoFuncional.eq(monto)
+			: Boolean(monedaFuncional && montoFuncional && tasaCambio &&
+				reconciliacion.rateEffectiveAt &&
+				reconciliacion.rateEffectiveAt <= reconciliacion.fechaReconciliacion &&
+				reconciliacion.fxProvenanceKind && reconciliacion.fxProvenanceSource &&
+				reconciliacion.fxEvidenceFingerprint && reconciliacion.fxEvidenceVersion &&
+				verifyAppliedFxEvidence({
+					originalAmount: monto.toNumber(),
+					originalCurrency: moneda,
+					functionalCurrency: monedaFuncional,
+					convertedAmount: montoFuncional.toNumber(),
+					exchangeRate: tasaCambio.toNumber(),
+					rateEffectiveAt: reconciliacion.rateEffectiveAt,
+					fxProvenanceKind: reconciliacion.fxProvenanceKind,
+					fxProvenanceSource: reconciliacion.fxProvenanceSource,
+					fxCatalogRateId: reconciliacion.fxCatalogRateId,
+					fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+					fxEvidenceVersion: reconciliacion.fxEvidenceVersion,
+				}));
+		const evento = await construirEventoLiquidacion(
+			client as Prisma.TransactionClient,
+			{ tenantId, userId: 'replay-preflight' },
+			{
+				tipo: 'COBRO_SERVICIO',
+				reconciliacion: {
+					reconciliacionId: reconciliacion.reconciliacionId,
+					monto,
+					moneda,
+					montoConvertido: montoFuncional,
+					functionalCurrency: monedaFuncional,
+					tasaCambio,
+					fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+					fechaReconciliacion: reconciliacion.fechaReconciliacion,
+				},
+				treasuryAccountType: tipoCuentaPorCuenta.get(reconciliacion.cuentaId),
+				descripcion: reconciliacion.observaciones ?? 'Cobro de servicio',
+			},
+		);
+		candidatos.push({
+			origenTipo: 'reconciliacion_servicio',
+			origenId: reconciliacion.reconciliacionId,
+			fecha: reconciliacion.fechaReconciliacion,
+			evento,
+			...(!evidenciaFxValida ? { causaOmision: CAUSA_VALORACION_NO_VERIFICABLE } : {}),
+		});
+	}
+
+	// --- Transferencias bancarias ---------------------------------------------
+
+	for (const transferencia of transferenciasBancarias) {
+		const montoOrigen = new Prisma.Decimal(transferencia.montoOrigen);
+		const montoDestino = new Prisma.Decimal(transferencia.montoDestino);
+		const monedaOrigen = transferencia.monedaOrigen.trim().toUpperCase();
+		const monedaDestino = transferencia.monedaDestino.trim().toUpperCase();
+		const monedaFuncional = politica?.functionalCurrencyCode?.trim().toUpperCase() ?? null;
+		const tasaCambio = transferencia.tasaCambio === null
+			? null : new Prisma.Decimal(transferencia.tasaCambio);
+		const cuentasDistintas = transferencia.cuentaOrigenId !== transferencia.cuentaDestinoId;
+		const cuentasTenantValidas = transferencia.cuentaOrigen.tenantId === tenantId &&
+			transferencia.cuentaDestino.tenantId === tenantId &&
+			transferencia.cuentaOrigen.cuentaId === transferencia.cuentaOrigenId &&
+			transferencia.cuentaDestino.cuentaId === transferencia.cuentaDestinoId;
+		const monedasPersistidasCoherentes =
+			transferencia.cuentaOrigen.moneda.trim().toUpperCase() === monedaOrigen &&
+			transferencia.cuentaDestino.moneda.trim().toUpperCase() === monedaDestino;
+		const monedaFuncionalCoincide = monedaFuncional !== null &&
+			monedaOrigen === monedaFuncional && monedaDestino === monedaFuncional;
+		const valoracionVerificable = Boolean(
+			transferencia.existe &&
+			cuentasDistintas &&
+			cuentasTenantValidas &&
+			monedasPersistidasCoherentes &&
+			monedaFuncional &&
+			monedaOrigen === monedaFuncional &&
+			monedaDestino === monedaFuncional &&
+			montoOrigen.gt(0) &&
+			montoOrigen.eq(montoDestino) &&
+			(tasaCambio === null || tasaCambio.eq(1)),
+		);
+		const causaOmision = !transferencia.existe
+			? 'TRANSFERENCIA_NO_ACTIVA'
+			: !cuentasDistintas
+				? 'TRANSFERENCIA_CUENTAS_IGUALES'
+			: !cuentasTenantValidas
+				? 'TRANSFERENCIA_CUENTA_TENANT_NO_COINCIDE'
+				: !monedasPersistidasCoherentes
+					? 'TRANSFERENCIA_VALORES_NO_COINCIDEN'
+					: !monedaFuncionalCoincide
+						? CAUSA_VALORACION_NO_VERIFICABLE
+						: !montoOrigen.gt(0) || !montoOrigen.eq(montoDestino) ||
+							(tasaCambio !== null && !tasaCambio.eq(1))
+							? 'TRANSFERENCIA_VALORES_NO_COINCIDEN'
+							: undefined;
+
+		candidatos.push({
+			origenTipo: 'transferencia_bancaria',
+			origenId: transferencia.transferenciaId,
+			fecha: transferencia.fechaTransferencia,
+			evento: {
+				tipo: 'TRANSFERENCIA_BANCARIA',
+				fecha: transferencia.fechaTransferencia,
+				descripcion: transferencia.descripcion ?? transferencia.motivo,
+				origen: { tipo: 'transferencia_bancaria', id: transferencia.transferenciaId },
+				monto: montoOrigen,
+				moneda: monedaOrigen,
+				montoFuncional: valoracionVerificable ? montoOrigen : null,
+				monedaFuncional,
+				tasaCambio: valoracionVerificable ? tasaCambio : null,
+				referencia: transferencia.numeroComprobante,
+			},
+			...(causaOmision ? { causaOmision } : {}),
+		});
+	}
+
 	// --- Devoluciones de venta ------------------------------------------------
 
 	for (const devolucion of devolucionesVenta) {
@@ -858,5 +1523,14 @@ export async function recolectarCandidatos(
 		}
 		return left.origenId < right.origenId ? -1 : left.origenId > right.origenId ? 1 : 0;
 	});
+	const manifestEvidence = buildReplayManifestEvidence(candidatos.map((candidato) => ({
+		tipo: candidato.evento.tipo,
+		origenTipo: candidato.origenTipo,
+	})), [...executedQueryIds]);
+	if (!manifestEvidence.complete) {
+		throw new Error(
+			`REPLAY_SOURCE_MANIFEST_INCOMPLETE:${manifestEvidence.unclassifiedCount}`,
+		);
+	}
 	return candidatos;
 }

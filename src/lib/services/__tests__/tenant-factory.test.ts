@@ -46,6 +46,7 @@ describe('createTenantForUser referral attribution', () => {
     vi.mocked(prisma.plan.findFirst).mockResolvedValue({
       planId: 'plan-1',
       precio: 40,
+      referralDiscountUsd: 5,
       duracionDias: 30,
       maxUsuarios: 5,
       maxAlmacenes: 2,
