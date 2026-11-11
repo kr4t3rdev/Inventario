@@ -553,7 +553,6 @@ export const VentaMutationService = {
           clienteId: parsed.clienteId ?? null,
           empleadoId: parsed.empleadoId ?? null,
           turnoId,
-          createdAt: fechaCostoVenta,
           ...(esPedido ? {} : { costoVentaFecha: fechaCostoVenta }),
           // PVE: el pedido nace sin pago; el cobro se define al facturar.
           estado: esPedido

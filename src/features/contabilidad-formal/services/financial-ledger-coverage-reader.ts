@@ -61,7 +61,13 @@ export async function readCoverageEvidence(
 		throw new Error('El tenant y el período son obligatorios para leer la evidencia');
 	}
 
-	const db = params.client ?? prisma;
+	// El contexto compartido reconstruyó sus fuentes con su propio cliente:
+	// si el llamador trae otro cliente, se mezclarian dos instantaneas
+	// distintas de la base de datos.
+	if (params.contexto && params.client && params.contexto.client !== params.client) {
+		throw new Error('El contexto de snapshot pertenece a otro cliente de base de datos');
+	}
+	const db = params.client ?? params.contexto?.client ?? prisma;
 	const [run, asientosEnPeriodo, fuentesProduccionNoEvaluables] = await Promise.all([
 		db.replayRun.findFirst({
 			where: { tenantId: params.tenantId, preflight: { periodoId: params.periodoId } },

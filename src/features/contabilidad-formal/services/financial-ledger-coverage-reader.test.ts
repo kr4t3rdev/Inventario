@@ -117,7 +117,7 @@ describe('readCoverageEvidence', () => {
       preflight: { snapshot: { sources: [] }, digest: 'digest-1', digestVersion: 2 },
     });
     snapshotPeriodo.mockResolvedValue({ sources: [] });
-    const contexto = { obtener: vi.fn() };
+    const contexto = { obtener: vi.fn(), tenantId: 'tenant-a', client: db };
 
     await readCoverageEvidence({
       tenantId: 'tenant-a', periodoId: 'periodo-1', contexto: contexto as never,

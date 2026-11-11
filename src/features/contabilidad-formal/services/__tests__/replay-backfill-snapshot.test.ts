@@ -86,6 +86,8 @@ describe('snapshotPeriodo', () => {
 				posteados: new Set<string>(),
 				executedQueryIds: new Set<string>(),
 			}),
+			tenantId: 'tenant-a',
+			client: db,
 		};
 
 		const snapshot = await snapshotPeriodo(
@@ -95,5 +97,18 @@ describe('snapshotPeriodo', () => {
 		expect(contexto.obtener).toHaveBeenCalledTimes(1);
 		expect(recolectarCandidatos).not.toHaveBeenCalled();
 		expect(snapshot.sources[0]?.classification).toBe('OMITIDO');
+	});
+
+	it('rechaza un contexto de snapshot de otro tenant', async () => {
+		const contexto = {
+			obtener: vi.fn(),
+			tenantId: 'tenant-b',
+			client: db,
+		};
+
+		await expect(snapshotPeriodo(
+			db as never, 'tenant-a', 'periodo-1', contexto as never,
+		)).rejects.toThrow('otro tenant');
+		expect(contexto.obtener).not.toHaveBeenCalled();
 	});
 });

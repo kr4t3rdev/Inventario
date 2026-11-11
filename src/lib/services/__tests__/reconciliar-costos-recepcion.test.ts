@@ -345,6 +345,29 @@ describe('recalcularAgregadosFacturadosDeOrden', () => {
     expect(tx.recepcionItem.updateMany).not.toHaveBeenCalled()
   })
 
+  it('rechaza una procedencia persistida que apunta a otra orden', async () => {
+    const tx = createMockTx()
+    tx.compraDocumentoItem.findMany.mockResolvedValue([{
+      compraDocumentoItemId: 'active-line-1',
+      productoId: 'prod-1',
+      cantidad: 2,
+      precioUnitario: 120,
+      compraDocumento: { createdAt: new Date('2026-01-02T00:00:00.000Z') },
+      receiptInvoiceAllocations: [{ recepcionItemId: 'ri-de-otra-orden', cantidad: 2 }],
+    }])
+    tx.recepcionItem.findMany.mockResolvedValue([{
+      id: 'ri-1', productoId: 'prod-1', cantidad: 4,
+      cantidadFacturada: 0, montoFacturado: 0,
+      recepcion: { fecha: new Date('2026-01-01T00:00:00.000Z') },
+    }])
+
+    await expect(recalcularAgregadosFacturadosDeOrden(tx as any, {
+      tenantId: 'tenant-1',
+      ordenId: 'oc-1',
+    })).rejects.toMatchObject({ code: 'FACTURA_PROVENIENCIA_INCONSISTENTE' })
+    expect(tx.recepcionItem.updateMany).not.toHaveBeenCalled()
+  })
+
   it('rejects active invoice quantities above physical receipts without updating counters', async () => {
     const tx = createMockTx()
     tx.compraDocumentoItem.findMany.mockResolvedValue([{

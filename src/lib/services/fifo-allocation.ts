@@ -54,6 +54,12 @@ export interface FuenteCostoFifo {
 	 * `false` cuando la porción se apoya en una recepción sin factura trazada.
 	 * Su costo es una estimación operativa: repone inventario, pero no es
 	 * acreditable en el libro formal (falla cerrado en modo `enforce`).
+	 *
+	 * En el writer de ventas, esa falta de acreditabilidad hace que el evento
+	 * de costo no se pueda valorar y el motor formal rechace la operación
+	 * completa en modo `enforce` (`VALORACION_MONETARIA_AUSENTE`): una
+	 * recepción sin factura trazada no se puede vender con la capa formal
+	 * activa. En la devolución, en cambio, solo se omite la línea de costo.
 	 */
 	verificable?: boolean;
 }

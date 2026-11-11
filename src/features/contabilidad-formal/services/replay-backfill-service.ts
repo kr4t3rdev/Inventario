@@ -249,6 +249,10 @@ export async function planBackfillContable(tenantId: string): Promise<PlanBackfi
  * comparte, el costo deja de multiplicarse por el numero de periodos.
  */
 export interface ContextoSnapshotPeriodo {
+	/** Tenant cuyas fuentes contiene el contexto. */
+	tenantId: string;
+	/** Cliente con el que se reconstruyeron las fuentes. */
+	client: ReplayDb;
 	/** Candidatos repondidos por el colector para el tenant. */
 	candidatos: CandidatoReplay[];
 	/** Identidades ya contabilizadas en el libro mayor del tenant. */
@@ -262,6 +266,10 @@ export interface ContextoSnapshotPeriodo {
  * sola vez y solo si algun periodo lo necesita.
  */
 export interface ContextoSnapshotPeriodoLazy {
+	/** Tenant cuyas fuentes contiene el contexto. */
+	tenantId: string;
+	/** Cliente con el que se reconstruyeron las fuentes. */
+	client: ReplayDb;
 	/**
 	 * @description Resuelve el contexto compartido (memoizado).
 	 * @returns {Promise<ContextoSnapshotPeriodo>} Contexto reconstruido.
@@ -289,6 +297,8 @@ export async function contextoSnapshotPeriodo(
 		}),
 	]);
 	return {
+		tenantId,
+		client,
 		candidatos,
 		posteados: new Set(
 			asientos.map((asiento) => `${asiento.origenTipo}:${asiento.origenId}`),
@@ -309,7 +319,14 @@ export function contextoSnapshotPeriodoLazy(
 ): ContextoSnapshotPeriodoLazy {
 	let promesa: Promise<ContextoSnapshotPeriodo> | null = null;
 	return {
-		obtener: () => (promesa ??= contextoSnapshotPeriodo(client, tenantId)),
+		tenantId,
+		client,
+		// Una promesa rechazada no se cachea: un fallo transitorio (timeout,
+		// conexion) no deja el contexto inutilizable para el resto del reporte.
+		obtener: () => (promesa ??= contextoSnapshotPeriodo(client, tenantId).catch((error: unknown) => {
+			promesa = null;
+			throw error;
+		})),
 	};
 }
 
@@ -332,6 +349,15 @@ export async function snapshotPeriodo(
 		select: { periodoId: true, fechaInicio: true, fechaFin: true },
 	});
 	if (!periodo) throw new Error('Período contable no encontrado para el tenant');
+	// El contexto trae las fuentes de un tenant y de un cliente: si no
+	// coinciden con los de esta llamada, el snapshot mezclaría datos de otro
+	// tenant o de otra instantanea.
+	if (contexto && contexto.tenantId !== tenantId) {
+		throw new Error('El contexto de snapshot pertenece a otro tenant');
+	}
+	if (contexto && contexto.client !== client) {
+		throw new Error('El contexto de snapshot pertenece a otro cliente de base de datos');
+	}
 
 	const fuente = contexto ? await contexto.obtener() : await contextoSnapshotPeriodo(client, tenantId);
 	const executedQueryIds = fuente.executedQueryIds;
