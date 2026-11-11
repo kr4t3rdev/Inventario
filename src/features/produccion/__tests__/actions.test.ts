@@ -13,7 +13,12 @@ vi.mock('@/lib/utils/produccion', () => ({
 	),
 }));
 vi.mock('@/lib/utils/unit-converter', () => ({
-	convertToBase: vi.fn((cantidad) => cantidad),
+  convertToBase: vi.fn((cantidad) => cantidad),
+  convertBetweenUnits: vi.fn((cantidad, from, to) =>
+    from === 'g' && to === 'kg' ? cantidad / 1000 : cantidad,
+  ),
+  MASS_UNITS: ['g', 'kg', 'lb', 'oz'],
+  VOLUME_UNITS: ['ml', 'L', 'fl oz', 'tsp', 'tbsp', 'cup'],
 }));
 vi.mock('@/features/contabilidad-formal/services/inventory-adjustment-posting-service', () => ({
 	emitirProduccionInventario: vi.fn(),
@@ -65,6 +70,7 @@ vi.mock('@/lib/prisma', () => ({
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { calcularCantidadRequeridaMaterial } from '@/lib/utils/produccion';
 import { emitirProduccionInventario } from '@/features/contabilidad-formal/services/inventory-adjustment-posting-service';
 import {
 	aprobarOrdenProduccionAction,
@@ -105,7 +111,7 @@ describe('Producción Server Actions', () => {
 		mockTx.receta.findMany.mockResolvedValueOnce([{
 			recetaId: 'recipe-1', productoId: null, rendimiento: 1,
 			RecetaIngrediente: [
-				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'u' },
+				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'mat-1', nombre: 'Material 1', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
 			],
 		}]);
 		mockTx.producto.findUnique.mockResolvedValue({
@@ -279,7 +285,7 @@ describe('Producción: kardex y cancelación', () => {
 		mockTx.receta.findMany.mockResolvedValueOnce([{
 			recetaId: 'recipe-1', productoId: null, rendimiento: 1,
 			RecetaIngrediente: [
-				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'u' },
+				{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'mat-1', nombre: 'Material 1', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
 			],
 		}]);
 		mockTx.producto.findUnique.mockResolvedValue({
@@ -320,13 +326,13 @@ describe('Producción: kardex y cancelación', () => {
 			{
 				recetaId: 'P', productoId: 'product-P', rendimiento: 1,
 				RecetaIngrediente: [
-					{ productoId: 'product-S', recetaIngredienteId: 'S', cantidad: 2, desperdicio: 0 },
+					{ productoId: 'product-S', recetaIngredienteId: 'S', cantidad: 2, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'product-S', nombre: 'Subproducto', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
 				],
 			},
 			{
 				recetaId: 'S', productoId: 'product-S', rendimiento: 1,
 				RecetaIngrediente: [
-					{ productoId: 'I', recetaIngredienteId: null, cantidad: 3, desperdicio: 0 },
+					{ productoId: 'I', recetaIngredienteId: null, cantidad: 3, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'I', nombre: 'Ingrediente I', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
 				],
 			},
 		]);
@@ -339,10 +345,102 @@ describe('Producción: kardex y cancelación', () => {
 		const result = await aprobarOrdenProduccionAction('op-bom');
 
 		expect(result.success).toBe(true);
-		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
 			mockTx,
 			expect.objectContaining({ productoId: 'I', delta: -60 }),
 		);
+	});
+
+	it('aprueba recetas legacy convirtiendo cantidades al stock antes de descontar', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-units', recetaId: 'recipe-units', estado: 'PENDIENTE', cantidad: 1,
+			Receta: { rendimiento: 1, RecetaIngrediente: [] },
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([{
+			recetaId: 'recipe-units', productoId: null, rendimiento: 1,
+			RecetaIngrediente: [{
+				productoId: 'flour', recetaIngredienteId: null, cantidad: 500,
+				unidadSimbolo: 'g', desperdicio: 0,
+				Producto: {
+					id: 'flour', nombre: 'Harina',
+					unidad: { simbolo: 'kg', dimension: 'MASS' },
+					unidadesConversion: [],
+				},
+			}],
+		}]);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: 'flour', nombre: 'Harina', precioCosto: 10, stock: 10, almacenId: 'alm-1',
+		});
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-units' });
+
+		const result = await aprobarOrdenProduccionAction('op-units');
+
+		expect(result.success).toBe(true);
+		expect(calcularCantidadRequeridaMaterial).toHaveBeenCalledWith(
+			expect.objectContaining({ productoId: 'flour', cantidad: 0.5 }),
+			1,
+		);
+	});
+
+	it('aplica el factor específico de la presentación antes de consumir stock', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-factor', recetaId: 'recipe-factor', estado: 'PENDIENTE', cantidad: 1,
+			Receta: { rendimiento: 1, RecetaIngrediente: [] },
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([{
+			recetaId: 'recipe-factor', productoId: null, rendimiento: 1,
+			RecetaIngrediente: [{
+				productoId: 'rice', recetaIngredienteId: null, cantidad: 2,
+				unidadSimbolo: 'caja', desperdicio: 0,
+				Producto: {
+					id: 'rice', nombre: 'Arroz',
+					unidad: { simbolo: 'unidad', dimension: 'COUNT' },
+					unidadesConversion: [{
+						factorAStock: { toString: () => '12' },
+						unidad: { simbolo: 'caja', dimension: 'COUNT' },
+					}],
+				},
+			}],
+		}]);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: 'rice', nombre: 'Arroz', precioCosto: 5, stock: 50, almacenId: 'alm-1',
+		});
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 50 });
+		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-factor' });
+
+		const result = await aprobarOrdenProduccionAction('op-factor');
+
+		expect(result.success).toBe(true);
+		expect(calcularCantidadRequeridaMaterial).toHaveBeenCalledWith(
+			expect.objectContaining({ productoId: 'rice', cantidad: 24 }),
+			1,
+		);
+	});
+
+	it('rechaza unidades incompatibles sin modificar el stock', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-invalid-unit', recetaId: 'recipe-invalid-unit', estado: 'PENDIENTE', cantidad: 1,
+			Receta: { rendimiento: 1, RecetaIngrediente: [] },
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([{
+			recetaId: 'recipe-invalid-unit', productoId: null, rendimiento: 1,
+			RecetaIngrediente: [{
+				productoId: 'flour', recetaIngredienteId: null, cantidad: 2,
+				unidadSimbolo: 'L', desperdicio: 0,
+				Producto: {
+					id: 'flour', nombre: 'Harina',
+					unidad: { simbolo: 'kg', dimension: 'MASS' },
+					unidadesConversion: [],
+				},
+			}],
+		}]);
+
+		const result = await aprobarOrdenProduccionAction('op-invalid-unit');
+
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe('UNIT_CONVERSION_INVALID');
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 	});
 
 	it('completar orden registra ingreso del producto terminado con costo de materiales', async () => {

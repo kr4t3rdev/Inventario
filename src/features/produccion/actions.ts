@@ -15,7 +15,8 @@ import {
 	calcularCantidadRequeridaMaterial,
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
-import { BomError, explodeBom } from "@/features/produccion/services/bom";
+import { BomError, explodeBom, type BomIngredient } from "@/features/produccion/services/bom";
+import { normalizeRecipeIngredientsToStock } from "@/features/produccion/services/recipe-unit-normalizer";
 import { planificarNecesidades } from "@/features/produccion/services/mrp";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
@@ -463,29 +464,80 @@ export const aprobarOrdenProduccionAction = withAction(
 
 			const recetasAnidadas = await tx.receta.findMany({
 				where: { tenantId },
-				include: { RecetaIngrediente: true },
+				include: {
+					RecetaIngrediente: {
+						include: {
+							Producto: {
+								include: {
+									unidad: true,
+									unidadesConversion: { include: { unidad: true } },
+								},
+							},
+						},
+					},
+				},
 			});
 			if (!recetasAnidadas.some((recipe) => recipe.recetaId === orden.recetaId)) {
 				throw new ActionError("Receta no encontrada", "NOT_FOUND");
 			}
-			const recetasBom = recetasAnidadas.map((recipe) => ({
-				recetaId: recipe.recetaId,
-				productoId: recipe.productoId,
-				rendimiento: recipe.rendimiento,
-				ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
-					ingredient.recetaIngredienteId
-						? {
+			const recetasBom = recetasAnidadas.map((recipe) => {
+				const ingredientes: BomIngredient[] = [];
+				for (const ingredient of recipe.RecetaIngrediente) {
+					const product = ingredient.Producto;
+					if (!product) {
+						throw new ActionError(
+							`Producto ingrediente ${ingredient.productoId ?? ''} no encontrado en la receta`,
+							'NOT_FOUND',
+						);
+					}
+					let normalized;
+					try {
+						normalized = normalizeRecipeIngredientsToStock([{
+							productoId: product.id,
+							cantidad: ingredient.cantidad,
+							unidadSimbolo: ingredient.unidadSimbolo,
+							producto: {
+								id: product.id,
+								nombre: product.nombre,
+								unidadSimbolo: product.unidad?.simbolo ?? null,
+								unidadDimension: product.unidad?.dimension ?? null,
+								unidadesConversion: product.unidadesConversion.map((conversion) => ({
+									factorAStock: conversion.factorAStock.toString(),
+									unidad: {
+										simbolo: conversion.unidad.simbolo,
+										dimension: conversion.unidad.dimension,
+									},
+								})),
+							},
+						}])[0];
+					} catch (error) {
+						throw new ActionError(
+							error instanceof Error ? error.message : 'La unidad de receta no es válida',
+							'UNIT_CONVERSION_INVALID',
+						);
+					}
+
+					if (ingredient.recetaIngredienteId) {
+						ingredientes.push({
 							recetaIngredienteId: ingredient.recetaIngredienteId,
-							cantidad: ingredient.cantidad,
+							cantidad: normalized.cantidad,
 							desperdicio: ingredient.desperdicio,
-						}
-						: {
-							productoId: ingredient.productoId ?? '',
-							cantidad: ingredient.cantidad,
+						});
+					} else {
+						ingredientes.push({
+							productoId: normalized.productoId,
+							cantidad: normalized.cantidad,
 							desperdicio: ingredient.desperdicio,
-						},
-				),
-			}));
+						});
+					}
+				}
+				return {
+					recetaId: recipe.recetaId,
+					productoId: recipe.productoId,
+					rendimiento: recipe.rendimiento,
+					ingredientes,
+				};
+			});
 
 			let explosion;
 			try {
