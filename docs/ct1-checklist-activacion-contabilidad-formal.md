@@ -211,9 +211,9 @@ Detalle: `docs/ct1-r0-5-matriz-canonica.md`.
 
 | Qué | Dónde |
 |---|---|
-| Commit | `3b5b71dce9117751bacff583b928918f936b4709` (`feat(contabilidad): cierra el R6 local/CI...`) |
-| Manifiesto de evidencia | `../ct1-evidencias/manifest-r6-local-20261110.md` |
-| Logs de los gates | `../ct1-evidencias/logs/` (11 logs, todos `EXIT=0`) |
+| Rama de la capa formal | `feature/contabilidad-capa-formal-ct1` · PR #192 (<https://github.com/kr4t3rdev/Inventario/pull/192>) |
+| Manifiesto de evidencia | `../ct1-evidencias/manifest-r6-local-20261110.md` (§11 = ronda de remediación) |
+| Logs de los gates | `../ct1-evidencias/logs/` (todos `EXIT=0`) |
 | Producción | `https://financemdm.kr4t3rdev.xyz` (Railway) · Env `FinanceMDM / production` |
 | Staging | GitHub Environment `FinanceMDM / staging` |
 | Verificar el SHA desplegado | Actions → **"Smoke post-deploy"** (`workflow_dispatch`), input `expected_sha`. No corre automático |
