@@ -15,7 +15,8 @@ import {
 	calcularCantidadRequeridaMaterial,
 	validarDisponibilidadMateriales,
 } from "@/lib/utils/produccion";
-import { BomError, explodeBom } from "@/features/produccion/services/bom";
+import { BomError, explodeBom, type BomIngredient } from "@/features/produccion/services/bom";
+import { normalizeRecipeIngredientsToStock } from "@/features/produccion/services/recipe-unit-normalizer";
 import { planificarNecesidades } from "@/features/produccion/services/mrp";
 import { convertToBase } from "@/lib/utils/unit-converter";
 import { emitirProduccionInventario } from "@/features/contabilidad-formal/services/inventory-adjustment-posting-service";
@@ -54,28 +55,131 @@ export const planificarNecesidadesAction = withAction(
 						productoId: true,
 						recetaIngredienteId: true,
 						cantidad: true,
+						unidadSimbolo: true,
 						desperdicio: true,
 					},
 				},
 			},
 		});
+		const recetasPorId = new Map(recetas.map((recipe) => [recipe.recetaId, recipe]));
+		const recetasEnCierre = new Set<string>();
+		const porVisitar = [input.recetaId];
+		while (porVisitar.length > 0) {
+			const recetaId = porVisitar.pop();
+			if (!recetaId || recetasEnCierre.has(recetaId)) continue;
+			const recipe = recetasPorId.get(recetaId);
+			if (!recipe) continue;
+			recetasEnCierre.add(recetaId);
+			for (const ingredient of recipe.RecetaIngrediente) {
+				if (ingredient.recetaIngredienteId) porVisitar.push(ingredient.recetaIngredienteId);
+			}
+		}
+
+		const productoIds = new Set<string>();
+		for (const recetaId of recetasEnCierre) {
+			const recipe = recetasPorId.get(recetaId);
+			if (!recipe) continue;
+			if (recipe.productoId) productoIds.add(recipe.productoId);
+			for (const ingredient of recipe.RecetaIngrediente) {
+				const productoId = ingredient.recetaIngredienteId
+					? recetasPorId.get(ingredient.recetaIngredienteId)?.productoId
+					: ingredient.productoId;
+				if (productoId) productoIds.add(productoId);
+			}
+		}
+		const productos = productoIds.size > 0
+			? await prisma.producto.findMany({
+					where: { tenantId, id: { in: [...productoIds] } },
+					select: {
+						id: true,
+						nombre: true,
+						unidad: { select: { simbolo: true, dimension: true } },
+						unidadesConversion: {
+							where: { tenantId },
+							select: {
+								factorAStock: true,
+								unidad: { select: { simbolo: true, dimension: true } },
+							},
+						},
+					},
+				})
+			: [];
+		const productosPorId = new Map(productos.map((product) => [product.id, {
+			id: product.id,
+			nombre: product.nombre,
+			unidadSimbolo: product.unidad?.simbolo ?? null,
+			unidadDimension: product.unidad?.dimension ?? null,
+			unidadesConversion: product.unidadesConversion.map((conversion) => ({
+				factorAStock: conversion.factorAStock.toString(),
+				unidad: conversion.unidad,
+			})),
+		}]));
+		const usaConversionPorProducto = [...recetasEnCierre].some((recetaId) => {
+			const recipe = recetasPorId.get(recetaId);
+			return recipe?.RecetaIngrediente.some((ingredient) => {
+				const productoId = ingredient.recetaIngredienteId
+					? recetasPorId.get(ingredient.recetaIngredienteId)?.productoId
+					: ingredient.productoId;
+				const unidad = ingredient.unidadSimbolo?.trim().toLowerCase();
+				return Boolean(productoId && unidad && productosPorId.get(productoId)?.unidadesConversion.some(
+					(conversion) => conversion.unidad.simbolo.trim().toLowerCase() === unidad,
+				));
+			}) ?? false;
+		});
+		if (usaConversionPorProducto) {
+			requireFeature(user, 'unidades', 'conversiones de unidades en producción');
+		}
+
 		const recipes = recetas.map((recipe) => ({
 			recetaId: recipe.recetaId,
 			productoId: recipe.productoId,
 			rendimiento: recipe.rendimiento,
-			ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
-				ingredient.recetaIngredienteId
+			ingredientes: recipe.RecetaIngrediente.map((ingredient) => {
+				const isInClosure = recetasEnCierre.has(recipe.recetaId);
+				const productoId = ingredient.recetaIngredienteId
+					? recetasPorId.get(ingredient.recetaIngredienteId)?.productoId
+					: ingredient.productoId;
+				const product = productoId ? productosPorId.get(productoId) : undefined;
+				if (!isInClosure || !productoId) {
+					return ingredient.recetaIngredienteId
+						? {
+							recetaIngredienteId: ingredient.recetaIngredienteId,
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						}
+						: {
+							productoId: ingredient.productoId,
+							cantidad: ingredient.cantidad,
+							desperdicio: ingredient.desperdicio,
+						};
+				}
+				if (!product) {
+					throw new ActionError(`Producto ingrediente ${productoId} no encontrado`, 'NOT_FOUND');
+				}
+
+				let cantidad = ingredient.cantidad;
+				try {
+					cantidad = normalizeRecipeIngredientsToStock([{
+						productoId,
+						cantidad: ingredient.cantidad,
+						unidadSimbolo: ingredient.unidadSimbolo,
+						producto: product,
+					}])[0].cantidad;
+				} catch (error) {
+					throw new ActionError(
+						error instanceof Error ? error.message : 'La unidad de receta no es válida',
+						'UNIT_CONVERSION_INVALID',
+					);
+				}
+
+				return ingredient.recetaIngredienteId
 					? {
 						recetaIngredienteId: ingredient.recetaIngredienteId,
-						cantidad: ingredient.cantidad,
+						cantidad,
 						desperdicio: ingredient.desperdicio,
 					}
-					: {
-						productoId: ingredient.productoId,
-						cantidad: ingredient.cantidad,
-						desperdicio: ingredient.desperdicio,
-					},
-			),
+					: { productoId, cantidad, desperdicio: ingredient.desperdicio };
+			}),
 		}));
 		const explosion = ejecutarConErrorBom(() =>
 			explodeBom(input.recetaId, input.cantidad, recipes),
@@ -463,29 +567,125 @@ export const aprobarOrdenProduccionAction = withAction(
 
 			const recetasAnidadas = await tx.receta.findMany({
 				where: { tenantId },
-				include: { RecetaIngrediente: true },
+				include: {
+					RecetaIngrediente: {
+						include: {
+							Producto: {
+								include: {
+									unidad: true,
+									unidadesConversion: { include: { unidad: true } },
+								},
+							},
+						},
+					},
+				},
 			});
 			if (!recetasAnidadas.some((recipe) => recipe.recetaId === orden.recetaId)) {
 				throw new ActionError("Receta no encontrada", "NOT_FOUND");
 			}
-			const recetasBom = recetasAnidadas.map((recipe) => ({
-				recetaId: recipe.recetaId,
-				productoId: recipe.productoId,
-				rendimiento: recipe.rendimiento,
-				ingredientes: recipe.RecetaIngrediente.map((ingredient) =>
-					ingredient.recetaIngredienteId
-						? {
-							recetaIngredienteId: ingredient.recetaIngredienteId,
-							cantidad: ingredient.cantidad,
-							desperdicio: ingredient.desperdicio,
+			// Cierre BOM alcanzable desde la receta de la orden: solo estas
+			// recetas participan en la explosión. Las recetas fuera del cierre
+			// no deben bloquear la aprobación con sus unidades.
+			const recetasEnCierre = new Set<string>([orden.recetaId]);
+			const recetasPorId = new Map(recetasAnidadas.map((recipe) => [recipe.recetaId, recipe]));
+			const recetasPorVisitar = [orden.recetaId];
+			while (recetasPorVisitar.length > 0) {
+				const recetaActual = recetasPorVisitar.pop();
+				if (!recetaActual) continue;
+				const recipe = recetasPorId.get(recetaActual);
+				if (!recipe) continue;
+				for (const ingredient of recipe.RecetaIngrediente) {
+					if (ingredient.recetaIngredienteId && !recetasEnCierre.has(ingredient.recetaIngredienteId)) {
+						recetasEnCierre.add(ingredient.recetaIngredienteId);
+						recetasPorVisitar.push(ingredient.recetaIngredienteId);
+					}
+				}
+			}
+			const recetasBom = recetasAnidadas.map((recipe) => {
+				const ingredientes: BomIngredient[] = [];
+				// F-1: solo se normalizan las unidades de las recetas del cierre
+				// BOM de la orden. Las recetas ajenas solo aportan su estructura
+				// al grafo; normalizarlas bloquearía aprobaciones por unidades
+				// de recetas que no participan en esta orden.
+				if (!recetasEnCierre.has(recipe.recetaId)) {
+					for (const ingredient of recipe.RecetaIngrediente) {
+						if (ingredient.recetaIngredienteId) {
+							ingredientes.push({
+								recetaIngredienteId: ingredient.recetaIngredienteId,
+								cantidad: ingredient.cantidad,
+								desperdicio: ingredient.desperdicio,
+							});
+						} else {
+							ingredientes.push({
+								productoId: ingredient.productoId ?? '',
+								cantidad: ingredient.cantidad,
+								desperdicio: ingredient.desperdicio,
+							});
 						}
-						: {
-							productoId: ingredient.productoId ?? '',
+					}
+					return {
+						recetaId: recipe.recetaId,
+						productoId: recipe.productoId,
+						rendimiento: recipe.rendimiento,
+						ingredientes,
+					};
+				}
+				for (const ingredient of recipe.RecetaIngrediente) {
+					const product = ingredient.Producto;
+					if (!product) {
+						throw new ActionError(
+							`Producto ingrediente ${ingredient.productoId ?? ''} no encontrado en la receta`,
+							'NOT_FOUND',
+						);
+					}
+					let normalized;
+					try {
+						normalized = normalizeRecipeIngredientsToStock([{
+							productoId: product.id,
 							cantidad: ingredient.cantidad,
+							unidadSimbolo: ingredient.unidadSimbolo,
+							producto: {
+								id: product.id,
+								nombre: product.nombre,
+								unidadSimbolo: product.unidad?.simbolo ?? null,
+								unidadDimension: product.unidad?.dimension ?? null,
+								unidadesConversion: product.unidadesConversion.map((conversion) => ({
+									factorAStock: conversion.factorAStock.toString(),
+									unidad: {
+										simbolo: conversion.unidad.simbolo,
+										dimension: conversion.unidad.dimension,
+									},
+								})),
+							},
+						}])[0];
+					} catch (error) {
+						throw new ActionError(
+							error instanceof Error ? error.message : 'La unidad de receta no es válida',
+							'UNIT_CONVERSION_INVALID',
+						);
+					}
+
+					if (ingredient.recetaIngredienteId) {
+						ingredientes.push({
+							recetaIngredienteId: ingredient.recetaIngredienteId,
+							cantidad: normalized.cantidad,
 							desperdicio: ingredient.desperdicio,
-						},
-				),
-			}));
+						});
+					} else {
+						ingredientes.push({
+							productoId: normalized.productoId,
+							cantidad: normalized.cantidad,
+							desperdicio: ingredient.desperdicio,
+						});
+					}
+				}
+				return {
+					recetaId: recipe.recetaId,
+					productoId: recipe.productoId,
+					rendimiento: recipe.rendimiento,
+					ingredientes,
+				};
+			});
 
 			let explosion;
 			try {
@@ -495,6 +695,15 @@ export const aprobarOrdenProduccionAction = withAction(
 					throw new ActionError(error.message, error.code);
 				}
 				throw error;
+			}
+			const demandaFraccionaria = explosion.materiales.find(
+				(material) => !Number.isInteger(material.cantidad),
+			);
+			if (demandaFraccionaria) {
+				throw new ActionError(
+					`La cantidad requerida de ${demandaFraccionaria.productoId} no puede representarse como un entero de inventario`,
+					'VALIDATION_ERROR',
+				);
 			}
 
 			// Validar disponibilidad de materiales hoja y descontar el stock agregado.

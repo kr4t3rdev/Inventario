@@ -101,9 +101,46 @@ export const POST = withAuthPost(async (
       })),
     }));
 
+    // F-1: el producto final de cada subreceta referenciada define la
+    // unidad canónica de su fila. Sin esto, las filas de subreceta se
+    // validaban como válidas sin más y se persistían con unidadSimbolo
+    // tal cual (posible null); la aprobación las rechazaba después.
+    const subrecetaIds = [...new Set(ingredientes.flatMap((ing) => (ing.recetaIngredienteId ? [ing.recetaIngredienteId] : [])))];
+    const subrecetasRaw = subrecetaIds.length > 0
+      ? await prisma.receta.findMany({
+          where: { tenantId, recetaId: { in: subrecetaIds } },
+          include: {
+            Producto: {
+              include: {
+                unidad: true,
+                unidadesConversion: { include: { unidad: true } },
+              },
+            },
+          },
+        })
+      : [];
+    const productoFinalPorSubreceta = new Map(subrecetasRaw.map((subreceta) => [
+      subreceta.recetaId,
+      subreceta.Producto
+        ? {
+            id: subreceta.Producto.id,
+            nombre: subreceta.Producto.nombre,
+            unidadSimbolo: subreceta.Producto.unidad?.simbolo ?? null,
+            unidadDimension: subreceta.Producto.unidad?.dimension ?? null,
+            unidadesConversion: (subreceta.Producto.unidadesConversion ?? []).map((conversion) => ({
+              factorAStock: conversion.factorAStock.toString(),
+              unidad: conversion.unidad,
+            })),
+          }
+        : null,
+    ]));
+
     const usaConversionPorProducto = ingredientes.some((ingrediente) => {
-      if (!ingrediente.productoId) return false;
-      const producto = productosInventario.find((item) => item.id === ingrediente.productoId);
+      const producto = ingrediente.productoId
+        ? productosInventario.find((item) => item.id === ingrediente.productoId)
+        : ingrediente.recetaIngredienteId
+          ? productoFinalPorSubreceta.get(ingrediente.recetaIngredienteId) ?? undefined
+          : undefined;
       return producto?.unidadesConversion.some(
         (conversion) => conversion.unidad.simbolo.trim().toLowerCase() ===
           ingrediente.unidadSimbolo?.trim().toLowerCase(),
@@ -130,12 +167,26 @@ export const POST = withAuthPost(async (
 
     const normalizedIngredientes: IngredientValidationResult[] = ingredientes.map((ing) => {
       if (!ing.productoId) {
-        return {
-          isValid: true as const,
-          normalizedCantidad: ing.cantidad,
-          normalizedUnidadSimbolo: ing.unidadSimbolo ?? null,
-          normalization: null,
-        };
+        // F-1: la fila de subreceta se valida igual que la de producto,
+        // contra la unidad canónica del producto final de la subreceta.
+        const productoFinal = ing.recetaIngredienteId
+          ? productoFinalPorSubreceta.get(ing.recetaIngredienteId) ?? null
+          : null;
+        if (!productoFinal) {
+          // Sin producto final no hay unidad canónica contra la que
+          // validar; la transacción rechaza la fila (BomError) antes
+          // de persistir.
+          return {
+            isValid: true as const,
+            normalizedCantidad: ing.cantidad,
+            normalizedUnidadSimbolo: ing.unidadSimbolo ?? null,
+            normalization: null,
+          };
+        }
+        return validateAndNormalizeIngredientUnit(
+          { productoId: productoFinal.id, cantidad: ing.cantidad, unidadSimbolo: ing.unidadSimbolo },
+          productoFinal,
+        ) as IngredientValidationSuccess;
       }
       const producto = productosInventario.find((p) => p.id === ing.productoId);
 
