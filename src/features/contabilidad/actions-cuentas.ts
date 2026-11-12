@@ -22,6 +22,7 @@ import {
 	annulCuentaPorCobrarSchema,
 	getCuentasPorPagarSchema,
 	createCuentaPorPagarSchema,
+	estadoDeCuentaSchema,
 } from "./schemas-cuentas";
 import type {
 	GetCuentasPorCobrarInput,
@@ -31,6 +32,7 @@ import type {
 	GetCuentasPorPagarInput,
 	CreateCuentaPorPagarInput,
 } from "./schemas-cuentas";
+import { ACTIVE_RECEIVABLE_STATES } from "./domain/balance-calculator";
 
 // ═══════════════════════════════════════════════════════════
 // Tipos de Resultado
@@ -79,6 +81,95 @@ export interface CxcMetrics {
 	vencidas: number;
 	cuentasActivas: number;
 	totalCuentas: number;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Estado de cuenta de cliente (F-6)
+// ═══════════════════════════════════════════════════════════
+
+/** Resumen monetario del estado de cuenta (montos ya resueltos server-side). */
+export interface EstadoDeCuentaResumen {
+	porMoneda: Array<{
+		moneda: string;
+		deudaTotal: number;
+		deudaVencida: number;
+		saldoAFavorAnticipos: number;
+		saldoAFavorNotasCredito: number;
+		saldoAFavor: number;
+		saldoNeto: number;
+	}>;
+}
+
+/** Anticipo COBRO activo con saldo disponible (serializable). */
+export interface EstadoDeCuentaAnticipo {
+	anticipoId: string;
+	tipo: string;
+	estado: string;
+	montoOriginal: number;
+	saldoDisponible: number;
+	moneda: string;
+	fechaReserva: string;
+}
+
+/** Nota de crédito (DevolucionVenta) con saldo a favor. */
+export interface EstadoDeCuentaNotaCredito {
+	devolucionId: string;
+	ventaId: string;
+	estado: string;
+	moneda: string;
+	total: number;
+	montoAplicadoCxc: number;
+	montoSaldoFavor: number;
+	createdAt: string;
+}
+
+/** Factura del cliente incluida en el estado de cuenta. */
+export interface EstadoDeCuentaFactura {
+	idFactura: string;
+	numeroFactura: string;
+	tipoDocumento: string;
+	estado: string;
+	fechaEmision: string;
+	fechaVencimiento: string | null;
+	subtotal: number;
+	impuestos: number;
+	descuento: number;
+	total: number;
+}
+
+/** Pago histórico del cliente (ReconciliacionVenta). */
+export interface EstadoDeCuentaPago {
+	reconciliacionId: string;
+	monto: number;
+	moneda: string;
+	montoConvertido: number | null;
+	fechaReconciliacion: string;
+	tipoPagoNombre: string | null;
+	observaciones: string | null;
+}
+
+/** Resultado completo del estado de cuenta (todo serializable para PDF client-side). */
+export interface EstadoDeCuentaClienteData {
+	empresa: {
+		nombre: string;
+		propietario: string | null;
+		direccion: string | null;
+		telefono: string | null;
+		email: string | null;
+	} | null;
+	cliente: {
+		clienteId: string;
+		nombre: string;
+		telefono: string | null;
+		direccion: string | null;
+	};
+	generadoEn: string;
+	resumen: EstadoDeCuentaResumen;
+	cuentasPorCobrar: CuentaPorCobrarEnriquecida[];
+	anticipos: EstadoDeCuentaAnticipo[];
+	notasCredito: EstadoDeCuentaNotaCredito[];
+	facturas: EstadoDeCuentaFactura[];
+	pagos: EstadoDeCuentaPago[];
 }
 
 /** Cuenta por Pagar con antigüedad calculada. */
@@ -291,7 +382,9 @@ function enriquecerCuentaPorCobrar(
 		totalFactura,
 		totalPagadoFactura,
 		saldoFactura,
-		moneda: cuenta.moneda as string,
+		// CuentaPorCobrar no tiene columna `moneda`: la moneda real vive en
+		// monedaOriginal (null en filas legacy -> CUP, moneda funcional).
+		moneda: (cuenta.monedaOriginal as string | null) ?? 'CUP',
 		cliente: cuenta.cliente as { clienteId: string; nombre: string } | null,
 		factura: facturaRecord
 			? {
@@ -604,6 +697,233 @@ export const getCxcMetricsAction = withAction(
 		const tenantId = requireTenant(user);
 
 		return AccountingAccountsService.getReceivablesMetrics({ tenantId });
+	},
+);
+
+/**
+ * @description Componen el estado de cuenta de un cliente en un solo
+ * resultado tenant-scoped (F-6): empresa, cliente, resumen (deudaTotal,
+ * deudaVencida, saldoAFavor por origen, saldoNeto), CxC enriquecidas
+ * (reusa `enriquecerCuentaPorCobrar`), anticipos COBRO activos, notas de
+ * crédito con saldo a favor, facturas e historial de pagos. `desde` acota
+ * CxC, facturas e historial. Los montos se resuelven aquí: el PDF
+ * client-side solo compone.
+ */
+export const getEstadoDeCuentaClienteAction = withAction(
+	async (
+		input: { clienteId: string; desde?: string },
+		user: AuthenticatedUser,
+	): Promise<EstadoDeCuentaClienteData> => {
+		requireFeature(user, 'cuentas-cobrar', 'consultar cuentas por cobrar');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar el estado de cuenta');
+		const tenantId = requireTenant(user);
+		const f = estadoDeCuentaSchema.parse(input);
+		const desde = f.desde ? new Date(f.desde) : null;
+
+		const [empresa, cliente] = await Promise.all([
+			prisma.miEmpresa.findFirst({ where: { tenantId } }),
+			prisma.cliente.findFirst({
+				where: { clienteId: f.clienteId, tenantId },
+			}),
+		]);
+		if (!cliente) throw new ActionError("Cliente no encontrado", "NOT_FOUND");
+
+		const [cxcRaw, anticiposRaw, notasCreditoRaw, facturasRaw, pagosRaw] =
+			await Promise.all([
+				prisma.cuentaPorCobrar.findMany({
+					where: {
+						tenantId,
+						clienteId: f.clienteId,
+						estado: { in: [...ACTIVE_RECEIVABLE_STATES] },
+						...(desde ? { createdAt: { gte: desde } } : {}),
+					},
+					include: CXC_INCLUDE,
+					orderBy: { createdAt: "desc" },
+				}),
+				prisma.anticipo.findMany({
+					where: {
+						tenantId,
+						clienteId: f.clienteId,
+						tipo: "COBRO",
+						estado: { not: "ANULADO" },
+						saldoDisponible: { gt: 0 },
+					},
+					select: {
+						anticipoId: true,
+						tipo: true,
+						estado: true,
+						montoOriginal: true,
+						saldoDisponible: true,
+						moneda: true,
+						fechaReserva: true,
+					},
+					orderBy: { createdAt: "desc" },
+				}),
+				prisma.devolucionVenta.findMany({
+					where: {
+						tenantId,
+						venta: { clienteId: f.clienteId },
+						estado: { not: "ANULADA" },
+						montoSaldoFavor: { gt: 0 },
+					},
+					select: {
+						devolucionId: true,
+						anticipoId: true,
+						ventaId: true,
+						estado: true,
+						moneda: true,
+						total: true,
+						montoAplicadoCxc: true,
+						montoSaldoFavor: true,
+						createdAt: true,
+					},
+					orderBy: { createdAt: "desc" },
+				}),
+				prisma.factura.findMany({
+					where: {
+						tenantId,
+						clienteId: f.clienteId,
+						...(desde ? { fechaEmision: { gte: desde } } : {}),
+					},
+					select: {
+						idFactura: true,
+						numeroFactura: true,
+						tipoDocumento: true,
+						estado: true,
+						fechaEmision: true,
+						fechaVencimiento: true,
+						subtotal: true,
+						impuestos: true,
+						descuento: true,
+						total: true,
+					},
+					orderBy: { fechaEmision: "desc" },
+				}),
+				prisma.reconciliacionVenta.findMany({
+					where: {
+						tenantId,
+						venta: { clienteId: f.clienteId },
+						...(desde ? { fechaReconciliacion: { gte: desde } } : {}),
+					},
+					select: {
+						reconciliacionId: true,
+						monto: true,
+						moneda: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
+						observaciones: true,
+						tipoPago: { select: { nombre: true } },
+					},
+					orderBy: { fechaReconciliacion: "desc" },
+				}),
+			]);
+
+		const cuentasPorCobrar = cxcRaw.map((cuenta) =>
+			enriquecerCuentaPorCobrar(cuenta as unknown as Record<string, unknown>),
+		);
+		const ahora = new Date();
+		const resumenPorMoneda = new Map<string, EstadoDeCuentaResumen['porMoneda'][number]>();
+		const resumenMoneda = (moneda: string) => {
+			const actual = resumenPorMoneda.get(moneda);
+			if (actual) return actual;
+			const nuevo = {
+				moneda,
+				deudaTotal: 0,
+				deudaVencida: 0,
+				saldoAFavorAnticipos: 0,
+				saldoAFavorNotasCredito: 0,
+				saldoAFavor: 0,
+				saldoNeto: 0,
+			};
+			resumenPorMoneda.set(moneda, nuevo);
+			return nuevo;
+		};
+		for (const cuenta of cuentasPorCobrar) {
+			const resumen = resumenMoneda(cuenta.moneda || 'CUP');
+			resumen.deudaTotal += cuenta.saldoFactura;
+			if (cuenta.fechaVencimiento && new Date(cuenta.fechaVencimiento) < ahora) {
+				resumen.deudaVencida += cuenta.saldoFactura;
+			}
+		}
+		for (const anticipo of anticiposRaw) {
+			resumenMoneda(anticipo.moneda).saldoAFavorAnticipos += Number(anticipo.saldoDisponible);
+		}
+		const notasCreditoSinAnticipo = notasCreditoRaw.filter((nota) => nota.anticipoId == null);
+		for (const nota of notasCreditoSinAnticipo) {
+			// Una NC materializada como anticipo (anticipoId != null) no se
+			// suma aquí: su saldo a favor vive en el anticipo (saldoDisponible,
+			// saldo vivo) y contarlo dos veces subestima la deuda neta.
+			// montoSaldoFavor es solo la foto del momento de creación.
+			resumenMoneda(nota.moneda).saldoAFavorNotasCredito += Number(nota.montoSaldoFavor);
+		}
+		for (const resumen of resumenPorMoneda.values()) {
+			resumen.saldoAFavor = resumen.saldoAFavorAnticipos + resumen.saldoAFavorNotasCredito;
+			resumen.saldoNeto = resumen.deudaTotal - resumen.saldoAFavor;
+		}
+
+		return {
+			empresa: empresa
+				? {
+						nombre: empresa.nombre,
+						propietario: empresa.propietario,
+						direccion: empresa.direccion,
+						telefono: empresa.telefono,
+						email: empresa.email,
+					}
+				: null,
+			cliente: {
+				clienteId: cliente.clienteId,
+				nombre: cliente.nombre,
+				telefono: cliente.telefono,
+				direccion: cliente.direccion,
+			},
+			generadoEn: ahora.toISOString(),
+			resumen: {
+				porMoneda: [...resumenPorMoneda.values()].sort((a, b) => a.moneda.localeCompare(b.moneda)),
+			},
+			cuentasPorCobrar,
+			anticipos: anticiposRaw.map((a) => ({
+				anticipoId: a.anticipoId,
+				tipo: a.tipo,
+				estado: a.estado,
+				montoOriginal: Number(a.montoOriginal),
+				saldoDisponible: Number(a.saldoDisponible),
+				moneda: a.moneda,
+				fechaReserva: a.fechaReserva.toISOString(),
+			})),
+			notasCredito: notasCreditoSinAnticipo.map((nc) => ({
+				devolucionId: nc.devolucionId,
+				ventaId: nc.ventaId,
+				estado: nc.estado,
+				moneda: nc.moneda,
+				total: Number(nc.total),
+				montoAplicadoCxc: nc.montoAplicadoCxc,
+				montoSaldoFavor: nc.montoSaldoFavor,
+				createdAt: nc.createdAt.toISOString(),
+			})),
+			facturas: facturasRaw.map((fa) => ({
+				idFactura: fa.idFactura,
+				numeroFactura: fa.numeroFactura,
+				tipoDocumento: fa.tipoDocumento,
+				estado: fa.estado,
+				fechaEmision: fa.fechaEmision.toISOString(),
+				fechaVencimiento: fa.fechaVencimiento?.toISOString() ?? null,
+				subtotal: Number(fa.subtotal),
+				impuestos: Number(fa.impuestos),
+				descuento: Number(fa.descuento),
+				total: Number(fa.total),
+			})),
+			pagos: pagosRaw.map((p) => ({
+				reconciliacionId: p.reconciliacionId,
+				monto: Number(p.monto),
+				moneda: p.moneda,
+				montoConvertido:
+					p.montoConvertido === null ? null : Number(p.montoConvertido),
+				fechaReconciliacion: p.fechaReconciliacion.toISOString(),
+				tipoPagoNombre: p.tipoPago?.nombre ?? null,
+				observaciones: p.observaciones,
+			})),
+		};
 	},
 );
 

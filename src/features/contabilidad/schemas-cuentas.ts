@@ -38,6 +38,21 @@ export const annulCuentaPorCobrarSchema = z.object({
 	motivo: z.string().trim().min(1).max(500).optional(),
 });
 
+// ═══ Estado de cuenta de cliente (F-6) ═══
+
+export const estadoDeCuentaSchema = z.object({
+	clienteId: z.string().min(1, "El ID de cliente es requerido"),
+	/** Fecha ISO opcional: acota CxC, facturas e historial de pagos. */
+	desde: z
+		.string()
+		.refine((v) => !Number.isNaN(new Date(v).getTime()), {
+			message: "La fecha desde es inválida",
+		})
+		.optional(),
+});
+
+export type EstadoDeCuentaInput = z.infer<typeof estadoDeCuentaSchema>;
+
 // ═══ Cuentas por Pagar ═══
 
 export const getCuentasPorPagarSchema = z.object({
