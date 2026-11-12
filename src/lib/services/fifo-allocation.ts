@@ -766,41 +766,88 @@ export async function allocateFifoForVentaItem(
 	}
 }
 
+// ─── Helper: Cantidad de una línea de compra ya vendida ─────────
+
+/**
+ * @description Cantidad de una línea de compra ya asignada a ventas (FIFO).
+ *
+ * Suma las asignaciones directas (`compraDocumentoItemId`) y las asignaciones
+ * por recibo ligadas a la línea vía `PurchaseReceiptInvoiceAllocation`: las
+ * ventas consumidas desde una recepción se crean con `compraDocumentoItemId`
+ * en null, así que el aggregate directo solo no las ve y el disponible a
+ * devolver se sobreestima.
+ *
+ * Las asignaciones de recibo sin capa de factura no se pueden atribuir a
+ * ninguna línea (la nulidad es la marca de procedencia del libro formal) y
+ * no se cuentan aquí.
+ *
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
+ * @param {string} tenantId - Tenant propietario.
+ * @param {string} compraDocumentoItemId - ID del item de compra.
+ * @returns {Promise<number>} Unidades de la línea ya vendidas.
+ */
+export async function getCantidadAsignadaAVentas(
+	tx: Prisma.TransactionClient,
+	tenantId: string,
+	compraDocumentoItemId: string,
+): Promise<number> {
+	const [directa, capas] = await Promise.all([
+		tx.purchaseAllocation.aggregate({
+			where: { tenantId, compraDocumentoItemId },
+			_sum: { cantidad: true },
+		}),
+		tx.purchaseReceiptInvoiceAllocation.findMany({
+			where: { tenantId, compraDocumentoItemId },
+			select: { id: true },
+		}),
+	]);
+	const asignadaDirecta = directa._sum.cantidad ?? 0;
+	if (capas.length === 0) return asignadaDirecta;
+	const porRecibo = await tx.purchaseAllocation.groupBy({
+		by: ["purchaseReceiptInvoiceAllocationId"],
+		where: {
+			tenantId,
+			purchaseReceiptInvoiceAllocationId: { in: capas.map((capa) => capa.id) },
+		},
+		_sum: { cantidad: true },
+	});
+	return (
+		asignadaDirecta +
+		porRecibo.reduce((total, grupo) => total + (grupo._sum.cantidad ?? 0), 0)
+	);
+}
+
 // ─── Helper: Stock disponible de un item de compra ─────────────
 
 /**
  * @description Retorna el stock disponible de un item de compra.
  *
  *   El stock disponible se calcula como:
- *   `cantidadOriginal - SUM(PurchaseAllocation.cantidad)`
+ *   `cantidadOriginal - SUM(PurchaseAllocation.cantidad)`, donde la suma
+ *   incluye las asignaciones directas y las de recibo ligadas por capa de
+ *   factura (ver `getCantidadAsignadaAVentas`).
  *
  * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
  * @param {string} compraDocumentoItemId - ID del item de compra.
  * @returns {Promise<number>} Stock disponible (nunca negativo).
  */
+
 export async function getAvailableStock(
 	tx: Prisma.TransactionClient,
 	compraDocumentoItemId: string,
 ): Promise<number> {
-	const [compraItem, allocatedResult] = await Promise.all([
-		tx.compraDocumentoItem.findUnique({
-			where: { compraDocumentoItemId },
-			select: { cantidad: true, compraDocumento: { select: { estado: true, deletedAt: true } } },
-		}),
-		tx.purchaseAllocation.aggregate({
-			where: { compraDocumentoItemId },
-			_sum: { cantidad: true },
-		}),
-	]);
+	const compraItem = await tx.compraDocumentoItem.findUnique({
+		where: { compraDocumentoItemId },
+		select: { cantidad: true, tenantId: true, compraDocumento: { select: { estado: true, deletedAt: true } } },
+	});
 
 	if (!compraItem) return 0;
 	// Una compra anulada o eliminada ya no tiene stock disponible para asignar.
 	if (compraItem.compraDocumento?.deletedAt || compraItem.compraDocumento?.estado === "ANULADA") return 0;
 
-	const originalCantidad = compraItem.cantidad;
-	const allocated = allocatedResult._sum.cantidad ?? 0;
+	const allocated = await getCantidadAsignadaAVentas(tx, compraItem.tenantId, compraDocumentoItemId);
 
-	return Math.max(0, originalCantidad - allocated);
+	return Math.max(0, compraItem.cantidad - allocated);
 }
 
 // ─── FIFO: Procesar venta completa ─────────────────────────────

@@ -36,7 +36,8 @@ const mockTx = {
   cuentaPorPagar: { update: vi.fn(), findFirst: vi.fn() },
   pagoCuentaPorPagar: { findFirst: vi.fn() },
   producto: { findUnique: vi.fn(), findFirst: vi.fn() },
-  purchaseAllocation: { aggregate: vi.fn() },
+  purchaseAllocation: { aggregate: vi.fn(), groupBy: vi.fn() },
+  purchaseReceiptInvoiceAllocation: { findMany: vi.fn() },
   devolucionCompraItem: { aggregate: vi.fn() },
 };
 
@@ -55,7 +56,8 @@ vi.mock('@/lib/prisma', () => ({
     cuentaPorPagar: { update: vi.fn(), findFirst: vi.fn() },
     pagoCuentaPorPagar: { findFirst: vi.fn() },
     producto: { findUnique: vi.fn(), findFirst: vi.fn() },
-    purchaseAllocation: { aggregate: vi.fn() },
+    purchaseAllocation: { aggregate: vi.fn(), groupBy: vi.fn() },
+    purchaseReceiptInvoiceAllocation: { findMany: vi.fn() },
     devolucionCompraItem: { aggregate: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockTx)),
   },
@@ -116,6 +118,7 @@ describe('F-2: crearDevolucionCompraAction', () => {
     mockTx.purchaseAllocation.aggregate.mockResolvedValue({
       _sum: { cantidad: 0 },
     } as any);
+    mockTx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([] as any);
     mockTx.devolucionCompraItem.aggregate.mockResolvedValue({
       _sum: { cantidad: 0 },
     } as any);
@@ -200,6 +203,52 @@ describe('F-2: crearDevolucionCompraAction', () => {
     expect(mockTx.devolucionCompra.create).not.toHaveBeenCalled();
   });
 
+  it('cuenta como asignadas las ventas desde recibo ligadas por capa de factura', async () => {
+    mockTx.purchaseAllocation.aggregate.mockResolvedValue({
+      _sum: { cantidad: 0 },
+    } as any);
+    mockTx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([
+      { id: 'layer-1' },
+    ] as any);
+    mockTx.purchaseAllocation.groupBy.mockResolvedValue([
+      { purchaseReceiptInvoiceAllocationId: 'layer-1', _sum: { cantidad: 15 } },
+    ] as any);
+    mockTx.devolucionCompraItem.aggregate.mockResolvedValue({
+      _sum: { cantidad: 0 },
+    } as any);
+
+    const result = await crearDevolucionCompraAction({
+      compraDocumentoId: 'cd-1',
+      formaImputacion: 'SALDO_FAVOR',
+      // 24 compradas − 15 vendidas desde recibo = 9 disponibles; pide 10
+      items: [{ compraDocumentoItemId: 'cdi-1', cantidad: 10 }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('STOCK_DEVUELTO_ASIGNADO');
+    expect(mockTx.devolucionCompra.create).not.toHaveBeenCalled();
+  });
+
+  it('permite devolver justo lo disponible tras ventas desde recibo', async () => {
+    mockTx.purchaseAllocation.aggregate.mockResolvedValue({
+      _sum: { cantidad: 0 },
+    } as any);
+    mockTx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([
+      { id: 'layer-1' },
+    ] as any);
+    mockTx.purchaseAllocation.groupBy.mockResolvedValue([
+      { purchaseReceiptInvoiceAllocationId: 'layer-1', _sum: { cantidad: 15 } },
+    ] as any);
+
+    const result = await crearDevolucionCompraAction({
+      compraDocumentoId: 'cd-1',
+      formaImputacion: 'SALDO_FAVOR',
+      items: [{ compraDocumentoItemId: 'cdi-1', cantidad: 9 }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it('rechaza ítem ajeno a la compra', async () => {
     const result = await crearDevolucionCompraAction({
       compraDocumentoId: 'cd-1',
@@ -235,6 +284,7 @@ describe('F-2: completarDevolucionCompraAction', () => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(user);
     mockTx.purchaseAllocation.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } } as any);
+    mockTx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([] as any);
     mockTx.devolucionCompraItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } } as any);
     mockTx.compraDocumentoItem.findFirst.mockResolvedValue({ cantidad: 24 } as any);
   });
@@ -281,6 +331,35 @@ describe('F-2: completarDevolucionCompraAction', () => {
       }) as any,
     );
     mockTx.purchaseAllocation.aggregate.mockResolvedValue({ _sum: { cantidad: 21 } } as any);
+
+    const result = await completarDevolucionCompraAction('dc-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('STOCK_DEVUELTO_ASIGNADO');
+    expect(upsertStockUbicacion).not.toHaveBeenCalled();
+    expect(registrarMovimiento).not.toHaveBeenCalled();
+  });
+
+  it('vuelve a validar al completar las ventas desde recibo ligadas por capa', async () => {
+    mockTx.devolucionCompra.findFirst.mockResolvedValue(
+      devolucionBase({
+        formaImputacion: 'SALDO_FAVOR',
+        items: [{
+          id: 'dci-1',
+          compraDocumentoItemId: 'cdi-1',
+          productoId: 'prod-1',
+          cantidad: 4,
+          costoUnitario: 500,
+        }],
+      }) as any,
+    );
+    mockTx.purchaseAllocation.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } } as any);
+    mockTx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([
+      { id: 'layer-1' },
+    ] as any);
+    mockTx.purchaseAllocation.groupBy.mockResolvedValue([
+      { purchaseReceiptInvoiceAllocationId: 'layer-1', _sum: { cantidad: 21 } },
+    ] as any);
 
     const result = await completarDevolucionCompraAction('dc-1');
 

@@ -7,6 +7,7 @@ import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inv
 import { ActionError, withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { getCantidadAsignadaAVentas } from '@/lib/services/fifo-allocation';
 import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -104,11 +105,8 @@ export const crearDevolucionCompraAction = withAction(
 					throw new ActionError('La línea no pertenece a la compra indicada', 'NOT_FOUND');
 				}
 
-				const [asignaciones, devolucionesPrevias] = await Promise.all([
-					tx.purchaseAllocation.aggregate({
-						where: { tenantId, compraDocumentoItemId },
-						_sum: { cantidad: true },
-					}),
+				const [asignada, devolucionesPrevias] = await Promise.all([
+					getCantidadAsignadaAVentas(tx, tenantId, compraDocumentoItemId),
 					tx.devolucionCompraItem.aggregate({
 						where: {
 							tenantId,
@@ -118,7 +116,6 @@ export const crearDevolucionCompraAction = withAction(
 						_sum: { cantidad: true },
 					}),
 				]);
-				const asignada = asignaciones._sum.cantidad ?? 0;
 				const yaDevuelta = devolucionesPrevias._sum.cantidad ?? 0;
 				const disponible = compraItem.cantidad - asignada - yaDevuelta;
 				if (cantidad > disponible) {
@@ -225,11 +222,8 @@ export const completarDevolucionCompraAction = withAction(
 			}
 
 			for (const [index, item] of devolucion.items.entries()) {
-				const [asignaciones, otrasDevoluciones] = await Promise.all([
-					tx.purchaseAllocation.aggregate({
-						where: { tenantId, compraDocumentoItemId: item.compraDocumentoItemId },
-						_sum: { cantidad: true },
-					}),
+				const [asignada, otrasDevoluciones] = await Promise.all([
+					getCantidadAsignadaAVentas(tx, tenantId, item.compraDocumentoItemId),
 					tx.devolucionCompraItem.aggregate({
 						where: {
 							tenantId,
@@ -240,7 +234,6 @@ export const completarDevolucionCompraAction = withAction(
 						_sum: { cantidad: true },
 					}),
 				]);
-				const asignada = asignaciones._sum.cantidad ?? 0;
 				const reservadaPorOtras = otrasDevoluciones._sum.cantidad ?? 0;
 				const lineaCompra = await tx.compraDocumentoItem.findFirst({
 					where: { tenantId, compraDocumentoItemId: item.compraDocumentoItemId },
