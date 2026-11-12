@@ -22,21 +22,25 @@ interface SyncProveedorProductosParams {
   tenantId: string;
   proveedorId: string;
   compraDocumentoId: string;
+  /** Moneda de la factura: el costo se persiste en esa moneda. */
+  moneda: string;
   items: { productoId: string; precioUnitario: number }[];
 }
 
 /**
  * @description Sincroniza el pricelist del proveedor con el costo real de los
- * ítems de una factura de compra (upsert por vendor+producto).
+ * ítems de una factura de compra (upsert por vendor+producto). El costo se
+ * guarda en unidades enteras de la moneda de la factura (misma convención
+ * que precioCosto de Producto), no en centavos.
  * @param {any} tx - Cliente/tx Prisma (se llama dentro de la transacción de compra).
- * @param {SyncProveedorProductosParams} params - Tenant, proveedor, compra e ítems con costo.
+ * @param {SyncProveedorProductosParams} params - Tenant, proveedor, compra, moneda e ítems con costo.
  * @returns {Promise<void>}
  */
 export async function sincronizarProveedorProductos(
   tx: any,
   params: SyncProveedorProductosParams,
 ): Promise<void> {
-  const { tenantId, proveedorId, compraDocumentoId, items } = params;
+  const { tenantId, proveedorId, compraDocumentoId, moneda, items } = params;
   for (const item of items) {
     await tx.proveedorProducto.upsert({
       where: {
@@ -51,11 +55,13 @@ export async function sincronizarProveedorProductos(
         vendorId: proveedorId,
         productoId: item.productoId,
         costoUnitario: item.precioUnitario,
+        moneda,
         ultimaCompraDocumentoId: compraDocumentoId,
         esPreferente: false,
       },
       update: {
         costoUnitario: item.precioUnitario,
+        moneda,
         ultimaCompraDocumentoId: compraDocumentoId,
       },
     });
@@ -73,7 +79,7 @@ interface ResolverPrecioParams {
  * preferente si existe; si no, el registro más reciente.
  * @param {any} tx - Cliente/tx Prisma.
  * @param {ResolverPrecioParams} params - Tenant, proveedor y producto.
- * @returns {Promise<number|null>} Costo unitario en centavos o null si no hay registro.
+ * @returns {Promise<number|null>} Costo unitario en unidades enteras de la moneda o null si no hay registro.
  */
 export async function resolverPrecioProveedor(
   tx: any,
@@ -102,7 +108,9 @@ const upsertProveedorProductoSchema = z.object({
 
 /**
  * @description Crea o actualiza un precio de proveedor (manual). Con
- * `esPreferente` desmarca primero a los demás vendors del mismo producto.
+ * `esPreferente` desmarca primero a los demás vendors del mismo producto,
+ * en la misma transacción que el upsert. `costoUnitario` va en unidades
+ * enteras de `moneda`, como el costo del sync automático.
  * @param {z.input<typeof upsertProveedorProductoSchema>} input - Datos del precio.
  * @param {AuthenticatedUser} user - Usuario autenticado.
  * @returns {Promise<object>} Resultado con el registro persistido.
@@ -129,38 +137,43 @@ export const upsertProveedorProductoAction = withAction(
     if (!vendor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
     if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
 
-    if (parsed.esPreferente) {
-      await prisma.proveedorProducto.updateMany({
-        where: { tenantId, productoId: parsed.productoId },
-        data: { esPreferente: false },
-      });
-    }
+    // Desmarcar al resto y persistir el registro van en una sola
+    // transacción: si no, dos llamadas concurrentes pueden dejar dos
+    // preferentes (o cero).
+    const registro = await prisma.$transaction(async (tx) => {
+      if (parsed.esPreferente) {
+        await tx.proveedorProducto.updateMany({
+          where: { tenantId, productoId: parsed.productoId },
+          data: { esPreferente: false },
+        });
+      }
 
-    const registro = await prisma.proveedorProducto.upsert({
-      where: {
-        tenantId_vendorId_productoId: {
+      return tx.proveedorProducto.upsert({
+        where: {
+          tenantId_vendorId_productoId: {
+            tenantId,
+            vendorId: parsed.vendorId,
+            productoId: parsed.productoId,
+          },
+        },
+        create: {
           tenantId,
           vendorId: parsed.vendorId,
           productoId: parsed.productoId,
+          costoUnitario: parsed.costoUnitario,
+          moneda: parsed.moneda,
+          cantidadMinima: parsed.cantidadMinima ?? null,
+          plazoEntregaDias: parsed.plazoEntregaDias ?? null,
+          esPreferente: parsed.esPreferente,
         },
-      },
-      create: {
-        tenantId,
-        vendorId: parsed.vendorId,
-        productoId: parsed.productoId,
-        costoUnitario: parsed.costoUnitario,
-        moneda: parsed.moneda,
-        cantidadMinima: parsed.cantidadMinima ?? null,
-        plazoEntregaDias: parsed.plazoEntregaDias ?? null,
-        esPreferente: parsed.esPreferente,
-      },
-      update: {
-        costoUnitario: parsed.costoUnitario,
-        moneda: parsed.moneda,
-        cantidadMinima: parsed.cantidadMinima ?? null,
-        plazoEntregaDias: parsed.plazoEntregaDias ?? null,
-        esPreferente: parsed.esPreferente,
-      },
+        update: {
+          costoUnitario: parsed.costoUnitario,
+          moneda: parsed.moneda,
+          cantidadMinima: parsed.cantidadMinima ?? null,
+          plazoEntregaDias: parsed.plazoEntregaDias ?? null,
+          esPreferente: parsed.esPreferente,
+        },
+      });
     });
 
     revalidatePath('/busy/vendor');
@@ -187,13 +200,17 @@ export const setProveedorProductoPreferenteAction = withAction(
       throw new ActionError('Registro no encontrado', 'NOT_FOUND');
     }
 
-    await prisma.proveedorProducto.updateMany({
-      where: { tenantId, productoId: registro.productoId },
-      data: { esPreferente: false },
-    });
-    const actualizado = await prisma.proveedorProducto.update({
-      where: { proveedorProductoId },
-      data: { esPreferente: true },
+    // Desmarcar y marcar en una sola transacción: fuera de ella, dos
+    // llamadas concurrentes pueden dejar dos preferentes (o cero).
+    const actualizado = await prisma.$transaction(async (tx) => {
+      await tx.proveedorProducto.updateMany({
+        where: { tenantId, productoId: registro.productoId },
+        data: { esPreferente: false },
+      });
+      return tx.proveedorProducto.update({
+        where: { proveedorProductoId },
+        data: { esPreferente: true },
+      });
     });
 
     revalidatePath('/busy/vendor');
@@ -261,7 +278,10 @@ export const getProveedor360Action = withAction(
           where: { tenantId, vendorId },
           orderBy: { createdAt: 'desc' },
         }),
-        prisma.compraDocumento.aggregate({
+        // Desglose por moneda: sumar totales de monedas distintas en un
+        // solo número mezcla CUP con USD/EUR y no es comparable.
+        prisma.compraDocumento.groupBy({
+          by: ['moneda'],
           where: {
             tenantId,
             proveedorId: vendorId,
@@ -282,7 +302,14 @@ export const getProveedor360Action = withAction(
       deudasCash,
       contratos,
       metricas: {
-        totalComprado12Meses: metrica._sum.total ?? 0,
+        // Total en CUP (moneda funcional por defecto); el desglose por
+        // moneda cubre el resto. Antes era la suma sin agrupar por moneda.
+        totalComprado12Meses:
+          metrica.find((m) => m.moneda === 'CUP')?._sum.total ?? 0,
+        totalesComprado12MesesPorMoneda: metrica.map((m) => ({
+          moneda: m.moneda,
+          total: m._sum.total ?? 0,
+        })),
         ultimaCompra: comprasRecientes[0]?.createdAt ?? null,
       },
     };

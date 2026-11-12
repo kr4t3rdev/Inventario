@@ -34,7 +34,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     vendor: { findFirst: vi.fn() },
     producto: { findFirst: vi.fn() },
-    compraDocumento: { findMany: vi.fn(), aggregate: vi.fn() },
+    compraDocumento: { findMany: vi.fn(), groupBy: vi.fn() },
     cuentaPorPagar: { findMany: vi.fn() },
     anticipo: { findMany: vi.fn() },
     deudaCash: { findMany: vi.fn() },
@@ -72,6 +72,7 @@ describe('F-3: sincronizarProveedorProductos', () => {
       tenantId: 'tenant-1',
       proveedorId: 'ven-1',
       compraDocumentoId: 'cd-1',
+      moneda: 'USD',
       items: [
         { productoId: 'prod-1', precioUnitario: 500 },
         { productoId: 'prod-2', precioUnitario: 800 },
@@ -89,13 +90,41 @@ describe('F-3: sincronizarProveedorProductos', () => {
       },
       create: expect.objectContaining({
         costoUnitario: 500,
+        moneda: 'USD',
         ultimaCompraDocumentoId: 'cd-1',
       }),
       update: expect.objectContaining({
         costoUnitario: 500,
+        moneda: 'USD',
         ultimaCompraDocumentoId: 'cd-1',
       }),
     });
+  });
+
+  it('al comprar de nuevo en otra moneda persiste la moneda nueva', async () => {
+    await sincronizarProveedorProductos(mockTx as any, {
+      tenantId: 'tenant-1',
+      proveedorId: 'ven-1',
+      compraDocumentoId: 'cd-1',
+      moneda: 'USD',
+      items: [{ productoId: 'prod-1', precioUnitario: 500 }],
+    });
+    await sincronizarProveedorProductos(mockTx as any, {
+      tenantId: 'tenant-1',
+      proveedorId: 'ven-1',
+      compraDocumentoId: 'cd-2',
+      moneda: 'CUP',
+      items: [{ productoId: 'prod-1', precioUnitario: 700 }],
+    });
+
+    expect(mockTx.proveedorProducto.upsert).toHaveBeenCalledTimes(2);
+    expect(mockTx.proveedorProducto.upsert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        create: expect.objectContaining({ costoUnitario: 700, moneda: 'CUP' }),
+        update: expect.objectContaining({ costoUnitario: 700, moneda: 'CUP' }),
+      }),
+    );
   });
 });
 
@@ -138,11 +167,13 @@ describe('F-3: upsertProveedorProductoAction y preferente único', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(user);
     vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'ven-1' } as any);
     vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any);
-    prisma.proveedorProducto.upsert.mockResolvedValue({
+    // desmarcar+upsert corren dentro de prisma.$transaction: el mock de la
+    // transacción ejecuta el callback con mockTx.
+    mockTx.proveedorProducto.upsert.mockResolvedValue({
       proveedorProductoId: 'pp-1',
       esPreferente: true,
     } as any);
-    prisma.proveedorProducto.updateMany.mockResolvedValue({
+    mockTx.proveedorProducto.updateMany.mockResolvedValue({
       count: 2,
     } as any);
   });
@@ -155,13 +186,15 @@ describe('F-3: upsertProveedorProductoAction y preferente único', () => {
       esPreferente: true,
     });
 
-    // Desmarca primero (los otros vendors del mismo producto)...
-    expect(prisma.proveedorProducto.updateMany).toHaveBeenCalledWith({
+    // Desmarca primero (los otros vendors del mismo producto), dentro de
+    // la misma transacción que el upsert...
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockTx.proveedorProducto.updateMany).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', productoId: 'prod-1' },
       data: { esPreferente: false },
     });
     // ...y después persiste el upsert con la marca.
-    expect(prisma.proveedorProducto.upsert).toHaveBeenCalledWith(
+    expect(mockTx.proveedorProducto.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         create: expect.objectContaining({
           esPreferente: true,
@@ -179,7 +212,8 @@ describe('F-3: upsertProveedorProductoAction y preferente único', () => {
       costoUnitario: 450,
     });
 
-    expect(prisma.proveedorProducto.updateMany).not.toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockTx.proveedorProducto.updateMany).not.toHaveBeenCalled();
   });
 
   it('rechaza un proveedor que no pertenece al tenant autenticado', async () => {
@@ -210,21 +244,23 @@ describe('F-3: setProveedorProductoPreferenteAction', () => {
       tenantId: 'tenant-1',
       productoId: 'prod-1',
     } as any);
-    prisma.proveedorProducto.update.mockResolvedValue({
+    mockTx.proveedorProducto.update.mockResolvedValue({
       esPreferente: true,
     } as any);
-    prisma.proveedorProducto.updateMany.mockResolvedValue({ count: 1 } as any);
+    mockTx.proveedorProducto.updateMany.mockResolvedValue({ count: 1 } as any);
   });
 
   it('marca el registro y desmarca el resto del producto', async () => {
     const result = await setProveedorProductoPreferenteAction('pp-1');
 
     expect(result.success).toBe(true);
-    expect(prisma.proveedorProducto.updateMany).toHaveBeenCalledWith({
+    // Desmarcar y marcar corren en una sola transacción.
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockTx.proveedorProducto.updateMany).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', productoId: 'prod-1' },
       data: { esPreferente: false },
     });
-    expect(prisma.proveedorProducto.update).toHaveBeenCalledWith({
+    expect(mockTx.proveedorProducto.update).toHaveBeenCalledWith({
       where: { proveedorProductoId: 'pp-1' },
       data: { esPreferente: true },
     });
@@ -256,9 +292,9 @@ describe('F-3: getProveedor360Action', () => {
     vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([
       { compraDocumentoId: 'cd-1', total: 12000, createdAt: new Date() },
     ] as any);
-    vi.mocked(prisma.compraDocumento.aggregate).mockResolvedValue({
-      _sum: { total: 42000 },
-    } as any);
+    vi.mocked(prisma.compraDocumento.groupBy).mockResolvedValue([
+      { moneda: 'CUP', _sum: { total: 42000 } },
+    ] as any);
     vi.mocked(prisma.cuentaPorPagar.findMany).mockResolvedValue([
       { cuentaPorPagarId: 'cxp-1', saldoPendiente: 3000 },
     ] as any);
@@ -277,6 +313,9 @@ describe('F-3: getProveedor360Action', () => {
     expect(data.comprasRecientes).toHaveLength(1);
     expect(data.cuentasPorPagar).toHaveLength(1);
     expect(data.metricas.totalComprado12Meses).toBe(42000);
+    expect(data.metricas.totalesComprado12MesesPorMoneda).toEqual([
+      { moneda: 'CUP', total: 42000 },
+    ]);
 
     // Tenant scoping en cada consulta
     expect(prisma.proveedorProducto.findMany).toHaveBeenCalledWith(
@@ -289,6 +328,24 @@ describe('F-3: getProveedor360Action', () => {
         where: expect.objectContaining({ tenantId: 'tenant-1' }),
       }),
     );
+  });
+
+  it('no mezcla monedas en el total de 12 meses', async () => {
+    vi.mocked(prisma.compraDocumento.groupBy).mockResolvedValue([
+      { moneda: 'CUP', _sum: { total: 42000 } },
+      { moneda: 'USD', _sum: { total: 150 } },
+    ] as any);
+
+    const result = await getProveedor360Action('ven-1');
+
+    expect(result.success).toBe(true);
+    const data = result.data as any;
+    // El total principal es solo CUP; el resto va en el desglose.
+    expect(data.metricas.totalComprado12Meses).toBe(42000);
+    expect(data.metricas.totalesComprado12MesesPorMoneda).toEqual([
+      { moneda: 'CUP', total: 42000 },
+      { moneda: 'USD', total: 150 },
+    ]);
   });
 
   it('rechaza proveedor ajeno al tenant', async () => {

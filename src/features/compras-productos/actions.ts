@@ -467,6 +467,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         tenantId,
         proveedorId: parsed.proveedorId,
         compraDocumentoId: compra.compraDocumentoId,
+        moneda: parsed.moneda,
         items: itemsNormalizados.map((item) => ({
           productoId: item.productoId,
           precioUnitario: item.precioCosto,

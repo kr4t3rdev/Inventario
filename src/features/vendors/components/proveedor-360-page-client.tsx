@@ -44,7 +44,11 @@ interface Proveedor360Data {
   anticipos: Array<Record<string, unknown>>;
   deudasCash: Array<Record<string, unknown>>;
   contratos: Array<Record<string, unknown>>;
-  metricas: { totalComprado12Meses: number; ultimaCompra?: string | Date | null };
+  metricas: {
+    totalComprado12Meses: number;
+    totalesComprado12MesesPorMoneda?: Array<{ moneda: string; total: number }>;
+    ultimaCompra?: string | Date | null;
+  };
 }
 
 function stringOrDash(value: unknown): string {
@@ -135,8 +139,11 @@ export function Proveedor360PageClient({ vendorId }: Proveedor360PageClientProps
   );
 
   const { vendor, metricas } = data;
+  // Los montos llegan en unidades enteras de la moneda (misma convención
+  // que CompraDocumento.total y Producto.precioCosto), no en centavos:
+  // dividir por 100 mostraba los totales 100 veces más pequeños.
   const money = (amount: number, currency = 'CUP') =>
-    `${new Intl.NumberFormat('es', { maximumFractionDigits: 0 }).format(amount / 100)} ${currency}`;
+    `${new Intl.NumberFormat('es', { maximumFractionDigits: 0 }).format(amount)} ${currency}`;
 
   return (
     <main className="container mx-auto space-y-6 py-6">
@@ -149,7 +156,7 @@ export function Proveedor360PageClient({ vendorId }: Proveedor360PageClientProps
         </div>
       </div>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores del proveedor">
-        <Card><CardHeader><CardTitle className="text-sm">Compras últimos 12 meses</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{money(metricas.totalComprado12Meses)}</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-sm">Compras últimos 12 meses</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{money(metricas.totalComprado12Meses)}{(metricas.totalesComprado12MesesPorMoneda ?? []).filter((t) => t.moneda !== 'CUP').map((t) => <span key={t.moneda} className="mt-1 block text-sm font-normal text-muted-foreground">{money(t.total, t.moneda)}</span>)}</CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm">Productos en pricelist</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{data.pricelist.length}</CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm">Cuentas por pagar abiertas</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{data.cuentasPorPagar.length}</CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm">Compras recientes</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{data.comprasRecientes.length}</CardContent></Card>

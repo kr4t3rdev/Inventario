@@ -1520,7 +1520,7 @@ model ProveedorProducto {
   tenantId                String
   vendorId                 String
   productoId               String
-  /// Centavos por unidad de stock.
+  /// Costo en unidades enteras de la moneda (misma convención que precioCosto de Producto, no centavos).
   costoUnitario            Int
   moneda                   String           @default("CUP")
   cantidadMinima           Int?

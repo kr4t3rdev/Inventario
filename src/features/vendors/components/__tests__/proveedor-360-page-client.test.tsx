@@ -50,6 +50,37 @@ describe('Proveedor360PageClient', () => {
     expect(screen.getByText('CT-09')).toBeInTheDocument();
   });
 
+  it('muestra los montos en unidades enteras, sin dividir por 100', async () => {
+    getProveedor360Action.mockResolvedValue({ success: true, data: fixture });
+    render(<Proveedor360PageClient vendorId="vendor-1" />);
+
+    // Totales en unidades enteras: 42000 CUP no es 420.00.
+    expect(await screen.findByText('42.000 CUP')).toBeInTheDocument();
+    expect(screen.getByText('25.000 CUP')).toBeInTheDocument();
+    expect(screen.getByText('12.500 CUP')).toBeInTheDocument();
+  });
+
+  it('desglosa el total de 12 meses por moneda', async () => {
+    getProveedor360Action.mockResolvedValue({
+      success: true,
+      data: {
+        ...fixture,
+        metricas: {
+          totalComprado12Meses: 42000,
+          totalesComprado12MesesPorMoneda: [
+            { moneda: 'CUP', total: 42000 },
+            { moneda: 'USD', total: 150 },
+          ],
+          ultimaCompra: '2026-10-01T00:00:00Z',
+        },
+      },
+    });
+    render(<Proveedor360PageClient vendorId="vendor-1" />);
+
+    expect(await screen.findByText('42.000 CUP')).toBeInTheDocument();
+    expect(screen.getByText('150 USD')).toBeInTheDocument();
+  });
+
   it('permite reintentar cuando falla la carga', async () => {
     const user = userEvent.setup();
     getProveedor360Action.mockResolvedValueOnce({ success: false, error: { message: 'Sin acceso' } })
