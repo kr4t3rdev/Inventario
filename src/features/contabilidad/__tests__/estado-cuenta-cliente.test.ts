@@ -63,7 +63,8 @@ const cxcVencida = {
   clienteId: 'cli-1',
   montoDeuda: 1000,
   montoPagado: 0,
-  moneda: 'CUP',
+  // La CxC real no tiene columna `moneda`: la moneda vive en monedaOriginal.
+  monedaOriginal: 'CUP',
   idTransferencia: null,
   estado: 'PENDIENTE',
   tipoCuenta: null,
@@ -82,6 +83,7 @@ const anticipoActivo = {
   montoOriginal: 200,
   saldoDisponible: 200,
   moneda: 'CUP',
+  referenciaExterna: null,
   fechaReserva: new Date('2026-02-10T00:00:00Z'),
 };
 
@@ -90,6 +92,7 @@ const notaCreditoSaldoFavor = {
   ventaId: 'v-1',
   estado: 'REGISTRADA',
   moneda: 'CUP',
+  anticipoId: null,
   total: 100,
   montoAplicadoCxc: 0,
   montoSaldoFavor: 100,
@@ -161,7 +164,7 @@ describe('F-6: getEstadoDeCuentaClienteAction', () => {
   it('mantiene el resumen separado por moneda para no sumar saldos incompatibles', async () => {
     vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
       cxcVencida,
-      { ...cxcVencida, id: 'cxc-usd', moneda: 'USD', montoDeuda: 100, montoPagado: 0 },
+      { ...cxcVencida, id: 'cxc-usd', monedaOriginal: 'USD', montoDeuda: 100, montoPagado: 0 },
     ] as any);
     vi.mocked(prisma.anticipo.findMany).mockResolvedValue([
       anticipoActivo,
@@ -184,6 +187,91 @@ describe('F-6: getEstadoDeCuentaClienteAction', () => {
         moneda: 'USD', deudaTotal: 100, saldoAFavor: 30, saldoNeto: 70,
       }),
     ]);
+  });
+
+  it('no duplica el saldo a favor de una NC materializada como anticipo', async () => {
+    // La NC dv-1 tiene saldo 100 y su anticipo 'ant-nc' es el vehículo
+    // vivo de ese mismo saldo: el resumen debe contar 100 una sola vez.
+    vi.mocked(prisma.anticipo.findMany).mockResolvedValue([
+      anticipoActivo,
+      {
+        ...anticipoActivo,
+        anticipoId: 'ant-nc',
+        referenciaExterna: 'NC:dv-1',
+        saldoDisponible: 100,
+      },
+    ] as any);
+    vi.mocked(prisma.devolucionVenta.findMany).mockResolvedValue([
+      { ...notaCreditoSaldoFavor, anticipoId: 'ant-nc' },
+    ] as any);
+
+    const result = await getEstadoDeCuentaClienteAction({ clienteId: 'cli-1' });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.resumen).toEqual({
+      porMoneda: [{
+        moneda: 'CUP',
+        deudaTotal: 1000,
+        deudaVencida: 1000,
+        saldoAFavorAnticipos: 300,
+        saldoAFavorNotasCredito: 0,
+        saldoAFavor: 300,
+        saldoNeto: 700,
+      }],
+    });
+    // El detalle sigue listando la NC (con su saldo original).
+    expect(result.data.notasCredito).toEqual([
+      expect.objectContaining({ devolucionId: 'dv-1', montoSaldoFavor: 100 }),
+    ]);
+  });
+
+  it('una CxC sin monedaOriginal cae en el bucket CUP, nunca en DOP', async () => {
+    vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
+      { ...cxcVencida, monedaOriginal: null },
+    ] as any);
+    vi.mocked(prisma.anticipo.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.devolucionVenta.findMany).mockResolvedValue([] as any);
+
+    const result = await getEstadoDeCuentaClienteAction({ clienteId: 'cli-1' });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.resumen.porMoneda).toEqual([
+      expect.objectContaining({ moneda: 'CUP', deudaTotal: 1000 }),
+    ]);
+    expect(result.data.resumen.porMoneda.map((r) => r.moneda)).not.toContain('DOP');
+    expect(result.data.cuentasPorCobrar[0].moneda).toBe('CUP');
+  });
+
+  it('rechaza FORBIDDEN el estado de cuenta a un no-admin sin financiero.contabilidad.acceder', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...user,
+      role: 'user',
+      tenantRole: 'dependiente',
+      permissions: new Set(),
+      planFeatures: { 'cuentas-cobrar': true },
+    });
+
+    const result = await getEstadoDeCuentaClienteAction({ clienteId: 'cli-1' });
+
+    expect(result.success).toBe(false);
+    expect(result.error!.code).toBe('FORBIDDEN');
+    expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('permite el estado de cuenta a un no-admin con financiero.contabilidad.acceder', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...user,
+      role: 'user',
+      tenantRole: 'dependiente',
+      permissions: new Set(['financiero.contabilidad.acceder']),
+      planFeatures: { 'cuentas-cobrar': true },
+    });
+
+    const result = await getEstadoDeCuentaClienteAction({ clienteId: 'cli-1' });
+
+    expect(result.success).toBe(true);
   });
 
   it('no vence una CxC sin fecha de vencimiento (deudaVencida 0)', async () => {

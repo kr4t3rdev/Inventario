@@ -382,7 +382,9 @@ function enriquecerCuentaPorCobrar(
 		totalFactura,
 		totalPagadoFactura,
 		saldoFactura,
-		moneda: cuenta.moneda as string,
+		// CuentaPorCobrar no tiene columna `moneda`: la moneda real vive en
+		// monedaOriginal (null en filas legacy -> CUP, moneda funcional).
+		moneda: (cuenta.monedaOriginal as string | null) ?? 'CUP',
 		cliente: cuenta.cliente as { clienteId: string; nombre: string } | null,
 		factura: facturaRecord
 			? {
@@ -713,6 +715,7 @@ export const getEstadoDeCuentaClienteAction = withAction(
 		user: AuthenticatedUser,
 	): Promise<EstadoDeCuentaClienteData> => {
 		requireFeature(user, 'cuentas-cobrar', 'consultar cuentas por cobrar');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'consultar el estado de cuenta');
 		const tenantId = requireTenant(user);
 		const f = estadoDeCuentaSchema.parse(input);
 		const desde = f.desde ? new Date(f.desde) : null;
@@ -765,6 +768,7 @@ export const getEstadoDeCuentaClienteAction = withAction(
 					},
 					select: {
 						devolucionId: true,
+						anticipoId: true,
 						ventaId: true,
 						estado: true,
 						moneda: true,
@@ -835,7 +839,7 @@ export const getEstadoDeCuentaClienteAction = withAction(
 			return nuevo;
 		};
 		for (const cuenta of cuentasPorCobrar) {
-			const resumen = resumenMoneda(cuenta.moneda || 'DOP');
+			const resumen = resumenMoneda(cuenta.moneda || 'CUP');
 			resumen.deudaTotal += cuenta.saldoFactura;
 			if (cuenta.fechaVencimiento && new Date(cuenta.fechaVencimiento) < ahora) {
 				resumen.deudaVencida += cuenta.saldoFactura;
@@ -845,6 +849,11 @@ export const getEstadoDeCuentaClienteAction = withAction(
 			resumenMoneda(anticipo.moneda).saldoAFavorAnticipos += Number(anticipo.saldoDisponible);
 		}
 		for (const nota of notasCreditoRaw) {
+			// Una NC materializada como anticipo (anticipoId != null) no se
+			// suma aquí: su saldo a favor vive en el anticipo (saldoDisponible,
+			// saldo vivo) y contarlo dos veces subestima la deuda neta.
+			// montoSaldoFavor es solo la foto del momento de creación.
+			if (nota.anticipoId != null) continue;
 			resumenMoneda(nota.moneda).saldoAFavorNotasCredito += Number(nota.montoSaldoFavor);
 		}
 		for (const resumen of resumenPorMoneda.values()) {
