@@ -299,7 +299,9 @@ export const generarGastosRecurrentesAction = withAction(
                 empleadoId: plantilla.empleadoId,
                 proveedor: proveedorNombre,
                 estado: 'PENDIENTE',
-                monto: plantilla.monto,
+                // La plantilla guarda el monto en centavos y GastosDE en
+                // unidades enteras: convertir o el gasto sale x100.
+                monto: Math.round(plantilla.monto / 100),
                 periodo,
                 descripcion: `${plantilla.nombre} (recurrente ${periodo})`,
                 gastoRecurrenteId: plantilla.gastoRecurrenteId,

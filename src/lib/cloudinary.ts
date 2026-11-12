@@ -58,10 +58,12 @@ export function generateUploadSignature(policy: ResolvedUploadPolicy): UploadSig
 
   const timestamp = Math.round(Date.now() / 1000)
 
-  // Construir parámetros para firma
+  // Construir parámetros para firma. El folder NO se firma ni se envía:
+  // publicId ya lleva la ruta completa (buildPublicId) y Cloudinary
+  // antepone `folder` a `public_id`, duplicando el prefijo; además una
+  // firma que incluyera folder no validaría si el cliente no lo envía.
   const paramsToSign: Record<string, unknown> = {
     timestamp,
-    folder,
   }
 
   if (publicId) {

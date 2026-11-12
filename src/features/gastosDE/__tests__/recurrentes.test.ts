@@ -99,7 +99,7 @@ describe('F-4: generarGastosRecurrentesAction', () => {
         tenantId: 'tenant-1',
         estado: 'PENDIENTE',
         periodo: '2026-09',
-        monto: 50000,
+        monto: 500,
         gastoRecurrenteId: 'GR-1',
         claveIdempotencia: 'rec:GR-1:2026-09',
       }),

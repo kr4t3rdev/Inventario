@@ -89,6 +89,16 @@ describe('GastosDE Actions', () => {
       );
     });
 
+    it('normaliza empleadoId vacío a null en el update (sin violar la FK)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as any);
+      await updateGastosDEAction({ gastosDEId: 'g1', empleadoId: '' });
+      expect(vi.mocked(prisma.gastosDE.update)).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ empleadoId: null }) })
+      );
+    });
+
     it('rechaza update con conceptoId + elementoId que no se relacionan', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);

@@ -54,7 +54,7 @@ describe('F-4: adjuntos de gasto', () => {
     const result = await registrarAdjuntoGastoAction({
       gastosDEId: 'gde-1',
       publicId: 'tenant-1/gastosDE/gde-1/comprobantes/abc',
-      secureUrl: 'https://res.cloudinary.com/x/image/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
+      secureUrl: 'https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
       mimeType: 'image/jpeg',
     });
 
@@ -65,7 +65,7 @@ describe('F-4: adjuntos de gasto', () => {
     expect(llamada.ownerId).toBe('gde-1');
     expect(llamada.slot).toBe('comprobante');
     expect(llamada.asset.publicId).toBe('tenant-1/gastosDE/gde-1/comprobantes/abc');
-    expect(llamada.asset.secureUrl).toBe('https://res.cloudinary.com/x/image/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg');
+    expect(llamada.asset.secureUrl).toBe('https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg');
   });
 
   it('registrar rechaza gasto ajeno al tenant', async () => {
@@ -88,6 +88,20 @@ describe('F-4: adjuntos de gasto', () => {
       publicId: 'tenant-1/gastosDE/otro-gasto/comprobantes/abc',
       secureUrl: 'https://example.com/abc.jpg',
       mimeType: 'image/jpeg',
+    });
+
+    expect(result.success).toBe(false);
+    expect(recordOwnerAsset).not.toHaveBeenCalled();
+  });
+
+  it('rechaza publicId con el prefijo de carpeta duplicado (folder + public_id)', async () => {
+    const result = await registrarAdjuntoGastoAction({
+      gastosDEId: 'gde-1',
+      publicId:
+        'tenant-1/gastosDE/gde-1/comprobantes/tenant-1/gastosDE/gde-1/comprobantes/gde-1-1234567890',
+      secureUrl:
+        'https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/tenant-1/gastosDE/gde-1/comprobantes/gde-1-1234567890.jpg',
+      mimeType: 'application/pdf',
     });
 
     expect(result.success).toBe(false);

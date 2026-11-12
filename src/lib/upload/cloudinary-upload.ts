@@ -110,7 +110,6 @@ export async function uploadToCloudinaryFromIntent(
     cloudName,
     uploadKey,
     resourceType,
-    folder,
     publicId,
   } = intent
 
@@ -120,7 +119,9 @@ export async function uploadToCloudinaryFromIntent(
   formData.append('api_key', apiKey)
   formData.append('timestamp', timestamp.toString())
   formData.append('signature', signature)
-  formData.append('folder', folder)
+  // Sin `folder`: publicId ya lleva la ruta completa y Cloudinary antepone
+  // folder a public_id, duplicando el prefijo (el public_id devuelto ya no
+  // casa con la validación del adjunto). La firma tampoco incluye folder.
   formData.append('public_id', publicId)
 
   // 3. Subir a Cloudinary

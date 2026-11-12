@@ -107,7 +107,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
     let gastoId = initialData?.gastosDEId
     try {
       if (initialData) {
-        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data, proveedorId: data.proveedorId || null })
+        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data, proveedorId: data.proveedorId || null, empleadoId: data.empleadoId || null })
         if (!result.success) {
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return

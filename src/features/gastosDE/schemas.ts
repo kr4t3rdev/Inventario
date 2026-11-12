@@ -25,7 +25,9 @@ export const gastosDEUpdateSchema = z.object({
   monto: z.coerce.number().positive().optional(),
   descripcion: z.string().min(1).optional(),
   numeroFactura: z.string().optional().nullable(),
-  empleadoId: z.string().optional().nullable(),
+  // '' (valor del select "Sin empleado asociado") se normaliza a null:
+  // escribir '' violaría la FK compuesta de Empleado (ningún id es '').
+  empleadoId: z.string().optional().nullable().transform((v) => (v === '' ? null : v)),
   periodo: z.string().optional(),
 });
 export type GastosDEInput = z.infer<typeof gastosDESchema>;
