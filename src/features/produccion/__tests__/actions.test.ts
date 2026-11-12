@@ -37,6 +37,7 @@ const { mockTx } = vi.hoisted(() => ({
 			findMany: vi.fn().mockResolvedValue([]),
 		},
 		producto: {
+			findMany: vi.fn(),
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
@@ -55,6 +56,7 @@ const { mockTx } = vi.hoisted(() => ({
 vi.mock('@/lib/prisma', () => ({
 	prisma: {
 		receta: { findMany: vi.fn() },
+		producto: { findMany: vi.fn() },
 		stockUbicacion: { findMany: vi.fn() },
 		ordenProduccion: {
 			findFirst: vi.fn(),
@@ -93,6 +95,7 @@ describe('Producción Server Actions', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([] as never);
 	});
 
 	it('(RETIRE LEGACY) aprobar orden con ingredientes en almacén no escribe Producto.stock', async () => {
@@ -217,6 +220,9 @@ describe('Producción Server Actions', () => {
 				productoId: 'I', recetaIngredienteId: null, cantidad: 3, desperdicio: 0,
 			}],
 		}] as never);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([{
+			id: 'I', nombre: 'Ingrediente I', unidad: null, unidadesConversion: [],
+		}] as never);
 		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([{
 			productoId: 'I', cantidadDisponible: 2,
 		}] as never);
@@ -232,6 +238,31 @@ describe('Producción Server Actions', () => {
 		expect(prisma.receta.findMany).toHaveBeenCalledWith(expect.objectContaining({
 			where: { tenantId: mockUser.tenantId },
 		}));
+	});
+
+	it('normaliza unidades de recetas a stock al planificar MRP', async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue({
+			...mockUser,
+			planFeatures: { 'mrp-avanzado': true },
+		});
+		vi.mocked(prisma.receta.findMany).mockResolvedValue([{
+			recetaId: 'P', productoId: 'p', rendimiento: 1,
+			RecetaIngrediente: [{
+				productoId: 'I', recetaIngredienteId: null, cantidad: 500,
+				unidadSimbolo: 'g', desperdicio: 0,
+			}],
+		}] as never);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue([{
+			id: 'I', nombre: 'Harina', unidad: { simbolo: 'kg', dimension: 'MASS' },
+			unidadesConversion: [],
+		}] as never);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([] as never);
+
+		const result = await planificarNecesidadesAction({ recetaId: 'P', cantidad: 1 });
+
+		expect(expectActionSuccess(result).data?.materiales).toEqual([{
+			productoId: 'I', cantidadRequerida: 0.5, cantidadDisponible: 0, cantidadComprar: 0.5,
+		}]);
 	});
 
 	it('rechaza planificar MRP si el plan no incluye el flag avanzado', async () => {
@@ -351,7 +382,7 @@ describe('Producción: kardex y cancelación', () => {
 		);
 	});
 
-	it('aprueba recetas legacy convirtiendo cantidades al stock antes de descontar', async () => {
+	it('rechaza demandas fraccionarias normalizadas antes de modificar inventario', async () => {
 		mockTx.ordenProduccion.findUnique.mockResolvedValue({
 			ordenProduccionId: 'op-units', recetaId: 'recipe-units', estado: 'PENDIENTE', cantidad: 1,
 			Receta: { rendimiento: 1, RecetaIngrediente: [] },
@@ -376,11 +407,11 @@ describe('Producción: kardex y cancelación', () => {
 
 		const result = await aprobarOrdenProduccionAction('op-units');
 
-		expect(result.success).toBe(true);
-		expect(calcularCantidadRequeridaMaterial).toHaveBeenCalledWith(
-			expect.objectContaining({ productoId: 'flour', cantidad: 0.5 }),
-			1,
-		);
+		expect(result.success).toBe(false);
+		expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR');
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		expect(mockTx.ordenProduccion.update).not.toHaveBeenCalled();
 	});
 
 	it('aplica el factor específico de la presentación antes de consumir stock', async () => {
