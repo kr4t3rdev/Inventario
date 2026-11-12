@@ -65,6 +65,7 @@ export type TipoEventoClave =
 	| 'COBRO_SERVICIO'
 	| 'COMPRA_CONTADO'
 	| 'COMPRA_CREDITO'
+	| 'DEVOLUCION_COMPRA'
 	| 'PAGO_CXP'
 	| 'GASTO_CONTADO'
 	| 'GASTO_CREDITO'
@@ -130,6 +131,7 @@ export const DIARIO_POR_EVENTO: Record<TipoEventoClave, DiarioDefault['tipo']> =
 	ANTICIPO_CLIENTE_DEVUELTO: 'VENTAS',
 	COMPRA_CONTADO: 'COMPRAS',
 	COMPRA_CREDITO: 'COMPRAS',
+	DEVOLUCION_COMPRA: 'COMPRAS',
 	PAGO_CXP: 'COMPRAS',
 	GASTO_CREDITO: 'COMPRAS',
 	PAGO_GASTO_CREDITO: 'COMPRAS',
@@ -450,6 +452,11 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 		{ lado: 'HABER', rol: 'CAJA_PRINCIPAL', regla: 'MONTO_REEMBOLSADO' },
 		{ lado: 'DEBE', rol: 'INVENTARIOS', regla: 'COSTO_FIFO' },
 		{ lado: 'HABER', rol: 'COSTO_VENTAS', regla: 'COSTO_FIFO' },
+	]),
+	...plantilla('DEVOLUCION_COMPRA', [
+		{ lado: 'DEBE', rol: 'CXP_PROVEEDORES', regla: 'MONTO_APLICADO_CXC' },
+		{ lado: 'DEBE', rol: 'ANTICIPOS_PROVEEDORES', regla: 'MONTO_SALDO_FAVOR' },
+		{ lado: 'HABER', rol: 'INVENTARIOS', regla: 'TOTAL' },
 	]),
 	...plantilla('VENTA_SERVICIO', [
 		{ lado: 'DEBE', rol: 'CAJA_PRINCIPAL', regla: 'TOTAL' },

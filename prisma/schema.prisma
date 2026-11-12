@@ -3506,7 +3506,7 @@ model DevolucionVentaItem {
   @@map("devoluciones_venta_items")
 }
 
-/// Devolución operativa de mercancía a proveedor, sin efecto formal contable aún.
+/// Devolución a proveedor con movimientos operativos y posteo formal opcional según rollout.
 model DevolucionCompra {
   devolucionId      String   @id @default(cuid())
   tenantId          String
@@ -4457,6 +4457,7 @@ enum TipoEventoContable {
   COBRO_SERVICIO
   COMPRA_CONTADO
   COMPRA_CREDITO
+  DEVOLUCION_COMPRA
   PAGO_CXP
   GASTO_CONTADO
   GASTO_CREDITO

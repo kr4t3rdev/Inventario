@@ -23,8 +23,8 @@ equivalentes.
 |---|---|---|---|---|
 | 31 callsites en 19 archivos | invocaciones técnicas de `postEvento()` del writer histórico | 31 | rama `feat/contabilidad-capa-formal` | 2026-10-11 |
 | 25 filas | agrupamientos por **writer de negocio** (una fila puede cubrir varios tipos de evento) | 25 | `docs/ct1-cierre-integracion-capa-formal.md` §4 | 2026-11-04 |
-| 39 tipos | tipos de evento del contrato formal (`TipoEventoClave`) | 39 | `src/features/contabilidad-formal/services/replay-source-manifest.ts` | vigente |
-| **23 callsites en 12 archivos** | **invocaciones técnicas de `postEvento()` en el árbol actual** | **23** | este documento | 2026-11-10 |
+| 40 tipos | tipos de evento del contrato formal (`TipoEventoClave`) | 40 | `src/features/contabilidad-formal/services/replay-source-manifest.ts` | vigente |
+| **24 callsites en 13 archivos** | **invocaciones técnicas de `postEvento()` en el árbol actual** | **24** | este documento | 2026-11-11 |
 
 Reglas de lectura:
 
@@ -42,8 +42,8 @@ Reglas de lectura:
   tipos (por ejemplo `anticipos-workflow.ts` cubre los ocho tipos de anticipo
   en cuatro invocaciones; las liquidaciones cubren `COBRO_CXC`, `COBRO_SERVICIO`
   y `PAGO_CXP` con un solo emisor).
-- **39 tipos no son 39 writers.** La sección 4 resuelve cada tipo: 29 `replay`,
-  2 programáticos y 8 solo plantilla. De los 29 `replay`, uno
+- **40 tipos no son 40 writers.** La sección 4 resuelve cada tipo: 30 `replay`,
+  2 programáticos y 8 solo plantilla. De los 30 `replay`, uno
   (`TRANSFERENCIA_BANCARIA`) no tiene writer vivo.
 
 ## 2. Definiciones y dimensiones
@@ -108,6 +108,7 @@ marcan **➖** en las ocho columnas.
 | 21 | `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts#L881` | `registerCashLoanPayment` | actions y rutas web/móvil de pago de préstamos | `COBRO_PRESTAMO` | `reconciliacion_venta` | Cobro de préstamo | replay | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 22 | `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts#L1197` | `createCashDebt` | actions y rutas web/móvil de deudas (`actions-deudas-cash.ts`, `/api/contabilidad/deudas-cash`, `/api/mobile/v1/accounting/cash-debts`) | `DEUDA_RECIBIDA` | `deuda_cash` | Deudas cash | replay | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
 | 23 | `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts#L1571` | `registerCashDebtPayment` | actions y rutas web/móvil de pago de deudas | `PAGO_DEUDA` | `reconciliacion_gasto` | Pago de deuda | replay | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad/services/__integration__/cash-debt-formal-posting.integration.test.ts` |
+| 24 | `src/features/contabilidad-formal/services/supplier-return-posting-service.ts#L101` | `emitirDevolucionCompra` | `src/features/compras-productos/devoluciones.ts` (L354) | `DEVOLUCION_COMPRA` | `devolucion_compra` | Devoluciones a proveedores | replay | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | `src/features/contabilidad-formal/services/__tests__/supplier-return-posting-service.test.ts`, `src/features/contabilidad-formal/services/__tests__/replay-source-collector.test.ts`, `src/features/compras-productos/__tests__/devoluciones.test.ts` |
 
 <!-- R0.5-CALLSITES:END -->
 
@@ -127,7 +128,7 @@ Notas de la matriz:
   deudas y pago de deudas delegan en las filas 22-23. La de préstamos es la
   excepción: crea el documento sin emisor (brecha en §6.1).
 
-## 4. Resolución de los 39 tipos del manifiesto
+## 4. Resolución de los 40 tipos del manifiesto
 
 La columna **Disposición** es exactamente la que declara
 `REPLAY_SOURCE_MANIFEST` y la verifica la regresión. **Writer vivo** indica si
@@ -142,6 +143,7 @@ existe un flujo productivo que emita el tipo hoy.
 | `COBRO_CXC` | replay | sí | `src/features/contabilidad-formal/services/settlement-posting-service.ts#L170` | Cubierto (fila 19) |
 | `COSTO_VENTA_DEVENGADO` | replay | sí | `src/features/contabilidad-formal/services/sale-posting-service.ts#L196` | Cubierto (fila 14) |
 | `DEVOLUCION_VENTA` | replay | sí | `src/features/contabilidad-formal/services/sale-return-posting-service.ts#L192` | Cubierto (fila 15) |
+| `DEVOLUCION_COMPRA` | replay | sí | `src/features/contabilidad-formal/services/supplier-return-posting-service.ts#L101` | Cubierto (fila 24); reconstrucción desde la devolución y la tasa persistidas |
 | `VENTA_SERVICIO` | template-only | no | — | Solo plantilla; el flujo real emite `VENTA_SERVICIO_CREDITO` |
 | `VENTA_SERVICIO_CREDITO` | replay | sí | `src/features/contabilidad-formal/services/service-sale-posting-service.ts#L63` | Cubierto (fila 17) |
 | `COBRO_SERVICIO` | replay | sí | `src/features/contabilidad-formal/services/settlement-posting-service.ts#L170` | Cubierto (fila 19) |
@@ -179,8 +181,8 @@ existe un flujo productivo que emita el tipo hoy.
 
 <!-- R0.5-MANIFEST:END -->
 
-Resumen de resolución: **29 replay** (28 con writer vivo + `TRANSFERENCIA_BANCARIA`),
-**8 template-only** y **2 programáticos** = 39 tipos.
+Resumen de resolución: **30 replay** (29 con writer vivo + `TRANSFERENCIA_BANCARIA`),
+**8 template-only** y **2 programáticos** = 40 tipos.
 
 ## 5. Emisores huérfanos e invariantes
 
@@ -311,7 +313,7 @@ integración equivalente a las de las filas 10 y 20.
 ## 8. Referencias
 
 - `docs/ct1-cierre-integracion-capa-formal.md` §4 (matriz de negocio), §6 (gates)
-- `src/features/contabilidad-formal/services/replay-source-manifest.ts` (39 tipos)
+- `src/features/contabilidad-formal/services/replay-source-manifest.ts` (40 tipos)
 - `src/features/contabilidad-formal/lib/plan-default.ts` (`TipoEventoClave`)
 - `src/features/contabilidad-formal/services/posting-engine.ts` (`postEvento`, `replayEvento`)
 - `src/features/contabilidad-formal/__tests__/writers-matrix.test.ts` (regresión)

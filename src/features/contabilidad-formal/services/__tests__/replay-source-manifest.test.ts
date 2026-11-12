@@ -12,7 +12,7 @@ describe('replay source manifest', () => {
 		const eventTypes = Object.keys(REPLAY_SOURCE_MANIFEST).sort();
 		expect(eventTypes).toEqual(Object.keys(DIARIO_POR_EVENTO).sort());
 		expect(Object.values(REPLAY_SOURCE_MANIFEST).filter((entry) => entry.disposition === 'replay'))
-			.toHaveLength(29);
+			.toHaveLength(30);
 		expect(Object.values(REPLAY_SOURCE_MANIFEST).filter((entry) => entry.disposition === 'programmatic'))
 			.toHaveLength(2);
 		expect(Object.values(REPLAY_SOURCE_MANIFEST).filter((entry) => entry.disposition === 'template-only'))

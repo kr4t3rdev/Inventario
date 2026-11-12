@@ -22,6 +22,12 @@ vi.mock('@/features/inventario/movimientos', () => ({
   registrarMovimiento: vi.fn(),
   revertirMovimientosDeOrigen: vi.fn(),
 }));
+vi.mock('@/features/contabilidad-formal/services/supplier-return-posting-service', () => ({
+  emitirDevolucionCompra: vi.fn(),
+}));
+vi.mock('@/features/contabilidad-formal/services/reversal-service', () => ({
+  reverseFormalEntries: vi.fn(),
+}));
 
 const mockTx = {
   $queryRaw: vi.fn(),
@@ -31,7 +37,7 @@ const mockTx = {
     count: vi.fn(),
     update: vi.fn(),
   },
-  compraDocumento: { findFirst: vi.fn() },
+  compraDocumento: { findFirst: vi.fn(), findMany: vi.fn() },
   compraDocumentoItem: { findFirst: vi.fn() },
   cuentaPorPagar: { update: vi.fn(), findFirst: vi.fn() },
   pagoCuentaPorPagar: { findFirst: vi.fn() },
@@ -51,7 +57,7 @@ vi.mock('@/lib/prisma', () => ({
       count: vi.fn(),
       findMany: vi.fn(),
     },
-    compraDocumento: { findFirst: vi.fn() },
+    compraDocumento: { findFirst: vi.fn(), findMany: vi.fn() },
     compraDocumentoItem: { findFirst: vi.fn() },
     cuentaPorPagar: { update: vi.fn(), findFirst: vi.fn() },
     pagoCuentaPorPagar: { findFirst: vi.fn() },
@@ -75,7 +81,10 @@ import {
   anularDevolucionCompraAction,
   completarDevolucionCompraAction,
   crearDevolucionCompraAction,
+  getDevolucionesCompraDataAction,
 } from '../devoluciones';
+import { emitirDevolucionCompra } from '@/features/contabilidad-formal/services/supplier-return-posting-service';
+import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
 
 const user = {
   userId: 'user-1',
@@ -110,6 +119,27 @@ const compraOrigen = {
     },
   ],
 };
+
+describe('F-2: getDevolucionesCompraDataAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue(user);
+    vi.mocked(prisma.devolucionCompra.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([] as any);
+  });
+
+  it('lista devoluciones y compras elegibles aisladas por tenant', async () => {
+    const result = await getDevolucionesCompraDataAction();
+
+    expect(result.success).toBe(true);
+    expect(prisma.devolucionCompra.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { tenantId: 'tenant-1' },
+    }));
+    expect(prisma.compraDocumento.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ tenantId: 'tenant-1', deletedAt: null }),
+    }));
+  });
+});
 
 describe('F-2: crearDevolucionCompraAction', () => {
   beforeEach(() => {
@@ -382,6 +412,11 @@ describe('F-2: completarDevolucionCompraAction', () => {
     mockTx.cuentaPorPagar.update.mockResolvedValue({} as any);
     mockTx.devolucionCompra.update.mockResolvedValue({
       estado: 'COMPLETADA',
+      devolucionId: 'dc-1',
+      montoTotal: 2000,
+      montoImputado: 2000,
+      saldoAFavor: 0,
+      moneda: 'CUP',
     } as any);
 
     const result = await completarDevolucionCompraAction('dc-1');
@@ -425,6 +460,16 @@ describe('F-2: completarDevolucionCompraAction', () => {
           montoImputado: 2000,
           saldoAFavor: 0,
         }),
+      }),
+    );
+    expect(emitirDevolucionCompra).toHaveBeenCalledWith(
+      expect.anything(),
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      expect.objectContaining({
+        devolucionId: 'dc-1',
+        montoTotal: 2000,
+        montoImputado: 2000,
+        saldoAFavor: 0,
       }),
     );
   });
@@ -591,6 +636,11 @@ describe('F-2: anularDevolucionCompraAction', () => {
         tipoOrigen: 'DEVOLUCION_COMPRA',
         origenId: 'dc-1',
       }),
+    );
+    expect(reverseFormalEntries).toHaveBeenCalledWith(
+      expect.anything(),
+      { tenantId: 'tenant-1', userId: 'user-1' },
+      [{ tipo: 'devolucion_compra', id: 'dc-1' }],
     );
     // CxP restaurada
     expect(mockTx.cuentaPorPagar.update).toHaveBeenCalledWith(
