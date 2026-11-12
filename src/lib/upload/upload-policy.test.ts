@@ -105,6 +105,24 @@ describe('resolveUploadPolicy', () => {
     expect(policy.resourceType).toBe('raw')
     expect(policy.folder).toBe('tenant-1/gastosDE/gasto-1/comprobantes')
     expect(policy.maxBytes).toBe(10 * 1024 * 1024)
+    expect(policy.publicId).toMatch(/^tenant-1\/gastosDE\/gasto-1\/comprobantes\/.+\.pdf$/)
+  })
+
+  it('uses the filename extension required by Cloudinary raw uploads', () => {
+    const policy = resolveUploadPolicy({
+      uploadKey: 'gastosDE.attachment',
+      user: { ...baseUser, role: 'regularUser', planFeatures: { gastos: true } },
+      input: {
+        filename: 'evidencia.final.jpeg',
+        mimeType: 'image/jpeg',
+        bytes: 100_000,
+        entityId: 'gasto-1',
+      },
+    })
+
+    expect(policy.resourceType).toBe('raw')
+    expect(policy.publicId).toMatch(/\.jpg$/)
+    expect(policy.publicId).not.toMatch(/\.jpeg$/)
   })
 
   it('rejects missing expense ids and files outside the receipt allowlist', () => {

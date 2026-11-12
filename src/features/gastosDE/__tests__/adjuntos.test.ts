@@ -53,7 +53,7 @@ describe('F-4: adjuntos de gasto', () => {
   it('registrar valida el gasto y delega en recordOwnerAsset', async () => {
     const result = await registrarAdjuntoGastoAction({
       gastosDEId: 'gde-1',
-      publicId: 'tenant-1/gastosDE/gde-1/comprobantes/abc',
+      publicId: 'tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
       secureUrl: 'https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
       mimeType: 'image/jpeg',
     });
@@ -64,8 +64,9 @@ describe('F-4: adjuntos de gasto', () => {
     expect(llamada.ownerType).toBe('gastoDE');
     expect(llamada.ownerId).toBe('gde-1');
     expect(llamada.slot).toBe('comprobante');
-    expect(llamada.asset.publicId).toBe('tenant-1/gastosDE/gde-1/comprobantes/abc');
+    expect(llamada.asset.publicId).toBe('tenant-1/gastosDE/gde-1/comprobantes/abc.jpg');
     expect(llamada.asset.secureUrl).toBe('https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg');
+    expect(llamada.asset.resourceType).toBe('raw');
   });
 
   it('registrar rechaza gasto ajeno al tenant', async () => {
@@ -87,6 +88,30 @@ describe('F-4: adjuntos de gasto', () => {
       gastosDEId: 'gde-1',
       publicId: 'tenant-1/gastosDE/otro-gasto/comprobantes/abc',
       secureUrl: 'https://example.com/abc.jpg',
+      mimeType: 'image/jpeg',
+    });
+
+    expect(result.success).toBe(false);
+    expect(recordOwnerAsset).not.toHaveBeenCalled();
+  });
+
+  it('rechaza URLs cuyo path solo contiene el publicId como prefijo', async () => {
+    const result = await registrarAdjuntoGastoAction({
+      gastosDEId: 'gde-1',
+      publicId: 'tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
+      secureUrl: 'https://res.cloudinary.com/x/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg-backup',
+      mimeType: 'image/jpeg',
+    });
+
+    expect(result.success).toBe(false);
+    expect(recordOwnerAsset).not.toHaveBeenCalled();
+  });
+
+  it('rechaza URLs image con segmentos raw/upload anidados en el path', async () => {
+    const result = await registrarAdjuntoGastoAction({
+      gastosDEId: 'gde-1',
+      publicId: 'tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
+      secureUrl: 'https://res.cloudinary.com/x/image/upload/raw/upload/tenant-1/gastosDE/gde-1/comprobantes/abc.jpg',
       mimeType: 'image/jpeg',
     });
 

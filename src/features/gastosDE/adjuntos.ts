@@ -70,18 +70,34 @@ export const registrarAdjuntoGastoAction = withAction(
     const publicIdSuffix = parsed.publicId.startsWith(expectedPrefix)
       ? parsed.publicId.slice(expectedPrefix.length)
       : '';
+    const attachmentExtension = publicIdSuffix.split('.').at(-1);
+    const expectedExtensionByMime: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'application/msword': 'doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
     let uploadUrl: URL;
     try {
       uploadUrl = new URL(parsed.secureUrl);
     } catch {
       throw new ActionError('La URL del comprobante no es válida', 'INVALID_INPUT');
     }
+    const cloudinaryRawPublicId = uploadUrl.pathname.match(
+      /^\/[^/]+\/raw\/upload\/(?:v\d+\/)?(.+)$/,
+    )?.[1];
     if (
       uploadUrl.protocol !== 'https:' ||
       uploadUrl.hostname !== 'res.cloudinary.com' ||
-      !/^[\w-]+$/.test(publicIdSuffix) ||
+      !/^[\w-]+\.(pdf|doc|docx|jpg|png|webp|gif)$/.test(publicIdSuffix) ||
+      (parsed.mimeType !== undefined &&
+        expectedExtensionByMime[parsed.mimeType] !== attachmentExtension) ||
       (parsed.bytes !== undefined && parsed.bytes > 10 * 1024 * 1024) ||
-      !uploadUrl.pathname.includes(`/${parsed.publicId}.`)
+      cloudinaryRawPublicId !== parsed.publicId
     ) {
       throw new ActionError('El comprobante no pertenece a este gasto', 'INVALID_INPUT');
     }
@@ -97,7 +113,7 @@ export const registrarAdjuntoGastoAction = withAction(
         uploadKey: `gastoDE:${parsed.gastosDEId}:${parsed.publicId}`,
         publicId: parsed.publicId,
         secureUrl: parsed.secureUrl,
-        resourceType: (parsed.mimeType?.startsWith('image/') ? 'image' : 'raw') as 'image' | 'raw',
+        resourceType: 'raw',
         bytes: parsed.bytes ?? 0,
         mimeType: parsed.mimeType ?? 'application/octet-stream',
         originalFilename: parsed.originalFilename ?? parsed.publicId,

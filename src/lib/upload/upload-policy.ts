@@ -55,6 +55,17 @@ const CONTRACT_MIME_TYPES = [
   ...IMAGE_MIME_TYPES,
 ] as const
 
+const GASTO_ATTACHMENT_EXTENSIONS: Readonly<Record<string, string>> = {
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+}
+
 function slugifyFilename(filename: string): string {
   const withoutExtension = filename.replace(/\.[^.]+$/, '')
   return withoutExtension
@@ -190,6 +201,11 @@ export function resolveUploadPolicy({
 
   ensureMimeAndSize(mimeType, bytes, allowedMimeTypes, maxBytes)
 
+  const basePublicId = buildPublicId(folder, filename, entityId)
+  const publicId = uploadKey === 'gastosDE.attachment'
+    ? `${basePublicId}.${GASTO_ATTACHMENT_EXTENSIONS[mimeType]}`
+    : basePublicId
+
   return {
     uploadKey,
     provider,
@@ -197,6 +213,6 @@ export function resolveUploadPolicy({
     resourceType,
     maxBytes,
     allowedMimeTypes: [...allowedMimeTypes],
-    publicId: buildPublicId(folder, filename, entityId),
+    publicId,
   }
 }
