@@ -3173,6 +3173,7 @@ model RecetaIngrediente {
   tenant               Tenant   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
+  @@index([tenantId, recetaIngredienteId])
 }
 
 model ValeSalida {

@@ -75,12 +75,18 @@ export function PricingDynamic(): React.JSX.Element | null {
       {isLoading || hasError || plans.length === 0 ? (
         <div className="mx-auto max-w-2xl rounded-xl border border-border/60 bg-card/70 p-8 text-center">
           <h3 className="text-xl font-semibold font-mono">
-            {isLoading ? "Cargando planes" : "Conoce la opción adecuada para tu operación"}
+            {isLoading
+              ? "Cargando planes"
+              : hasError
+                ? "No pudimos cargar los planes"
+                : "Conoce la opción adecuada para tu operación"}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {isLoading
               ? "Estamos consultando la información comercial actualizada."
-              : "Nuestro equipo puede orientarte con información vigente y una propuesta acorde a tu negocio."}
+              : hasError
+                ? "Ocurrió un problema al consultar los planes. Inténtalo de nuevo más tarde o contacta con nuestro equipo."
+                : "Nuestro equipo puede orientarte con información vigente y una propuesta acorde a tu negocio."}
           </p>
           <Button asChild className="mt-5 gap-2">
             <Link href="#contacto">

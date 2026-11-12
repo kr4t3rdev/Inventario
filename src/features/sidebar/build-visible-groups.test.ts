@@ -127,7 +127,7 @@ describe('buildVisibleSidebarGroups', () => {
       expect(summary).toContainEqual({ title: 'Acciones', itemCount: 20 })
       expect(summary).toContainEqual({ title: 'Configuración', itemCount: 7 })
       expect(summary).toContainEqual({ title: 'Contabilidad', itemCount: 20 })
-      expect(summary).toContainEqual({ title: 'Reportes', itemCount: 7 })
+      expect(summary).toContainEqual({ title: 'Reportes', itemCount: 8 })
     })
 
     it('admin without tenantId does NOT see Ficha de Costo', () => {

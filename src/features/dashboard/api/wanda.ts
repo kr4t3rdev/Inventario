@@ -617,6 +617,83 @@ export async function getWandaDashboardHandler(request: NextRequest) {
       }))
     }
 
+    const calcularVentasPorHora = () => {
+      const horas: Record<
+        number,
+        { hora: string; total: number; cantidad: number }
+      > = {}
+      for (let h = 0; h < 24; h++) {
+        horas[h] = { hora: `${h.toString().padStart(2, '0')}:00`, total: 0, cantidad: 0 }
+      }
+
+      ventas.forEach((v) => {
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        horas[hora].total += total
+        horas[hora].cantidad += 1
+      })
+
+      ventasServicios.forEach((v) => {
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        horas[hora].total += total
+        horas[hora].cantidad += 1
+      })
+
+      return Object.values(horas)
+    }
+
+    const calcularVentasPorDiaYHora = () => {
+      const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+      const mapa: Record<string, Record<number, { hora: string; total: number; cantidad: number }>> = {}
+      for (const dia of dias) {
+        mapa[dia] = {}
+        for (let h = 0; h < 24; h++) {
+          mapa[dia][h] = { hora: `${h.toString().padStart(2, '0')}:00`, total: 0, cantidad: 0 }
+        }
+      }
+
+      ventas.forEach((v) => {
+        const diaIndex = v.createdAt.getDay()
+        const dia = dias[diaIndex]
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        mapa[dia][hora].total += total
+        mapa[dia][hora].cantidad += 1
+      })
+
+      ventasServicios.forEach((v) => {
+        const diaIndex = v.createdAt.getDay()
+        const dia = dias[diaIndex]
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        mapa[dia][hora].total += total
+        mapa[dia][hora].cantidad += 1
+      })
+
+      return dias.map((dia) => ({
+        dia,
+        horas: Object.values(mapa[dia]),
+      }))
+    }
+
     const dashboardData = {
       gaugeChart: {
         titulo: "Distribución por Canal de Pago",
@@ -658,6 +735,16 @@ export async function getWandaDashboardHandler(request: NextRequest) {
       shiftBillingBarChart: {
         titulo: "Facturación por Turno",
         data: calcularFacturacionPorTurno(),
+      },
+
+      hourlySalesBarChart: {
+        titulo: "Ventas por Hora del Día",
+        data: calcularVentasPorHora(),
+      },
+
+      hourlySalesHeatmap: {
+        titulo: "Ventas por Día y Hora",
+        data: calcularVentasPorDiaYHora(),
       },
 
       topChannelsList: {

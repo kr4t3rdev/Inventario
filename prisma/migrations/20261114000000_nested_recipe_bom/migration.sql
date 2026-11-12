@@ -1,5 +1,11 @@
 -- El esquema histórico creó recetaIngredienteId como PK y la migración de reparación copió
 -- sus valores a id. Libera ese nombre legado para usarlo como FK opcional a una subreceta.
+-- Idempotente: en bases donde la columna ya no existe (o nunca existió, p. ej. producción
+-- creada vía db push), se agrega temporalmente para satisfacer el UPDATE y se libera
+-- con DROP COLUMN IF EXISTS en lugar de fallar con 42703.
+ALTER TABLE "RecetaIngrediente"
+  ADD COLUMN IF NOT EXISTS "recetaIngredienteId" TEXT;
+
 ALTER TABLE "RecetaIngrediente"
   DROP CONSTRAINT IF EXISTS "RecetaIngrediente_pkey";
 
@@ -10,7 +16,7 @@ ALTER TABLE "RecetaIngrediente"
   ALTER COLUMN "id" SET NOT NULL;
 
 ALTER TABLE "RecetaIngrediente"
-  DROP COLUMN "recetaIngredienteId";
+  DROP COLUMN IF EXISTS "recetaIngredienteId";
 
 ALTER TABLE "RecetaIngrediente"
   ADD CONSTRAINT "RecetaIngrediente_pkey" PRIMARY KEY ("id");

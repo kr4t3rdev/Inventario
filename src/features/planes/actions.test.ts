@@ -84,4 +84,18 @@ describe('getPlansPublicActionV2', () => {
       expect.arrayContaining(['Cuentas por cobrar', 'Cuentas por pagar']),
     );
   });
+
+  it('registra y propaga errores de base de datos al cargar planes públicos', async () => {
+    const error = new Error('La consulta de planes falló');
+    const logError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(prisma.plan.findMany).mockRejectedValueOnce(error);
+
+    await expect(getPlansPublicActionV2()).rejects.toBe(error);
+
+    expect(logError).toHaveBeenCalledWith(
+      '[planes] No se pudieron cargar los planes públicos:',
+      error,
+    );
+    logError.mockRestore();
+  });
 });

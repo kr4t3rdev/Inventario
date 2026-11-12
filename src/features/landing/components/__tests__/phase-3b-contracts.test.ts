@@ -9,6 +9,7 @@ describe('landing phase 3B contracts', () => {
 
     expect(pricing).toContain('Cargando planes');
     expect(pricing).toContain('hasError');
+    expect(pricing).toContain('No pudimos cargar los planes');
     expect(pricing).toContain('plans.length === 0');
     expect(pricing).not.toContain('if (isLoading) return null');
     expect(pricing).not.toContain('if (plans.length === 0) return null');

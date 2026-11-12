@@ -17,7 +17,9 @@ describe('contrato de migración para BOM multinivel', () => {
 
   it('crea la FK compuesta tenant-scoped y restringe borrar una receta referenciada', () => {
     expect(migration).toContain('SET "id" = COALESCE("id", "recetaIngredienteId")');
-    expect(migration).toMatch(/DROP COLUMN "recetaIngredienteId"[\s\S]*ADD COLUMN "recetaIngredienteId" TEXT/);
+    expect(migration).toMatch(/ADD COLUMN IF NOT EXISTS "recetaIngredienteId" TEXT/);
+    expect(migration).toMatch(/DROP COLUMN IF EXISTS "recetaIngredienteId"/);
+    expect(migration).toContain('ADD COLUMN "recetaIngredienteId" TEXT');
     expect(migration).toContain('"RecetaIngrediente_subreceta_tenant_fkey"');
     expect(migration).toMatch(/FOREIGN KEY \("tenantId", "recetaIngredienteId"\)/);
     expect(migration).toMatch(/ON DELETE RESTRICT/);
