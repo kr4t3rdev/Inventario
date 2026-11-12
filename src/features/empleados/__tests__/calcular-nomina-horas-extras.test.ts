@@ -95,6 +95,8 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
     expect((createCall.data as Record<string, unknown>).horasExtras).toBeUndefined();
     // Trazabilidad para el trabajador en el propio registro.
     expect(createCall.data.observaciones).toContain('Horas extras');
+    // Sin config del tenant, la observación usa el default 1.5×.
+    expect(createCall.data.observaciones).toContain('Horas extras: 40 h × 1.5 = $600');
   });
 
   it('solo cuenta como extras las horas por encima de 8 en el mismo día', async () => {
@@ -171,5 +173,8 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
       horasExtrasHoras: 40,
       montoHorasExtras: 800,
     });
+    // La observación usa la tarifa configurada (2×), no el 1.5× fijo.
+    expect(createCall.data.observaciones).toContain('Horas extras: 40 h × 2 = $800');
+    expect(createCall.data.observaciones).not.toContain('× 1.5');
   });
 });

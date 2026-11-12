@@ -18,6 +18,7 @@ import {
 	calcularMontoHorasExtras,
 	calculatePayrollFormulas,
 	getPayrollConfig,
+	OVERTIME_RATE_MULTIPLIER,
 	STANDARD_MONTHLY_HOURS,
 } from "@/lib/payroll-formulas";
 
@@ -754,7 +755,8 @@ export const calculateNominaAction = withAction(
 
 				const standardHours = STANDARD_MONTHLY_HOURS;
 				const bonificaciones = 0;
-				// Las horas extras no entran al devengado base: se pagan aparte a 1.5×
+				// Las horas extras no entran al devengado base: se pagan aparte con la
+				// tarifa configurada del tenant (por defecto 1.5×)
 				// en `montoHorasExtras` (B-05). Sin asistencias se asume mes completo.
 				const baseHoursWorked =
 					totalHours > 0 ? totalHours - overtimeHours : standardHours;
@@ -770,6 +772,11 @@ export const calculateNominaAction = withAction(
 					empleado.salarioBases,
 					nominaConfig ?? undefined,
 				);
+				// Tarifa efectiva (config del tenant o default 1.5): la
+				// misma que usa el cálculo del monto, para que el texto
+				// no describa una tarifa distinta a la cobrada.
+				const tarifaHoraExtraEfectiva =
+					nominaConfig?.tarifaHoraExtra ?? OVERTIME_RATE_MULTIPLIER;
 
 				const payroll = await prisma.pagosalario.create({
 					data: {
@@ -790,7 +797,7 @@ export const calculateNominaAction = withAction(
 								? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})`
 								: "") +
 							(horasExtrasHoras > 0
-								? `. Horas extras: ${horasExtrasHoras} h × 1.5 = $${montoHorasExtras}`
+								? `. Horas extras: ${horasExtrasHoras} h × ${tarifaHoraExtraEfectiva} = $${montoHorasExtras}`
 								: ""),
 					},
 					include: nominaInclude,
