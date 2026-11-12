@@ -58,6 +58,12 @@ FROM "StockUbicacion" su
 JOIN "Almacen" a ON a."tenantId" = su."tenantId" AND a."almacenId" = su."ubicacionId"
 WHERE su."tipoUbicacion" = 'almacen';
 
+-- Backfill de ubicación: StockMoveLine es apendicular (triggers
+-- stock_move_line_no_update/no_delete creados por 20260905130000_add_stock_move_lines),
+-- se desactivan los triggers de usuario solo para este backfill puntual de legacy y se
+-- reactivan inmediatamente después, dentro de la misma transacción de la migración.
+ALTER TABLE "StockMoveLine" DISABLE TRIGGER USER;
+
 UPDATE "StockMoveLine" sm
 SET "ubicacionHijaId" = 'legacy-general-' || sm."ubicacionId",
     "ubicacionHijaKey" = 'legacy-general-' || sm."ubicacionId"
@@ -65,6 +71,8 @@ FROM "Almacen" a
 WHERE sm."tenantId" = a."tenantId"
   AND sm."ubicacionId" = a."almacenId"
   AND sm."tipoUbicacion" = 'almacen';
+
+ALTER TABLE "StockMoveLine" ENABLE TRIGGER USER;
 
 UPDATE "AjusteInventario" ai
 SET "ubicacionHijaId" = 'legacy-general-' || ai."ubicacionId"
