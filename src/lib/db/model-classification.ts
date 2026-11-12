@@ -79,6 +79,8 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   CloudinaryAsset: SCOPED('Activo multimedia del tenant (ownerType/ownerId polimórfico + tenantId propio).'),
   CompraDocumento: SCOPED(),
   CompraDocumentoItem: SCOPED('Ítem con tenantId propio denormalizado.'),
+  DevolucionCompra: SCOPED('Devolución a proveedor con relaciones compuestas dentro del tenant.'),
+  DevolucionCompraItem: SCOPED('Detalle de devolución con tenantId propio y FKs compuestas al mismo tenant.'),
   CompraProducto: SCOPED(),
   CompraServicio: SCOPED(),
   CobroNota: SCOPED('Nota de seguimiento de cobro por tenant.'),

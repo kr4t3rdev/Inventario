@@ -609,6 +609,21 @@ describe("getAvailableStock", () => {
 
 		expect(result).toBe(0);
 	});
+	it("incluye las ventas desde recibo ligadas por capa de factura", async () => {
+		tx.compraDocumentoItem.findUnique.mockResolvedValue({ cantidad: 100, tenantId: "t1" });
+		tx.purchaseAllocation.aggregate.mockResolvedValue({
+			_sum: { cantidad: 30 },
+		});
+		tx.purchaseReceiptInvoiceAllocation.findMany.mockResolvedValue([{ id: "layer-1" }]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([
+			{ purchaseReceiptInvoiceAllocationId: "layer-1", _sum: { cantidad: 20 } },
+		]);
+
+		const result = await getAvailableStock(tx as any, "c1");
+
+		expect(result).toBe(50);
+	});
+
 });
 
 // ─── Tests: allocateFifoForSale ──────────────────────────────────

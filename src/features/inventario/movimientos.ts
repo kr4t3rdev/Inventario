@@ -1,4 +1,5 @@
 import { ActionError } from '@/lib/server-actions/types';
+import type { Prisma } from '@/generated/prisma';
 
 export const MOTIVOS_AJUSTE_DEFAULT = 'PERDIDA' as const;
 
@@ -26,6 +27,7 @@ export const TIPOS_MOVIMIENTO_INVENTARIO = [
   'AJUSTE',
   'PRODUCCION',
   'CONTEO',
+  'DEVOLUCION_COMPRA',
 ] as const;
 
 export type TipoMovimientoInventario = (typeof TIPOS_MOVIMIENTO_INVENTARIO)[number];
@@ -113,17 +115,7 @@ interface EventoKeyInput {
 
 export interface StockMoveLineStore {
   stockMoveLine: {
-    upsert(args: {
-      where: { eventoKey: EventoKeyInput };
-      create: Omit<RegistrarMovimientoInput, 'secuencia'> & {
-        productoTenantId: string;
-        costoTotal: number;
-        secuencia: string;
-        ubicacionHijaId: string | null;
-        ubicacionHijaKey: string;
-      };
-      update: Record<string, never>;
-    }): Promise<MovimientoKardex>;
+    upsert: Prisma.TransactionClient['stockMoveLine']['upsert'];
     findMany(args: {
       where: Record<string, unknown>;
       orderBy: Array<Record<string, 'asc' | 'desc'>>;
