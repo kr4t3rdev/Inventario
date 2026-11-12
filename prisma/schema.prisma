@@ -88,6 +88,7 @@ model Vendor {
   gastoCompras     GastoCompra[]
   gastosDE         GastosDE[]
   productos        Producto[]
+  proveedorProductos ProveedorProducto[]
   tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
 
   @@unique([tenantId, vendorCode])
@@ -267,6 +268,7 @@ model Tenant {
   valesSalida                    ValeSalida[]
   valesSalidaItem                ValeSalidaItem[]
   vendors                        Vendor[]
+  proveedorProductos              ProveedorProducto[]
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
   devolucionesCompra             DevolucionCompra[]
@@ -589,6 +591,7 @@ model Producto {
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
   unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Restrict)
   vendor               Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Restrict)
+  proveedorProductos   ProveedorProducto[]
   costHistory          ProductoCostHistory[]
   unidadesConversion  UnidadConversion[]
   Receta               Receta[]
@@ -1512,6 +1515,30 @@ model CompraProducto {
 }
 
 /// * Cabecera de compra múltiple. Una factura/proveedor → N items.
+model ProveedorProducto {
+  proveedorProductoId     String           @id @default(cuid())
+  tenantId                String
+  vendorId                 String
+  productoId               String
+  /// Costo en unidades enteras de la moneda (misma convención que precioCosto de Producto, no centavos).
+  costoUnitario            Int
+  moneda                   String           @default("CUP")
+  cantidadMinima           Int?
+  plazoEntregaDias         Int?
+  esPreferente             Boolean          @default(false)
+  ultimaCompraDocumentoId  String?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  vendor                   Vendor           @relation(fields: [tenantId, vendorId], references: [tenantId, vendorId], onDelete: Restrict)
+  producto                 Producto         @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
+  ultimaCompra             CompraDocumento? @relation(fields: [tenantId, ultimaCompraDocumentoId], references: [tenantId, compraDocumentoId], onDelete: Restrict)
+  tenant                   Tenant           @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, vendorId, productoId])
+  @@index([tenantId, productoId])
+  @@map("proveedor_productos")
+}
+
 model CompraDocumento {
   compraDocumentoId String                @id @default(cuid())
   tenantId          String
@@ -1539,6 +1566,7 @@ model CompraDocumento {
   tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
   updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId])
   items             CompraDocumentoItem[]
+  proveedorProductos ProveedorProducto[]
   ordenCompra       OrdenCompra?           @relation(fields: [tenantId, ordenCompraId], references: [tenantId, id], onDelete: NoAction, onUpdate: Cascade)
   devoluciones      DevolucionCompra[]
 

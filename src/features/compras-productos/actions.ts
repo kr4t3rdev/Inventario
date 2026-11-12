@@ -26,6 +26,7 @@ import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
 import { emitirReconocimientoCompra } from '@/features/contabilidad-formal/services/purchase-posting-service';
 import { reverseFormalEntries } from '@/features/contabilidad-formal/services/reversal-service';
+import { sincronizarProveedorProductos } from '@/features/vendors/pricelist';
 import { isCompatibleUnitConversion } from '@/lib/inventory-unit-conversion-compatibility';
 import { calculateUnitQuantityCost } from '@/lib/unit-quantity-cost';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
@@ -462,6 +463,16 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         });
         compraItems.push(compraItem);
       }
+      await sincronizarProveedorProductos(tx, {
+        tenantId,
+        proveedorId: parsed.proveedorId,
+        compraDocumentoId: compra.compraDocumentoId,
+        moneda: parsed.moneda,
+        items: itemsNormalizados.map((item) => ({
+          productoId: item.productoId,
+          precioUnitario: item.precioCosto,
+        })),
+      });
       if (parsed.ordenCompraId) {
         await reconciliarCostosRecepcionConFactura(tx, {
           tenantId,

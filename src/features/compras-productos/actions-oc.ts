@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { crearLoteDesdeEntrada, deriveLoteCodigo } from '@/features/inventario/lotes';
+import { resolverPrecioProveedor } from '@/features/vendors/pricelist';
 import { prisma } from '@/lib/prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
@@ -153,7 +154,26 @@ export const createOrdenCompraAction = withAction(
       }
     }
 
-    const total = parsed.items.reduce(
+    const itemsConPrecio = await Promise.all(parsed.items.map(async (item) => ({
+      ...item,
+      precioUnitario: item.precioUnitario ?? await resolverPrecioProveedor(prisma, {
+        tenantId,
+        proveedorId: parsed.proveedorId,
+        productoId: item.productoId,
+      }),
+    })));
+    if (itemsConPrecio.some((item) => item.precioUnitario == null)) {
+      throw new ActionError(
+        'Indique el precio de cada producto o registre un precio para el proveedor',
+        'PRICE_REQUIRED',
+      );
+    }
+    const itemsValidados = itemsConPrecio as Array<{
+      productoId: string;
+      cantidadPedida: number;
+      precioUnitario: number;
+    }>;
+    const total = itemsValidados.reduce(
       (sum, item) => sum + item.cantidadPedida * item.precioUnitario,
       0,
     );
@@ -166,7 +186,7 @@ export const createOrdenCompraAction = withAction(
           total,
         },
       });
-      for (const item of parsed.items) {
+      for (const item of itemsValidados) {
         await tx.ordenCompraItem.create({
           data: {
             tenantId,
