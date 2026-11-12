@@ -36,6 +36,8 @@ vi.mock('@/lib/prisma', () => ({
     attendance: {
       findMany: vi.fn(),
     },
+    user: { findFirst: vi.fn() },
+    nominaConfig: { findUnique: vi.fn() },
   },
 }));
 
@@ -162,6 +164,164 @@ describe('Empleados Server Actions', () => {
     const result = await getEmpleadosAction();
     expect(result.success).toBe(false);
     expect(expectActionFailure(result).error!.code).toBe('FEATURE_NOT_AVAILABLE');
+  });
+
+  // ─── F-5: datos personales y vinculación de usuario ──────────────
+
+  describe('F-5: campos personales (ci/email/banco)', () => {
+    it('createEmpleadoAction persiste ci/email/banco', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.create).mockResolvedValue({ empleadoId: 'emp-1' } as any);
+      const result = await createEmpleadoAction({
+        nombre: 'Juan',
+        apellido: 'Pérez',
+        cargo: 'Vendedor',
+        salarioBases: 50000,
+        ci: '12345678901',
+        email: 'juan@empresa.com',
+        banco: 'Banco Metropolitano',
+      });
+      expect(result.success).toBe(true);
+      expect(prisma.empleado.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ci: '12345678901',
+            email: 'juan@empresa.com',
+            banco: 'Banco Metropolitano',
+          }),
+        }),
+      );
+    });
+
+    it('updateEmpleadoAction persiste ci/email/banco cuando vienen', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
+      vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
+      const result = await updateEmpleadoAction({
+        empleadoId: 'emp-1',
+        ci: '98765432109',
+        email: 'nuevo@empresa.com',
+        banco: 'BPA',
+      });
+      expect(result.success).toBe(true);
+      expect(prisma.empleado.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            ci: '98765432109',
+            email: 'nuevo@empresa.com',
+            banco: 'BPA',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('F-5: vinculación Empleado.userId', () => {
+    it('vincula un usuario del tenant que está libre', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockImplementation(async (args: any) => {
+        // Primera llamada: empleado existente; segunda: check de vinculado.
+        if (args?.where?.userId) return null;
+        return { empleadoId: 'emp-1', tenantId: 'tenant-test' };
+      });
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({ userId: 'user-2' } as any);
+      vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', userId: 'user-2' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'user-2',
+            tenantMemberships: { some: { tenantId: 'tenant-test' } },
+          }),
+        }),
+      );
+      expect(prisma.empleado.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'user-2' }),
+        }),
+      );
+    });
+
+    it('rechaza con EMPLEADO_USER_TOMADO si el usuario ya está vinculado a otro empleado', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockImplementation(async (args: any) => {
+        if (args?.where?.userId) return { empleadoId: 'emp-otro' };
+        return { empleadoId: 'emp-1', tenantId: 'tenant-test' };
+      });
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({ userId: 'user-2' } as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', userId: 'user-2' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('EMPLEADO_USER_TOMADO');
+      expect(prisma.empleado.update).not.toHaveBeenCalled();
+    });
+
+    it('permite re-vincular al mismo empleado (idempotente)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockImplementation(async (args: any) => {
+        if (args?.where?.userId) return { empleadoId: 'emp-1' };
+        return { empleadoId: 'emp-1', tenantId: 'tenant-test' };
+      });
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({ userId: 'user-2' } as any);
+      vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', userId: 'user-2' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.empleado.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'user-2' }),
+        }),
+      );
+    });
+
+    it('rechaza con NOT_FOUND si el usuario no existe o no es del tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
+        empleadoId: 'emp-1',
+        tenantId: 'tenant-test',
+      } as any);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', userId: 'user-x' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('NOT_FOUND');
+      expect(prisma.empleado.update).not.toHaveBeenCalled();
+    });
+
+    it('permite desvincular con userId: null sin validar usuario', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
+      vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', userId: null });
+
+      expect(result.success).toBe(true);
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
+      expect(prisma.empleado.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: null }),
+        }),
+      );
+    });
+
+    it('sin userId en el payload no toca la vinculación', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
+      vi.mocked(prisma.empleado.update).mockResolvedValue({} as any);
+
+      const result = await updateEmpleadoAction({ empleadoId: 'emp-1', nombre: 'Nuevo' });
+
+      expect(result.success).toBe(true);
+      const data = vi.mocked(prisma.empleado.update).mock.calls[0][0].data as Record<string, unknown>;
+      expect(data).not.toHaveProperty('userId');
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
+    });
   });
 
   // ─── Tests para Fix A del spec (Task 5) ───────────────────────────

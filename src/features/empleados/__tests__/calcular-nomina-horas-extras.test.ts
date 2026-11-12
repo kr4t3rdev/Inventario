@@ -27,6 +27,9 @@ vi.mock('@/lib/prisma', () => ({
     attendance: {
       findMany: vi.fn(),
     },
+    nominaConfig: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -92,6 +95,8 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
     expect((createCall.data as Record<string, unknown>).horasExtras).toBeUndefined();
     // Trazabilidad para el trabajador en el propio registro.
     expect(createCall.data.observaciones).toContain('Horas extras');
+    // Sin config del tenant, la observación usa el default 1.5×.
+    expect(createCall.data.observaciones).toContain('Horas extras: 40 h × 1.5 = $600');
   });
 
   it('solo cuenta como extras las horas por encima de 8 en el mismo día', async () => {
@@ -138,5 +143,38 @@ describe('calculateNominaAction — horas extras (B-05)', () => {
       horasExtrasHoras: 0,
       montoHorasExtras: 0,
     });
+  });
+
+  it('usa la NominaConfig del tenant para las horas extras (F-5) sin tocar el devengado', async () => {
+    // Misma asistencia que el primer test (40 h extras, 160 h base), pero con
+    // tarifaHoraExtra 2.0 del tenant: el devengado/salario/deducciones se
+    // mantienen y solo cambia montoHorasExtras (40 × 10 × 2 = 800).
+    vi.mocked(prisma.attendance.findMany).mockResolvedValue(
+      attendanceRows(10, 20) as never,
+    );
+    vi.mocked(prisma.nominaConfig.findUnique).mockResolvedValue({
+      tenantId: 'tenant-test',
+      tarifaHoraExtra: 2,
+      horasMensualesEstandar: 192,
+      monedaPago: 'CUP',
+    } as never);
+
+    const result = await calculateNominaAction({
+      periodo: '2026-08',
+      includeVacationAccrual: false,
+      forceRecalculate: false,
+    });
+
+    expect(result.success).toBe(true);
+    const createCall = vi.mocked(prisma.pagosalario.create).mock.calls[0][0];
+    expect(createCall.data).toMatchObject({
+      salario: 1745,
+      deducciones: 384,
+      horasExtrasHoras: 40,
+      montoHorasExtras: 800,
+    });
+    // La observación usa la tarifa configurada (2×), no el 1.5× fijo.
+    expect(createCall.data.observaciones).toContain('Horas extras: 40 h × 2 = $800');
+    expect(createCall.data.observaciones).not.toContain('× 1.5');
   });
 });

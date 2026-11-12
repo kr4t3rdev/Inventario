@@ -59,12 +59,19 @@ export const createPagoSalarioAction = withAction(
 		const now = new Date();
 		const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
+		// F-5: la tarifa/horas estándar puede estar configurada por tenant; sin
+		// config la fórmula cae a los defaults vigentes (1.5 / 192).
+		const nominaConfig = await prisma.nominaConfig.findUnique({
+			where: { tenantId },
+		});
+
 		// B-05: `horasExtras` de entrada es una cantidad de HORAS; su dinero se
 		// calcula con la tarifa del salario base del empleado y se guarda aparte.
 		const horasExtrasHoras = parsed.horasExtras ?? 0;
 		const montoHorasExtras = calcularMontoHorasExtras(
 			horasExtrasHoras,
 			empleado.salarioBases ?? 0,
+			nominaConfig ?? undefined,
 		);
 
 		const pago = await prisma.pagosalario.create({
@@ -102,18 +109,22 @@ export const updatePagoSalarioAction = withAction(
 			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
 
 		// B-05: al editar horas, persistirlas en `horasExtrasHoras` y recalcular
-		// su dinero con la tarifa actual del empleado.
+		// su dinero con la tarifa actual del empleado (F-5: y la config del tenant).
 		let overridesHoras: { horasExtrasHoras: number; montoHorasExtras: number } | undefined;
 		if (data.horasExtras !== undefined) {
-			const empleado = await prisma.empleado.findFirst({
-				where: { empleadoId: existing.empleadoId, tenantId },
-				select: { salarioBases: true },
-			});
+			const [empleado, nominaConfig] = await Promise.all([
+				prisma.empleado.findFirst({
+					where: { empleadoId: existing.empleadoId, tenantId },
+					select: { salarioBases: true },
+				}),
+				prisma.nominaConfig.findUnique({ where: { tenantId } }),
+			]);
 			overridesHoras = {
 				horasExtrasHoras: data.horasExtras,
 				montoHorasExtras: calcularMontoHorasExtras(
 					data.horasExtras,
 					empleado?.salarioBases ?? 0,
+					nominaConfig ?? undefined,
 				),
 			};
 		}

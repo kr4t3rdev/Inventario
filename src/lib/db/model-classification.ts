@@ -121,6 +121,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Lote: SCOPED('Lote tenant-owned con FK compuesta tenantId-productoId al producto.'),
   Merma: SCOPED(),
   MiEmpresa: SCOPED('Ficha de empresa del tenant (1:1 por tenant).'),
+  NominaConfig: SCOPED('Configuración de nómina 1:1 por tenant.'),
   Oferta: SCOPED(),
   OrdenCompra: SCOPED('Orden de compra por tenant.'),
   OrdenCompraItem: SCOPED('Ítem de orden con tenantId propio denormalizado.'),

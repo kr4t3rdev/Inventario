@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
+import { hasPermission, requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { empleadoSchema, empleadoUpdateSchema } from "./schemas";
 import type { EmpleadoInput, EmpleadoUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -18,6 +18,7 @@ import {
 	calcularMontoHorasExtras,
 	calculatePayrollFormulas,
 	getPayrollConfig,
+	OVERTIME_RATE_MULTIPLIER,
 	STANDARD_MONTHLY_HOURS,
 } from "@/lib/payroll-formulas";
 
@@ -55,10 +56,24 @@ export const createEmpleadoAction = withAction(
 	async (input: EmpleadoInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
 		requirePermission(user, "rrhh.empleados.crear", "crear empleados");
-		const parsed = empleadoSchema.parse(input);
-		const tenantId = requireTenant(user);
+			const parsed = empleadoSchema.parse(input);
+			const tenantId = requireTenant(user);
+			if (parsed.userId) {
+				const targetUser = await prisma.user.findFirst({
+					where: { userId: parsed.userId, tenantMemberships: { some: { tenantId } } },
+					select: { userId: true },
+				});
+				if (!targetUser) throw new ActionError('Usuario no encontrado en el tenant', 'NOT_FOUND');
+				const linkedEmployee = await prisma.empleado.findFirst({
+					where: { userId: parsed.userId },
+					select: { empleadoId: true, tenantId: true },
+				});
+				if (linkedEmployee) {
+					throw new ActionError('El usuario ya está vinculado a otro empleado', 'EMPLEADO_USER_TOMADO');
+				}
+			}
 
-		const empleado = await prisma.empleado.create({
+			const empleado = await prisma.empleado.create({
 			data: {
 				nombre: parsed.nombre,
 				apellido: parsed.apellido,
@@ -70,6 +85,11 @@ export const createEmpleadoAction = withAction(
 					: new Date(),
 				esTiempoCompleto: parsed.esTiempoCompleto ?? true,
 				diasVacacionesAnuales: parsed.diasVacacionesAnuales ?? 15,
+				// F-5: datos personales opcionales.
+				ci: parsed.ci ?? null,
+				email: parsed.email ?? null,
+				banco: parsed.banco ?? null,
+				userId: parsed.userId ?? null,
 				tenantId,
 			},
 		});
@@ -92,12 +112,45 @@ export const updateEmpleadoAction = withAction(
 		});
 		if (!existing) throw new ActionError("Empleado no encontrado", "NOT_FOUND");
 
+		// F-5: vinculación de usuario del sistema. `null` desvincula (permitido);
+		// un userId nuevo debe existir, pertenecer al tenant y no estar ya
+		// vinculado a otro empleado (unicidad lógica del vínculo 1:1).
+		if (data.userId !== undefined && data.userId !== null) {
+			const targetUser = await prisma.user.findFirst({
+				where: {
+					userId: data.userId,
+					tenantMemberships: { some: { tenantId } },
+				},
+				select: { userId: true },
+			});
+			if (!targetUser) {
+				throw new ActionError(
+					"Usuario no encontrado en el tenant",
+					"NOT_FOUND",
+				);
+			}
+			const vinculado = await prisma.empleado.findFirst({
+				where: { userId: data.userId },
+				select: { empleadoId: true, tenantId: true },
+			});
+			if (vinculado && vinculado.empleadoId !== empleadoId) {
+				throw new ActionError(
+					"El usuario ya está vinculado a otro empleado",
+					"EMPLEADO_USER_TOMADO",
+				);
+			}
+		}
+
 		const empleado = await prisma.empleado.update({
 			where: { empleadoId },
 			data: {
 				...(data.nombre !== undefined && { nombre: data.nombre }),
 				...(data.apellido !== undefined && { apellido: data.apellido }),
 				...(data.telefono !== undefined && { telefono: data.telefono }),
+				...(data.ci !== undefined && { ci: data.ci }),
+				...(data.email !== undefined && { email: data.email }),
+				...(data.banco !== undefined && { banco: data.banco }),
+				...(data.userId !== undefined && { userId: data.userId }),
 				...(data.cargo !== undefined && { cargo: data.cargo }),
 				...(data.salarioBases !== undefined && {
 					salarioBases: data.salarioBases,
@@ -113,6 +166,40 @@ export const updateEmpleadoAction = withAction(
 
 		revalidatePath("/busy/empleados");
 		return empleado;
+	},
+);
+
+/**
+ * @description Lista usuarios del tenant que pueden vincularse con una ficha de empleado.
+ * @param {string | undefined} empleadoId - Empleado actual, si se está editando.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Usuarios disponibles y vínculo actual.
+ */
+export const getUsuariosVinculablesEmpleadoAction = withAction(
+	async (empleadoId: string | undefined, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
+		if (!hasPermission(user, 'rrhh.empleados.crear') && !hasPermission(user, 'rrhh.empleados.editar')) {
+			throw new ActionError('No tienes permisos para consultar usuarios vinculables.', 'FORBIDDEN');
+		}
+		const tenantId = requireTenant(user);
+		if (empleadoId) {
+			const empleado = await prisma.empleado.findFirst({
+				where: { empleadoId, tenantId },
+				select: { empleadoId: true },
+			});
+			if (!empleado) throw new ActionError('Empleado no encontrado', 'NOT_FOUND');
+		}
+		return prisma.user.findMany({
+			where: {
+				tenantMemberships: { some: { tenantId } },
+				OR: [
+					{ empleado: null },
+					...(empleadoId ? [{ empleado: { empleadoId, tenantId } }] : []),
+				],
+			},
+			select: { userId: true, email: true },
+			orderBy: { email: 'asc' },
+		});
 	},
 );
 
@@ -631,6 +718,11 @@ export const calculateNominaAction = withAction(
 		}
 
 		const payrollConfig = await getPayrollConfig(periodo);
+		// F-5: config de horas extra del tenant; sin fila cae a defaults (1.5/192)
+		// y el cálculo queda idéntico al histórico.
+		const nominaConfig = await prisma.nominaConfig.findUnique({
+			where: { tenantId },
+		});
 		const { VacationAccrualService } = await import(
 			"@/lib/vacation-accrual-service"
 		);
@@ -663,7 +755,8 @@ export const calculateNominaAction = withAction(
 
 				const standardHours = STANDARD_MONTHLY_HOURS;
 				const bonificaciones = 0;
-				// Las horas extras no entran al devengado base: se pagan aparte a 1.5×
+				// Las horas extras no entran al devengado base: se pagan aparte con la
+				// tarifa configurada del tenant (por defecto 1.5×)
 				// en `montoHorasExtras` (B-05). Sin asistencias se asume mes completo.
 				const baseHoursWorked =
 					totalHours > 0 ? totalHours - overtimeHours : standardHours;
@@ -677,7 +770,13 @@ export const calculateNominaAction = withAction(
 				const montoHorasExtras = calcularMontoHorasExtras(
 					horasExtrasHoras,
 					empleado.salarioBases,
+					nominaConfig ?? undefined,
 				);
+				// Tarifa efectiva (config del tenant o default 1.5): la
+				// misma que usa el cálculo del monto, para que el texto
+				// no describa una tarifa distinta a la cobrada.
+				const tarifaHoraExtraEfectiva =
+					nominaConfig?.tarifaHoraExtra ?? OVERTIME_RATE_MULTIPLIER;
 
 				const payroll = await prisma.pagosalario.create({
 					data: {
@@ -698,7 +797,7 @@ export const calculateNominaAction = withAction(
 								? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})`
 								: "") +
 							(horasExtrasHoras > 0
-								? `. Horas extras: ${horasExtrasHoras} h × 1.5 = $${montoHorasExtras}`
+								? `. Horas extras: ${horasExtrasHoras} h × ${tarifaHoraExtraEfectiva} = $${montoHorasExtras}`
 								: ""),
 					},
 					include: nominaInclude,

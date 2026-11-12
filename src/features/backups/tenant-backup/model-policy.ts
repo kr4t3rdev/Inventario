@@ -40,6 +40,7 @@ const DIRECT_TENANT_MODELS = [
   'Servicios', 'VentaServicios', 'CompraServicio',
   'GastoConcepto', 'GastoElemento', 'GastosDE', 'TenantAccountingPolicy',
   'GastoRecurrente',
+  'NominaConfig',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'TransaccionMoneda', 'CuentaBancaria',
   'TipoPago', 'ReconciliacionVenta', 'ReconciliacionServicio', 'ReconciliacionGasto', 'Ubicacion',
   'AjusteBancario', 'TransferenciaBancaria', 'CobroNota', 'Contrato',
@@ -75,6 +76,7 @@ const EXCLUDED_MODELS = [
 const BUSINESS_MODEL_NAMES = [
   'Categoria', 'Unidad', 'UnidadConversion', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
+  'NominaConfig',
   'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'ProductoPlantilla',
   'StockUbicacion', 'StockUbicacionDetalle', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'VentaItem', 'Merma', 'Lote', 'Ubicacion',

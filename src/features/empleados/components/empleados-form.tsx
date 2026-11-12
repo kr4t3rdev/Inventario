@@ -1,7 +1,7 @@
 "use client"
 
 import { LazyMotion, m as motion } from "framer-motion"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -13,7 +13,11 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from 'sonner'
 import { Skeleton } from "@/components/ui/skeleton"
-import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
+import {
+  createEmpleadoAction,
+  getUsuariosVinculablesEmpleadoAction,
+  updateEmpleadoAction,
+} from "@/features/empleados/actions"
 import { Users, Loader2 } from "lucide-react"
 
 const empleadoSchema = z.object({
@@ -29,9 +33,12 @@ const empleadoSchema = z.object({
   cargo: z.string({
     required_error: 'El campo Cargo no ha sido rellenado',
   }),
-  carnetIdentidad: z.string({
+  ci: z.string({
     required_error: 'El campo Carné de identidad no ha sido rellenado',
   }).min(11, "El carné debe tener 11 dígitos"),
+  email: z.string().email('Escribe un correo válido').optional().or(z.literal('')),
+  banco: z.string().max(100).optional(),
+  userId: z.string().optional(),
   fechaBaja: z.string().optional().refine((date) => {
     if (!date) return true;
     return new Date(date) <= new Date();
@@ -50,7 +57,10 @@ type EmpleadoSubmitData = {
   cargo: string
   periodo: string
   salarioBases: number
-  carnetIdentidad?: string
+  ci?: string | null
+  email?: string | null
+  banco?: string | null
+  userId?: string | null
   fechaBaja?: Date | null
   motivoBaja?: string | null
 }
@@ -65,6 +75,10 @@ interface EmpleadoFormProps {
     salarioBases: number
     cargo: string
     carnetIdentidad?: string | null
+    ci?: string | null
+    email?: string | null
+    banco?: string | null
+    userId?: string | null
     fechaBaja?: string | Date | null
     motivoBaja?: string | null
     ventas?: any[]
@@ -90,6 +104,7 @@ const formFieldVariants = {
 export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [usuarios, setUsuarios] = useState<Array<{ userId: string; email: string }>>([])
   const { isLoading: isLoadingEmpleados } = { isLoading: false }
 
   const form = useForm<EmpleadoFormValues>({
@@ -99,11 +114,22 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
       apellido: initialData?.apellido || '',
       telefono: initialData?.telefono || '',
       cargo: initialData?.cargo || '',
-      carnetIdentidad: initialData?.carnetIdentidad || '',
+      ci: initialData?.ci || initialData?.carnetIdentidad || '',
+      email: initialData?.email || '',
+      banco: initialData?.banco || '',
+      userId: initialData?.userId || '',
       fechaBaja: initialData?.fechaBaja ? new Date(initialData.fechaBaja).toISOString().split('T')[0] : '',
       motivoBaja: initialData?.motivoBaja || '',
     },
   })
+
+  useEffect(() => {
+    getUsuariosVinculablesEmpleadoAction(initialData?.empleadoId)
+      .then((result) => {
+        if (result.success) setUsuarios(result.data ?? [])
+      })
+      .catch(() => toast.error('No se pudieron cargar los usuarios del tenant.'))
+  }, [initialData?.empleadoId])
 
   async function onSubmit(data: EmpleadoFormValues) {
     setIsLoading(true)
@@ -114,7 +140,10 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
         salarioBases: 0,
         fechaBaja: data.fechaBaja ? new Date(data.fechaBaja) : null,
         motivoBaja: data.motivoBaja || null,
-        carnetIdentidad: data.carnetIdentidad || undefined
+        ci: data.ci || null,
+        email: data.email || null,
+        banco: data.banco || null,
+        userId: data.userId || null,
       }
       if (!initialData) {
         submitData.periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
@@ -329,10 +358,10 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
             >
               <FormField
                 control={form.control}
-                name="carnetIdentidad"
+                name="ci"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="dark:text-slate-200">Carne de Identidad</FormLabel>
+                    <FormLabel className="dark:text-slate-200">Carné de identidad (CI)</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
@@ -341,13 +370,65 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
-                      Ingrese el carne de identidad del empleado.
+                      Ingrese los 11 dígitos del carné de identidad.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </motion.div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Correo electrónico</FormLabel>
+                    <FormControl><Input type="email" autoComplete="email" {...field} /></FormControl>
+                    <FormDescription>Correo de contacto del empleado.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="banco"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Banco</FormLabel>
+                    <FormControl><Input maxLength={100} {...field} /></FormControl>
+                    <FormDescription>Banco asociado al pago de nómina, si aplica.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuario del sistema</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        value={field.value ?? ''}
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="">Sin usuario vinculado</option>
+                        {usuarios.map((usuario) => (
+                          <option key={usuario.userId} value={usuario.userId}>
+                            {usuario.email || usuario.userId}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormDescription>Vincula una cuenta del mismo tenant. Un usuario solo puede vincularse a un empleado.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {initialData && (
               <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">

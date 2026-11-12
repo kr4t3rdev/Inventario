@@ -22,6 +22,7 @@ vi.mock('@/lib/prisma', () => ({
       deleteMany: vi.fn(),
     },
     empleado: { findFirst: vi.fn() },
+    nominaConfig: { findUnique: vi.fn() },
     reconciliacionGasto: {
       findMany: vi.fn(),
       deleteMany: vi.fn(),
@@ -255,6 +256,84 @@ describe('PagoSalario Server Actions', () => {
       const data = vi.mocked(prisma.pagosalario.update).mock.calls[0][0].data;
       expect(data).not.toHaveProperty('horasExtrasHoras');
       expect(data).not.toHaveProperty('montoHorasExtras');
+    });
+  });
+
+  describe('NominaConfig del tenant (F-5)', () => {
+    it('create usa la tarifa configurada del tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
+        empleadoId: 'emp-1',
+        salarioBases: 1920,
+      } as never);
+      vi.mocked(prisma.nominaConfig.findUnique).mockResolvedValue({
+        tenantId: 'tenant-test',
+        tarifaHoraExtra: 2,
+        horasMensualesEstandar: 192,
+        monedaPago: 'CUP',
+      } as never);
+      vi.mocked(prisma.pagosalario.create).mockResolvedValue({ pgId: 'pg-1' } as never);
+
+      const result = await createPagoSalarioAction({
+        empleadoId: 'emp-1',
+        salario: 25000,
+        horasExtras: 40,
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.nominaConfig.findUnique).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-test' },
+      });
+      const data = vi.mocked(prisma.pagosalario.create).mock.calls[0][0].data;
+      // 40 h × (1920/192) × 2.0 = 800
+      expect(data).toMatchObject({ horasExtrasHoras: 40, montoHorasExtras: 800 });
+    });
+
+    it('create sin config cae a los defaults (1.5 / 192)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
+        empleadoId: 'emp-1',
+        salarioBases: 1920,
+      } as never);
+      vi.mocked(prisma.nominaConfig.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.pagosalario.create).mockResolvedValue({ pgId: 'pg-1' } as never);
+
+      const result = await createPagoSalarioAction({
+        empleadoId: 'emp-1',
+        salario: 25000,
+        horasExtras: 40,
+      });
+
+      expect(result.success).toBe(true);
+      const data = vi.mocked(prisma.pagosalario.create).mock.calls[0][0].data;
+      // 40 h × (1920/192) × 1.5 = 600 — paridad byte-a-byte sin config
+      expect(data).toMatchObject({ horasExtrasHoras: 40, montoHorasExtras: 600 });
+    });
+
+    it('update recalcula con la config del tenant al editar horas', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.pagosalario.findFirst).mockResolvedValue({
+        pgId: 'pg-1',
+        empleadoId: 'emp-1',
+      } as never);
+      vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
+        empleadoId: 'emp-1',
+        salarioBases: 1920,
+      } as never);
+      vi.mocked(prisma.nominaConfig.findUnique).mockResolvedValue({
+        tenantId: 'tenant-test',
+        tarifaHoraExtra: 2,
+        horasMensualesEstandar: 192,
+        monedaPago: 'CUP',
+      } as never);
+      vi.mocked(prisma.pagosalario.update).mockResolvedValue({} as never);
+
+      const result = await updatePagoSalarioAction({ pgId: 'pg-1', horasExtras: 10 });
+
+      expect(result.success).toBe(true);
+      const data = vi.mocked(prisma.pagosalario.update).mock.calls[0][0].data;
+      // 10 h × (1920/192) × 2.0 = 200
+      expect(data).toMatchObject({ horasExtrasHoras: 10, montoHorasExtras: 200 });
     });
   });
 

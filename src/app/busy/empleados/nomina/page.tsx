@@ -15,6 +15,8 @@ import { getEmpleadosAction } from "@/features/empleados/actions"
 import { getPagoSalariosAction } from "@/features/pago-salario/actions"
 import { NominaEmpleadoSection } from "@/features/empleados/components"
 import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access"
+import { hasPermission } from "@/lib/services/tenant-scope"
+import { NominaConfigCard } from "@/features/empleados/components/nomina-config-card"
 import type { ReactElement } from "react"
 
 export default async function NominaPage(): Promise<ReactElement> {
@@ -41,9 +43,14 @@ export default async function NominaPage(): Promise<ReactElement> {
     : []
 
   return (
-    <NominaEmpleadoSection
-      initialEmpleados={initialEmpleados as any}
-      initialPagos={initialPagos as any}
-    />
+    <>
+      <NominaConfigCard canConfigure={Boolean(
+        user && hasPermission(user, 'rrhh.nomina.configurar'),
+      )} />
+      <NominaEmpleadoSection
+        initialEmpleados={initialEmpleados as any}
+        initialPagos={initialPagos as any}
+      />
+    </>
   )
 }

@@ -293,6 +293,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		sensitive: true,
 	},
 	{
+		key: 'rrhh.nomina.configurar',
+		label: 'Configurar nómina',
+		description: 'Modificar la configuración de nómina del tenant (tarifa de horas extra, horas estándar).',
+		category: 'rrhh',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'rrhh.nomina.editar',
 		label: 'Editar nómina',
 		description: 'Modificar registros de nómina existentes.',
