@@ -77,4 +77,45 @@ describe('emitirDevolucionCompra', () => {
       tasaCambio: 25,
     }));
   });
+
+  it('redondea a 4 decimales el prorrateo y el convertido con tasa de 6 decimales', async () => {
+    await emitirDevolucionCompra(tx, ctx, {
+      devolucionId: 'dc-fx-redondeo',
+      fecha: new Date('2026-11-11T12:00:00.000Z'),
+      montoTotal: 33,
+      montoImputado: 11,
+      saldoAFavor: 22,
+      moneda: 'USD',
+      tasaCambio: 1.123456,
+    });
+
+    // 33 * 1.123456 = 37.074048 -> 37.074; prorrateo 37.074 * 11 / 33 = 12.358;
+    // residuo 37.074 - 12.358 = 24.716. Sin redondeo el motor lanzaría
+    // PRECISION_FUNCIONAL_INVALIDA al validar el evento.
+    expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+      tipo: 'DEVOLUCION_COMPRA',
+      montoFuncional: 37.074,
+      auxiliares: { montoAplicadoCxc: 12.358, montoSaldoFavor: 24.716 },
+      tasaCambio: 1.123456,
+    }));
+  });
+
+  it('redondea a 4 decimales el prorrateo en misma moneda con división no exacta', async () => {
+    await emitirDevolucionCompra(tx, ctx, {
+      devolucionId: 'dc-prorrateo',
+      fecha: new Date('2026-11-11T12:00:00.000Z'),
+      montoTotal: 100.05,
+      montoImputado: 33.35,
+      saldoAFavor: 66.7,
+      moneda: 'CUP',
+      tasaCambio: 1,
+    });
+
+    // 100.05 * 33.35 / 100.05 en float es 33.350000000000001; con Decimal es 33.35.
+    expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+      tipo: 'DEVOLUCION_COMPRA',
+      montoFuncional: 100.05,
+      auxiliares: { montoAplicadoCxc: 33.35, montoSaldoFavor: 66.7 },
+    }));
+  });
 });

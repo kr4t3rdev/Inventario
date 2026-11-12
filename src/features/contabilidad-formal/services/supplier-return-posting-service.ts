@@ -1,4 +1,5 @@
 import { buildFunctionalValuation } from '../lib/functional-valuation';
+import { Prisma } from '@/generated/prisma';
 import {
   postEvento,
   type ContextoPosting,
@@ -41,16 +42,26 @@ export function construirEventoDevolucionCompra(
     source: 'supplier-return-posting-service',
   });
   const montoTotalFuncional = valuation.sameCurrency ? params.montoTotal : valuation.montoConvertido;
+  // El motor exige importes funcionales exactos a 4 decimales: el prorrateo
+  // y el residuo se redondean con Decimal para que el error float no llegue
+  // a PRECISION_FUNCIONAL_INVALIDA (p. ej. 100.05 / 3).
   const montoImputadoFuncional = params.montoImputadoFuncional ?? (
     montoTotalFuncional == null
       ? null
       : params.montoTotal > 0
-        ? montoTotalFuncional * params.montoImputado / params.montoTotal
+        ? new Prisma.Decimal(montoTotalFuncional)
+          .mul(params.montoImputado)
+          .div(params.montoTotal)
+          .toDecimalPlaces(4)
+          .toNumber()
         : 0
   );
   const saldoAFavorFuncional = montoTotalFuncional == null || montoImputadoFuncional == null
     ? null
-    : montoTotalFuncional - montoImputadoFuncional;
+    : new Prisma.Decimal(montoTotalFuncional)
+      .sub(montoImputadoFuncional)
+      .toDecimalPlaces(4)
+      .toNumber();
 
   return {
     tipo: 'DEVOLUCION_COMPRA',

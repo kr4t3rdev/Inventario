@@ -1,3 +1,4 @@
+import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 
 /** Entrada para valorar un importe operativo en la moneda funcional del tenant. */
@@ -69,7 +70,10 @@ export function buildFunctionalValuation(input: FunctionalValuationInput): Funct
 	}
 
 	const rateEffectiveAt = input.fechaTasa ?? input.fechaOperacion;
-	const montoConvertido = monto * tasa;
+	// El motor solo acepta 4 decimales: el producto monto*tasa se redondea
+	// aquí para que una tasa con más de 4 decimales no provoque
+	// PRECISION_FUNCIONAL_INVALIDA al postear.
+	const montoConvertido = new Prisma.Decimal(monto).mul(tasa).toDecimalPlaces(4).toNumber();
 	const evidence = buildAppliedFxEvidence({
 		originalAmount: monto,
 		originalCurrency: currency,

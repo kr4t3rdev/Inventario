@@ -137,6 +137,70 @@ describe('recolectarCandidatos', () => {
 		}));
 	});
 
+	it('usa completadaAt como fecha efectiva de la devolución a proveedor', async () => {
+		const creada = new Date('2026-10-31T12:00:00.000Z');
+		const completada = new Date('2026-11-02T12:00:00.000Z');
+		const client = crearClient({
+			devolucionCompra: { findMany: vi.fn().mockResolvedValue([{
+				devolucionId: 'devolucion-compra-2',
+				estado: 'COMPLETADA',
+				montoTotal: 100,
+				montoImputado: 60,
+				montoImputadoFuncional: 60,
+				saldoAFavor: 40,
+				moneda: 'CUP',
+				idempotencyKey: 'return-key-2',
+				createdAt: creada,
+				completadaAt: completada,
+				compraDocumento: { cuentaPorPagar: { tasaCambio: null } },
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		// El writer postea con completadaAt: el replay debe caer en el mismo
+		// periodo (P2), no en el de creación (P1).
+		expect(candidatos).toContainEqual(expect.objectContaining({
+			origenTipo: 'devolucion_compra',
+			origenId: 'devolucion-compra-2',
+			fecha: completada,
+			evento: expect.objectContaining({ tipo: 'DEVOLUCION_COMPRA', fecha: completada }),
+		}));
+	});
+
+	it('clasifica la devolución al contado sin CxP como tasa no persistida', async () => {
+		const fecha = new Date('2026-11-10T12:00:00.000Z');
+		const client = crearClient({
+			devolucionCompra: { findMany: vi.fn().mockResolvedValue([{
+				devolucionId: 'devolucion-compra-contado',
+				estado: 'COMPLETADA',
+				montoTotal: 100,
+				montoImputado: 60,
+				montoImputadoFuncional: null,
+				saldoAFavor: 40,
+				moneda: 'USD',
+				idempotencyKey: 'return-key-contado',
+				createdAt: fecha,
+				completadaAt: fecha,
+				compraDocumento: {},
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		// Sin CxP no hay tasa: no es NaN ni VALORACION_FUNCIONAL_NO_VERIFICABLE.
+		expect(candidatos).toContainEqual(expect.objectContaining({
+			origenTipo: 'devolucion_compra',
+			origenId: 'devolucion-compra-contado',
+			causaOmision: 'TASA_CAMBIO_NO_PERSISTIDA',
+			evento: expect.objectContaining({
+				tipo: 'DEVOLUCION_COMPRA',
+				montoFuncional: null,
+				tasaCambio: null,
+			}),
+		}));
+	});
+
 	it('expone solo las consultas fuente que el collector ejecutó en esta pasada', async () => {
 		const executedQueryIds = new Set<string>();
 

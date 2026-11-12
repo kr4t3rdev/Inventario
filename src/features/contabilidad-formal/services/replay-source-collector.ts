@@ -452,6 +452,7 @@ export async function recolectarCandidatos(
 				moneda: true,
 				idempotencyKey: true,
 				createdAt: true,
+				completadaAt: true,
 				compraDocumento: {
 					select: { cuentaPorPagar: { select: { tasaCambio: true } } },
 				},
@@ -1331,10 +1332,15 @@ export async function recolectarCandidatos(
 		if (devolucion.estado === 'PENDIENTE') continue;
 		const total = Math.abs(Number(devolucion.montoTotal));
 		if (!Number.isFinite(total) || total <= 0) continue;
-		const tasaCambio = devolucion.compraDocumento?.cuentaPorPagar?.tasaCambio;
+		// La fecha efectiva es la de completado: el writer postea con
+		// completadaAt, así que el replay debe caer en el mismo periodo.
+		const fechaEfectiva = devolucion.completadaAt ?? devolucion.createdAt;
+		// Sin CxP (compra al contado) la tasa es undefined: se normaliza a null
+		// para no convertirla en NaN ni clasificar mal la causa de omisión.
+		const tasaCambio = devolucion.compraDocumento?.cuentaPorPagar?.tasaCambio ?? null;
 		const evento = construirEventoDevolucionCompra({
 			devolucionId: devolucion.devolucionId,
-			fecha: devolucion.createdAt,
+			fecha: fechaEfectiva,
 			montoTotal: total,
 			montoImputado: Number(devolucion.montoImputado),
 			montoImputadoFuncional: devolucion.montoImputadoFuncional === null
@@ -1352,7 +1358,7 @@ export async function recolectarCandidatos(
 		candidatos.push({
 			origenTipo: DEVOLUCION_COMPRA_ORIGIN_TYPE,
 			origenId: devolucion.devolucionId,
-			fecha: devolucion.createdAt,
+			fecha: fechaEfectiva,
 			evento,
 			...(causaOmision ? { causaOmision } : {}),
 		});
