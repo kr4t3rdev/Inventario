@@ -443,6 +443,88 @@ describe('Producción: kardex y cancelación', () => {
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 	});
 
+	it('aprueba una orden aunque una receta ajena tenga una unidad inválida', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-1',
+			recetaId: 'recipe-1',
+			estado: 'PENDIENTE',
+			cantidad: 2,
+			Receta: {
+				rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'mat-1', cantidad: 2, unidadSimbolo: 'u', desperdicio: 0 },
+				],
+			},
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([
+			{
+				recetaId: 'recipe-1', productoId: null, rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'mat-1', nombre: 'Material 1', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
+				],
+			},
+			{
+				recetaId: 'recipe-ajena', productoId: null, rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'flour', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'saco', Producto: { id: 'flour', nombre: 'Harina', unidad: { simbolo: 'kg', dimension: 'MASS' }, unidadesConversion: [] } },
+				],
+			},
+		]);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: 'mat-1', nombre: 'Material 1', precioCosto: 100, stock: 999, almacenId: 'alm-1',
+		});
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-1' });
+
+		const result = await aprobarOrdenProduccionAction('op-1');
+
+		expect(result.success).toBe(true);
+	});
+
+	it('aprueba una orden aunque una subreceta ajena tenga unidad null en masa', async () => {
+		mockTx.ordenProduccion.findUnique.mockResolvedValue({
+			ordenProduccionId: 'op-1',
+			recetaId: 'recipe-1',
+			estado: 'PENDIENTE',
+			cantidad: 2,
+			Receta: {
+				rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'mat-1', cantidad: 2, unidadSimbolo: 'u', desperdicio: 0 },
+				],
+			},
+		});
+		mockTx.receta.findMany.mockResolvedValueOnce([
+			{
+				recetaId: 'recipe-1', productoId: null, rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'mat-1', recetaIngredienteId: null, cantidad: 2, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'mat-1', nombre: 'Material 1', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
+				],
+			},
+			{
+				recetaId: 'recipe-ajena', productoId: null, rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'product-S', recetaIngredienteId: 'S', cantidad: 1, desperdicio: 0, unidadSimbolo: null, Producto: { id: 'product-S', nombre: 'Subproducto', unidad: { simbolo: 'kg', dimension: 'MASS' }, unidadesConversion: [] } },
+				],
+			},
+			{
+				recetaId: 'S', productoId: 'product-S', rendimiento: 1,
+				RecetaIngrediente: [
+					{ productoId: 'leaf', recetaIngredienteId: null, cantidad: 1, desperdicio: 0, unidadSimbolo: 'unidad', Producto: { id: 'leaf', nombre: 'Hoja', unidad: { simbolo: 'unidad', dimension: 'COUNT' }, unidadesConversion: [] } },
+				],
+			},
+		]);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: 'mat-1', nombre: 'Material 1', precioCosto: 100, stock: 999, almacenId: 'alm-1',
+		});
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+		mockTx.ordenProduccion.update.mockResolvedValue({ ordenProduccionId: 'op-1' });
+
+		const result = await aprobarOrdenProduccionAction('op-1');
+
+		expect(result.success).toBe(true);
+	});
+
 	it('completar orden registra ingreso del producto terminado con costo de materiales', async () => {
 		mockTx.ordenProduccion.findUnique.mockResolvedValue({
 			ordenProduccionId: 'op-1',

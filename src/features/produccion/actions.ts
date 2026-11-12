@@ -480,8 +480,53 @@ export const aprobarOrdenProduccionAction = withAction(
 			if (!recetasAnidadas.some((recipe) => recipe.recetaId === orden.recetaId)) {
 				throw new ActionError("Receta no encontrada", "NOT_FOUND");
 			}
+			// Cierre BOM alcanzable desde la receta de la orden: solo estas
+			// recetas participan en la explosión. Las recetas fuera del cierre
+			// no deben bloquear la aprobación con sus unidades.
+			const recetasEnCierre = new Set<string>([orden.recetaId]);
+			const recetasPorId = new Map(recetasAnidadas.map((recipe) => [recipe.recetaId, recipe]));
+			const recetasPorVisitar = [orden.recetaId];
+			while (recetasPorVisitar.length > 0) {
+				const recetaActual = recetasPorVisitar.pop();
+				if (!recetaActual) continue;
+				const recipe = recetasPorId.get(recetaActual);
+				if (!recipe) continue;
+				for (const ingredient of recipe.RecetaIngrediente) {
+					if (ingredient.recetaIngredienteId && !recetasEnCierre.has(ingredient.recetaIngredienteId)) {
+						recetasEnCierre.add(ingredient.recetaIngredienteId);
+						recetasPorVisitar.push(ingredient.recetaIngredienteId);
+					}
+				}
+			}
 			const recetasBom = recetasAnidadas.map((recipe) => {
 				const ingredientes: BomIngredient[] = [];
+				// F-1: solo se normalizan las unidades de las recetas del cierre
+				// BOM de la orden. Las recetas ajenas solo aportan su estructura
+				// al grafo; normalizarlas bloquearía aprobaciones por unidades
+				// de recetas que no participan en esta orden.
+				if (!recetasEnCierre.has(recipe.recetaId)) {
+					for (const ingredient of recipe.RecetaIngrediente) {
+						if (ingredient.recetaIngredienteId) {
+							ingredientes.push({
+								recetaIngredienteId: ingredient.recetaIngredienteId,
+								cantidad: ingredient.cantidad,
+								desperdicio: ingredient.desperdicio,
+							});
+						} else {
+							ingredientes.push({
+								productoId: ingredient.productoId ?? '',
+								cantidad: ingredient.cantidad,
+								desperdicio: ingredient.desperdicio,
+							});
+						}
+					}
+					return {
+						recetaId: recipe.recetaId,
+						productoId: recipe.productoId,
+						rendimiento: recipe.rendimiento,
+						ingredientes,
+					};
+				}
 				for (const ingredient of recipe.RecetaIngrediente) {
 					const product = ingredient.Producto;
 					if (!product) {

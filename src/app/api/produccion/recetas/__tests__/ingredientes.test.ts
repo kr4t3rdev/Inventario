@@ -559,7 +559,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId: 'A',
     }) as any)
-    vi.mocked(prisma.receta.findMany).mockResolvedValueOnce([
+    vi.mocked(prisma.receta.findMany).mockResolvedValue([
       {
         recetaId: 'A', tenantId: 'tenant-1', productoId: 'producto-A', rendimiento: 1,
         RecetaIngrediente: [],
@@ -592,7 +592,7 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     vi.mocked(prisma.producto.findMany)
       .mockResolvedValueOnce([] as any)
       .mockResolvedValueOnce([{ id: 'producto-S' }] as any)
-    vi.mocked(prisma.receta.findMany).mockResolvedValueOnce([
+    vi.mocked(prisma.receta.findMany).mockResolvedValue([
       {
         recetaId: 'P', tenantId: 'tenant-1', productoId: 'producto-P', rendimiento: 1,
         RecetaIngrediente: [],
@@ -621,6 +621,94 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
         productoId: 'producto-S',
         recetaIngredienteId: 'S',
         cantidad: 2,
+      })],
+    }))
+  })
+
+  it('rechaza una fila de subreceta con unidad null cuando el producto final es de masa', async () => {
+    const root = buildRecetaBase({ recetaId: 'P' })
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(root as any)
+    vi.mocked(prisma.receta.findMany).mockResolvedValue([
+      {
+        recetaId: 'P', tenantId: 'tenant-1', productoId: 'producto-P', rendimiento: 1,
+        RecetaIngrediente: [],
+      },
+      {
+        recetaId: 'S', tenantId: 'tenant-1', productoId: 'producto-S', rendimiento: 1,
+        nombre: 'Subreceta S', costoUnitario: 25, RecetaIngrediente: [],
+        Producto: {
+          id: 'producto-S',
+          nombre: 'Subproducto',
+          unidad: { simbolo: 'kg', dimension: 'MASS' },
+          unidadesConversion: [],
+        },
+      },
+    ] as any)
+
+    const request = createIngredientesRequest('P', [{
+      recetaIngredienteId: 'S',
+      cantidad: 2,
+      unidadSimbolo: null,
+      desperdicio: 0,
+    }])
+    const response = await setIngredientesHandler(request, { params: paramsFor('P') })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.unitErrors).toEqual([{
+      productoId: 'producto-S',
+      productoNombre: 'Subproducto',
+      providedUnit: null,
+      canonicalUnit: 'kg',
+      reason: 'missing_unit',
+    }])
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+    expect(prisma.recetaIngrediente.createMany).not.toHaveBeenCalled()
+  })
+
+  it('normaliza una fila de subreceta a la unidad del producto final antes de guardar', async () => {
+    const root = buildRecetaBase({ recetaId: 'P' })
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(root as any)
+    vi.mocked(prisma.producto.findMany)
+      .mockResolvedValueOnce([] as any)
+      .mockResolvedValueOnce([{ id: 'producto-S' }] as any)
+    vi.mocked(prisma.receta.findMany).mockResolvedValue([
+      {
+        recetaId: 'P', tenantId: 'tenant-1', productoId: 'producto-P', rendimiento: 1,
+        RecetaIngrediente: [],
+      },
+      {
+        recetaId: 'S', tenantId: 'tenant-1', productoId: 'producto-S', rendimiento: 1,
+        nombre: 'Subreceta S', costoUnitario: 25, RecetaIngrediente: [],
+        Producto: {
+          id: 'producto-S',
+          nombre: 'Subproducto',
+          unidad: { simbolo: 'kg', dimension: 'MASS' },
+          unidadesConversion: [],
+        },
+      },
+    ] as any)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce({
+      ...root,
+      costoUnitario: 25,
+      RecetaIngrediente: [],
+    } as any)
+
+    const request = createIngredientesRequest('P', [{
+      recetaIngredienteId: 'S',
+      cantidad: 500,
+      unidadSimbolo: 'g',
+      desperdicio: 0,
+    }])
+    const response = await setIngredientesHandler(request, { params: paramsFor('P') })
+
+    expect(response.status).toBe(200)
+    expect(prisma.recetaIngrediente.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({
+        productoId: 'producto-S',
+        recetaIngredienteId: 'S',
+        cantidad: 0.5,
+        unidadSimbolo: 'kg',
       })],
     }))
   })
