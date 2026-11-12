@@ -122,8 +122,9 @@ export async function getPlansPublicActionV2(): Promise<PlanDisplay[]> {
         },
       }
     })
-  } catch {
-    return []
+  } catch (error) {
+    console.error('[planes] No se pudieron cargar los planes públicos:', error)
+    throw error
   }
 }
 

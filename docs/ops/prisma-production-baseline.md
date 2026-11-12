@@ -1,47 +1,60 @@
 # Prisma production baseline
 
-## Verified facts
+## Estado actual de FinanceMDM
 
-- Production DB has `tenant_licenses`.
-- Production DB does **not** have `_prisma_migrations`.
-- `pnpm prisma migrate status` reports historical migrations as pending because history is empty.
-- `tenant_licenses.featureOverrides` already exists in production.
+Verificado el 12 de noviembre de 2026 después de reconciliar el historial y
+aplicar las migraciones pendientes:
 
-## Rollback note
+- `prisma migrate status` informa que el schema está actualizado.
+- `_prisma_migrations` contiene 188 filas: 183 migraciones aplicadas y 5 intentos
+  fallidos marcados como revertidos (sin fallas pendientes).
+- El repositorio actual contiene 180 directorios de migración. El historial conserva
+  algunos registros de migraciones históricas cuyos directorios ya no están en el repo.
+- El arranque de producción valida el estado con `prisma migrate status` antes de
+  iniciar Next.js; falla de forma cerrada si el comando detecta un desfase.
 
-Do **not** run `pnpm prisma migrate deploy` against this DB until baseline is complete, or Prisma may attempt to replay historical DDL on existing tables.
+Estos datos describen FinanceMDM en la fecha indicada. No deben usarse como baseline
+para otra base de datos o un entorno nuevo sin una verificación propia.
 
-## Production sequence
+## Procedimiento para una base de datos histórica sin baseline
 
-1. Take a Railway/Postgres backup and store the backup identifier.
-2. Export `DATABASE_URL` for the production database.
-3. Run the helper in dry-run mode:
+No ejecutes `prisma migrate deploy` a ciegas en una base existente: puede intentar
+reproducir DDL histórico sobre objetos ya creados. Primero confirma el estado real del
+schema y del ledger.
 
-```bash
-pnpm tsx scripts/ops/baseline-prisma-production.ts --dry-run
-```
+1. Toma un backup de Railway/Postgres y registra su identificador.
+2. Exporta `DATABASE_URL` del entorno que se va a revisar.
+3. Ejecuta el helper en modo de solo lectura:
 
-4. Execute every generated command:
+   ```bash
+   pnpm tsx scripts/ops/baseline-prisma-production.ts --dry-run
+   ```
 
-```bash
-pnpm prisma migrate resolve --applied <migration_name>
-```
+4. Revisa cada migración propuesta contra el schema real. Marca una migración como
+   aplicada solo cuando todos sus efectos estén presentes y validados:
 
-5. Verify Prisma history:
+   ```bash
+   pnpm prisma migrate resolve --applied <migration_name>
+   ```
 
-```bash
-pnpm prisma migrate status
-```
+5. Confirma el estado antes de continuar:
 
-6. Verify `_prisma_migrations` has rows:
+   ```bash
+   pnpm prisma migrate status
+   psql "$DATABASE_URL" -c 'SELECT migration_name, finished_at, rolled_back_at FROM "_prisma_migrations" ORDER BY migration_name;'
+   ```
 
-```bash
-psql "$DATABASE_URL" -c 'SELECT migration_name, finished_at FROM "_prisma_migrations" ORDER BY migration_name LIMIT 5;'
-```
+6. Una vez reconciliado el baseline, usa `prisma migrate deploy` para las migraciones
+   nuevas. No uses `db push --accept-data-loss` en producción como sustituto del
+   historial de migraciones.
 
-7. Only after the baseline is healthy, use `pnpm prisma migrate deploy` for future migrations.
+## Guard de arranque
 
-## Current production findings
+`start.sh` ejecuta `pnpm exec prisma migrate status` antes de `node server.js`.
+Si Prisma reporta migraciones pendientes o falla la consulta, el contenedor no inicia.
+El guard se puede desactivar únicamente mediante `PRISMA_MIGRATION_GUARD_ON_START=false`;
+no lo desactives en producción. Los entornos que usan `db-push` deben migrar a un
+historial Prisma reconciliado antes de habilitar el guard.
 
-- `_prisma_migrations` row count: `0`
-- Baseline strategy required: `prisma migrate resolve --applied`
+La sincronización de schema continúa siendo opt-in y se controla por separado con
+`PRISMA_SCHEMA_SYNC_ON_START` y `PRISMA_MIGRATION_MODE`.

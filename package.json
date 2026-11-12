@@ -18,7 +18,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:staging": "vitest run --config vitest.staging.config.mjs",
-    "test:node": "node --test scripts/ops/__tests__/cash-create-idempotency.test.mjs",
+    "test:node": "node --test scripts/ops/__tests__/cash-create-idempotency.test.mjs scripts/ops/__tests__/start-migration-guard.test.mjs",
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
     "seed:plans": "tsx prisma/seed/plans-seed.ts",
