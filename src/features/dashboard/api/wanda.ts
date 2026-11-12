@@ -626,19 +626,27 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         horas[h] = { hora: `${h.toString().padStart(2, '0')}:00`, total: 0, cantidad: 0 }
       }
 
-      const procesar = (venta: { createdAt: Date; reconciliaciones: Array<{ monto: number; montoConvertido: number | null }>; total: number | null }) => {
-        const hora = venta.createdAt.getHours()
+      ventas.forEach((v) => {
+        const hora = v.createdAt.getHours()
         const total =
-          venta.reconciliaciones.reduce(
+          v.reconciliaciones.reduce(
             (sum, r) => sum + Number(r.montoConvertido || r.monto),
             0,
-          ) || (venta.total || 0)
+          ) || (v.total || 0)
         horas[hora].total += total
         horas[hora].cantidad += 1
-      }
+      })
 
-      ventas.forEach(procesar)
-      ventasServicios.forEach(procesar)
+      ventasServicios.forEach((v) => {
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        horas[hora].total += total
+        horas[hora].cantidad += 1
+      })
 
       return Object.values(horas)
     }
@@ -654,21 +662,31 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }
       }
 
-      const procesar = (venta: { createdAt: Date; reconciliaciones: Array<{ monto: number; montoConvertido: number | null }>; total: number | null }) => {
-        const diaIndex = venta.createdAt.getDay()
+      ventas.forEach((v) => {
+        const diaIndex = v.createdAt.getDay()
         const dia = dias[diaIndex]
-        const hora = venta.createdAt.getHours()
+        const hora = v.createdAt.getHours()
         const total =
-          venta.reconciliaciones.reduce(
+          v.reconciliaciones.reduce(
             (sum, r) => sum + Number(r.montoConvertido || r.monto),
             0,
-          ) || (venta.total || 0)
+          ) || (v.total || 0)
         mapa[dia][hora].total += total
         mapa[dia][hora].cantidad += 1
-      }
+      })
 
-      ventas.forEach(procesar)
-      ventasServicios.forEach(procesar)
+      ventasServicios.forEach((v) => {
+        const diaIndex = v.createdAt.getDay()
+        const dia = dias[diaIndex]
+        const hora = v.createdAt.getHours()
+        const total =
+          v.reconciliaciones.reduce(
+            (sum, r) => sum + Number(r.montoConvertido || r.monto),
+            0,
+          ) || (v.total || 0)
+        mapa[dia][hora].total += total
+        mapa[dia][hora].cantidad += 1
+      })
 
       return dias.map((dia) => ({
         dia,

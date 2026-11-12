@@ -12,7 +12,7 @@ import { ReportesShellLoader } from '@/features/reportes-financieros/components/
 import { cn } from '@/lib/utils';
 import { PageTransition } from '@/components/ui/animations';
 
-const HorarioVentasPageLoader = () => <ReportesShellLoader kpis={2} />;
+const HorarioVentasPageLoader = () => <ReportesShellLoader kpis={3} />;
 
 const ReporteHorarioVentas = dynamic(
   () =>
