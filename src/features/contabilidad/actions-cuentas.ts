@@ -848,12 +848,12 @@ export const getEstadoDeCuentaClienteAction = withAction(
 		for (const anticipo of anticiposRaw) {
 			resumenMoneda(anticipo.moneda).saldoAFavorAnticipos += Number(anticipo.saldoDisponible);
 		}
-		for (const nota of notasCreditoRaw) {
+		const notasCreditoSinAnticipo = notasCreditoRaw.filter((nota) => nota.anticipoId == null);
+		for (const nota of notasCreditoSinAnticipo) {
 			// Una NC materializada como anticipo (anticipoId != null) no se
 			// suma aquí: su saldo a favor vive en el anticipo (saldoDisponible,
 			// saldo vivo) y contarlo dos veces subestima la deuda neta.
 			// montoSaldoFavor es solo la foto del momento de creación.
-			if (nota.anticipoId != null) continue;
 			resumenMoneda(nota.moneda).saldoAFavorNotasCredito += Number(nota.montoSaldoFavor);
 		}
 		for (const resumen of resumenPorMoneda.values()) {
@@ -891,7 +891,7 @@ export const getEstadoDeCuentaClienteAction = withAction(
 				moneda: a.moneda,
 				fechaReserva: a.fechaReserva.toISOString(),
 			})),
-			notasCredito: notasCreditoRaw.map((nc) => ({
+			notasCredito: notasCreditoSinAnticipo.map((nc) => ({
 				devolucionId: nc.devolucionId,
 				ventaId: nc.ventaId,
 				estado: nc.estado,

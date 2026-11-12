@@ -220,10 +220,40 @@ describe('F-6: getEstadoDeCuentaClienteAction', () => {
         saldoNeto: 700,
       }],
     });
-    // El detalle sigue listando la NC (con su saldo original).
-    expect(result.data.notasCredito).toEqual([
-      expect.objectContaining({ devolucionId: 'dv-1', montoSaldoFavor: 100 }),
+    // La NC vinculada se representa solo con el saldo vivo del anticipo.
+    expect(result.data.notasCredito).toEqual([]);
+  });
+
+  it('muestra solo el saldo vivo del anticipo para una nota de crédito vinculada', async () => {
+    vi.mocked(prisma.anticipo.findMany).mockResolvedValue([
+      {
+        ...anticipoActivo,
+        anticipoId: 'ant-nc',
+        referenciaExterna: 'NC:dv-1',
+        saldoDisponible: 50,
+      },
+    ] as any);
+    vi.mocked(prisma.devolucionVenta.findMany).mockResolvedValue([
+      { ...notaCreditoSaldoFavor, anticipoId: 'ant-nc', montoSaldoFavor: 100 },
+    ] as any);
+
+    const result = await getEstadoDeCuentaClienteAction({ clienteId: 'cli-1' });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.resumen.porMoneda).toEqual([
+      expect.objectContaining({
+        moneda: 'CUP',
+        saldoAFavorAnticipos: 50,
+        saldoAFavorNotasCredito: 0,
+        saldoAFavor: 50,
+        saldoNeto: 950,
+      }),
     ]);
+    expect(result.data.anticipos).toEqual([
+      expect.objectContaining({ anticipoId: 'ant-nc', saldoDisponible: 50 }),
+    ]);
+    expect(result.data.notasCredito).toEqual([]);
   });
 
   it('una CxC sin monedaOriginal cae en el bucket CUP, nunca en DOP', async () => {
