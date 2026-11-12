@@ -53,6 +53,12 @@ describe('generateUploadSignature', () => {
       signature: 'signed-payload',
     })
     expect(apiSignRequestMock).toHaveBeenCalled()
+    // La firma cubre solo timestamp + public_id: folder ya va dentro de
+    // publicId y el cliente no lo envía (si se firmara, la firma no
+    // validaría y Cloudinary duplicaría el prefijo).
+    const signedParams = apiSignRequestMock.mock.calls[0]![0] as Record<string, unknown>;
+    expect(signedParams).not.toHaveProperty('folder');
+    expect(signedParams).toHaveProperty('public_id', 'tenant123/productos/my-photo');
     expect(result.timestamp).toBeGreaterThan(0)
   })
 

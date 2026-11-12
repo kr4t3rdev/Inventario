@@ -96,7 +96,7 @@ describe('uploadToCloudinary', () => {
     expect(body.mimeType).toBe('image/jpeg')
   })
 
-  it('usa folder y publicId retornados por el server al subir a Cloudinary', async () => {
+  it('no envía folder a Cloudinary: publicId ya lleva la ruta completa', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
     const fetchMock = vi
@@ -131,7 +131,7 @@ describe('uploadToCloudinary', () => {
 
     const secondCall = fetchMock.mock.calls[1]!
     const formData = secondCall[1]!.body as FormData
-    expect(formData.get('folder')).toBe('tenant-123/clientes/logo')
+    expect(formData.get('folder')).toBeNull()
     expect(formData.get('public_id')).toBe('tenant-123/clientes/logo/cliente-1')
   })
 

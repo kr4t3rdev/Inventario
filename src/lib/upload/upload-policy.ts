@@ -12,6 +12,7 @@ export type UploadKey =
   | 'reparaciones.orden-photo'
   | 'contratos.attachment'
   | 'contratos.version'
+  | 'gastosDE.attachment'
   | 'deudasCash.receipt'
 
 export interface UploadIntentInput {
@@ -53,6 +54,17 @@ const CONTRACT_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ...IMAGE_MIME_TYPES,
 ] as const
+
+const GASTO_ATTACHMENT_EXTENSIONS: Readonly<Record<string, string>> = {
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+}
 
 function slugifyFilename(filename: string): string {
   const withoutExtension = filename.replace(/\.[^.]+$/, '')
@@ -169,6 +181,15 @@ export function resolveUploadPolicy({
       allowedMimeTypes = CONTRACT_MIME_TYPES
       break
     }
+    case 'gastosDE.attachment': {
+      requireFeature(user, 'gastos', 'adjuntar comprobantes a gastos')
+      const gastoId = ensureEntityId(entityId, 'Se requiere el id del gasto para adjuntar comprobantes')
+      folder = `${tenantId}/gastosDE/${gastoId}/comprobantes`
+      resourceType = 'raw'
+      maxBytes = 10 * 1024 * 1024
+      allowedMimeTypes = CONTRACT_MIME_TYPES
+      break
+    }
     case 'deudasCash.receipt':
       requireFeature(user, 'upload-deudas-cash-receipt', 'subir comprobantes de deudas cash')
       folder = `${tenantId}/contabilidad/deudas-cash/comprobantes`
@@ -180,6 +201,11 @@ export function resolveUploadPolicy({
 
   ensureMimeAndSize(mimeType, bytes, allowedMimeTypes, maxBytes)
 
+  const basePublicId = buildPublicId(folder, filename, entityId)
+  const publicId = uploadKey === 'gastosDE.attachment'
+    ? `${basePublicId}.${GASTO_ATTACHMENT_EXTENSIONS[mimeType]}`
+    : basePublicId
+
   return {
     uploadKey,
     provider,
@@ -187,6 +213,6 @@ export function resolveUploadPolicy({
     resourceType,
     maxBytes,
     allowedMimeTypes: [...allowedMimeTypes],
-    publicId: buildPublicId(folder, filename, entityId),
+    publicId,
   }
 }

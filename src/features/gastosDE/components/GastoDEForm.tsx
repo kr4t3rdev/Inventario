@@ -21,6 +21,10 @@ import { usePeriodLock } from "@/features/contabilidad/hooks/use-period-lock"
 import { PeriodLockBanner } from "@/features/contabilidad/components/periodos/period-lock-banner"
 import type { Vendor } from "@/app/models/model"
 import type { GastoConcepto, GastoElemento } from "@/app/models/economicos"
+import { getEmpleadosAction } from "@/features/empleados/actions"
+import { uploadAsset, toCloudinaryAssetUploadResult } from "@/lib/upload/upload-asset"
+import { registrarAdjuntoGastoAction, getAdjuntosGastoAction, removeAdjuntoGastoAction } from "@/features/gastosDE/adjuntos"
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
 
 const gastosDESchema = z.object({
   tipo: z.string().max(100, 'Máximo 100 caracteres').optional(),
@@ -32,12 +36,13 @@ const gastosDESchema = z.object({
   monto: z.coerce.number({ invalid_type_error: 'Ingrese un monto válido' }).positive({ message: "El monto debe ser mayor a 0" }),
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500, 'Máximo 500 caracteres'),
   periodo: z.string().regex(/^\d{4}-\d{2}$/, "El período debe tener formato YYYY-MM"),
+  empleadoId: z.string().optional(),
 })
 
 type GastosDEFormValues = z.infer<typeof gastosDESchema>
 
 interface GastosDEFormProps {
-  initialData?: { gastosDEId: string; tipo: string | null; conceptoId: string | null; elementoId: string | null; numeroFactura?: string | null; proveedor: string | null; proveedorId?: string | null; monto: number; descripcion: string | null; periodo?: string }
+  initialData?: { gastosDEId: string; tipo: string | null; conceptoId: string | null; elementoId: string | null; numeroFactura?: string | null; proveedor: string | null; proveedorId?: string | null; empleadoId?: string | null; monto: number; descripcion: string | null; periodo?: string }
   initialVendors?: Vendor[]
 }
 
@@ -52,10 +57,23 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   const isLoadingVendors = initialVendors ? false : hookVendors.isLoading
   const [conceptos, setConceptos] = useState<GastoConcepto[]>([])
   const [elementos, setElementos] = useState<GastoElemento[]>([])
+  const [empleados, setEmpleados] = useState<Array<{ empleadoId: string; nombre: string; apellido: string }>>([])
+  const [adjuntos, setAdjuntos] = useState<CloudinaryAssetUploadResult[]>([])
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     getGastoConceptosAction({}).then(r => { if (r.success) setConceptos(r.data ?? []) })
+    getEmpleadosAction(undefined).then(r => { if (r.success) setEmpleados((r.data ?? []) as typeof empleados) })
   }, [])
+
+  useEffect(() => {
+    if (initialData?.gastosDEId) {
+      getAdjuntosGastoAction(initialData.gastosDEId).then((r) => {
+        if (r.success) setAdjuntos((r.data ?? []) as unknown as CloudinaryAssetUploadResult[])
+      })
+    }
+  }, [initialData?.gastosDEId])
 
   useEffect(() => {
     if (selectedConceptoId) {
@@ -71,6 +89,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
       proveedorId: initialData?.proveedorId || (initialVendors?.find((v) => v.nombre === initialData?.proveedor)?.vendorId ?? ''),
       descripcion: initialData?.descripcion || '', monto: initialData?.monto ?? undefined,
       periodo: initialData?.periodo || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+      empleadoId: initialData?.empleadoId || '',
     },
   })
 
@@ -85,9 +104,10 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
 
   async function onSubmit(data: GastosDEFormValues) {
     setIsLoading(true)
+    let gastoId = initialData?.gastosDEId
     try {
       if (initialData) {
-        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data, proveedorId: data.proveedorId || null })
+        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data, proveedorId: data.proveedorId || null, empleadoId: data.empleadoId || null })
         if (!result.success) {
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return
@@ -99,13 +119,25 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return
         }
+        gastoId = (result.data as { gastosDEId?: string } | undefined)?.gastosDEId
         sileo.success({ title: 'El gasto de explotación ha sido registrado exitosamente.' })
+      }
+      if (archivo && gastoId) {
+        setUploading(true)
+        const uploaded = await uploadAsset(archivo, { uploadKey: 'gastosDE.attachment', entityId: gastoId })
+        const asset = toCloudinaryAssetUploadResult(uploaded)
+        const registered = await registrarAdjuntoGastoAction({
+          gastosDEId: gastoId,
+          ...asset,
+        })
+        if (!registered.success) throw new Error(registered.error?.message || 'No se pudo registrar el comprobante')
       }
       router.back()
     } catch (error) {
       console.error("Error al guardar el gasto de explotación:", error)
       sileo.error({ title: 'Hubo un error al guardar el gasto de explotación.' })
-    } finally { setIsLoading(false) }
+      if (!initialData && gastoId) router.push(`/busy/gastosDE/update/${gastoId}`)
+    } finally { setIsLoading(false); setUploading(false) }
   }
 
   if (isLoadingGastosDE) {
@@ -165,6 +197,12 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                 { name: "tipo" as const, label: "Tipo (texto libre, opcional)", desc: "Texto libre alternativo al concepto/elemento.", delay: 0.24, render: (field: any) => <Input type="text" {...field} placeholder="Solo si no usa concepto/elemento" className="transition-all duration-200 focus:scale-[1.01]" /> },
                 { name: "periodo" as const, label: "Período", desc: "Período del gasto (formato YYYY-MM).", delay: 0.22, render: (field: any) => <Input type="text" placeholder="YYYY-MM" {...field} className="transition-all duration-200 focus:scale-[1.01]" /> },
                 { name: "numeroFactura" as const, label: "Nro. Factura", desc: "Factura entrante del proveedor (opcional).", delay: 0.25, render: (field: any) => <Input type="text" placeholder="Ej: F-2024-0012" {...field} className="transition-all duration-200 focus:scale-[1.01]" /> },
+                { name: "empleadoId" as const, label: "Empleado (viático, opcional)", desc: "Asocie el gasto con un empleado si corresponde a viáticos.", delay: 0.26, render: (field: any) => (
+                  <select {...field} className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Sin empleado asociado</option>
+                    {empleados.map((empleado) => <option key={empleado.empleadoId} value={empleado.empleadoId}>{empleado.nombre} {empleado.apellido}</option>)}
+                  </select>
+                )},
                 { name: (usarProveedorLibre ? "proveedor" : "proveedorId") as "proveedor", label: "Proveedor", desc: usarProveedorLibre ? "Escriba el nombre del proveedor (texto libre)." : "Seleccione el proveedor del catálogo.", delay: 0.3, render: (field: any) => (
                   <div className="space-y-2">
                     {usarProveedorLibre
@@ -184,6 +222,11 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                   )} />
                 </motion.div>
               ))}
+              <section className="space-y-3 rounded-lg border p-4" aria-labelledby="comprobantes-title">
+                <div><h3 id="comprobantes-title" className="font-medium">Comprobantes</h3><p className="text-sm text-muted-foreground">Adjunte PDF o imágenes de hasta 10 MB.</p></div>
+                <Input type="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setArchivo(event.target.files?.[0] ?? null)} aria-label="Adjuntar comprobante" />
+                {adjuntos.map((adjunto, index) => <div key={adjunto.publicId ?? index} className="flex items-center justify-between gap-3 text-sm"><a className="underline" href={adjunto.secureUrl} target="_blank" rel="noreferrer">{adjunto.originalFilename || 'Comprobante'}</a><Button type="button" variant="outline" onClick={async () => { const result = await removeAdjuntoGastoAction((adjunto as CloudinaryAssetUploadResult & { assetId: string }).assetId); if (result.success) setAdjuntos((items) => items.filter((_, i) => i !== index)) }}>Eliminar</Button></div>)}
+              </section>
               {watchedValues.monto && (watchedValues.tipo || watchedValues.conceptoId || watchedValues.elementoId) && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
                   <Card className="bg-muted/50 border-dashed"><CardContent className="pt-4">
@@ -201,8 +244,8 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                   <Button type="button" variant="destructive" onClick={() => router.push("/busy/gastosDE")}>Cancelar</Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button type="submit" disabled={isLoading || isLocked} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>) : initialData ? "Actualizar Gasto" : "Registrar Gasto"}
+                  <Button type="submit" disabled={isLoading || isLocked || uploading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    {isLoading || uploading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />{uploading ? 'Subiendo comprobante...' : 'Guardando...'}</>) : initialData ? "Actualizar Gasto" : "Registrar Gasto"}
                   </Button>
                 </motion.div>
               </motion.div>

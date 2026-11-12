@@ -12,7 +12,7 @@ import type { GastosDEInput, GastosDEUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from './reversal';
 
-const INCLUDE = { concepto: true, elemento: true } as const;
+const INCLUDE = { concepto: true, elemento: true, empleado: { select: { nombre: true, apellido: true } } } as const;
 
 /**
  * @description Valida en servidor que el período contable del gasto permita
@@ -41,13 +41,14 @@ async function assertPeriodoGastoEscritable(periodo: string, tenantId: string): 
 
 // ─── GastosDE ──────────────────────────────────────────────
 
-export const getGastosDEAction = withAction(async (filters: { periodo?: string; conceptoId?: string; elementoId?: string } = {}, user: AuthenticatedUser) => {
+export const getGastosDEAction = withAction(async (filters: { periodo?: string; conceptoId?: string; elementoId?: string; empleadoId?: string } = {}, user: AuthenticatedUser) => {
   requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
   const where: any = { tenantId };
   if (filters.periodo) where.periodo = filters.periodo;
   if (filters.conceptoId) where.conceptoId = filters.conceptoId;
   if (filters.elementoId) where.elementoId = filters.elementoId;
+  if (filters.empleadoId) where.empleadoId = filters.empleadoId;
   return prisma.gastosDE.findMany({ where, include: INCLUDE, orderBy: { createdAt: 'desc' } });
 });
 
@@ -92,7 +93,11 @@ export const createGastosDEAction = withAction(async (input: GastosDEInput, user
     proveedorId = vendor.vendorId;
     proveedor = vendor.nombre;
   }
-  const g = await prisma.gastosDE.create({ data: { tipo, conceptoId: parsed.conceptoId||null, elementoId: parsed.elementoId||null, proveedor, proveedorId, estado: 'PENDIENTE', monto: parsed.monto, periodo, numeroFactura: parsed.numeroFactura||null, descripcion: parsed.descripcion, tenantId }, include: INCLUDE });
+  if (parsed.empleadoId) {
+    const empleado = await prisma.empleado.findFirst({ where: { empleadoId: parsed.empleadoId, tenantId } });
+    if (!empleado) throw new ActionError('Empleado no encontrado', 'NOT_FOUND');
+  }
+  const g = await prisma.gastosDE.create({ data: { tipo, conceptoId: parsed.conceptoId||null, elementoId: parsed.elementoId||null, proveedor, proveedorId, estado: 'PENDIENTE', monto: parsed.monto, periodo, numeroFactura: parsed.numeroFactura||null, empleadoId: parsed.empleadoId||null, descripcion: parsed.descripcion, tenantId }, include: INCLUDE });
   revalidatePath('/busy/gastosDE');
   return g;
 });
@@ -124,6 +129,13 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
       proveedorUpdate = { proveedorId: vendor.vendorId, proveedor: vendor.nombre };
     }
   }
+  if (data.empleadoId) {
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: data.empleadoId, tenantId },
+      select: { empleadoId: true },
+    });
+    if (!empleado) throw new ActionError('Empleado no encontrado', 'NOT_FOUND');
+  }
   if (data.conceptoId || data.elementoId) {
     const concepto = data.conceptoId
       ? await prisma.gastoConcepto.findFirst({ where: { conceptoId: data.conceptoId, tenantId } })
@@ -134,7 +146,7 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
       : null;
     if (data.elementoId && !elem) throw new ActionError('El elemento no pertenece al concepto de esta empresa', 'VALIDATION_ERROR');
   }
-  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.tipo!==undefined&&{tipo:data.tipo}), ...(data.conceptoId!==undefined&&{conceptoId:data.conceptoId}), ...(data.elementoId!==undefined&&{elementoId:data.elementoId}), ...(data.periodo!==undefined&&{periodo:data.periodo}), ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...proveedorUpdate, ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}) } });
+  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.tipo!==undefined&&{tipo:data.tipo}), ...(data.conceptoId!==undefined&&{conceptoId:data.conceptoId}), ...(data.elementoId!==undefined&&{elementoId:data.elementoId}), ...(data.periodo!==undefined&&{periodo:data.periodo}), ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...proveedorUpdate, ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}), ...(data.empleadoId!==undefined&&{empleadoId:data.empleadoId}) } });
   revalidatePath('/busy/gastosDE');
   return g;
 });
