@@ -25,7 +25,7 @@ esac
 case "${PRISMA_MIGRATION_GUARD_ON_START:-true}" in
   true)
     echo "[start] Checking Prisma migration status..."
-    if ! pnpm exec prisma migrate status; then
+    if ! node /app/scripts/check-prisma-migration-status.cjs; then
       echo "[start] ERROR: database migrations are not up to date; refusing to start." >&2
       exit 1
     fi
