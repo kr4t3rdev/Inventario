@@ -26,7 +26,7 @@ async function runStart(prismaStatus) {
   );
   await writeFile(
     path.join(binDir, 'node'),
-    '#!/bin/sh\ngrep -qx "exec prisma migrate status" "$COMMAND_LOG" || exit 91\ntouch "$APP_MARKER"\n',
+    '#!/bin/sh\ncase "$1" in\n  */check-prisma-migration-status.cjs) echo "migrate status"; echo guard >> "$COMMAND_LOG"; exit "$PRISMA_STATUS_EXIT" ;;\n  server.js) grep -qx guard "$COMMAND_LOG" || exit 91; touch "$APP_MARKER" ;;\n  *) exit 92 ;;\nesac\n',
     { mode: 0o755 },
   );
 
