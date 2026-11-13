@@ -1,14 +1,12 @@
-import { Building2 } from "lucide-react"
-
 import { getFiscalConfigAction } from "@/features/facturas/actions-fiscal-config"
 import { FiscalConfigForm } from "@/features/facturas/components/fiscal-config-form"
 import { MiEmpresaForm } from "@/features/mi-empresa/components/mi-empresa-form"
+import { MiEmpresaPageShell } from "@/features/mi-empresa/components/mi-empresa-page-shell"
 import {
   filterActiveCuentasBancarias,
   mapMiEmpresaApiToFormValues,
 } from "@/features/mi-empresa/lib/miEmpresaUtils"
 import { getMiEmpresaPageData } from "@/features/mi-empresa/server/data"
-import { SettingsPageShell } from "@/features/configuracion/components/settings-page-shell"
 import { getCurrentUser } from "@/lib/server-actions"
 import { hasFeature } from "@/lib/services/tenant-scope"
 
@@ -51,11 +49,7 @@ export default async function MiEmpresaConfigPage() {
   }
 
   return (
-    <SettingsPageShell
-      icon={Building2}
-      title="Mi Empresa"
-      description="Configura los datos que aparecen como beneficiario en facturas y documentos."
-    >
+    <MiEmpresaPageShell>
       <MiEmpresaForm initialData={initialData} cuentas={activeCuentas} />
 
       {showFiscal && (
@@ -69,6 +63,6 @@ export default async function MiEmpresaConfigPage() {
           <FiscalConfigForm initial={fiscalInitial} />
         </section>
       )}
-    </SettingsPageShell>
+    </MiEmpresaPageShell>
   )
 }
