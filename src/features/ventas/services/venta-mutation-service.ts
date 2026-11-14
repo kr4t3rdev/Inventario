@@ -2,6 +2,8 @@ import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { validarCupon } from '@/features/cupones/services/cupon-validator';
+import { acumularPuntosPorCompraVenta } from '@/features/ventas/services/lealtad-integration';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
@@ -485,7 +487,65 @@ export const VentaMutationService = {
     }
     const cambioDerivado = esPedido ? null : cobro.cambio;
 
-    return prisma.$transaction(async (tx) => {
+    // CRM-T6: validar cupón antes de la transacción (si hay cuponCodigo)
+    let cuponDescuento = 0;
+    let cuponUsado = false;
+    if (parsed.cuponCodigo && parsed.clienteId) {
+      try {
+        const cupon = await prisma.cupon.findFirst({
+          where: { tenantId, codigo: parsed.cuponCodigo, activo: true },
+        });
+        if (cupon) {
+          // Contar usos por cliente
+          const usosPorCliente = parsed.clienteId
+            ? await prisma.cuponUso.count({
+                where: { tenantId, cuponId: cupon.cuponId, clienteId: parsed.clienteId },
+              })
+            : 0;
+
+          const validacion = validarCupon({
+            cupon: {
+              cuponId: cupon.cuponId,
+              codigo: cupon.codigo,
+              tipo: cupon.tipo as 'PORCENTAJE' | 'FIJO' | '2X1' | 'ENVIO_GRATIS' | 'PRODUCTO_GRATIS' | 'CASHBACK_PUNTOS',
+              valor: cupon.valor,
+              usoMinimo: cupon.usoMinimo,
+              usoMaximo: cupon.usoMaximo,
+              vecesMaximo: cupon.vecesMaximo,
+              vecesPorCliente: cupon.vecesPorCliente,
+              validoDesde: cupon.validoDesde,
+              validoHasta: cupon.validoHasta,
+              activo: cupon.activo,
+              aplicableA: cupon.aplicableA,
+              filtros: cupon.filtros as Record<string, unknown> | null,
+              canalAplicacion: cupon.canalAplicacion,
+              segmentoTarget: cupon.segmentoTarget,
+              vecesUsado: cupon.vecesUsado,
+            },
+            totalCompra: subtotalVenta,
+            canal: 'POS',
+            clienteId: parsed.clienteId,
+            segmentoCliente: null,
+            productoIds: productoIds,
+            usosPorCliente,
+          });
+
+          if (validacion.valido && validacion.descuento != null && validacion.descuento > 0) {
+            cuponDescuento = validacion.descuento;
+            cuponUsado = true;
+          }
+        }
+      } catch {
+        // Errores de validación de cupón no fallan la venta
+        console.warn('Cupón no válido, se continúa sin descuento:', parsed.cuponCodigo);
+      }
+    }
+
+    // Recalcular total con descuento de cupón
+    const totalVentaConCupon = Math.max(totalVenta - cuponDescuento, 0);
+
+    let ventaId: string | null = null;
+    await prisma.$transaction(async (tx) => {
       // CRM-T2/B4: re-validación del tope DENTRO de la transacción con el lock
       // de crédito del cliente — el saldo leído antes de abrir la transacción
       // pudo quedar obsoleto frente a otro crédito concurrente del mismo
@@ -571,9 +631,9 @@ export const VentaMutationService = {
             ? null
             : (parsed.montoRecibidoEfectivo ?? null),
           cambioDevuelto: esPedido ? null : cambioDerivado,
-          descuento: parsed.descuento ?? 0,
+          descuento: (parsed.descuento ?? 0) + cuponDescuento,
           observaciones: parsed.observaciones ?? null,
-          total: Math.max(totalVenta, 0),
+          total: totalVentaConCupon,
           cantidad: totalCantidad,
           esVentaUnica: true,
           items: {
@@ -646,6 +706,29 @@ export const VentaMutationService = {
         }
       }
 
+      // CRM-T6: registrar uso de cupón dentro de la transacción
+      if (cuponUsado && parsed.cuponCodigo) {
+        const cupon = await tx.cupon.findFirst({
+          where: { tenantId, codigo: parsed.cuponCodigo },
+        });
+        if (cupon) {
+          await tx.cuponUso.create({
+            data: {
+              tenantId,
+              cuponId: cupon.cuponId,
+              clienteId: parsed.clienteId,
+              ventaId: venta.ventaId,
+              descuentoAplicado: cuponDescuento,
+              canal: 'POS',
+            },
+          });
+          await tx.cupon.update({
+            where: { cuponId: cupon.cuponId },
+            data: { vecesUsado: { increment: 1 } },
+          });
+        }
+      }
+
       if (hasFacturacion && parsed.clienteId && serie) {
         const factura = await tx.factura.create({
           data: {
@@ -657,9 +740,9 @@ export const VentaMutationService = {
             ventaId: venta.ventaId,
             clienteId: parsed.clienteId,
             subtotal: subtotalVenta,
-            descuento: parsed.descuento ?? 0,
+            descuento: (parsed.descuento ?? 0) + cuponDescuento,
             cargoTransporte,
-            total: Math.max(totalVenta, 0),
+            total: totalVentaConCupon,
             estado: 'PENDIENTE',
             creadoPor: user.userId || 'sistema',
             fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
@@ -672,7 +755,7 @@ export const VentaMutationService = {
             ventaId: venta.ventaId,
             facturaId: factura.idFactura,
             clienteId: parsed.clienteId,
-            montoTotal: Math.max(totalVenta, 0),
+            montoTotal: totalVentaConCupon,
             usuarioId: user.userId || 'sistema',
             tenantId,
             observaciones: parsed.observaciones,
@@ -684,8 +767,33 @@ export const VentaMutationService = {
         }
       }
 
-      return venta;
+      // Capturar ventaId para uso fuera de la transacción
+      ventaId = venta.ventaId;
     });
+
+    // CRM-T6: acumular puntos de lealtad después de confirmar la venta
+    // (fuera de la transacción para no bloquear el checkout)
+    if (parsed.clienteId && !esPedido && ventaId) {
+      try {
+        await acumularPuntosPorCompraVenta({
+          clienteId: parsed.clienteId,
+          ventaId,
+          totalCompra: totalVentaConCupon,
+          tenantId,
+        });
+      } catch (error) {
+        // Errores de lealtad no fallan la venta
+        console.error('Error acumulando puntos de lealtad:', error);
+      }
+    }
+
+    // Re-consultar la venta completa para el retorno
+    if (ventaId) {
+      return prisma.venta.findUnique({
+        where: { ventaId },
+      });
+    }
+    throw new ActionError('Venta no creada', 'INTERNAL_ERROR');
   },
 
   /**

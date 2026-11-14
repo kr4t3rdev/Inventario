@@ -100,6 +100,20 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"backups-diario": false,
 	"backups-tiempo-real": false,
 	"api-integraciones": false,
+	// CRM y Fidelización (no en Básico)
+	"crm-cdp": false,
+	"crm-segmentacion": false,
+	"lealtad-programa": false,
+	"lealtad-gamificacion": false,
+	"lealtad-referidos": false,
+	"cupones-promociones": false,
+	"cupones-ab-testing": false,
+	"cliente-analytics": false,
+	"cliente-churn": false,
+	"cliente-basket": false,
+	"automatizacion-triggers": false,
+	"automatizacion-webhooks": false,
+	"fidelizacion-dashboard": false,
 };
 
 /* ─── Plan 2: Profesional — $60/mes (referido: $50/mes) ─── */
@@ -139,6 +153,20 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	variantes: true,
 	"ubicaciones-avanzadas": true,
 	"mrp-avanzado": false,
+	// CRM y Fidelización (Profesional: CDP, lealtad, cupones, referidos, triggers, dashboard)
+	"crm-cdp": true,
+	"crm-segmentacion": false,
+	"lealtad-programa": true,
+	"lealtad-gamificacion": false,
+	"lealtad-referidos": true,
+	"cupones-promociones": true,
+	"cupones-ab-testing": false,
+	"cliente-analytics": false,
+	"cliente-churn": false,
+	"cliente-basket": false,
+	"automatizacion-triggers": true,
+	"automatizacion-webhooks": false,
+	"fidelizacion-dashboard": true,
 };
 
 /* ─── Plan 3: Empresarial — $90/mes (referido: $75/mes) ─── */
@@ -175,6 +203,20 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	// NO incluidos
 	reparaciones: false,
 	"api-integraciones": false,
+	// CRM y Fidelización (Empresarial: todo habilitado)
+	"crm-cdp": true,
+	"crm-segmentacion": true,
+	"lealtad-programa": true,
+	"lealtad-gamificacion": true,
+	"lealtad-referidos": true,
+	"cupones-promociones": true,
+	"cupones-ab-testing": true,
+	"cliente-analytics": true,
+	"cliente-churn": true,
+	"cliente-basket": true,
+	"automatizacion-triggers": true,
+	"automatizacion-webhooks": true,
+	"fidelizacion-dashboard": true,
 };
 
 /* ─── Seed ─── */

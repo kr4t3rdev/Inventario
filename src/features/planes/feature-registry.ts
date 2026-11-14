@@ -558,6 +558,88 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Endpoints públicos para integraciones externas",
 		category: "infra",
 	},
+
+	// ════════════════════════════════════════════
+	// CRM y Fidelización
+	// ════════════════════════════════════════════
+	{
+		key: "crm-cdp",
+		label: "CDP de Clientes",
+		description: "Perfil unificado, segmentación y deduplicación de clientes",
+		category: "ventas",
+	},
+	{
+		key: "crm-segmentacion",
+		label: "Segmentación Inteligente",
+		description: "Segmentos automáticos por RFM, comportamiento y reglas",
+		category: "ventas",
+	},
+	{
+		key: "lealtad-programa",
+		label: "Programa de Lealtad",
+		description: "Puntos, tiers, canjes y fidelización de clientes",
+		category: "ventas",
+	},
+	{
+		key: "lealtad-gamificacion",
+		label: "Gamificación",
+		description: "Misiones, desafíos y rachas para engagement",
+		category: "ventas",
+	},
+	{
+		key: "lealtad-referidos",
+		label: "Programa de Referidos",
+		description: "Incentivos bidireccionales con tracking automático",
+		category: "ventas",
+	},
+	{
+		key: "cupones-promociones",
+		label: "Cupones y Promociones",
+		description: "Códigos de descuento, promociones y A/B testing",
+		category: "ventas",
+	},
+	{
+		key: "cupones-ab-testing",
+		label: "A/B Testing de Cupones",
+		description: "Experimentación continua sobre tipo de oferta y timing",
+		category: "ventas",
+	},
+	{
+		key: "cliente-analytics",
+		label: "Analytics de Clientes",
+		description: "RFM, CLV, segmentación y comportamiento de compra",
+		category: "ventas",
+	},
+	{
+		key: "cliente-churn",
+		label: "Predicción de Churn",
+		description: "Detección de clientes en riesgo con re-engagement automático",
+		category: "ventas",
+	},
+	{
+		key: "cliente-basket",
+		label: "Basket Analysis",
+		description: "Productos que se compran juntos, cross-sell y up-sell",
+		category: "ventas",
+	},
+	{
+		key: "automatizacion-triggers",
+		label: "Automatización de Triggers",
+		description: "Triggers en tiempo real para email, SMS y push",
+		category: "ventas",
+	},
+	{
+		key: "automatizacion-webhooks",
+		label: "Webhooks de Lealtad",
+		description: "Webhooks para eventos de lealtad en tiempo real",
+		category: "infra",
+	},
+	{
+		key: "fidelizacion-dashboard",
+		label: "Dashboard de Fidelización",
+		description: "KPIs de lealtad, churn, CLV y redención",
+		category: "ventas",
+	},
 ];
 
 /** Etiquetas de categoría para mostrar en la UI */
