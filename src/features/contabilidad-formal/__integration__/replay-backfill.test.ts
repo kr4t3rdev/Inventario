@@ -152,7 +152,10 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 				await tx.tenant.deleteMany({ where: { tenantId: fixture.tenantId } });
 			});
 		}
-		if (creoMonedaCUP) {
+		const checkpointsQueUsanCUP = await prisma.financialAuxiliaryCheckpoint.count({
+			where: { functionalCurrencyCode: 'CUP' },
+		});
+		if (creoMonedaCUP && checkpointsQueUsanCUP === 0) {
 			await prisma.moneda.deleteMany({ where: { codigo: 'CUP' } });
 		}
 		if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
