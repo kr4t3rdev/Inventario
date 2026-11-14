@@ -115,6 +115,31 @@ describe('AbrirPeriodoDialog', () => {
 		expect(JSON.stringify(payload)).not.toMatch(/fxEvidenceId|exchangeRate|tasaCambio/);
 	});
 
+	it('asks to configure the policy when the tenant has no accounting policy', async () => {
+		accountingPolicyStateMock.mockResolvedValue({ success: true, data: {
+			policy: null, evidence: 'NONE', canManage: false,
+		} });
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+
+		expect(await screen.findByText(
+			'Configura la moneda funcional contable antes de preparar la apertura.',
+		)).toBeInTheDocument();
+	});
+
+	it('reports the action error instead of masking it as a missing policy', async () => {
+		accountingPolicyStateMock.mockResolvedValue({
+			success: false, error: { message: 'Sesión expirada' },
+		});
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+
+		expect(await screen.findByText('Sesión expirada')).toBeInTheDocument();
+		expect(screen.queryByText(
+			'Configura la moneda funcional contable antes de preparar la apertura.',
+		)).not.toBeInTheDocument();
+	});
+
 	it('reuses the same idempotency key when retrying an unchanged submission', async () => {
 		vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'retry-key-1') });
 		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
