@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,10 +36,69 @@ describe('AbrirPeriodoDialog', () => {
 	});
 
 	it('shows an honest error when the persisted-request list cannot be loaded', async () => {
-		listRequestsMock.mockResolvedValue({ success: false, error: { message: 'No autorizado' } });
+		listRequestsMock.mockResolvedValueOnce({ success: false, error: { message: 'No autorizado' } })
+			.mockResolvedValueOnce({ success: true, data: { solicitudes: [] } });
+		const user = userEvent.setup();
 		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
 
 		expect(await screen.findByText('No autorizado')).toBeInTheDocument();
+		await user.type(screen.getByLabelText('Fecha de inicio'), '2026-04-01');
+		await user.type(screen.getByLabelText('Fecha de fin'), '2026-04-30');
+		expect(screen.getByRole('button', { name: 'Enviar para aprobación' })).toBeDisabled();
+		await user.click(screen.getByRole('button', { name: 'Reintentar consulta de solicitudes' }));
+		expect(await screen.findByText('No hay solicitudes guardadas pendientes de revisión.')).toBeInTheDocument();
+		expect(screen.queryByText('No autorizado')).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Enviar para aprobación' })).toBeEnabled();
+	});
+
+	it('reports a successful empty request lookup before enabling submission', async () => {
+		let resolveList!: (value: unknown) => void;
+		listRequestsMock.mockReturnValue(new Promise((resolve) => { resolveList = resolve; }));
+		const user = userEvent.setup();
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		await user.type(screen.getByLabelText('Fecha de inicio'), '2026-04-01');
+		await user.type(screen.getByLabelText('Fecha de fin'), '2026-04-30');
+		expect(screen.getByRole('button', { name: 'Enviar para aprobación' })).toBeDisabled();
+		resolveList({ success: true, data: { solicitudes: [] } });
+		expect(await screen.findByText('No hay solicitudes guardadas pendientes de revisión.')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Enviar para aprobación' })).toBeEnabled();
+	});
+
+	it('keeps the latest selected request when detail responses arrive out of order', async () => {
+		const request = (id: string, start: string) => ({ solicitudId: id, tipo: 'MENSUAL',
+			fechaInicio: `${start}T00:00:00.000Z`, fechaFin: `${start}T23:59:59.999Z`,
+			functionalCurrencyCode: 'EUR', estado: 'PENDIENTE', lineas: [], lineasValuadas: [], previewHash: id });
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [request('A', '2026-04-01'), request('B', '2026-05-01')] } });
+		let resolveFirst!: (value: unknown) => void;
+		readRequestMock.mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+			.mockResolvedValueOnce({ success: true, data: { solicitud: request('B', '2026-05-01') } });
+		const user = userEvent.setup();
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		await user.click(await screen.findByRole('button', { name: /01\/04\/2026/ }));
+		await user.click(screen.getByRole('button', { name: /01\/05\/2026/ }));
+		expect(await screen.findByText(/Solicitud B:/)).toBeInTheDocument();
+		await act(async () => { resolveFirst({ success: true, data: { solicitud: request('A', '2026-04-01') } }); });
+		expect(screen.getByText(/Solicitud B:/)).toBeInTheDocument();
+		expect(screen.queryByText(/Solicitud A:/)).not.toBeInTheDocument();
+	});
+
+	it('does not restore a pending request after closing and reopening', async () => {
+		const request = { solicitudId: 'A', tipo: 'MENSUAL', fechaInicio: '2026-04-01T00:00:00.000Z',
+			fechaFin: '2026-04-30T23:59:59.999Z', functionalCurrencyCode: 'EUR', estado: 'PENDIENTE',
+			lineas: [], lineasValuadas: [], previewHash: 'A' };
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [request] } });
+		let resolveDetail!: (value: unknown) => void;
+		readRequestMock.mockReturnValue(new Promise((resolve) => { resolveDetail = resolve; }));
+		const user = userEvent.setup();
+		const props = { onOpenChange: vi.fn(), onSuccess: vi.fn() };
+		const view = render(<AbrirPeriodoDialog open {...props} />);
+		await user.click(await screen.findByRole('button', { name: /01\/04\/2026/ }));
+		await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+		view.rerender(<AbrirPeriodoDialog open={false} {...props} />);
+		view.rerender(<AbrirPeriodoDialog open {...props} />);
+		await act(async () => { resolveDetail({ success: true, data: { solicitud: request } }); });
+		expect(screen.queryByText(/Solicitud A:/)).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Enviar para aprobación' })).toBeInTheDocument();
 	});
 
 	it('shows request-bound server-valued FX evidence before enabling approval', async () => {

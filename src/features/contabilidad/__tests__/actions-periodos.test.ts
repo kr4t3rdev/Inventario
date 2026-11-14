@@ -85,7 +85,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 		tasaCambio: { findUnique: vi.fn() },
 		tenantAccountingPolicy: { findUnique: vi.fn() },
 		diario: { findFirst: vi.fn() },
-		asiento: { findUnique: vi.fn(), aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() },
+		asiento: { findUnique: vi.fn(), aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
 		snapshotPeriodo: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -260,6 +260,7 @@ function mockAperturaService() {
 	);
 	mockPrisma.aperturaPeriodo.findUnique.mockResolvedValue(null);
 	mockPrisma.aperturaPeriodo.create.mockResolvedValue({ aperturaId: "ap-1" });
+	mockPrisma.asiento.count.mockResolvedValue(0);
 	mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]);
 	mockPrisma.cuentaPorCobrar.aggregate.mockResolvedValue({
 		_sum: { saldoPendiente: null },
@@ -301,6 +302,7 @@ beforeEach(() => {
 		debt: [],
 		capital: [],
 	});
+	mockPrisma.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: "CUP" });
 	vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 	mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue(null);
 	mockPrisma.aperturaPeriodoSolicitud.create.mockResolvedValue({ solicitudId: "request-1", estado: "PENDIENTE" });
@@ -318,6 +320,9 @@ beforeEach(() => {
 			);
 			return {
 				checkpointId: "checkpoint-annual",
+				cutoffAt: new Date("2026-01-02T12:00:00.000Z"),
+				capturedAt: new Date("2026-01-02T12:00:01.000Z"),
+				hashIntegridad: "checkpoint-integrity-hash",
 				payload: {
 					...evidence,
 					version: 3,
@@ -549,7 +554,7 @@ describe("obtenerTimelineAction", () => {
 // ── Tests: abrirPeriodoAction ─────────────────────────────────────────────
 
 describe("abrirPeriodoAction", () => {
-	it("bloquea la apertura no verificable y mantiene la operación atómica", async () => {
+	it("abre el primer período vacío con saldos iniciales verificados y operación atómica", async () => {
 		mockPrisma.periodoContable.count.mockResolvedValue(0);
 		mockPrisma.periodoContable.create.mockResolvedValue(
 			makePeriodo({ tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
@@ -563,12 +568,10 @@ describe("abrirPeriodoAction", () => {
 			fechaFin: "2026-03-31T23:59:59Z",
 		});
 
-		expect(result.success).toBe(false);
-		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
-		expect(expectActionFailure(result).error?.message).toContain("revisión contable");
+		expect(result.success).toBe(true);
 		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
-		expect(AuditLogService.logStrict).not.toHaveBeenCalled();
-		expect(revalidatePath).not.toHaveBeenCalled();
+		expect(AuditLogService.logStrict).toHaveBeenCalledOnce();
+		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
 	});
 
 	it("falla con fechas inválidas (inicio posterior a fin)", async () => {
@@ -625,7 +628,7 @@ describe("abrirPeriodoAction", () => {
 		TipoPeriodo.TRIMESTRAL,
 		TipoPeriodo.SEMESTRAL,
 		TipoPeriodo.ANUAL,
-	])("bloquea períodos %s hasta contar con saldos iniciales verificables", async (tipo) => {
+	])("permite apertura en cero verificada para un tenant vacío (%s)", async (tipo) => {
 		mockPrisma.periodoContable.count.mockResolvedValue(0);
 		mockPrisma.periodoContable.create.mockResolvedValue(
 			makePeriodo({ tipo, estado: EstadoPeriodo.ABIERTO }),
@@ -638,9 +641,13 @@ describe("abrirPeriodoAction", () => {
 			fechaFin: "2026-03-31T23:59:59Z",
 		});
 
-		expect(result.success).toBe(false);
-		expect(expectActionFailure(result).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
-		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
+		expect(result.success).toBe(true);
+		expect(mockPrisma.aperturaPeriodo.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				saldoCuentasCobrarInicial: 0,
+				saldoCuentasPagarInicial: 0,
+			}),
+		}));
 	});
 });
 
@@ -1202,6 +1209,18 @@ describe("abrirPeriodoAction", () => {
 		expect(result.success).toBe(true);
 		expect(expectActionSuccess(result).data?.periodo.estado).toBe(EstadoPeriodo.CERRADO);
 		expect(expectActionSuccess(result).data?.snapshots).toBe(0);
+		expect(checkpointMocks.captureFinancialAuxiliaryCheckpoint).toHaveBeenCalledWith(
+			expect.objectContaining({ tenantId: TENANT, schemaVersion: 3 }),
+		);
+		const continuityUpdate = mockPrisma.periodoContable.update.mock.calls.find(
+			([input]) => Boolean(input.data?.resumenJson?.continuityCheckpoint),
+		);
+		expect(continuityUpdate?.[0].data.resumenJson).toMatchObject({
+			continuityCheckpoint: {
+				cutoffAt: "2026-01-02T12:00:00.000Z",
+				checkpointHash: "checkpoint-integrity-hash",
+			},
+		});
 		expect(revalidatePath).toHaveBeenCalledWith("/busy/contabilidad/periodos");
 	});
 

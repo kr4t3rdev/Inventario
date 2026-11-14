@@ -1,8 +1,9 @@
-import type { Prisma } from '@/generated/prisma';
+import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 import { hashImmutableFinancialEvidence } from './immutable-financial-evidence';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { resolveCashObligationFunctionalBalance, resolveFunctionalBalance } from './cash-obligation-continuity';
 
 type CheckpointErrorCode =
   | 'CUTOFF_EVIDENCE_UNAVAILABLE'
@@ -101,17 +102,170 @@ export async function collectFinancialAuxiliaryEvidence(params: {
           id: true,
           montoDeuda: true,
           montoPagado: true,
+          montoDeudaFuncional: true,
+          montoPagadoFuncional: true,
+          monedaOriginal: true,
+          monedaFuncional: true,
+          fxEvidenceJson: true,
+          fxEvidenceFingerprint: true,
+          fxEvidenceVersion: true,
           estado: true,
-          prestamoCash: { select: { moneda: true } },
+          prestamoCash: { select: {
+            moneda: true,
+            montoCapital: true,
+            cashInterestPolicyVersion: true,
+            cashInterestGrantDate: true,
+            cashInterestMaturityDate: true,
+            ordinaryAnnualRate: true,
+            moratoryAnnualRate: true,
+            cashInterestAccruedThroughDate: true,
+            cashInterestPrincipalRemaining: true,
+            cashInterestOrdinaryCarry: true,
+            cashInterestMoratoryCarry: true,
+            reconciliaciones: {
+              where: {
+                tenantId: params.tenantId,
+                fechaReconciliacion: { lte: params.cutoffAt },
+                tipoReconciliacion: 'PRESTAMO_CASH',
+              },
+              orderBy: { fechaReconciliacion: 'asc' },
+              select: {
+                reconciliacionId: true,
+                monto: true,
+                montoConvertido: true,
+                moneda: true,
+                functionalCurrency: true,
+                tasaCambio: true,
+                rateEffectiveAt: true,
+                fxProvenanceSource: true,
+                fxCatalogRateId: true,
+                fxEvidenceJson: true,
+                fxEvidenceFingerprint: true,
+                fxEvidenceVersion: true,
+                fechaReconciliacion: true,
+                cashInterestAllocation: { select: {
+                  reconciliacionId: true,
+                  obligationType: true,
+                  policyVersion: true,
+                  grantDate: true,
+                  maturityDate: true,
+                  paymentDate: true,
+                  accrualCheckpointDate: true,
+                  ordinaryElapsedDays: true,
+                  moratoryElapsedDays: true,
+                  ordinaryAnnualRate: true,
+                  moratoryAnnualRate: true,
+                  principalBefore: true,
+                  overduePrincipalBefore: true,
+                  ordinaryCarryBefore: true,
+                  moratoryCarryBefore: true,
+                  ordinaryAccruedThisPeriod: true,
+                  moratoryAccruedThisPeriod: true,
+                  paymentAmount: true,
+                  moratoryAllocated: true,
+                  ordinaryAllocated: true,
+                  principalAllocated: true,
+                  principalAfter: true,
+                  ordinaryCarryAfter: true,
+                  moratoryCarryAfter: true,
+                  functionalAmount: true,
+                  moratoryFunctional: true,
+                  ordinaryFunctional: true,
+                  principalFunctional: true,
+                  functionalCurrency: true,
+                  fxEvidenceFingerprint: true,
+                  eventFingerprint: true,
+                } },
+              },
+            },
+          } },
         },
       }),
       db.cuentaPorPagar.findMany({
         where: { tenantId: params.tenantId, deletedAt: null },
         select: {
           cuentaPorPagarId: true,
+          montoDeuda: true,
+          montoPagado: true,
           saldoPendiente: true,
           moneda: true,
+          monedaOriginal: true,
+          monedaFuncional: true,
+          montoDeudaFuncional: true,
+          montoPagadoFuncional: true,
+          fxEvidenceJson: true,
+          fxEvidenceFingerprint: true,
+          fxEvidenceVersion: true,
           estado: true,
+          deudaCash: { select: {
+            moneda: true,
+            montoCapital: true,
+            cashInterestPolicyVersion: true,
+            cashInterestGrantDate: true,
+            cashInterestMaturityDate: true,
+            ordinaryAnnualRate: true,
+            moratoryAnnualRate: true,
+            cashInterestAccruedThroughDate: true,
+            cashInterestPrincipalRemaining: true,
+            cashInterestOrdinaryCarry: true,
+            cashInterestMoratoryCarry: true,
+            reconciliaciones: {
+              where: {
+                tenantId: params.tenantId,
+                fechaReconciliacion: { lte: params.cutoffAt },
+                tipoReconciliacion: 'DEUDA_CASH',
+              },
+              orderBy: { fechaReconciliacion: 'asc' },
+              select: {
+                reconciliacionId: true,
+                monto: true,
+                montoConvertido: true,
+                moneda: true,
+                functionalCurrency: true,
+                tasaCambio: true,
+                rateEffectiveAt: true,
+                fxProvenanceSource: true,
+                fxCatalogRateId: true,
+                fxEvidenceJson: true,
+                fxEvidenceFingerprint: true,
+                fxEvidenceVersion: true,
+                fechaReconciliacion: true,
+                cashInterestAllocation: { select: {
+                  reconciliacionId: true,
+                  obligationType: true,
+                  policyVersion: true,
+                  grantDate: true,
+                  maturityDate: true,
+                  paymentDate: true,
+                  accrualCheckpointDate: true,
+                  ordinaryElapsedDays: true,
+                  moratoryElapsedDays: true,
+                  ordinaryAnnualRate: true,
+                  moratoryAnnualRate: true,
+                  principalBefore: true,
+                  overduePrincipalBefore: true,
+                  ordinaryCarryBefore: true,
+                  moratoryCarryBefore: true,
+                  ordinaryAccruedThisPeriod: true,
+                  moratoryAccruedThisPeriod: true,
+                  paymentAmount: true,
+                  moratoryAllocated: true,
+                  ordinaryAllocated: true,
+                  principalAllocated: true,
+                  principalAfter: true,
+                  ordinaryCarryAfter: true,
+                  moratoryCarryAfter: true,
+                  functionalAmount: true,
+                  moratoryFunctional: true,
+                  ordinaryFunctional: true,
+                  principalFunctional: true,
+                  functionalCurrency: true,
+                  fxEvidenceFingerprint: true,
+                  eventFingerprint: true,
+                } },
+              },
+            },
+          } },
         },
       }),
       db.inyeccionCapital.findMany({
@@ -181,21 +335,93 @@ export async function collectFinancialAuxiliaryEvidence(params: {
     identity: {
       debt: toAmountString(receivable.montoDeuda),
       paid: toAmountString(receivable.montoPagado),
+      debtFunctional: toNullableAmountString(receivable.montoDeudaFuncional),
+      paidFunctional: toNullableAmountString(receivable.montoPagadoFuncional),
+      fxEvidenceFingerprint: receivable.fxEvidenceFingerprint,
     },
-    originalAmount: toAmountString(
-      Number(receivable.montoDeuda) - Number(receivable.montoPagado),
-    ),
-    originalCurrency: receivable.prestamoCash?.moneda ?? functionalCurrency,
+    originalAmount: new Prisma.Decimal(toAmountString(receivable.montoDeuda))
+      .minus(toAmountString(receivable.montoPagado)).toString(),
+    originalCurrency: receivable.monedaOriginal ?? receivable.prestamoCash?.moneda ?? functionalCurrency,
     functionalCurrency,
+    functionalAmount: receivable.prestamoCash?.cashInterestPolicyVersion === 1
+      ? resolveCashObligationFunctionalBalance({
+        principalAmount: receivable.prestamoCash.montoCapital,
+        originalCurrency: receivable.monedaOriginal ?? receivable.prestamoCash.moneda,
+        recordFunctionalCurrency: receivable.monedaFuncional,
+        functionalCurrency,
+        debtAmount: receivable.montoDeuda,
+        paidAmount: receivable.montoPagado,
+        debtFunctionalAmount: receivable.montoDeudaFuncional,
+        paidFunctionalAmount: receivable.montoPagadoFuncional,
+        fxEvidence: receivable.fxEvidenceJson,
+        fxEvidenceFingerprint: receivable.fxEvidenceFingerprint,
+        fxEvidenceVersion: receivable.fxEvidenceVersion,
+        interest: receivable.prestamoCash,
+        payments: receivable.prestamoCash.reconciliaciones,
+        obligationType: 'loan',
+      })
+      : resolveFunctionalBalance({
+        originalAmount: toAmountString(receivable.montoDeuda),
+        paidAmount: toAmountString(receivable.montoPagado),
+        debtFunctionalAmount: toNullableAmountString(receivable.montoDeudaFuncional),
+        paidFunctionalAmount: toNullableAmountString(receivable.montoPagadoFuncional),
+        originalCurrency: receivable.monedaOriginal ?? receivable.prestamoCash?.moneda ?? functionalCurrency,
+        recordFunctionalCurrency: receivable.monedaFuncional,
+        functionalCurrency,
+        fxEvidence: asEvidenceRecord(receivable.fxEvidenceJson),
+        fxEvidenceFingerprint: receivable.fxEvidenceFingerprint,
+        fxEvidenceVersion: receivable.fxEvidenceVersion,
+      }),
+    fxEvidence: asEvidenceRecord(receivable.fxEvidenceJson),
   }));
   const payableEvidence = payables.map((payable) => buildAuxiliaryEvidence({
     sourceId: payable.cuentaPorPagarId,
     sourceType: 'PAYABLE',
     status: String(payable.estado),
-    identity: {},
-    originalAmount: toAmountString(payable.saldoPendiente),
-    originalCurrency: payable.moneda,
+    identity: {
+      debt: toAmountString(payable.montoDeuda),
+      paid: toAmountString(payable.montoPagado),
+      debtFunctional: toNullableAmountString(payable.montoDeudaFuncional),
+      paidFunctional: toNullableAmountString(payable.montoPagadoFuncional),
+      pending: toAmountString(payable.saldoPendiente),
+      fxEvidenceFingerprint: payable.fxEvidenceFingerprint,
+    },
+    originalAmount: new Prisma.Decimal(toAmountString(payable.montoDeuda))
+      .minus(toAmountString(payable.montoPagado)).toString(),
+    originalCurrency: payable.monedaOriginal ?? payable.moneda,
     functionalCurrency,
+    functionalAmount: payable.deudaCash?.cashInterestPolicyVersion === 1
+      ? resolveCashObligationFunctionalBalance({
+        principalAmount: payable.deudaCash.montoCapital,
+        originalCurrency: payable.monedaOriginal ?? payable.deudaCash.moneda,
+        recordFunctionalCurrency: payable.monedaFuncional,
+        functionalCurrency,
+        debtAmount: payable.montoDeuda,
+        paidAmount: payable.montoPagado,
+        pendingAmount: payable.saldoPendiente,
+        debtFunctionalAmount: payable.montoDeudaFuncional,
+        paidFunctionalAmount: payable.montoPagadoFuncional,
+        fxEvidence: payable.fxEvidenceJson,
+        fxEvidenceFingerprint: payable.fxEvidenceFingerprint,
+        fxEvidenceVersion: payable.fxEvidenceVersion,
+        interest: payable.deudaCash,
+        payments: payable.deudaCash.reconciliaciones,
+        obligationType: 'debt',
+      })
+      : resolveFunctionalBalance({
+        originalAmount: toAmountString(payable.montoDeuda),
+        paidAmount: toAmountString(payable.montoPagado),
+        pendingAmount: toAmountString(payable.saldoPendiente),
+        debtFunctionalAmount: toNullableAmountString(payable.montoDeudaFuncional),
+        paidFunctionalAmount: toNullableAmountString(payable.montoPagadoFuncional),
+        originalCurrency: payable.monedaOriginal ?? payable.moneda,
+        recordFunctionalCurrency: payable.monedaFuncional,
+        functionalCurrency,
+        fxEvidence: asEvidenceRecord(payable.fxEvidenceJson),
+        fxEvidenceFingerprint: payable.fxEvidenceFingerprint,
+        fxEvidenceVersion: payable.fxEvidenceVersion,
+      }),
+    fxEvidence: asEvidenceRecord(payable.fxEvidenceJson),
   }));
   const debtEvidence = injections
     .filter((injection) => injection.tipo !== 'CAPITAL_SOCIAL')
@@ -502,6 +728,8 @@ function buildAuxiliaryEvidence(params: {
   originalAmount: string;
   originalCurrency: string;
   functionalCurrency: string;
+  functionalAmount?: string | null;
+  fxEvidence?: Record<string, unknown> | null;
 }): FinancialAuxiliaryEvidence {
   const originalCurrency = params.originalCurrency.trim().toUpperCase();
   const sameCurrency = originalCurrency === params.functionalCurrency;
@@ -512,9 +740,11 @@ function buildAuxiliaryEvidence(params: {
     identity: params.identity,
     originalAmount: params.originalAmount,
     originalCurrency,
-    functionalAmount: sameCurrency ? params.originalAmount : null,
+    functionalAmount: params.functionalAmount !== undefined
+      ? params.functionalAmount
+      : sameCurrency ? params.originalAmount : null,
     functionalCurrency: params.functionalCurrency,
-    fxEvidence: null,
+    fxEvidence: params.fxEvidence ?? null,
   };
   return {
     ...evidence,
@@ -522,9 +752,19 @@ function buildAuxiliaryEvidence(params: {
   };
 }
 
+function asEvidenceRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
 function toAmountString(value: unknown): string {
   if (value && typeof value === 'object' && 'toString' in value) {
     return String(value);
   }
   return String(value ?? '0');
+}
+
+function toNullableAmountString(value: unknown): string | null {
+  return value === null || value === undefined ? null : toAmountString(value);
 }

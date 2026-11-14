@@ -67,6 +67,73 @@ import {
 function requirePeriodManagementAccess(user: AuthenticatedUser, action: string): void {
   requireFeature(user, 'contabilidad', action);
 }
+
+/** @description Captura auxiliares inmutables para traspasar saldos sin duplicar asientos. */
+async function capturePeriodContinuityCheckpoint(
+	tx: PrismaTypes.TransactionClient,
+	tenantId: string,
+	actorId: string,
+	periodoId: string,
+	fechaFin: Date,
+): Promise<void> {
+	const accountingPolicy = await tx.tenantAccountingPolicy.findUnique({
+		where: { tenantId },
+		select: { functionalCurrencyCode: true },
+	});
+	const functionalCurrency = accountingPolicy?.functionalCurrencyCode?.trim().toUpperCase();
+	if (!functionalCurrency) {
+		throw new ActionError(
+			"No se puede verificar la moneda funcional del cierre",
+			"CUTOFF_EVIDENCE_UNAVAILABLE",
+		);
+	}
+	const checkpoint = await captureFinancialAuxiliaryCheckpoint({
+		tenantId,
+		capturedBy: actorId,
+		schemaVersion: 3,
+		client: tx,
+		collectEvidence: async (checkpointClient, cutoffAt) => {
+			const auxiliaries = await collectFinancialAuxiliaryEvidence({
+				client: checkpointClient,
+				tenantId,
+				cutoffAt,
+				functionalCurrency,
+			});
+			return {
+				functionalCurrency,
+				balance: null,
+				result: null,
+				resultThrough: fechaFin.toISOString(),
+				sourceFingerprints: Object.fromEntries(
+					Object.entries(auxiliaries).map(([source, entries]) => [
+						source,
+						hashImmutableFinancialEvidence(entries),
+					]),
+				),
+				appliedFxEvidence: [],
+				auxiliaries,
+			};
+		},
+	});
+	const checkpointPayload = checkpoint.payload as unknown as FinancialAuxiliaryCheckpointPayload & {
+		auxiliaries: unknown;
+	};
+	const summary = {
+		version: 1,
+		continuityCheckpoint: {
+			cutoffAt: checkpoint.cutoffAt.toISOString(),
+			checkpointHash: checkpoint.hashIntegridad,
+			auxiliaryHash: hashImmutableFinancialEvidence(checkpointPayload.auxiliaries),
+		},
+	};
+	await tx.periodoContable.update({
+		where: { periodoId },
+		data: {
+			resumenJson: summary as Prisma.InputJsonValue,
+			hashIntegridad: hashImmutableFinancialEvidence(summary),
+		},
+	});
+}
  
 
 
@@ -1199,6 +1266,11 @@ export const cerrarPeriodoAction = withAction(
 						tenantId,
 						actorId: user.userId,
 					});
+				}
+				if (periodo.tipo !== TipoPeriodo.ANUAL) {
+					await capturePeriodContinuityCheckpoint(
+						tx, tenantId, user.userId, parsed.periodoId, periodo.fechaFin,
+					);
 				}
 
 				return { cerrado: resultadoCierre };

@@ -126,6 +126,13 @@ describe('obtenerLibroMayor', () => {
 		]);
 	});
 
+	it('incluye originales revertidos para conservar la historia en ambas consultas', async () => {
+		await obtenerLibroMayor(TENANT, { cuentaId: 'cta-caja', fechaDesde: '2026-09-01', fechaHasta: '2026-09-30' });
+		const expected = [{ estado: 'CONTABILIZADO' }, { estado: 'ANULADO', revertidoPorId: { not: null } }];
+		expect(prismaMock.asientoLinea.groupBy.mock.calls[0][0].where.asiento.OR).toEqual(expected);
+		expect(prismaMock.asientoLinea.findMany.mock.calls[0][0].where.asiento.OR).toEqual(expected);
+	});
+
 	it('calcula saldo inicial y saldo corrido por naturaleza deudora', async () => {
 		const resultado = await obtenerLibroMayor(TENANT, {
 			cuentaId: 'cta-caja',

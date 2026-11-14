@@ -58,6 +58,7 @@ import { formatCivilDate } from "@/features/contabilidad/lib/format-civil-date";
 import { PeriodoTimeline } from "./periodo-timeline";
 import { PeriodosDashboard } from "./periodos-dashboard";
 import { PeriodoBadge } from "./periodo-badge";
+import { NuevoPeriodoDialog } from "./nuevo-periodo-dialog";
 import { AbrirPeriodoDialog } from "./abrir-periodo-dialog";
 import { CerrarPeriodoDialog } from "./cerrar-periodo-dialog";
 import { ReabrirPeriodoDialog } from "./reabrir-periodo-dialog";
@@ -124,6 +125,7 @@ export function PeriodosPageClient({
 	const [filtroEstado, setFiltroEstado] = useState<string>("todos");
 
 	// Dialogs
+	const [showNuevoPeriodoDialog, setShowNuevoPeriodoDialog] = useState(false);
 	const [showAbrirDialog, setShowAbrirDialog] = useState(false);
 	const [showCerrarDialog, setShowCerrarDialog] = useState(false);
 	const [showReabrirDialog, setShowReabrirDialog] = useState(false);
@@ -307,9 +309,12 @@ export function PeriodosPageClient({
 							Dashboard
 						</button>
 					</div>
-					<Button onClick={() => setShowAbrirDialog(true)}>
+					<Button onClick={() => setShowNuevoPeriodoDialog(true)}>
 						<Plus className="h-4 w-4 mr-2" />
 						Nuevo Período
+					</Button>
+					<Button variant="outline" onClick={() => setShowAbrirDialog(true)}>
+						Apertura inicial manual
 					</Button>
 				</div>
 			</div>
@@ -633,6 +638,15 @@ export function PeriodosPageClient({
 			)}
 
 			{/* Dialogs */}
+			<NuevoPeriodoDialog
+				open={showNuevoPeriodoDialog}
+				onOpenChange={setShowNuevoPeriodoDialog}
+				onSuccess={() => {
+					toast.success("Período abierto con saldos continuados");
+					refreshPeriodos();
+				}}
+			/>
+
 			<AbrirPeriodoDialog
 				open={showAbrirDialog}
 				onOpenChange={setShowAbrirDialog}

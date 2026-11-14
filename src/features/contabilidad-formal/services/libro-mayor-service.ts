@@ -64,13 +64,17 @@ export async function obtenerLibroMayor(
 
 	const desde = new Date(filtros.fechaDesde);
 	const hasta = new Date(filtros.fechaHasta);
+	const estadosHistoricos = [
+		{ estado: 'CONTABILIZADO' as const },
+		{ estado: 'ANULADO' as const, revertidoPorId: { not: null } },
+	];
 
 	// Saldo inicial: agregado de todos los asientos anteriores al período.
 	const [agregadoPrevio] = await prisma.asientoLinea.groupBy({
 		by: ['cuentaId'],
 		where: {
 			cuentaId: cuenta.cuentaContableId,
-			asiento: { tenantId, fecha: { lt: desde }, estado: 'CONTABILIZADO' },
+			asiento: { tenantId, fecha: { lt: desde }, OR: estadosHistoricos },
 		},
 		_sum: { debe: true, haber: true },
 	});
@@ -82,7 +86,7 @@ export async function obtenerLibroMayor(
 	const lineas = await prisma.asientoLinea.findMany({
 		where: {
 			cuentaId: cuenta.cuentaContableId,
-			asiento: { tenantId, fecha: { gte: desde, lte: hasta }, estado: 'CONTABILIZADO' },
+			asiento: { tenantId, fecha: { gte: desde, lte: hasta }, OR: estadosHistoricos },
 		},
 		orderBy: [{ asiento: { fecha: 'asc' } }, { asiento: { numero: 'asc' } }, { orden: 'asc' }],
 		include: {

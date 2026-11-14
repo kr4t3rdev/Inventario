@@ -80,10 +80,12 @@ function formatCivilDate(value: string | Date): string {
 export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPeriodoDialogProps): ReactElement {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
+	const [errorSolicitudes, setErrorSolicitudes] = useState("");
 	const [solicitudId, setSolicitudId] = useState("");
 	const [estado, setEstado] = useState<"NUEVA" | "PENDIENTE" | "APROBADA">("NUEVA");
 	const [previewHash, setPreviewHash] = useState("");
 	const [solicitudes, setSolicitudes] = useState<SolicitudAperturaSummary[]>([]);
+	const [estadoSolicitudes, setEstadoSolicitudes] = useState<"cargando" | "listo" | "error">("cargando");
 	const [tipo, setTipo] = useState("MENSUAL");
 	const [categoria, setCategoria] = useState("ORDINARIO");
 	const [modoContable, setModoContable] = useState("CAJA");
@@ -97,18 +99,28 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 	]);
 	const [lineasValuadas, setLineasValuadas] = useState<AperturaManualLineaValuada[]>([]);
 	const pendingRequestKey = useRef<{ payload: string; key: string } | null>(null);
+	const solicitudConsulta = useRef(0);
+	const detalleConsulta = useRef(0);
 
 	const loadSolicitudes = useCallback(async () => {
+		const consulta = ++solicitudConsulta.current;
+		setEstadoSolicitudes("cargando");
+		setErrorSolicitudes("");
 		try {
 			const { listarSolicitudesAperturaManualAction } = await import("@/features/contabilidad/actions-periodos");
 			const result = await listarSolicitudesAperturaManualAction({});
+			if (consulta !== solicitudConsulta.current) return;
 			if (!result.success) {
-				setError(result.error?.message ?? "No se pudieron cargar las solicitudes guardadas.");
+				setEstadoSolicitudes("error");
+				setErrorSolicitudes(result.error?.message ?? "No se pudieron cargar las solicitudes guardadas.");
 				return;
 			}
 			setSolicitudes(result.data.solicitudes as unknown as SolicitudAperturaSummary[]);
+			setEstadoSolicitudes("listo");
 		} catch (cause) {
-			setError(cause instanceof Error
+			if (consulta !== solicitudConsulta.current) return;
+			setEstadoSolicitudes("error");
+			setErrorSolicitudes(cause instanceof Error
 				? cause.message
 				: "No se pudieron cargar las solicitudes guardadas.");
 		}
@@ -134,11 +146,13 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 	}, []);
 
 	const loadSolicitud = async (id: string) => {
+		const consulta = ++detalleConsulta.current;
 		setLoading(true);
 		setError("");
 		try {
 			const { obtenerSolicitudAperturaManualAction } = await import("@/features/contabilidad/actions-periodos");
 			const result = await obtenerSolicitudAperturaManualAction({ solicitudId: id });
+			if (consulta !== detalleConsulta.current) return;
 			if (!result.success) throw new Error(result.error?.message ?? "No se pudo leer la solicitud");
 			const request = result.data.solicitud;
 			const lines = request.lineas as unknown as AperturaManualLinea[];
@@ -155,9 +169,10 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			setObservaciones(request.observaciones ?? "");
 			setLineas(lines);
 		} catch (cause) {
+			if (consulta !== detalleConsulta.current) return;
 			setError(cause instanceof Error ? cause.message : "Error inesperado");
 		} finally {
-			setLoading(false);
+			if (consulta === detalleConsulta.current) setLoading(false);
 		}
 	};
 
@@ -166,6 +181,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			void loadSolicitudes();
 			void loadFunctionalCurrency();
 		}
+		return () => { solicitudConsulta.current += 1; detalleConsulta.current += 1; };
 	}, [open, loadSolicitudes, loadFunctionalCurrency]);
 
 	const runAction = async (operation: "solicitar" | "aprobar" | "abrir") => {
@@ -217,6 +233,11 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 	};
 
 	const reset = () => {
+		detalleConsulta.current += 1;
+		setLoading(false);
+		setEstadoSolicitudes("cargando");
+		setErrorSolicitudes("");
+		setSolicitudes([]);
 		setError(""); setSolicitudId(""); setEstado("NUEVA"); setPreviewHash(""); setTipo("MENSUAL");
 		setCategoria("ORDINARIO"); setModoContable("CAJA");
 		setFechaInicio(""); setFechaFin(""); setObservaciones("");
@@ -232,6 +253,9 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			<DialogHeader><DialogTitle>Apertura contable manual</DialogTitle></DialogHeader>
 			{estado === "NUEVA" ? <div className="space-y-4">
 				<p className="rounded border bg-muted/30 p-2 text-sm">Moneda funcional: <strong>{functionalCurrencyCode || "No configurada"}</strong></p>
+				{estadoSolicitudes === "cargando" && <p role="status">Consultando solicitudes guardadas…</p>}
+				{estadoSolicitudes === "listo" && solicitudes.length === 0 && <p role="status">No hay solicitudes guardadas pendientes de revisión.</p>}
+				{estadoSolicitudes === "error" && <Button type="button" variant="outline" onClick={() => void loadSolicitudes()}>Reintentar consulta de solicitudes</Button>}
 				{solicitudes.length > 0 && <section className="space-y-2 rounded border p-3">
 					<h3 className="font-medium">Solicitudes guardadas para revisión</h3>
 					<ul className="max-h-40 space-y-1 overflow-y-auto">{solicitudes.map((request) => <li key={request.solicitudId}>
@@ -286,6 +310,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 				<p className="break-all text-xs text-muted-foreground">Huella de revisión: {previewHash || "No disponible"}</p>
 				<p className="text-sm text-muted-foreground">La aprobación queda registrada con hash; no genera contrapartidas.</p>
 			</div>}
+			{errorSolicitudes && <p className="text-sm text-destructive">{errorSolicitudes}</p>}
 			{error && <p className="text-sm text-destructive">{error}</p>}
 			<DialogFooter>
 				<Button type="button" variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cancelar</Button>
@@ -293,7 +318,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					type="button"
 					className="min-h-11"
 					onClick={() => runAction("solicitar")}
-					disabled={loading || !functionalCurrencyCode || !fechaInicio || !fechaFin || lineas.some((line) => !line.moneda)}
+					disabled={loading || estadoSolicitudes !== "listo" || !functionalCurrencyCode || !fechaInicio || !fechaFin || lineas.some((line) => !line.moneda)}
 				>
 					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
 					Enviar para aprobación
