@@ -4099,7 +4099,9 @@ model SaldoSnapshot {
 model AuditoriaPeriodo {
   auditoriaId     String          @id @default(cuid())
   tenantId        String
-  periodoId       String
+  /// Null cuando el intento audita la ausencia de período aplicable: no existe
+  /// referencia válida y no se usa un marcador inválido ('N/A').
+  periodoId       String?
   evento          EventoAuditoria
   actor           String
   timestamp       DateTime        @default(now())
@@ -4107,7 +4109,7 @@ model AuditoriaPeriodo {
   motivo          String?
   payload         Json?
   createdAt       DateTime        @default(now())
-  periodo         PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  periodo         PeriodoContable? @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
   tenant          Tenant          @relation(fields: [tenantId], references: [tenantId])
 
   @@index([periodoId])
