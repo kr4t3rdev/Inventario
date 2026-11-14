@@ -118,7 +118,13 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 		try {
 			const { getAccountingPolicyStateAction } = await import("@/features/contabilidad/actions-accounting-policy");
 			const result = await getAccountingPolicyStateAction();
-			const currency = result.success ? result.data.policy?.functionalCurrencyCode : null;
+			// Un error de consulta no es una ausencia configurada: se informa el
+			// error de la acción en lugar de pedir a configurar la moneda.
+			if (!result.success) {
+				setError(result.error?.message ?? "No se pudo cargar la moneda funcional contable.");
+				return;
+			}
+			const currency = result.data.policy?.functionalCurrencyCode;
 			if (!currency) {
 				setError("Configura la moneda funcional contable antes de preparar la apertura.");
 				return;
