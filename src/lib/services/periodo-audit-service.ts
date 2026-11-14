@@ -26,7 +26,8 @@ export class PeriodoAuditService {
    * @returns {Promise<AuditoriaPeriodo>} El registro de auditoría creado.
    */
   async registrar(params: {
-    periodoId: string;
+    /** ID del período afectado; null cuando el intento audita su ausencia. */
+    periodoId: string | null;
     tenantId: string;
     evento: string;
     actor: string;

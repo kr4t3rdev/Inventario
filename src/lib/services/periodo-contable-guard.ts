@@ -165,7 +165,8 @@ export async function limpiarCacheExpirado(): Promise<number> {
  */
 export interface PeriodoAuditServiceStub {
 	registrar(params: {
-		periodoId: string;
+		/** ID del período afectado; null cuando el intento audita su ausencia. */
+		periodoId: string | null;
 		tenantId: string;
 		evento: string;
 		actor: string;
@@ -406,15 +407,25 @@ export class PeriodoGuard {
 
 		try {
 			await this.auditService.registrar({
-				periodoId: typeof payload?.periodoId === 'string' ? payload.periodoId : 'N/A',
+				// Sin período aplicable no hay referencia válida: se audita con
+				// periodoId null (FK nullable) en lugar de un marcador 'N/A' que
+				// la FK rechaza y oculta el diagnóstico original.
+				periodoId: typeof payload?.periodoId === 'string' ? payload.periodoId : null,
 				tenantId,
 				evento: "INTENTO_BYPASS",
 				actor,
 				motivo: mensaje,
 				payload,
 			});
-		} catch {
+		} catch (cause) {
 			if (obligatoria) {
+				// Se preserva la política fail-closed, pero el error subyacente
+				// queda registrado para diagnóstico en lugar de descartarse.
+				console.error(
+					"[PeriodoGuard] Auditoría obligatoria no persistida:",
+					mensaje,
+					cause,
+				);
 				throw new ActionError('No se pudo persistir la auditoría del período',
 					'AUDITORIA_FALLIDA');
 			}
@@ -422,6 +433,7 @@ export class PeriodoGuard {
 			console.error(
 				"[PeriodoGuard] Error registrando intento bypass:",
 				mensaje,
+				cause,
 			);
 		}
 	}
