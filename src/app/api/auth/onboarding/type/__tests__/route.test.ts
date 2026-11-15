@@ -87,7 +87,7 @@ describe('/api/auth/onboarding/type', () => {
     })
   })
 
-  it('guarda el tipo company y avanza a awaiting_global_approval', async () => {
+  it('guarda el tipo company sin pedir moneda y avanza a awaiting_global_approval', async () => {
     const { verifyOnboardingToken } = await import('@/lib/auth/onboarding')
     vi.mocked(verifyOnboardingToken).mockReturnValue({
       userId: 'user-2',
@@ -104,7 +104,7 @@ describe('/api/auth/onboarding/type', () => {
         'authorization': 'Bearer onboarding-token',
         'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
       },
-      body: JSON.stringify({ userType: 'company', functionalCurrencyCode: 'CUP' }),
+      body: JSON.stringify({ userType: 'company' }),
     })
 
     const response = await POST(request)
@@ -117,12 +117,11 @@ describe('/api/auth/onboarding/type', () => {
       data: {
         onboardingType: 'company',
         onboardingStatus: 'awaiting_global_approval',
-        pendingFunctionalCurrencyCode: 'CUP',
       },
     })
   })
 
-  it('rechaza el alta company sin una moneda funcional activa confirmada', async () => {
+  it('ignora la moneda enviada por el cliente y no consulta el catálogo', async () => {
     const { verifyOnboardingToken } = await import('@/lib/auth/onboarding')
     vi.mocked(verifyOnboardingToken).mockReturnValue({
       userId: 'user-2',
@@ -143,8 +142,15 @@ describe('/api/auth/onboarding/type', () => {
 
     const response = await POST(request)
 
-    expect(response.status).toBe(400)
-    expect(prisma.user.update).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
+    expect(prisma.moneda.findUnique).not.toHaveBeenCalled()
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 'user-2' },
+      data: {
+        onboardingType: 'company',
+        onboardingStatus: 'awaiting_global_approval',
+      },
+    })
   })
 
   it('rechaza salesAgent sin teléfono', async () => {
