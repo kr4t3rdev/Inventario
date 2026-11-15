@@ -39,17 +39,26 @@ const { mockTx } = vi.hoisted(() => {
 	return { mockTx };
 });
 
-vi.mock("@/lib/prisma", () => ({
-	prisma: {
-		puntoDeVenta: { findFirst: vi.fn() },
-		cliente: { findFirst: vi.fn() },
-		listaPrecio: { findFirst: vi.fn() },
-		producto: { findMany: vi.fn() },
-		productoPlantilla: { findFirst: vi.fn() },
-		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
-		$transaction: vi.fn((cb: any) => cb(mockTx)),
-	},
-}));
+vi.mock("@/lib/prisma", () => {
+	const { vi } = require("vitest");
+	return {
+		prisma: {
+			puntoDeVenta: { findFirst: vi.fn() },
+			cliente: { findFirst: vi.fn() },
+			listaPrecio: { findFirst: vi.fn() },
+			producto: { findMany: vi.fn() },
+			productoPlantilla: { findFirst: vi.fn() },
+			turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
+			// CRM y Fidelización — mocks para la integración con ventas
+			cupon: { findFirst: vi.fn(), update: vi.fn() },
+			cuponUso: { create: vi.fn() },
+			programaLealtad: { findFirst: vi.fn() },
+			clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+			historialPuntos: { create: vi.fn() },
+			$transaction: vi.fn((cb: any) => cb(mockTx)),
+		},
+	};
+});
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";

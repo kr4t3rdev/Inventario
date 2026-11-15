@@ -42,16 +42,25 @@ const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
 	return { mockTx, mockClienteFindFirst, mockCxcFindMany };
 });
 
-vi.mock('@/lib/prisma', () => ({
-	prisma: {
-		puntoDeVenta: { findFirst: vi.fn() },
-		cliente: { findFirst: mockClienteFindFirst },
-		listaPrecio: { findFirst: vi.fn() },
-		producto: { findMany: vi.fn() },
-		cuentaPorCobrar: { findMany: mockCxcFindMany },
-		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
-	},
-}));
+vi.mock('@/lib/prisma', () => {
+	const { vi } = require('vitest');
+	return {
+		prisma: {
+			puntoDeVenta: { findFirst: vi.fn() },
+			cliente: { findFirst: mockClienteFindFirst },
+			listaPrecio: { findFirst: vi.fn() },
+			producto: { findMany: vi.fn() },
+			cuentaPorCobrar: { findMany: mockCxcFindMany },
+			// CRM y Fidelización — mocks para la integración con ventas
+			cupon: { findFirst: vi.fn(), update: vi.fn() },
+			cuponUso: { create: vi.fn() },
+			programaLealtad: { findFirst: vi.fn() },
+			clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+			historialPuntos: { create: vi.fn() },
+			$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
+		},
+	};
+});
 
 import { prisma } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';

@@ -56,6 +56,12 @@ const DIRECT_TENANT_MODELS = [
   'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
+  // CRM y Fidelización
+  'BasketAnalysis', 'ClienteAnalytics', 'ClienteDuplicado', 'ClienteLealtad',
+  'ClienteSegmento', 'CohorteAnalytics', 'Cupon', 'CuponABTest', 'CuponUso',
+  'HistorialPuntos', 'MisionLealtad', 'ProgramaLealtad', 'ProgresoMision',
+  'ReferidoLealtad', 'SegmentoCliente', 'TierLealtad', 'TriggerAutomatizacion',
+  'TriggerEjecucion', 'WebhookLealtad',
 ] as const;
 const REFERENCE_ONLY_MODELS = [
   'Tenant', 'User', 'Plan', 'ReferralPerkCatalog',

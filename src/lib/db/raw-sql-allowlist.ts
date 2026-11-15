@@ -258,4 +258,16 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Locks FOR UPDATE para serializar numeración/reservas y completar o anular devoluciones a proveedores.',
     tenantGuarantee: 'Cada query parametrizada filtra por tenantId; los IDs de devolución y CxP se resuelven dentro del mismo tenant.',
   },
+  {
+    file: 'src/features/cliente-analytics/actions.ts',
+    occurrences: 1,
+    reason: 'Agregado de KPIs de fidelización (CLV, AOV, churn rate) con GROUP BY y subconsultas.',
+    tenantGuarantee: 'La query parametrizada filtra por tenantId de requireTenant en el WHERE.',
+  },
+  {
+    file: 'src/features/fidelizacion-dashboard/actions.ts',
+    occurrences: 4,
+    reason: 'Agregados de dashboard: distribución RFM, tiers, tendencia de churn y redención con GROUP BY.',
+    tenantGuarantee: 'Cada query parametrizada filtra por tenantId de requireTenant en el WHERE.',
+  },
 ] as const;
