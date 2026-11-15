@@ -31,7 +31,7 @@ vi.mock('@/features/turnos-pos', () => ({
 	}),
 }));
 
-const { mockTx } = vi.hoisted(() => {
+const { mockTx, mockPrismaExtras } = vi.hoisted(() => {
 	const mockTx = {
 		serieFacturacion: {
 			findFirst: vi.fn(),
@@ -43,7 +43,14 @@ const { mockTx } = vi.hoisted(() => {
 		stockUbicacion: { findUnique: vi.fn() },
 		factura: { create: vi.fn() },
 	};
-	return { mockTx };
+	const mockPrismaExtras = {
+		cupon: { findFirst: vi.fn(), update: vi.fn() },
+		cuponUso: { create: vi.fn() },
+		programaLealtad: { findFirst: vi.fn() },
+		clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+		historialPuntos: { create: vi.fn() },
+	};
+	return { mockTx, mockPrismaExtras };
 });
 
 vi.mock('@/lib/prisma', () => ({
@@ -52,6 +59,8 @@ vi.mock('@/lib/prisma', () => ({
 		cliente: { findFirst: vi.fn() },
 		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
+		venta: { findUnique: vi.fn() },
+		...mockPrismaExtras,
 		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
 	},
 }));
@@ -77,6 +86,7 @@ const items = [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 500 }];
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.mocked(prisma.venta.findUnique).mockResolvedValue({ ventaId: 'v-1' } as never);
 	vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 		pvId: 'pv-1',
 		listaPrecioId: null,

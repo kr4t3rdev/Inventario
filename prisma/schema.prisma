@@ -168,6 +168,36 @@ model Cliente {
   taxIdCliente      String?
   /// Gap 6: límite de crédito del cliente (centavos; null = sin tope).
   limiteCredito     Int?
+  /// CDP: contacto principal para email marketing y comunicaciones
+  email             String?           @unique
+  /// CDP: contacto secundario para comunicaciones
+  emailSecondary    String?
+  /// CDP: contacto alternativo telefónico
+  telefonoSecondary String?
+  /// CDP: para cumpleaños y promociones de edad
+  fechaNacimiento   DateTime?
+  /// CDP: para personalización de recomendaciones
+  genero            String?
+  /// CDP: preferencias de comunicación {email: true, sms: false, push: true}
+  preferenciasComunicacion Json?
+  /// CDP: consentimientos GDPR/LOPD {marketing: true, analytics: true, shared: false}
+  consentimientos   Json?
+  /// CDP: segmento manual "VIP", "Mayorista", "Minorista", "Nuevo"
+  segmento          String?
+  /// CDP: array de tags ["frecuente","nuevo","churn-risk"]
+  tags              Json?
+  /// CDP: canal preferido denormalizado "POS", "Web", "App"
+  canalPreferido    String?
+  /// CDP: última compra denormalizada para RFM
+  ultimaCompra      DateTime?
+  /// CDP: total comprado denormalizado para RFM (centavos)
+  totalComprado     Int?
+  /// CDP: cantidad de compras denormalizada para RFM
+  cantidadCompras   Int?
+  /// CDP: Customer Lifetime Value calculado
+  clv               Float?
+  /// CDP: campos personalizados por tenant
+  metadata          Json?
   anticipos         Anticipo[]
   notasContacto     CobroNota[]
   tenant            Tenant            @relation(fields: [tenantId], references: [tenantId])
@@ -180,9 +210,27 @@ model Cliente {
   Venta             Venta[]
   ventasServicios   VentaServicios[]
   facturas          Factura[]
+  /// CRM: asignaciones a segmentos
+  asignacionesSegmento ClienteSegmento[]
+  /// Loyalty: perfil de lealtad del cliente
+  lealtad           ClienteLealtad?
+  /// Loyalty: progreso de misiones
+  progresosMision   ProgresoMision[]
+  /// Loyalty: referidos donde este cliente es el refiriente
+  referidosComoRefiriente ReferidoLealtad[] @relation("Refiriente")
+  /// Loyalty: referidos donde este cliente fue referido
+  referidosComoReferido ReferidoLealtad? @relation("Referido")
+  /// Analytics: datos de comportamiento
+  analytics         ClienteAnalytics?
+  /// Automatización: ejecuciones de triggers
+  ejecucionesTrigger TriggerEjecucion[]
 
   @@index([tenantId])
   @@index([listaPrecioId])
+  @@index([email])
+  @@index([segmento])
+  @@index([ultimaCompra])
+  @@index([tenantId, segmento])
 }
 
 /// * Modelo base de multi-tenant. Cada empresa/organización es un Tenant.
@@ -319,6 +367,24 @@ model Tenant {
   checkpointsFormales CheckpointContableFormal[]
   shadowPosteos                  ShadowPosteoOutbox[]
   stockUbicacionDetalles         StockUbicacionDetalle[]
+  /// CRM: segmentos de clientes
+  segmentosCliente               SegmentoCliente[]
+  /// CRM: registro de duplicados fusionados
+  clientesDuplicados             ClienteDuplicado[]
+  /// Loyalty: programas de lealtad
+  programasLealtad               ProgramaLealtad[]
+  /// Cupones: códigos promocionales
+  cupones                        Cupon[]
+  /// Analytics: comportamiento de compra
+  clienteAnalytics               ClienteAnalytics[]
+  /// Analytics: market basket analysis
+  basketAnalyses                 BasketAnalysis[]
+  /// Analytics: cohort analysis
+  cohortesAnalytics              CohorteAnalytics[]
+  /// Automatización: triggers de eventos
+  triggersAutomatizacion         TriggerAutomatizacion[]
+  /// Automatización: webhooks de lealtad
+  webhooksLealtad                WebhookLealtad[]
 
   @@index([slug])
   @@map("tenants")
@@ -4553,4 +4619,401 @@ enum TipoOrigenMovimiento {
   PRODUCCION
   CONTEO
   DEVOLUCION_COMPRA
+}
+
+// ============================================================================
+// CRM y Fidelización — Modelos nuevos
+// ============================================================================
+
+// --- CRM: Segmentación y Deduplicación ---
+
+/// CRM: Segmentos de clientes (VIP, Churn Risk, Nuevos, etc.)
+model SegmentoCliente {
+  segmentoId    String   @id @default(cuid())
+  tenantId      String
+  nombre        String   // "VIP", "Churn Risk", "Nuevos"
+  tipo          String   // "MANUAL", "AUTOMATICO", "RFM"
+  reglas        Json     // {recencia: {max: 30}, frecuencia: {min: 5}, monto: {min: 50000}}
+  descripcion   String?
+  activo        Boolean  @default(true)
+  color         String?  // Para UI: "#FF6B6B"
+  clientesCount Int      @default(0) // Denormalizado
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
+  asignaciones  ClienteSegmento[]
+
+  @@index([tenantId, activo])
+}
+
+/// CRM: Relación many-to-many entre Cliente y SegmentoCliente
+model ClienteSegmento {
+  id            String         @id @default(cuid())
+  tenantId      String
+  clienteId     String
+  segmentoId    String
+  asignadoEn    DateTime       @default(now())
+  asignadoPor   String         // "AUTO", "MANUAL", "RFM_JOB"
+  cliente       Cliente        @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
+  segmento      SegmentoCliente @relation(fields: [segmentoId], references: [segmentoId], onDelete: Cascade)
+
+  @@unique([clienteId, segmentoId])
+  @@index([tenantId, segmentoId])
+}
+
+/// CRM: Registro de fusión de clientes duplicados
+model ClienteDuplicado {
+  id               String    @id @default(cuid())
+  tenantId         String
+  clientePrincipal String    // El cliente "ganador" después de la fusión
+  clientesFusionados String[] // Array de clienteIds fusionados
+  criteriosMatch   Json      // {email: true, telefono: true, nombre: true}
+  resueltoEn       DateTime  @default(now())
+  resueltoPor      String?   // userId o "AUTO"
+  tenant           Tenant    @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+}
+
+// --- Loyalty Engine ---
+
+/// Loyalty: Programa de lealtad del tenant
+model ProgramaLealtad {
+  programaId        String           @id @default(cuid())
+  tenantId          String
+  nombre            String           // "Programa Fidelización TCP"
+  activo            Boolean          @default(true)
+  puntosPorPeso     Float            @default(1) // 1 punto por $1 gastado
+  puntosMinimos     Int              @default(1000) // Para canjear
+  valorCanje        Int              @default(100) // $100 por 1000 puntos
+  reglas            Json?            // Reglas personalizadas por categoría, canal, periodo
+  tenant            Tenant           @relation(fields: [tenantId], references: [tenantId])
+  tiers             TierLealtad[]
+  historialPuntos   HistorialPuntos[]
+  misiones          MisionLealtad[]
+  clientesLealtad   ClienteLealtad[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([tenantId, nombre])
+  @@index([tenantId, activo])
+}
+
+/// Loyalty: Niveles del programa (Bronce, Plata, Oro, VIP)
+model TierLealtad {
+  tierId            String           @id @default(cuid())
+  programaId        String
+  nombre            String           // "Bronce", "Plata", "Oro", "VIP"
+  orden             Int              // 1=Bronce, 2=Plata, 3=Oro, 4=VIP
+  umbralGasto       Int              // Gasto anual mínimo (centavos)
+  umbralFrecuencia  Int?             // Compras anuales mínimas
+  beneficios        Json             // {descuento: 0.1, envioGratis: true, accesoAnticipado: false}
+  color             String?          // UI: "#CD7F32"
+  icono             String?          // Emoji o icono
+  activo            Boolean          @default(true)
+  programa          ProgramaLealtad  @relation(fields: [programaId], references: [programaId])
+  clientes          ClienteLealtad[]
+
+  @@unique([programaId, nombre])
+  @@index([programaId, orden])
+}
+
+/// Loyalty: Historial de movimientos de puntos
+model HistorialPuntos {
+  historialId       String           @id @default(cuid())
+  tenantId          String
+  clienteId         String
+  programaId        String
+  puntos            Int              // Positivo = ganados, negativo = canjeados
+  tipo              String           // "COMPRA", "CANJE", "BONUS", "CUMPLEANOS", "REFERIDO", "MISION", "MANUAL"
+  referenciaId      String?          // ventaId, cuponId, misionId
+  saldoAcumulado    Int              // Snapshot del saldo después de esta operación
+  idempotenciaKey   String?          // Para prevenir duplicados
+  createdAt         DateTime         @default(now())
+  programa          ProgramaLealtad  @relation(fields: [programaId], references: [programaId])
+
+  @@unique([tenantId, idempotenciaKey])
+  @@index([tenantId, clienteId])
+  @@index([programaId])
+}
+
+/// Loyalty: Perfil de lealtad del cliente (saldo, tier actual)
+model ClienteLealtad {
+  clienteLealtadId  String           @id @default(cuid())
+  tenantId          String
+  clienteId         String           @unique
+  programaId        String
+  tierId            String?
+  saldoPuntos       Int              @default(0)
+  puntosGanados     Int              @default(0)
+  puntosCanjeados   Int              @default(0)
+  puntosExpirados   Int              @default(0)
+  tierActual        String?          // Denormalizado: "Bronce", "Plata"
+  cliente           Cliente          @relation(fields: [clienteId], references: [clienteId])
+  programa          ProgramaLealtad  @relation(fields: [programaId], references: [programaId])
+  tier              TierLealtad?     @relation(fields: [tierId], references: [tierId])
+  updatedAt          DateTime         @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Loyalty: Misiones y desafíos de gamificación
+model MisionLealtad {
+  misionId          String           @id @default(cuid())
+  tenantId          String
+  programaId        String
+  nombre            String           // "Compra 3 productos de la línea X"
+  descripcion       String?
+  tipo              String           // "COMPRA_CATEGORIA", "FRECUENCIA", "AOV", "PRIMERA_COMPRA"
+  reglas            Json             // {categoriaId, cantidad: 3, periodo: "mes"}
+  recompensaPuntos  Int              // Puntos al completar
+  validoDesde       DateTime
+  validoHasta       DateTime?
+  activo            Boolean          @default(true)
+  vecesMaximo       Int?             // Límite total de completados
+  programa          ProgramaLealtad  @relation(fields: [programaId], references: [programaId])
+  progresos         ProgresoMision[]
+
+  @@index([tenantId, activo])
+}
+
+/// Loyalty: Progreso del cliente en una misión
+model ProgresoMision {
+  progresoId        String         @id @default(cuid())
+  tenantId          String
+  clienteId         String
+  misionId          String
+  progreso          Int            @default(0) // Progreso actual
+  completado        Boolean        @default(false)
+  completadoEn      DateTime?
+  cliente           Cliente        @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
+  mision            MisionLealtad  @relation(fields: [misionId], references: [misionId], onDelete: Cascade)
+
+  @@unique([clienteId, misionId])
+  @@index([tenantId, clienteId])
+}
+
+/// Loyalty: Programa de referidos
+model ReferidoLealtad {
+  referidoId        String   @id @default(cuid())
+  tenantId          String
+  codigoReferral    String   // Código único del refiriente
+  refirienteId      String   // clienteId del que refiere
+  referidoClienteId String?  @unique // clienteId del referido (null si aún no se registró)
+  estado            String   // "PENDIENTE", "REGISTRADO", "COMPRA_COMPLETADA"
+  incentivoRefiriente Int    // Puntos para el refiriente
+  incentivoReferido   Int    // Puntos para el referido
+  puntosRefiriente    Boolean @default(false) // Pagado?
+  puntosReferido      Boolean @default(false) // Pagado?
+  refiriente         Cliente  @relation("Refiriente", fields: [refirienteId], references: [clienteId])
+  referido          Cliente? @relation("Referido", fields: [referidoClienteId], references: [clienteId])
+  createdAt          DateTime @default(now())
+
+  @@unique([tenantId, codigoReferral])
+  @@index([tenantId, refirienteId])
+}
+
+// --- Cupones y Promociones ---
+
+/// Cupones: Código promocional
+model Cupon {
+  cuponId           String   @id @default(cuid())
+  tenantId          String
+  codigo            String   // "VERANO2026", "BIENVENIDO10"
+  tipo              String   // "PORCENTAJE", "FIJO", "2X1", "ENVIO_GRATIS", "PRODUCTO_GRATIS", "CASHBACK_PUNTOS"
+  valor             Float    // 10.5 = 10.5% o $10.50
+  descripcion       String?
+  usoMinimo         Int?     // Monto mínimo de compra (centavos)
+  usoMaximo         Int?     // Monto máximo de descuento
+  vecesMaximo       Int?     // Límite total de usos
+  vecesPorCliente   Int?     // Límite por cliente
+  validoDesde       DateTime
+  validoHasta       DateTime?
+  activo            Boolean  @default(true)
+  aplicableA        String?  // "TODOS", "CATEGORIA", "PRODUCTO", "SEGMENTO"
+  filtros           Json?    // {categoriaIds: [...], productoIds: [...], segmentoIds: [...]}
+  canalAplicacion   String?  // "POS", "WEB", "APP", "TODOS"
+  segmentoTarget    String?  // "VIP", "NUEVO", "CHURN_RISK"
+  canalTarget       String?  // Canal donde se envió el cupón
+  vecesUsado        Int      @default(0)
+  tasaRedencion     Float    @default(0) // % de redención
+  impactoAov        Float?   // Impacto en Average Order Value
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  usos              CuponUso[]
+  abTests           CuponABTest[]
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId, activo])
+  @@index([tenantId, segmentoTarget])
+}
+
+/// Cupones: Registro de uso de cupón
+model CuponUso {
+  usoId             String   @id @default(cuid())
+  tenantId          String
+  cuponId           String
+  clienteId         String?  // Null = uso anónimo
+  ventaId           String
+  descuentoAplicado Int      // Centavos
+  canal             String   // "POS", "WEB", "APP"
+  createdAt         DateTime @default(now())
+  cupon             Cupon    @relation(fields: [cuponId], references: [cuponId])
+
+  @@index([tenantId, cuponId])
+  @@index([clienteId])
+}
+
+/// Cupones: A/B Testing
+model CuponABTest {
+  abTestId          String   @id @default(cuid())
+  tenantId          String
+  nombre            String   // "Test descuento vs envío gratis"
+  cuponId           String
+  variante          String   // "A", "B"
+  segmentoTarget    String?  // Segmento al que se envía esta variante
+  enviadoA          Int      @default(0) // Clientes que recibieron
+  redimidoPor       Int      @default(0) // Clientes que redimieron
+  activo            Boolean  @default(true)
+  cupon             Cupon    @relation(fields: [cuponId], references: [cuponId])
+
+  @@index([tenantId, activo])
+}
+
+// --- Analytics de Comportamiento ---
+
+/// Analytics: Datos de comportamiento de compra por cliente
+model ClienteAnalytics {
+  analyticsId         String   @id @default(cuid())
+  tenantId            String
+  clienteId           String   @unique
+  /// RFM (Recencia, Frecuencia, Monetario)
+  ultimaCompra        DateTime?
+  diasDesdeUltima     Int?
+  totalCompras        Int      @default(0)
+  totalGastado        Int      @default(0)     // Centavos
+  ticketPromedio      Int?     // Centavos
+  /// Segmentación automática
+  segmentoRfm         String?  // "Champion", "Loyal", "At Risk", "Lost", "New", "Regular"
+  scoreLealtad        Int?     // 1-100
+  /// CLV (Customer Lifetime Value)
+  clv                 Float?   // Valor de vida calculado
+  clvProyectado       Float?   // Proyección a 12 meses
+  /// Categorías preferidas
+  categoriasFrecuentes Json?   // [{categoriaId, count, porcentaje}]
+  productosFrecuentes  Json?   // [{productoId, count, porcentaje}]
+  /// Canales
+  canalPreferido      String?  // "POS", "Web", "App"
+  /// Churn
+  probabilidadChurn   Float?   // 0-1
+  senalesChurn        Json?    // [{senal: "disminucion_frecuencia", severidad: "alta"}]
+  /// Cohorte
+  cohorteAdquisicion  String?  // "2026-Q1", "2026-Q2"
+  diasHastaSegunda    Int?     // Tiempo hasta segunda compra
+  /// KPIs
+  repeatPurchaseRate  Float?   // Frecuencia de recompra
+  redemptionRate      Float?   // % de recompensas canjeadas
+  cliente             Cliente  @relation(fields: [clienteId], references: [clienteId])
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([segmentoRfm])
+  @@index([cohorteAdquisicion])
+}
+
+/// Analytics: Market Basket Analysis
+model BasketAnalysis {
+  basketId            String   @id @default(cuid())
+  tenantId            String
+  productoA           String   // productoId
+  productoB           String   // productoId
+  coocurrencias       Int      @default(0) // Veces que aparecen juntos
+  soporte             Float    // Soporte (support)
+  confianza           Float    // Confianza (confidence)
+  levantamiento       Float    // Levantamiento (lift)
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+  updatedAt           DateTime @updatedAt
+
+  @@unique([tenantId, productoA, productoB])
+  @@index([tenantId])
+}
+
+/// Analytics: Cohort analysis
+model CohorteAnalytics {
+  cohorteId           String   @id @default(cuid())
+  tenantId            String
+  periodo             String   // "2026-Q1", "2026-01"
+  canalAdquisicion    String?  // "POS", "Web", "App"
+  totalClientes       Int      @default(0)
+  retencionMes1       Float?   // % de retención mes 1
+  retencionMes2       Float?   // % de retención mes 2
+  retencionMes3       Float?   // % de retención mes 3
+  ltvPromedio         Float?   // CLV promedio de la cohorte
+  aovPromedio         Float?   // AOV promedio
+  diasHastaSegunda    Float?   // Promedio de días hasta segunda compra
+  churnRate           Float?   // % de churn
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([tenantId, periodo, canalAdquisicion])
+  @@index([tenantId])
+}
+
+// --- Automatización y Triggers ---
+
+/// Automatización: Triggers de eventos
+model TriggerAutomatizacion {
+  triggerId           String   @id @default(cuid())
+  tenantId            String
+  nombre              String   // "Cumpleaños", "Post-Compra", "Churn Risk"
+  evento              String   // "COMPRA_COMPLETADA", "CUMPLEANOS", "TIER_ALCANZADO", "CHURN_RISK", "CARRITO_ABANDONADO"
+  condiciones         Json     // {minimoGasto: 1000, segmento: "VIP"}
+  accion              String   // "EMAIL", "SMS", "PUSH", "CUPON", "PUNTOS_BONUS"
+  payload             Json     // {templateId, cuponId, puntos, mensaje}
+  canal               String   // "EMAIL", "SMS", "PUSH"
+  delayMinutos        Int      @default(0) // Delay antes de enviar
+  activo              Boolean  @default(true)
+  vecesMaximo         Int?     // Límite de disparos por cliente
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  ejecuciones         TriggerEjecucion[]
+
+  @@index([tenantId, activo])
+}
+
+/// Automatización: Log de ejecuciones de triggers
+model TriggerEjecucion {
+  ejecucionId         String   @id @default(cuid())
+  tenantId            String
+  triggerId           String
+  clienteId           String
+  eventoData          Json     // Datos del evento que disparó
+  estado              String   // "PENDIENTE", "ENVIADO", "FALLIDO"
+  enviadoEn           DateTime?
+  error               String?
+  cliente             Cliente  @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
+  trigger             TriggerAutomatizacion @relation(fields: [triggerId], references: [triggerId], onDelete: Cascade)
+
+  @@index([tenantId, triggerId])
+  @@index([clienteId])
+}
+
+/// Automatización: Webhooks de eventos de lealtad
+model WebhookLealtad {
+  webhookId           String   @id @default(cuid())
+  tenantId            String
+  url                 String   // URL del endpoint
+  eventos             String[] // ["puntos_acumulados", "tier_cambiado", "cupon_redimido"]
+  secreto             String   // HMAC secret para verificar
+  activo              Boolean  @default(true)
+  ultimoEstado        String?  // "200", "404", "error"
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId, activo])
 }

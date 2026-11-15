@@ -20,6 +20,8 @@ export const createVentaSchema = z.object({
   descuento: z.coerce.number().int().min(0).optional().default(0),
   cargoTransporte: z.coerce.number().int().min(0).optional().default(0),
   observaciones: z.string().max(500).optional().nullable(),
+  /** Código de cupón opcional para aplicar descuento en el checkout. */
+  cuponCodigo: z.string().optional().nullable(),
   items: z.array(ventaItemSchema).min(1, 'Debe tener al menos un producto'),
   /**
    * Modo pedido (PVE): crea la venta en estado PEDIDO sin efectos de stock,

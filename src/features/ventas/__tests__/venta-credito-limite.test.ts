@@ -26,7 +26,7 @@ vi.mock('@/features/turnos-pos', () => ({
 
 // Lecturas de crédito compartidas raíz↔tx (mismo fn): la re-validación del
 // tope (B-4) corre por tx dentro de la transacción con el lock del cliente.
-const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
+const { mockTx, mockClienteFindFirst, mockCxcFindMany, mockPrismaExtras } = vi.hoisted(() => {
 	const mockClienteFindFirst = vi.fn();
 	const mockCxcFindMany = vi.fn();
 	const mockTx = {
@@ -39,7 +39,14 @@ const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
 		cuentaPorCobrar: { findMany: mockCxcFindMany },
 		$executeRaw: vi.fn(),
 	};
-	return { mockTx, mockClienteFindFirst, mockCxcFindMany };
+	const mockPrismaExtras = {
+		cupon: { findFirst: vi.fn(), update: vi.fn() },
+		cuponUso: { create: vi.fn() },
+		programaLealtad: { findFirst: vi.fn() },
+		clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+		historialPuntos: { create: vi.fn() },
+	};
+	return { mockTx, mockClienteFindFirst, mockCxcFindMany, mockPrismaExtras };
 });
 
 vi.mock('@/lib/prisma', () => ({
@@ -49,6 +56,8 @@ vi.mock('@/lib/prisma', () => ({
 		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
 		cuentaPorCobrar: { findMany: mockCxcFindMany },
+		venta: { findUnique: vi.fn() },
+		...mockPrismaExtras,
 		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
 	},
 }));
@@ -110,7 +119,10 @@ const baseVentaACredito = {
 };
 
 describe('enforcement del límite de crédito (CRM-T2)', () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue({ ventaId: 'v-1' } as never);
+	});
 
 	it('sin límite configurado el crédito pasa siempre', async () => {
 		prepararEntorno({ limiteCredito: null, saldoCxc: 0 });

@@ -193,6 +193,27 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Venta: SCOPED(),
   VentaServicios: SCOPED(),
 
+  // ---- CRM y Fidelización (19 modelos nuevos, todos scoped) ----
+  BasketAnalysis: SCOPED('Análisis de cesta de compra por tenant.'),
+  ClienteAnalytics: SCOPED('Analytics de comportamiento de compra por tenant.'),
+  ClienteDuplicado: SCOPED('Registro de fusión de duplicados por tenant.'),
+  ClienteLealtad: SCOPED('Perfil de lealtad del cliente por tenant.'),
+  ClienteSegmento: SCOPED('Asignación de segmento a cliente por tenant.'),
+  CohorteAnalytics: SCOPED('Analytics de cohortes por tenant.'),
+  Cupon: SCOPED('Cupón promocional por tenant.'),
+  CuponABTest: SCOPED('A/B test de cupones por tenant.'),
+  CuponUso: SCOPED('Registro de uso de cupón por tenant.'),
+  HistorialPuntos: SCOPED('Historial de puntos de lealtad por tenant.'),
+  MisionLealtad: SCOPED('Misión de gamificación por tenant.'),
+  ProgramaLealtad: SCOPED('Programa de lealtad del tenant.'),
+  ProgresoMision: SCOPED('Progreso de misión por cliente y tenant.'),
+  ReferidoLealtad: SCOPED('Registro de referido por tenant.'),
+  SegmentoCliente: SCOPED('Segmento de cliente por tenant.'),
+  TierLealtad: CHILD('ProgramaLealtad', 'programaId', 'Nivel de lealtad; hereda el tenant del programa.'),
+  TriggerAutomatizacion: SCOPED('Trigger de automatización por tenant.'),
+  TriggerEjecucion: SCOPED('Ejecución de trigger por tenant.'),
+  WebhookLealtad: SCOPED('Webhook de lealtad por tenant.'),
+
   // ---- global (22): plataforma, nunca llevan tenant ----
   Tenant: GLOBAL('Identidad del tenant: su PK es tenantId, no es una fila escopada.'),
   User: GLOBAL('Identidad de plataforma: un usuario puede pertenecer a varios tenants vía TenantMembership.'),
@@ -217,7 +238,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   VendorCodeSequence: GLOBAL('Secuencia global de códigos de proveedor (una fila id=1). RIESGO: contador compartido entre tenants; evaluar secuencia por tenant en AS-05.'),
   AuditLog: GLOBAL('Auditoría polimórfica de plataforma (entidad/entidadId libres + usuarioId). Decisión AS-01: se mantiene global; las vistas por tenant filtran vía usuarioId/membresías. Reevaluar tenantId en AS-05 si el volumen lo exige.'),
 
-  // ---- child (17): heredan el tenant del padre ----
+  // ---- child (18): heredan el tenant del padre ----
   VentaItem: CHILD('Venta', 'ventaId', 'Ítem intra-transacción; acceso siempre vía la venta.'),
   OfertaItem: CHILD('Oferta', 'ofertaId', 'Ítem intra-transacción; acceso siempre vía la oferta.'),
   ContratoVersion: CHILD('Contrato', 'contratoId', 'Versión intra-contrato; acceso siempre vía el contrato.'),

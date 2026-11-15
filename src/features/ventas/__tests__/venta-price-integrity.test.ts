@@ -16,7 +16,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 	AuditLogService: { logStrict: vi.fn() },
 }));
 
-const { mockTx } = vi.hoisted(() => {
+const { mockTx, mockPrismaExtras } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -36,7 +36,14 @@ const { mockTx } = vi.hoisted(() => {
 			findUniqueOrThrow: vi.fn(),
 		},
 	};
-	return { mockTx };
+	const mockPrismaExtras = {
+		cupon: { findFirst: vi.fn(), update: vi.fn() },
+		cuponUso: { create: vi.fn() },
+		programaLealtad: { findFirst: vi.fn() },
+		clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+		historialPuntos: { create: vi.fn() },
+	};
+	return { mockTx, mockPrismaExtras };
 });
 
 vi.mock("@/lib/prisma", () => ({
@@ -47,6 +54,8 @@ vi.mock("@/lib/prisma", () => ({
 		producto: { findMany: vi.fn() },
 		productoPlantilla: { findFirst: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
+		venta: { findUnique: vi.fn() },
+		...mockPrismaExtras,
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -122,6 +131,7 @@ function mockHappyPath() {
 beforeEach(() => {
 	vi.clearAllMocks();
 	vi.mocked(prisma.productoPlantilla.findFirst).mockResolvedValue(null as any);
+	vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta as any);
 	// Defaults: PV sin lista, sin lista default, sin cliente, producto con precio base 500.
 	vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 		pvId: "pv-1",

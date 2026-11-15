@@ -56,6 +56,12 @@ const DIRECT_TENANT_MODELS = [
   'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
+  // CRM y Fidelización
+  'BasketAnalysis', 'ClienteAnalytics', 'ClienteDuplicado', 'ClienteLealtad',
+  'ClienteSegmento', 'CohorteAnalytics', 'Cupon', 'CuponABTest', 'CuponUso',
+  'HistorialPuntos', 'MisionLealtad', 'ProgramaLealtad', 'ProgresoMision',
+  'ReferidoLealtad', 'SegmentoCliente', 'TriggerAutomatizacion',
+  'TriggerEjecucion', 'WebhookLealtad',
 ] as const;
 const REFERENCE_ONLY_MODELS = [
   'Tenant', 'User', 'Plan', 'ReferralPerkCatalog',
@@ -125,6 +131,7 @@ const CHILD_OWNER_PATHS = {
   ProductoCostHistory: 'Producto.tenantId',
   AnticipoMovimiento: 'Anticipo.tenantId (must be non-null)',
   DevolucionVentaItem: 'DevolucionVenta.tenantId AND DevolucionVenta.ventaId -> Venta.tenantId AND DevolucionVenta.ventaId === ventaItem.ventaId AND ventaItem.venta.tenantId AND ventaItem.producto.tenantId AND productoId === ventaItem.productoId',
+  TierLealtad: 'ProgramaLealtad.tenantId',
 } as const;
 
 const PROTECTED_EVIDENCE_CANDIDATES = [
