@@ -56,6 +56,7 @@ vi.mock('@/lib/prisma', () => ({
 		listaPrecio: { findFirst: vi.fn() },
 		producto: { findMany: vi.fn() },
 		cuentaPorCobrar: { findMany: mockCxcFindMany },
+		venta: { findUnique: vi.fn() },
 		...mockPrismaExtras,
 		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
 	},
@@ -118,7 +119,10 @@ const baseVentaACredito = {
 };
 
 describe('enforcement del límite de crédito (CRM-T2)', () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue({ ventaId: 'v-1' } as never);
+	});
 
 	it('sin límite configurado el crédito pasa siempre', async () => {
 		prepararEntorno({ limiteCredito: null, saldoCxc: 0 });
