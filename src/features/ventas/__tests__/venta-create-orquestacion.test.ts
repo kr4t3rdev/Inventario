@@ -31,7 +31,7 @@ vi.mock('@/features/turnos-pos', () => ({
 	}),
 }));
 
-const { mockTx } = vi.hoisted(() => {
+const { mockTx, mockPrismaExtras } = vi.hoisted(() => {
 	const mockTx = {
 		serieFacturacion: {
 			findFirst: vi.fn(),
@@ -43,27 +43,26 @@ const { mockTx } = vi.hoisted(() => {
 		stockUbicacion: { findUnique: vi.fn() },
 		factura: { create: vi.fn() },
 	};
-	return { mockTx };
+	const mockPrismaExtras = {
+		cupon: { findFirst: vi.fn(), update: vi.fn() },
+		cuponUso: { create: vi.fn() },
+		programaLealtad: { findFirst: vi.fn() },
+		clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+		historialPuntos: { create: vi.fn() },
+	};
+	return { mockTx, mockPrismaExtras };
 });
 
-vi.mock('@/lib/prisma', () => {
-	const { vi } = require('vitest');
-	return {
-		prisma: {
-			puntoDeVenta: { findFirst: vi.fn() },
-			cliente: { findFirst: vi.fn() },
-			listaPrecio: { findFirst: vi.fn() },
-			producto: { findMany: vi.fn() },
-			// CRM y Fidelización — mocks para la integración con ventas
-			cupon: { findFirst: vi.fn(), update: vi.fn() },
-			cuponUso: { create: vi.fn() },
-			programaLealtad: { findFirst: vi.fn() },
-			clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
-			historialPuntos: { create: vi.fn() },
-			$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
-		},
-	};
-});
+vi.mock('@/lib/prisma', () => ({
+	prisma: {
+		puntoDeVenta: { findFirst: vi.fn() },
+		cliente: { findFirst: vi.fn() },
+		listaPrecio: { findFirst: vi.fn() },
+		producto: { findMany: vi.fn() },
+		...mockPrismaExtras,
+		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
+	},
+}));
 
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';

@@ -26,7 +26,7 @@ vi.mock('@/features/turnos-pos', () => ({
 
 // Lecturas de crédito compartidas raíz↔tx (mismo fn): la re-validación del
 // tope (B-4) corre por tx dentro de la transacción con el lock del cliente.
-const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
+const { mockTx, mockClienteFindFirst, mockCxcFindMany, mockPrismaExtras } = vi.hoisted(() => {
 	const mockClienteFindFirst = vi.fn();
 	const mockCxcFindMany = vi.fn();
 	const mockTx = {
@@ -39,28 +39,27 @@ const { mockTx, mockClienteFindFirst, mockCxcFindMany } = vi.hoisted(() => {
 		cuentaPorCobrar: { findMany: mockCxcFindMany },
 		$executeRaw: vi.fn(),
 	};
-	return { mockTx, mockClienteFindFirst, mockCxcFindMany };
+	const mockPrismaExtras = {
+		cupon: { findFirst: vi.fn(), update: vi.fn() },
+		cuponUso: { create: vi.fn() },
+		programaLealtad: { findFirst: vi.fn() },
+		clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
+		historialPuntos: { create: vi.fn() },
+	};
+	return { mockTx, mockClienteFindFirst, mockCxcFindMany, mockPrismaExtras };
 });
 
-vi.mock('@/lib/prisma', () => {
-	const { vi } = require('vitest');
-	return {
-		prisma: {
-			puntoDeVenta: { findFirst: vi.fn() },
-			cliente: { findFirst: mockClienteFindFirst },
-			listaPrecio: { findFirst: vi.fn() },
-			producto: { findMany: vi.fn() },
-			cuentaPorCobrar: { findMany: mockCxcFindMany },
-			// CRM y Fidelización — mocks para la integración con ventas
-			cupon: { findFirst: vi.fn(), update: vi.fn() },
-			cuponUso: { create: vi.fn() },
-			programaLealtad: { findFirst: vi.fn() },
-			clienteLealtad: { findUnique: vi.fn(), upsert: vi.fn() },
-			historialPuntos: { create: vi.fn() },
-			$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
-		},
-	};
-});
+vi.mock('@/lib/prisma', () => ({
+	prisma: {
+		puntoDeVenta: { findFirst: vi.fn() },
+		cliente: { findFirst: mockClienteFindFirst },
+		listaPrecio: { findFirst: vi.fn() },
+		producto: { findMany: vi.fn() },
+		cuentaPorCobrar: { findMany: mockCxcFindMany },
+		...mockPrismaExtras,
+		$transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(mockTx)),
+	},
+}));
 
 import { prisma } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';

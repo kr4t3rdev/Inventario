@@ -29,8 +29,8 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 126,
-      'tenant-child': 16,
+      'tenant-direct': 125,
+      'tenant-child': 17,
       'reference-only': 10,
       excluded: 36,
     });
