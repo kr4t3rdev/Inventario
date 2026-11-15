@@ -82,6 +82,7 @@ describe('ascensoTier', () => {
     const resultado = ascensoTier({
       tierAnterior: 'Bronce',
       nuevoTier: { nombre: 'Plata', orden: 2, umbralGasto: 50000, umbralFrecuencia: 3, activo: true },
+      tiers: tiersMock,
     });
     expect(resultado).toBe(true);
   });

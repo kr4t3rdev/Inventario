@@ -41,10 +41,10 @@ export function calcularSegmentoRFM({ recencia, frecuencia, monetario }: RFMInpu
   if (recencia <= 30 && frecuencia >= 5 && monetario >= 50000) return 'Champion';
   // Loyal: compra reciente y con frecuencia moderada
   if (recencia <= 60 && frecuencia >= 3) return 'Loyal';
-  // At Risk: dejó de comprar recientemente pero tenía frecuencia
-  if (recencia > 90 && frecuencia >= 2) return 'At Risk';
-  // Lost: inactivo por más de 6 meses
+  // Lost: inactivo por más de 6 meses (antes que At Risk porque es más específico)
   if (recencia > 180) return 'Lost';
+  // At Risk: dejó de comprar hace 90+ días pero tenía frecuencia
+  if (recencia > 90 && frecuencia >= 2) return 'At Risk';
   // New: primera compra reciente
   if (frecuencia === 1 && recencia <= 30) return 'New';
   // Regular: el resto

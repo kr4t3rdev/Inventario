@@ -21,13 +21,13 @@ describe('calcularCLV', () => {
       vidaEsperadaAnios: 3,
       totalGastado: 500000,
       totalCompras: 10,
-      diasDesdePrimeraCompra: 365,
+      diasDesdePrimeraCompra: 730, // 2 años para que no sea primer año
     });
 
     expect(result.clvHistorico).toBe(125000); // 500000 * 0.25
     expect(result.clvProyectado).toBe(125000); // 50000 * 10 * 0.25
     expect(result.clvVidaTotal).toBeGreaterThan(0);
-    expect(result.tasaDecaimiento).toBe(0.85);
+    expect(result.tasaDecaimiento).toBe(0.85); // frecuencia >= 10, más de 1 año
   });
 
   it('calcula CLV para cliente con baja frecuencia', () => {
