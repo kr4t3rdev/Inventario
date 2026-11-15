@@ -65,6 +65,7 @@ export function AperturaTurnoDialog({
   const [observaciones, setObservaciones] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingEmpleados, setIsLoadingEmpleados] = useState(false);
+  const [empleadosError, setEmpleadosError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -82,13 +83,22 @@ export function AperturaTurnoDialog({
 
   const loadEmpleados = async () => {
     setIsLoadingEmpleados(true);
+    setEmpleadosError('');
     try {
       const result = await getEmpleadosAction();
+      // Un fallo de consulta (permiso, plan) no es una empresa sin empleados:
+      // se informa en lugar de dejar el selector vacío y ambiguo.
       if (result.success) {
         setEmpleados(result.data ?? []);
+      } else {
+        setEmpleados([]);
+        setEmpleadosError(
+          result.error?.message ?? 'No se pudo cargar la lista de empleados.',
+        );
       }
     } catch {
-      // Silently fail, empleados quedan vacío
+      setEmpleados([]);
+      setEmpleadosError('No se pudo cargar la lista de empleados.');
     } finally {
       setIsLoadingEmpleados(false);
     }
@@ -161,6 +171,16 @@ export function AperturaTurnoDialog({
                 ))}
               </SelectContent>
             </Select>
+            {empleadosError && (
+              <p role="alert" className="text-sm text-destructive">
+                {empleadosError}
+              </p>
+            )}
+            {!isLoadingEmpleados && !empleadosError && empleados.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No hay empleados registrados en esta empresa.
+              </p>
+            )}
           </div>
 
           {/* Fondo inicial CUP */}
