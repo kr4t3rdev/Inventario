@@ -212,13 +212,25 @@ function logShadow(mensaje: string, extra?: Record<string, unknown>): void {
 
 /** @description Valida evidencia monetaria antes de cualquier escritura formal. */
 function validarEventoMonetario(evento: EventoContableInput): asserts evento is EventoContableValorizado {
-	if (
-		evento.moneda == null || evento.moneda.trim() === '' ||
-		evento.montoFuncional == null ||
-		evento.monedaFuncional == null || evento.monedaFuncional.trim() === ''
-	) {
+	// El diagnóstico identifica el emisor y el dato que falta: el mensaje
+	// genérico no permitía saber qué campo de valoración estaba ausente.
+	// Los chequeos van uno por uno (y no agregados) para que el análisis de
+	// flujo de TypeScript estreche los campos tras cada throw.
+	if (evento.moneda == null || evento.moneda.trim() === '') {
 		throw new ActionError(
-			'La valoración monetaria del evento no está disponible',
+			`La valoración monetaria del evento ${evento.tipo} no está disponible: falta moneda original`,
+			'VALORACION_MONETARIA_AUSENTE',
+		);
+	}
+	if (evento.montoFuncional == null) {
+		throw new ActionError(
+			`La valoración monetaria del evento ${evento.tipo} no está disponible: falta monto funcional`,
+			'VALORACION_MONETARIA_AUSENTE',
+		);
+	}
+	if (evento.monedaFuncional == null || evento.monedaFuncional.trim() === '') {
+		throw new ActionError(
+			`La valoración monetaria del evento ${evento.tipo} no está disponible: falta moneda funcional`,
 			'VALORACION_MONETARIA_AUSENTE',
 		);
 	}
