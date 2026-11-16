@@ -191,7 +191,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   // Calculate estimated totals (in selected currency)
   const totalCosto = cantidad * (precioCostoInput > 0 ? precioCostoInput : (producto.precioCosto / tasaCambioActual))
   const totalVenta = cantidad * (precioVentaInput > 0 ? precioVentaInput : (producto.precioVenta / tasaCambioActual))
-  
+
   // Margen en moneda seleccionada
   const margenEstimado = (precioVentaInput > 0 && precioCostoInput > 0)
     ? precioVentaInput - precioCostoInput
@@ -335,7 +335,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       </Card>
     )
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
