@@ -62,6 +62,26 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
+
+  useEffect(() => {
+    let cancelado = false
+
+    getProductosAction()
+      .then((resultado) => {
+        if (cancelado) return
+        if (resultado.success) setProductos(resultado.data ?? [])
+      })
+      .catch(() => {
+        if (!cancelado) setProductos([])
+      })
+      .finally(() => {
+        if (!cancelado) setIsLoadingProductos(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [])
   const { monedas: monedasData } = useMonedas()
 
   const monedas = monedasData || []
