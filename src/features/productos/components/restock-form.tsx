@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import {
   Dialog,
@@ -27,6 +28,7 @@ import { ProductPhotoUpload } from "./product-photo-upload"
 
 import { restockProductoAction } from "@/features/productos/actions"
 import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
+import { useMonedaPrincipal } from "@/features/contabilidad/hooks/use-moneda-principal"
 import { useCuentasBancarias } from "@/features/contabilidad/hooks/use-cuentas-bancarias"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"
@@ -119,12 +121,15 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const preciosCambiados = useRef(false)
 
   const { monedas: monedasData } = useMonedas()
+  const {
+    monedaPrincipal,
+    isLoading: isLoadingMonedaPrincipal,
+  } = useMonedaPrincipal()
   const { cuentas: cuentasData } = useCuentasBancarias()
   const monedas = monedasData || []
   const cuentasBancarias: any[] = cuentasData || []
 
   const monedasActivas = monedas.filter((m: any) => m.isActive)
-  const monedaPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || "CUP"
   const cuentasMonedaPrincipal = cuentasBancarias.filter((c: any) => c.isActive && c.moneda === monedaPrincipal)
 
   const cuentaDefecto = cuentasMonedaPrincipal.length > 0 ? cuentasMonedaPrincipal[0].cuentaId : ""
@@ -137,7 +142,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       facturaUrl: "",
       precioCosto: "",
       precioVenta: "",
-      moneda: monedaPrincipal,
+      moneda: "",
       descripcion: "",
       formaPago: "PAGO_COMPLETO",
       estado: "PAGADA",
@@ -153,8 +158,17 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     const nextEstado = formaPagoSeleccionada === "PAGO_COMPLETO" ? "PAGADA" : "PENDIENTE"
     form.setValue("estado", nextEstado, { shouldValidate: true })
   }, [formaPagoSeleccionada, form])
+
+  useEffect(() => {
+    if (isLoadingMonedaPrincipal || form.getValues("moneda")) return
+    form.setValue("moneda", monedaPrincipal || "")
+    form.setValue("cuentaId", cuentaDefecto)
+  }, [cuentaDefecto, form, isLoadingMonedaPrincipal, monedaPrincipal])
+
   const cantidad = Number(watchedValues.cantidad) || 0
-  const selectedMoneda = monedasActivas.find(m => m.codigo === watchedValues.moneda)
+  const monedaSeleccionada = watchedValues.moneda || monedaPrincipal || ""
+  const cuentaSeleccionada = watchedValues.cuentaId || cuentaDefecto || ""
+  const selectedMoneda = monedasActivas.find(m => m.codigo === monedaSeleccionada)
   // Usar la tasaCambio que ahora viene directamente en el objeto moneda desde la API
   const tasaCambioActual = selectedMoneda?.esPrincipal ? 1 : (Number(selectedMoneda?.tasaCambio) || 1)
 
@@ -170,7 +184,9 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     ? precioVentaInput * tasaCambioActual 
     : producto.precioVenta
 
-  const requiresExchangeConfirmation = watchedValues.moneda && watchedValues.moneda !== monedaPrincipal
+  const requiresExchangeConfirmation = Boolean(
+    monedaSeleccionada && monedaPrincipal && monedaSeleccionada !== monedaPrincipal,
+  )
 
   // Calculate estimated totals (in selected currency)
   const totalCosto = cantidad * (precioCostoInput > 0 ? precioCostoInput : (producto.precioCosto / tasaCambioActual))
@@ -305,6 +321,21 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     setPendingSubmission(null)
   }
 
+  if (isLoadingMonedaPrincipal) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -464,7 +495,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
                     <FormLabel>Cuenta Bancaria</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      value={field.value}
+                      value={cuentaSeleccionada}
                       disabled={cuentasMonedaPrincipal.length === 0}
                     >
                       <FormControl>
@@ -496,7 +527,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
             )}
 
             {/* Currency Selection */}
-            {/* <FormField
+            <FormField
               control={form.control}
               name="moneda"
               render={({ field }) => (
@@ -505,7 +536,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
                     <DollarSign className="h-4 w-4" />
                     Moneda de la Compra
                   </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={monedaSeleccionada}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione la moneda" />
@@ -520,7 +551,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
                               {moneda.simbolo} - {moneda.nombre}
                             </span>
                             {moneda.esPrincipal && (
-                              <Badge variant="secondary" className="text-xs">Principal</Badge>
+                              <Badge variant="secondary" className="text-xs">Base de tasas</Badge>
                             )}
                           </div>
                         </SelectItem>
@@ -538,7 +569,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
                   <FormMessage />
                 </FormItem>
               )}
-            /> */}
+            />
 
             <Separator />
 
@@ -707,7 +738,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
           isOpen={showTasaCambioDialog}
           onClose={handleExchangeCancel}
           monedaOrigen={pendingSubmission.moneda}
-          monedaDestino={monedaPrincipal}
+          monedaDestino={monedaPrincipal || ""}
           monto={totalCosto}
           onConfirm={handleExchangeConfirm}
           titulo="Confirmar Tasa de Cambio para Compra"
