@@ -1,6 +1,5 @@
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { assertDisposableDatabase } from './ci/disposable-database.mjs';
 
 /**
  * @description Siembra fixtures nuevas y atómicas solo en una base local desechable.
@@ -18,6 +17,7 @@ export interface E2EFixtureOwnership {
 }
 
 export async function run(): Promise<E2EFixtureOwnership> {
+  const { assertDisposableDatabase } = await import('./ci/disposable-database.cjs');
   assertDisposableDatabase(process.env);
   const password = process.env.E2E_TEST_PASSWORD;
   if (!password || password.length < 16) throw new Error('E2E_TEST_PASSWORD requiere 16 caracteres.');
