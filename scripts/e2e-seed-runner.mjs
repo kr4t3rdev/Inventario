@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import seed from './seed-e2e-user.cts';
+import seed from './seed-e2e-user.ts';
 
 const { cleanup, run } = seed;
 

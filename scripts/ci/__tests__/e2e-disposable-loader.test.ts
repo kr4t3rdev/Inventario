@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 it('expone el guard de BD desechable en un módulo CJS compatible con Playwright', async () => {
   const config = readFileSync('playwright.config.ts', 'utf8');
-  const seed = readFileSync('scripts/seed-e2e-user.cts', 'utf8');
+  const seed = readFileSync('scripts/seed-e2e-user.ts', 'utf8');
   const setup = readFileSync('e2e/global-setup.cjs', 'utf8');
   const teardown = readFileSync('e2e/global-teardown.cjs', 'utf8');
   expect(config).toContain("globalSetup: './e2e/global-setup.cjs'");
