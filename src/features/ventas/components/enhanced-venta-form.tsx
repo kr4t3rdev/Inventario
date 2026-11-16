@@ -334,6 +334,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
                           min="0"
                           placeholder={`Precio por defecto: ${selectedProducto.precioVenta.toFixed(2)}`}
                           {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormDescription>

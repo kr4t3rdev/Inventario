@@ -304,5 +304,76 @@ describe('EnhancedVentaForm - moneda principal desde la politica contable', () =
     expect(mocks.sileo.error).toHaveBeenCalled();
   });
 
+  it('maneja un error al cargar productos y la cancelación del formulario', async () => {
+    mocks.getProductosAction.mockRejectedValueOnce(new Error('catalogo caído'));
+    render(<EnhancedVentaForm />);
 
+    await waitFor(() => expect(mocks.getProductosAction).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(mocks.router.push).toHaveBeenCalledWith('/busy/sales');
+  });
+
+  it('ignora resultados de productos después de desmontar el formulario', async () => {
+    let resolverProductos: (valor: unknown) => void = () => undefined;
+    mocks.getProductosAction.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolverProductos = resolve;
+        }),
+    );
+
+    const { unmount } = render(<EnhancedVentaForm />);
+    unmount();
+    resolverProductos({
+      success: true,
+      data: [{ id: 'p2', nombre: 'Arroz', stock: 4, precioVenta: 50 }],
+    });
+
+    await waitFor(() => expect(mocks.getProductosAction).toHaveBeenCalledTimes(1));
+  });
+
+  it('mantiene el formulario vacío cuando el catálogo responde sin éxito', async () => {
+    mocks.getProductosAction.mockResolvedValueOnce({ success: false, data: [] });
+    render(<EnhancedVentaForm />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: TRIGGER_MONEDA })).toBeInTheDocument(),
+    );
+    await userEvent.setup().click(screen.getByRole('combobox', { name: 'Producto' }));
+    expect(screen.queryByRole('option', { name: /Harina/ })).toBeNull();
+  });
+
+  it('usa una lista vacía cuando el catálogo exitoso no incluye datos', async () => {
+    mocks.getProductosAction.mockResolvedValueOnce({ success: true });
+    render(<EnhancedVentaForm />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: TRIGGER_MONEDA })).toBeInTheDocument(),
+    );
+    await userEvent.setup().click(screen.getByRole('combobox', { name: 'Producto' }));
+    expect(screen.queryByRole('option', { name: /Harina/ })).toBeNull();
+  });
+
+  it('usa el precio de venta opcional al crear una venta', async () => {
+    render(<EnhancedVentaForm />);
+    const user = await completeForm();
+    await user.type(screen.getByLabelText('Precio de Venta (Opcional)'), '125');
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+
+    await waitFor(() =>
+      expect(mocks.createVentaAction.mock.calls[0][0].items[0]).toMatchObject({
+        precioUnitario: 125,
+      }),
+    );
+  });
+
+  it('usa el mensaje predeterminado cuando crear devuelve un error sin detalle', async () => {
+    mocks.createVentaAction.mockResolvedValueOnce({ success: false });
+    render(<EnhancedVentaForm />);
+    const user = await completeForm();
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+
+    await waitFor(() => expect(mocks.sileo.error).toHaveBeenCalled());
+  });
 });
