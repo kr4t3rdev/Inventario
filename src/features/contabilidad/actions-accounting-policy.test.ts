@@ -190,4 +190,33 @@ describe('accounting policy actions', () => {
 
     expect(response).toMatchObject({ success: false, error: { code: 'VALIDATION_ERROR' } });
   });
+
+  describe('getMonedaPrincipalAction', () => {
+    it('devuelve la moneda de la política contable del tenant, normalizada', async () => {
+      prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+        tenantId: 'tenant-a',
+        functionalCurrencyCode: ' usd ',
+      });
+      const { getMonedaPrincipalAction } = await import('./actions-accounting-policy');
+
+      const response = await getMonedaPrincipalAction();
+
+      expect(response).toEqual({
+        success: true,
+        data: { estado: 'CONFIGURADA', moneda: 'USD' },
+      });
+    });
+
+    it('reporta AUSENTE sin sustituir por CUP cuando la empresa no tiene política', async () => {
+      prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue(null);
+      const { getMonedaPrincipalAction } = await import('./actions-accounting-policy');
+
+      const response = await getMonedaPrincipalAction();
+
+      expect(response).toEqual({
+        success: true,
+        data: { estado: 'AUSENTE', moneda: null },
+      });
+    });
+  });
 });

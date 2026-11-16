@@ -9,6 +9,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { resolverMonedaPrincipal } from '@/lib/services/moneda-principal-service';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 
 import {
@@ -55,6 +56,22 @@ async function requireAccountingPolicyManager(
     );
   }
 }
+
+/**
+ * @description Lee la moneda principal de la empresa desde su política contable
+ * (fuente de verdad). No usa el catálogo global ni sustituye la moneda cuando
+ * no está configurada.
+ * @param {_input: void} _input - Sin parámetros.
+ * @param {AuthenticatedUser} user - Usuario autenticado con membresía activa.
+ * @returns {Promise<{ estado: EstadoMonedaPrincipal; moneda: string | null }>}
+ * Estado explícito (CONFIGURADA/AUSENTE/ERROR) y código normalizado.
+ */
+export const getMonedaPrincipalAction = withAction(
+  async (_input: void, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
+    return resolverMonedaPrincipal(tenantId);
+  },
+);
 
 export const getAccountingPolicyStateAction = withAction(
   async (_input: void, user: AuthenticatedUser) => {
