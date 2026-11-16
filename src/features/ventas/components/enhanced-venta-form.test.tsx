@@ -63,6 +63,11 @@ const politicaConfigurada = (moneda: string) => ({
   data: { estado: 'CONFIGURADA', moneda },
 });
 
+const politicaAusente = {
+  success: true,
+  data: { estado: 'AUSENTE', moneda: null },
+};
+
 describe('EnhancedVentaForm - moneda principal desde la politica contable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -84,5 +89,81 @@ describe('EnhancedVentaForm - moneda principal desde la politica contable', () =
 
     await waitFor(() => expect(mocks.getProductosAction).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole('combobox', { name: TRIGGER_MONEDA })).toBeInTheDocument();
+  });
+
+  it('consulta la politica contable del tenant para resolver la moneda principal', async () => {
+    render(<EnhancedVentaForm />);
+
+    await waitFor(() => expect(mocks.getMonedaPrincipalAction).toHaveBeenCalledTimes(1));
+  });
+
+  it('no muestra el formulario mientras la politica contable esta pendiente', async () => {
+    let resolverPolitica: (valor: unknown) => void = () => undefined;
+    mocks.getMonedaPrincipalAction.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolverPolitica = resolve;
+        }),
+    );
+
+    render(<EnhancedVentaForm />);
+
+    await waitFor(() => expect(mocks.getMonedaPrincipalAction).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('combobox', { name: TRIGGER_MONEDA })).toBeNull();
+
+    resolverPolitica(politicaConfigurada('USD'));
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: TRIGGER_MONEDA })).toBeInTheDocument(),
+    );
+  });
+
+  it('usa la moneda de la politica contable como valor por defecto', async () => {
+    const user = userEvent.setup();
+    render(<EnhancedVentaForm />);
+
+    const trigger = await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await user.click(trigger);
+
+    expect(screen.getByRole('option', { name: /USD/ })).toHaveAttribute('data-state', 'checked');
+    expect(screen.getByRole('option', { name: /CUP/ })).toHaveAttribute('data-state', 'unchecked');
+  });
+
+  it('etiqueta la moneda del catalogo como base de tasas, no como principal', async () => {
+    const user = userEvent.setup();
+    render(<EnhancedVentaForm />);
+
+    const trigger = await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await user.click(trigger);
+
+    expect(screen.getByText('Base de tasas')).toBeInTheDocument();
+    expect(screen.queryByText('Principal')).toBeNull();
+  });
+
+  it('no exige confirmacion de tasa cuando la moneda es la de la politica', async () => {
+    const user = userEvent.setup();
+    render(<EnhancedVentaForm />);
+
+    const trigger = await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await user.click(trigger);
+    await user.click(screen.getByRole('option', { name: /USD/ }));
+
+    expect(screen.queryByText(/Se solicitará confirmación de tasa de cambio/)).toBeNull();
+  });
+
+  it('no sustituye por CUP cuando la politica contable esta ausente', async () => {
+    mocks.getMonedaPrincipalAction.mockResolvedValue(politicaAusente);
+
+    const user = userEvent.setup();
+    render(<EnhancedVentaForm />);
+
+    const trigger = await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await user.click(trigger);
+
+    const opciones = screen.getAllByRole('option');
+    expect(opciones.some((opcion) => opcion.getAttribute('data-state') === 'checked')).toBe(false);
+
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveTextContent('Seleccione la moneda');
   });
 });
