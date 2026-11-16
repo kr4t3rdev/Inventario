@@ -9,7 +9,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 
 import {
   classifyAccountingPolicyEvidence,
@@ -84,6 +84,16 @@ export const setInitialAccountingPolicyAction = withAction(
     const parsed = policyInputSchema.parse(input);
     const tenantId = requireTenant(user);
     await requireAccountingPolicyManager(user, tenantId);
+
+    // Cambiar una moneda ya configurada es exclusivo del plan con el feature;
+    // la configuración inicial (tenant sin política) no se restringe por plan.
+    const existingPolicy = await prisma.tenantAccountingPolicy.findUnique({
+      where: { tenantId },
+      select: { functionalCurrencyCode: true },
+    });
+    if (existingPolicy) {
+      requireFeature(user, 'moneda-principal-cambio', 'cambiar la moneda principal');
+    }
 
     const result = await provisionTenantAccountingPolicy({
       tenantId,
