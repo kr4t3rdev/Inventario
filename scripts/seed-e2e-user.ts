@@ -508,6 +508,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
  * @returns {Promise<void>} Finaliza solo después de verificar la eliminación del tenant y usuario.
  */
 export async function cleanup(ownership: E2EFixtureOwnership): Promise<void> {
+  const { assertDisposableDatabase } = await import('./ci/disposable-database.cjs');
   assertDisposableDatabase(process.env);
   if (!ownership.tenantId.startsWith('e2e-') || !ownership.userId) {
     throw new Error('Manifiesto de fixtures E2E inválido.');
