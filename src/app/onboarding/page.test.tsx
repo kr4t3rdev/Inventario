@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -149,6 +149,7 @@ describe('OnboardingPage hydration-safe motion', () => {
   afterEach(() => {
     routerReplaceMock.mockReset()
     motionState.captures = []
+    sessionStorage.clear()
   })
 
   it('keeps the first render motion props stable when reduced-motion changes before mount', async () => {
@@ -179,14 +180,53 @@ describe('OnboardingPage hydration-safe motion', () => {
     expect(screen.getByLabelText('Teléfono')).toBeInTheDocument()
   })
 
-  it('solicita confirmar la moneda funcional antes del alta de una empresa', async () => {
+  it('no muestra un selector de moneda en el alta de una empresa', async () => {
     const Page = await loadOnboardingPage()
 
     render(React.createElement(Page))
 
-    expect(screen.getByRole('combobox', {
+    expect(screen.queryByRole('combobox', {
       name: 'Moneda funcional contable de la empresa',
-    })).toBeRequired()
-    expect(screen.getByRole('option', { name: 'Peso cubano (CUP)' })).toBeInTheDocument()
+    })).not.toBeInTheDocument()
+    expect(screen.getByText('Empresa')).toBeInTheDocument()
+  })
+
+  it('envía el alta de empresa sin moneda funcional', async () => {
+    sessionStorage.setItem('onboardingToken', 'token-de-prueba')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        onboardingStatus: 'awaiting_global_approval',
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const Page = await loadOnboardingPage()
+
+      render(React.createElement(Page))
+
+      fireEvent.click(screen.getByText('Empresa'))
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/auth/onboarding/type',
+          expect.objectContaining({
+            body: JSON.stringify({ userType: 'company', phone: '' }),
+          }),
+        )
+      })
+      const typeCall = fetchMock.mock.calls.find(
+        (call) => call[0] === '/api/auth/onboarding/type',
+      )
+      expect(typeCall).toBeDefined()
+      const body = JSON.parse(
+        typeCall![1].body as string,
+      ) as Record<string, unknown>
+      expect(body).not.toHaveProperty('functionalCurrencyCode')
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
