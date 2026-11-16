@@ -161,4 +161,15 @@ describe('ExchangeManager — moneda principal desde la política contable', () 
     })
     expect(actionMocks.toastSuccess).not.toHaveBeenCalled()
   })
+
+  it('marca como principal la moneda de la política y como base de tasas a la del catálogo', async () => {
+    render(<ExchangeManager />)
+
+    await screen.findByText('Moneda principal activa')
+
+    // La fila USD corresponde a la política contable de la empresa.
+    expect(screen.getAllByText('Principal')).toHaveLength(1)
+    // La marca global del catálogo (CUP) es la base de formación de tasas.
+    expect(screen.getByText('Base de tasas')).toBeInTheDocument()
+  })
 })

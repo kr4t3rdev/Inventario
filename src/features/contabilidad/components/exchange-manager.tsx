@@ -339,12 +339,20 @@ export function ExchangeManager({
                     <CardContent>
                       <div className="flex items-center justify-between">
                         <div className="flex flex-wrap items-center gap-2">
-                          {moneda.esPrincipal && (
+                          {moneda.codigo === monedaPrincipalPolicy && (
                             <Badge
                               variant="outline"
                               className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300"
                             >
                               Principal
+                            </Badge>
+                          )}
+                          {moneda.esPrincipal && moneda.codigo !== monedaPrincipalPolicy && (
+                            <Badge
+                              variant="outline"
+                              className="border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+                            >
+                              Base de tasas
                             </Badge>
                           )}
                           {!moneda.isActive && (
