@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { canManageAccountingPolicy } from '@/lib/auth/accounting-policy-capabilities';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import {
   provisionTenantAccountingPolicy,
@@ -182,6 +183,12 @@ export const cambiarMonedaPrincipalAction = withAction(
   async (input: { codigo: string }, user: AuthenticatedUser) => {
     requireFeature(user, 'moneda-principal-cambio', 'cambiar la moneda principal');
     const tenantId = requireTenant(user);
+    if (!await canManageAccountingPolicy(user.userId, tenantId)) {
+      throw new ActionError(
+        'No tienes permisos para cambiar la moneda principal de esta empresa',
+        'FORBIDDEN',
+      );
+    }
 
     const codigo = typeof input?.codigo === 'string' ? input.codigo.trim().toUpperCase() : '';
     const moneda = codigo

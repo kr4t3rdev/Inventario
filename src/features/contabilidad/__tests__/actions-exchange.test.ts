@@ -38,6 +38,11 @@ const exchangeProviderMock = vi.hoisted(() => ({
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn())
 const provisionPolicyMock = vi.hoisted(() => vi.fn())
+const canManageMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@/lib/auth/accounting-policy-capabilities', () => ({
+  canManageAccountingPolicy: canManageMock,
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
@@ -74,6 +79,7 @@ vi.mock('next/cache', () => ({
 describe('actions-exchange', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    canManageMock.mockResolvedValue(true)
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-1',
       tenantId: 'tenant-1',
@@ -200,6 +206,27 @@ describe('actions-exchange', () => {
       isActive: true,
       planFeatures: { 'multi-moneda': true, 'moneda-principal-cambio': true },
     }
+
+    it('rechaza a usuarios sin permiso de gestión de la política contable', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      canManageMock.mockResolvedValue(false)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'USD',
+        nombre: 'Dólar estadounidense',
+        simbolo: 'US$',
+        isActive: true,
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'USD' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN')
+      expect(provisionPolicyMock).not.toHaveBeenCalled()
+      expect(prismaMock.moneda.findUnique).not.toHaveBeenCalled()
+    })
 
     it('rechaza a planes sin el feature de cambio de moneda principal', async () => {
       getCurrentUserMock.mockResolvedValue({

@@ -117,7 +117,12 @@ export default function ExchangePage() {
         </Badge>
       </div>
       <div className={surfaceCardClass}>
-        <ExchangeManager />
+        <ExchangeManager
+          puedeCambiarMonedaPrincipal={
+            user?.role === 'admin' ||
+            user?.planFeatures?.['moneda-principal-cambio'] === true
+          }
+        />
       </div>
     </AccountingPageShell>
   );
