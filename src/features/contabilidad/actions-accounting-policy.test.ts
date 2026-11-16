@@ -160,6 +160,25 @@ describe('accounting policy actions', () => {
     expect(prismaMock.accountingPolicyTenantApproval.create).not.toHaveBeenCalled();
   });
 
+  it('bloquea el cambio de una moneda ya configurada a planes sin el feature', async () => {
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      tenantId: 'tenant-a',
+      functionalCurrencyCode: 'CUP',
+    });
+    const { setInitialAccountingPolicyAction } = await import('./actions-accounting-policy');
+
+    const response = await setInitialAccountingPolicyAction({
+      functionalCurrencyCode: 'USD',
+      reason: 'Cambio solicitado por un plan sin derecho al cambio',
+    });
+
+    expect(response).toMatchObject({
+      success: false,
+      error: { code: 'FEATURE_NOT_AVAILABLE' },
+    });
+    expect(provisionMock).not.toHaveBeenCalled();
+  });
+
   it('rechaza returnTo fuera de la allowlist', async () => {
     const { setInitialAccountingPolicyAction } = await import('./actions-accounting-policy');
 
