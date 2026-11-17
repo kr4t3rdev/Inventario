@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getPrestamosCashStatsAction: vi.fn(),
   getResumenAnticiposAction: vi.fn(),
   getReconciliacionStatsAction: vi.fn(),
+  resolverMonedaPrincipal: vi.fn(),
 }));
 
 vi.mock('../services/accounting-reports-service', () => ({
@@ -25,6 +26,9 @@ vi.mock('../actions-anticipos', () => ({
 }));
 vi.mock('../actions-reconciliacion', () => ({
   getReconciliacionStatsAction: mocks.getReconciliacionStatsAction,
+}));
+vi.mock('@/lib/services/moneda-principal-service', () => ({
+  resolverMonedaPrincipal: mocks.resolverMonedaPrincipal,
 }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
@@ -60,6 +64,17 @@ describe('getResumenCompletoAction', () => {
     mocks.getReconciliacionStatsAction.mockResolvedValue({
       success: true,
       data: { modules: { ventas: { pending: 3 }, servicios: { pending: 1 }, gastos: { pending: 2 } } },
+    });
+    mocks.resolverMonedaPrincipal.mockResolvedValue({ estado: 'CONFIGURADA', moneda: 'USD' });
+  });
+
+  it('incluye la moneda principal resuelta desde la política contable del tenant', async () => {
+    const result = await getResumenCompletoAction({});
+
+    expect(mocks.resolverMonedaPrincipal).toHaveBeenCalledWith('tenant-a');
+    expect(expectActionSuccess(result).data?.monedaPrincipal).toEqual({
+      estado: 'CONFIGURADA',
+      moneda: 'USD',
     });
   });
 

@@ -28,6 +28,7 @@ function payloadBase() {
         ],
       },
       monedas: [{ codigo: 'CUP', esPrincipal: true }, { codigo: 'USD', esPrincipal: false }],
+      monedaPrincipal: { estado: 'CONFIGURADA', moneda: 'CUP' },
       prestamosStats: { montoPendienteCobro: { CUP: 500 } },
       resumenAnticipos: { resumen: { porMoneda: { CUP: { total: 200 } } } },
       conteos: { ventas: { pending: 0 }, servicios: { pending: 0 }, gastos: { pending: 0 } },
@@ -132,18 +133,35 @@ describe('ResumenFinanciero — Rediseño Fase 4', () => {
     }, { timeout: 3000 });
   });
 
-  it('usa la primera moneda disponible si el catálogo no marca una principal', async () => {
+  it('usa la moneda de la política contable aunque el catálogo marque otra como principal', async () => {
     const p = payloadBase();
-    p.data.monedas = [{ codigo: 'USD', esPrincipal: false }];
+    // El catálogo global sigue marcando CUP; la empresa opera en USD.
+    p.data.monedas = [{ codigo: 'CUP', esPrincipal: true }, { codigo: 'USD', esPrincipal: false }];
+    p.data.monedaPrincipal = { estado: 'CONFIGURADA', moneda: 'USD' };
     p.data.resumen = {
       estadisticas: { periodo: { fechaInicio: '2026-01-01', fechaFin: '2026-01-31' } },
-      resumenPorMoneda: [{ moneda: 'USD', totalIngresos: 100, totalEgresos: 20, saldoActual: 80 } as any],
+      resumenPorMoneda: [
+        { moneda: 'CUP', totalIngresos: 1000, totalEgresos: 400 } as any,
+        { moneda: 'USD', totalIngresos: 100, totalEgresos: 20, saldoActual: 80 } as any,
+      ],
     };
     getResumenCompletoAction.mockResolvedValue(p);
     render(<ResumenFinanciero periodo="enero" page={1} limit={10} />);
     await waitFor(() => {
       const netFlowLabel = screen.getByText('Flujo Neto del Período', { selector: 'span' });
       expect(netFlowLabel.parentElement?.parentElement).toHaveTextContent('USD');
+    });
+  });
+
+  it('no presenta CUP como moneda configurada cuando la política está ausente', async () => {
+    const p = payloadBase();
+    p.data.monedaPrincipal = { estado: 'AUSENTE', moneda: null };
+    getResumenCompletoAction.mockResolvedValue(p);
+    render(<ResumenFinanciero periodo="enero" page={1} limit={10} />);
+
+    await waitFor(() => {
+      const netFlowLabel = screen.getByText('Flujo Neto del Período', { selector: 'span' });
+      expect(netFlowLabel.parentElement?.parentElement).not.toHaveTextContent('CUP');
     });
   });
 

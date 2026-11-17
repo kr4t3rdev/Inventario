@@ -20,6 +20,7 @@ import { getProductosAction } from "@/features/productos/actions"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
 import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
+import { useMonedaPrincipal } from "@/features/contabilidad/hooks/use-moneda-principal"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const ventaSchema = z.object({
@@ -62,11 +63,31 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
+
+  useEffect(() => {
+    let cancelado = false
+
+    getProductosAction()
+      .then((resultado) => {
+        if (cancelado) return
+        if (resultado.success) setProductos(resultado.data ?? [])
+      })
+      .catch(() => {
+        if (!cancelado) setProductos([])
+      })
+      .finally(() => {
+        if (!cancelado) setIsLoadingProductos(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [])
   const { monedas: monedasData } = useMonedas()
+  const { monedaPrincipal, isLoading: isLoadingMonedaPrincipal } = useMonedaPrincipal()
 
   const monedas = monedasData || []
   const monedasActivas = monedas.filter((m: any) => m.isActive)
-  const monedaPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || "CUP"
 
   const form = useForm<VentaFormValues>({
     resolver: zodResolver(ventaSchema),
@@ -74,18 +95,31 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
       productoId: initialData?.productoId || "",
       cantidad: initialData?.cantidad || 1,
       puntoDeVentaId: initialData?.puntoDeVentaId || "",
-      moneda: initialData?.moneda || monedaPrincipal,
+      moneda: initialData?.moneda || "",
       precioVentaOriginal: initialData?.precioVentaOriginal || undefined,
     },
   })
 
   const watchedValues = form.watch()
+  const monedaSeleccionada = watchedValues.moneda || initialData?.moneda || monedaPrincipal || ''
+
+  // La politica contable se resuelve de forma asincrona: se refleja en el
+  // estado del formulario para que el envio no falle por moneda vacia.
+  useEffect(() => {
+    if (isLoadingMonedaPrincipal) return
+    if (initialData?.moneda) return
+    if (form.getValues('moneda')) return
+    form.setValue('moneda', monedaPrincipal || '')
+  }, [isLoadingMonedaPrincipal, monedaPrincipal, form, initialData?.moneda])
+
   const selectedProducto = productos?.find(p => p.id === watchedValues.productoId)
-  const selectedMoneda = monedasActivas.find(m => m.codigo === watchedValues.moneda)
+  const selectedMoneda = monedasActivas.find(m => m.codigo === monedaSeleccionada)
   const precioVenta = watchedValues.precioVentaOriginal || selectedProducto?.precioVenta || 0
   const totalVenta = (watchedValues.cantidad || 0) * precioVenta
 
-  const requiresExchangeConfirmation = watchedValues.moneda && watchedValues.moneda !== monedaPrincipal
+  const requiresExchangeConfirmation = Boolean(
+    monedaSeleccionada && monedaPrincipal && monedaSeleccionada !== monedaPrincipal,
+  )
 
   async function onSubmit(data: VentaFormValues) {
     // If currency is different from principal, show exchange rate dialog
@@ -147,7 +181,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
     setPendingSubmission(null)
   }
 
-  if (isLoadingProductos || isLoadingPuntosDeVenta) {
+  if (isLoadingProductos || isLoadingPuntosDeVenta || isLoadingMonedaPrincipal) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -250,7 +284,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
                       <DollarSign className="h-4 w-4" />
                       Moneda de la Venta
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={monedaSeleccionada}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione la moneda" />
@@ -265,7 +299,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
                                 {moneda.simbolo} - {moneda.nombre}
                               </span>
                               {moneda.esPrincipal && (
-                                <Badge variant="secondary" className="text-xs">Principal</Badge>
+                                <Badge variant="secondary" className="text-xs">Base de tasas</Badge>
                               )}
                             </div>
                           </SelectItem>
@@ -369,7 +403,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
           isOpen={showTasaCambioDialog}
           onClose={handleExchangeCancel}
           monedaOrigen={pendingSubmission.moneda}
-          monedaDestino={monedaPrincipal}
+          monedaDestino={monedaPrincipal || ""}
           monto={totalVenta}
           onConfirm={handleExchangeConfirm}
           titulo="Confirmar Tasa de Cambio para Venta"

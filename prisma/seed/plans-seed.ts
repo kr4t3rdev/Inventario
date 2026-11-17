@@ -60,6 +60,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"transferencias-bancarias": false,
 	"ajustes-bancarios": false,
 	"multi-moneda": false,
+	"moneda-principal-cambio": false,
 	"rentabilidad-compra": true,
 	"inyeccion-capital": false,
 	"reportes-financieros": true,
@@ -128,6 +129,7 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	facturacion: true,
 	"series-facturacion": true,
 	"multi-moneda": true,
+	"moneda-principal-cambio": false,
 	"transferencias-bancarias": true,
 	"ajustes-bancarios": true,
 	"servicios": true,
@@ -196,6 +198,8 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,
+	// Solo Empresarial puede cambiar la moneda principal (sin movimientos)
+	"moneda-principal-cambio": true,
 	"upload-productos-photo": true,
 	"upload-contratos-attachment": true,
 	"upload-contratos-version": true,

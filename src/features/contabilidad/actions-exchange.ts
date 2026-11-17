@@ -8,7 +8,12 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { canManageAccountingPolicy } from '@/lib/auth/accounting-policy-capabilities';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import {
+  provisionTenantAccountingPolicy,
+  TenantAccountingPolicyError,
+} from '@/features/contabilidad/services/tenant-accounting-policy-service';
 
 import { CurrencyConversionService } from '@/lib/services/currency-conversion-service';
 
@@ -161,6 +166,67 @@ export const updateMonedaAction = withAction(
 
     revalidatePath('/busy/contabilidad/exchange');
     return moneda;
+  },
+);
+
+/**
+ * @description Cambia la moneda principal (política contable) del tenant desde
+ * el exchange. Solo planes con el feature `moneda-principal-cambio`
+ * (Empresarial); el servicio de política bloquea el cambio si la empresa ya
+ * tiene movimientos contables (FUNCTIONAL_CURRENCY_IMMUTABLE) y no se abre
+ * ningún proceso de revisión: sin historial, sin cambio.
+ * @param {{ codigo: string }} input - Código de la moneda principal destino.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<unknown>} Resultado del provisioning o ActionError tipada.
+ */
+export const cambiarMonedaPrincipalAction = withAction(
+  async (input: { codigo: string }, user: AuthenticatedUser) => {
+    requireFeature(user, 'moneda-principal-cambio', 'cambiar la moneda principal');
+    const tenantId = requireTenant(user);
+    if (!await canManageAccountingPolicy(user.userId, tenantId)) {
+      throw new ActionError(
+        'No tienes permisos para cambiar la moneda principal de esta empresa',
+        'FORBIDDEN',
+      );
+    }
+
+    const codigo = typeof input?.codigo === 'string' ? input.codigo.trim().toUpperCase() : '';
+    const moneda = codigo
+      ? await prisma.moneda.findUnique({ where: { codigo } })
+      : null;
+    if (!moneda?.isActive) {
+      throw new ActionError(
+        'La moneda seleccionada no está activa',
+        'FUNCTIONAL_CURRENCY_NOT_AVAILABLE',
+      );
+    }
+
+    try {
+      const result = await provisionTenantAccountingPolicy({
+        tenantId,
+        functionalCurrencyCode: moneda.codigo,
+        actorUserId: user.userId,
+        origin: 'TENANT_UI',
+        reason: 'Cambio de moneda principal solicitado desde el exchange contable',
+        correlationId: `exchange-${randomUUID()}`,
+      });
+      if (!['UPDATED', 'CREATED', 'NO_OP'].includes(result.result)) {
+        throw new ActionError(
+          'La moneda principal solo puede cambiarse en empresas sin movimientos contables',
+          'ACCOUNTING_POLICY_BLOCKED',
+        );
+      }
+      revalidatePath('/busy/contabilidad/exchange');
+      return result;
+    } catch (error) {
+      if (
+        error instanceof TenantAccountingPolicyError &&
+        error.code === 'FUNCTIONAL_CURRENCY_IMMUTABLE'
+      ) {
+        throw new ActionError(error.message, 'FUNCTIONAL_CURRENCY_IMMUTABLE');
+      }
+      throw error;
+    }
   },
 );
 

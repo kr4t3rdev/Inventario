@@ -7,6 +7,8 @@ const fetchMock = vi.fn(async () =>
   new Response(new Blob(['csv-data'], { type: 'text/csv' }), { status: 200 }),
 );
 
+const monedaPrincipalMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@/features/contabilidad/actions-exchange', () => ({
   getMonedasAction: vi.fn().mockResolvedValue({
     success: true,
@@ -14,8 +16,16 @@ vi.mock('@/features/contabilidad/actions-exchange', () => ({
   }),
 }));
 
+vi.mock('@/features/contabilidad/actions-accounting-policy', () => ({
+  getMonedaPrincipalAction: monedaPrincipalMock,
+}));
+
 beforeEach(() => {
   fetchMock.mockClear();
+  monedaPrincipalMock.mockResolvedValue({
+    success: true,
+    data: { estado: 'CONFIGURADA', moneda: 'USD' },
+  });
   globalThis.fetch = fetchMock as unknown as typeof fetch;
   if (!window.URL.createObjectURL) {
     Object.defineProperty(window.URL, 'createObjectURL', {
@@ -355,5 +365,30 @@ describe('ReportesAnalyticsPage — Contrato de filtros (Fase 0)', () => {
     expect(url).toContain('busqueda=servicio');
     expect(url).toContain('tipoMovimiento=venta');
     expect(url).toContain('moneda=USD');
+  });
+
+  it('muestra en la toolbar la moneda de la política contable, no la del catálogo', async () => {
+    await renderPage();
+
+    await waitFor(() => {
+      expect(monedaPrincipalMock).toHaveBeenCalled();
+      expect(screen.getByText('USD')).toBeInTheDocument();
+    });
+    // El catálogo global marca CUP como principal, pero la empresa no opera en ella.
+    expect(screen.queryByText('CUP')).not.toBeInTheDocument();
+  });
+
+  it('no presenta CUP como moneda configurada cuando la política está ausente', async () => {
+    monedaPrincipalMock.mockResolvedValue({
+      success: true,
+      data: { estado: 'AUSENTE', moneda: null },
+    });
+
+    await renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Sin moneda configurada')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('CUP')).not.toBeInTheDocument();
   });
 });

@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCuentasBancarias } from '@/features/contabilidad/hooks/use-cuentas-bancarias';
-import { getMonedasAction } from '@/features/contabilidad/actions-exchange';
+import { getMonedaPrincipalAction } from '@/features/contabilidad/actions-accounting-policy';
 import { buildMovimientosExportParams } from '@/features/contabilidad/lib/reportes-filters';
 import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
@@ -75,15 +75,20 @@ export function ReportesAnalyticsPage() {
   const [resetMovimientosKey, setResetMovimientosKey] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [monedas, setMonedas] = useState<Array<{ codigo: string; esPrincipal?: boolean }>>([]);
+  const [monedaPrincipal, setMonedaPrincipal] = useState<string | null>(null);
 
   const { cuentas } = useCuentasBancarias();
   const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
 
   useEffect(() => {
-    getMonedasAction().then((result) => {
-      if (result.success && Array.isArray(result.data)) setMonedas(result.data);
-    }).catch((error) => console.error('Error al cargar monedas del reporte:', error));
+    // Fuente de verdad de la moneda principal: política contable del tenant.
+    getMonedaPrincipalAction().then((result) => {
+      if (result.success && result.data?.estado === 'CONFIGURADA') {
+        setMonedaPrincipal(result.data.moneda);
+      } else {
+        setMonedaPrincipal(null);
+      }
+    }).catch((error) => console.error('Error al cargar la moneda principal del reporte:', error));
   }, []);
 
   const containerVariants = {
@@ -166,10 +171,7 @@ export function ReportesAnalyticsPage() {
     ? `${filtrosGlobales.fechaInicio} al ${filtrosGlobales.fechaFin}`
     : 'Período no seleccionado';
 
-  const monedaPrincipal = monedas.find((moneda) => moneda.esPrincipal)?.codigo
-    || monedas[0]?.codigo
-    || cuentas[0]?.moneda
-    || 'CUP';
+  const monedaPrincipalLabel = monedaPrincipal ?? 'Sin moneda configurada';
   const hasActiveFilters = !!(filtrosGlobales.fechaInicio || filtrosGlobales.fechaFin || filtrosGlobales.cuentaId);
 
   return (
@@ -208,7 +210,7 @@ export function ReportesAnalyticsPage() {
               <ReportFiltersToolbar
                 periodo={periodoString}
                 cuentaActiva={cuentaSeleccionada?.nombreBanco || 'Todas las cuentas'}
-                monedaPrincipal={monedaPrincipal}
+                monedaPrincipal={monedaPrincipalLabel}
                 onRefresh={handleRefresh}
                 onClear={handleLimpiarFiltros}
                 hasActiveFilters={hasActiveFilters}

@@ -9,7 +9,8 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { resolverMonedaPrincipal } from '@/lib/services/moneda-principal-service';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 
 import {
   classifyAccountingPolicyEvidence,
@@ -56,6 +57,22 @@ async function requireAccountingPolicyManager(
   }
 }
 
+/**
+ * @description Lee la moneda principal de la empresa desde su política contable
+ * (fuente de verdad). No usa el catálogo global ni sustituye la moneda cuando
+ * no está configurada.
+ * @param {_input: void} _input - Sin parámetros.
+ * @param {AuthenticatedUser} user - Usuario autenticado con membresía activa.
+ * @returns {Promise<{ estado: EstadoMonedaPrincipal; moneda: string | null }>}
+ * Estado explícito (CONFIGURADA/AUSENTE/ERROR) y código normalizado.
+ */
+export const getMonedaPrincipalAction = withAction(
+  async (_input: void, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
+    return resolverMonedaPrincipal(tenantId);
+  },
+);
+
 export const getAccountingPolicyStateAction = withAction(
   async (_input: void, user: AuthenticatedUser) => {
     const tenantId = requireTenant(user);
@@ -84,6 +101,16 @@ export const setInitialAccountingPolicyAction = withAction(
     const parsed = policyInputSchema.parse(input);
     const tenantId = requireTenant(user);
     await requireAccountingPolicyManager(user, tenantId);
+
+    // Cambiar una moneda ya configurada es exclusivo del plan con el feature;
+    // la configuración inicial (tenant sin política) no se restringe por plan.
+    const existingPolicy = await prisma.tenantAccountingPolicy.findUnique({
+      where: { tenantId },
+      select: { functionalCurrencyCode: true },
+    });
+    if (existingPolicy) {
+      requireFeature(user, 'moneda-principal-cambio', 'cambiar la moneda principal');
+    }
 
     const result = await provisionTenantAccountingPolicy({
       tenantId,

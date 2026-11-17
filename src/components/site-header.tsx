@@ -1,4 +1,6 @@
 import { getMonedasAction, getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
+import { getCurrentUser } from "@/lib/server-actions/get-current-user"
+import { resolverMonedaPrincipal } from "@/lib/services/moneda-principal-service"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "./theme-toggle"
 import {
@@ -18,10 +20,16 @@ import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/conta
  * @returns {Promise<React.JSX.Element>} Encabezado accesible de la aplicación.
  */
 export async function SiteHeader() {
-  const [monedasResult, tasasResult] = await Promise.all([
+  const [monedasResult, tasasResult, usuario] = await Promise.all([
     getMonedasAction(),
     getTasasActualesAction(),
+    getCurrentUser(),
   ])
+
+  // Fuente de verdad de la moneda principal: política contable del tenant.
+  const monedaPrincipal = usuario?.tenantId
+    ? await resolverMonedaPrincipal(usuario.tenantId)
+    : { estado: 'AUSENTE' as const, moneda: null }
 
   const monedas = monedasResult.success ? (monedasResult.data ?? []) : []
   const tasas = tasasResult.success ? (tasasResult.data?.tasas ?? []) : []
@@ -43,7 +51,7 @@ export async function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        <CurrencyIndicator monedas={monedas} tasas={tasas} />
+        <CurrencyIndicator monedas={monedas} tasas={tasas} monedaPrincipal={monedaPrincipal} />
         
         <div className="flex items-center gap-2">
           <FloatingAccount />

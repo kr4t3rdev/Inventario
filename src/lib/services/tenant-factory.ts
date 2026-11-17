@@ -27,6 +27,9 @@ export interface CreateTenantForUserResult {
   licenseId: string
 }
 
+/** Moneda principal que el servidor asigna a toda empresa nueva. */
+const MONEDA_PRINCIPAL_NUEVA_EMPRESA = 'CUP'
+
 interface ReferralOwner {
   domain: 'affiliate' | 'salesAgent'
   ownerId: string
@@ -60,7 +63,6 @@ export async function createTenantForUser(
       name: true,
       onboardingStatus: true,
       pendingReferralCode: true,
-      pendingFunctionalCurrencyCode: true,
     }
   })
   if (!user) throw new ActionError('Usuario no encontrado', 'NOT_FOUND')
@@ -99,13 +101,9 @@ export async function createTenantForUser(
       'INVALID_ONBOARDING_STATUS'
     )
   }
-  const functionalCurrencyCode = user.pendingFunctionalCurrencyCode
-  if (!functionalCurrencyCode) {
-    throw new ActionError(
-      'La empresa debe confirmar su moneda funcional contable antes de la aprobación',
-      'ACCOUNTING_POLICY_REQUIRED',
-    )
-  }
+  // La moneda principal se asigna en el servidor; no depende de lo que
+  // envíe el cliente ni del catálogo global de monedas.
+  const functionalCurrencyCode = MONEDA_PRINCIPAL_NUEVA_EMPRESA
 
   // 2. Rechazar membresías parciales o ajenas al alta actual.
   if (existingMembership) {
@@ -173,7 +171,7 @@ export async function createTenantForUser(
       functionalCurrencyCode,
       actorUserId: userId,
       origin: 'ONBOARDING',
-      reason: 'Moneda funcional confirmada durante el alta de la empresa',
+      reason: 'Moneda principal asignada automáticamente al alta de la empresa',
       correlationId: `onboarding-${userId}`,
     })
     if (!policyResult || !['CREATED', 'NO_OP'].includes(policyResult.result)) {

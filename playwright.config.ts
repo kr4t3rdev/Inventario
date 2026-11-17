@@ -11,8 +11,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  globalSetup: './e2e/global-setup.ts',
-  globalTeardown: './e2e/global-teardown.ts',
+  globalSetup: './e2e/global-setup.cjs',
+  globalTeardown: './e2e/global-teardown.cjs',
   reporter: [
     ['html', { open: 'never' }],
     ['list']

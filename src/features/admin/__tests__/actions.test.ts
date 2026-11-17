@@ -804,8 +804,9 @@ describe('Admin Server Actions', () => {
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
-    it('company user -> rechaza la aprobación sin moneda funcional confirmada', async () => {
+    it('company user -> aprueba sin moneda pendiente y asigna CUP en el servidor', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(provisionTenantAccountingPolicyInTransaction).mockClear();
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         userId: 'user-company',
         name: 'Empresa Demo',
@@ -814,6 +815,17 @@ describe('Admin Server Actions', () => {
         onboardingType: 'company',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-basico',
+        nombre: 'B\u00e1sico',
+        precio: 30,
+        duracionDias: 30,
+        maxUsuarios: 3,
+        maxAlmacenes: 2,
+        maxProductos: 500,
+        features: {},
+      } as any);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null); // slug libre
 
       const r = await approveGlobalUserAction({
         userId: 'user-company',
@@ -821,9 +833,12 @@ describe('Admin Server Actions', () => {
         planId: 'plan-basico',
       });
 
-      expect(r.success).toBe(false);
-      expect(expectActionFailure(r).error.code).toBe('ACCOUNTING_POLICY_REQUIRED');
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(r.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(vi.mocked(provisionTenantAccountingPolicyInTransaction)).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ functionalCurrencyCode: 'CUP' }),
+      );
     });
 
     it('worker user -> legacy activation (solo activar)', async () => {

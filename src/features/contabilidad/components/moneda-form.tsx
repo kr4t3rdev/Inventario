@@ -177,10 +177,10 @@ export function MonedaForm({ moneda, onClose, onSuccess }: MonedaFormProps) {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
-                      Moneda Principal
+                      Base de tasas
                     </FormLabel>
                     <FormDescription>
-                      Esta será la moneda base del sistema para conversiones
+                      Moneda base para la formación del catálogo de tasas de cambio
                     </FormDescription>
                   </div>
                   <FormControl>

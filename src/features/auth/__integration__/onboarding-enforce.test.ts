@@ -263,7 +263,7 @@ describe('PE-04 onboarding and multi-tenant integration gate', { timeout: 120_00
     const typed = await onboardingType(
       request(
         '/api/auth/onboarding/type',
-        { userType: 'company', functionalCurrencyCode: 'CUP' },
+        { userType: 'company' },
         company.onboardingToken,
       ),
     );
@@ -373,7 +373,7 @@ describe('PE-04 onboarding and multi-tenant integration gate', { timeout: 120_00
     expect((await onboardingType(
       request(
         '/api/auth/onboarding/type',
-        { userType: 'company', functionalCurrencyCode: 'CUP' },
+        { userType: 'company' },
         company.onboardingToken,
       ),
     )).status).toBe(200);
