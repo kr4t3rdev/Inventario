@@ -10,6 +10,34 @@
 - [ ] 7. Ejecutar pruebas unitarias, PostgreSQL e interfaz/E2E significativas, cobertura del código nuevo >=80%, tipos, lint y build; comprobar primera venta/compra/cobro/pago, conciliación, planes e aislamiento. Registrar evidencia real.
 - [ ] 8. Revisar migraciones, rollback operativo, auditoría, seguridad y diff; actualizar graphify tras cambios de código. No marcar tareas sin evidencia.
 
+## Estado consolidado verificado (2026-11-17)
+
+### Terminado en código, con alcance acotado
+
+- La rama local `codex/onboarding-saldos-iniciales` incorpora `origin/main` en `34f297402` y contiene los commits `bb26d826` (persistencia segura de submayores externos) y `d6bd8dd6` (cálculo de liquidaciones). No se ha publicado.
+- CxC externa: contrato y persistencia interna ligados a tenant e inicialización, cliente del mismo tenant, referencia externa única, solo moneda funcional por ahora. No crea una venta, movimiento bancario ni asiento. La lectura devuelve y busca la referencia y moneda originales; la edición/anulación genérica se bloquea y la fusión de clientes no puede reasignar esas cuentas.
+- CxP externa: contrato y persistencia interna ligados a tenant e inicialización, proveedor del mismo tenant y referencia única. Puede conservar desconocidas factura y fecha en vez de inventarlas. La consulta muestra «Saldo inicial», referencia y antigüedad desconocida; el pago está deshabilitado.
+- Inventario: migración 09 define la identidad de una fuente por lote/producto e inicialización y la relación opcional desde asignaciones FIFO. Las rutas de valoración y devolución rechazan fuentes iniciales mientras falten evidencia, FX y asiento coordinado. No existe aún un writer FIFO para esas fuentes.
+- Contratos puros verifican importes y comparan saldos originales de auxiliares/inventario con líneas contables por cuenta y moneda. No prueban ni concilian todavía valores funcionales o evidencia FX.
+- Liquidación: `initial-subledger-settlement.ts` calcula aplicación parcial/final, remanente a cuatro decimales y diferencia funcional usando importes expresos. Sus seis pruebas pasaron tras observar el fallo inicial del esqueleto `NOT_IMPLEMENTED`. Este cálculo no persiste pagos ni saldos, no actualiza banco y no emite asientos.
+- Se conservan bloqueos para las nuevas aperturas bancarias y las rutas de inicialización no coordinadas. El alta de stock por EAN ya no inventa una compra o gasto inicial.
+
+### Evidencia ejecutada
+
+- Suite focalizada previa: 91 pruebas unitarias en 14 archivos; suite PostgreSQL dirigida: 14/14. El nuevo cálculo añadió 6/6 pruebas unitarias.
+- `prisma validate`, generación Prisma, migración deploy sobre la base desechable, TypeScript sin emisión, ESLint de archivos tocados y `git diff --check` pasan según las corridas registradas arriba. Graphify se actualizó después del código.
+- El typecheck y ESLint del cálculo nuevo pasan. No se ejecutó build ni E2E/navegador en esta pasada. La prueba integral de cobertura >=80% aún no existe.
+- Las migraciones se aplicaron solo a PostgreSQL local desechable; no se ejecutó escritura en producción.
+
+### Pendiente para cerrar el cambio
+
+- Coordinador reanudable que valide plan/permisos, tenant, período y payload; confirme apertura, registros operativos y asiento en forma atómica/idempotente y recupere resultados ambiguos. La apertura bancaria positiva permanece bloqueada.
+- Cobro/pago operativo de CxC/CxP externas: evidencia de moneda/FX, fecha efectiva y período, cuenta bancaria, saldo auxiliar, movimiento de tesorería, asiento formal, clave/replay idempotente, rollback/concurrencia y UI. No convertir el saldo inicial en venta o gasto.
+- Writer de inventario inicial que cree cantidad/costo por lote y ubicación, integre FIFO con concurrencia, venta, devolución y replay, y concilie el asiento coordinado en moneda funcional.
+- Importación de anticipos, deudas y préstamos existentes con principal/valoración/evidencia, sin duplicar desembolsos o cobros bancarios; probar liquidaciones posteriores.
+- Conciliación integral de bancos, auxiliares, inventario y libro mayor por cuenta, moneda original, moneda funcional y evidencia FX; permisos efectivos y planes; recorridos posteriores de compra, venta, cobro y pago.
+- Pruebas de integración PostgreSQL y E2E significativas, cobertura nueva >=80%, build, rollback/auditoría/seguridad y revisión completa de escritores antes de retirar los bloqueos.
+
 ## Avance parcial verificado (2026-11-16)
 
 - La creación directa de CxC/CxP y la creación normal de producto toman el bloqueo contable dentro de sus transacciones. Las pruebas unitarias observaron RED antes del cambio y pasaron después; PostgreSQL confirmó espera del bloqueo en CxC, CxP y creación normal de producto. El flujo EAN tomó el mismo bloqueo, pero falta su prueba concurrente real. El bloqueo añadido a edición de producto se retiró después de detectar posibles inversiones de orden con ventas y compras; requiere coordinación integral y pruebas de ausencia de deadlock.
