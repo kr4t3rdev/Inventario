@@ -1,0 +1,7 @@
+# Prompt para OpenCode
+
+Implementa íntegramente el cambio `openspec/changes/inicializacion-empresa-existente/`. Lee proposal.md, design.md, specs y tasks.md, además de AGENTS.md aplicables. Trabaja en el worktree existente y preserva todos los cambios compartidos; inspecciona el estado y origin/main antes de integrar. No leas archivos .env restringidos, no uses producción ni borres datos. No uses ODD.
+
+El usuario necesita cargar una empresa ya operativa sin respaldo y sin reconstruir su historia. El saldo bancario a corte NO presupone inyección, deuda o anticipo. Atiende todos los módulos del plan, permisos efectivos de cada tenant, detalle operativo y apertura contable conciliada. El código actual solo cubre parcialmente bancos y tiene supuestos incorrectos; verifica antes de reutilizarlo.
+
+Sigue las tareas en orden con TDD estricto: prueba fallida observada por la razón esperada, implementación mínima, prueba verde y refactor; registra evidencia por tarea. Usa PostgreSQL aislado para transacciones, rollback, concurrencia e idempotencia, y E2E para flujos críticos. Incluye fecha de corte, multimoneda, tenant, autorización, planes, reintentos y ausencia de efectos ficticios. No declares éxito sin verificar. Marca casillas únicamente con evidencia real. Conserva datos existentes y no despliegues ni alteres entornos externos. Entrega resumen con archivos, pruebas, limitaciones y pendientes para revisión en Codex.

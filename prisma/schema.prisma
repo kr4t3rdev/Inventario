@@ -330,6 +330,8 @@ model Tenant {
   fiscalEmisionEvents            FiscalEmisionEvent[]
   aperturaPeriodos               AperturaPeriodo[]
   aperturaPeriodoSolicitudes    AperturaPeriodoSolicitud[]
+  inicializacionesContables     InicializacionContable[]
+  periodoContableVersion        PeriodoContableVersion?
   arqueosCaja                    ArqueoCaja[]
   auditoriaPeriodos              AuditoriaPeriodo[]
   backupLogs                     BackupLog[]
@@ -2332,6 +2334,9 @@ model TransaccionMoneda {
 model CuentaBancaria {
   cuentaId                 String                   @id @default(cuid())
   tenantId                 String
+  nombreCuenta             String?
+  cuentaContableInicialId  String?
+  cuentaContableInicial    CuentaContable? @relation("CuentaBancariaApertura", fields: [tenantId, cuentaContableInicialId], references: [tenantId, cuentaContableId], onDelete: Restrict)
   nombreBanco              String
   numeroCuenta             String
   tipoCuenta               String
@@ -3741,6 +3746,16 @@ model PeriodoContable {
   @@map("periodos_contables")
 }
 
+/// Versión por tenant que invalida snapshots anteriores a cambios de período.
+model PeriodoContableVersion {
+  tenantId  String   @id
+  version   Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@map("periodo_contable_versiones")
+}
+
 /// Catálogo de cuentas tenant-scoped usado por el mayor formal.
 model CuentaContable {
   cuentaContableId String             @id @default(cuid())
@@ -3761,6 +3776,7 @@ model CuentaContable {
   tenant           Tenant             @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
   lineas           AsientoLinea[]
   roles            CuentaRolTenant[]
+  cuentasBancariasApertura CuentaBancaria[] @relation("CuentaBancariaApertura")
 
   @@unique([tenantId, codigo])
   @@unique([tenantId, cuentaContableId])
@@ -4127,6 +4143,7 @@ model AperturaPeriodoSolicitud {
   modoContable           ModoContable    @default(CAJA)
   functionalCurrencyCode String
   lineas                 Json
+  cuentasBancarias       Json?
   idempotencyKey         String?
   idempotencyPayloadHash String?
   estado                 String          @default("PENDIENTE")
@@ -4135,6 +4152,9 @@ model AperturaPeriodoSolicitud {
   hashAprobacion         String?
   aprobadaAt             DateTime?
   consumidaAt            DateTime?
+  consumoEvidencia       Json?
+  consumoHash            String?
+  consumidaPor           String?
   periodoId              String?         @unique
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
@@ -4143,6 +4163,23 @@ model AperturaPeriodoSolicitud {
   @@index([tenantId, estado, createdAt])
   @@unique([tenantId, solicitadaPor, idempotencyKey])
   @@map("apertura_periodo_solicitudes")
+}
+
+/// Evidencia de idempotencia de una inicialización contable por empresa.
+model InicializacionContable {
+  inicializacionId String   @id @default(cuid())
+  tenantId         String
+  idempotencyKey   String
+  payloadHash      String
+  estado           String   @default("EN_PROGRESO")
+  resultado        Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tenant           Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId])
+  @@index([tenantId, estado, createdAt])
+  @@map("inicializaciones_contables")
 }
 
 model SaldoSnapshot {

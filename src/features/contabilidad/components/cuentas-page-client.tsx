@@ -36,6 +36,7 @@ interface CuentasPageClientProps {
 type OpeningBalanceSource = 'CAPITAL_SOCIAL' | 'DEUDA_EXTERNA';
 
 interface CreateBankAccountForm {
+  nombreCuenta: string;
   nombreBanco: string;
   numeroCuenta: string;
   tipoCuenta: string;
@@ -47,6 +48,7 @@ interface CreateBankAccountForm {
 }
 
 const emptyForm: CreateBankAccountForm = {
+  nombreCuenta: '',
   nombreBanco: '',
   numeroCuenta: '',
   tipoCuenta: 'AHORROS',
@@ -135,6 +137,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
 
   const openEdit = (cuenta: any) => {
     setEditForm({
+      nombreCuenta: cuenta.nombreCuenta ?? '',
       nombreBanco: cuenta.nombreBanco,
       numeroCuenta: cuenta.numeroCuenta,
       tipoCuenta: cuenta.tipoCuenta,
@@ -166,6 +169,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
       description="Administra los bancos, tipos de cuenta y saldos disponibles."
       actions={
         <>
+          <Button variant="outline" asChild><Link href="/busy/contabilidad/periodos">Inicializar saldos</Link></Button>
           <Button
             variant="ghost"
             size="icon"
@@ -193,6 +197,10 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="create-account-label">Nombre de la cuenta</Label>
+                      <Input id="create-account-label" value={form.nombreCuenta} onChange={e => setForm({...form, nombreCuenta: e.target.value})} placeholder="Ej: Operaciones" />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="create-bank-name">Banco</Label>
                       <Input id="create-bank-name" value={form.nombreBanco} onChange={e => setForm({...form, nombreBanco: e.target.value})} placeholder="Ej: Banco Nacional" />
@@ -404,7 +412,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
                             <th scope="row" className="py-3 text-left font-normal">
                               <div className="flex items-center gap-2">
                                 <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                                <span className="font-medium">{cuenta.nombreBanco}</span>
+                                <span className="font-medium">{cuenta.nombreCuenta || cuenta.nombreBanco}</span>
                               </div>
                             </th>
                             <td className="py-3 font-mono text-xs">{cuenta.numeroCuenta}</td>
@@ -458,6 +466,10 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
             {editing && (
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-account-label">Nombre de la cuenta</Label>
+                    <Input id="edit-account-label" value={editForm.nombreCuenta ?? ''} onChange={e => setEditForm({...editForm, nombreCuenta: e.target.value})} />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-bank-name">Banco</Label>
                     <Input id="edit-bank-name" value={editForm.nombreBanco} onChange={e => setEditForm({...editForm, nombreBanco: e.target.value})} />

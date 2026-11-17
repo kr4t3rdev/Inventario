@@ -11,6 +11,8 @@
 "use server";
 
 import { z } from "zod";
+import { initialBankDraftSchema } from "@/features/contabilidad/services/initial-bank-draft";
+import { reconcileInitialBankBalances } from "@/features/contabilidad/services/initial-bank-reconciliation";
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { hasPermission, requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
@@ -156,6 +158,7 @@ const manualOpeningLineInputSchema = z.object({
 const solicitudAperturaSchema = abrirPeriodoSchema.extend({
 	idempotencyKey: z.string().trim().min(1).max(64),
 	lineas: z.array(manualOpeningLineInputSchema).min(2).max(500),
+	cuentasBancarias: z.unknown().transform((value) => initialBankDraftSchema.parse({ cuentas: value }).cuentas).optional(),
 });
 
 const solicitudIdSchema = z.object({ solicitudId: z.string().min(1) });
@@ -209,6 +212,7 @@ export const obtenerSolicitudAperturaManualAction = withAction(
 				modoContable: true,
 				functionalCurrencyCode: true,
 				lineas: true,
+				cuentasBancarias: true,
 				estado: true,
 				solicitadaPor: true,
 				aprobadaPor: true,
@@ -230,11 +234,13 @@ export const obtenerSolicitudAperturaManualAction = withAction(
 		const verification = await verifyManualOpening(
 			tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines,
 		);
+		await validateOpeningBanks(tx, tenantId, user, policy.functionalCurrencyCode, solicitud.cuentasBancarias, verification.valuedLines);
 		const previewHash = hashImmutableFinancialEvidence({
 			solicitudId, tenantId, functionalCurrencyCode: policy.functionalCurrencyCode,
 			fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
 			tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
 			observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+			...(solicitud.cuentasBancarias ? { cuentasBancarias: solicitud.cuentasBancarias } : {}),
 			fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
 		});
 		if (solicitud.estado === "APROBADA") {
@@ -245,6 +251,7 @@ export const obtenerSolicitudAperturaManualAction = withAction(
 				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
 				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
 				observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+				...(solicitud.cuentasBancarias ? { cuentasBancarias: solicitud.cuentasBancarias } : {}),
 				fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
 			});
 			if (!solicitud.hashAprobacion || approvedHash !== solicitud.hashAprobacion) {
@@ -407,6 +414,46 @@ async function verifyManualOpening(
 	};
 }
 
+/** @description Concilia todas las líneas de las cuentas bancarias declaradas. */
+async function validateOpeningBanks(db: PrismaTypes.TransactionClient, tenantId: string, user: AuthenticatedUser, functionalCurrencyCode: string, value: unknown, lines: Array<{ cuentaContableId: string; moneda: string; debito: string; credito: string }>): Promise<void> {
+  if (value == null) return;
+  const { cuentas } = initialBankDraftSchema.parse({ cuentas: value });
+  if (cuentas.some((account) => account.moneda !== functionalCurrencyCode)) {
+    requireFeature(user, 'multi-moneda', 'inicializar cuentas en moneda extranjera');
+  }
+  const currencies = await db.moneda.findMany({ where: { codigo: { in: cuentas.map((account) => account.moneda) }, isActive: true }, select: { codigo: true } });
+  if (new Set(currencies.map((currency) => currency.codigo)).size !== new Set(cuentas.map((account) => account.moneda)).size) throw new ActionError("Una moneda no existe o está inactiva", "APERTURA_SALDOS_NO_VERIFICABLES");
+  const roles = await db.cuentaRolTenant.findMany({ where: { tenantId, rol: { in: ['BANCOS', 'CAJA_PRINCIPAL'] }, cuenta: { activa: true, aceptaMovimiento: true, tipo: 'ACTIVO' } }, select: { rol: true, cuentaId: true } });
+  for (const account of cuentas) {
+    const role = account.tipoCuenta === 'EFECTIVO' ? 'CAJA_PRINCIPAL' : 'BANCOS';
+    if (!roles.some((entry) => entry.rol === role && entry.cuentaId === account.cuentaContableId)) {
+      throw new ActionError("La cuenta contable no corresponde al rol de tesorería", "APERTURA_SALDOS_NO_VERIFICABLES");
+    }
+  }
+  const unsupportedRoles = await db.cuentaRolTenant.findMany({
+    where: { tenantId, rol: { in: ['INVENTARIOS', 'CXC_CLIENTES', 'ANTICIPOS_CLIENTES', 'PRESTAMOS_OTORGADOS', 'CXP_PROVEEDORES', 'ANTICIPOS_PROVEEDORES', 'DEUDAS_RECIBIDAS'] } },
+    select: { cuentaId: true },
+  });
+  const unsupportedIds = new Set(unsupportedRoles.map((entry) => entry.cuentaId));
+  if (lines.some((line) => unsupportedIds.has(line.cuentaContableId) && (!new Prisma.Decimal(line.debito).isZero() || !new Prisma.Decimal(line.credito).isZero()))) {
+    throw new ActionError("La apertura contiene saldos auxiliares que aún no se pueden inicializar de forma coordinada", "APERTURA_SALDOS_NO_VERIFICABLES");
+  }
+  const ids = new Set(roles.map((entry) => entry.cuentaId));
+  const lineAccounts = await db.cuentaContable.findMany({
+    where: { tenantId, cuentaContableId: { in: lines.map((line) => line.cuentaContableId) }, activa: true, aceptaMovimiento: true },
+    select: { cuentaContableId: true, tipo: true },
+  });
+  const byId = new Map(lineAccounts.map((account) => [account.cuentaContableId, account.tipo]));
+  if (lines.some((line) => !ids.has(line.cuentaContableId) && byId.get(line.cuentaContableId) !== 'PATRIMONIO')) {
+    throw new ActionError("Solo se admiten tesorería y patrimonio en esta apertura", "APERTURA_SALDOS_NO_VERIFICABLES");
+  }
+  try {
+    reconcileInitialBankBalances(cuentas, lines.filter((line) => ids.has(line.cuentaContableId)));
+  } catch {
+    throw new ActionError("Los saldos bancarios no coinciden con la apertura", "APERTURA_SALDOS_NO_VERIFICABLES");
+  }
+}
+
 /** @description Registra líneas manuales de apertura pendientes de aprobación. */
 export const solicitarAperturaManualAction = withAction(
 	async (input: z.infer<typeof solicitudAperturaSchema>, user: AuthenticatedUser) => {
@@ -417,6 +464,9 @@ export const solicitarAperturaManualAction = withAction(
 			throw new ActionError("La fecha de inicio no puede ser posterior a la fecha de fin", "FECHAS_INVALIDAS");
 		}
 		const policy = await getRequiredTenantAccountingPolicy(tenantId);
+		if (parsed.cuentasBancarias?.some((account) => account.moneda !== policy.functionalCurrencyCode)) {
+			requireFeature(user, "multi-moneda", "inicializar cuentas en moneda extranjera");
+		}
 		const idempotencyPayloadHash = hashImmutableFinancialEvidence({
 			tenantId, solicitadaPor: user.userId,
 			tipo: parsed.tipo,
@@ -427,6 +477,7 @@ export const solicitarAperturaManualAction = withAction(
 			modoContable: parsed.modoContable ?? ModoContable.CAJA,
 			functionalCurrencyCode: policy.functionalCurrencyCode,
 			lineas: parsed.lineas,
+			...(parsed.cuentasBancarias ? { cuentasBancarias: parsed.cuentasBancarias } : {}),
 		});
 		let result: { solicitud: { solicitudId: string; estado: string }; replayed: boolean };
 		try {
@@ -453,6 +504,7 @@ export const solicitarAperturaManualAction = withAction(
 				modoContable: parsed.modoContable,
 				functionalCurrencyCode: policy.functionalCurrencyCode,
 				lineas: initialLines as unknown as Prisma.InputJsonValue,
+				...(parsed.cuentasBancarias ? { cuentasBancarias: parsed.cuentasBancarias as Prisma.InputJsonValue } : {}),
 				idempotencyKey: parsed.idempotencyKey,
 				idempotencyPayloadHash,
 				solicitadaPor: user.userId,
@@ -562,6 +614,10 @@ export const aprobarAperturaManualAction = withAction(
 			}
 			const lines = z.array(manualOpeningLineSchema).parse(solicitud.lineas);
 			const verification = await verifyManualOpening(tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines);
+			await validateOpeningBanks(tx, tenantId, user, policy.functionalCurrencyCode, solicitud.cuentasBancarias, verification.valuedLines);
+			if (solicitud.cuentasBancarias != null) {
+				throw new ActionError("La carga inicial aún no puede confirmarse hasta conciliar los saldos operativos", "INICIALIZACION_NO_DISPONIBLE");
+			}
 			const approvedAt = new Date();
 			const approvalHash = hashImmutableFinancialEvidence({
 				solicitudId, tenantId, solicitedBy: solicitud.solicitadaPor, approvedBy: user.userId,
@@ -569,6 +625,7 @@ export const aprobarAperturaManualAction = withAction(
 				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
 				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
 				observaciones: solicitud.observaciones, lineas: solicitud.lineas,
+				...(solicitud.cuentasBancarias ? { cuentasBancarias: solicitud.cuentasBancarias } : {}),
 				fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines,
 			});
 			const updated = await tx.aperturaPeriodoSolicitud.updateMany({
@@ -592,13 +649,20 @@ export const abrirPeriodoManualAprobadoAction = withAction(
 		const { solicitudId } = solicitudIdSchema.parse(input);
 		const periodo = await prisma.$transaction(async (tx) => {
 			await acquireAccountingTenantLock(tx, tenantId);
-			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({ where: { solicitudId, tenantId, estado: "APROBADA" } });
+			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({ where: { solicitudId, tenantId, estado: { in: ["APROBADA", "CONSUMIDA"] } } });
 			if (!solicitud || !solicitud.hashAprobacion || !solicitud.aprobadaAt) {
 				throw new ActionError("La solicitud no cuenta con aprobación verificable", "APERTURA_SALDOS_NO_VERIFICABLES");
 			}
-			const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+			const historicalLine = z.object({ cuentaContableId: z.string(), moneda: z.string(), debito: z.string(), credito: z.string(), debitoFuncional: z.string(), creditoFuncional: z.string(), tasaCambio: z.string().nullable(), fxEvidenceId: z.string().nullable(), fxEvidenceFingerprint: z.string().nullable(), monedaFuncional: z.string(), fxEvidence: z.unknown() }).passthrough();
+			const historicalSchema = z.object({ lineas: z.array(historicalLine), fxFingerprints: z.array(z.string()) }).passthrough();
+			const priorOpening = solicitud.estado === "CONSUMIDA" && solicitud.periodoId
+				? await tx.aperturaPeriodo.findFirst({ where: { tenantId, periodoId: solicitud.periodoId } }) : null;
+			const historical = solicitud.estado === "CONSUMIDA" ? historicalSchema.safeParse(priorOpening?.detalleJson) : null;
+			if (historical && !historical.success) throw new ActionError("La evidencia histórica no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+			const policy = solicitud.estado === "CONSUMIDA" ? { functionalCurrencyCode: solicitud.functionalCurrencyCode } : await getRequiredTenantAccountingPolicy(tenantId, tx);
 			const lines = z.array(manualOpeningLineSchema).parse(solicitud.lineas);
-			const verification = await verifyManualOpening(tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines);
+			const verification = historical?.success ? { valuedLines: historical.data.lineas, fingerprints: historical.data.fxFingerprints } : await verifyManualOpening(tx, tenantId, policy.functionalCurrencyCode, solicitud.solicitudId, solicitud.fechaInicio, lines);
+			if (solicitud.estado !== "CONSUMIDA") await validateOpeningBanks(tx, tenantId, user, policy.functionalCurrencyCode, solicitud.cuentasBancarias, verification.valuedLines);
 			const expectedHash = hashImmutableFinancialEvidence({
 				solicitudId, tenantId, solicitedBy: solicitud.solicitadaPor,
 				approvedBy: solicitud.aprobadaPor, approvedAt: solicitud.aprobadaAt.toISOString(),
@@ -606,10 +670,84 @@ export const abrirPeriodoManualAprobadoAction = withAction(
 				fechaInicio: solicitud.fechaInicio.toISOString(), fechaFin: solicitud.fechaFin.toISOString(),
 				tipo: solicitud.tipo, categoria: solicitud.categoria, modoContable: solicitud.modoContable,
 				observaciones: solicitud.observaciones,
-				lineas: solicitud.lineas, fxFingerprints: verification.fingerprints,
+				lineas: solicitud.lineas, ...(solicitud.cuentasBancarias ? { cuentasBancarias: solicitud.cuentasBancarias } : {}), fxFingerprints: verification.fingerprints,
 				lineasValuadas: verification.valuedLines,
 			});
 			if (expectedHash !== solicitud.hashAprobacion) throw new ActionError("La evidencia cambió desde la aprobación", "APERTURA_SALDOS_NO_VERIFICABLES");
+			if (solicitud.estado === "CONSUMIDA") {
+				if (!solicitud.cuentasBancarias) {
+					if (solicitud.consumoEvidencia != null || solicitud.consumoHash != null || solicitud.consumidaPor != null || !solicitud.periodoId) {
+						throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+					}
+					const detailSchema = z.object({
+						solicitudId: z.string(), hashAprobacion: z.string(), asientoId: z.string(),
+						origen: z.literal("CUADRE_MANUAL_APROBADO"), functionalCurrencyCode: z.string(),
+					}).passthrough();
+					const detail = detailSchema.safeParse(priorOpening?.detalleJson);
+					if (!detail.success || detail.data.solicitudId !== solicitudId || detail.data.hashAprobacion !== solicitud.hashAprobacion || detail.data.functionalCurrencyCode !== policy.functionalCurrencyCode) {
+						throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+					}
+					const [period, entry] = await Promise.all([
+						tx.periodoContable.findFirst({ where: { tenantId, periodoId: solicitud.periodoId } }),
+						tx.asiento.findFirst({ where: {
+							tenantId, asientoId: detail.data.asientoId, periodoId: solicitud.periodoId,
+							origenTipo: "apertura_manual", origenId: solicitudId,
+						}, include: { lineas: { orderBy: { orden: "asc" } } } }),
+					]);
+					if (!period || period.periodoId !== solicitud.periodoId || period.tenantId !== tenantId || !entry || entry.asientoId !== detail.data.asientoId || entry.lineas.length !== verification.valuedLines.length) {
+						throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+					}
+					for (let i = 0; i < verification.valuedLines.length; i++) {
+						const line = entry.lineas[i]; const expected = verification.valuedLines[i];
+						if (!line || line.cuentaId !== expected.cuentaContableId || !line.debe.eq(expected.debitoFuncional) || !line.haber.eq(expected.creditoFuncional) || line.monedaOriginal !== expected.moneda || !line.montoOriginal?.eq(new Prisma.Decimal(expected.debito).greaterThan(0) ? expected.debito : expected.credito) || (line.tasaCambio?.toString() ?? null) !== expected.tasaCambio || line.fxEvidenceFingerprint !== expected.fxEvidenceFingerprint) {
+							throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+						}
+					}
+					return period;
+				}
+				const receiptSchema = z.object({ periodoId: z.string(), asientoId: z.string(), bancoIds: z.array(z.string()).min(1), hashAprobacion: z.string(), usuarioId: z.string() }).strict();
+				const receipt = receiptSchema.safeParse(solicitud.consumoEvidencia);
+				if (!receipt.success || !solicitud.cuentasBancarias || solicitud.consumidaPor !== receipt.data.usuarioId || receipt.data.hashAprobacion !== solicitud.hashAprobacion || receipt.data.periodoId !== solicitud.periodoId || hashImmutableFinancialEvidence(receipt.data) !== solicitud.consumoHash) throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+				const banks = initialBankDraftSchema.parse({ cuentas: solicitud.cuentasBancarias }).cuentas;
+				if (banks.length !== receipt.data.bancoIds.length || new Set(receipt.data.bancoIds).size !== banks.length) throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+				const [period, opening, entry, storedBanks] = await Promise.all([
+					tx.periodoContable.findFirst({ where: { tenantId, periodoId: receipt.data.periodoId } }),
+					tx.aperturaPeriodo.findFirst({ where: { tenantId, periodoId: receipt.data.periodoId } }),
+					tx.asiento.findFirst({ where: { tenantId, asientoId: receipt.data.asientoId, periodoId: receipt.data.periodoId, origenTipo: "apertura_manual", origenId: solicitudId }, include: { lineas: { orderBy: { orden: "asc" } } } }),
+					tx.cuentaBancaria.findMany({ where: { tenantId, cuentaId: { in: receipt.data.bancoIds } } }),
+				]);
+				const detail = z.object({ solicitudId: z.string(), hashAprobacion: z.string(), asientoId: z.string() }).passthrough().safeParse(opening?.detalleJson);
+				if (!period || !entry || !detail.success || detail.data.solicitudId !== solicitudId || detail.data.hashAprobacion !== solicitud.hashAprobacion || detail.data.asientoId !== entry.asientoId || entry.lineas.length !== verification.valuedLines.length || storedBanks.length !== banks.length) throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+				for (let i = 0; i < banks.length; i++) {
+					const bank = storedBanks.find((item) => item.cuentaId === receipt.data.bancoIds[i]);
+					if (!bank || bank.cuentaContableInicialId !== banks[i].cuentaContableId) throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+				}
+				for (let i = 0; i < verification.valuedLines.length; i++) {
+					const line = entry.lineas[i]; const expected = verification.valuedLines[i];
+					if (!line || line.cuentaId !== expected.cuentaContableId || !line.debe.eq(expected.debitoFuncional) || !line.haber.eq(expected.creditoFuncional) || line.monedaOriginal !== expected.moneda || !line.montoOriginal?.eq(new Prisma.Decimal(expected.debito).greaterThan(0) ? expected.debito : expected.credito) || (line.tasaCambio?.toString() ?? null) !== expected.tasaCambio || line.fxEvidenceFingerprint !== expected.fxEvidenceFingerprint) throw new ActionError("La apertura registrada no se puede verificar", "APERTURA_SALDOS_NO_VERIFICABLES");
+				}
+				return period;
+			}
+			if (solicitud.cuentasBancarias != null) {
+				throw new ActionError("La carga inicial aún no puede confirmarse hasta conciliar los saldos operativos", "INICIALIZACION_NO_DISPONIBLE");
+			}
+
+			const createdBankIds: string[] = [];
+			if (solicitud.cuentasBancarias != null) {
+				const { cuentas } = initialBankDraftSchema.parse({ cuentas: solicitud.cuentasBancarias });
+				if ((await tx.cuentaBancaria.count({ where: { tenantId } })) || (await tx.asiento.count({ where: { tenantId } })) || (await tx.aperturaPeriodo.count({ where: { tenantId } }))) {
+					throw new ActionError("Ya existen cuentas bancarias para esta empresa", "INITIALIZATION_NOT_EMPTY");
+				}
+				for (const cuenta of cuentas) {
+					const created = await tx.cuentaBancaria.create({ data: {
+						tenantId, cuentaContableInicialId: cuenta.cuentaContableId, nombreCuenta: cuenta.nombreCuenta, nombreBanco: cuenta.nombreBanco,
+						numeroCuenta: cuenta.numeroCuenta, tipoCuenta: cuenta.tipoCuenta,
+						moneda: cuenta.moneda, saldo: Number(cuenta.saldo),
+					} });
+					createdBankIds.push(created.cuentaId);
+					await AuditLogService.logStrict({ accion: "CREATE", entidad: "CUENTA_BANCARIA", entidadId: created.cuentaId, usuarioId: user.userId, detalles: { accion: "APERTURA_MANUAL", solicitudId, cuentaContableId: cuenta.cuentaContableId, moneda: cuenta.moneda, saldoInicial: cuenta.saldo } }, tx);
+				}
+			}
 			const p = await PeriodoContableService.abrirPeriodo({
 				tenantId, tipo: solicitud.tipo as unknown as TipoPeriodo, fechaInicio: solicitud.fechaInicio, fechaFin: solicitud.fechaFin,
 				observaciones: solicitud.observaciones ?? undefined, categoria: solicitud.categoria as never, modoContable: solicitud.modoContable,
@@ -647,9 +785,10 @@ export const abrirPeriodoManualAprobadoAction = withAction(
 				{ ...solicitud, fxFingerprints: verification.fingerprints, lineasValuadas: verification.valuedLines, asientoId: asiento.asientoId },
 				tx,
 			);
+			const receipt = { periodoId: p.periodoId, asientoId: asiento.asientoId, bancoIds: createdBankIds, hashAprobacion: solicitud.hashAprobacion, usuarioId: user.userId };
 			const consumed = await tx.aperturaPeriodoSolicitud.updateMany({
 				where: { solicitudId, tenantId, estado: "APROBADA", hashAprobacion: solicitud.hashAprobacion },
-				data: { estado: "CONSUMIDA", consumidaAt: new Date(), periodoId: p.periodoId },
+				data: { estado: "CONSUMIDA", consumidaAt: new Date(), periodoId: p.periodoId, ...(solicitud.cuentasBancarias ? { consumoEvidencia: receipt, consumoHash: hashImmutableFinancialEvidence(receipt), consumidaPor: user.userId } : {}) },
 			});
 			if (consumed.count !== 1) throw new ActionError("La aprobación ya fue consumida", "APERTURA_SALDOS_NO_VERIFICABLES");
 			await AuditLogService.logStrict({ accion: "CREATE", entidad: "CIERRE_CONTABLE", entidadId: p.periodoId, usuarioId: user.userId, detalles: { accion: "ABRIR_MANUAL", solicitudId, hashAprobacion: solicitud.hashAprobacion, aprobadaPor: solicitud.aprobadaPor, asientoId: asiento.asientoId } }, tx);
@@ -999,10 +1138,14 @@ export const cerrarPeriodoAction = withAction(
 		// Managers y admins del tenant auto-aprueban al cerrar.
 			const { cerrado } = await prisma.$transaction(async (tx) => {
 				await acquireAccountingTenantLock(tx, tenantId);
+				const periodoEnTransaccion = await tx.periodoContable.findFirst({
+					where: { periodoId: parsed.periodoId, tenantId },
+				});
+				if (!periodoEnTransaccion) throw new ActionError("Período no encontrado", "NOT_FOUND");
 				const pendingOperations = await getPeriodClosePendingCounts(
 					tx,
 					tenantId,
-					periodo,
+					periodoEnTransaccion,
 				);
 				if (
 					pendingOperations.ventasSinReconciliar > 0 ||
@@ -1016,8 +1159,8 @@ export const cerrarPeriodoAction = withAction(
 				}
 				let resultadoCierre;
 
-				if (periodo.tipo === TipoPeriodo.ANUAL) {
-					const year = getAccountingYear(periodo.fechaInicio);
+				if (periodoEnTransaccion.tipo === TipoPeriodo.ANUAL) {
+					const year = getAccountingYear(periodoEnTransaccion.fechaInicio);
 					let collectedResult: Awaited<ReturnType<typeof getReconciledResultForYear>> | undefined;
 					let collectedBalance: Awaited<ReturnType<typeof getCurrentBalance>> | undefined;
 
@@ -1071,7 +1214,7 @@ export const cerrarPeriodoAction = withAction(
 								functionalCurrency: collectedBalance.functionalCurrency,
 								balance: collectedBalance,
 								result: collectedResult,
-								resultThrough: periodo.fechaFin.toISOString(),
+								resultThrough: periodoEnTransaccion.fechaFin.toISOString(),
 								sourceFingerprints: {
 									reconciledPeriods: String(collectedResult.monthly.length),
 								},
@@ -1127,7 +1270,7 @@ export const cerrarPeriodoAction = withAction(
 						cutoffAt: checkpointCutoffAt,
 						capturedAt: checkpointCapturedAt,
 						range: {
-							gte: periodo.fechaInicio.toISOString(),
+							gte: periodoEnTransaccion.fechaInicio.toISOString(),
 							lt: checkpointCutoffAt.toISOString(),
 						},
 						functionalCurrency: balance.functionalCurrency,
@@ -1254,11 +1397,15 @@ export const reabrirPeriodoAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
-		const reabierto = await PeriodoContableService.reabrirPeriodo(
-			parsed.periodoId,
-			user.userId,
-			parsed.motivo,
-		);
+		const reabierto = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			return PeriodoContableService.reabrirPeriodo(
+				parsed.periodoId,
+				user.userId,
+				parsed.motivo,
+				tx,
+			);
+		});
 
 		AuditLogService.log({
 			accion: "UPDATE",

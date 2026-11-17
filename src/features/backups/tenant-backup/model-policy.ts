@@ -53,7 +53,7 @@ const DIRECT_TENANT_MODELS = [
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
   'CheckpointContableFormal',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
   // CRM y Fidelización
@@ -74,6 +74,7 @@ const EXCLUDED_MODELS = [
   'SalesAgentProfile', 'SalesAgentReferral', 'SalesAgentCommissionLedger', 'TenantLicensePayment',
   'SalesAgentBalance', 'SalesAgentPayout', 'AffiliatePerkGrant', 'ReferralPerkRequest',
   'Notification', 'SalesAgentEmailDelivery', 'UserActivityLog', 'UserSession',
+  'PeriodoContableVersion',
   'AccountingPolicyRolloutRun', 'AccountingPolicyRolloutEntry', 'AccountingPolicyTenantApproval', 'AlertHistory',
   'AuditLog', 'ReportHistory', 'ScheduledReport', 'ScenarioSimulation',
   'ProductoCostSheetTemplate', 'ReplayPreflight', 'ReplayApproval', 'ReplayRun',
@@ -111,7 +112,7 @@ const BUSINESS_MODEL_NAMES = [
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
   'CheckpointContableFormal',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
 ] as const;
 const CHILD_OWNER_PATHS = {
@@ -139,7 +140,7 @@ const PROTECTED_EVIDENCE_CANDIDATES = [
   'SalesAgentCommissionLedger', 'TenantLicensePayment', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'CashPaymentInterestAllocation',
-  'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud',
+  'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable',
   'CheckpointContableFormal',
   'PurchaseAllocation', 'PurchaseReceiptInvoiceAllocation',
 ] as const;

@@ -108,6 +108,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'La clave del lock es el tenantId autenticado; no lee datos.',
   },
   {
+    file: 'src/features/contabilidad/services/accounting-period-version-lock.ts',
+    occurrences: 3,
+    reason: 'Bloquea y avanza la versión de períodos dentro de la transacción contable.',
+    tenantGuarantee: 'Todas las consultas parametrizan tenantId autenticado y se ejecutan en su transacción scoped.',
+  },
+  {
     file: 'src/features/contabilidad/services/financial-auxiliary-checkpoint-service.ts',
     occurrences: 2,
     reason: 'Captura timestamps consistentes de inicio/fin de checkpoint.',

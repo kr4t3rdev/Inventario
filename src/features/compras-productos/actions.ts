@@ -615,24 +615,6 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
       }
 
-      if (
-        parsed.formaPago === 'PAGO_COMPLETO' ||
-        parsed.formaPago === 'PAGO_PARCIAL' ||
-        parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO
-      ) {
-        await emitirReconocimientoCompra(
-          tx,
-          { tenantId, userId: user.userId || 'system' },
-          {
-            compraDocumentoId: compra.compraDocumentoId,
-            fecha: compra.fechaCompra,
-            monto: total,
-            moneda: parsed.moneda,
-            tasaCambio: parsed.tasaCambio,
-          },
-        );
-      }
-
       if (parsed.formaPago === 'PAGO_COMPLETO') {
         if (!gastoCompraId || !cuentaPorPagarId || !parsed.cuentaId || !parsed.tipoPagoId) {
           throw new ActionError('No se pudo preparar el pago completo de la compra', 'PAYMENT_SETUP_FAILED');
@@ -667,6 +649,24 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           usuarioId: user.userId, observaciones: `Pago de compra ${compra.compraDocumentoId}`,
         });
       }
+      }
+
+      if (
+        parsed.formaPago === 'PAGO_COMPLETO' ||
+        parsed.formaPago === 'PAGO_PARCIAL' ||
+        parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO
+      ) {
+        await emitirReconocimientoCompra(
+          tx,
+          { tenantId, userId: user.userId || 'system' },
+          {
+            compraDocumentoId: compra.compraDocumentoId,
+            fecha: compra.fechaCompra,
+            monto: total,
+            moneda: parsed.moneda,
+            tasaCambio: parsed.tasaCambio,
+          },
+        );
       }
 
       return compraCompleta;

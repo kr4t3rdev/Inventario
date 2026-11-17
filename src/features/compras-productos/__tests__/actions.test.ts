@@ -423,8 +423,8 @@ describe("ComprasProductos Server Actions", () => {
 					estado: "PAGADA",
 				}),
 			);
-			expect(emitirReconocimientoCompra.mock.invocationCallOrder[0]).toBeLessThan(
-				vi.mocked(applyPagoGastoWorkflow).mock.invocationCallOrder[0],
+			expect(vi.mocked(applyPagoGastoWorkflow).mock.invocationCallOrder[0]).toBeLessThan(
+				emitirReconocimientoCompra.mock.invocationCallOrder[0],
 			);
 			// El stock se consulta dentro de la transacción (tx), no con el cliente global.
 			expect(getStockTotalProducto).toHaveBeenCalledWith(
@@ -609,7 +609,7 @@ describe("ComprasProductos Server Actions", () => {
 			expect(applyPagoGastoWorkflow).not.toHaveBeenCalled();
 		});
 
-		it("propaga el fallo del pago para revertir la compra en la transacción", async () => {
+		it("si falla el pago, no reconoce la compra y revierte la transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
 			mockProductResponse({
@@ -633,7 +633,7 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(false);
-			expect(emitirReconocimientoCompra).toHaveBeenCalled();
+			expect(emitirReconocimientoCompra).not.toHaveBeenCalled();
 			expect(applyPagoGastoWorkflow).toHaveBeenCalled();
 		});
 
@@ -669,7 +669,7 @@ describe("ComprasProductos Server Actions", () => {
 			);
 		});
 
-		it("reconoce la compra antes de aplicar el anticipo del proveedor", async () => {
+		it("reconoce la compra después de aplicar el anticipo del proveedor", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			mockVendorResponse({ vendorId: "ven-1", nombre: "Proveedor" });
 			mockProductResponse({
@@ -699,8 +699,8 @@ describe("ComprasProductos Server Actions", () => {
 				expect.anything(),
 				expect.objectContaining({ compraDocumentoId: "cd-advance", monto: 800 }),
 			);
-			expect(emitirReconocimientoCompra.mock.invocationCallOrder[0]).toBeLessThan(
-				vi.mocked(applyAnticipoAllocations).mock.invocationCallOrder[0],
+			expect(vi.mocked(applyAnticipoAllocations).mock.invocationCallOrder[0]).toBeLessThan(
+				emitirReconocimientoCompra.mock.invocationCallOrder[0],
 			);
 		});
 

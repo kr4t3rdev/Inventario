@@ -843,6 +843,25 @@ describe("assertWritable estático", () => {
 
 		expect(result.permitido).toBe(true);
 	});
+
+	it("usa la lectura transaccional sin consultar ni actualizar la caché compartida", async () => {
+		process.env.PERIODO_CONTABLE_MODE = "enforce";
+		const fecha = new Date("2026-03-15");
+		const client = { periodoContable: { findFirst: vi.fn().mockResolvedValue({
+			periodoId: "periodo-no-confirmado", tenantId: TENANT, tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.ABIERTO, fechaInicio: new Date("2026-03-01"),
+			fechaFin: new Date("2026-03-31"),
+		}) } };
+		mockPrisma.periodoCache.findUnique.mockResolvedValue({ resultadoJson: {
+			periodo: null, estado: "NO_EXISTE", esWritable: false,
+		}, expiresAt: new Date(Date.now() + 10000) });
+		const result = await PeriodoGuard.assertWritable(fecha, TENANT, "asiento", undefined, client as never);
+		expect(result.permitido).toBe(true);
+		expect(client.periodoContable.findFirst).toHaveBeenCalled();
+		expect(mockPrisma.periodoCache.findUnique).not.toHaveBeenCalled();
+		expect(mockPrisma.periodoCache.upsert).not.toHaveBeenCalled();
+		mockPrisma.periodoCache.findUnique.mockReset();
+	});
 });
 
 // ── Tests: checkWritable estático ────────────────────────────────────────
@@ -906,6 +925,35 @@ describe('auditoría obligatoria del asiento formal', () => {
 		process.env.PERIODO_CONTABLE_MODE = 'enforce';
 		mockPrisma.periodoCache.findUnique.mockResolvedValue(null);
 		mockPrisma.periodoContable.findFirst.mockResolvedValue(null);
+	});
+
+	it('busca la referencia autónoma dentro del tenant y conserva el ID no visible en el payload', async () => {
+		const tx = { periodoContable: { findFirst: vi.fn().mockResolvedValue({
+			periodoId: 'periodo-tx', tenantId: TENANT, tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.CERRADO, fechaInicio: new Date('2026-10-01'), fechaFin: new Date('2026-10-31'),
+		}) } };
+		const result = await PeriodoGuard.assertWritable(new Date('2026-10-14'), TENANT, 'asiento', {
+			actorId: ACTOR, actorTipo: 'USUARIO', origen: { tipo: 'prueba', id: 'origen' },
+		}, tx as never);
+		expect(result.codigo).toBe('PERIODO_CERRADO');
+		expect(mockPrisma.periodoContable.findFirst).toHaveBeenCalledWith({
+			where: { periodoId: 'periodo-tx', tenantId: TENANT }, select: { periodoId: true },
+		});
+		expect(mockPrisma.auditoriaPeriodo.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({ periodoId: null, tenantId: TENANT, payload: expect.objectContaining({ periodoId: 'periodo-tx' }) }),
+		}));
+	});
+
+	it('falla cerrado si no puede comprobar visibilidad para la auditoría autónoma', async () => {
+		const tx = { periodoContable: { findFirst: vi.fn().mockResolvedValue({
+			periodoId: 'periodo-tx', tenantId: TENANT, tipo: TipoPeriodo.MENSUAL,
+			estado: EstadoPeriodo.CERRADO, fechaInicio: new Date('2026-10-01'), fechaFin: new Date('2026-10-31'),
+		}) } };
+		mockPrisma.periodoContable.findFirst.mockRejectedValueOnce(new Error('database unavailable'));
+		await expect(PeriodoGuard.assertWritable(new Date('2026-10-14'), TENANT, 'asiento', {
+			actorId: ACTOR, actorTipo: 'USUARIO', origen: { tipo: 'prueba', id: 'origen' },
+		}, tx as never)).rejects.toMatchObject({ code: 'AUDITORIA_FALLIDA' });
+		expect(mockPrisma.auditoriaPeriodo.create).not.toHaveBeenCalled();
 	});
 
 	it('bloquea el posteo si no puede persistir el intento de bypass con actor/origen', async () => {

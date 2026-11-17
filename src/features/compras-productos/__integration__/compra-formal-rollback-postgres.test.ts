@@ -304,7 +304,7 @@ describe(
       expect(Number(after.banco)).toBe(Number(before.banco) - 300);
       expect(after.ledger).toHaveLength(before.ledger.length + 2);
       expect(after.ledger.slice(before.ledger.length).map((entry) => entry.origenTipo))
-        .toEqual(['compra_documento', 'reconciliacion_gasto']);
+        .toEqual(['reconciliacion_gasto', 'compra_documento']);
 
       const documento = await prisma.compraDocumento.findFirstOrThrow({
         where: { tenantId, numeroFactura: `FA-${suffix}-OK` },
@@ -337,11 +337,11 @@ describe(
         .toEqual([['1.3.01', '300', '0'], ['2.1.01', '0', '300']]);
 
       const pago = await prisma.asiento.findUniqueOrThrow({
-        where: { asientoId: after.ledger[before.ledger.length + 1].id },
+        where: { asientoId: after.ledger[before.ledger.length].id },
         include: { lineas: { orderBy: { orden: 'asc' }, include: { cuenta: true } } },
       });
       expect(pago.estado).toBe('CONTABILIZADO');
-      expect(pago.hashAnterior).toBe(asiento.hash);
+      expect(asiento.hashAnterior).toBe(pago.hash);
       expect(pago.lineas.map((linea) => [linea.cuenta.codigo, linea.debe.toString(), linea.haber.toString()]))
         .toEqual([['2.1.01', '300', '0'], ['1.1.01', '0', '300']]);
     });

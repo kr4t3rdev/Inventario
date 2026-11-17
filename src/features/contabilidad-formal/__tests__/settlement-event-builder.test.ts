@@ -4,6 +4,7 @@ import {
 	buildCobroCxcEvent,
 	buildCobroServicioEvent,
 	buildPagoCxpEvent,
+	buildSettlementEvent,
 	derivarMedioCobro,
 } from '../lib/settlement-event-builder';
 
@@ -97,5 +98,48 @@ describe('settlement-event-builder', () => {
 		expect(evento.montoFuncional).toBeNull();
 		expect(evento.tasaCambio).toBeNull();
 		expect(evento.fxEvidenceFingerprint).toBeNull();
+	});
+
+	it('preserva la diferencia de cambio y origen propio de un cobro externo', () => {
+		const input = { ...common, valorContableAplicado: '37705.0000' };
+		const evento = buildSettlementEvent(input, 'COBRO_CXC', 'cobro_cxc_externo');
+		expect(evento.origen).toEqual({ tipo: 'cobro_cxc_externo', id: 'recon-1' });
+		expect(evento.auxiliares).toEqual({ diferenciaFx: '20' });
+	});
+
+	it('exige diferencia explícita y conserva diferencias negativas en cobros externos', () => {
+		expect(() => buildSettlementEvent(common, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow(
+			'El cobro externo requiere importes funcionales verificables',
+		);
+		expect(buildSettlementEvent({ ...common, valorContableAplicado: '37745' }, 'COBRO_CXC', 'cobro_cxc_externo').auxiliares)
+			.toEqual({ diferenciaFx: '-20' });
+	});
+
+	it('rechaza usar origen de cobro externo en otra familia de eventos', () => {
+		expect(() => buildSettlementEvent({ ...common, valorContableAplicado: '37725' }, 'PAGO_CXP', 'cobro_cxc_externo'))
+			.toThrow('El origen externo solo corresponde a cobros de CxC');
+	});
+
+	it('deriva la diferencia externa de los importes funcionales recibidos y aplicados', () => {
+		const input = { ...common, valorContableAplicado: '37705.0000' };
+		const evento = buildSettlementEvent(input, 'COBRO_CXC', 'cobro_cxc_externo');
+		expect(evento.auxiliares).toEqual({ diferenciaFx: '20' });
+	});
+
+	it('calcula exactamente la diferencia sin redondear valores grandes', () => {
+		const evento = buildSettlementEvent({ ...common, functionalAmount: '9999999999999999.9999',
+			valorContableAplicado: '9999999999999999.9998' }, 'COBRO_CXC', 'cobro_cxc_externo');
+		expect(evento.auxiliares).toEqual({ diferenciaFx: '0.0001' });
+	});
+
+	it.each(['', '-1', '0.00001', 'NaN', '10000000000000000', '1e3'])(
+		'rechaza el valor contable no verificable %s', (valorContableAplicado) => {
+			expect(() => buildSettlementEvent({ ...common, valorContableAplicado }, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow();
+		},
+	);
+
+	it('rechaza importes funcionales cero o expresados como número flotante', () => {
+		expect(() => buildSettlementEvent({ ...common, functionalAmount: '0', valorContableAplicado: '1' }, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow();
+		expect(() => buildSettlementEvent({ ...common, functionalAmount: 1, valorContableAplicado: '1' }, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow();
 	});
 });

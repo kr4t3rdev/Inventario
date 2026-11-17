@@ -14,6 +14,7 @@ import { requireFeature, requirePermission, requireTenant } from "@/lib/services
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import {
 	getCuentasPorCobrarSchema,
@@ -512,49 +513,62 @@ export const createCuentaPorCobrarAction = withAction(
 		const tenantId = requireTenant(user);
 		const p = createCuentaPorCobrarSchema.parse(input);
 
-		const venta = await prisma.venta.findFirst({
-			where: { ventaId: p.ventaId, tenantId },
-			select: { ventaId: true, factura: { select: { idFactura: true } } },
-		});
-		if (!venta)
-			throw new ActionError(
-				"Venta no encontrada o no pertenece al tenant",
-				"NOT_FOUND",
-			);
+		const cuenta = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const venta = await tx.venta.findFirst({
+				where: { ventaId: p.ventaId, tenantId },
+				select: { ventaId: true, clienteId: true, factura: { select: { idFactura: true } } },
+			});
+			if (!venta)
+				throw new ActionError(
+					"Venta no encontrada o no pertenece al tenant",
+					"NOT_FOUND",
+				);
 
-		const facturaIdReal = venta.factura?.idFactura;
+			const facturaIdReal = venta.factura?.idFactura;
+			const cliente = await tx.cliente.findFirst({
+				where: { clienteId: p.clienteId, tenantId },
+				select: { clienteId: true },
+			});
+			if (!cliente) {
+				throw new ActionError("Cliente no encontrado o no pertenece al tenant", "NOT_FOUND");
+			}
+			if (venta.clienteId !== p.clienteId) {
+				throw new ActionError("El cliente no coincide con el cliente de la venta", "CLIENTE_NO_COINCIDE");
+			}
 
-		const existente = await prisma.cuentaPorCobrar.findFirst({
-			where: {
-				OR: [
-					{ facturaId: p.ventaId },
-					...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
-				],
-				tenantId,
-			},
-		});
-		if (existente)
-			throw new ActionError(
-				"Ya existe una cuenta por cobrar para esta venta",
-				"DUPLICATE",
-			);
+			const existente = await tx.cuentaPorCobrar.findFirst({
+				where: {
+					OR: [
+						{ facturaId: p.ventaId },
+						...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
+					],
+					tenantId,
+				},
+			});
+			if (existente)
+				throw new ActionError(
+					"Ya existe una cuenta por cobrar para esta venta",
+					"DUPLICATE",
+				);
 
-		const cuenta = await prisma.cuentaPorCobrar.create({
-			data: {
-				tenantId,
-				clienteId: p.clienteId,
-				montoDeuda: p.monto,
-				montoPagado: 0,
-				// @ts-expect-error — Prisma schema has moneda column but type def may lack it
-				moneda: p.moneda,
-				estado: "PENDIENTE",
-				facturaId: facturaIdReal || p.ventaId,
-				numeroFactura: p.numeroFactura ?? null,
-				fechaVencimiento: p.fechaVencimiento
-					? new Date(p.fechaVencimiento)
-					: null,
-			},
-			include: CXC_INCLUDE,
+			return tx.cuentaPorCobrar.create({
+				data: {
+					tenantId,
+					clienteId: p.clienteId,
+					montoDeuda: p.monto,
+					montoPagado: 0,
+					// @ts-expect-error — Prisma schema has moneda column but type def may lack it
+					moneda: p.moneda,
+					estado: "PENDIENTE",
+					facturaId: facturaIdReal || p.ventaId,
+					numeroFactura: p.numeroFactura ?? null,
+					fechaVencimiento: p.fechaVencimiento
+						? new Date(p.fechaVencimiento)
+						: null,
+				},
+				include: CXC_INCLUDE,
+			});
 		});
 
 		AuditLogService.log({
@@ -967,41 +981,44 @@ export const createCuentaPorPagarAction = withAction(
 		const tenantId = requireTenant(user);
 		const p = createCuentaPorPagarSchema.parse(input);
 
-		const existente = await prisma.cuentaPorPagar.findFirst({
-			where: {
-				numeroFactura: p.numeroFactura,
-				proveedorId: p.proveedorId,
-				tenantId,
-				estado: { not: "PAGADA" },
-				deletedAt: null,
-			},
-		});
-		if (existente)
-			throw new ActionError(
-				"Ya existe una cuenta por pagar con ese número de factura",
-				"DUPLICATE",
-			);
+		const cuenta = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const existente = await tx.cuentaPorPagar.findFirst({
+				where: {
+					numeroFactura: p.numeroFactura,
+					proveedorId: p.proveedorId,
+					tenantId,
+					estado: { not: "PAGADA" },
+					deletedAt: null,
+				},
+			});
+			if (existente)
+				throw new ActionError(
+					"Ya existe una cuenta por pagar con ese número de factura",
+					"DUPLICATE",
+				);
 
-		const cuenta = await prisma.cuentaPorPagar.create({
-			data: {
-				tenantId,
-				numeroFactura: p.numeroFactura,
-				tipo: p.tipo,
-				proveedorId: p.proveedorId,
-				proveedorNombre: p.proveedorNombre ?? null,
-				montoDeuda: p.montoDeuda,
-				montoPagado: 0,
-				saldoPendiente: p.montoDeuda,
-				moneda: p.moneda,
-				fechaEmision: p.fechaEmision ? new Date(p.fechaEmision) : new Date(),
-				fechaVencimiento: p.fechaVencimiento
-					? new Date(p.fechaVencimiento)
-					: null,
-				estado: "PENDIENTE",
-				gastoCompraId: p.gastoCompraId ?? null,
-				gastosDEId: p.gastosDEId ?? null,
-			},
-			include: CXP_INCLUDE,
+			return tx.cuentaPorPagar.create({
+				data: {
+					tenantId,
+					numeroFactura: p.numeroFactura,
+					tipo: p.tipo,
+					proveedorId: p.proveedorId,
+					proveedorNombre: p.proveedorNombre ?? null,
+					montoDeuda: p.montoDeuda,
+					montoPagado: 0,
+					saldoPendiente: p.montoDeuda,
+					moneda: p.moneda,
+					fechaEmision: p.fechaEmision ? new Date(p.fechaEmision) : new Date(),
+					fechaVencimiento: p.fechaVencimiento
+						? new Date(p.fechaVencimiento)
+						: null,
+					estado: "PENDIENTE",
+					gastoCompraId: p.gastoCompraId ?? null,
+					gastosDEId: p.gastosDEId ?? null,
+				},
+				include: CXP_INCLUDE,
+			});
 		});
 
 		AuditLogService.log({

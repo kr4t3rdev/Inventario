@@ -25,6 +25,11 @@ import {
 	type ContextoPosting,
 } from './posting-engine';
 import { resolverModoTenant } from '../lib/modo-tenant';
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
+import {
+	advanceAccountingPeriodVersion,
+	lockAccountingPeriodVersion,
+} from '@/features/contabilidad/services/accounting-period-version-lock';
 
 /** Origen de negocio cuyo asiento formal se debe anular si existe. */
 export interface FormalEntryOrigin {
@@ -58,6 +63,8 @@ export async function reverseFormalEntries(
 		origen,
 	])).values()];
 	if (unicos.length === 0) return [];
+	await acquireAccountingTenantLock(tx, contexto.tenantId);
+	await lockAccountingPeriodVersion(tx, contexto.tenantId);
 
 	const candidatos = await tx.asiento.findMany({
 		where: {
@@ -135,6 +142,7 @@ export async function reverseFormalEntries(
 
 		const fecha = new Date();
 		const origenReverso = { tipo: 'REVERSO_ASIENTO', id: original.asientoId };
+		await advanceAccountingPeriodVersion(tx, contexto.tenantId);
 		const validacion = await PeriodoGuard.assertWritable(
 			fecha,
 			contexto.tenantId,
@@ -144,6 +152,7 @@ export async function reverseFormalEntries(
 				actorTipo: 'USUARIO',
 				origen: origenReverso,
 			},
+			tx,
 		);
 		if (!validacion.permitido) {
 			throw new ActionError(
@@ -154,6 +163,8 @@ export async function reverseFormalEntries(
 		const resolucion = await PeriodoContableService.resolverPeriodoActivo(
 			fecha,
 			contexto.tenantId,
+			undefined,
+			tx,
 		);
 		if (!resolucion.periodo) {
 			throw new ActionError(
