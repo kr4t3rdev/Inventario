@@ -14,10 +14,22 @@ const mocks = vi.hoisted(() => ({
   usePuntosDeVenta: vi.fn(),
   createVentaAction: vi.fn(),
   updateVentaAction: vi.fn(),
+  router: {
+    push: vi.fn(),
+    refresh: vi.fn(),
+  },
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => mocks.router,
+}));
+
+vi.mock('@/lib/sileo-shim', () => ({
+  sileo: mocks.sileo,
 }));
 
 vi.mock('@/features/contabilidad/actions-accounting-policy', () => ({
@@ -54,6 +66,21 @@ vi.mock('@/features/ventas/actions', () => ({
   updateVentaAction: mocks.updateVentaAction,
 }));
 
+vi.mock('@/features/contabilidad/components/tasa-cambio-dialog', () => ({
+  TasaCambioDialog: ({
+    onClose,
+    onConfirm,
+  }: {
+    onClose: () => void;
+    onConfirm: (tasa: number, monto: number) => void;
+  }) => (
+    <div role="dialog">
+      <button type="button" onClick={() => onConfirm(2, 200)}>Confirmar tasa</button>
+      <button type="button" onClick={onClose}>Cancelar tasa</button>
+    </div>
+  ),
+}));
+
 import { EnhancedVentaForm } from './enhanced-venta-form';
 
 const TRIGGER_MONEDA = /Moneda de la Venta/;
@@ -77,12 +104,24 @@ describe('EnhancedVentaForm - moneda principal desde la politica contable', () =
       data: [{ id: 'p1', nombre: 'Harina', stock: 10, precioVenta: 100, unidad: { simbolo: 'kg' } }],
     });
     mocks.usePuntosDeVenta.mockReturnValue({
-      puntosDeVenta: [{ id: 'pv1', nombre: 'Sucursal 1' }],
+      puntosDeVenta: [{ pvId: 'pv1', nombre: 'Sucursal 1' }],
       isLoading: false,
     });
     mocks.createVentaAction.mockResolvedValue({ success: true, data: {} });
     mocks.updateVentaAction.mockResolvedValue({ success: true, data: {} });
   });
+
+  async function completeForm() {
+    const user = userEvent.setup();
+    await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await user.click(screen.getByRole('combobox', { name: 'Producto' }));
+    await user.click(screen.getByRole('option', { name: /Harina/ }));
+    await user.click(screen.getByRole('combobox', { name: 'Punto de Venta' }));
+    await user.click(screen.getByRole('option', { name: /Sucursal 1/ }));
+    await user.clear(screen.getByLabelText('Cantidad'));
+    await user.type(screen.getByLabelText('Cantidad'), '2');
+    return user;
+  }
 
   it('carga el catalogo de productos y deja de mostrar el skeleton', async () => {
     render(<EnhancedVentaForm />);
@@ -166,4 +205,104 @@ describe('EnhancedVentaForm - moneda principal desde la politica contable', () =
     await user.keyboard('{Escape}');
     expect(trigger).toHaveTextContent('Seleccione la moneda');
   });
+
+  it('crea una venta con el producto seleccionado y muestra el resumen', async () => {
+    render(<EnhancedVentaForm />);
+    const user = await completeForm();
+
+    expect(screen.getByText('Resumen de la Venta')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+
+    await waitFor(() => expect(mocks.createVentaAction).toHaveBeenCalledTimes(1));
+    expect(mocks.createVentaAction.mock.calls[0][0]).toMatchObject({
+      puntoDeVentaId: 'pv1',
+      items: [{ productoId: 'p1', cantidad: 2, precioUnitario: 100 }],
+    });
+    expect(mocks.router.refresh).toHaveBeenCalled();
+  });
+
+  it('actualiza una venta existente', async () => {
+    render(
+      <EnhancedVentaForm
+        initialData={{
+          ventaId: 'venta-1',
+          productoId: 'p1',
+          cantidad: 1,
+          puntoDeVentaId: 'pv1',
+          moneda: 'USD',
+        }}
+      />,
+    );
+
+    await screen.findByRole('combobox', { name: TRIGGER_MONEDA });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Actualizar' }));
+
+    await waitFor(() => expect(mocks.updateVentaAction).toHaveBeenCalledTimes(1));
+    expect(mocks.updateVentaAction).toHaveBeenCalledWith({ ventaId: 'venta-1' });
+  });
+
+  it('confirma conversión al vender en una moneda distinta', async () => {
+    render(<EnhancedVentaForm />);
+    const user = await completeForm();
+    await user.click(screen.getByRole('combobox', { name: TRIGGER_MONEDA }));
+    await user.click(screen.getByRole('option', { name: /CUP/ }));
+
+    expect(screen.getByText(/requiere conversión de moneda/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+    await user.click(await screen.findByRole('button', { name: 'Confirmar tasa' }));
+
+    await waitFor(() => expect(mocks.createVentaAction).toHaveBeenCalledTimes(1));
+  });
+
+  it('cancela la confirmación de conversión sin crear la venta', async () => {
+    render(<EnhancedVentaForm />);
+    const user = await completeForm();
+    await user.click(screen.getByRole('combobox', { name: TRIGGER_MONEDA }));
+    await user.click(screen.getByRole('option', { name: /CUP/ }));
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancelar tasa' }));
+
+    expect(mocks.createVentaAction).not.toHaveBeenCalled();
+  });
+
+  it('muestra error si crear o actualizar la venta falla', async () => {
+    mocks.createVentaAction
+      .mockResolvedValueOnce({ success: false, error: { message: 'No permitido' } })
+      .mockRejectedValueOnce(new Error('fallo de red'));
+    const user = userEvent.setup();
+
+    render(<EnhancedVentaForm />);
+    await completeForm();
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+    await waitFor(() => expect(mocks.createVentaAction).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+    await waitFor(() => expect(mocks.createVentaAction).toHaveBeenCalledTimes(2));
+    expect(mocks.sileo.error).toHaveBeenCalled();
+  });
+
+  it('muestra el error al actualizar una venta', async () => {
+    mocks.updateVentaAction.mockResolvedValue({
+      success: false,
+      error: { message: 'No permitido' },
+    });
+    render(
+      <EnhancedVentaForm
+        initialData={{
+          ventaId: 'venta-1',
+          productoId: 'p1',
+          cantidad: 1,
+          puntoDeVentaId: 'pv1',
+          moneda: 'USD',
+        }}
+      />,
+    );
+
+    await screen.findByRole('button', { name: 'Actualizar' });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Actualizar' }));
+
+    await waitFor(() => expect(mocks.updateVentaAction).toHaveBeenCalledTimes(1));
+    expect(mocks.sileo.error).toHaveBeenCalled();
+  });
+
+
 });

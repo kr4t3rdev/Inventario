@@ -114,7 +114,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
 
   const selectedProducto = productos?.find(p => p.id === watchedValues.productoId)
   const selectedMoneda = monedasActivas.find(m => m.codigo === monedaSeleccionada)
-  const precioVenta = watchedValues.precioVentaOriginal || selectedProducto?.precioVenta || 0
+  const precioVenta = Number(watchedValues.precioVentaOriginal) || selectedProducto?.precioVenta || 0
   const totalVenta = (watchedValues.cantidad || 0) * precioVenta
 
   const requiresExchangeConfirmation = Boolean(
