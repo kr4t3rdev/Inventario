@@ -72,4 +72,23 @@ describe('idempotencia de inicialización contable', () => {
     updateMany.mockResolvedValue({ count: 0 });
     await expect(runIdempotentInitialization(input, vi.fn().mockResolvedValue({ ok: true }))).rejects.toMatchObject({ code: 'INITIALIZATION_INCOMPLETE' });
   });
+
+  it('reanuda un borrador con la misma clave aunque la carga final cambie', async () => {
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: input.idempotencyKey, payloadHash: 'b'.repeat(64), estado: 'BORRADOR', borrador: {} });
+    const execute = vi.fn().mockResolvedValue({ periodoId: 'periodo-a' });
+    const result = await runIdempotentInitialization(input, execute);
+    expect(execute).toHaveBeenCalledWith(tx);
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ inicializacionId: 'init-a', tenantId: 'tenant-a', estado: 'BORRADOR' }),
+      data: expect.objectContaining({ estado: 'EN_PROGRESO', payloadHash: input.payloadHash }),
+    }));
+    expect(result).toEqual({ replayed: false, resultado: { periodoId: 'periodo-a' } });
+  });
+
+  it('rechaza reanudar un borrador con otra clave', async () => {
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'otra-clave', payloadHash: 'b'.repeat(64), estado: 'BORRADOR', borrador: {} });
+    const execute = vi.fn();
+    await expect(runIdempotentInitialization(input, execute)).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

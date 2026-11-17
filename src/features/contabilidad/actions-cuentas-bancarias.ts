@@ -19,7 +19,7 @@ import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
-import { computeInitializationPayloadHash } from './services/initialization-idempotency';
+import { assertInitializationAccess, computeInitializationPayloadHash } from './services/initialization-idempotency';
 import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import type { Prisma } from '@/generated/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -260,7 +260,7 @@ export const createCuentaBancariaAction = withAction(withPeriodValidation(
  */
 export const initializeBankAccountsAction = withAction(
   async (input: z.input<typeof initializationContract>, user: AuthenticatedUser) => {
-    requireFeature(user, 'contabilidad', 'inicializar cuentas y saldos');
+    assertInitializationAccess(user);
     const parsed = initializationContract.parse(input);
     const tenantId = requireTenant(user);
     const { idempotencyKey, ...payload } = parsed;

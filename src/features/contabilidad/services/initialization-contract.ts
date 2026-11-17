@@ -58,7 +58,7 @@ const origin = z.object({
   }
 });
 
-const account = z.object({
+const accountBase = z.object({
   nombreCuenta: requiredText,
   nombreBanco: requiredText,
   numeroCuenta: requiredText,
@@ -67,7 +67,9 @@ const account = z.object({
   saldoInicial: amount,
   origen: origin.optional(),
   origenNoDocumentado: z.boolean().optional(),
-}).strict().superRefine((value, context) => {
+}).strict();
+
+const account = accountBase.superRefine((value, context) => {
   const tieneOrigen = value.origen !== undefined;
   const origenNoDocumentado = value.origenNoDocumentado === true;
   if (value.saldoInicial !== '0' && tieneOrigen === origenNoDocumentado) {
@@ -87,13 +89,15 @@ const account = z.object({
 });
 
 /** Contrato de entrada puro; la ejecución debe validar permisos, persistencia e idempotencia. */
-export const initializationContract = z.object({
+export const initializationContractBase = z.object({
   idempotencyKey: z.string().trim().min(1).max(64),
   fechaCorte,
   monedaFuncional: currencyCode,
   tasas: tasas.optional(),
   cuentas: z.array(account).min(1).max(100),
-}).strict().superRefine((value, context) => {
+}).strict();
+
+export const initializationContract = initializationContractBase.superRefine((value, context) => {
   const seen = new Set<string>();
   value.cuentas.forEach((item, index) => {
     // Debe reflejar @@unique([tenantId, numeroCuenta]): PostgreSQL compara
@@ -118,3 +122,27 @@ export const initializationContract = z.object({
 
 export type InitializationInput = z.input<typeof initializationContract>;
 export type InitializationData = z.output<typeof initializationContract>;
+
+/**
+ * @description Borrador parcial de inicialización: permite guardar y retomar
+ * una carga incompleta. La confirmación exige el contrato completo.
+ */
+export const initializationDraftContract = z.object({
+  idempotencyKey: z.string().trim().min(1).max(64),
+  fechaCorte: fechaCorte.optional(),
+  monedaFuncional: currencyCode.optional(),
+  tasas: tasas.optional(),
+  cuentas: z.array(accountBase.deepPartial().strict()).max(100).optional(),
+}).strict().superRefine((value, context) => {
+  const seen = new Set<string>();
+  value.cuentas?.forEach((item, index) => {
+    const numero = item.numeroCuenta;
+    if (numero === undefined) return;
+    if (seen.has(numero)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['cuentas', index, 'numeroCuenta'], message: 'La cuenta bancaria está repetida' });
+    }
+    seen.add(numero);
+  });
+});
+
+export type InitializationDraftData = z.output<typeof initializationDraftContract>;
