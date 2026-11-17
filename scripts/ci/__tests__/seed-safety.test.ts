@@ -23,10 +23,11 @@ describe('production smoke isolation', () => {
   it('owns and tears down every local E2E fixture lifecycle', () => {
     const scripts = JSON.parse(read('package.json')).scripts;
     expect(scripts['seed:e2e']).toBeUndefined();
-    expect(read('playwright.config.ts')).toContain("globalTeardown: './e2e/global-teardown.ts'");
-    const teardown = read('e2e/global-teardown.ts');
-    expect(teardown).toContain('await cleanup(ownership)');
-    expect(teardown.indexOf('await cleanup(ownership)')).toBeLessThan(
+    expect(read('playwright.config.ts')).toContain("globalTeardown: './e2e/global-teardown.cjs'");
+    const teardown = read('e2e/global-teardown.cjs');
+    expect(teardown).toContain('scripts/e2e-seed-runner.mjs');
+    expect(teardown).toContain("E2E_SEED_COMMAND: 'cleanup'");
+    expect(teardown.indexOf("E2E_SEED_COMMAND: 'cleanup'")).toBeLessThan(
       teardown.indexOf('await rm(E2E_FIXTURE_MANIFEST'),
     );
   });

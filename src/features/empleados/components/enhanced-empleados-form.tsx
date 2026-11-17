@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
 import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
 import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
+import { useMonedaPrincipal } from "@/features/contabilidad/hooks/use-moneda-principal"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const empleadoSchema = z.object({
@@ -65,12 +66,14 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<EmpleadoFormValues | null>(null)
 
-  const { isLoading: isLoadingEmpleados } = { isLoading: false }
+  const {
+    monedaPrincipal,
+    isLoading: isLoadingMonedaPrincipal,
+  } = useMonedaPrincipal()
   const { monedas: monedasData } = useMonedas()
 
   const monedas = monedasData || []
   const monedasActivas = monedas.filter(m => m.isActive)
-  const monedaPrincipal = monedas.find(m => m.esPrincipal)?.codigo || "CUP"
 
   const form = useForm<EmpleadoFormValues>({
     resolver: zodResolver(empleadoSchema),
@@ -81,13 +84,26 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
       telefono: initialData?.telefono || '',
       salarioBases: initialData?.salarioBases ?? undefined,
       cargo: initialData?.cargo || '',
-      monedaSalario: initialData?.monedaSalario || monedaPrincipal,
+      monedaSalario: initialData?.monedaSalario || '',
     },
   })
 
   const watchedValues = form.watch()
-  const selectedMoneda = monedasActivas.find(m => m.codigo === watchedValues.monedaSalario)
-  const requiresExchangeConfirmation = watchedValues.monedaSalario && watchedValues.monedaSalario !== monedaPrincipal
+  const monedaSeleccionada = watchedValues.monedaSalario || initialData?.monedaSalario || monedaPrincipal || ''
+
+  // La politica contable se resuelve de forma asincrona: se refleja en el
+  // estado del formulario para que el envio no falle por moneda vacia.
+  useEffect(() => {
+    if (isLoadingMonedaPrincipal) return
+    if (initialData?.monedaSalario) return
+    if (form.getValues('monedaSalario')) return
+    form.setValue('monedaSalario', monedaPrincipal || '')
+  }, [isLoadingMonedaPrincipal, monedaPrincipal, form, initialData?.monedaSalario])
+
+  const selectedMoneda = monedasActivas.find(m => m.codigo === monedaSeleccionada)
+  const requiresExchangeConfirmation = Boolean(
+    monedaSeleccionada && monedaPrincipal && monedaSeleccionada !== monedaPrincipal,
+  )
 
   async function onSubmit(data: EmpleadoFormValues) {
     // If currency is different from principal, show exchange rate dialog
@@ -158,7 +174,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
     setPendingSubmission(null)
   }
 
-  if (isLoadingEmpleados) {
+  if (isLoadingMonedaPrincipal) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -271,7 +287,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
                       <DollarSign className="h-4 w-4" />
                       Moneda del Salario
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={monedaSeleccionada}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione la moneda" />
@@ -286,7 +302,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
                                 {moneda.simbolo} - {moneda.nombre}
                               </span>
                               {moneda.esPrincipal && (
-                                <Badge variant="secondary" className="text-xs">Principal</Badge>
+                                <Badge variant="secondary" className="text-xs">Base de tasas</Badge>
                               )}
                             </div>
                           </SelectItem>
@@ -382,7 +398,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
           isOpen={showTasaCambioDialog}
           onClose={handleExchangeCancel}
           monedaOrigen={pendingSubmission.monedaSalario}
-          monedaDestino={monedaPrincipal}
+          monedaDestino={monedaPrincipal || ""}
           monto={pendingSubmission.salarioBases}
           onConfirm={handleExchangeConfirm}
           titulo="Confirmar Tasa de Cambio para Salario"

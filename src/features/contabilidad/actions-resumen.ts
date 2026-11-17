@@ -2,6 +2,7 @@
 
 import { withAction } from '@/lib/server-actions';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { resolverMonedaPrincipal } from '@/lib/services/moneda-principal-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
 import { getReportCapabilities } from '@/features/contabilidad/lib/report-capabilities';
@@ -18,6 +19,8 @@ import { getReconciliacionStatsAction } from '@/features/contabilidad/actions-re
 interface ResumenCompletoPayload {
   resumen: unknown;
   monedas: unknown[];
+  /** Moneda principal según la política contable del tenant (fuente de verdad). */
+  monedaPrincipal: { estado: 'CONFIGURADA' | 'AUSENTE' | 'ERROR'; moneda: string | null };
   prestamosStats: unknown | null;
   resumenAnticipos: unknown | null;
   conteos: { ventas: { pending: number }; servicios: { pending: number }; gastos: { pending: number } } | null;
@@ -38,7 +41,7 @@ export async function buildResumenCompleto(
   const tenantId = requireTenant(user);
   const capabilities = getReportCapabilities(user);
 
-  const [resumen, monedas, prestamos, anticipos, conteos] = await Promise.all([
+  const [resumen, monedas, prestamos, anticipos, conteos, monedaPrincipal] = await Promise.all([
     AccountingReportsService.getSummaryReport({
       tenantId,
       fechaInicio: params.fechaInicio,
@@ -54,11 +57,13 @@ export async function buildResumenCompleto(
       ? getResumenAnticiposAction({ fechaInicio: params.fechaInicio, fechaFin: params.fechaFin })
       : Promise.resolve(null),
     getReconciliacionStatsAction(),
+    resolverMonedaPrincipal(tenantId),
   ]);
 
   return {
     resumen,
     monedas: monedas?.success ? (monedas.data as unknown[]) : [],
+    monedaPrincipal,
     prestamosStats: prestamos?.success ? prestamos.data : null,
     resumenAnticipos: anticipos?.success ? anticipos.data : null,
     conteos: conteos?.success ? (conteos.data?.modules as ResumenCompletoPayload['conteos']) : null,

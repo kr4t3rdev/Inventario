@@ -10,7 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
+import {
+  cambiarMonedaPrincipalAction,
+  getMonedasAction,
+  getTasasActualesAction,
+} from '@/features/contabilidad/actions-exchange';
+import { getAccountingPolicyStateAction } from '@/features/contabilidad/actions-accounting-policy';
 import type {
   ExchangeCurrentRate,
   ExchangeCurrentRatesResult,
@@ -32,11 +37,24 @@ const interactiveCardClass = cn(
   'transition-all duration-300 hover:-translate-y-1 hover:shadow-lg',
 );
 
+interface ExchangeManagerProps {
+  /**
+   * true solo si el plan de la empresa permite cambiar la moneda principal
+   * (feature moneda-principal-cambio). El servidor valida igualmente.
+   */
+  puedeCambiarMonedaPrincipal?: boolean;
+}
+
 /**
  * @description Gestor de monedas, tasas de cambio y conversiones del sistema.
+ * La moneda principal mostrada proviene de la política contable del tenant
+ * (fuente de verdad), no de la marca esPrincipal del catálogo.
+ * @param {ExchangeManagerProps} props - Capacidades del plan actual.
  * @returns {JSX.Element} Vista operativa del módulo exchange.
  */
-export function ExchangeManager() {
+export function ExchangeManager({
+  puedeCambiarMonedaPrincipal = false,
+}: ExchangeManagerProps) {
   const shouldReduceMotion = useReducedMotion();
   const [showMonedaForm, setShowMonedaForm] = useState(false);
   const [showTasaForm, setShowTasaForm] = useState(false);
@@ -45,18 +63,25 @@ export function ExchangeManager() {
 
   const [monedasData, setMonedasData] = useState<ExchangeCurrencyRecord[]>([]);
   const [tasasActualesData, setTasasActualesData] = useState<ExchangeCurrentRatesResult | null>(null);
+  const [monedaPrincipalPolicy, setMonedaPrincipalPolicy] = useState<string | null>(null);
+  const [destinoMoneda, setDestinoMoneda] = useState('');
+  const [cambiandoMoneda, setCambiandoMoneda] = useState(false);
   const [loadingMonedas, setLoadingMonedas] = useState(true);
   const [loadingTasas, setLoadingTasas] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoadingMonedas(true); setLoadingTasas(true);
-    const [m, t] = await Promise.all([
+    const [m, t, p] = await Promise.all([
       getMonedasAction(),
       getTasasActualesAction(),
+      getAccountingPolicyStateAction(),
     ]);
     if (m.success) setMonedasData(m.data ?? []);
     if (t.success) setTasasActualesData(t.data);
+    if (p.success && p.data) {
+      setMonedaPrincipalPolicy(p.data.policy?.functionalCurrencyCode ?? null);
+    }
     setLoadingMonedas(false); setLoadingTasas(false);
   }, []);
 
@@ -72,7 +97,10 @@ export function ExchangeManager() {
     return tasasActualesData.tasas ?? [];
   }, [tasasActualesData]);
 
-  const monedaPrincipal = monedas.find((moneda) => moneda.esPrincipal);
+  const monedaPrincipal = monedas.find((moneda) => moneda.codigo === monedaPrincipalPolicy);
+  const monedasDestino = monedas.filter(
+    (moneda) => moneda.isActive && moneda.codigo !== monedaPrincipalPolicy,
+  );
   const loadingGeneral = loadingMonedas || loadingTasas;
 
   const containerVariants = {
@@ -130,6 +158,32 @@ export function ExchangeManager() {
     setEditingMoneda(null);
   };
 
+  /**
+   * @description Cambia la moneda principal de la empresa mediante la política
+   * contable. Solo disponible para planes con el feature; el servidor bloquea
+   * el cambio si la empresa ya tiene movimientos contables.
+   * @returns {Promise<void>} Actualiza el estado y notifica el resultado.
+   */
+  const handleChangeMonedaPrincipal = async (): Promise<void> => {
+    if (!destinoMoneda) return;
+    setCambiandoMoneda(true);
+    try {
+      const result = await cambiarMonedaPrincipalAction({ codigo: destinoMoneda });
+      if (result.success) {
+        toast.success('Moneda principal actualizada correctamente');
+        setDestinoMoneda('');
+        setRefreshKey((key) => key + 1);
+      } else {
+        toast.error(result.error?.message ?? 'No se pudo cambiar la moneda principal');
+      }
+    } catch (error) {
+      console.error('Error al cambiar la moneda principal:', error);
+      toast.error('No se pudo cambiar la moneda principal');
+    } finally {
+      setCambiandoMoneda(false);
+    }
+  };
+
   return (
     <motion.div
       className="space-y-6 p-6"
@@ -172,33 +226,78 @@ export function ExchangeManager() {
         </div>
       </motion.div>
 
-      {monedaPrincipal && (
-        <motion.div variants={itemVariants}>
-          <Card className={surfaceCardClass}>
-            <CardHeader>
-              <CardTitle className="text-lg">Moneda principal activa</CardTitle>
-              <CardDescription>Base para conversiones y reportes.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300" />
-                <div>
-                  <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {monedaPrincipal.nombre}
+      <motion.div variants={itemVariants}>
+        <Card className={surfaceCardClass}>
+          <CardHeader>
+            <CardTitle className="text-lg">Moneda principal activa</CardTitle>
+            <CardDescription>
+              Base para conversiones y reportes. Definida en la política contable de la empresa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {monedaPrincipalPolicy ? (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300" />
+                    <div>
+                      <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                        {monedaPrincipal?.nombre ?? monedaPrincipalPolicy}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Código: {monedaPrincipalPolicy}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Código: {monedaPrincipal.codigo}</p>
+                  <Badge
+                    variant="outline"
+                    className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/10 dark:text-blue-300"
+                  >
+                    Símbolo {monedaPrincipal?.simbolo ?? '—'}
+                  </Badge>
+                </>
+              ) : (
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Sin moneda configurada
+                </p>
+              )}
+            </div>
+
+            {puedeCambiarMonedaPrincipal && monedaPrincipalPolicy && (
+              <div className="flex flex-wrap items-end gap-3 border-t border-slate-200/70 pt-4 dark:border-slate-800/70">
+                <div className="space-y-1">
+                  <label
+                    htmlFor="nueva-moneda-principal"
+                    className="text-sm font-medium text-slate-900 dark:text-slate-100"
+                  >
+                    Nueva moneda principal
+                  </label>
+                  <select
+                    id="nueva-moneda-principal"
+                    value={destinoMoneda}
+                    onChange={(event) => setDestinoMoneda(event.target.value)}
+                    className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Selecciona una moneda activa</option>
+                    {monedasDestino.map((moneda) => (
+                      <option key={moneda.codigo} value={moneda.codigo}>
+                        {moneda.codigo} — {moneda.nombre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void handleChangeMonedaPrincipal()}
+                  disabled={!destinoMoneda || cambiandoMoneda}
+                  className="min-h-11 bg-blue-600 text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg"
+                >
+                  {cambiandoMoneda ? 'Cambiando...' : 'Cambiar moneda principal'}
+                </Button>
               </div>
-              <Badge
-                variant="outline"
-                className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/10 dark:text-blue-300"
-              >
-                Símbolo {monedaPrincipal.simbolo}
-              </Badge>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="monedas" className="space-y-4">
@@ -240,12 +339,20 @@ export function ExchangeManager() {
                     <CardContent>
                       <div className="flex items-center justify-between">
                         <div className="flex flex-wrap items-center gap-2">
-                          {moneda.esPrincipal && (
+                          {moneda.codigo === monedaPrincipalPolicy && (
                             <Badge
                               variant="outline"
                               className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300"
                             >
                               Principal
+                            </Badge>
+                          )}
+                          {moneda.esPrincipal && moneda.codigo !== monedaPrincipalPolicy && (
+                            <Badge
+                              variant="outline"
+                              className="border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+                            >
+                              Base de tasas
                             </Badge>
                           )}
                           {!moneda.isActive && (

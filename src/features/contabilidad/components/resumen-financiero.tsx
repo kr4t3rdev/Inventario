@@ -111,7 +111,6 @@ export function ResumenFinanciero({
   }, [fechaInicio, fechaFin, cuentaId, retryKey, refreshToken]);
 
   const resumen = payload?.resumen ?? null;
-  const monedasData = payload?.monedas ?? null;
   const prestamosCashData = payload?.prestamosStats ?? null;
   const resumenAnticiposData = payload?.resumenAnticipos ?? null;
   const conteos = payload?.conteos ?? null;
@@ -163,16 +162,21 @@ export function ResumenFinanciero({
 
   if (!resumen) return null;
 
-  const monedasDisponibles = Array.isArray(monedasData) ? monedasData : [];
-  const monedaPrincipal = monedasDisponibles.find((m: any) => m.esPrincipal)?.codigo
-    || monedasDisponibles[0]?.codigo
-    || resumen.resumenPorMoneda?.[0]?.moneda
-    || 'CUP';
-  const resumenPrincipal = resumen.resumenPorMoneda?.find((m: any) => m.moneda === monedaPrincipal);
+  // Fuente de verdad: política contable del tenant. Sin fallbacks al catálogo
+  // ni a CUP: si no está configurada, no se presenta ninguna moneda.
+  const monedaPrincipal =
+    payload?.monedaPrincipal?.estado === 'CONFIGURADA' && payload.monedaPrincipal.moneda
+      ? payload.monedaPrincipal.moneda
+      : null;
+  const resumenPrincipal = monedaPrincipal
+    ? resumen.resumenPorMoneda?.find((m: any) => m.moneda === monedaPrincipal)
+    : undefined;
 
   const ingresosTotales = resumenPrincipal?.totalIngresos ?? 0;
   const egresosTotales = resumenPrincipal?.totalEgresos ?? 0;
-  const saldoNetoEnPrincipal = getSaldoNetoTotal(resumen.resumenPorMoneda, monedaPrincipal);
+  const saldoNetoEnPrincipal = monedaPrincipal
+    ? getSaldoNetoTotal(resumen.resumenPorMoneda, monedaPrincipal)
+    : 0;
 
   const balances = resumen.resumenPorMoneda?.map((m: any) => ({
     moneda: m.moneda,
@@ -196,13 +200,15 @@ export function ResumenFinanciero({
         )}
       </div>
       <FinancialStatePanel
-        monedaPrincipal={monedaPrincipal}
+        monedaPrincipal={monedaPrincipal ?? ''}
         flujoNeto={saldoNetoEnPrincipal}
         ingresosTotales={ingresosTotales}
         egresosTotales={egresosTotales}
         balances={balances}
         flujoNetoAnterior={
-          resumen.periodoAnterior?.porMoneda?.[monedaPrincipal]?.saldoNeto ?? null
+          monedaPrincipal
+            ? resumen.periodoAnterior?.porMoneda?.[monedaPrincipal]?.saldoNeto ?? null
+            : null
         }
       />
 
@@ -221,7 +227,7 @@ export function ResumenFinanciero({
           totalIngresos: m.totalIngresos,
           totalEgresos: m.totalEgresos,
         })) || []}
-        monedaPrincipal={monedaPrincipal}
+        monedaPrincipal={monedaPrincipal ?? ''}
       />
 
       <AccountingDetailsDisclosure

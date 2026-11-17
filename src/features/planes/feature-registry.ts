@@ -326,6 +326,13 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "moneda-principal-cambio",
+		label: "Cambio de moneda principal",
+		description:
+			"Cambio de la moneda principal de la empresa desde el exchange (solo empresas sin movimientos contables)",
+		category: "financiero",
+	},
+	{
 		key: "rentabilidad-compra",
 		label: "Rentabilidad por compra",
 		description: "Análisis de rentabilidad detallado por cada compra realizada",

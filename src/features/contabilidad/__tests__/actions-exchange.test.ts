@@ -37,11 +37,34 @@ const exchangeProviderMock = vi.hoisted(() => ({
 }))
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn())
+const provisionPolicyMock = vi.hoisted(() => vi.fn())
+const canManageMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@/lib/auth/accounting-policy-capabilities', () => ({
+  canManageAccountingPolicy: canManageMock,
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
   default: prismaMock,
 }))
+
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => {
+  class TenantAccountingPolicyError extends Error {
+    constructor(
+      message: string,
+      public readonly code: string,
+      public readonly auditResult?: unknown,
+    ) {
+      super(message)
+      this.name = 'TenantAccountingPolicyError'
+    }
+  }
+  return {
+    provisionTenantAccountingPolicy: provisionPolicyMock,
+    TenantAccountingPolicyError,
+  }
+})
 
 vi.mock('@/lib/server-actions/get-current-user', () => ({
   getCurrentUser: getCurrentUserMock,
@@ -56,6 +79,7 @@ vi.mock('next/cache', () => ({
 describe('actions-exchange', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    canManageMock.mockResolvedValue(true)
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-1',
       tenantId: 'tenant-1',
@@ -170,5 +194,179 @@ describe('actions-exchange', () => {
 
     expect(result.success).toBe(true)
     expect(prismaMock.tasaCambio.create).not.toHaveBeenCalled()
+  })
+
+  describe('cambiarMonedaPrincipalAction', () => {
+    const empresarialUser = {
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      name: 'Empresa',
+      email: 'empresa@example.com',
+      role: 'regularUser',
+      isActive: true,
+      planFeatures: { 'multi-moneda': true, 'moneda-principal-cambio': true },
+    }
+
+    it('rechaza a usuarios sin permiso de gestión de la política contable', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      canManageMock.mockResolvedValue(false)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'USD',
+        nombre: 'Dólar estadounidense',
+        simbolo: 'US$',
+        isActive: true,
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'USD' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('FORBIDDEN')
+      expect(provisionPolicyMock).not.toHaveBeenCalled()
+      expect(prismaMock.moneda.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('rechaza a planes sin el feature de cambio de moneda principal', async () => {
+      getCurrentUserMock.mockResolvedValue({
+        ...empresarialUser,
+        planFeatures: { 'multi-moneda': true },
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'USD' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('FEATURE_NOT_AVAILABLE')
+      expect(provisionPolicyMock).not.toHaveBeenCalled()
+      expect(prismaMock.moneda.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('cambia la moneda principal cuando el plan lo permite y no hay movimientos', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'USD',
+        nombre: 'Dólar estadounidense',
+        simbolo: 'US$',
+        isActive: true,
+      })
+      provisionPolicyMock.mockResolvedValue({
+        result: 'UPDATED',
+        functionalCurrencyCode: 'USD',
+        existingCurrencyCode: 'CUP',
+        evidence: 'NONE',
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'usd' })
+
+      expect(result.success).toBe(true)
+      expect(prismaMock.moneda.findUnique).toHaveBeenCalledWith({
+        where: { codigo: 'USD' },
+      })
+      expect(provisionPolicyMock).toHaveBeenCalledWith(expect.objectContaining({
+        tenantId: 'tenant-1',
+        functionalCurrencyCode: 'USD',
+        actorUserId: 'user-1',
+        origin: 'TENANT_UI',
+      }))
+    })
+
+    it('no falla si la moneda solicitada ya es la principal', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'CUP',
+        nombre: 'Peso cubano',
+        simbolo: '$',
+        isActive: true,
+      })
+      provisionPolicyMock.mockResolvedValue({
+        result: 'NO_OP',
+        functionalCurrencyCode: 'CUP',
+        existingCurrencyCode: 'CUP',
+        evidence: 'NONE',
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'CUP' })
+
+      expect(result.success).toBe(true)
+      expect(provisionPolicyMock).toHaveBeenCalled()
+    })
+
+    it('bloquea el cambio cuando la empresa ya tiene movimientos contables', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'USD',
+        nombre: 'Dólar estadounidense',
+        simbolo: 'US$',
+        isActive: true,
+      })
+      const { TenantAccountingPolicyError } = await import(
+        '@/features/contabilidad/services/tenant-accounting-policy-service'
+      )
+      provisionPolicyMock.mockRejectedValue(
+        new TenantAccountingPolicyError(
+          'La moneda funcional no puede cambiar después de registrar evidencia contable',
+          'FUNCTIONAL_CURRENCY_IMMUTABLE',
+        ),
+      )
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'USD' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('FUNCTIONAL_CURRENCY_IMMUTABLE')
+    })
+
+    it('no abre un proceso de revisión cuando la evidencia requiere revisión', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      prismaMock.moneda.findUnique.mockResolvedValue({
+        codigo: 'USD',
+        nombre: 'Dólar estadounidense',
+        simbolo: 'US$',
+        isActive: true,
+      })
+      provisionPolicyMock.mockResolvedValue({
+        result: 'CONFLICT',
+        functionalCurrencyCode: 'USD',
+        existingCurrencyCode: 'CUP',
+        evidence: 'REVIEW_REQUIRED',
+      })
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'USD' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('ACCOUNTING_POLICY_BLOCKED')
+      expect(result).toMatchObject({
+        error: { message: expect.stringContaining('movimientos contables') },
+      })
+    })
+
+    it('rechaza monedas inexistentes o inactivas del catálogo', async () => {
+      getCurrentUserMock.mockResolvedValue(empresarialUser)
+      prismaMock.moneda.findUnique.mockResolvedValue(null)
+
+      const { cambiarMonedaPrincipalAction } = await import(
+        '@/features/contabilidad/actions-exchange'
+      )
+      const result = await cambiarMonedaPrincipalAction({ codigo: 'XYZ' })
+
+      expect(result.success).toBe(false)
+      expect(expectActionFailure(result).error?.code).toBe('FUNCTIONAL_CURRENCY_NOT_AVAILABLE')
+      expect(provisionPolicyMock).not.toHaveBeenCalled()
+    })
   })
 })

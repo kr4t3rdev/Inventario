@@ -31,10 +31,10 @@ vi.mock('../../../src/generated/prisma', () => ({
       // LP-1.4: fixtures de listas de precios sembradas por seedPrecioListaCatalog.
       listaPrecio: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('listaPrecio'); return { count: 2 }; }) },
       precioProducto: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('precioProducto'); return { count: 2 }; }) },
-       puntoDeVenta: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('puntoDeVenta'); return { count: 1 }; }) },
-       stockUbicacion: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('stockUbicacion'); return { count: 1 }; }) },
-       cuentaBancaria: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('cuentaBancaria'); return { count: 1 }; }) },
-       tipoPago: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('tipoPago'); return { count: 1 }; }) },
+      puntoDeVenta: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('puntoDeVenta'); return { count: 1 }; }) },
+      stockUbicacion: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('stockUbicacion'); return { count: 1 }; }) },
+      cuentaBancaria: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('cuentaBancaria'); return { count: 1 }; }) },
+      tipoPago: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('tipoPago'); return { count: 1 }; }) },
       });
       if (state.commitFailure) throw new Error('commit failed');
       return result;

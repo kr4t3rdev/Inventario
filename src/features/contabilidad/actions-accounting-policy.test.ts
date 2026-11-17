@@ -160,6 +160,25 @@ describe('accounting policy actions', () => {
     expect(prismaMock.accountingPolicyTenantApproval.create).not.toHaveBeenCalled();
   });
 
+  it('bloquea el cambio de una moneda ya configurada a planes sin el feature', async () => {
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      tenantId: 'tenant-a',
+      functionalCurrencyCode: 'CUP',
+    });
+    const { setInitialAccountingPolicyAction } = await import('./actions-accounting-policy');
+
+    const response = await setInitialAccountingPolicyAction({
+      functionalCurrencyCode: 'USD',
+      reason: 'Cambio solicitado por un plan sin derecho al cambio',
+    });
+
+    expect(response).toMatchObject({
+      success: false,
+      error: { code: 'FEATURE_NOT_AVAILABLE' },
+    });
+    expect(provisionMock).not.toHaveBeenCalled();
+  });
+
   it('rechaza returnTo fuera de la allowlist', async () => {
     const { setInitialAccountingPolicyAction } = await import('./actions-accounting-policy');
 
@@ -170,5 +189,34 @@ describe('accounting policy actions', () => {
     });
 
     expect(response).toMatchObject({ success: false, error: { code: 'VALIDATION_ERROR' } });
+  });
+
+  describe('getMonedaPrincipalAction', () => {
+    it('devuelve la moneda de la política contable del tenant, normalizada', async () => {
+      prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+        tenantId: 'tenant-a',
+        functionalCurrencyCode: ' usd ',
+      });
+      const { getMonedaPrincipalAction } = await import('./actions-accounting-policy');
+
+      const response = await getMonedaPrincipalAction();
+
+      expect(response).toEqual({
+        success: true,
+        data: { estado: 'CONFIGURADA', moneda: 'USD' },
+      });
+    });
+
+    it('reporta AUSENTE sin sustituir por CUP cuando la empresa no tiene política', async () => {
+      prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue(null);
+      const { getMonedaPrincipalAction } = await import('./actions-accounting-policy');
+
+      const response = await getMonedaPrincipalAction();
+
+      expect(response).toEqual({
+        success: true,
+        data: { estado: 'AUSENTE', moneda: null },
+      });
+    });
   });
 });

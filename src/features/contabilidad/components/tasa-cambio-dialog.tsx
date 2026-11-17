@@ -103,7 +103,6 @@ export function TasaCambioDialog({
     : Array.isArray((monedasData as { data?: unknown })?.data) 
     ? (monedasData as { data: unknown[] }).data 
     : Object.values(monedasData ?? [])
-  const monedaPrincipal = (monedas as any[]).find((m: any) => m.esPrincipal)?.codigo
   
   // Normalizar el array de tasas para extraer el valor correcto
   const tasaActualMoneda = React.useMemo(() => {

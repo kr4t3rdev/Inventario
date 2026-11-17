@@ -215,7 +215,7 @@ describe('createTenantForUser referral attribution', () => {
     );
   });
 
-  it('impide completar el alta sin moneda funcional confirmada', async () => {
+  it('asigna CUP en el servidor aunque no haya moneda pendiente', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       userId: 'company-user',
       name: 'Company',
@@ -223,10 +223,67 @@ describe('createTenantForUser referral attribution', () => {
       pendingReferralCode: null,
       pendingFunctionalCurrencyCode: null,
     } as never);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback({
+        tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+        tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'membership-new' }) },
+        tenantLicense: { create: vi.fn().mockResolvedValue({
+          tenantLicenseId: 'license-new',
+          expiracion: new Date('2030-01-01'),
+        }) },
+        salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        user: { update: vi.fn() },
+      } as never),
+    );
 
-    await expect(createTenantForUser({ userId: 'company-user' }))
-      .rejects.toMatchObject({ code: 'ACCOUNTING_POLICY_REQUIRED' });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    await expect(createTenantForUser({ userId: 'company-user' })).resolves.toMatchObject({
+      tenantId: 'tenant-new',
+    });
+
+    expect(provisionMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      tenantId: 'tenant-new',
+      functionalCurrencyCode: 'CUP',
+      origin: 'ONBOARDING',
+    }));
+  });
+
+  it('ignora una moneda pendiente heredada y asigna CUP', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'company-user',
+      name: 'Company',
+      onboardingStatus: 'awaiting_global_approval',
+      pendingReferralCode: null,
+      pendingFunctionalCurrencyCode: 'USD',
+    } as never);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    const userUpdate = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback({
+        tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+        tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'membership-new' }) },
+        tenantLicense: { create: vi.fn().mockResolvedValue({
+          tenantLicenseId: 'license-new',
+          expiracion: new Date('2030-01-01'),
+        }) },
+        salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        user: { update: userUpdate },
+      } as never),
+    );
+
+    await createTenantForUser({ userId: 'company-user' });
+
+    expect(provisionMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      functionalCurrencyCode: 'CUP',
+    }));
+    expect(provisionMock).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      functionalCurrencyCode: 'USD',
+    }));
+    expect(userUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ pendingFunctionalCurrencyCode: null }),
+    }));
   });
 
   it('publica la métrica solo después del commit del alta exterior', async () => {

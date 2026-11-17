@@ -2,15 +2,24 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { withAuthGet } from '@/lib/auth-middleware'
+import { resolverMonedaPrincipal } from '@/lib/services/moneda-principal-service'
 
-export const GET = withAuthGet(async () => {
+export const GET = withAuthGet(async (_request, _context, user) => {
   try {
-    const [monedas, tasas] = await Promise.all([
+    const [monedas, tasas, principal] = await Promise.all([
       prisma.moneda.findMany({ orderBy: { nombre: 'asc' } }),
       prisma.tasaCambio.findMany({ orderBy: { fechaVigencia: 'desc' }, take: 50 }),
+      user.tenantId
+        ? resolverMonedaPrincipal(user.tenantId)
+        : Promise.resolve({ estado: 'AUSENTE' as const, moneda: null }),
     ])
 
-    const monedaPrincipal = monedas.find((m) => m.esPrincipal) ?? monedas[0] ?? null
+    // La moneda principal proviene de la política contable del tenant; el
+    // catálogo solo aporta el detalle (nombre/símbolo) y nunca un fallback.
+    const monedaPrincipal =
+      principal.estado === 'CONFIGURADA' && principal.moneda
+        ? monedas.find((m) => m.codigo === principal.moneda) ?? null
+        : null
 
     return NextResponse.json({
       success: true,

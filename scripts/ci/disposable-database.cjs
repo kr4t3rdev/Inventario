@@ -1,0 +1,52 @@
+/**
+ * @description CommonJS-compatible guard for local disposable PostgreSQL databases.
+ * Playwright loads E2E global setup through a CommonJS transform.
+ */
+function assertDisposableDatabase(env) {
+  const fail = () => {
+    throw new Error('Explicit local disposable test database required.');
+  };
+
+  if (env.ALLOW_DISPOSABLE_TEST_DB !== '1' || env.NODE_ENV === 'production') fail();
+  if (!env.DATABASE_URL || env.DATABASE_URL_TEST !== env.DATABASE_URL) fail();
+  if (env.DIRECT_URL && env.DIRECT_URL !== env.DATABASE_URL) fail();
+
+  let url;
+  try {
+    url = new URL(env.DATABASE_URL);
+  } catch {
+    fail();
+  }
+
+  if (
+    !['postgres:', 'postgresql:'].includes(url.protocol)
+    || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)
+    || !url.username
+    || !/^\/tcp_test_[a-z0-9_]+$/.test(url.pathname)
+    || !url.port
+    || url.search
+    || url.hash
+  ) {
+    fail();
+  }
+
+  return env.DATABASE_URL;
+}
+
+function assertDisposableDatabaseIdentity(identity, env) {
+  const target = new URL(assertDisposableDatabase(env));
+  if (
+    !identity
+    || typeof identity !== 'object'
+    || identity.databaseName !== target.pathname.slice(1)
+    || identity.roleName !== decodeURIComponent(target.username)
+    || Number(identity.serverPort) !== Number(target.port)
+  ) {
+    throw new Error('Connected database does not match the approved disposable target.');
+  }
+}
+
+module.exports = {
+  assertDisposableDatabase,
+  assertDisposableDatabaseIdentity,
+};

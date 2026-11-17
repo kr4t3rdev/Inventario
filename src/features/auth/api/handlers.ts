@@ -1028,7 +1028,7 @@ export async function onboardingType(request: NextRequest) {
 		}
 
 		const payload = verifyOnboardingToken(token);
-		const { userType, phone, functionalCurrencyCode } = await request.json();
+		const { userType, phone } = await request.json();
 
 		if (!["worker", "company", "salesAgent"].includes(userType)) {
 			return NextResponse.json(
@@ -1110,31 +1110,8 @@ export async function onboardingType(request: NextRequest) {
 			return NextResponse.json({ success: true, onboardingStatus });
 		}
 
-		let confirmedFunctionalCurrencyCode: string | undefined;
-		if (userType === "company") {
-			if (
-				typeof functionalCurrencyCode !== "string" ||
-				!/^[A-Z]{3}$/.test(functionalCurrencyCode.trim().toUpperCase())
-			) {
-				return NextResponse.json(
-					{ error: "Debes confirmar una moneda funcional contable válida" },
-					{ status: 400 },
-				);
-			}
-
-			confirmedFunctionalCurrencyCode = functionalCurrencyCode.trim().toUpperCase();
-			const currency = await prisma.moneda.findUnique({
-				where: { codigo: confirmedFunctionalCurrencyCode },
-				select: { codigo: true, isActive: true },
-			});
-			if (!currency?.isActive) {
-				return NextResponse.json(
-					{ error: "La moneda funcional seleccionada no está activa" },
-					{ status: 400 },
-				);
-			}
-		}
-
+		// La moneda principal no se solicita en el onboarding: el servidor la
+		// asigna al crear la empresa (tenant-factory) desde la política contable.
 		const onboardingStatus =
 			userType === "worker" ? "selecting_tenant" : "awaiting_global_approval";
 
@@ -1143,9 +1120,6 @@ export async function onboardingType(request: NextRequest) {
 			data: {
 				onboardingType: userType,
 				onboardingStatus,
-				...(confirmedFunctionalCurrencyCode
-					? { pendingFunctionalCurrencyCode: confirmedFunctionalCurrencyCode }
-					: {}),
 			},
 		});
 

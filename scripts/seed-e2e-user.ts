@@ -1,6 +1,5 @@
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { assertDisposableDatabase } from './ci/disposable-database.mjs';
 
 /**
  * @description Siembra fixtures nuevas y atómicas solo en una base local desechable.
@@ -18,6 +17,7 @@ export interface E2EFixtureOwnership {
 }
 
 export async function run(): Promise<E2EFixtureOwnership> {
+  const { assertDisposableDatabase } = await import('./ci/disposable-database.cjs');
   assertDisposableDatabase(process.env);
   const password = process.env.E2E_TEST_PASSWORD;
   if (!password || password.length < 16) throw new Error('E2E_TEST_PASSWORD requiere 16 caracteres.');
@@ -508,6 +508,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
  * @returns {Promise<void>} Finaliza solo después de verificar la eliminación del tenant y usuario.
  */
 export async function cleanup(ownership: E2EFixtureOwnership): Promise<void> {
+  const { assertDisposableDatabase } = await import('./ci/disposable-database.cjs');
   assertDisposableDatabase(process.env);
   if (!ownership.tenantId.startsWith('e2e-') || !ownership.userId) {
     throw new Error('Manifiesto de fixtures E2E inválido.');
