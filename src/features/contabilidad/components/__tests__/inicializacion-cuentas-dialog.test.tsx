@@ -48,6 +48,8 @@ describe('InicializacionCuentasDialog', () => {
 
     expect(initializeMock).toHaveBeenCalledWith(expect.objectContaining({
       idempotencyKey: 'request-1',
+      fechaCorte: expect.any(String),
+      monedaFuncional: 'CUP',
       cuentas: [expect.objectContaining({
         nombreCuenta: 'Caja principal',
         saldoInicial: '100000',

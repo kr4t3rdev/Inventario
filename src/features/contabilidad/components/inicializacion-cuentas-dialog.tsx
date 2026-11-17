@@ -42,6 +42,8 @@ export function InicializacionCuentasDialog(): ReactElement {
   const [accounts, setAccounts] = useState<AccountDraft[]>([newAccount()]);
   const [paymentTypes, setPaymentTypes] = useState<Array<{ tipoId: string; nombre: string }>>([]);
   const [key, setKey] = useState(() => crypto.randomUUID());
+  const [fechaCorte, setFechaCorte] = useState(() => new Date().toISOString().slice(0, 10));
+  const [monedaFuncional, setMonedaFuncional] = useState('CUP');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -58,8 +60,17 @@ export function InicializacionCuentasDialog(): ReactElement {
   const submit = async () => {
     setSaving(true);
     try {
+      const tasas: Record<string, string> = {};
+      accounts.forEach((account) => {
+        if (account.moneda !== monedaFuncional && account.tasaCambio.trim()) {
+          tasas[account.moneda] = account.tasaCambio.trim();
+        }
+      });
       const result = await initializeBankAccountsAction({
         idempotencyKey: key,
+        fechaCorte,
+        monedaFuncional,
+        ...(Object.keys(tasas).length > 0 ? { tasas } : {}),
         cuentas: accounts.map((account) => {
           const saldoPositivo = Number(account.saldoInicial) > 0;
           const fuente = !saldoPositivo ? {} : account.origen === 'NO_DOCUMENTADO'
@@ -96,10 +107,11 @@ export function InicializacionCuentasDialog(): ReactElement {
     }
   };
 
-  const canSubmit = accounts.every((a) => a.nombreCuenta.trim() && a.nombreBanco.trim()
+  const canSubmit = fechaCorte.trim() !== '' && monedaFuncional.trim() !== '' && accounts.every((a) => a.nombreCuenta.trim() && a.nombreBanco.trim()
     && a.numeroCuenta.trim() && a.saldoInicial !== ''
     && (Number(a.saldoInicial) <= 0 || a.origen === 'NO_DOCUMENTADO' || (a.origen && a.tercero.trim()
-      && (a.origen !== 'ANTICIPO' || a.tipoPagoId))));
+      && (a.origen !== 'ANTICIPO' || a.tipoPagoId)))
+    && (Number(a.saldoInicial) <= 0 || a.moneda === monedaFuncional || a.tasaCambio.trim() !== ''));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -138,10 +150,14 @@ export function InicializacionCuentasDialog(): ReactElement {
                     </Select>
                   </Field>
                 )}
-                {account.origen && account.origen !== 'ANTICIPO' && account.origen !== 'NO_DOCUMENTADO' && <Field label="Tasa a moneda funcional (si aplica)"><Input inputMode="decimal" value={account.tasaCambio} onChange={(e) => update(index, { tasaCambio: e.target.value })} /></Field>}
+                {account.moneda !== monedaFuncional && <Field label="Tasa a moneda funcional (si aplica)"><Input inputMode="decimal" value={account.tasaCambio} onChange={(e) => update(index, { tasaCambio: e.target.value })} /></Field>}
               </div>}
             </section>
           ))}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Fecha de corte"><Input type="date" value={fechaCorte} onChange={(e) => setFechaCorte(e.target.value)} /></Field>
+            <Field label="Moneda funcional"><Select value={monedaFuncional} onValueChange={setMonedaFuncional}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CUP">CUP</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="MLC">MLC</SelectItem></SelectContent></Select></Field>
+          </div>
           <div className="flex flex-wrap justify-between gap-2">
             <Button type="button" variant="outline" onClick={() => setAccounts((rows) => [...rows, newAccount()])} disabled={accounts.length >= 100}><Plus className="mr-2 h-4 w-4" />Agregar cuenta</Button>
             <Button type="button" onClick={submit} disabled={saving || !canSubmit}>{saving ? 'Guardando…' : 'Inicializar cuentas'}</Button>

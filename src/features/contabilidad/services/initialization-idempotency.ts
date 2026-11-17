@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
@@ -25,6 +26,40 @@ function isJsonValue(value: unknown, visited = new Set<object>()): boolean {
     : Object.values(value).every((item) => isJsonValue(item, visited));
   visited.delete(value);
   return valid;
+}
+
+/** @description Serializa JSON con claves ordenadas para que el hash no dependa del orden de construcción. */
+function stableStringify(value: unknown, seen = new Set<object>()): string {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
+  if (typeof value === 'number') return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    if (seen.has(value)) throw new Error('El payload de inicialización contiene una referencia circular');
+    seen.add(value);
+    const out = '[' + value.map((item) => stableStringify(item, seen)).join(',') + ']';
+    seen.delete(value);
+    return out;
+  }
+  if (typeof value === 'object') {
+    if (seen.has(value)) throw new Error('El payload de inicialización contiene una referencia circular');
+    seen.add(value);
+    const record = value as Record<string, unknown>;
+    const out = '{' + Object.keys(record).sort().map((key) => JSON.stringify(key) + ':' + stableStringify(record[key], seen)).join(',') + '}';
+    seen.delete(value);
+    return out;
+  }
+  throw new Error('El payload de inicialización contiene valores no serializables');
+}
+
+/**
+ * @description Calcula el hash SHA-256 de una carga normalizada.
+ * Dos cargas con el mismo contenido lógico producen el mismo hash aunque se
+ * construyeran con distinto orden de claves; contenidos distintos, hash distinto.
+ */
+export function computeInitializationPayloadHash(payload: unknown): string {
+  if (!isJsonValue(payload)) {
+    throw new Error('El payload de inicialización contiene valores no serializables');
+  }
+  return createHash('sha256').update(stableStringify(payload)).digest('hex');
 }
 
 /**

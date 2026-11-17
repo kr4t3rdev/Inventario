@@ -1,6 +1,6 @@
 # Tareas (TDD estricto: RED observado, GREEN mínimo, refactor y evidencia por cada tramo)
 
-- [ ] 0. Revisar cambios existentes y actualizar la base desde origin/main sin perder trabajo; preparar PostgreSQL aislado y migrado. Referencias: `prisma/schema.prisma`, `src/features/contabilidad/services/`.
+- [x] 0. Revisar cambios existentes y actualizar la base desde origin/main sin perder trabajo; preparar PostgreSQL aislado y migrado. Referencias: `prisma/schema.prisma`, `src/features/contabilidad/services/`.
 - [ ] 1. Probar primero contrato, borrador, permisos, planes efectivos, aislamiento, idempotencia y concurrencia; implementar en `src/features/contabilidad/services/initialization-contract.ts` y `initialization-idempotency.ts`.
 - [ ] 2. Probar primero banco/caja a corte sin origen ficticio, múltiples monedas, balance, período, rollback y reintento; coordinar `actions-cuentas-bancarias.ts`, `actions-periodos.ts` y `src/lib/services/apertura-periodo-service.ts`.
 - [ ] 3. Probar primero productos, stock por almacén, costo y venta posterior sin compra ficticia; implementar carga coordinada en `src/features/productos/` y servicios de inventario.
@@ -11,6 +11,10 @@
 - [ ] 8. Revisar migraciones, rollback operativo, auditoría, seguridad y diff; actualizar graphify tras cambios de código. No marcar tareas sin evidencia.
 
 ## Estado consolidado verificado (2026-11-17)
+- Avance 2026-11-17 (tarea 1 parcial, sin cerrar): contrato extendido con `fechaCorte` (aaaa-mm-dd, válida, no futura) y `monedaFuncional` normalizada, más mapa `tasas` y regla FX (saldo distinto de cero en moneda distinta a la funcional exige tasa, desde `tasas[moneda]` o `origen.tasaCambio`; saldos cero exentos). Hash canónico `computeInitializationPayloadHash` en `initialization-idempotency.ts` (claves ordenadas, sha256) y la action lo usa sobre la carga completa sin la clave. El diálogo envía `fechaCorte` (por defecto hoy), `monedaFuncional` y `tasas` desde la tasa por cuenta, y muestra el campo de tasa para cualquier cuenta en moneda extranjera con saldo. RED observado 9/30 y GREEN posterior: unitarias 77 pasadas (3 omitidas, 5 archivos), PostgreSQL 8 pasadas (1 omitida: aislamiento misma clave en dos tenants, concurrentes misma clave con hash distinto -> IDEMPOTENCY_CONFLICT, y claves distintas -> INITIALIZATION_ALREADY_COMPLETED), `tsc --noEmit` 0 errores, ESLint limpio en archivos tocados. Pendiente en la tarea 1, a la espera de decisión del usuario: borrador reanudable con persistencia y estados (propuesto: misma tabla `InicializacionContable` con estado BORRADOR + payload) y gate de permisos/planes (propuesto: reutilizar `financiero.apertura.aprobar` + feature `contabilidad`).
+
+- Avance 2026-11-17 (tarea 0 cerrada): origin/main avanzo de 34f297402 a c8fd08873 (PRs #236 y #237, solo enhanced-venta-form, sin solape con la rama) y se incorporo con merge limpio e91150a9e (0 detras / 6 delante, sin conflictos; solo graphify-out sucio, generado, sin tocar). Base desechable nueva tcp_test_init_t0_20261117 en PostgreSQL 17 (127.0.0.1:5433): prisma validate OK, migrate deploy aplico las 200 migraciones (incluidas las 10 de la rama, 00-09) y migrate status dice Database schema is up to date. Tablas de la rama presentes: inicializaciones_contables, apertura_periodos, apertura_periodo_solicitudes, inventario_inicial_fuentes.
+
 
 ### Terminado en código, con alcance acotado
 

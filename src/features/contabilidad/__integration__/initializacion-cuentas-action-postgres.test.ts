@@ -1,7 +1,8 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { assertDisposableDatabase, assertDisposableDatabaseIdentity } from '../../../../scripts/ci/disposable-database.mjs';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
+import { computeInitializationPayloadHash } from '@/features/contabilidad/services/initialization-idempotency';
 
 assertDisposableDatabase(process.env);
 
@@ -43,17 +44,18 @@ describe('acción de inicialización coordinada en PostgreSQL aislado', { timeou
   });
 
   it('rechaza una carga nueva sin persistir cuentas ni marcadores', async () => {
-    const result = await initialize({ idempotencyKey: 'blocked-action', cuentas: [accountInput] });
+    const result = await initialize({ idempotencyKey: 'blocked-action', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [accountInput] });
     expect(result).toMatchObject({ success: false, error: { code: 'INICIALIZACION_NO_DISPONIBLE' } });
     expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(0);
     expect(await prisma.inicializacionContable.count({ where: { tenantId } })).toBe(0);
   });
 
   it('rechaza un resultado previo sin cuentas reales y no crea ni altera registros', async () => {
-    const input = { idempotencyKey: 'completed-action', cuentas: [{ ...accountInput,
+    const input = { idempotencyKey: 'completed-action', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [{ ...accountInput,
       saldoInicial: '10', origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio' } }] };
     const parsed = initializationContract.parse(input);
-    const payloadHash = createHash('sha256').update(JSON.stringify({ cuentas: parsed.cuentas })).digest('hex');
+    const { idempotencyKey, ...payload } = parsed;
+    const payloadHash = computeInitializationPayloadHash(payload);
     await prisma.inicializacionContable.create({ data: { tenantId, idempotencyKey: parsed.idempotencyKey,
       payloadHash, estado: 'COMPLETADA', resultado: { cuentas: [] } } });
     const replay = await initialize(input);
@@ -64,7 +66,7 @@ describe('acción de inicialización coordinada en PostgreSQL aislado', { timeou
   });
 
   it.skip('pendiente: crea una vez, reproduce el resultado y bloquea la misma clave con otra carga', async () => {
-    const request = { idempotencyKey: 'init-action-qa', cuentas: [accountInput] };
+    const request = { idempotencyKey: 'init-action-qa', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [accountInput] };
     const first = await initialize(request);
     expect(first).toMatchObject({ success: true, data: { replayed: false } });
     const created = await prisma.cuentaBancaria.findMany({ where: { tenantId } });

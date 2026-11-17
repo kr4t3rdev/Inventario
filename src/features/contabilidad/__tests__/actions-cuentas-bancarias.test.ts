@@ -24,9 +24,10 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 vi.mock('@/features/contabilidad-formal/services/capital-adjustment-posting-service', () => ({
   emitirInyeccionCapital: vi.fn().mockResolvedValue({}),
 }));
-vi.mock('@/features/contabilidad/services/initialization-idempotency', () => ({
-  runIdempotentInitialization: vi.fn(),
-}));
+vi.mock('@/features/contabilidad/services/initialization-idempotency', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/contabilidad/services/initialization-idempotency')>();
+  return { ...actual, runIdempotentInitialization: vi.fn() };
+});
 vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
   acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
 }));
@@ -694,6 +695,8 @@ describe('Cuentas Bancarias Actions', () => {
       txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, saldo: 0 });
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'blocked-init',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'BLOCK',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
       });
@@ -705,6 +708,8 @@ describe('Cuentas Bancarias Actions', () => {
     it('acepta saldo histórico sin origen documentado en el contrato pero mantiene el alta bloqueada', async () => {
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'blocked-unknown-source',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{
           nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'UNKNOWN-SOURCE',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '100000',
@@ -720,6 +725,8 @@ describe('Cuentas Bancarias Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'unauthorized-init',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{
           nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'NO-AUTH',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0',
@@ -734,6 +741,8 @@ describe('Cuentas Bancarias Actions', () => {
       vi.mocked(runIdempotentInitialization).mockResolvedValue({ replayed: true, resultado: { cuentas: [] } });
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'completed-init',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'DONE',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
       });
@@ -746,6 +755,8 @@ describe('Cuentas Bancarias Actions', () => {
       periodGuardState.blocked = true;
       vi.mocked(runIdempotentInitialization).mockResolvedValue({ replayed: true, resultado: { cuentas: [] } });
       const result = await initializeBankAccountsAction({ idempotencyKey: 'completed-positive',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'DONE-POSITIVE',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '10',
           origen: { tipo: 'CAPITAL_SOCIAL', tercero: 'Socio' } }] });
@@ -759,6 +770,8 @@ describe('Cuentas Bancarias Actions', () => {
       txClient.cuentaBancaria.create.mockResolvedValue(created);
       const input = {
         idempotencyKey: 'onboarding-1',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{
           nombreCuenta: 'Operaciones',
           nombreBanco: 'Banco Test',
@@ -787,6 +800,8 @@ describe('Cuentas Bancarias Actions', () => {
       txClient.aperturaPeriodo.count.mockResolvedValue(1);
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'existing-opening',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{
           nombreCuenta: 'Banco', nombreBanco: 'Banco', numeroCuenta: 'ALREADY-OPEN',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0',
@@ -802,6 +817,8 @@ describe('Cuentas Bancarias Actions', () => {
       txClient.anticipo.create.mockResolvedValue({ anticipoId: 'advance-1' });
       const input = {
         idempotencyKey: 'onboarding-advance',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
         cuentas: [{
           nombreCuenta: 'Cobros', nombreBanco: 'Banco Test', numeroCuenta: 'INIT-002',
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '50',

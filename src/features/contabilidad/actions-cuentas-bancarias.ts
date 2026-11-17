@@ -19,6 +19,7 @@ import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
+import { computeInitializationPayloadHash } from './services/initialization-idempotency';
 import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import type { Prisma } from '@/generated/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -262,9 +263,8 @@ export const initializeBankAccountsAction = withAction(
     requireFeature(user, 'contabilidad', 'inicializar cuentas y saldos');
     const parsed = initializationContract.parse(input);
     const tenantId = requireTenant(user);
-    const payloadHash = createHash('sha256')
-      .update(JSON.stringify({ cuentas: parsed.cuentas }))
-      .digest('hex');
+    const { idempotencyKey, ...payload } = parsed;
+    const payloadHash = computeInitializationPayloadHash(payload);
     const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
 
     const result = await runIdempotentInitialization({

@@ -8,6 +8,10 @@ let run: typeof import('@/features/contabilidad/services/initialization-idempote
 let tenantId = '';
 let repeatableTenantId = '';
 let rollbackTenantId = '';
+let isolationTenantA = '';
+let isolationTenantB = '';
+let conflictTenant = '';
+let secondKeyTenant = '';
 const input = { tenantId: '', idempotencyKey: 'concurrency-test', payloadHash: 'a'.repeat(64) };
 
 describe('idempotencia de inicialización en PostgreSQL', { timeout: 120_000 }, () => {
@@ -21,11 +25,15 @@ describe('idempotencia de inicialización en PostgreSQL', { timeout: 120_000 }, 
     tenantId = (await prisma.tenant.create({ data: { nombre: 'QA idempotencia', slug: randomUUID() } })).tenantId;
     repeatableTenantId = (await prisma.tenant.create({ data: { nombre: 'QA repeatable', slug: randomUUID() } })).tenantId;
     rollbackTenantId = (await prisma.tenant.create({ data: { nombre: 'QA rollback', slug: randomUUID() } })).tenantId;
+    isolationTenantA = (await prisma.tenant.create({ data: { nombre: 'QA aislamiento A', slug: randomUUID() } })).tenantId;
+    isolationTenantB = (await prisma.tenant.create({ data: { nombre: 'QA aislamiento B', slug: randomUUID() } })).tenantId;
+    conflictTenant = (await prisma.tenant.create({ data: { nombre: 'QA conflicto', slug: randomUUID() } })).tenantId;
+    secondKeyTenant = (await prisma.tenant.create({ data: { nombre: 'QA segunda clave', slug: randomUUID() } })).tenantId;
     input.tenantId = tenantId;
   });
   afterAll(async () => {
     if (!prisma) return;
-    const tenantIds = [tenantId, repeatableTenantId, rollbackTenantId].filter(Boolean);
+    const tenantIds = [tenantId, repeatableTenantId, rollbackTenantId, isolationTenantA, isolationTenantB, conflictTenant, secondKeyTenant].filter(Boolean);
     await prisma.inicializacionContable.deleteMany({ where: { tenantId: { in: tenantIds } } });
     await prisma.tenant.deleteMany({ where: { tenantId: { in: tenantIds } } });
     await prisma.$disconnect();
@@ -72,5 +80,57 @@ describe('idempotencia de inicialización en PostgreSQL', { timeout: 120_000 }, 
     expect((await prisma.tenant.findUniqueOrThrow({ where: { tenantId: rollbackTenantId } })).nombre).toBe('QA rollback');
     expect(await prisma.inicializacionContable.count({ where: { tenantId: rollbackTenantId, idempotencyKey: request.idempotencyKey } })).toBe(0);
     expect(await run(request, async () => ({ cuentaId: 'recuperado' }))).toEqual({ replayed: false, resultado: { cuentaId: 'recuperado' } });
+  });
+
+  it('aísla tenants: la misma clave en otro tenant ejecuta independiente sin fugar el resultado', async () => {
+    const key = 'shared-key';
+    const hash = 'd'.repeat(64);
+    const first = await run({ tenantId: isolationTenantA, idempotencyKey: key, payloadHash: hash },
+      async () => ({ cuentaId: 'tenant-a' }));
+    const second = await run({ tenantId: isolationTenantB, idempotencyKey: key, payloadHash: hash },
+      async () => ({ cuentaId: 'tenant-b' }));
+    expect(first).toEqual({ replayed: false, resultado: { cuentaId: 'tenant-a' } });
+    expect(second).toEqual({ replayed: false, resultado: { cuentaId: 'tenant-b' } });
+    expect(await run({ tenantId: isolationTenantA, idempotencyKey: key, payloadHash: hash },
+      async () => ({ cuentaId: 'otro' }))).toEqual({ replayed: true, resultado: { cuentaId: 'tenant-a' } });
+    expect(await prisma.inicializacionContable.count({ where: { idempotencyKey: key } })).toBe(2);
+  });
+
+  it('serializa dos concurrentes con misma clave y distinto hash: una ejecuta y la otra ve conflicto', async () => {
+    let calls = 0;
+    const execute = async () => {
+      calls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return { cuentaId: 'solo-una' };
+    };
+    const results = await Promise.allSettled([
+      run({ tenantId: conflictTenant, idempotencyKey: 'conflict-key', payloadHash: 'e'.repeat(64) }, execute),
+      run({ tenantId: conflictTenant, idempotencyKey: 'conflict-key', payloadHash: 'f'.repeat(64) }, execute),
+    ]);
+    expect(calls).toBe(1);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.filter((result) => result.status === 'rejected');
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(await prisma.inicializacionContable.count({ where: { tenantId: conflictTenant } })).toBe(1);
+  });
+
+  it('serializa dos concurrentes con claves distintas: una ejecuta y la otra ve inicialización completada', async () => {
+    let calls = 0;
+    const execute = async () => {
+      calls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return { cuentaId: 'solo-una' };
+    };
+    const results = await Promise.allSettled([
+      run({ tenantId: secondKeyTenant, idempotencyKey: 'key-1', payloadHash: 'e'.repeat(64) }, execute),
+      run({ tenantId: secondKeyTenant, idempotencyKey: 'key-2', payloadHash: 'e'.repeat(64) }, execute),
+    ]);
+    expect(calls).toBe(1);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.filter((result) => result.status === 'rejected');
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ code: 'INITIALIZATION_ALREADY_COMPLETED' });
+    expect(await prisma.inicializacionContable.count({ where: { tenantId: secondKeyTenant } })).toBe(1);
   });
 });

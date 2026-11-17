@@ -13,6 +13,26 @@ function normalizeAmount(value: string): string {
 }
 
 const requiredText = z.string().trim().min(1).max(200);
+const currencyCode = z.string().trim().transform((value) => value.toUpperCase())
+  .pipe(z.string().regex(/^[A-Z]{3,8}$/));
+const positiveRate = z.string().regex(/^\d+(?:\.\d{1,8})?$/)
+  .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0, 'La tasa debe ser mayor que cero');
+const fechaCorte = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de corte debe tener formato aaaa-mm-dd')
+  .refine((value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+  }, 'La fecha de corte no es una fecha válida')
+  .refine((value) => value <= new Date().toISOString().slice(0, 10), 'La fecha de corte no puede ser futura');
+const tasas = z.record(z.string(), positiveRate)
+  .transform((value) => Object.fromEntries(Object.entries(value).map(([key, rate]) => [key.trim().toUpperCase(), rate])))
+  .superRefine((value, context) => {
+    for (const key of Object.keys(value)) {
+      if (!/^[A-Z]{3,8}$/.test(key)) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'La moneda de la tasa no es válida' });
+      }
+    }
+  });
 const amountPattern = /^\d{1,30}(?:\.\d{1,2})?$/;
 const amount = z.string().regex(amountPattern).refine((value) => {
   if (!amountPattern.test(value)) return false;
@@ -27,9 +47,7 @@ const amount = z.string().regex(amountPattern).refine((value) => {
 const origin = z.object({
   tipo: z.enum(['CAPITAL_SOCIAL', 'PRESTAMO', 'ANTICIPO']),
   tercero: requiredText,
-  tasaCambio: z.string().regex(/^\d+(?:\.\d{1,8})?$/)
-    .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0, 'La tasa debe ser mayor que cero')
-    .optional(),
+  tasaCambio: positiveRate.optional(),
   tipoPagoId: requiredText.optional(),
 }).strict().superRefine((value, context) => {
   if (value.tipo === 'ANTICIPO' && !value.tipoPagoId) {
@@ -45,8 +63,7 @@ const account = z.object({
   nombreBanco: requiredText,
   numeroCuenta: requiredText,
   tipoCuenta: requiredText,
-  moneda: z.string().trim().transform((value) => value.toUpperCase())
-    .pipe(z.string().regex(/^[A-Z]{3,8}$/)),
+  moneda: currencyCode,
   saldoInicial: amount,
   origen: origin.optional(),
   origenNoDocumentado: z.boolean().optional(),
@@ -72,6 +89,9 @@ const account = z.object({
 /** Contrato de entrada puro; la ejecución debe validar permisos, persistencia e idempotencia. */
 export const initializationContract = z.object({
   idempotencyKey: z.string().trim().min(1).max(64),
+  fechaCorte,
+  monedaFuncional: currencyCode,
+  tasas: tasas.optional(),
   cuentas: z.array(account).min(1).max(100),
 }).strict().superRefine((value, context) => {
   const seen = new Set<string>();
@@ -83,6 +103,16 @@ export const initializationContract = z.object({
       context.addIssue({ code: z.ZodIssueCode.custom, path: ['cuentas', index, 'numeroCuenta'], message: 'La cuenta bancaria está repetida' });
     }
     seen.add(key);
+  });
+  value.cuentas.forEach((item) => {
+    if (item.saldoInicial !== '0' && item.moneda !== value.monedaFuncional
+      && value.tasas?.[item.moneda] === undefined && item.origen?.tasaCambio === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tasas', item.moneda],
+        message: 'Falta la tasa de cambio para ' + item.moneda + ' respecto a ' + value.monedaFuncional,
+      });
+    }
   });
 });
 
