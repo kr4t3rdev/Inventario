@@ -29,6 +29,13 @@ describe('contrato de borrador de inicialización', () => {
     expect(result.monedaFuncional).toBe('CUP');
   });
 
+  it('rechaza tasas duplicadas tras normalizar la moneda', () => {
+    expect(initializationDraftContract.safeParse({
+      idempotencyKey: 'draft-1',
+      tasas: { usd: '400', USD: '420' },
+    }).success).toBe(false);
+  });
+
   it('rechaza clave vacía y cuentas duplicadas', () => {
     expect(initializationDraftContract.safeParse({ idempotencyKey: ' ' }).success).toBe(false);
     expect(initializationDraftContract.safeParse({

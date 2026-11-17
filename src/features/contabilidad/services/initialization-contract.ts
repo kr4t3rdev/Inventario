@@ -25,6 +25,16 @@ const fechaCorte = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de corte de
   }, 'La fecha de corte no es una fecha válida')
   .refine((value) => value <= new Date().toISOString().slice(0, 10), 'La fecha de corte no puede ser futura');
 const tasas = z.record(z.string(), positiveRate)
+  .superRefine((value, context) => {
+    const seen = new Map<string, string>();
+    for (const key of Object.keys(value)) {
+      const normalized = key.trim().toUpperCase();
+      if (seen.has(normalized)) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: `La tasa ${normalized} está duplicada` });
+      }
+      seen.set(normalized, key);
+    }
+  })
   .transform((value) => Object.fromEntries(Object.entries(value).map(([key, rate]) => [key.trim().toUpperCase(), rate])))
   .superRefine((value, context) => {
     for (const key of Object.keys(value)) {

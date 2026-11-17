@@ -162,6 +162,17 @@ describe('contrato de inicialización: fecha de corte, moneda funcional y eviden
     expect(initializationContract.safeParse({ ...baseFx, cuentas: [usd] }).success).toBe(true);
   });
 
+  it('rechaza tasas duplicadas tras normalizar la moneda', () => {
+    expect(initializationContract.safeParse({
+      ...baseFx,
+      tasas: { usd: '400', USD: '420' },
+    }).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...baseFx,
+      tasas: { usd: '400', USD: '400' },
+    }).success).toBe(false);
+  });
+
   it('rechaza tasas cero, negativas o no numéricas', () => {
     const usd = { ...baseFx.cuentas[0], moneda: 'USD', origen: { tipo: 'CAPITAL_SOCIAL', tercero: 'Socio QA' } };
     expect(initializationContract.safeParse({ ...baseFx, cuentas: [usd], tasas: { USD: '0' } }).success).toBe(false);

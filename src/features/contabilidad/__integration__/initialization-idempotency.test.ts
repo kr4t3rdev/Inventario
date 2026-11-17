@@ -74,7 +74,7 @@ describe('idempotencia de inicialización en PostgreSQL', { timeout: 120_000 }, 
   it('revierte la evidencia si falla la operación y permite un reintento', async () => {
     const request = { ...input, tenantId: rollbackTenantId, idempotencyKey: 'rollback-test' };
     await expect(run(request, async (tx) => {
-      await tx.tenant.update({ where: { tenantId }, data: { nombre: 'No debe persistir' } });
+      await tx.tenant.update({ where: { tenantId: rollbackTenantId }, data: { nombre: 'No debe persistir' } });
       throw new Error('fallo de prueba');
     })).rejects.toThrow('fallo de prueba');
     expect((await prisma.tenant.findUniqueOrThrow({ where: { tenantId: rollbackTenantId } })).nombre).toBe('QA rollback');
