@@ -1819,6 +1819,7 @@ model PurchaseAllocation {
   tenantId              String
   compraDocumentoItemId String?
   recepcionItemId       String?
+  inventarioInicialFuenteId String?
   ventaItemId           String
   loteId                String?
   costoUnitarioSnapshot Int?
@@ -1839,10 +1840,12 @@ model PurchaseAllocation {
   tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
   ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id], onDelete: Cascade)
   lote                  Lote?               @relation(fields: [tenantId, loteId], references: [tenantId, id], onDelete: Restrict)
+  inventarioInicialFuente InventarioInicialFuente? @relation(fields: [tenantId, inventarioInicialFuenteId, loteId], references: [tenantId, id, loteId], onDelete: Restrict)
 
   @@index([tenantId, loteId])
   @@index([tenantId, recepcionItemId])
   @@index([tenantId, purchaseReceiptInvoiceAllocationId])
+  @@index([tenantId, inventarioInicialFuenteId])
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
   @@index([tenantId])
@@ -1895,8 +1898,10 @@ model Lote {
   compraItem         CompraDocumentoItem?  @relation(fields: [tenantId, compraItemId], references: [tenantId, compraDocumentoItemId], onDelete: Restrict)
   recepcionItem      RecepcionItem?        @relation(fields: [tenantId, recepcionItemId], references: [tenantId, id], onDelete: Restrict)
   allocations        PurchaseAllocation[]
+  inventarioInicial  InventarioInicialFuente[]
 
   @@unique([tenantId, id])
+  @@unique([tenantId, id, productoId])
   @@unique([tenantId, productoId, codigo])
   @@index([tenantId, fechaVencimiento])
   @@index([tenantId, productoId, fechaVencimiento])
@@ -2924,6 +2929,9 @@ model CuentaPorCobrar {
   facturaId        String?               @unique
   numeroFactura    String?
   clienteId        String
+  inicializacionId String?
+  referenciaInicial String?
+  referenciaExternaInicial String?
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
   montoOriginal    Decimal?              @db.Decimal(20, 4)
@@ -2949,17 +2957,22 @@ model CuentaPorCobrar {
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+  inicializacion   InicializacionContable? @relation(fields: [tenantId, inicializacionId], references: [tenantId, inicializacionId], onDelete: Restrict)
   prestamoCash     PrestamoCash?
   // C-5: Restrict — ninguna vía de borrado deja CxC de servicio huérfana.
   ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId], onDelete: Restrict)
 
   @@index([tenantId])
+  @@unique([tenantId, inicializacionId, referenciaInicial])
 }
 
 model CuentaPorPagar {
   cuentaPorPagarId String                @id @default(cuid())
   tenantId         String
-  numeroFactura    String
+  numeroFactura    String?
+  inicializacionId String?
+  referenciaInicial String?
+  referenciaExternaInicial String?
   gastoCompraId    String?               @unique
   gastosDEId       String?               @unique
   proveedorNombre  String?
@@ -2979,7 +2992,7 @@ model CuentaPorPagar {
   fxEvidenceVersion Int?
   saldoPendiente   Decimal
   moneda           String                @default("CUP")
-  fechaEmision     DateTime              @default(now())
+  fechaEmision     DateTime?             @default(now())
   fechaVencimiento DateTime?
   estado           EstadoCuentaPorPagar  @default(PENDIENTE)
   createdAt        DateTime              @default(now())
@@ -2994,6 +3007,7 @@ model CuentaPorPagar {
   gastosDE         GastosDE?             @relation(fields: [gastosDEId], references: [gastosDEId])
   proveedor        Vendor?               @relation(fields: [proveedorId], references: [vendorId])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+  inicializacion   InicializacionContable? @relation(fields: [tenantId, inicializacionId], references: [tenantId, inicializacionId], onDelete: Restrict)
   deudaCash        DeudaCash?
   pagos            PagoCuentaPorPagar[]
   reconciliaciones ReconciliacionGasto[]
@@ -3003,6 +3017,7 @@ model CuentaPorPagar {
   @@index([tipo])
   @@index([numeroFactura])
   @@index([deletedAt])
+  @@unique([tenantId, inicializacionId, referenciaInicial])
 }
 
 model DeudaCash {
@@ -4176,10 +4191,40 @@ model InicializacionContable {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   tenant           Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  cuentasPorCobrarIniciales CuentaPorCobrar[]
+  inventarioInicialFuentes InventarioInicialFuente[]
+  cuentasPorPagarIniciales CuentaPorPagar[]
 
   @@unique([tenantId])
+  @@unique([tenantId, inicializacionId])
   @@index([tenantId, estado, createdAt])
   @@map("inicializaciones_contables")
+}
+
+/// Fuente de costo declarada en la apertura, todavía no conectada al asignador FIFO.
+model InventarioInicialFuente {
+  id                 String @id @default(cuid())
+  tenantId           String
+  inicializacionId   String
+  loteId             String
+  productoId         String
+  cantidad           Int
+  costoUnitario      Int
+  moneda             String
+  fechaCorte         DateTime
+  montoFuncional     Decimal @db.Decimal(20, 4)
+  monedaFuncional    String
+  evidencia          Json
+  evidenciaHash      String
+  createdAt          DateTime @default(now())
+  inicializacion     InicializacionContable @relation(fields: [tenantId, inicializacionId], references: [tenantId, inicializacionId], onDelete: Restrict)
+  lote               Lote @relation(fields: [tenantId, loteId, productoId], references: [tenantId, id, productoId], onDelete: Restrict)
+  asignaciones       PurchaseAllocation[]
+
+  @@unique([tenantId, loteId])
+  @@unique([tenantId, id, loteId])
+  @@index([tenantId, inicializacionId])
+  @@map("inventario_inicial_fuentes")
 }
 
 model SaldoSnapshot {
@@ -4419,6 +4464,7 @@ enum EstadoCuentaPorCobrar {
 enum TipoCuentaPorPagar {
   compra
   servicio
+  inicial_externa
 }
 
 enum EstadoCuentaPorPagar {

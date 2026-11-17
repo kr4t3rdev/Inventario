@@ -176,8 +176,9 @@ export interface EstadoDeCuentaClienteData {
 /** Cuenta por Pagar con antigüedad calculada. */
 export interface CuentaPorPagarEnriquecida {
 	cuentaPorPagarId: string;
-	numeroFactura: string;
-	tipo: "compra" | "servicio";
+	numeroFactura: string | null;
+	tipo: "compra" | "servicio" | "inicial_externa";
+	referenciaExternaInicial: string | null;
 	gastoCompraId: string | null;
 	gastosDEId: string | null;
 	proveedorId: string | null;
@@ -186,12 +187,12 @@ export interface CuentaPorPagarEnriquecida {
 	montoPagado: number;
 	saldoPendiente: number;
 	moneda: string;
-	fechaEmision: string;
+	fechaEmision: string | null;
 	fechaVencimiento: string | null;
 	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
 	tipoDeuda: string | null;
-	rangoAntiguedad: string;
-	diasTranscurridos: number;
+	rangoAntiguedad: string | null;
+	diasTranscurridos: number | null;
 	proveedor: {
 		vendorId: string;
 		nombre: string;
@@ -428,19 +429,18 @@ function computeAging(fecha: Date): {
 function enriquecerCuentaPorPagar(
 	cuenta: Record<string, unknown>,
 ): CuentaPorPagarEnriquecida {
-	const fechaEmision = cuenta.fechaEmision
-		? new Date(cuenta.fechaEmision as string)
-		: new Date();
-	const aging = isNaN(fechaEmision.getTime())
-		? { rangoAntiguedad: "0-30", diasTranscurridos: 0 }
+	const fechaEmision = cuenta.fechaEmision ? new Date(cuenta.fechaEmision as string) : null;
+	const aging = !fechaEmision || isNaN(fechaEmision.getTime())
+		? { rangoAntiguedad: null, diasTranscurridos: null }
 		: computeAging(fechaEmision);
 	const pagos =
 		(cuenta.pagos as Array<Record<string, unknown>> | undefined) ?? [];
 
 	return {
 		cuentaPorPagarId: cuenta.cuentaPorPagarId as string,
-		numeroFactura: cuenta.numeroFactura as string,
-		tipo: cuenta.tipo as "compra" | "servicio",
+		numeroFactura: cuenta.numeroFactura as string | null,
+		tipo: cuenta.tipo as "compra" | "servicio" | "inicial_externa",
+		referenciaExternaInicial: cuenta.referenciaExternaInicial as string | null,
 		gastoCompraId: cuenta.gastoCompraId as string | null,
 		gastosDEId: cuenta.gastosDEId as string | null,
 		proveedorId: cuenta.proveedorId as string | null,
@@ -449,7 +449,7 @@ function enriquecerCuentaPorPagar(
 		montoPagado: Number(cuenta.montoPagado),
 		saldoPendiente: Number(cuenta.saldoPendiente),
 		moneda: cuenta.moneda as string,
-		fechaEmision: (cuenta.fechaEmision as Date).toISOString(),
+		fechaEmision: fechaEmision?.toISOString() ?? null,
 		fechaVencimiento: cuenta.fechaVencimiento
 			? (cuenta.fechaVencimiento as Date).toISOString()
 			: null,
@@ -608,6 +608,12 @@ export const updateCuentaPorCobrarAction = withAction(
 				"Una cuenta por cobrar anulada no puede reactivarse mediante una actualización genérica",
 				"VALIDATION_ERROR",
 			);
+		if (existente.inicializacionId !== null && existente.inicializacionId !== undefined) {
+			throw new ActionError(
+				"Esta cuenta inicial requiere un flujo de cobro coordinado",
+				"INITIAL_RECEIVABLE_UPDATE_UNAVAILABLE",
+			);
+		}
 
 		const data: Record<string, unknown> = {};
 		if (p.estado !== undefined) data.estado = p.estado;
@@ -621,7 +627,7 @@ export const updateCuentaPorCobrarAction = withAction(
 				: null;
 
 		const updated = await prisma.cuentaPorCobrar.updateMany({
-			where: { id: p.id, tenantId, estado: { not: "ANULADA" } },
+			where: { id: p.id, tenantId, inicializacionId: null, estado: { not: "ANULADA" } },
 			data,
 		});
 		if (updated.count !== 1)

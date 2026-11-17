@@ -81,6 +81,7 @@ async function detectarAlertasVencimientoCxP(): Promise<
     select: {
       cuentaPorPagarId: true,
       numeroFactura: true,
+      referenciaExternaInicial: true,
       estado: true,
       saldoPendiente: true,
       fechaVencimiento: true
@@ -91,7 +92,7 @@ async function detectarAlertasVencimientoCxP(): Promise<
     .filter((c) => c.fechaVencimiento && c.fechaVencimiento < hoy)
     .map((c) => ({
       id: c.cuentaPorPagarId,
-      numeroFactura: c.numeroFactura,
+      numeroFactura: c.numeroFactura ?? c.referenciaExternaInicial ?? 'Saldo inicial',
       estado: c.estado,
       saldoPendiente: Number(c.saldoPendiente),
       fechaVencimiento: c.fechaVencimiento!,

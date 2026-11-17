@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { ActionError } from '@/lib/server-actions';
 import {
   getCuentasPorCobrarSchema,
   getCuentasPorPagarSchema,
@@ -171,7 +172,8 @@ function enriquecerCuentaPorCobrar(cuenta: Record<string, unknown>) {
     totalFactura,
     totalPagadoFactura,
     saldoFactura,
-    moneda: cuenta.moneda as string,
+    moneda: (cuenta.monedaOriginal ?? cuenta.moneda) as string,
+    referenciaExternaInicial: cuenta.referenciaExternaInicial as string | null,
     cliente: cuenta.cliente as { clienteId: string; nombre: string } | null,
     factura: facturaRecord
       ? {
@@ -200,18 +202,17 @@ function enriquecerCuentaPorCobrar(cuenta: Record<string, unknown>) {
  * @returns {Record<string, unknown>} Cuenta enriquecida.
  */
 function enriquecerCuentaPorPagar(cuenta: Record<string, unknown>) {
-  const fechaEmision = cuenta.fechaEmision
-    ? new Date(cuenta.fechaEmision as string)
-    : new Date();
-  const aging = Number.isNaN(fechaEmision.getTime())
-    ? { rangoAntiguedad: '0-30', diasTranscurridos: 0 }
-    : computeAging(fechaEmision);
+  const fechaEmision = cuenta.fechaEmision ? new Date(cuenta.fechaEmision as string) : null;
+  const aging = fechaEmision && !Number.isNaN(fechaEmision.getTime())
+    ? computeAging(fechaEmision)
+    : { rangoAntiguedad: null, diasTranscurridos: null };
   const pagos = (cuenta.pagos as Array<Record<string, unknown>> | undefined) ?? [];
 
   return {
     cuentaPorPagarId: cuenta.cuentaPorPagarId as string,
-    numeroFactura: cuenta.numeroFactura as string,
-    tipo: cuenta.tipo as 'compra' | 'servicio',
+    numeroFactura: cuenta.numeroFactura as string | null,
+    tipo: cuenta.tipo as 'compra' | 'servicio' | 'inicial_externa',
+    referenciaExternaInicial: cuenta.referenciaExternaInicial as string | null,
     gastoCompraId: cuenta.gastoCompraId as string | null,
     gastosDEId: cuenta.gastosDEId as string | null,
     proveedorId: cuenta.proveedorId as string | null,
@@ -220,7 +221,7 @@ function enriquecerCuentaPorPagar(cuenta: Record<string, unknown>) {
     montoPagado: Number(cuenta.montoPagado),
     saldoPendiente: Number(cuenta.saldoPendiente),
     moneda: cuenta.moneda as string,
-    fechaEmision: (cuenta.fechaEmision as Date).toISOString(),
+    fechaEmision: fechaEmision?.toISOString() ?? null,
     fechaVencimiento: cuenta.fechaVencimiento
       ? (cuenta.fechaVencimiento as Date).toISOString()
       : null,
@@ -285,6 +286,7 @@ export const AccountingAccountsService = {
     if (f.search) {
       where.OR = [
         { numeroFactura: { contains: f.search, mode: 'insensitive' } },
+        { referenciaExternaInicial: { contains: f.search, mode: 'insensitive' } },
         { cliente: { nombre: { contains: f.search, mode: 'insensitive' } } },
       ];
     }
@@ -327,6 +329,12 @@ export const AccountingAccountsService = {
       include: CXC_INCLUDE,
     });
     if (!existing) return null;
+    if (existing.inicializacionId != null) {
+      throw new ActionError(
+        'Esta cuenta inicial requiere una reversión contable coordinada',
+        'INITIAL_RECEIVABLE_UPDATE_UNAVAILABLE',
+      );
+    }
     if (existing.estado === 'ANULADA') {
       return {
         cuenta: existing as unknown as Record<string, unknown>,
@@ -336,7 +344,7 @@ export const AccountingAccountsService = {
     }
 
     const claimed = await prisma.cuentaPorCobrar.updateMany({
-      where: { ...where, estado: { not: 'ANULADA' } },
+      where: { ...where, inicializacionId: null, estado: { not: 'ANULADA' } },
       data: { estado: 'ANULADA' },
     });
     if (claimed.count === 0) {
@@ -344,6 +352,12 @@ export const AccountingAccountsService = {
         where,
         include: CXC_INCLUDE,
       });
+      if (current?.inicializacionId != null) {
+        throw new ActionError(
+          'Esta cuenta inicial requiere una reversión contable coordinada',
+          'INITIAL_RECEIVABLE_UPDATE_UNAVAILABLE',
+        );
+      }
       return current
         ? {
             cuenta: current as unknown as Record<string, unknown>,
@@ -432,6 +446,7 @@ export const AccountingAccountsService = {
     if (f.search) {
       where.OR = [
         { numeroFactura: { contains: f.search, mode: 'insensitive' } },
+        { referenciaExternaInicial: { contains: f.search, mode: 'insensitive' } },
         { proveedorNombre: { contains: f.search, mode: 'insensitive' } },
       ];
     }

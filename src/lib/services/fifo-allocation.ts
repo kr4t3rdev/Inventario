@@ -909,6 +909,7 @@ export async function getCostoFifoVentaValorado(
 		where: { tenantId, ventaItem: { ventaId } },
 		select: {
 			tenantId: true,
+			inventarioInicialFuenteId: true,
 			recepcionItemId: true,
 			purchaseReceiptInvoiceAllocationId: true,
 			cantidad: true,
@@ -963,6 +964,10 @@ export async function getCostoFifoVentaValorado(
 		const cantidad = asignacion.cantidad;
 		if (!Number.isSafeInteger(cantidad) || cantidad <= 0) { fuenteNoVerificable = true; continue; }
 		cantidadTotal += cantidad;
+		if (asignacion.inventarioInicialFuenteId != null) {
+			fuenteNoVerificable = true;
+			continue;
+		}
 		const hasReceiptSource = asignacion.recepcionItemId != null;
 		const hasInvoiceLayer = asignacion.purchaseReceiptInvoiceAllocationId != null;
 		if (hasReceiptSource !== hasInvoiceLayer) {
@@ -1170,6 +1175,7 @@ export async function restaurarAllocacionesFifo(
 		where: { tenantId, ventaItemId },
 		select: {
 			id: true,
+			inventarioInicialFuenteId: true,
 			recepcionItemId: true,
 			purchaseReceiptInvoiceAllocationId: true,
 			cantidad: true,
@@ -1234,6 +1240,9 @@ export async function restaurarAllocacionesFifo(
 	let functionalCurrency: string | null | undefined;
 	for (const alloc of allocations) {
 		if (remainingToValidate <= 0) break;
+		if (alloc.inventarioInicialFuenteId != null) {
+			throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+		}
 		if (!Number.isFinite(alloc.cantidad) || alloc.cantidad <= 0) {
 			throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
 		}

@@ -101,4 +101,24 @@ describe('/busy/contabilidad/cuentas-por-pagar page', () => {
       expect(vi.mocked(getCuentasPorPagarAction).mock.calls.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  it('identifica una deuda inicial sin factura ni fecha histórica y bloquea su pago', async () => {
+    const { getCuentasPorPagarAction } = await import('@/features/contabilidad');
+    vi.mocked(getCuentasPorPagarAction).mockResolvedValueOnce({ success: true, data: {
+      cuentas: [{ cuentaPorPagarId: 'inicial-1', tipo: 'inicial_externa', numeroFactura: null,
+        referenciaExternaInicial: 'LEGACY-AP-1',
+        fechaEmision: null, rangoAntiguedad: null, diasTranscurridos: null,
+        proveedorNombre: 'Proveedor inicial', montoDeuda: 125, montoPagado: 0, saldoPendiente: 125,
+        moneda: 'CUP', estado: 'PENDIENTE', pagos: [], createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z' }],
+      pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      metricas: { totalCuentas: 1, totalFacturado: 125, totalPagado: 0, totalSaldo: 125,
+        cuentasPendientes: 1, cuentasPagadas: 0 },
+    } } as never);
+    render(<CuentasPorPagarPage />);
+    expect(await screen.findByText('Saldo inicial')).toBeInTheDocument();
+    expect(screen.getByText('LEGACY-AP-1')).toBeInTheDocument();
+    expect(screen.getByText('Antigüedad desconocida')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /pagar/i })).toBeDisabled();
+  });
 });

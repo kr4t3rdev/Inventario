@@ -82,6 +82,19 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
 
+  it('rechaza anular una CxC inicial sin reversión contable coordinada', async () => {
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
+      ...cuenta, inicializacionId: 'init-1', tipoCuenta: 'APERTURA_EXTERNA',
+    })
+    prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 })
+
+    const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('INITIAL_RECEIVABLE_UPDATE_UNAVAILABLE')
+    expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
+  })
+
   it('marks the receivable as ANULADA while preserving historical amounts and payment link', async () => {
     prismaMock.cuentaPorCobrar.findFirst
       .mockResolvedValueOnce(cuenta)
@@ -95,7 +108,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     expect(expectActionSuccess(result).data?.montoDeuda).toBe(1000)
     expect(expectActionSuccess(result).data?.montoPagado).toBe(250)
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
-      where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
+      where: { id: 'cxc-1', tenantId: 'tenant-1', inicializacionId: null, estado: { not: 'ANULADA' } },
       data: { estado: 'ANULADA' },
     })
     expect(auditLogMock.log).toHaveBeenCalledWith(expect.objectContaining({
