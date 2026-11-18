@@ -1602,6 +1602,12 @@ export async function restaurarAllocacionesFifo(
 					rateId: snapshot.rateId,
 				},
 				functionalAmount: snapshot.amountFunctional - (montoFuncionalDevuelto ?? 0),
+				// Una asignación de fuente inicial se valida después contra
+				// 'initial-inventory': sin este origen el snapshot restante
+				// se firmaría 'fifo-allocation' y dejaría de ser verificable.
+				source: alloc.inventarioInicialFuenteId != null
+					? INITIAL_INVENTORY_EVIDENCE_SOURCE
+					: undefined,
 			})
 			: null;
 		if (snapshot && cantidadRestante > 0 && !snapshotRestante) {

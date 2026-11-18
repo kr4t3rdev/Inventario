@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
-import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
 import { assertDisposableDatabase, assertDisposableDatabaseIdentity } from '../../../../scripts/ci/disposable-database.mjs';
 
@@ -355,5 +355,56 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
 
     const replay = await initialize(request);
     expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+  });
+
+  it('tras una devolución parcial, la asignación restante sigue siendo valorable y devolvible', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId);
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 2);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+    } as unknown as AuthenticatedUser;
+    const result1 = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: sale.venta.ventaId,
+        items: [{ ventaItemId: sale.venta.items[0].id, cantidad: 1 }],
+        motivo: 'Primera devolución parcial',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result1.devolucionId).toBeTruthy();
+
+    // La unidad restante (1 x 25) sigue valorándose al costo de la fuente.
+    const valor = await prisma.$transaction((tx) =>
+      getCostoFifoVentaValorado(tx, tenantId, sale.venta.ventaId),
+    );
+    expect(valor?.montoFuncional).toBe(25);
+    expect(valor?.fuentesSinTasa).toEqual([]);
+
+    // Y la segunda devolución de esa misma asignación también funciona.
+    const result2 = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: sale.venta.ventaId,
+        items: [{ ventaItemId: sale.venta.items[0].id, cantidad: 1 }],
+        motivo: 'Segunda devolución parcial',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result2.devolucionId).toBeTruthy();
+    const allocAfter = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: sale.venta.items[0].id } });
+    expect(allocAfter).toHaveLength(0);
+    const devolucion2 = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result2.devolucionId } });
+    expect(Number(devolucion2.costoFifoFuncional)).toBe(25);
   });
 });
