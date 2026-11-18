@@ -189,6 +189,16 @@ export async function registrarMovimientoEfectivoAnticipo(
     idempotencyKey: string
     usuarioId: string
     observaciones?: string
+    // Carga inicial: el anticipo ya existía a fecha de corte. La valoración
+    // (tasa declarada, importe funcional y huella) llega de la inicialización
+    // y el evento formal se fecha a corte; sin ella el flujo sigue siendo el
+    // ordinario (tasa del catálogo y fecha actual).
+    valoracionInicial?: {
+      fechaEfectiva: Date
+      tasaCambio: number | null
+      montoFuncional: number
+      fxEvidenceFingerprint: string | null
+    }
   },
 ): Promise<{ movimientoId: string; saldoDisponible: number; idempotentReplay: boolean }> {
   if (!Number.isFinite(params.monto) || params.monto <= 0) {
@@ -275,16 +285,24 @@ export async function registrarMovimientoEfectivoAnticipo(
   let montoFuncional = params.monto
   let tasaId: string | null = null
   if (moneda !== monedaFuncional) {
-    const tasa = await exchangeRateProvider.getRateAsOf({
-      sourceCurrency: moneda,
-      targetCurrency: monedaFuncional,
-      boundaryAt: new Date(),
-      client: tx,
-    })
-    if (!tasa) throw createAnticipoWorkflowError(409, 'TASA_INVALIDA', `No hay tasa vigente ${moneda} → ${monedaFuncional}`)
-    tasaCambio = tasa.tasa
-    tasaId = tasa.tasaId
-    montoFuncional = params.monto * tasa.tasa
+    if (params.valoracionInicial) {
+      if (params.valoracionInicial.tasaCambio == null) {
+        throw createAnticipoWorkflowError(409, 'TASA_INVALIDA', `No hay tasa vigente ${moneda} → ${monedaFuncional}`)
+      }
+      tasaCambio = params.valoracionInicial.tasaCambio
+      montoFuncional = params.valoracionInicial.montoFuncional
+    } else {
+      const tasa = await exchangeRateProvider.getRateAsOf({
+        sourceCurrency: moneda,
+        targetCurrency: monedaFuncional,
+        boundaryAt: new Date(),
+        client: tx,
+      })
+      if (!tasa) throw createAnticipoWorkflowError(409, 'TASA_INVALIDA', `No hay tasa vigente ${moneda} → ${monedaFuncional}`)
+      tasaCambio = tasa.tasa
+      tasaId = tasa.tasaId
+      montoFuncional = params.monto * tasa.tasa
+    }
   }
 
   const saldoAntes = Number(anticipo.saldoDisponible)
@@ -325,9 +343,10 @@ export async function registrarMovimientoEfectivoAnticipo(
     )
   }
 
-  const fxEvidenceFingerprint = tasaId
-    ? createHash('sha256').update(`${tasaId}:${moneda}:${monedaFuncional}:${tasaCambio}`).digest('hex')
-    : null
+  const fxEvidenceFingerprint = params.valoracionInicial?.fxEvidenceFingerprint
+    ?? (tasaId
+      ? createHash('sha256').update(`${tasaId}:${moneda}:${monedaFuncional}:${tasaCambio}`).digest('hex')
+      : null)
   const movimiento = await tx.anticipoMovimiento.create({
     data: {
       anticipoId: anticipo.anticipoId,
@@ -352,7 +371,7 @@ export async function registrarMovimientoEfectivoAnticipo(
   await emitirEventoAnticipo(tx, { tenantId: params.tenantId, userId: params.usuarioId }, {
     anticipoMovimientoId: movimiento.movimientoId,
     tipo: anticipo.tipo === 'COBRO' ? 'ANTICIPO_CLIENTE_RECIBIDO' : 'ANTICIPO_PROVEEDOR_ENTREGADO' as const,
-    fecha: new Date(),
+    fecha: params.valoracionInicial?.fechaEfectiva ?? new Date(),
     monto: params.monto,
     moneda,
     montoFuncional: montoFuncional ?? 0,

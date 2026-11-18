@@ -499,6 +499,7 @@ export async function verifyInitializationReplay(input: {
     }
   }
   const injectedByCurrency = new Map<string, Prisma.Decimal>();
+  const anticipoByCurrency = new Map<string, Prisma.Decimal>();
   for (const ref of stored.asientos as OpeningAsientoRef[]) {
     if (ref.asientoId) {
       const asiento = await prisma.asiento.findUnique({ where: { asientoId: ref.asientoId } });
@@ -513,6 +514,11 @@ export async function verifyInitializationReplay(input: {
     if (ref.tipo === 'ANTICIPO') {
       const movimiento = await prisma.anticipoMovimiento.findFirst({ where: { idempotencyKey: ref.referencia } });
       if (!movimiento) throw incompleteError();
+      // El asiento de apertura excluye los índices de anticipo: su pierna de
+      // banco la aporta el evento formal del movimiento, así que su importe
+      // suma aquí igual que las inyecciones de capital.
+      const currentAnticipo = anticipoByCurrency.get(movimiento.moneda) ?? new Prisma.Decimal(0);
+      anticipoByCurrency.set(movimiento.moneda, currentAnticipo.add(new Prisma.Decimal(movimiento.monto.toString())));
     }
   }
   const storedByCurrency = new Map<string, Prisma.Decimal>();
@@ -545,7 +551,8 @@ export async function verifyInitializationReplay(input: {
   }
   for (const [moneda, total] of storedByCurrency) {
     const posted = (postedByCurrency.get(moneda) ?? new Prisma.Decimal(0))
-      .add(injectedByCurrency.get(moneda) ?? new Prisma.Decimal(0));
+      .add(injectedByCurrency.get(moneda) ?? new Prisma.Decimal(0))
+      .add(anticipoByCurrency.get(moneda) ?? new Prisma.Decimal(0));
     if (!total.equals(posted)) throw incompleteError();
   }
 }

@@ -272,14 +272,6 @@ export const initializeBankAccountsAction = withAction(
     const tenantId = requireTenant(user);
     const { idempotencyKey, ...payload } = parsed;
     const payloadHash = computeInitializationPayloadHash(payload);
-    const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
-    if (hasAdvance) {
-      throw new ActionError(
-        'Los saldos iniciales por anticipo aún no están coordinados a fecha de corte; llegan con la tarea 5',
-        'INITIALIZATION_ANTICIPO_NO_DISPONIBLE',
-      );
-    }
-
     const result = await runIdempotentInitialization({
       tenantId,
       idempotencyKey: parsed.idempotencyKey,
@@ -376,7 +368,11 @@ export const initializeBankAccountsAction = withAction(
         });
 
         if (openingBalance > 0 && item.origen) {
-          // Bloqueado hasta la tarea 5: el rechazo temprano de ANTICIPO impide llegar aquí.
+          // Tarea 5, tramo 1: el origen ANTICIPO es un anticipo de cliente
+          // recibido (COBRO) que ya existía a fecha de corte. Se valora con
+          // tasas[moneda] u origen.tasaCambio a fecha de corte y su asiento
+          // formal se fecha a corte; el anticipo entregado a proveedor
+          // (PAGO) queda para un tramo aparte.
           if (item.origen.tipo === 'ANTICIPO') {
             if (!item.origen.tipoPagoId) {
               throw new ActionError('Selecciona el tipo de pago para registrar el anticipo', 'TIPO_PAGO_REQUERIDO');
@@ -418,6 +414,12 @@ export const initializeBankAccountsAction = withAction(
               idempotencyKey: movementKey,
               usuarioId: user.userId,
               observaciones: `Saldo inicial recibido de ${item.origen.tercero}`,
+              valoracionInicial: {
+                fechaEfectiva: fechaCorteDate,
+                tasaCambio: valued[index].tasaCambio,
+                montoFuncional: Number(valued[index].montoFuncional),
+                fxEvidenceFingerprint: valued[index].fxEvidenceFingerprint,
+              },
             });
             asientos.push({ tipo: 'ANTICIPO', asientoId: null, estado: movement.idempotentReplay ? 'YA_EXISTENTE' : 'EMITIDO_POR_FLUJO', referencia: movementKey });
             await AuditLogService.logStrict({

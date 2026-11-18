@@ -161,20 +161,46 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
     expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(1);
   });
 
-  it('bloquea un saldo inicial por anticipo hasta la coordinación de la tarea 5', async () => {
+  it('carga un anticipo de cliente a fecha de corte con la tasa declarada y el replay lo reconoce', async () => {
     const { tenantId } = await makeTenant();
     const tipoPagoId = tipoPagoByTenant.get(tenantId)!;
-    const result = await initialize({
+    const request = {
       idempotencyKey: `anticipo-${tenantId.slice(0, 8)}`, fechaCorte: '2026-11-01', monedaFuncional: 'CUP',
+      tasas: { USD: '24' },
       cuentas: [
-        { nombreCuenta: 'Anticipos', nombreBanco: 'Banco QA', numeroCuenta: 'ANT-001', tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '50000', origen: { tipo: 'ANTICIPO' as const, tercero: 'Cliente QA', tipoPagoId } },
+        { nombreCuenta: 'Anticipos', nombreBanco: 'Banco QA', numeroCuenta: 'ANT-001', tipoCuenta: 'CORRIENTE', moneda: 'USD', saldoInicial: '100', origen: { tipo: 'ANTICIPO' as const, tercero: 'Cliente QA', tipoPagoId } },
       ],
-    });
-    expect(result).toMatchObject({ success: false, error: { code: 'INITIALIZATION_ANTICIPO_NO_DISPONIBLE' } });
-    expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(0);
-    expect(await prisma.anticipo.count({ where: { tenantId } })).toBe(0);
-    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(0);
-    expect(await prisma.inicializacionContable.count({ where: { tenantId } })).toBe(0);
+    };
+    const result = await initialize(request);
+    expect(result).toMatchObject({ success: true, data: { replayed: false } });
+    const anticipo = await prisma.anticipo.findFirstOrThrow({ where: { tenantId } });
+    expect(anticipo).toMatchObject({ tipo: 'COBRO', estado: 'RESERVADO', moneda: 'USD' });
+    expect(Number(anticipo.montoOriginal)).toBe(100);
+    expect(Number(anticipo.montoFinanciado)).toBe(100);
+    expect(Number(anticipo.saldoDisponible)).toBe(100);
+    const movimiento = await prisma.anticipoMovimiento.findFirstOrThrow({ where: { anticipoId: anticipo.anticipoId, tipoMovimiento: 'RECEPCION' } });
+    expect(movimiento.tipoMovimiento).toBe('RECEPCION');
+    expect(Number(movimiento.tasaAplicada)).toBe(24);
+    expect(Number(movimiento.montoFuncional)).toBe(2400);
+    expect(movimiento.functionalCurrency).toBe('CUP');
+    expect(movimiento.fxEvidenceFingerprint).not.toBeNull();
+    const cuenta = await prisma.cuentaBancaria.findFirstOrThrow({ where: { tenantId } });
+    expect(Number(cuenta.saldo)).toBe(100);
+    expect(cuenta.moneda).toBe('USD');
+    const asientos = await prisma.asiento.findMany({ where: { tenantId }, include: { lineas: true } });
+    expect(asientos).toHaveLength(1);
+    expect(asientos[0]!.fecha.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(asientos[0]!.lineas).toHaveLength(2);
+    expect(asientos[0]!.lineas.some((linea) => Number(linea.debe) === 2400)).toBe(true);
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+    if (!result.success || !replay.success) throw new Error('la inicialización con anticipo debe completarse');
+    expect(replay.data.resultado).toEqual(result.data.resultado);
+    expect(await prisma.anticipo.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.anticipoMovimiento.count({ where: { anticipoId: anticipo.anticipoId } })).toBe(2);
+    expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(1);
+    expect((await prisma.inicializacionContable.findFirstOrThrow({ where: { tenantId, idempotencyKey: request.idempotencyKey } })).estado).toBe('COMPLETADA');
   });
 
   it('rechaza la apertura si el tenant ya tiene saldos en submayores', async () => {
