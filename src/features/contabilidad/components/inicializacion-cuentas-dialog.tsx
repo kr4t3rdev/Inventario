@@ -251,7 +251,7 @@ export function InicializacionCuentasDialog(): ReactElement {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline" className="min-h-11">Inicializar saldos</Button></DialogTrigger>
+<DialogTrigger asChild><Button variant="outline" className="min-h-11">Cargar saldos iniciales</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configurar cuentas bancarias</DialogTitle>

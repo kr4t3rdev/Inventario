@@ -14,6 +14,12 @@ export interface E2EFixtureOwnership {
     productoId: string;
     proveedorId: string;
   };
+  /** Tenant vacío para el E2E de inicialización de cuentas (sin catálogo). */
+  initTenant: {
+    tenantId: string;
+    userId: string;
+    email: string;
+  };
 }
 
 export async function run(): Promise<E2EFixtureOwnership> {
@@ -23,6 +29,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
   if (!password || password.length < 16) throw new Error('E2E_TEST_PASSWORD requiere 16 caracteres.');
   const { PrismaClient } = await import('../src/generated/prisma');
   const { default: bcrypt } = await import('bcryptjs');
+  const { seedPlanContable, seedPlantillasGlobales } = await import('../src/features/contabilidad-formal/services/seed-plan-contable');
   const client = new PrismaClient();
   const fixtureId = `e2e-${randomUUID()}`;
   const E2E_TENANT_ID = fixtureId;
@@ -230,6 +237,71 @@ export async function run(): Promise<E2EFixtureOwnership> {
             finalPriceUsd: 0,
           },
         })
+      }
+
+      /**
+       * @description Siembra el tenant vacío para el E2E de inicialización de
+       * cuentas: usuario manager con licencia Profesional (contabilidad en el
+       * plan base) y sin catálogo, para que la acción no rechace por
+       * INITIALIZATION_NOT_EMPTY.
+       * @param {string} hashedPassword - Hash bcrypt de E2E_TEST_PASSWORD.
+       * @returns {Promise<{ tenantId: string; userId: string; email: string }>} Identidad del tenant vacío.
+       */
+      async function seedInitTenant(hashedPassword: string): Promise<{ tenantId: string; userId: string; email: string }> {
+        const initTenantId = `${fixtureId}-init`;
+        const initEmail = `${fixtureId}-init@test.invalid`;
+        await prisma.tenant.create({ data: { tenantId: initTenantId, nombre: 'Tenant E2E inicialización' } });
+        const initUser = await prisma.user.create({
+          data: {
+            name: 'E2E Inicialización', email: initEmail, password: hashedPassword,
+            role: 'user', isActive: true,
+          },
+        });
+        await prisma.tenantMembership.upsert({
+          where: { tenantId_userId: { tenantId: initTenantId, userId: initUser.userId } },
+          update: { tenantRole: 'manager', isActive: true },
+          create: { tenantId: initTenantId, userId: initUser.userId, tenantRole: 'manager', isActive: true },
+        });
+        await prisma.review.upsert({
+          where: { tenantId_userId: { tenantId: initTenantId, userId: initUser.userId } },
+          update: {},
+          create: {
+            reviewId: `${fixtureId}-init-review-suppress-prompt`,
+            tenantId: initTenantId,
+            userId: initUser.userId,
+            rating: 5,
+            comment: 'Fixture para mantener las pruebas E2E deterministas.',
+            isApproved: false,
+            isPositive: true,
+          },
+        });
+        const plan = await prisma.plan.findFirst({ where: { nombre: 'Profesional' } });
+        if (!plan) throw new Error('No existe el plan Profesional — ejecuta pnpm run seed:plans primero');
+        const now = new Date();
+        const expiry = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        // El asiento de apertura exige diario APERTURA_CIERRE + cuentas de rol;
+        // sin esto la confirmación falla con DIARIO_NO_ENCONTRADO.
+        await seedPlanContable(prisma as never, initTenantId);
+        await seedPlantillasGlobales(prisma as never);
+        await prisma.tenantLicense.upsert({
+          where: { tenantLicenseId: `${fixtureId}-init-license-1` },
+          update: { planId: plan.planId, activa: true, expiracion: expiry },
+          create: {
+            tenantLicenseId: `${fixtureId}-init-license-1`,
+            tenantId: initTenantId,
+            planId: plan.planId,
+            activa: true,
+            inicio: now,
+            expiracion: expiry,
+            maxUsuarios: 100,
+            maxAlmacenes: 10,
+            maxProductos: 90000,
+            maxClientes: 90000,
+            listPriceUsd: 0,
+            finalPriceUsd: 0,
+          },
+        });
+        return { tenantId: initTenantId, userId: initUser.userId, email: initEmail };
       }
 
       /**
@@ -476,6 +548,8 @@ export async function run(): Promise<E2EFixtureOwnership> {
           },
         })
 
+        const initTenant = await seedInitTenant(hashedPassword)
+
         await seedProductionCatalog()
         await seedLicenseE2E()
         await seedServiciosCatalog()
@@ -491,6 +565,7 @@ export async function run(): Promise<E2EFixtureOwnership> {
             productoId: E2E_FIXTURES.productoAceiteId,
             proveedorId: `${fixtureId}-proveedor-1`,
           },
+          initTenant,
         };
       }
       return main();

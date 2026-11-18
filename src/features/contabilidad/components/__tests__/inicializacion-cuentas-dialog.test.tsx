@@ -40,7 +40,7 @@ const draftResumed = {
 
 async function openDialog(user: ReturnType<typeof userEvent.setup>) {
   render(<InicializacionCuentasDialog />);
-  await user.click(screen.getByRole('button', { name: 'Inicializar saldos' }));
+  await user.click(screen.getByRole('button', { name: 'Cargar saldos iniciales' }));
 }
 
 async function fillAccount(user: ReturnType<typeof userEvent.setup>, values: { nombre: string; banco: string; numero: string; saldo: string }) {
