@@ -21,7 +21,7 @@ describe('idempotencia de inicialización contable', () => {
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: 'ReadCommitted' });
     expect(acquireAccountingTenantLock).toHaveBeenCalledWith(tx, 'tenant-a');
     expect(vi.mocked(acquireAccountingTenantLock).mock.invocationCallOrder[0]).toBeLessThan(findFirst.mock.invocationCallOrder[0]);
-    expect(execute).toHaveBeenCalledWith(tx);
+    expect(execute).toHaveBeenCalledWith(tx, 'init-a');
     expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-a', inicializacionId: 'init-a', estado: 'EN_PROGRESO' }) }));
     expect(result).toEqual({ replayed: false, resultado: { periodoId: 'periodo-a' } });
   });
@@ -77,7 +77,7 @@ describe('idempotencia de inicialización contable', () => {
     findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: input.idempotencyKey, payloadHash: 'b'.repeat(64), estado: 'BORRADOR', borrador: {} });
     const execute = vi.fn().mockResolvedValue({ periodoId: 'periodo-a' });
     const result = await runIdempotentInitialization(input, execute);
-    expect(execute).toHaveBeenCalledWith(tx);
+    expect(execute).toHaveBeenCalledWith(tx, 'init-a');
     expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ inicializacionId: 'init-a', tenantId: 'tenant-a', estado: 'BORRADOR' }),
       data: expect.objectContaining({ estado: 'EN_PROGRESO', payloadHash: input.payloadHash }),

@@ -23,6 +23,7 @@ function parseCutoffDate(value: string): Date {
 
 function buildEvidence(input: {
   row: InitialInventoryRow;
+  fechaCorte: string;
   monedaFuncional: string;
   montoFuncional: Prisma.Decimal;
   tasaCambio: Prisma.Decimal | null;
@@ -31,7 +32,7 @@ function buildEvidence(input: {
     version: '1',
     source: 'INICIALIZACION_CONTABLE',
     referenciaFila: input.row.referenciaFila,
-    fechaCorte: input.row.fechaCorte ?? null,
+    fechaCorte: input.fechaCorte,
     monedaOriginal: input.row.moneda,
     monedaFuncional: input.monedaFuncional,
     cantidad: input.row.cantidad,
@@ -109,6 +110,7 @@ export async function persistInitialInventory(
   count: number;
   totalFuncional: string;
   fuentes: Array<{ referenciaFila: string; fuenteId: string; loteId: string }>;
+  filas: Array<{ referenciaFila: string; moneda: string; montoFuncional: string }>;
 }> {
   const parsed = initialInventoryContract.parse({
     fechaCorte: input.fechaCorte,
@@ -130,12 +132,14 @@ export async function persistInitialInventory(
 
   let totalFuncional = new Prisma.Decimal(0);
   const fuentes: Array<{ referenciaFila: string; fuenteId: string; loteId: string }> = [];
+  const filas: Array<{ referenciaFila: string; moneda: string; montoFuncional: string }> = [];
   for (const row of parsed.inventario) {
     await validateReferences(tx, input.tenantId, row);
     const valued = functionalValue(row, parsed.monedaFuncional, parsed.tasas);
     const fechaCorte = parseCutoffDate(parsed.fechaCorte);
     const { evidence, hash } = buildEvidence({
       row,
+      fechaCorte: parsed.fechaCorte,
       monedaFuncional: parsed.monedaFuncional,
       montoFuncional: valued.amount,
       tasaCambio: valued.rate,
@@ -192,11 +196,17 @@ export async function persistInitialInventory(
       fuenteId: source.id,
       loteId: source.loteId,
     });
+    filas.push({
+      referenciaFila: row.referenciaFila,
+      moneda: row.moneda,
+      montoFuncional: valued.amount.toFixed(4),
+    });
   }
 
   return {
     count: fuentes.length,
     totalFuncional: totalFuncional.toFixed(4),
     fuentes,
+    filas,
   };
 }
