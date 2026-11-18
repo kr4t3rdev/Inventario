@@ -23,6 +23,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
+import { recolectarCandidatos } from '@/features/contabilidad-formal/services/replay-source-collector';
 import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
 import { withTestTenant } from '@/lib/db/tenant-context';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
@@ -813,5 +814,34 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
 
     const replay = await initialize(request);
     expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+  });
+
+  it('el replay contable reconoce la venta real desde inventario inicial y omite la de costo cero', async () => {
+    // Venta con costo: el replay la reconstruye sin causa de omisión.
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId);
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const { venta } = await makeRealSale(tenantId, user, producto, almacen, pv, 2);
+    const candidatos = await recolectarCandidatos(tenantId, prisma as never);
+    const costo = candidatos.find((c) => c.origenTipo === 'venta_costo' && c.origenId === venta.ventaId);
+    expect(costo).toBeDefined();
+    expect(costo).not.toHaveProperty('causaOmision');
+    expect(costo?.evento.monto).toBe(50);
+    expect(costo?.evento.montoFuncional).toBe(50);
+
+    // Venta en cero: verificada pero sin asiento que reconstruir.
+    const { tenantId: tenantCero, user: userCero } = await makeTenant();
+    const setupCero = await makeInventorySetup(tenantCero);
+    const requestCero = inventoryRequest(tenantCero, setupCero.producto.id, setupCero.almacen.almacenId, '0');
+    const firstCero = await initialize(requestCero);
+    expect(firstCero).toMatchObject({ success: true, data: { replayed: false } });
+    const { venta: ventaCero } = await makeRealSale(
+      tenantCero, userCero, setupCero.producto, setupCero.almacen, setupCero.pv, 2,
+    );
+    const candidatosCero = await recolectarCandidatos(tenantCero, prisma as never);
+    const costoCero = candidatosCero.find((c) => c.origenTipo === 'venta_costo' && c.origenId === ventaCero.ventaId);
+    expect(costoCero?.causaOmision).toBe('MONTO_NO_POSITIVO');
   });
 });

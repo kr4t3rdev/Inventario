@@ -104,6 +104,99 @@ describe('recolectarCandidatos', () => {
 		}));
 	});
 
+	it('reconstruye el costo FIFO de una venta desde inventario inicial', async () => {
+		const fecha = new Date('2026-10-12T12:00:00.000Z');
+		const evidencia = JSON.stringify({ fxProvenanceSource: 'initial-inventory' });
+		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
+			ventaId: 'venta-inicial', estado: 'ENTREGADA', deletedAt: null,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
+			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{
+				cantidad: 2, compraDocumentoItemId: null, recepcionItemId: null,
+				purchaseReceiptInvoiceAllocationId: null, loteId: 'lote-1',
+				inventarioInicialFuenteId: 'fuente-1',
+				costoUnitarioSnapshot: 25, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha,
+				fifoMonedaFuncional: 'CUP', fifoCostoFuncional: new Prisma.Decimal(50),
+				fifoEvidenciaFx: evidencia,
+				inventarioInicialFuente: {
+					id: 'fuente-1', tenantId: 'tenant-1', productoId: 'producto-1',
+					loteId: 'lote-1', cantidad: 4, costoUnitario: new Prisma.Decimal(25),
+					moneda: 'CUP', monedaFuncional: 'CUP', montoFuncional: new Prisma.Decimal(100),
+					fechaCorte: fecha,
+				},
+			}] }],
+		}]) } });
+		getCostoFifoVentaValorado.mockResolvedValue({ montoFuncional: 50, monedaFuncional: 'CUP',
+			cantidad: 2, fuentesSinTasa: [] });
+
+		const costosVenta = (await recolectarCandidatos('tenant-1', client as never))
+			.filter((item) => item.origenTipo === 'venta_costo');
+		expect(costosVenta).toHaveLength(1);
+		expect(costosVenta[0]).toMatchObject({
+			origenId: 'venta-inicial',
+			evento: expect.objectContaining({ tipo: 'COSTO_VENTA_DEVENGADO', monto: 50,
+				montoFuncional: 50, monedaFuncional: 'CUP' }),
+		});
+		expect(costosVenta[0]).not.toHaveProperty('causaOmision');
+	});
+
+	it('omite como MONTO_NO_POSITIVO una venta verificada de costo cero desde inventario inicial', async () => {
+		const fecha = new Date('2026-10-12T12:00:00.000Z');
+		const evidencia = JSON.stringify({ fxProvenanceSource: 'initial-inventory' });
+		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
+			ventaId: 'venta-inicial-cero', estado: 'ENTREGADA', deletedAt: null,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
+			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{
+				cantidad: 2, compraDocumentoItemId: null, recepcionItemId: null,
+				purchaseReceiptInvoiceAllocationId: null, loteId: 'lote-1',
+				inventarioInicialFuenteId: 'fuente-1',
+				costoUnitarioSnapshot: 0, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha,
+				fifoMonedaFuncional: 'CUP', fifoCostoFuncional: new Prisma.Decimal(0),
+				fifoEvidenciaFx: evidencia,
+				inventarioInicialFuente: {
+					id: 'fuente-1', tenantId: 'tenant-1', productoId: 'producto-1',
+					loteId: 'lote-1', cantidad: 4, costoUnitario: new Prisma.Decimal(0),
+					moneda: 'CUP', monedaFuncional: 'CUP', montoFuncional: new Prisma.Decimal(0),
+					fechaCorte: fecha,
+				},
+			}] }],
+		}]) } });
+		getCostoFifoVentaValorado.mockResolvedValue({ montoFuncional: 0, monedaFuncional: 'CUP',
+			cantidad: 2, fuentesSinTasa: [] });
+
+		const candidato = (await recolectarCandidatos('tenant-1', client as never))
+			.find((item) => item.origenTipo === 'venta_costo');
+		// Verificada pero sin asiento: el writer tampoco postea costo cero.
+		expect(candidato?.causaOmision).toBe('MONTO_NO_POSITIVO');
+	});
+
+	it('omite costo FIFO si la fuente inicial no coincide con la asignación', async () => {
+		const fecha = new Date('2026-10-12T12:00:00.000Z');
+		const evidencia = JSON.stringify({ fxProvenanceSource: 'initial-inventory' });
+		const client = crearClient({ venta: { findMany: vi.fn().mockResolvedValue([{
+			ventaId: 'venta-inicial-alterada', estado: 'ENTREGADA', deletedAt: null,
+			createdAt: fecha, updatedAt: fecha, costoVentaFecha: fecha,
+			items: [{ cantidad: 2, productoId: 'producto-1', allocations: [{
+				cantidad: 2, compraDocumentoItemId: null, recepcionItemId: null,
+				purchaseReceiptInvoiceAllocationId: null, loteId: 'lote-1',
+				inventarioInicialFuenteId: 'fuente-1',
+				costoUnitarioSnapshot: 25, fifoMonedaOrigen: 'CUP', fifoFechaFuente: fecha,
+				fifoMonedaFuncional: 'CUP', fifoCostoFuncional: new Prisma.Decimal(50),
+				fifoEvidenciaFx: evidencia,
+				inventarioInicialFuente: {
+					id: 'fuente-1', tenantId: 'tenant-1', productoId: 'producto-1',
+					loteId: 'lote-1', cantidad: 4, costoUnitario: new Prisma.Decimal(30),
+					moneda: 'CUP', monedaFuncional: 'CUP', montoFuncional: new Prisma.Decimal(120),
+					fechaCorte: fecha,
+				},
+			}] }],
+		}]) } });
+
+		const candidato = (await recolectarCandidatos('tenant-1', client as never))
+			.find((item) => item.origenTipo === 'venta_costo');
+		expect(candidato?.causaOmision).toBe('ASIGNACION_FIFO_NO_VERIFICABLE');
+		expect(getCostoFifoVentaValorado).not.toHaveBeenCalled();
+	});
+
 	it('reconstruye el asiento formal de una devolución a proveedor registrada', async () => {
 		const fecha = new Date('2026-11-10T12:00:00.000Z');
 		const client = crearClient({
