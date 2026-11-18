@@ -25,7 +25,10 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
   }, 'La fecha no es válida');
 
 const quantity = z.string().regex(integerPattern, 'La cantidad debe ser un entero positivo')
-  .refine((value) => !integerPattern.test(value) || BigInt(value) > BigInt(0), 'La cantidad debe ser mayor que cero');
+  .refine((value) => !integerPattern.test(value) || BigInt(value) > BigInt(0), 'La cantidad debe ser mayor que cero')
+  // Igual que el costo: "04" se normaliza a "4" para que la evidencia FIFO
+  // coincida con String(cantidad) de la columna entera.
+  .transform(normalizeDecimal);
 
 const cost = z.string().regex(decimalPattern, 'El costo unitario no es válido')
   .transform(normalizeDecimal);

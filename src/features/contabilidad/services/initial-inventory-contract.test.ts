@@ -46,6 +46,14 @@ describe('contrato de inventario inicial', () => {
     }).success).toBe(false);
   });
 
+  it('normaliza una cantidad con ceros iniciales como el costo', () => {
+    const parsed = initialInventoryContract.parse({
+      ...base,
+      inventario: [{ ...base.inventario[0], cantidad: '04' }],
+    });
+    expect(parsed.inventario[0].cantidad).toBe('4');
+  });
+
   it('rechaza dos filas con la misma referencia aunque cambien producto y lote', () => {
     const segunda = {
       ...base.inventario[0],

@@ -93,7 +93,7 @@ async function makeInventorySetup(tenantId: string) {
   return { categoria, almacen, producto, pv, cliente };
 }
 
-function inventoryRequest(tenantId: string, productoId: string, almacenId: string, costoUnitario = '25') {
+function inventoryRequest(tenantId: string, productoId: string, almacenId: string, costoUnitario = '25', cantidad = '4') {
   return {
     idempotencyKey: `inventory-sale-${tenantId.slice(0, 8)}`,
     fechaCorte: '2026-11-01',
@@ -111,7 +111,7 @@ function inventoryRequest(tenantId: string, productoId: string, almacenId: strin
       productoId,
       almacenId,
       loteCodigo: 'LOTE-INICIAL-1',
-      cantidad: '4',
+      cantidad,
       costoUnitario,
       moneda: 'CUP',
     }],
@@ -510,6 +510,28 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(result.devolucionId).toBeTruthy();
     const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
     expect(Number(devolucion.costoFifoFuncional)).toBe(0);
+  });
+
+  it('una cantidad con ceros iniciales se normaliza y la fuente se vende con snapshot válido', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '25', '04');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const fuente = await prisma.inventarioInicialFuente.findFirstOrThrow({ where: { tenantId } });
+    expect((fuente.evidencia as Record<string, unknown>).cantidad).toBe('4');
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 1);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+    const alloc = await prisma.purchaseAllocation.findFirstOrThrow({ where: { tenantId, ventaItemId: sale.venta.items[0].id } });
+    expect(alloc.inventarioInicialFuenteId).toBe(fuente.id);
+    expect(alloc.fifoEvidenciaFx).not.toBeNull();
+    const valorado = await prisma.$transaction((tx) =>
+      getCostoFifoVentaValorado(tx, tenantId, sale.venta.ventaId),
+    );
+    expect(valorado?.montoFuncional).toBe(25);
+    expect(valorado?.fuentesSinTasa).toEqual([]);
   });
 
   it('el recorrido real: la venta del servicio de mutación descuenta stock, asigna FIFO y se devuelve', async () => {
