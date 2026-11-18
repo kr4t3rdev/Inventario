@@ -2,11 +2,16 @@
  * @description Venta posterior que consume inventario inicial y devolución que
  * lo restaura (tarea 3, tramo 2 — PostgreSQL aislado).
  *
- * La venta se crea a mano (como en devolucion-fifo.test.ts) y la asignación
- * FIFO se ejecuta con el allocator real `allocateFifoForSale` (la misma
- * función que llama `VentaMutationService.create`; el cableado está cubierto
- * por `venta-create-orquestacion.test.ts`). La devolución usa el servicio
- * real `DevolucionVentaService.registrar`.
+ * Los primeros tests crean la venta a mano (como en devolucion-fifo.test.ts)
+ * y la asignación FIFO se ejecuta con el allocator real `allocateFifoForSale`
+ * (la misma función que llama `VentaMutationService.create`; el cableado está
+ * cubierto por `venta-create-orquestacion.test.ts`). La devolución usa el
+ * servicio real `DevolucionVentaService.registrar`.
+ *
+ * El último test cierra la brecha: crea la venta con el servicio real
+ * `VentaMutationService.create` (descuento de stock del PV, asignación FIFO y
+ * posteo formal del costo) y la devuelve con el servicio real. El traslado
+ * almacén -> PV se siembra a mano porque ese flujo no es parte de la tarea 3.
  *
  * La venta es FACTURADA con factura + CxC (patrón del test DNC) para que la
  * cascada financiera de la devolución tenga qué aplicar; el stock de la
@@ -18,6 +23,9 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
+import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
+import { withTestTenant } from '@/lib/db/tenant-context';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
 import { assertDisposableDatabase, assertDisposableDatabaseIdentity } from '../../../../scripts/ci/disposable-database.mjs';
 
@@ -203,6 +211,7 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
       await prisma.factura.deleteMany({ where: { tenantId } });
       await prisma.serieFacturacion.deleteMany({ where: { tenantId } });
       await prisma.ventaItem.deleteMany({ where: { venta: { tenantId } } });
+      await prisma.reconciliacionVenta.deleteMany({ where: { tenantId } });
       await prisma.venta.deleteMany({ where: { tenantId } });
       await prisma.inventarioInicialFuente.deleteMany({ where: { tenantId } });
       await prisma.lote.deleteMany({ where: { tenantId } });
@@ -211,6 +220,7 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
       await prisma.ubicacion.deleteMany({ where: { tenantId } });
       await prisma.almacen.deleteMany({ where: { tenantId } });
       await prisma.categoria.deleteMany({ where: { tenantId } });
+      await prisma.turnoPuntoVenta.deleteMany({ where: { tenantId } });
       await prisma.puntoDeVenta.deleteMany({ where: { tenantId } });
       await prisma.cliente.deleteMany({ where: { tenantId } });
       await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
@@ -500,5 +510,109 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(result.devolucionId).toBeTruthy();
     const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
     expect(Number(devolucion.costoFifoFuncional)).toBe(0);
+  });
+
+  it('el recorrido real: la venta del servicio de mutación descuenta stock, asigna FIFO y se devuelve', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId);
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+
+    // Traslado almacén -> PV (el flujo de traslado no es parte de la tarea 3;
+    // se siembra el movimiento que haría): 2 de las 4 unidades.
+    await prisma.$transaction((tx) => Promise.all([
+      upsertStockUbicacion(tx, {
+        tenantId, productoId: producto.id, tipoUbicacion: 'almacen',
+        ubicacionId: almacen.almacenId, modo: 'increment', delta: -2,
+      }),
+      upsertStockUbicacion(tx, {
+        tenantId, productoId: producto.id, tipoUbicacion: 'punto_venta',
+        ubicacionId: pv.pvId, modo: 'increment', delta: 2,
+      }),
+    ]));
+    const stockAlmacen = await prisma.stockUbicacion.findUniqueOrThrow({
+      where: { productoId_tipoUbicacion_ubicacionId: { productoId: producto.id, tipoUbicacion: 'almacen', ubicacionId: almacen.almacenId } },
+    });
+    expect(stockAlmacen.cantidadDisponible).toBe(2);
+
+    // Turno abierto y cobro en efectivo contra la cuenta creada por la init
+    // (patrón de venta-formal-rollback-postgres.test.ts).
+    const banco = await prisma.cuentaBancaria.findFirstOrThrow({ where: { tenantId } });
+    await prisma.tipoPago.create({
+      data: { tenantId, nombre: 'Efectivo PV', requiereCuenta: true, cuentaDefecto: banco.cuentaId },
+    });
+    const turno = await prisma.turnoPuntoVenta.create({
+      data: {
+        tenantId, puntoDeVentaId: pv.pvId, fondoInicialCup: 0, fondoInicialUsd: 0,
+        estado: 'ABIERTO', tipo: 'NORMAL',
+      },
+    });
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+      planFeatures: {
+        'ventas-pos': true, 'ventas-factura': true, facturacion: true,
+        'cuentas-cobrar': true, 'turnos-pos': true,
+      },
+    } as unknown as AuthenticatedUser;
+
+    const venta = await withTestTenant(tenantId, () =>
+      VentaMutationService.create({
+        input: {
+          puntoDeVentaId: pv.pvId,
+          turnoId: turno.id,
+          metodoPago: 'EFECTIVO',
+          montoEfectivo: 1000,
+          montoRecibidoEfectivo: 1000,
+          cuentaBancariaId: banco.cuentaId,
+          items: [{ productoId: producto.id, cantidad: 2, precioUnitario: 500 }],
+        } as never,
+        user: userCtx,
+      }),
+    ) as { ventaId: string };
+    expect(venta.ventaId).toBeTruthy();
+
+    const ventaCreada = await prisma.venta.findUniqueOrThrow({ where: { ventaId: venta.ventaId }, include: { items: true } });
+    expect(ventaCreada.estado).toBe('ENTREGADA');
+    expect(ventaCreada.items).toHaveLength(1);
+    const stockPv = await prisma.stockUbicacion.findUniqueOrThrow({
+      where: { productoId_tipoUbicacion_ubicacionId: { productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: pv.pvId } },
+    });
+    expect(stockPv.cantidadDisponible).toBe(0);
+    const alloc = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: ventaCreada.items[0].id } });
+    expect(alloc).toHaveLength(1);
+    expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(25);
+    expect(Number(alloc[0].fifoCostoFuncional)).toBe(50);
+    const asientoCosto = await prisma.asiento.findFirst({
+      where: { tenantId, origenId: venta.ventaId, estado: 'CONTABILIZADO' },
+    });
+    expect(asientoCosto).not.toBeNull();
+
+    // Devolución real de 1 unidad: restaura la asignación y el stock del PV.
+    // Sin cliente no hay saldo a favor: el excedente sale como reembolso.
+    const result = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: ventaCreada.items[0].id, cantidad: 1 }],
+        motivo: 'Devolución del recorrido real',
+        preferenciaFinanciera: 'REEMBOLSO_EFECTIVO',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result.devolucionId).toBeTruthy();
+    const allocAfter = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: ventaCreada.items[0].id } });
+    expect(allocAfter).toHaveLength(1);
+    expect(allocAfter[0].cantidad).toBe(1);
+    const stockPvAfter = await prisma.stockUbicacion.findUniqueOrThrow({
+      where: { productoId_tipoUbicacion_ubicacionId: { productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: pv.pvId } },
+    });
+    expect(stockPvAfter.cantidadDisponible).toBe(1);
+    const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
+    expect(Number(devolucion.costoFifoFuncional)).toBe(25);
+
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
   });
 });
