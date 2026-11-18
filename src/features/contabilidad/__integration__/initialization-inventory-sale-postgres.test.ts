@@ -396,7 +396,7 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
 
     // El ítem devuelto se valora al costo de la fuente (25) y la NC es por 500.
     const item = await prisma.devolucionVentaItem.findFirstOrThrow({ where: { devolucionId: result.devolucionId } });
-    expect(item.costoUnitarioDevolucion).toBe(25);
+    expect(Number(item.costoUnitarioDevolucion)).toBe(25);
     const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
     expect(Number(devolucion.costoFifoFuncional)).toBe(25);
     const nc = await prisma.factura.findUniqueOrThrow({ where: { idFactura: result.notaCreditoId as string } });
@@ -493,6 +493,36 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(alloc[0].inventarioInicialFuenteId).toBe(fuente.id);
     expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(25.5);
     expect(Number(alloc[0].fifoCostoFuncional)).toBe(51);
+  });
+
+  it('la devolución de una fuente decimal conserva los centavos en el costo auditado', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '25.50');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 2);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+    } as unknown as AuthenticatedUser;
+    const result = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: sale.venta.ventaId,
+        items: [{ ventaItemId: sale.venta.items[0].id, cantidad: 1 }],
+        motivo: 'Devolución decimal',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result.devolucionId).toBeTruthy();
+    const item = await prisma.devolucionVentaItem.findFirstOrThrow({ where: { devolucionId: result.devolucionId } });
+    // 25.50, no 26: el redondeo a entero falseaba el costo auditado.
+    expect(Number(item.costoUnitarioDevolucion)).toBe(25.5);
   });
 
   it('una fila de costo cero en moneda extranjera sin tasa no exige FX', async () => {
