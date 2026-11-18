@@ -9,7 +9,7 @@
  */
 
 import { Prisma } from "@/generated/prisma";
-import { createHash } from "node:crypto";
+import { hashInitialInventoryEvidence } from "@/features/contabilidad/services/initial-inventory-evidence";
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
 
@@ -151,7 +151,7 @@ function isInitialInventoryEvidenceValid(source: InitialInventorySourceIdentity)
 	if (!source.evidencia || typeof source.evidencia !== "object" ||
 		Array.isArray(source.evidencia)) return false;
 	const evidence = source.evidencia as Record<string, unknown>;
-	const hash = createHash("sha256").update(JSON.stringify(evidence)).digest("hex");
+	const hash = hashInitialInventoryEvidence(evidence);
 	return hash === source.evidenciaHash &&
 		evidence.version === "1" &&
 		evidence.source === "INICIALIZACION_CONTABLE" &&

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { hashInitialInventoryEvidence } from './initial-inventory-evidence';
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
@@ -118,6 +118,23 @@ export async function postOpeningEntry(
   return { asientoId, postedLines };
 }
 
+export interface InitialInventoryDetailSource {
+  referenciaFila: string;
+  fuenteId: string;
+  loteId: string;
+  productoId: string;
+  cantidad: string;
+  costoUnitario: string;
+  moneda: string;
+  montoFuncional: string;
+}
+
+export interface InitialInventoryDetail {
+  count: number;
+  totalFuncional: string;
+  fuentes: InitialInventoryDetailSource[];
+}
+
 export interface InitializationAperturaInput {
   periodoId: string;
   tenantId: string;
@@ -140,6 +157,7 @@ export interface InitializationAperturaInput {
   }>;
   totalDebeFuncional: string;
   totalHaberFuncional: string;
+  inventario?: InitialInventoryDetail;
 }
 
 /**
@@ -178,6 +196,7 @@ export async function createInitializationApertura(
         lineas: input.lines,
         fxFingerprints: input.fxFingerprints,
         cuentas: input.cuentas,
+        inventario: input.inventario ?? null,
         totalDebeFuncional: input.totalDebeFuncional,
         totalHaberFuncional: input.totalHaberFuncional,
       } as unknown as Prisma.InputJsonValue,
@@ -294,7 +313,7 @@ export async function verifyInitializationReplay(input: {
     }
     const sources = await prisma.inventarioInicialFuente.findMany({
       where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId },
-      select: { montoFuncional: true, evidencia: true, evidenciaHash: true },
+      select: { id: true, loteId: true, productoId: true, montoFuncional: true, evidencia: true, evidenciaHash: true },
     });
     const total = sources.reduce(
       (sum, source) => sum.plus(source.montoFuncional),
@@ -305,10 +324,54 @@ export async function verifyInitializationReplay(input: {
       throw incompleteError();
     }
     for (const source of sources) {
-      const evidenceHash = createHash('sha256')
-        .update(JSON.stringify(source.evidencia))
-        .digest('hex');
+      // Hash canónico: jsonb reordena las claves al leer, así que el hash
+      // se calcula sobre la representación ordenada, igual que al crear.
+      const evidenceHash = hashInitialInventoryEvidence(source.evidencia as Record<string, unknown>);
       if (evidenceHash !== source.evidenciaHash) throw incompleteError();
+    }
+    // El detalle ancla la identidad de cada fuente (producto, lote, cantidad,
+    // costo, moneda, fecha de corte) contra una copia independiente de la
+    // evidencia viva: si una fuente se manipula tras la apertura, el replay
+    // lo detecta aunque el total y el hash sigan intactos.
+    const detalleInventory = detalle.inventario as
+      | { count?: unknown; totalFuncional?: unknown; fuentes?: unknown }
+      | null
+      | undefined;
+    if (detalleInventory != null) {
+      if (typeof detalleInventory !== 'object' || Array.isArray(detalleInventory) ||
+        typeof detalleInventory.count !== 'number' ||
+        typeof detalleInventory.totalFuncional !== 'string' ||
+        !Array.isArray(detalleInventory.fuentes)) {
+        throw incompleteError();
+      }
+      const detalleFuentes = detalleInventory.fuentes as Array<Record<string, unknown>>;
+      if (detalleFuentes.length !== detalleInventory.count || sources.length !== detalleInventory.count) {
+        throw incompleteError();
+      }
+      const totalDetalle = sources.reduce(
+        (sum, source) => sum.plus(source.montoFuncional),
+        new Prisma.Decimal(0),
+      );
+      if (!totalDetalle.equals(new Prisma.Decimal(detalleInventory.totalFuncional))) {
+        throw incompleteError();
+      }
+      const sourceById = new Map(sources.map((source) => [source.id, source]));
+      for (const fuente of detalleFuentes) {
+        if (typeof fuente.fuenteId !== 'string') throw incompleteError();
+        const source = sourceById.get(fuente.fuenteId);
+        if (!source) throw incompleteError();
+        const evidencia = source.evidencia as Record<string, unknown> | null;
+        if (!evidencia || typeof evidencia !== 'object' || Array.isArray(evidencia) ||
+          source.loteId !== fuente.loteId || source.productoId !== fuente.productoId ||
+          evidencia.referenciaFila !== fuente.referenciaFila ||
+          evidencia.cantidad !== fuente.cantidad ||
+          evidencia.costoUnitario !== fuente.costoUnitario ||
+          evidencia.monedaOriginal !== fuente.moneda ||
+          !decimalEquals(evidencia.montoFuncional, fuente.montoFuncional) ||
+          evidencia.fechaCorte !== detalle.fechaCorte) {
+          throw incompleteError();
+        }
+      }
     }
   }
   const injectedByCurrency = new Map<string, Prisma.Decimal>();
@@ -333,6 +396,14 @@ export async function verifyInitializationReplay(input: {
     const moneda = String(cuenta.moneda);
     const current = storedByCurrency.get(moneda) ?? new Prisma.Decimal(0);
     storedByCurrency.set(moneda, current.add(new Prisma.Decimal(String(cuenta.saldoOriginal))));
+  }
+  if (storedInventory !== undefined) {
+    const monedaFuncional = String(detalle.monedaFuncional);
+    const current = storedByCurrency.get(monedaFuncional) ?? new Prisma.Decimal(0);
+    storedByCurrency.set(
+      monedaFuncional,
+      current.add(new Prisma.Decimal(String((storedInventory as Record<string, unknown>).totalFuncional))),
+    );
   }
   for (const [moneda, total] of storedByCurrency) {
     const posted = (postedByCurrency.get(moneda) ?? new Prisma.Decimal(0))

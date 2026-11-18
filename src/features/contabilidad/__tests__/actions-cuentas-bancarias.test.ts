@@ -927,6 +927,44 @@ describe('Cuentas Bancarias Actions', () => {
       expect(vi.mocked(reconcileInitialInventory)).not.toHaveBeenCalled();
       expect(vi.mocked(createInitializationApertura)).toHaveBeenCalled();
     });
+    it('guarda el inventario en el detalle de la apertura con la identidad de cada fuente', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '100.0000',
+        fuentes: [{ referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1' }],
+        filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoFuncional: '100.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '100', tasaCambio: null, montoFuncional: '100',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-detail',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-DET',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-1', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-1', cantidad: '4', costoUnitario: '25', moneda: 'CUP' }],
+      });
+      expect(result.success).toBe(true);
+      expect(vi.mocked(createInitializationApertura)).toHaveBeenCalledWith(
+        txClient,
+        expect.objectContaining({
+          inventario: {
+            count: 1, totalFuncional: '100.0000',
+            fuentes: [{
+              referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1',
+              productoId: 'prod-1', cantidad: '4', costoUnitario: '25',
+              moneda: 'CUP', montoFuncional: '100.0000',
+            }],
+          },
+        }),
+      );
+    });
 
     it('acepta YA_EXISTENTE del posteo de capital como contrapartida ya registrada', async () => {
       txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'init-ya', saldo: 0 });

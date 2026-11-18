@@ -82,8 +82,8 @@ describe("allocateFifoForVentaItem", () => {
 			montoFuncional: "100.0000",
 			tasaCambio: null,
 		};
-		const { createHash } = await import("node:crypto");
-		const evidenciaHash = createHash("sha256").update(JSON.stringify(evidence)).digest("hex");
+		const { hashInitialInventoryEvidence } = await import("@/features/contabilidad/services/initial-inventory-evidence");
+		const evidenciaHash = hashInitialInventoryEvidence(evidence);
 		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
 		tx.inventarioInicialFuente.findMany.mockResolvedValue([{
 			id: "fuente-1",

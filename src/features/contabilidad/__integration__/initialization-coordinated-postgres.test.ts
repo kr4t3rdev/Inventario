@@ -75,6 +75,7 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
       await prisma.lote.deleteMany({ where: { tenantId } });
       await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
       await prisma.producto.deleteMany({ where: { tenantId } });
+      await prisma.ubicacion.deleteMany({ where: { tenantId } });
       await prisma.almacen.deleteMany({ where: { tenantId } });
       await prisma.categoria.deleteMany({ where: { tenantId } });
       await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
@@ -269,17 +270,10 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
         almacenId: almacen.almacenId,
       },
     });
-    const inventoryAccount = await prisma.cuentaContable.create({
-      data: {
-        tenantId,
-        codigo: `INV-${tenantId.slice(0, 8)}`,
-        nombre: 'Inventarios',
-        tipo: 'ACTIVO',
-        naturaleza: 'DEUDORA',
-      },
-    });
-    await prisma.cuentaRolTenant.create({
-      data: { tenantId, rol: 'INVENTARIOS', cuentaId: inventoryAccount.cuentaContableId },
+    // El seed del plan ya crea el rol INVENTARIOS; reutilizarlo en vez de
+    // crear un segundo rol (la unicidad es por tenant + rol).
+    await prisma.cuentaRolTenant.findUniqueOrThrow({
+      where: { tenantId_rol: { tenantId, rol: 'INVENTARIOS' } },
     });
 
     const request = {

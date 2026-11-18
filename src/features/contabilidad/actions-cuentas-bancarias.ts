@@ -530,6 +530,25 @@ export const initializeBankAccountsAction = withAction(
           }
         }
       }
+      const filasByReferencia = new Map(inventory.filas.map((fila) => [fila.referenciaFila, fila]));
+      const detalleInventario = {
+        count: inventory.count,
+        totalFuncional: inventory.totalFuncional,
+        fuentes: inventory.fuentes.map((fuente) => {
+          const fila = filasByReferencia.get(fuente.referenciaFila);
+          const row = (parsed.inventario ?? []).find((r) => r.referenciaFila === fuente.referenciaFila);
+          return {
+            referenciaFila: fuente.referenciaFila,
+            fuenteId: fuente.fuenteId,
+            loteId: fuente.loteId,
+            productoId: row?.productoId ?? '',
+            cantidad: row?.cantidad ?? '',
+            costoUnitario: row?.costoUnitario ?? '',
+            moneda: fila?.moneda ?? row?.moneda ?? '',
+            montoFuncional: fila?.montoFuncional ?? '0',
+          };
+        }),
+      };
       await createInitializationApertura(tx, {
         periodoId: periodo.periodoId, tenantId, actor: user.userId,
         idempotencyKey: parsed.idempotencyKey, payloadHash,
@@ -545,6 +564,7 @@ export const initializeBankAccountsAction = withAction(
           montoFuncional: new Prisma.Decimal(valued[i].montoFuncional).toString(),
           cuentaContableInicialId: cuenta.cuentaContableInicialId,
         })),
+        inventario: detalleInventario,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
