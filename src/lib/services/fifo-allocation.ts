@@ -182,17 +182,25 @@ function buildInitialInventorySnapshot(
 	const sameCurrency = sourceCurrency === functionalCurrency;
 	const rawRate = evidence.tasaCambio;
 	const rate = sameCurrency ? null : typeof rawRate === "string" ? Number(rawRate) : null;
+	const amount = new Prisma.Decimal(source.costoUnitario).times(quantity).toNumber();
 	const functionalAmount = new Prisma.Decimal(source.montoFuncional)
 		.times(quantity)
 		.div(source.cantidad)
 		.toDecimalPlaces(4)
 		.toNumber();
+	// Una fuente de costo cero entre monedas no necesita conversión: 0 en
+	// cualquier tasa es 0. Sin tasa el snapshot quedaba ausente y la
+	// asignación no era valorable ni devolvible; se registra tasa 1 para
+	// que el snapshot exista y sea verificable (la evidencia FX con
+	// importe 0 ya se admite). Solo aplica al importe cero.
+	const effectiveRate = !sameCurrency && rate === null && amount === 0 &&
+		functionalAmount === 0 ? 1 : rate;
 	return buildFifoSnapshot({
-		amount: new Prisma.Decimal(source.costoUnitario).times(quantity).toNumber(),
+		amount,
 		sourceCurrency,
 		context: {
 			functionalCurrency,
-			rate,
+			rate: effectiveRate,
 			rateDate: sameCurrency ? null : source.fechaCorte,
 			rateId: null,
 		},

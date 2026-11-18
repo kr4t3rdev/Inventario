@@ -460,6 +460,52 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(replay).toMatchObject({ success: true, data: { replayed: true } });
   });
 
+  it('una fuente USD de costo cero sin tasa se vende y se devuelve con snapshot verificable', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '0');
+    request.inventario[0].moneda = 'USD';
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const fuente = await prisma.inventarioInicialFuente.findFirstOrThrow({ where: { tenantId } });
+    expect(fuente.moneda).toBe('USD');
+    expect(Number(fuente.montoFuncional)).toBe(0);
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 1);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+    const alloc = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: sale.venta.items[0].id } });
+    expect(alloc).toHaveLength(1);
+    expect(alloc[0].inventarioInicialFuenteId).toBe(fuente.id);
+    // Sin tasa no hay conversión que verificar, pero el snapshot existe:
+    // 0 en cualquier tasa es 0, y la valoración y la devolución lo exigen.
+    expect(alloc[0].fifoEvidenciaFx).toBeTruthy();
+    expect(Number(alloc[0].fifoCostoFuncional)).toBe(0);
+
+    const valor = await prisma.$transaction((tx) =>
+      getCostoFifoVentaValorado(tx, tenantId, sale.venta.ventaId),
+    );
+    expect(valor?.montoFuncional).toBe(0);
+    expect(valor?.fuentesSinTasa).toEqual([]);
+
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+    } as unknown as AuthenticatedUser;
+    const result = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: sale.venta.ventaId,
+        items: [{ ventaItemId: sale.venta.items[0].id, cantidad: 1 }],
+        motivo: 'Devolución de fuente USD en cero',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result.devolucionId).toBeTruthy();
+    const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
+    expect(Number(devolucion.costoFifoFuncional)).toBe(0);
+  });
+
   it('una inicialización con todo el inventario en costo cero se confirma', async () => {
     const { tenantId } = await makeTenant();
     const { almacen, producto } = await makeInventorySetup(tenantId);
