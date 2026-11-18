@@ -438,6 +438,13 @@ export async function settleInitialPayable(
 	if (!cuenta.inicializacionId) {
 		fail('INITIAL_SETTLEMENT_CUENTA_NO_INICIAL', 'La cuenta por pagar no es inicial externa');
 	}
+	const deuda = await tx.deudaCash.findFirst({
+		where: { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, deletedAt: null },
+		select: { id: true },
+	});
+	if (deuda) {
+		fail('INITIAL_SETTLEMENT_DEUDA_CASH', 'Esta cuenta por pagar es una deuda cash; págala desde Deudas cash');
+	}
 	if (cuenta.estado === 'PAGADA') {
 		fail('INITIAL_SETTLEMENT_CUENTA_PAGADA', 'La cuenta por pagar ya está liquidada');
 	}

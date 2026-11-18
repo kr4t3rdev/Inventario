@@ -78,8 +78,9 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
       await prisma.ubicacion.deleteMany({ where: { tenantId } });
       await prisma.almacen.deleteMany({ where: { tenantId } });
       await prisma.categoria.deleteMany({ where: { tenantId } });
-      await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
+      await prisma.deudaCash.deleteMany({ where: { tenantId } });
       await prisma.cuentaPorPagar.deleteMany({ where: { tenantId } });
+      await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
       const anticipos = await prisma.anticipo.findMany({ where: { tenantId }, select: { anticipoId: true } });
       await prisma.anticipoMovimiento.deleteMany({ where: { anticipoId: { in: anticipos.map((a) => a.anticipoId) } } });
       await prisma.anticipo.deleteMany({ where: { tenantId } });
@@ -95,6 +96,7 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
       await prisma.cuentaContable.deleteMany({ where: { tenantId } });
       await prisma.tipoPago.deleteMany({ where: { tenantId } });
       await prisma.tenantLicense.deleteMany({ where: { tenantId } });
+      await prisma.vendor.deleteMany({ where: { tenantId } });
       await prisma.tenant.deleteMany({ where: { tenantId } });
     }
     if (cupCreated) await prisma.moneda.deleteMany({ where: { codigo: 'CUP' } });
@@ -201,6 +203,75 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
     expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(1);
     expect(await prisma.asiento.count({ where: { tenantId } })).toBe(1);
     expect((await prisma.inicializacionContable.findFirstOrThrow({ where: { tenantId, idempotencyKey: request.idempotencyKey } })).estado).toBe('COMPLETADA');
+  });
+
+  it('carga una deuda recibida con CxP y DeudaCash a fecha de corte y el replay la reconoce', async () => {
+    const { tenantId } = await makeTenant();
+    const vendorId = (await prisma.vendor.create({ data: { tenantId, nombre: 'Prestamista QA' } })).vendorId;
+    const request = {
+      idempotencyKey: `deuda-${tenantId.slice(0, 8)}`, fechaCorte: '2026-11-01', monedaFuncional: 'CUP',
+      tasas: { USD: '24' },
+      cuentas: [
+        { nombreCuenta: 'Deuda USD', nombreBanco: 'Banco QA', numeroCuenta: 'DEU-001', tipoCuenta: 'CORRIENTE', moneda: 'USD', saldoInicial: '100', origen: { tipo: 'PRESTAMO' as const, tercero: 'Prestamista QA', proveedorId: vendorId, tasaInteres: '12', tasaInteresMoratorio: '18', fechaVencimiento: '2027-06-01' } },
+      ],
+    };
+    const result = await initialize(request);
+    expect(result).toMatchObject({ success: true, data: { replayed: false } });
+    const inyeccion = await prisma.inyeccionCapital.findFirstOrThrow({ where: { tenantId } });
+    expect(inyeccion).toMatchObject({ tipo: 'DEUDA_EXTERNA', estado: 'ACTIVA' });
+    expect(Number(inyeccion.saldoPendiente)).toBe(100);
+    const cxp = await prisma.cuentaPorPagar.findFirstOrThrow({ where: { tenantId } });
+    expect(cxp).toMatchObject({ tipo: 'inicial_externa', estado: 'PENDIENTE', monedaOriginal: 'USD', monedaFuncional: 'CUP', referenciaInicial: 'DEUDA:DEU-001' });
+    expect(Number(cxp.montoDeuda)).toBe(100);
+    expect(Number(cxp.montoDeudaFuncional)).toBe(2400);
+    expect(Number(cxp.tasaCambio)).toBe(24);
+    expect(cxp.rateEffectiveAt?.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(cxp.fxEvidenceFingerprint).not.toBeNull();
+    expect(cxp.inicializacionId).not.toBeNull();
+    const deuda = await prisma.deudaCash.findFirstOrThrow({ where: { tenantId } });
+    expect(deuda).toMatchObject({ estado: 'ACTIVO', moneda: 'USD' });
+    expect(deuda.cuentaPorPagarId).toBe(cxp.cuentaPorPagarId);
+    expect(deuda.inyeccionId).toBe(inyeccion.id);
+    expect(Number(deuda.montoCapital)).toBe(100);
+    expect(Number(deuda.ordinaryAnnualRate)).toBe(12);
+    expect(Number(deuda.moratoryAnnualRate)).toBe(18);
+    expect(deuda.cashInterestPolicyVersion).toBe(1);
+    expect(deuda.cashInterestGrantDate?.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(deuda.cashInterestAccruedThroughDate?.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(Number(deuda.cashInterestPrincipalRemaining)).toBe(100);
+    expect(deuda.fechaVencimiento?.toISOString()).toBe('2027-06-01T00:00:00.000Z');
+    const cuenta = await prisma.cuentaBancaria.findFirstOrThrow({ where: { tenantId } });
+    expect(Number(cuenta.saldo)).toBe(100);
+    const asientos = await prisma.asiento.findMany({ where: { tenantId }, include: { lineas: true } });
+    expect(asientos).toHaveLength(1);
+    expect(asientos[0]!.fecha.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(asientos[0]!.lineas).toHaveLength(2);
+    expect(asientos[0]!.lineas.some((linea) => Number(linea.debe) === 2400)).toBe(true);
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+    if (!result.success || !replay.success) throw new Error('la inicialización con deuda debe completarse');
+    expect(replay.data.resultado).toEqual(result.data.resultado);
+    expect(await prisma.cuentaPorPagar.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.deudaCash.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.inyeccionCapital.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(1);
+    expect((await prisma.inicializacionContable.findFirstOrThrow({ where: { tenantId, idempotencyKey: request.idempotencyKey } })).estado).toBe('COMPLETADA');
+  });
+
+  it('no crea CxP ni DeudaCash para un préstamo sin proveedor', async () => {
+    const { tenantId } = await makeTenant();
+    const request = {
+      idempotencyKey: `deuda-sin-prov-${tenantId.slice(0, 8)}`, fechaCorte: '2026-11-01', monedaFuncional: 'CUP',
+      tasas: { USD: '24' },
+      cuentas: [
+        { nombreCuenta: 'Deuda USD', nombreBanco: 'Banco QA', numeroCuenta: 'DEU-002', tipoCuenta: 'CORRIENTE', moneda: 'USD', saldoInicial: '100', origen: { tipo: 'PRESTAMO' as const, tercero: 'Prestamista QA' } },
+      ],
+    };
+    const result = await initialize(request);
+    expect(result).toMatchObject({ success: true, data: { replayed: false } });
+    expect(await prisma.inyeccionCapital.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.cuentaPorPagar.count({ where: { tenantId } })).toBe(0);
+    expect(await prisma.deudaCash.count({ where: { tenantId } })).toBe(0);
   });
 
   it('rechaza la apertura si el tenant ya tiene saldos en submayores', async () => {

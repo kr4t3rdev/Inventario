@@ -12,6 +12,7 @@ const capitalGlobalFindUnique = vi.fn();
 const adjustmentFindUnique = vi.fn();
 const inyeccionFindFirst = vi.fn();
 const inyeccionUpdate = vi.fn();
+const deudaCashFindFirst = vi.fn();
 const pagoCreate = vi.fn();
 const auditLogCreate = vi.fn();
 const policyFindUnique = vi.fn();
@@ -77,6 +78,7 @@ describe('AccountingOperationsMutationService', () => {
     auditLogCreate.mockResolvedValue({ id: 'audit-1' });
     policyFindUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
     postEvento.mockResolvedValue({ estado: 'OMITIDO' });
+    deudaCashFindFirst.mockResolvedValue(null);
     inyeccionFindFirst.mockResolvedValue({
       id: 'inyeccion-1',
       tipo: 'DEUDA_EXTERNA',
@@ -96,6 +98,7 @@ describe('AccountingOperationsMutationService', () => {
         update: inyeccionUpdate,
       },
       pagoDeuda: { create: pagoCreate },
+      deudaCash: { findFirst: deudaCashFindFirst },
       auditLog: { create: auditLogCreate },
       tenantAccountingPolicy: { findUnique: policyFindUnique },
     }));
@@ -572,6 +575,25 @@ describe('AccountingOperationsMutationService', () => {
       where: { id: 'inyeccion-1' },
       data: expect.objectContaining({ saldoPendiente: { decrement: 300 } }),
     });
+  });
+
+  it('rechaza el pago por capital de una deuda que ya tiene submayor DeudaCash', async () => {
+    deudaCashFindFirst.mockResolvedValueOnce({ id: 'deuda-1' });
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await expect(AccountingOperationsMutationService.registerCapitalPayment({
+      input: {
+        inyeccionId: 'inyeccion-1',
+        monto: 300,
+        cuentaBancariaId: 'account-1',
+        tipoPagoId: 'tipo-1',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'PAGO_DEUDA_CASH_REQUERIDO' });
+
+    expect(pagoCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(inyeccionUpdate).not.toHaveBeenCalled();
   });
 
   it('rechaza un pago sobre una inyección de otro tenant sin abrir escrituras', async () => {

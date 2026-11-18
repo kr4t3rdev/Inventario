@@ -893,6 +893,16 @@ export const AccountingOperationsMutationService = {
         throw new ActionError('Solo las deudas externas admiten pagos', 'VALIDATION_ERROR');
       }
 
+      // Una deuda con submayor DeudaCash se paga solo por Deudas cash: el
+      // pago por capital no postea evento formal y dejaría la CxP intacta.
+      const deuda = await tx.deudaCash.findFirst({
+        where: { inyeccionId: parsed.inyeccionId, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (deuda) {
+        throw new ActionError('Esta deuda se paga desde Deudas cash', 'PAGO_DEUDA_CASH_REQUERIDO');
+      }
+
       const cuenta = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: parsed.cuentaBancariaId, tenantId },
         select: { cuentaId: true, isActive: true },

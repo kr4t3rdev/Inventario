@@ -157,6 +157,16 @@ export interface InitialSubledgerDetail {
   cuentasPorPagar: InitialSubledgerDetailSection;
 }
 
+export type InitialDebtDetail = {
+  cuentaPorPagarId: string;
+  deudaCashId: string;
+  inyeccionId: string;
+  proveedorId: string;
+  moneda: string;
+  montoOriginal: string;
+  montoFuncional: string;
+};
+
 export interface InitializationAperturaInput {
   periodoId: string;
   tenantId: string;
@@ -181,6 +191,7 @@ export interface InitializationAperturaInput {
   totalHaberFuncional: string;
   inventario?: InitialInventoryDetail;
   subledger?: InitialSubledgerDetail;
+  deudas?: InitialDebtDetail[];
 }
 
 /**
@@ -221,6 +232,7 @@ export async function createInitializationApertura(
         cuentas: input.cuentas,
         inventario: input.inventario ?? null,
         subledger: input.subledger ?? null,
+        deudas: input.deudas ?? null,
         totalDebeFuncional: input.totalDebeFuncional,
         totalHaberFuncional: input.totalHaberFuncional,
       } as unknown as Prisma.InputJsonValue,
@@ -425,7 +437,7 @@ export async function verifyInitializationReplay(input: {
           },
         })
         : await prisma.cuentaPorPagar.findMany({
-          where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId },
+          where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId, deudaCash: { is: null } },
           select: {
             referenciaInicial: true, proveedorId: true, monedaOriginal: true, monedaFuncional: true,
             montoDeuda: true, montoDeudaFuncional: true, tasaCambio: true, rateEffectiveAt: true,
@@ -496,6 +508,45 @@ export async function verifyInitializationReplay(input: {
           }
         }
       }
+    }
+  }
+  const storedDeudas = stored.deudas as Array<Record<string, unknown>> | undefined;
+  if (storedDeudas !== undefined) {
+    if (!Array.isArray(storedDeudas)) throw incompleteError();
+    const detalleDeudas = detalle.deudas as Array<Record<string, unknown>> | null | undefined;
+    if (detalleDeudas == null || !Array.isArray(detalleDeudas) || detalleDeudas.length !== storedDeudas.length) {
+      throw incompleteError();
+    }
+    for (const deuda of detalleDeudas) {
+      if (typeof deuda.cuentaPorPagarId !== 'string' || typeof deuda.deudaCashId !== 'string' ||
+        typeof deuda.inyeccionId !== 'string' || typeof deuda.proveedorId !== 'string' ||
+        typeof deuda.moneda !== 'string' || typeof deuda.montoOriginal !== 'string' ||
+        typeof deuda.montoFuncional !== 'string') {
+        throw incompleteError();
+      }
+      const cxp = await prisma.cuentaPorPagar.findFirst({
+        where: { cuentaPorPagarId: deuda.cuentaPorPagarId, tenantId: input.tenantId },
+        select: { proveedorId: true, monedaOriginal: true, montoDeuda: true, montoDeudaFuncional: true, inicializacionId: true },
+      });
+      if (!cxp || cxp.proveedorId !== deuda.proveedorId || cxp.monedaOriginal !== deuda.moneda ||
+        !decimalEquals(cxp.montoDeuda, deuda.montoOriginal) ||
+        !decimalEquals(cxp.montoDeudaFuncional, deuda.montoFuncional) ||
+        cxp.inicializacionId !== row.inicializacionId) {
+        throw incompleteError();
+      }
+      const wrapper = await prisma.deudaCash.findFirst({
+        where: { id: deuda.deudaCashId, tenantId: input.tenantId },
+        select: { inyeccionId: true, cuentaPorPagarId: true },
+      });
+      if (!wrapper || wrapper.inyeccionId !== deuda.inyeccionId ||
+        wrapper.cuentaPorPagarId !== deuda.cuentaPorPagarId) {
+        throw incompleteError();
+      }
+      const inyeccion = await prisma.inyeccionCapital.findFirst({
+        where: { id: deuda.inyeccionId, tenantId: input.tenantId },
+        select: { tipo: true },
+      });
+      if (!inyeccion || inyeccion.tipo !== 'DEUDA_EXTERNA') throw incompleteError();
     }
   }
   const injectedByCurrency = new Map<string, Prisma.Decimal>();

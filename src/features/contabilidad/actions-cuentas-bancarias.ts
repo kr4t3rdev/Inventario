@@ -16,6 +16,7 @@ import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
+import { persistInitialDebt } from './services/initial-debt-persistence';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
@@ -35,6 +36,7 @@ import {
   postOpeningEntry,
   resolveRoleAccountId,
   verifyInitializationReplay,
+  type InitialDebtDetail,
   type OpeningAsientoRef,
 } from './services/initialization-coordinator';
 import { Prisma } from '@/generated/prisma';
@@ -349,6 +351,7 @@ export const initializeBankAccountsAction = withAction(
       const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
       const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
       const asientos: OpeningAsientoRef[] = [];
+      const deudas: InitialDebtDetail[] = [];
       for (const [index, item] of parsed.cuentas.entries()) {
         const openingBalance = Number(item.saldoInicial);
         const isAdvance = item.origen?.tipo === 'ANTICIPO';
@@ -466,6 +469,17 @@ export const initializeBankAccountsAction = withAction(
               );
             }
             asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
+            if (!isCapital && item.origen.proveedorId) {
+              const deuda = await persistInitialDebt(tx, {
+                tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+                monedaFuncional: functionalCurrency, numeroCuenta: item.numeroCuenta, moneda: item.moneda,
+                saldoInicial: item.saldoInicial, tercero: item.origen.tercero, tasaCambio: item.origen.tasaCambio,
+                proveedorId: item.origen.proveedorId, tasaInteres: item.origen.tasaInteres,
+                tasaInteresMoratorio: item.origen.tasaInteresMoratorio, fechaVencimiento: item.origen.fechaVencimiento,
+                cuentaBancariaId: created.cuentaId, inyeccionId: counterpart.id, usuarioId: user.userId,
+              });
+              deudas.push(deuda);
+            }
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
               usuarioId: user.userId,
@@ -681,6 +695,7 @@ export const initializeBankAccountsAction = withAction(
         })),
         inventario: detalleInventario,
         subledger: detalleSubledger,
+        deudas,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -696,6 +711,7 @@ export const initializeBankAccountsAction = withAction(
         monedaFuncional: functionalCurrency,
         inventario: inventory,
         subledger: { cuentasPorCobrar: receivables, cuentasPorPagar: payables },
+        deudas,
       };
     });
 

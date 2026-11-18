@@ -66,6 +66,7 @@ const tx = {
 	tasaCambio: { findFirst: vi.fn() },
 	reconciliacionVenta: { findFirst: vi.fn(), create: vi.fn() },
 	pagoCuentaPorPagar: { findFirst: vi.fn(), create: vi.fn() },
+	deudaCash: { findFirst: vi.fn() },
 };
 
 const cobroInput = {
@@ -112,6 +113,7 @@ beforeEach(() => {
 		...data,
 	}));
 	tx.pagoCuentaPorPagar.findFirst.mockResolvedValue(null);
+	tx.deudaCash.findFirst.mockResolvedValue(null);
 	tx.pagoCuentaPorPagar.create.mockImplementation(async ({ data }: any) => ({
 		pagoCuentaPorPagarId: 'pago-1',
 		...data,
@@ -243,6 +245,15 @@ describe('settleInitialReceivable', () => {
 });
 
 describe('settleInitialPayable', () => {
+	it('rechaza pagar una CxP inicial que es una deuda cash', async () => {
+		tx.deudaCash.findFirst.mockResolvedValueOnce({ id: 'deuda-1' });
+
+		await expect(settleInitialPayable(tx as never, pagoInput)).rejects.toMatchObject({
+			code: 'INITIAL_SETTLEMENT_DEUDA_CASH',
+		});
+		expect(tx.pagoCuentaPorPagar.create).not.toHaveBeenCalled();
+	});
+
 	it('paga parcial en la misma moneda y descuenta el banco', async () => {
 		mockBanco(bancoCup);
 		const result = await settleInitialPayable(tx as never, pagoInput);
