@@ -169,4 +169,59 @@ describe('verifyAppliedFxEvidence', () => {
       fxEvidenceVersion: 1,
     })).toBe(false);
   });
+
+  it('rechaza una fecha inventada en una evidencia de importe cero', () => {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+    const base = {
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      fxProvenanceKind: evidence.fxProvenanceKind,
+      fxProvenanceSource: evidence.fxProvenanceSource,
+      fxCatalogRateId: evidence.fxCatalogRateId,
+      fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+      fxEvidenceVersion: evidence.fxEvidenceVersion,
+    };
+
+    // La huella de ZERO_AMOUNT no cubre la fecha: una fecha inventada
+    // no puede pasar como verificada, ni como texto ni como Date.
+    expect(verifyAppliedFxEvidence({ ...base, rateEffectiveAt: '2026-01-15T12:00:00.000Z' })).toBe(false);
+    expect(verifyAppliedFxEvidence({ ...base, rateEffectiveAt: new Date('2026-01-15T12:00:00.000Z') })).toBe(false);
+  });
+
+  it('acepta la fecha vacía en una evidencia de importe cero', () => {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+
+    expect(verifyAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      rateEffectiveAt: '',
+      fxProvenanceKind: evidence.fxProvenanceKind,
+      fxProvenanceSource: evidence.fxProvenanceSource,
+      fxCatalogRateId: evidence.fxCatalogRateId,
+      fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+      fxEvidenceVersion: evidence.fxEvidenceVersion,
+    })).toBe(true);
+  });
 });

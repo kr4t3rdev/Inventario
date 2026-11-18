@@ -209,7 +209,12 @@ export function verifyAppliedFxEvidence(input: VerifyAppliedFxEvidenceInput): bo
       expected.fxCatalogRateId === (input.fxCatalogRateId ?? null) &&
       expected.fxEvidenceFingerprint === input.fxEvidenceFingerprint &&
       expected.fxEvidenceVersion === input.fxEvidenceVersion &&
-      (sameCurrency || input.fxProvenanceKind === 'ZERO_AMOUNT' ||
+      (sameCurrency ||
+        // La huella de ZERO_AMOUNT no cubre la fecha: la única fecha
+        // aceptable es la ausencia de fecha (nula, ausente o vacía).
+        // Una fecha inventada no puede pasar como verificada.
+        (input.fxProvenanceKind === 'ZERO_AMOUNT' &&
+          (input.rateEffectiveAt == null || input.rateEffectiveAt === '')) ||
         expected.rateEffectiveAt === effectiveAt?.toISOString());
   } catch {
     return false;
