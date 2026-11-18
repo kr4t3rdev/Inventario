@@ -171,7 +171,7 @@ export function construirTrazabilidadLote(registro: RegistroLoteTrazabilidad): T
 		cliente: allocation.ventaItem.venta.cliente?.nombre ?? 'Cliente general',
 		numeroFactura: allocation.ventaItem.venta.factura?.numeroFactura ?? null,
 		cantidad: allocation.cantidad,
-		costoUnitario: allocation.costoUnitarioSnapshot,
+		costoUnitario: allocation.costoUnitarioSnapshot == null ? null : Number(allocation.costoUnitarioSnapshot),
 	}));
 
 	return {

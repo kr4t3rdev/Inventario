@@ -7,6 +7,7 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { Prisma } from '@/generated/prisma';
 import {
 	allocateFifoForVentaItem,
 	getAvailableStock,
@@ -117,7 +118,7 @@ describe("allocateFifoForVentaItem", () => {
 				compraDocumentoItemId: null,
 				loteId: "lote-inicial",
 				cantidad: 2,
-				costoUnitarioSnapshot: 25,
+				costoUnitarioSnapshot: new Prisma.Decimal(25),
 				fifoMonedaOrigen: "CUP",
 				fifoFechaFuente: fecha,
 				fifoMonedaFuncional: "CUP",

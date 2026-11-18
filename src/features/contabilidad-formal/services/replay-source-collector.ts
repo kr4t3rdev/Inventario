@@ -751,7 +751,7 @@ export async function recolectarCandidatos(
 					lineaCapa.tenantId === tenantId && lineaCapa.productoId === item.productoIdVenta &&
 					lineaCapa.compraDocumento.tenantId === tenantId &&
 					lineaCapa.compraDocumento.deletedAt === null &&
-					item.costoUnitarioSnapshot === capaRecepcion.costoUnitarioSnapshot &&
+					Number(item.costoUnitarioSnapshot) === capaRecepcion.costoUnitarioSnapshot &&
 					item.fifoMonedaOrigen?.trim().toUpperCase() ===
 						capaRecepcion.fifoMonedaOrigen.trim().toUpperCase() &&
 					item.fifoFechaFuente?.getTime() === capaRecepcion.fifoFechaFuente.getTime());

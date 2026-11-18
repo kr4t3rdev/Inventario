@@ -85,7 +85,7 @@ async function makeInventorySetup(tenantId: string) {
   return { categoria, almacen, producto, pv, cliente };
 }
 
-function inventoryRequest(tenantId: string, productoId: string, almacenId: string) {
+function inventoryRequest(tenantId: string, productoId: string, almacenId: string, costoUnitario = '25') {
   return {
     idempotencyKey: `inventory-sale-${tenantId.slice(0, 8)}`,
     fechaCorte: '2026-11-01',
@@ -104,7 +104,7 @@ function inventoryRequest(tenantId: string, productoId: string, almacenId: strin
       almacenId,
       loteCodigo: 'LOTE-INICIAL-1',
       cantidad: '4',
-      costoUnitario: '25',
+      costoUnitario,
       moneda: 'CUP',
     }],
   };
@@ -261,10 +261,10 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
       loteId: fuente.loteId,
       compraDocumentoItemId: null,
       cantidad: 2,
-      costoUnitarioSnapshot: 25,
       fifoMonedaOrigen: 'CUP',
       fifoMonedaFuncional: 'CUP',
     });
+    expect(Number(alloc1[0].costoUnitarioSnapshot)).toBe(25);
     expect(Number(alloc1[0].fifoCostoFuncional)).toBe(50);
     expect(alloc1[0].fifoFechaFuente?.getTime()).toBe(fuente.fechaCorte.getTime());
 
@@ -406,5 +406,24 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(allocAfter).toHaveLength(0);
     const devolucion2 = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result2.devolucionId } });
     expect(Number(devolucion2.costoFifoFuncional)).toBe(25);
+  });
+
+  it('una venta consume una fuente inicial de costo decimal sin perder los centavos', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '25.50');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const fuente = await prisma.inventarioInicialFuente.findFirstOrThrow({ where: { tenantId } });
+    expect(Number(fuente.costoUnitario)).toBe(25.5);
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 2);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+    const alloc = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: sale.venta.items[0].id } });
+    expect(alloc).toHaveLength(1);
+    expect(alloc[0].inventarioInicialFuenteId).toBe(fuente.id);
+    expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(25.5);
+    expect(Number(alloc[0].fifoCostoFuncional)).toBe(51);
   });
 });

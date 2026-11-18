@@ -1822,7 +1822,7 @@ model PurchaseAllocation {
   inventarioInicialFuenteId String?
   ventaItemId           String
   loteId                String?
-  costoUnitarioSnapshot Int?
+  costoUnitarioSnapshot Decimal?          @db.Decimal(20, 4)
   fifoMonedaOrigen      String?
   fifoFechaFuente       DateTime?
   fifoMonedaFuncional   String?
