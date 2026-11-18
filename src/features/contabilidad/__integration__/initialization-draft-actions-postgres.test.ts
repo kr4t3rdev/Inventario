@@ -16,6 +16,7 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 const tenants: Array<{ tenantId: string; userId: string }> = [];
 let guardar: typeof import('@/features/contabilidad/actions-inicializacion-borrador').guardarBorradorInicializacionAction;
 let obtener: typeof import('@/features/contabilidad/actions-inicializacion-borrador').obtenerBorradorInicializacionAction;
+let obtenerActual: typeof import('@/features/contabilidad/actions-inicializacion-borrador').obtenerBorradorActualInicializacionAction;
 
 const draftPayload = {
   fechaCorte: '2026-11-01',
@@ -45,6 +46,7 @@ describe('acciones del borrador de inicialización — PostgreSQL', { timeout: 1
     const actions = await import('@/features/contabilidad/actions-inicializacion-borrador');
     guardar = actions.guardarBorradorInicializacionAction;
     obtener = actions.obtenerBorradorInicializacionAction;
+    obtenerActual = actions.obtenerBorradorActualInicializacionAction;
     const identity = await prisma.$queryRaw<Array<{ databaseName: string; roleName: string; serverPort: number }>>`
       SELECT current_database() AS "databaseName", current_user AS "roleName", inet_server_port() AS "serverPort"
     `;
@@ -107,5 +109,22 @@ describe('acciones del borrador de inicialización — PostgreSQL', { timeout: 1
     expect(result.success).toBe(false);
     if (result.success) throw new Error('Se esperaba un fallo de permiso');
     expect(result.error).toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  it('obtener actual devuelve el borrador sin conocer su clave', async () => {
+    auth.user = tenantA.user as unknown as AuthenticatedUser;
+    const result = await obtenerActual();
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error(result.error.message);
+    expect(result.data).toMatchObject({ idempotencyKey: 'draft-actions-1' });
+    expect((result.data?.borrador as Record<string, unknown>).fechaCorte).toBe('2026-11-01');
+  });
+
+  it('obtener actual sin borrador devuelve null', async () => {
+    auth.user = tenantB.user as unknown as AuthenticatedUser;
+    const result = await obtenerActual();
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error(result.error.message);
+    expect(result.data).toBeNull();
   });
 });

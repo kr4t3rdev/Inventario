@@ -221,3 +221,31 @@ export async function obtenerBorradorInicializacion(input: z.input<typeof draftL
     return { idempotencyKey: previous.idempotencyKey, payloadHash: previous.payloadHash, borrador: previous.borrador as JsonObject };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
 }
+
+const draftActualLookupSchema = z.object({
+  tenantId: z.string().trim().min(1),
+}).strict();
+
+/**
+ * @description Retoma el borrador actual de un tenant sin conocer su clave.
+ * El tenant solo tiene una fila de inicialización, así que el borrador actual
+ * es la fila en estado BORRADOR. Devuelve null si no hay nada que retomar.
+ */
+export async function obtenerBorradorActualInicializacion(input: z.input<typeof draftActualLookupSchema>): Promise<{ idempotencyKey: string; payloadHash: string; borrador: JsonObject } | null> {
+  const parsed = draftActualLookupSchema.parse(input);
+  return prisma.$transaction(async (tx) => {
+    await acquireAccountingTenantLock(tx, parsed.tenantId);
+    const previous = await tx.inicializacionContable.findFirst({ where: { tenantId: parsed.tenantId } });
+    if (!previous) return null;
+    if (previous.estado === 'COMPLETADA') {
+      throw new ActionError('La empresa ya tiene una inicialización contable completada', 'INITIALIZATION_ALREADY_COMPLETED');
+    }
+    if (previous.estado !== 'BORRADOR') {
+      throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
+    }
+    if (!previous.borrador || Array.isArray(previous.borrador) || typeof previous.borrador !== 'object' || !isJsonValue(previous.borrador)) {
+      throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
+    }
+    return { idempotencyKey: previous.idempotencyKey, payloadHash: previous.payloadHash, borrador: previous.borrador as JsonObject };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+}

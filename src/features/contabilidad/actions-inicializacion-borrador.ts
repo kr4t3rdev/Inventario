@@ -7,6 +7,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import {
   assertInitializationAccess,
   guardarBorradorInicializacion,
+  obtenerBorradorActualInicializacion,
   obtenerBorradorInicializacion,
 } from './services/initialization-idempotency';
 
@@ -49,5 +50,20 @@ export const obtenerBorradorInicializacionAction = withAction(
     const parsed = obtenerSchema.parse(input);
     const tenantId = requireTenant(user);
     return obtenerBorradorInicializacion({ tenantId, ...parsed });
+  },
+);
+
+/**
+ * @description Retoma el borrador actual del tenant del usuario autenticado
+ * sin conocer su clave. Devuelve null si no hay nada que retomar.
+ * @param _input - Sin entrada; el tenant se deriva de la sesión.
+ * @param user - Usuario autenticado que retoma el borrador.
+ * @returns Borrador actual con su clave y hash, o null.
+ */
+export const obtenerBorradorActualInicializacionAction = withAction(
+  async (_input: void, user: AuthenticatedUser) => {
+    assertInitializationAccess(user);
+    const tenantId = requireTenant(user);
+    return obtenerBorradorActualInicializacion({ tenantId });
   },
 );

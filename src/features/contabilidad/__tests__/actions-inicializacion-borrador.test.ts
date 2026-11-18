@@ -14,16 +14,19 @@ vi.mock('@/features/contabilidad/services/initialization-idempotency', async (im
     ...actual,
     guardarBorradorInicializacion: vi.fn(),
     obtenerBorradorInicializacion: vi.fn(),
+    obtenerBorradorActualInicializacion: vi.fn(),
   };
 });
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import {
   guardarBorradorInicializacion,
+  obtenerBorradorActualInicializacion,
   obtenerBorradorInicializacion,
 } from '@/features/contabilidad/services/initialization-idempotency';
 import {
   guardarBorradorInicializacionAction,
+  obtenerBorradorActualInicializacionAction,
   obtenerBorradorInicializacionAction,
 } from '@/features/contabilidad/actions-inicializacion-borrador';
 
@@ -57,6 +60,7 @@ describe('Acciones del borrador de inicialización', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     vi.mocked(guardarBorradorInicializacion).mockResolvedValue(savedDraft);
     vi.mocked(obtenerBorradorInicializacion).mockResolvedValue(savedDraft);
+    vi.mocked(obtenerBorradorActualInicializacion).mockResolvedValue(savedDraft);
   });
 
   it('guardar deriva el tenant del usuario y devuelve el borrador', async () => {
@@ -124,5 +128,27 @@ describe('Acciones del borrador de inicialización', () => {
     const failure = expectActionFailure(result);
     expect(failure.error).toMatchObject({ code: 'FORBIDDEN' });
     expect(obtenerBorradorInicializacion).not.toHaveBeenCalled();
+  });
+
+  it('obtener actual devuelve el borrador del tenant sin conocer su clave', async () => {
+    const result = await obtenerBorradorActualInicializacionAction();
+    const success = expectActionSuccess(result);
+    expect(obtenerBorradorActualInicializacion).toHaveBeenCalledWith({ tenantId: 't1' });
+    expect(success.data).toMatchObject({ idempotencyKey: 'draft-1' });
+  });
+
+  it('obtener actual sin borrador devuelve éxito con null', async () => {
+    vi.mocked(obtenerBorradorActualInicializacion).mockResolvedValue(null);
+    const result = await obtenerBorradorActualInicializacionAction();
+    const success = expectActionSuccess(result);
+    expect(success.data).toBeNull();
+  });
+
+  it('obtener actual sin permiso de apertura se rechaza con FORBIDDEN', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(deniedUser);
+    const result = await obtenerBorradorActualInicializacionAction();
+    const failure = expectActionFailure(result);
+    expect(failure.error).toMatchObject({ code: 'FORBIDDEN' });
+    expect(obtenerBorradorActualInicializacion).not.toHaveBeenCalled();
   });
 });
