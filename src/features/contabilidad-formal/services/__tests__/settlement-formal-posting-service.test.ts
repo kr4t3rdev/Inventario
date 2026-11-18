@@ -101,6 +101,58 @@ describe('settlement formal posting service', () => {
 		}));
 	});
 
+	it('emite COBRO_CXC externo con origen propio y diferencia recibido menos aplicado', async () => {
+		await emitirLiquidacionFormal(tx, ctx, {
+			tipo: 'COBRO_CXC',
+			reconciliacion: {
+				reconciliacionId: 'recon-ext-1',
+				monto: 100,
+				moneda: 'USD',
+				montoConvertido: 2500,
+				functionalCurrency: 'CUP',
+				tasaCambio: 25,
+				fxEvidenceFingerprint: 'fx-hash',
+				fechaReconciliacion: fecha,
+			},
+			functionalAmount: 2500,
+			valorContableAplicado: '2400',
+			origenExterno: 'cobro_cxc_externo',
+			treasuryAccountType: 'CORRIENTE',
+		});
+
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+			tipo: 'COBRO_CXC',
+			origen: { tipo: 'cobro_cxc_externo', id: 'recon-ext-1' },
+			auxiliares: { diferenciaFx: '100' },
+		}));
+	});
+
+	it('emite PAGO_CXP externo con origen propio y diferencia aplicado menos pagado', async () => {
+		await emitirLiquidacionFormal(tx, ctx, {
+			tipo: 'PAGO_CXP',
+			reconciliacion: {
+				reconciliacionId: 'pago-ext-1',
+				monto: 100,
+				moneda: 'USD',
+				montoConvertido: 2500,
+				functionalCurrency: 'CUP',
+				tasaCambio: 25,
+				fxEvidenceFingerprint: 'fx-hash',
+				fechaReconciliacion: fecha,
+			},
+			functionalAmount: 2500,
+			valorContableAplicado: '2400',
+			origenExterno: 'pago_cxp_externo',
+			treasuryAccountType: 'CORRIENTE',
+		});
+
+		expect(postEvento).toHaveBeenCalledWith(tx, ctx, expect.objectContaining({
+			tipo: 'PAGO_CXP',
+			origen: { tipo: 'pago_cxp_externo', id: 'pago-ext-1' },
+			auxiliares: { diferenciaFx: '-100' },
+		}));
+	});
+
 	it('omite liquidaciones con monto cero', async () => {
 		const result = await emitirLiquidacionFormal(tx, ctx, {
 			tipo: 'COBRO_CXC',

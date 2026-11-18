@@ -19,7 +19,8 @@ export type SettlementOriginType =
 	| 'reconciliacion_venta'
 	| 'reconciliacion_gasto'
 	| 'reconciliacion_servicio'
-	| 'cobro_cxc_externo';
+	| 'cobro_cxc_externo'
+	| 'pago_cxp_externo';
 
 export interface SettlementEvent {
 	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO';
@@ -89,17 +90,30 @@ export function buildSettlementEvent(
 	if (origenTipo === 'cobro_cxc_externo' && tipo !== 'COBRO_CXC') {
 		throw new Error('El origen externo solo corresponde a cobros de CxC');
 	}
+	if (origenTipo === 'pago_cxp_externo' && tipo !== 'PAGO_CXP') {
+		throw new Error('El origen externo solo corresponde a pagos de CxP');
+	}
 	let diferenciaFx: SettlementDecimalInput = 0;
-	if (origenTipo === 'cobro_cxc_externo') {
+	if (origenTipo === 'cobro_cxc_externo' || origenTipo === 'pago_cxp_externo') {
 		const decimalFuncional = /^\d{1,16}(?:\.\d{1,4})?$/;
+		const esCobro = origenTipo === 'cobro_cxc_externo';
 		if (typeof params.functionalAmount !== 'string' || !decimalFuncional.test(params.functionalAmount)
 			|| typeof params.valorContableAplicado !== 'string' || !decimalFuncional.test(params.valorContableAplicado)) {
-			throw new Error('El cobro externo requiere importes funcionales verificables');
+			throw new Error(esCobro
+				? 'El cobro externo requiere importes funcionales verificables'
+				: 'El pago externo requiere importes funcionales verificables');
 		}
-		const recibido = new Prisma.Decimal(params.functionalAmount);
+		const pagado = new Prisma.Decimal(params.functionalAmount);
 		const aplicado = new Prisma.Decimal(params.valorContableAplicado);
-		if (!recibido.gt(0) || !aplicado.gt(0)) throw new Error('Los importes funcionales deben ser positivos');
-		diferenciaFx = recibido.minus(aplicado).toString();
+		if (!pagado.gt(0) || !aplicado.gt(0)) throw new Error('Los importes funcionales deben ser positivos');
+		// Cobro: diferencia = recibido − aplicado (recibir más que el valor
+		// contable es ganancia). Pago: diferencia = aplicado − pagado (pagar
+		// menos que el valor contable es ganancia). El signo opuesto refleja que
+		// la plantilla PAGO_CXP debita la CxP por el aplicado y acredita la
+		// diferencia como ingreso cuando es positiva, igual que el cobro.
+		diferenciaFx = esCobro
+			? pagado.minus(aplicado).toString()
+			: aplicado.minus(pagado).toString();
 	}
 	const fingerprint = params.fxEvidenceFingerprint ?? null;
 	return {
@@ -132,6 +146,24 @@ export function buildSettlementEvent(
  * @param {SettlementEventParams} params - Conciliacion de venta ya persistida.
  * @returns {SettlementEvent} Evento COBRO_CXC apto para el motor formal.
  */
+/**
+ * @description Construye el evento formal de un cobro de CxC inicial externa.
+ * @param {SettlementEventParams} params - Cobro ya persistido con su valor contable aplicado.
+ * @returns {SettlementEvent} Evento COBRO_CXC con origen cobro_cxc_externo.
+ */
+export function buildCobroCxcExternoEvent(params: SettlementEventParams): SettlementEvent {
+	return buildSettlementEvent(params, 'COBRO_CXC', 'cobro_cxc_externo');
+}
+
+/**
+ * @description Construye el evento formal de un pago de CxP inicial externa.
+ * @param {SettlementEventParams} params - Pago ya persistido con su valor contable aplicado.
+ * @returns {SettlementEvent} Evento PAGO_CXP con origen pago_cxp_externo.
+ */
+export function buildPagoCxpExternoEvent(params: SettlementEventParams): SettlementEvent {
+	return buildSettlementEvent(params, 'PAGO_CXP', 'pago_cxp_externo');
+}
+
 export function buildCobroCxcEvent(params: SettlementEventParams): SettlementEvent {
 	return buildSettlementEvent(params, 'COBRO_CXC', 'reconciliacion_venta');
 }

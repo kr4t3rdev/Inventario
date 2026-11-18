@@ -2388,6 +2388,7 @@ model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
   tenantId                    String
   ventaId                     String?
+  cuentaPorCobrarId           String?
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
@@ -2423,8 +2424,10 @@ model ReconciliacionVenta {
   cashInterestAllocation     CashPaymentInterestAllocation?
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
+  cuentaPorCobrar           CuentaPorCobrar? @relation(fields: [cuentaPorCobrarId], references: [id])
 
   @@index([tenantId])
+  @@index([cuentaPorCobrarId])
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
@@ -2954,6 +2957,7 @@ model CuentaPorCobrar {
   updatedAt        DateTime              @updatedAt
   tipoCuenta       String?
   ventaServicioId  String?               @unique
+  reconciliacionesVenta ReconciliacionVenta[]
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
@@ -3100,6 +3104,17 @@ model PagoCuentaPorPagar {
   tenantId             String
   cuentaPorPagarId     String
   monto                Decimal
+  moneda                 String?
+  montoFuncional         Decimal?              @db.Decimal(20, 4)
+  tasaCambio             Decimal?              @db.Decimal(20, 10)
+  functionalCurrency     String?
+  rateEffectiveAt        DateTime?
+  fxProvenanceKind       String?
+  fxProvenanceSource     String?
+  fxCatalogRateId        String?
+  fxEvidenceJson         Json?
+  fxEvidenceFingerprint  String?
+  fxEvidenceVersion      Int?
   numeroTransaccion    String
   cuentaProveedor      String
   fechaPago            DateTime       @default(now())
