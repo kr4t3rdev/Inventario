@@ -4210,7 +4210,7 @@ model InventarioInicialFuente {
   loteId             String
   productoId         String
   cantidad           Int
-  costoUnitario      Int
+  costoUnitario      Decimal          @db.Decimal(20, 4)
   moneda             String
   fechaCorte         DateTime
   montoFuncional     Decimal @db.Decimal(20, 4)

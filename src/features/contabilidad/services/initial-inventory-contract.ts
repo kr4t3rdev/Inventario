@@ -3,6 +3,8 @@ import { z } from 'zod';
 const requiredText = z.string().trim().min(1).max(200);
 const currency = z.string().trim().transform((value) => value.toUpperCase())
   .pipe(z.string().regex(/^[A-Z]{3,8}$/));
+const rate = z.string().regex(/^\d+(?:\.\d{1,8})?$/)
+  .refine((value) => Number(value) > 0, 'La tasa debe ser mayor que cero');
 const decimalPattern = /^\d{1,24}(?:\.\d{1,4})?$/;
 const integerPattern = /^\d{1,12}$/;
 
@@ -51,6 +53,7 @@ const row = z.object({
 export const initialInventoryContract = z.object({
   fechaCorte: date,
   monedaFuncional: currency,
+  tasas: z.record(z.string(), rate).optional(),
   inventario: z.array(row).max(10000),
 }).strict().superRefine((value, context) => {
   const keys = new Set<string>();
@@ -60,6 +63,15 @@ export const initialInventoryContract = z.object({
         code: z.ZodIssueCode.custom,
         path: ['inventario', index, 'fechaCorte'],
         message: 'La existencia debe usar la fecha de corte común',
+      });
+    }
+    const hasValue = item.costoUnitario !== '0';
+    if (hasValue && item.moneda !== value.monedaFuncional &&
+      item.tasaCambio === undefined && value.tasas?.[item.moneda] === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'tasaCambio'],
+        message: `Falta la tasa de cambio para ${item.moneda}`,
       });
     }
     const key = JSON.stringify([

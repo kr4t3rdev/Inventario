@@ -37,6 +37,10 @@ const input = {
 };
 
 describe('persistencia de inventario inicial', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('crea lote, fuente y stock sin crear compra ni recepción', async () => {
     const mockedTx = tx as {
       inicializacionContable: { findFirst: ReturnType<typeof vi.fn> };
@@ -74,15 +78,14 @@ describe('persistencia de inventario inicial', () => {
       ubicacionHijaId: 'ubicacion-a',
       delta: 4,
     }));
-    expect(mockedTx.inventarioInicialFuente.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        tenantId: 'tenant-a',
-        inicializacionId: 'init-a',
-        loteId: 'lote-a',
-        costoUnitario: '25.5',
-        montoFuncional: '102',
-      }),
-    }));
+    const sourceData = mockedTx.inventarioInicialFuente.create.mock.calls[0][0].data;
+    expect(sourceData).toMatchObject({
+      tenantId: 'tenant-a',
+      inicializacionId: 'init-a',
+      loteId: 'lote-a',
+    });
+    expect(sourceData.costoUnitario.toString()).toBe('25.5');
+    expect(sourceData.montoFuncional.toString()).toBe('102');
   });
 
   it('falla cerrado si la existencia pertenece a otro almacén o tenant', async () => {
