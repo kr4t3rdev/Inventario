@@ -170,6 +170,64 @@ async function makeSale(tenantId: string, userId: string, pvId: string, clienteI
   return { venta, factura, cxc };
 }
 
+/**
+ * Venta real con el servicio de mutación: traslado almacén -> PV sembrado
+ * (ese flujo no es parte de la tarea 3), turno abierto y cobro en efectivo
+ * contra la cuenta creada por la init. Devuelve la venta y su contexto.
+ */
+async function makeRealSale(
+  tenantId: string,
+  user: { userId: string },
+  producto: { id: string },
+  almacen: { almacenId: string },
+  pv: { pvId: string },
+  cantidad: number,
+) {
+  await prisma.$transaction((tx) => Promise.all([
+    upsertStockUbicacion(tx, {
+      tenantId, productoId: producto.id, tipoUbicacion: 'almacen',
+      ubicacionId: almacen.almacenId, modo: 'increment', delta: -cantidad,
+    }),
+    upsertStockUbicacion(tx, {
+      tenantId, productoId: producto.id, tipoUbicacion: 'punto_venta',
+      ubicacionId: pv.pvId, modo: 'increment', delta: cantidad,
+    }),
+  ]));
+  const banco = await prisma.cuentaBancaria.findFirstOrThrow({ where: { tenantId } });
+  await prisma.tipoPago.create({
+    data: { tenantId, nombre: 'Efectivo PV', requiereCuenta: true, cuentaDefecto: banco.cuentaId },
+  });
+  const turno = await prisma.turnoPuntoVenta.create({
+    data: {
+      tenantId, puntoDeVentaId: pv.pvId, fondoInicialCup: 0, fondoInicialUsd: 0,
+      estado: 'ABIERTO', tipo: 'NORMAL',
+    },
+  });
+  const userCtx = {
+    userId: user.userId, role: 'admin', tenantId, isActive: true,
+    planFeatures: {
+      'ventas-pos': true, 'ventas-factura': true, facturacion: true,
+      'cuentas-cobrar': true, 'turnos-pos': true,
+    },
+  } as unknown as AuthenticatedUser;
+  const venta = await withTestTenant(tenantId, () =>
+    VentaMutationService.create({
+      input: {
+        puntoDeVentaId: pv.pvId,
+        turnoId: turno.id,
+        metodoPago: 'EFECTIVO',
+        montoEfectivo: cantidad * 500,
+        montoRecibidoEfectivo: cantidad * 500,
+        cuentaBancariaId: banco.cuentaId,
+        items: [{ productoId: producto.id, cantidad, precioUnitario: 500 }],
+      } as never,
+      user: userCtx,
+    }),
+  ) as { ventaId: string };
+  const ventaCreada = await prisma.venta.findUniqueOrThrow({ where: { ventaId: venta.ventaId }, include: { items: true } });
+  return { venta, ventaCreada, userCtx };
+}
+
 describe('venta posterior y devolución sobre inventario inicial — PostgreSQL', { timeout: 120_000 }, () => {
   beforeAll(async () => {
     process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
@@ -679,6 +737,49 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(stockPvAfter.cantidadDisponible).toBe(1);
     const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
     expect(Number(devolucion.costoFifoFuncional)).toBe(25);
+
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+  });
+
+  it('el recorrido real de una fuente de costo cero no revierte en enforce ni postea costo', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '0');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+
+    // Una venta sin costo no tiene nada que devengar: el motor formal
+    // rechaza montos cero, así que la mutación no debe intentar postearlo.
+    const { venta, ventaCreada, userCtx } = await makeRealSale(tenantId, user, producto, almacen, pv, 2);
+    expect(ventaCreada.estado).toBe('ENTREGADA');
+    const stockPv = await prisma.stockUbicacion.findUniqueOrThrow({
+      where: { productoId_tipoUbicacion_ubicacionId: { productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: pv.pvId } },
+    });
+    expect(stockPv.cantidadDisponible).toBe(0);
+    const alloc = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: ventaCreada.items[0].id } });
+    expect(alloc).toHaveLength(1);
+    expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(0);
+    expect(alloc[0].fifoEvidenciaFx).toBeTruthy();
+    const asientoCosto = await prisma.asiento.findFirst({
+      where: { tenantId, origenTipo: 'venta_costo', origenId: venta.ventaId, estado: 'CONTABILIZADO' },
+    });
+    expect(asientoCosto).toBeNull();
+
+    const result = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: ventaCreada.items[0].id, cantidad: 1 }],
+        motivo: 'Devolución de venta en cero',
+        preferenciaFinanciera: 'REEMBOLSO_EFECTIVO',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result.devolucionId).toBeTruthy();
+    const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
+    expect(Number(devolucion.costoFifoFuncional)).toBe(0);
 
     const replay = await initialize(request);
     expect(replay).toMatchObject({ success: true, data: { replayed: true } });
