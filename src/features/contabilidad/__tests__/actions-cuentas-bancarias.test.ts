@@ -22,7 +22,18 @@ vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: { log: vi.fn(), logStrict: vi.fn() },
 }));
 vi.mock('@/features/contabilidad-formal/services/capital-adjustment-posting-service', () => ({
-  emitirInyeccionCapital: vi.fn().mockResolvedValue({}),
+  emitirInyeccionCapital: vi.fn().mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'as-cap-1' }),
+}));
+vi.mock('@/features/contabilidad/services/initialization-period', () => ({
+  ensureCutoffPeriod: vi.fn().mockResolvedValue({ periodoId: 'p1', tipo: 'MENSUAL', estado: 'ABIERTO' }),
+  resolveCutoffPeriod: vi.fn(),
+}));
+vi.mock('@/features/contabilidad/services/initialization-coordinator', () => ({
+  createInitializationApertura: vi.fn().mockResolvedValue({}),
+  parseCutoffDate: vi.fn((value: string) => new Date(`${value}T00:00:00.000Z`)),
+  postOpeningEntry: vi.fn().mockResolvedValue(null),
+  resolveRoleAccountId: vi.fn().mockResolvedValue('cc-bancos'),
+  verifyInitializationReplay: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/features/contabilidad/services/initialization-idempotency', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/contabilidad/services/initialization-idempotency')>();
@@ -61,6 +72,14 @@ import { AuditLogService } from '@/lib/services/audit-log-service';
 import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
+import { ActionError } from '@/lib/server-actions';
+import { ensureCutoffPeriod } from '@/features/contabilidad/services/initialization-period';
+import {
+  createInitializationApertura,
+  postOpeningEntry,
+  resolveRoleAccountId,
+  verifyInitializationReplay,
+} from '@/features/contabilidad/services/initialization-coordinator';
 import {
   getCuentasBancariasAction,
   getCuentaBancariaByIdAction,
@@ -74,9 +93,14 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const txClient = {
   cuentaBancaria: { create: vi.fn(), count: vi.fn() },
-  inyeccionCapital: { create: vi.fn() },
-  anticipo: { create: vi.fn() },
+  inyeccionCapital: { create: vi.fn(), count: vi.fn() },
+  anticipo: { create: vi.fn(), count: vi.fn() },
   anticipoMovimiento: { create: vi.fn() },
+  cuentaPorCobrar: { count: vi.fn() },
+  cuentaPorPagar: { count: vi.fn() },
+  stockUbicacion: { count: vi.fn() },
+  deudaCash: { count: vi.fn() },
+  prestamoCash: { count: vi.fn() },
   tenantAccountingPolicy: { findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' }) },
   asiento: { count: vi.fn() },
   aperturaPeriodo: { count: vi.fn() },
@@ -119,6 +143,18 @@ describe('Cuentas Bancarias Actions', () => {
     txClient.cuentaBancaria.count.mockResolvedValue(0);
     txClient.asiento.count.mockResolvedValue(0);
     txClient.aperturaPeriodo.count.mockResolvedValue(0);
+    txClient.cuentaPorCobrar.count.mockResolvedValue(0);
+    txClient.cuentaPorPagar.count.mockResolvedValue(0);
+    txClient.stockUbicacion.count.mockResolvedValue(0);
+    txClient.anticipo.count.mockResolvedValue(0);
+    txClient.inyeccionCapital.count.mockResolvedValue(0);
+    txClient.deudaCash.count.mockResolvedValue(0);
+    txClient.prestamoCash.count.mockResolvedValue(0);
+    vi.mocked(ensureCutoffPeriod).mockResolvedValue({ periodoId: 'p1', tipo: 'MENSUAL', estado: 'ABIERTO' } as never);
+    vi.mocked(postOpeningEntry).mockResolvedValue(null);
+    vi.mocked(createInitializationApertura).mockResolvedValue({} as never);
+    vi.mocked(resolveRoleAccountId).mockResolvedValue('cc-bancos');
+    vi.mocked(verifyInitializationReplay).mockResolvedValue(undefined);
     txClient.inyeccionCapital.create.mockReset();
     txClient.anticipo.create.mockReset();
     txClient.anticipoMovimiento.create.mockReset();
@@ -691,8 +727,8 @@ describe('Cuentas Bancarias Actions', () => {
   });
 
   describe('initializeBankAccountsAction', () => {
-    it('bloquea una inicialización nueva sin crear cuentas mientras faltan submayores', async () => {
-      txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, saldo: 0 });
+    it('bloquea una inicialización nueva si ya existen saldos en submayores', async () => {
+      txClient.cuentaPorCobrar.count.mockResolvedValue(1);
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'blocked-init',
         fechaCorte: '2026-11-01',
@@ -701,13 +737,15 @@ describe('Cuentas Bancarias Actions', () => {
           tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
       });
       expect(result.success).toBe(false);
-      expect(expectActionFailure(result).error?.code).toBe('INICIALIZACION_NO_DISPONIBLE');
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_NOT_EMPTY');
       expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
       expect(txClient.inyeccionCapital.create).not.toHaveBeenCalled();
     });
-    it('acepta saldo histórico sin origen documentado en el contrato pero mantiene el alta bloqueada', async () => {
+    it('abre un saldo no documentado con asiento de apertura a resultados acumulados', async () => {
+      txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'init-unknown', saldo: 0 });
+      vi.mocked(postOpeningEntry).mockResolvedValue({ asientoId: 'as-apertura-1', postedLines: [] });
       const result = await initializeBankAccountsAction({
-        idempotencyKey: 'blocked-unknown-source',
+        idempotencyKey: 'unknown-source',
         fechaCorte: '2026-11-01',
         monedaFuncional: 'CUP',
         cuentas: [{
@@ -716,10 +754,14 @@ describe('Cuentas Bancarias Actions', () => {
           origenNoDocumentado: true,
         }],
       });
-      expect(result.success).toBe(false);
-      expect(expectActionFailure(result).error?.code).toBe('INICIALIZACION_NO_DISPONIBLE');
-      expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
-      expect(txClient.inyeccionCapital.create).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(txClient.cuentaBancaria.create).toHaveBeenCalled();
+      expect(vi.mocked(postOpeningEntry)).toHaveBeenCalled();
+      expect(vi.mocked(createInitializationApertura)).toHaveBeenCalledWith(
+        txClient,
+        expect.objectContaining({ asientoId: 'as-apertura-1' }),
+      );
+      expect(expectActionSuccess(result).data?.resultado.asientoId).toBe('as-apertura-1');
     });
     it('rechaza usuarios no autenticados antes de abrir la transacción idempotente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
@@ -739,6 +781,9 @@ describe('Cuentas Bancarias Actions', () => {
 
     it('rechaza un resultado previo sin evidencia verificable y no ejecuta otra carga', async () => {
       vi.mocked(runIdempotentInitialization).mockResolvedValue({ replayed: true, resultado: { cuentas: [] } });
+      vi.mocked(verifyInitializationReplay).mockRejectedValue(
+        new ActionError('La inicialización anterior no tiene evidencia verificable', 'INITIALIZATION_INCOMPLETE'),
+      );
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'completed-init',
         fechaCorte: '2026-11-01',
@@ -752,8 +797,10 @@ describe('Cuentas Bancarias Actions', () => {
     });
 
     it('rechaza un replay positivo no verificable aunque el período actual esté cerrado', async () => {
-      periodGuardState.blocked = true;
       vi.mocked(runIdempotentInitialization).mockResolvedValue({ replayed: true, resultado: { cuentas: [] } });
+      vi.mocked(verifyInitializationReplay).mockRejectedValue(
+        new ActionError('La inicialización anterior no tiene evidencia verificable', 'INITIALIZATION_INCOMPLETE'),
+      );
       const result = await initializeBankAccountsAction({ idempotencyKey: 'completed-positive',
         fechaCorte: '2026-11-01',
         monedaFuncional: 'CUP',
@@ -765,7 +812,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
     });
 
-    it.skip('pendiente: autentica, calcula el hash en servidor y crea una cuenta cero una sola vez', async () => {
+    it('autentica, calcula el hash en servidor y crea una cuenta cero una sola vez', async () => {
       const created = { ...mockCuenta, cuentaId: 'init-account', saldo: 0 };
       txClient.cuentaBancaria.create.mockResolvedValue(created);
       const input = {
@@ -796,7 +843,7 @@ describe('Cuentas Bancarias Actions', () => {
       }));
     });
 
-    it.skip('pendiente: bloquea el flujo de empresa nueva si ya existe una apertura formal', async () => {
+    it('bloquea el flujo de empresa nueva si ya existe una apertura formal', async () => {
       txClient.aperturaPeriodo.count.mockResolvedValue(1);
       const result = await initializeBankAccountsAction({
         idempotencyKey: 'existing-opening',
@@ -812,7 +859,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
     });
 
-    it.skip('pendiente: registra un saldo inicial por anticipo mediante el flujo contable existente', async () => {
+    it('registra un saldo inicial por anticipo mediante el flujo contable existente', async () => {
       txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'advance-account', saldo: 0 });
       txClient.anticipo.create.mockResolvedValue({ anticipoId: 'advance-1' });
       const input = {

@@ -21,7 +21,18 @@ import { initializationContract } from '@/features/contabilidad/services/initial
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
 import { assertInitializationAccess, computeInitializationPayloadHash } from './services/initialization-idempotency';
 import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
-import type { Prisma } from '@/generated/prisma';
+import { valueOpeningAccounts } from './services/initialization-valuation';
+import { buildOpeningEntryLines } from './services/initialization-opening-lines';
+import { ensureCutoffPeriod } from './services/initialization-period';
+import {
+  createInitializationApertura,
+  parseCutoffDate,
+  postOpeningEntry,
+  resolveRoleAccountId,
+  verifyInitializationReplay,
+  type OpeningAsientoRef,
+} from './services/initialization-coordinator';
+import { Prisma } from '@/generated/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Types ─────────────────────────────────────────────────
@@ -109,6 +120,7 @@ const CUENTA_SELECT = {
   tipoCuenta: true,
   saldo: true,
   moneda: true,
+  cuentaContableInicialId: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -145,16 +157,6 @@ async function hasAccountingHistory(tenantId: string, cuentaId: string): Promise
 }
 
 // ─── Server Actions ────────────────────────────────────────
-
-/** @description Mantiene bloqueadas nuevas cargas hasta coordinar todos los saldos operativos. */
-function requireCoordinatedInitializationReady(): void {
-  // Al habilitar la carga, validar la fecha del período dentro de la transacción,
-  // después de resolver el replay y antes de cualquier escritura operativa.
-  throw new ActionError(
-    'La carga inicial aún no puede confirmarse hasta conciliar los saldos operativos',
-    'INICIALIZACION_NO_DISPONIBLE',
-  );
-}
 
 export const getCuentasBancariasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'contabilidad', 'gestionar cuentas bancarias');
@@ -272,30 +274,44 @@ export const initializeBankAccountsAction = withAction(
       idempotencyKey: parsed.idempotencyKey,
       payloadHash,
     }, async (tx) => {
-      requireCoordinatedInitializationReady();
       if (hasAdvance) requireFeature(user, 'anticipos', 'inicializar saldos provenientes de anticipos');
-      const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number }> = [];
+      const fechaCorteDate = parseCutoffDate(parsed.fechaCorte);
       const policy = await tx.tenantAccountingPolicy.findUnique({
         where: { tenantId },
         select: { functionalCurrencyCode: true },
       });
-      const functionalCurrency = policy?.functionalCurrencyCode?.trim().toUpperCase() || 'CUP';
-      if (await tx.cuentaBancaria.count({ where: { tenantId } }) > 0) {
+      const functionalCurrency = parsed.monedaFuncional;
+      if (policy?.functionalCurrencyCode && policy.functionalCurrencyCode.trim().toUpperCase() !== functionalCurrency) {
         throw new ActionError(
-          'Ya existen cuentas bancarias; usa la apertura contable de empresa existente',
+          `La moneda funcional de la carga (${functionalCurrency}) no coincide con la política del tenant (${policy.functionalCurrencyCode.trim().toUpperCase()})`,
+          'MONEDA_FUNCIONAL_NO_COINCIDE',
+        );
+      }
+      const subledgerChecks: Array<{ label: string; count: number }> = [
+        { label: 'cuentas bancarias', count: await tx.cuentaBancaria.count({ where: { tenantId } }) },
+        { label: 'asientos', count: await tx.asiento.count({ where: { tenantId } }) },
+        { label: 'aperturas', count: await tx.aperturaPeriodo.count({ where: { tenantId } }) },
+        { label: 'cuentas por cobrar', count: await tx.cuentaPorCobrar.count({ where: { tenantId } }) },
+        { label: 'cuentas por pagar', count: await tx.cuentaPorPagar.count({ where: { tenantId } }) },
+        { label: 'existencias', count: await tx.stockUbicacion.count({ where: { tenantId } }) },
+        { label: 'anticipos', count: await tx.anticipo.count({ where: { tenantId } }) },
+        { label: 'inyecciones de capital', count: await tx.inyeccionCapital.count({ where: { tenantId } }) },
+        { label: 'deudas', count: await tx.deudaCash.count({ where: { tenantId } }) },
+        { label: 'préstamos', count: await tx.prestamoCash.count({ where: { tenantId } }) },
+      ];
+      const existingSubledger = subledgerChecks.find((check) => check.count > 0);
+      if (existingSubledger) {
+        throw new ActionError(
+          `Ya existen ${existingSubledger.label}; usa la apertura contable de empresa existente`,
           'INITIALIZATION_NOT_EMPTY',
         );
       }
-      const [existingEntries, existingOpenings] = await Promise.all([
-        tx.asiento.count({ where: { tenantId } }),
-        tx.aperturaPeriodo.count({ where: { tenantId } }),
-      ]);
-      if (existingEntries > 0 || existingOpenings > 0) {
-        throw new ActionError(
-          'Ya existe actividad o una apertura contable; usa el balance de apertura de empresa en operación',
-          'INITIALIZATION_NOT_EMPTY',
-        );
-      }
+      const valued = valueOpeningAccounts(parsed);
+      const entryLines = buildOpeningEntryLines({ cuentas: parsed.cuentas, valued, monedaFuncional: functionalCurrency });
+      const periodo = await ensureCutoffPeriod(tx, { tenantId, fechaCorte: parsed.fechaCorte, actor: user.userId });
+      const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
+      const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
+      const asientos: OpeningAsientoRef[] = [];
       for (const [index, item] of parsed.cuentas.entries()) {
         const openingBalance = Number(item.saldoInicial);
         const isAdvance = item.origen?.tipo === 'ANTICIPO';
@@ -309,6 +325,7 @@ export const initializeBankAccountsAction = withAction(
             moneda: item.moneda,
             isActive: true,
             tenantId,
+            cuentaContableInicialId: bancosCuentaId,
           },
           select: CUENTA_SELECT,
         });
@@ -346,7 +363,7 @@ export const initializeBankAccountsAction = withAction(
             });
             const movementKey = `init:${createHash('sha256')
               .update(`${parsed.idempotencyKey}:${index}`).digest('hex').slice(0, 48)}`;
-            await registrarMovimientoEfectivoAnticipo(tx, {
+            const movement = await registrarMovimientoEfectivoAnticipo(tx, {
               anticipoId: anticipo.anticipoId,
               tenantId,
               cuentaId: created.cuentaId,
@@ -356,26 +373,22 @@ export const initializeBankAccountsAction = withAction(
               usuarioId: user.userId,
               observaciones: `Saldo inicial recibido de ${item.origen.tercero}`,
             });
+            asientos.push({ tipo: 'ANTICIPO', asientoId: null, estado: movement.idempotentReplay ? 'YA_EXISTENTE' : 'EMITIDO_POR_FLUJO', referencia: movementKey });
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'ANTICIPO', entidadId: anticipo.anticipoId,
               usuarioId: user.userId,
               detalles: { origen: 'INICIALIZACION_CONTABLE', cuentaId: created.cuentaId, monto: openingBalance, moneda: item.moneda },
             }, tx);
           } else {
-            if (item.moneda !== functionalCurrency && !item.origen.tasaCambio) {
-              throw new ActionError(
-                `Indica la tasa de cambio de ${item.moneda} a ${functionalCurrency}`,
-                'TASA_CAMBIO_REQUERIDA',
-              );
-            }
             const isCapital = item.origen.tipo === 'CAPITAL_SOCIAL';
+            const resolvedRate = valued[index].tasaCambio;
             const counterpart = await tx.inyeccionCapital.create({
               data: {
                 tenantId,
                 tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
                 montoRecibido: openingBalance,
                 moneda: item.moneda,
-                tasaCambio: item.origen.tasaCambio ? Number(item.origen.tasaCambio) : null,
+                tasaCambio: resolvedRate,
                 cuentaId: created.cuentaId,
                 socio: isCapital ? item.origen.tercero : null,
                 entidadPrestamista: isCapital ? null : item.origen.tercero,
@@ -384,19 +397,21 @@ export const initializeBankAccountsAction = withAction(
                 estado: isCapital ? null : 'ACTIVA',
                 idempotencyKey: movementKeyFor(parsed.idempotencyKey, index),
                 descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
+                fechaRegistro: fechaCorteDate,
               },
               select: { id: true, fechaRegistro: true },
             });
-            await emitirInyeccionCapital(tx, { tenantId, userId: user.userId }, {
+            const posting = await emitirInyeccionCapital(tx, { tenantId, userId: user.userId }, {
               inyeccionId: counterpart.id,
-              fecha: counterpart.fechaRegistro,
+              fecha: fechaCorteDate,
               monto: openingBalance,
               moneda: item.moneda,
-              tasaCambio: item.origen.tasaCambio ? Number(item.origen.tasaCambio) : null,
+              tasaCambio: resolvedRate,
               referencia: movementKeyFor(parsed.idempotencyKey, index),
               descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
               tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
             });
+            asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
               usuarioId: user.userId,
@@ -421,16 +436,48 @@ export const initializeBankAccountsAction = withAction(
             fuenteSaldoInicial: item.origen?.tipo ?? null,
           },
         }, tx);
-        createdAccounts.push({ cuentaId: created.cuentaId, nombreCuenta: item.nombreCuenta, saldo: openingBalance });
+        createdAccounts.push({ cuentaId: created.cuentaId, nombreCuenta: item.nombreCuenta, saldo: openingBalance, moneda: item.moneda, cuentaContableInicialId: bancosCuentaId });
       }
-      return { cuentas: createdAccounts };
+      const openingEntry = await postOpeningEntry(tx, {
+        tenantId, userId: user.userId, periodoId: periodo.periodoId,
+        fechaCorte: parsed.fechaCorte, idempotencyKey: parsed.idempotencyKey, lines: entryLines.lines,
+      });
+      if (openingEntry) {
+        asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
+      }
+      await createInitializationApertura(tx, {
+        periodoId: periodo.periodoId, tenantId, actor: user.userId,
+        idempotencyKey: parsed.idempotencyKey, payloadHash,
+        fechaCorte: parsed.fechaCorte, monedaFuncional: functionalCurrency,
+        asientoId: openingEntry?.asientoId ?? null, asientos,
+        lines: openingEntry?.postedLines ?? [],
+        fxFingerprints: [...new Set(valued.map((v) => v.fxEvidenceFingerprint).filter((f): f is string => f !== null))],
+        cuentas: createdAccounts.map((cuenta, i) => ({
+          cuentaBancariaId: cuenta.cuentaId,
+          numeroCuenta: parsed.cuentas[i].numeroCuenta,
+          moneda: cuenta.moneda,
+          saldoOriginal: parsed.cuentas[i].saldoInicial,
+          montoFuncional: new Prisma.Decimal(valued[i].montoFuncional).toString(),
+          cuentaContableInicialId: cuenta.cuentaContableInicialId,
+        })),
+        totalDebeFuncional: entryLines.totalDebeFuncional,
+        totalHaberFuncional: entryLines.totalHaberFuncional,
+      });
+      return {
+        cuentas: createdAccounts,
+        periodoId: periodo.periodoId,
+        asientoId: openingEntry?.asientoId ?? null,
+        asientos,
+        lineas: openingEntry?.postedLines ?? [],
+        totalDebeFuncional: entryLines.totalDebeFuncional,
+        totalHaberFuncional: entryLines.totalHaberFuncional,
+        fechaCorte: parsed.fechaCorte,
+        monedaFuncional: functionalCurrency,
+      };
     });
 
     if (result.replayed) {
-      throw new ActionError(
-        'La inicialización anterior no tiene evidencia verificable de sus cuentas y asientos',
-        'INITIALIZATION_INCOMPLETE',
-      );
+      await verifyInitializationReplay({ tenantId, idempotencyKey: parsed.idempotencyKey, payloadHash });
     }
     revalidatePath('/busy/contabilidad/cuentas');
     revalidatePath('/busy/contabilidad/anticipos');

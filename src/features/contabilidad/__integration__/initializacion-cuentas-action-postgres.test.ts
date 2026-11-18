@@ -6,10 +6,9 @@ import { computeInitializationPayloadHash } from '@/features/contabilidad/servic
 
 assertDisposableDatabase(process.env);
 
-const tenantId = randomUUID();
 const user = {
   userId: randomUUID(), name: 'QA inicialización', email: 'qa-init@example.test',
-  role: 'admin' as const, isActive: true, tenantId, tenantRole: 'manager' as const,
+  role: 'admin' as const, isActive: true, tenantId: '', tenantRole: 'manager' as const,
 };
 vi.mock('@/lib/server-actions/get-current-user', () => ({ getCurrentUser: vi.fn(async () => user) }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -23,6 +22,15 @@ const accountInput = {
   nombreCuenta: 'Operaciones QA', nombreBanco: 'Banco QA', numeroCuenta: 'INIT-ACTION-001',
   tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0',
 };
+const tenants: string[] = [];
+
+async function makeTenant() {
+  const tenantId = randomUUID();
+  await prisma.tenant.create({ data: { tenantId, nombre: 'QA inicialización', slug: randomUUID() } });
+  user.tenantId = tenantId;
+  tenants.push(tenantId);
+  return tenantId;
+}
 
 describe('acción de inicialización coordinada en PostgreSQL aislado', { timeout: 120_000 }, () => {
   beforeAll(async () => {
@@ -32,25 +40,40 @@ describe('acción de inicialización coordinada en PostgreSQL aislado', { timeou
       SELECT current_database() AS "databaseName", current_user AS "roleName", inet_server_port() AS "serverPort"
     `;
     assertDisposableDatabaseIdentity(identity[0], process.env);
-    await prisma.tenant.create({ data: { tenantId, nombre: 'QA inicialización', slug: randomUUID() } });
   });
 
   afterAll(async () => {
     if (!prisma) return;
-    await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
-    await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
-    await prisma.tenant.deleteMany({ where: { tenantId } });
+    for (const tenantId of tenants) {
+      await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
+      await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
+      await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
+      await prisma.auditoriaPeriodo.deleteMany({ where: { tenantId } });
+      await prisma.periodoContable.deleteMany({ where: { tenantId } });
+      await prisma.tenant.deleteMany({ where: { tenantId } });
+    }
     await prisma.$disconnect();
   });
 
-  it('rechaza una carga nueva sin persistir cuentas ni marcadores', async () => {
-    const result = await initialize({ idempotencyKey: 'blocked-action', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [accountInput] });
-    expect(result).toMatchObject({ success: false, error: { code: 'INICIALIZACION_NO_DISPONIBLE' } });
-    expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(0);
-    expect(await prisma.inicializacionContable.count({ where: { tenantId } })).toBe(0);
+  it('abre una cuenta en cero con período y apertura sin asiento', async () => {
+    const tenantId = await makeTenant();
+    const result = await initialize({ idempotencyKey: 'zero-opening', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [accountInput] });
+    expect(result).toMatchObject({ success: true, data: { replayed: false, resultado: { asientoId: null } } });
+    const created = await prisma.cuentaBancaria.findMany({ where: { tenantId } });
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ nombreCuenta: 'Operaciones QA', saldo: 0, moneda: 'CUP' });
+    const periodo = await prisma.periodoContable.findFirstOrThrow({ where: { tenantId } });
+    expect(periodo).toMatchObject({ tipo: 'MENSUAL', estado: 'ABIERTO' });
+    expect(periodo.fechaInicio.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    const apertura = await prisma.aperturaPeriodo.findFirstOrThrow({ where: { tenantId } });
+    const detalle = apertura.detalleJson as Record<string, unknown>;
+    expect(detalle.origen).toBe('INICIALIZACION_CONTABLE');
+    expect(detalle.asientoId).toBeNull();
+    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(0);
   });
 
   it('rechaza un resultado previo sin cuentas reales y no crea ni altera registros', async () => {
+    const tenantId = await makeTenant();
     const input = { idempotencyKey: 'completed-action', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [{ ...accountInput,
       saldoInicial: '10', origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio' } }] };
     const parsed = initializationContract.parse(input);
@@ -65,7 +88,8 @@ describe('acción de inicialización coordinada en PostgreSQL aislado', { timeou
     await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
   });
 
-  it.skip('pendiente: crea una vez, reproduce el resultado y bloquea la misma clave con otra carga', async () => {
+  it('crea una vez, reproduce el resultado y bloquea la misma clave con otra carga', async () => {
+    const tenantId = await makeTenant();
     const request = { idempotencyKey: 'init-action-qa', fechaCorte: '2026-11-01', monedaFuncional: 'CUP', cuentas: [accountInput] };
     const first = await initialize(request);
     expect(first).toMatchObject({ success: true, data: { replayed: false } });
