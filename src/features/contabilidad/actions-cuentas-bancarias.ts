@@ -25,6 +25,7 @@ import { valueOpeningAccounts } from './services/initialization-valuation';
 import { buildOpeningEntryLines } from './services/initialization-opening-lines';
 import { ensureCutoffPeriod } from './services/initialization-period';
 import { persistInitialInventory } from './services/initial-inventory-persistence';
+import { reconcileInitialInventory } from './services/initial-inventory-reconciliation';
 import {
   createInitializationApertura,
   parseCutoffDate,
@@ -322,7 +323,7 @@ export const initializeBankAccountsAction = withAction(
           tasas: parsed.tasas,
           inventario: parsed.inventario,
         })
-        : { count: 0, totalFuncional: '0', fuentes: [] };
+        : { count: 0, totalFuncional: '0', fuentes: [], filas: [] };
       const entryLines = buildOpeningEntryLines({
         cuentas: parsed.cuentas,
         valued,
@@ -472,6 +473,62 @@ export const initializeBankAccountsAction = withAction(
       });
       if (openingEntry) {
         asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
+      }
+      if (inventory.count > 0) {
+        const postedInventoryLines = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'INVENTARIOS' && line.lado === 'DEBE');
+        const postedInventoryTotal = postedInventoryLines.reduce(
+          (total, line) => total.add(new Prisma.Decimal(line.montoFuncional)),
+          new Prisma.Decimal(0),
+        );
+        if (!openingEntry || postedInventoryLines.length === 0 ||
+          !postedInventoryTotal.equals(new Prisma.Decimal(inventory.totalFuncional))) {
+          throw new ActionError(
+            'La valoración del inventario no coincide con el débito del asiento de apertura',
+            'INITIALIZATION_INCOMPLETE',
+          );
+        }
+
+        const functionalRows = (parsed.inventario ?? [])
+          .filter((row) => row.moneda === functionalCurrency);
+        if (functionalRows.length > 0) {
+          const inventoryAccountId = postedInventoryLines[0].cuentaContableId;
+          const functionalTotal = inventory.filas
+            .filter((row) => row.moneda === functionalCurrency)
+            .reduce(
+              (total, row) => total.add(new Prisma.Decimal(row.montoFuncional)),
+              new Prisma.Decimal(0),
+            );
+          const linesForReconciliation = functionalRows.length === parsed.inventario?.length
+            ? postedInventoryLines.map((line) => ({
+              cuentaContableId: line.cuentaContableId,
+              moneda: line.moneda,
+              debito: line.montoFuncional,
+              credito: '0',
+            }))
+            : [{
+              cuentaContableId: inventoryAccountId,
+              moneda: functionalCurrency,
+              debito: functionalTotal.toString(),
+              credito: '0',
+            }];
+          try {
+            reconcileInitialInventory(
+              functionalRows.map((row) => ({
+                cuentaContableId: inventoryAccountId,
+                moneda: row.moneda,
+                cantidad: row.cantidad,
+                costoUnitario: row.costoUnitario,
+              })),
+              linesForReconciliation,
+            );
+          } catch {
+            throw new ActionError(
+              'El inventario no coincide con las líneas de apertura',
+              'INITIALIZATION_INCOMPLETE',
+            );
+          }
+        }
       }
       await createInitializationApertura(tx, {
         periodoId: periodo.periodoId, tenantId, actor: user.userId,
