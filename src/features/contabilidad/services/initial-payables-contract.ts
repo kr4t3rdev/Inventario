@@ -26,7 +26,7 @@ function isCivilDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-const payable = z.object({
+export const initialPayableRow = z.object({
   referenciaFila: z.string().trim().min(1).max(64),
   proveedorId: requiredText,
   referenciaExterna: requiredText.optional(),
@@ -36,6 +36,9 @@ const payable = z.object({
     .refine((value) => /[1-9]/.test(value), 'El saldo debe ser mayor que cero')
     .transform(normalizeAmount),
   fechaVencimiento: z.string().refine(isCivilDate, 'Indique una fecha válida').optional(),
+  tasaCambio: z.string().regex(/^\d+(?:\.\d{1,8})?$/)
+    .refine((value) => Number(value) > 0, 'La tasa debe ser mayor que cero')
+    .optional(),
 }).strict();
 
 /**
@@ -43,7 +46,7 @@ const payable = z.object({
  * @remarks El servidor debe comprobar proveedor, permisos, valoración y persistencia.
  */
 export const initialPayablesContract = z.object({
-  cuentas: z.array(payable).min(1).max(1000),
+  cuentas: z.array(initialPayableRow).min(1).max(1000),
 }).strict().superRefine(({ cuentas }, context) => {
   const references = new Set<string>();
   cuentas.forEach((account, index) => {
