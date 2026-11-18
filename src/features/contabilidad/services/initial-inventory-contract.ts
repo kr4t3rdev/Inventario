@@ -57,6 +57,7 @@ export const initialInventoryContract = z.object({
   inventario: z.array(initialInventoryRowContract).max(10000),
 }).strict().superRefine((value, context) => {
   const keys = new Set<string>();
+  const references = new Set<string>();
   value.inventario.forEach((item, index) => {
     if (item.fechaCorte !== undefined && item.fechaCorte !== value.fechaCorte) {
       context.addIssue({
@@ -88,6 +89,14 @@ export const initialInventoryContract = z.object({
       });
     }
     keys.add(key);
+    if (references.has(item.referenciaFila)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'referenciaFila'],
+        message: 'La referencia de fila está repetida',
+      });
+    }
+    references.add(item.referenciaFila);
   });
 });
 

@@ -46,6 +46,18 @@ describe('contrato de inventario inicial', () => {
     }).success).toBe(false);
   });
 
+  it('rechaza dos filas con la misma referencia aunque cambien producto y lote', () => {
+    const segunda = {
+      ...base.inventario[0],
+      productoId: 'producto-2',
+      loteCodigo: 'LOTE-002',
+    };
+    expect(initialInventoryContract.safeParse({
+      ...base,
+      inventario: [base.inventario[0], segunda],
+    }).success).toBe(false);
+  });
+
   it('exige que la fecha de cada existencia sea la fecha de corte común', () => {
     expect(initialInventoryContract.safeParse({
       ...base,
