@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const requiredText = z.string().trim().min(1).max(200);
 const monetaryValue = /^\d{1,16}(?:\.\d{1,4})?$/;
+const nonNegativeRate = z.string().regex(/^\d+(?:\.\d{1,10})?$/)
+  .refine((value) => Number(value) >= 0, 'La tasa debe ser mayor o igual que cero');
 
 /**
  * @description Normaliza un saldo decimal sin convertirlo a punto flotante.
@@ -39,6 +41,8 @@ export const initialReceivableRow = z.object({
   tasaCambio: z.string().regex(/^\d+(?:\.\d{1,8})?$/)
     .refine((value) => Number(value) > 0, 'La tasa debe ser mayor que cero')
     .optional(),
+  tasaInteres: nonNegativeRate.optional(),
+  tasaInteresMoratorio: nonNegativeRate.optional(),
 }).strict();
 
 /**
@@ -58,6 +62,13 @@ export const initialReceivablesContract = z.object({
       });
     }
     references.add(account.referenciaFila);
+    if ((account.tasaInteres == null) !== (account.tasaInteresMoratorio == null)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cuentas', index, 'tasaInteres'],
+        message: 'Ambas tasas de interés deben declararse juntas',
+      });
+    }
   });
 });
 

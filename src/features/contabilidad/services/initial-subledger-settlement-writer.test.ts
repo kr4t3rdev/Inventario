@@ -67,6 +67,7 @@ const tx = {
 	reconciliacionVenta: { findFirst: vi.fn(), create: vi.fn() },
 	pagoCuentaPorPagar: { findFirst: vi.fn(), create: vi.fn() },
 	deudaCash: { findFirst: vi.fn() },
+	prestamoCash: { findFirst: vi.fn(), updateMany: vi.fn() },
 };
 
 const cobroInput = {
@@ -114,6 +115,8 @@ beforeEach(() => {
 	}));
 	tx.pagoCuentaPorPagar.findFirst.mockResolvedValue(null);
 	tx.deudaCash.findFirst.mockResolvedValue(null);
+	tx.prestamoCash.findFirst.mockResolvedValue(null);
+	tx.prestamoCash.updateMany.mockResolvedValue({ count: 1 });
 	tx.pagoCuentaPorPagar.create.mockImplementation(async ({ data }: any) => ({
 		pagoCuentaPorPagarId: 'pago-1',
 		...data,
@@ -341,5 +344,31 @@ describe('settleInitialPayable', () => {
 		await expect(settleInitialPayable(tx as never, { ...pagoInput, monto: '501' }))
 			.rejects.toThrow('INITIAL_SETTLEMENT_EXCEEDS_BALANCE');
 		expect(tx.pagoCuentaPorPagar.create).not.toHaveBeenCalled();
+	});
+});
+
+describe('settleInitialReceivable actualiza el wrapper PrestamoCash', () => {
+	it('decrementa el principal restante en un cobro parcial', async () => {
+		tx.prestamoCash.findFirst.mockResolvedValue({ id: 'prest-1' });
+		const result = await settleInitialReceivable(tx as never, cobroInput);
+		expect(result.aplicadoOriginal).toBe('40.0000');
+		expect(tx.prestamoCash.updateMany).toHaveBeenCalledWith({
+			where: { id: 'prest-1', tenantId: 'tenant-a' },
+			data: { cashInterestPrincipalRemaining: { decrement: 40 } },
+		});
+	});
+
+	it('marca el wrapper PAGADO cuando el cobro liquida la CxC', async () => {
+		tx.prestamoCash.findFirst.mockResolvedValue({ id: 'prest-1' });
+		await settleInitialReceivable(tx as never, { ...cobroInput, monto: '100' });
+		expect(tx.prestamoCash.updateMany).toHaveBeenCalledWith({
+			where: { id: 'prest-1', tenantId: 'tenant-a' },
+			data: { cashInterestPrincipalRemaining: { decrement: 100 }, estado: 'PAGADO' },
+		});
+	});
+
+	it('no toca ningún wrapper cuando la CxC no tiene préstamo', async () => {
+		await settleInitialReceivable(tx as never, cobroInput);
+		expect(tx.prestamoCash.updateMany).not.toHaveBeenCalled();
 	});
 });

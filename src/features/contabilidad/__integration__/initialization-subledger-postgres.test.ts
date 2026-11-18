@@ -68,6 +68,7 @@ describe('inicialización de CxC/CxP externas — PostgreSQL', { timeout: 120_00
     if (previousNonCashMode === undefined) delete process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
     else process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = previousNonCashMode;
     for (const { tenantId, userId } of tenants) {
+      await prisma.prestamoCash.deleteMany({ where: { tenantId } });
       await prisma.cuentaPorCobrar.deleteMany({ where: { tenantId } });
       await prisma.cuentaPorPagar.deleteMany({ where: { tenantId } });
       await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
@@ -216,5 +217,70 @@ describe('inicialización de CxC/CxP externas — PostgreSQL', { timeout: 120_00
     expect(result.success).toBe(false);
     expect(await prisma.cuentaPorCobrar.count({ where: { tenantId } })).toBe(0);
     expect(await prisma.inicializacionContable.count({ where: { tenantId } })).toBe(0);
+  });
+
+  it('crea el wrapper PrestamoCash para una CxC marcada como préstamo y el replay lo reconoce', async () => {
+    const { tenantId, clientId } = await makeTenant();
+    const request = {
+      idempotencyKey: `sub-prestamo-${tenantId.slice(0, 8)}`,
+      fechaCorte: '2026-11-01',
+      monedaFuncional: 'CUP',
+      tasas: { USD: '24' },
+      cuentas: [{
+        nombreCuenta: 'Cuenta sin saldo', nombreBanco: 'Banco QA',
+        numeroCuenta: `SUBP-${tenantId.slice(0, 8)}`, tipoCuenta: 'CORRIENTE',
+        moneda: 'CUP', saldoInicial: '0',
+      }],
+      cuentasPorCobrar: [
+        { referenciaFila: 'cxc-prestamo', clienteId: clientId, moneda: 'USD', saldo: '100', tasaInteres: '12', tasaInteresMoratorio: '18', fechaVencimiento: '2027-06-01' },
+        { referenciaFila: 'cxc-plain', clienteId: clientId, moneda: 'CUP', saldo: '50' },
+      ],
+    };
+    const first = await initialize(request);
+    expect(first.success).toBe(true);
+    if (!first.success) throw new Error(JSON.stringify(first));
+    expect(first.data.replayed).toBe(false);
+    expect(first.data.resultado.totalDebeFuncional).toBe('2450');
+    expect(first.data.resultado.totalHaberFuncional).toBe('2450');
+    expect(first.data.resultado.prestamos).toHaveLength(1);
+    expect(await prisma.cuentaPorCobrar.count({ where: { tenantId } })).toBe(2);
+    expect(await prisma.prestamoCash.count({ where: { tenantId } })).toBe(1);
+
+    const receivable = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId, referenciaInicial: 'cxc-prestamo' } });
+    expect(receivable.montoDeudaFuncional?.toString()).toBe('2400');
+    const prestamo = await prisma.prestamoCash.findFirstOrThrow({ where: { tenantId } });
+    expect(prestamo.cuentaPorCobrarId).toBe(receivable.id);
+    expect(prestamo.clienteId).toBe(clientId);
+    expect(prestamo.montoCapital.toString()).toBe('100');
+    expect(prestamo.moneda).toBe('USD');
+    expect(prestamo.tasaInteres.toString()).toBe('12');
+    expect(prestamo.fechaOtorgamiento.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(prestamo.fechaVencimiento?.toISOString()).toBe('2027-06-01T00:00:00.000Z');
+    expect(prestamo.tasaCambioAlCrear?.toString()).toBe('24');
+    expect(prestamo.cuentaBancariaId).toBeNull();
+    expect(prestamo.estado).toBe('ACTIVO');
+    expect(prestamo.cashInterestPolicyVersion).toBe(1);
+    expect(prestamo.cashInterestGrantDate.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(prestamo.cashInterestAccruedThroughDate.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(prestamo.cashInterestPrincipalRemaining.toString()).toBe('100');
+    expect(prestamo.cashInterestOrdinaryCarry.toString()).toBe('0');
+    expect(prestamo.cashInterestMoratoryCarry.toString()).toBe('0');
+
+    const apertura = await prisma.aperturaPeriodo.findFirstOrThrow({ where: { tenantId } });
+    const detalle = apertura.detalleJson as Record<string, unknown>;
+    const prestamos = detalle.prestamos as Array<Record<string, unknown>>;
+    expect(prestamos).toHaveLength(1);
+    expect(prestamos[0]).toMatchObject({
+      cuentaPorCobrarId: receivable.id, prestamoCashId: prestamo.id,
+      clienteId: clientId, moneda: 'USD', montoOriginal: '100', montoFuncional: '2400',
+    });
+
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+    if (!replay.success) throw new Error(JSON.stringify(replay));
+    expect(replay.data.resultado).toEqual(first.data.resultado);
+    expect(await prisma.cuentaPorCobrar.count({ where: { tenantId } })).toBe(2);
+    expect(await prisma.prestamoCash.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(1);
   });
 });

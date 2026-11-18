@@ -17,6 +17,7 @@ import { BankAccountReadService } from '@/features/contabilidad/services/bank-ac
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
 import { persistInitialDebt } from './services/initial-debt-persistence';
+import { persistInitialLoan } from './services/initial-loan-persistence';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
@@ -37,6 +38,7 @@ import {
   resolveRoleAccountId,
   verifyInitializationReplay,
   type InitialDebtDetail,
+  type InitialLoanDetail,
   type OpeningAsientoRef,
 } from './services/initialization-coordinator';
 import { Prisma } from '@/generated/prisma';
@@ -352,6 +354,30 @@ export const initializeBankAccountsAction = withAction(
       const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
       const asientos: OpeningAsientoRef[] = [];
       const deudas: InitialDebtDetail[] = [];
+      const prestamos: InitialLoanDetail[] = [];
+      const loanRows = (parsed.cuentasPorCobrar ?? []).filter(
+        (row) => row.tasaInteres !== undefined && row.tasaInteresMoratorio !== undefined,
+      );
+      if (loanRows.length > 0) {
+        const createdCxc = await tx.cuentaPorCobrar.findMany({
+          where: { tenantId, inicializacionId, referenciaInicial: { in: loanRows.map((r) => r.referenciaFila) } },
+          select: { id: true, referenciaInicial: true },
+        });
+        for (const row of loanRows) {
+          const cxc = createdCxc.find((c) => c.referenciaInicial === row.referenciaFila);
+          if (!cxc) throw new ActionError('CxC inicial no encontrada para el préstamo', 'INITIALIZATION_INCOMPLETE');
+          const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaFila);
+          prestamos.push(await persistInitialLoan(tx, {
+            tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+            monedaFuncional: functionalCurrency,
+            cuentaPorCobrarId: cxc.id, referenciaFila: row.referenciaFila,
+            clienteId: row.clienteId, moneda: row.moneda, saldo: row.saldo,
+            tasaCambio: fila?.tasaCambio ?? row.tasaCambio,
+            tasaInteres: row.tasaInteres, tasaInteresMoratorio: row.tasaInteresMoratorio,
+            fechaVencimiento: row.fechaVencimiento, usuarioId: user.userId,
+          }));
+        }
+      }
       for (const [index, item] of parsed.cuentas.entries()) {
         const openingBalance = Number(item.saldoInicial);
         const isAdvance = item.origen?.tipo === 'ANTICIPO';
@@ -696,6 +722,7 @@ export const initializeBankAccountsAction = withAction(
         inventario: detalleInventario,
         subledger: detalleSubledger,
         deudas,
+        prestamos,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -712,6 +739,7 @@ export const initializeBankAccountsAction = withAction(
         inventario: inventory,
         subledger: { cuentasPorCobrar: receivables, cuentasPorPagar: payables },
         deudas,
+        prestamos,
       };
     });
 
