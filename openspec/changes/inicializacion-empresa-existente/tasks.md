@@ -3,7 +3,7 @@
 - [x] 0. Revisar cambios existentes y actualizar la base desde origin/main sin perder trabajo; preparar PostgreSQL aislado y migrado. Referencias: `prisma/schema.prisma`, `src/features/contabilidad/services/`.
 - [x] 1. Probar primero contrato, borrador, permisos, planes efectivos, aislamiento, idempotencia y concurrencia; implementar en `src/features/contabilidad/services/initialization-contract.ts` y `initialization-idempotency.ts`.
 - [x] 2. Probar primero banco/caja a corte sin origen ficticio, múltiples monedas, balance, período, rollback y reintento; coordinar `actions-cuentas-bancarias.ts`, `actions-periodos.ts` y `src/lib/services/apertura-periodo-service.ts`.
-- [ ] 3. Probar primero productos, stock por almacén, costo y venta posterior sin compra ficticia; implementar carga coordinada en `src/features/productos/` y servicios de inventario.
+- [x] 3. Probar primero productos, stock por almacén, costo y venta posterior sin compra ficticia; implementar carga coordinada en `src/features/productos/` y servicios de inventario.
 - [ ] 4. Probar primero CxC/CxP externas, conciliación y cobros/pagos parciales; implementar en `src/features/contabilidad/actions-cuentas.ts` y servicios pertinentes.
 - [ ] 5. Probar primero anticipos, deudas y préstamos existentes sin segundo flujo bancario; implementar en `src/features/contabilidad/actions-anticipos.ts`, `actions-deudas-cash.ts` y `actions-prestamos-cash.ts`.
 - [ ] 6. Probar primero borrador reanudable, permisos, diferencias y confirmación en interfaz; adaptar `src/features/contabilidad/components/inicializacion-cuentas-dialog.tsx` y componentes asociados.
@@ -33,6 +33,8 @@
 - Tarea 3 CERRADA por segunda vez 2026-11-18 (segunda revisión externa, 5 hallazgos, todos RED/GREEN): H5 cantidad "04" normalizada en el contrato (`7b77fb32`); H2 snapshot FIFO verificable para fuente USD en cero sin tasa, tasa 1 solo con importe cero (`56bc7e69`); H1 la venta real de costo cero no postea costo en enforce (`c3f7dacf`); H4 `costoUnitarioDevolucion` Int -> Decimal(20,4), migración `20261120000014` (`6c50aa7a`); H3 el replay contable reconoce ventas de fuentes iniciales y omite la de costo cero como `MONTO_NO_POSITIVO` (`9f0a9cf3`). Evidencia final: unitarias 1745/1745 en 205 archivos (contabilidad + formal + FIFO), PG 41/41 en 8 archivos, tsc 0, ESLint limpio.
 
 - Tarea 3 REABIERTA por tercera vez (2026-11-18, tercera revisión externa, 2 HIGH verificados contra el código, estática salvo 129 unitarias focales que pasaron): (1) la entrega de un pedido con costo cero revierte en enforce: `VentaLifecycleService.entregarVenta` llama a `emitirCostoVenta` con importe cero sin el guard que sí tiene la venta inmediata; (2) la solución FX del H2 registra una tasa ficticia: el snapshot sustituye la tasa ausente por 1 y la evidencia queda `MANUAL_GOVERNED` aunque nadie declaró esa tasa. Diagnóstico y plan presentados, sin visto bueno todavía.
+
+- Tarea 3 CERRADA por tercera vez 2026-11-18 (tercera revisión externa, 2 HIGH, todos RED/GREEN): la entrega de un pedido con costo cero no postea costo en enforce, mismo guard que la venta inmediata (`f029629c`, con contraprueba de pedido con costo que sí postea); la evidencia FX de importe cero ya no atribuye tasa ficticia: nuevo tipo `ZERO_AMOUNT` sin tasa ni fecha en build/verify/validador FIFO (`cb83c9db`); con tasa declarada se conserva `MANUAL_GOVERNED`. Evidencia final: unitarias 1764/1764 en 207 archivos, PG 43/43 en 8 archivos, tsc 0, ESLint limpio.
 
 
 ### Terminado en código, con alcance acotado
