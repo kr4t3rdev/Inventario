@@ -279,12 +279,12 @@ function buildFifoSnapshot(input: {
 	source?: string;
 }): FifoSnapshotFields | null {
 	const { amount, sourceCurrency, context } = input;
-	if (!Number.isFinite(amount) || amount <= 0) return null;
+	if (!Number.isFinite(amount) || amount < 0) return null;
 	const sameCurrency = sourceCurrency === context.functionalCurrency;
 	if (!sameCurrency && (context.rate === null || context.rateDate === null)) return null;
 	const rawConvertedAmount = input.functionalAmount ??
 		(sameCurrency ? amount : amount * (context.rate as number));
-	if (!Number.isFinite(rawConvertedAmount) || rawConvertedAmount <= 0) return null;
+	if (!Number.isFinite(rawConvertedAmount) || rawConvertedAmount < 0) return null;
 	try {
 		const evidence = buildAppliedFxEvidence({
 			originalAmount: amount,
@@ -334,7 +334,7 @@ function validateFifoSnapshot(allocation: {
 		allocation.fifoCostoFuncional == null || !allocation.fifoEvidenciaFx ||
 		allocation.fifoMonedaFuncional.trim().toUpperCase() !== functionalCurrency) return null;
 	const originalAmount = Number(allocation.costoUnitarioSnapshot) * allocation.cantidad;
-	if (!Number.isFinite(originalAmount) || originalAmount <= 0) return null;
+	if (!Number.isFinite(originalAmount) || originalAmount < 0) return null;
 	try {
 		const evidence = JSON.parse(allocation.fifoEvidenciaFx) as Record<string, unknown>;
 		const rawConvertedAmount = evidence.rawConvertedAmount;

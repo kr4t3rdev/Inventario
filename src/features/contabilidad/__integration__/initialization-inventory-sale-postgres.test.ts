@@ -426,4 +426,79 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(25.5);
     expect(Number(alloc[0].fifoCostoFuncional)).toBe(51);
   });
+
+  it('una fila de costo cero en moneda extranjera sin tasa no exige FX', async () => {
+    const { tenantId } = await makeTenant();
+    const { almacen, producto } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId);
+    request.inventario.push({
+      referenciaFila: 'fila-inventario-2',
+      productoId: producto.id,
+      almacenId: almacen.almacenId,
+      loteCodigo: 'LOTE-INICIAL-2',
+      cantidad: '2',
+      costoUnitario: '0',
+      moneda: 'USD',
+    });
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const fuentes = await prisma.inventarioInicialFuente.findMany({ where: { tenantId } });
+    expect(fuentes).toHaveLength(2);
+    expect(Number(fuentes.find((f) => f.moneda === 'USD')?.montoFuncional)).toBe(0);
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+  });
+
+  it('una inicialización con todo el inventario en costo cero se confirma', async () => {
+    const { tenantId } = await makeTenant();
+    const { almacen, producto } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '0');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    expect(first.data?.resultado?.inventario).toMatchObject({ count: 1, totalFuncional: '0.0000' });
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+  });
+
+  it('una fuente de costo cero se vende y se devuelve con su costo cero', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv, cliente } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '0');
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+
+    const sale = await makeSale(tenantId, user.userId, pv.pvId, cliente.clienteId, producto.id, 2);
+    await prisma.$transaction((tx) => allocateFifoForSale(tx, tenantId, sale.venta.ventaId));
+    const alloc = await prisma.purchaseAllocation.findMany({ where: { tenantId, ventaItemId: sale.venta.items[0].id } });
+    expect(alloc).toHaveLength(1);
+    expect(Number(alloc[0].costoUnitarioSnapshot)).toBe(0);
+    expect(alloc[0].fifoEvidenciaFx).toBeTruthy();
+    expect(Number(alloc[0].fifoCostoFuncional)).toBe(0);
+
+    const valor = await prisma.$transaction((tx) =>
+      getCostoFifoVentaValorado(tx, tenantId, sale.venta.ventaId),
+    );
+    expect(valor?.montoFuncional).toBe(0);
+    expect(valor?.fuentesSinTasa).toEqual([]);
+
+    const userCtx = {
+      userId: user.userId, role: 'admin', tenantId, isActive: true,
+    } as unknown as AuthenticatedUser;
+    const result = await DevolucionVentaService.registrar({
+      input: {
+        ventaId: sale.venta.ventaId,
+        items: [{ ventaItemId: sale.venta.items[0].id, cantidad: 1 }],
+        motivo: 'Devolución de costo cero',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: randomUUID(),
+      },
+      user: userCtx,
+    });
+    expect(result.devolucionId).toBeTruthy();
+    const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({ where: { devolucionId: result.devolucionId } });
+    expect(Number(devolucion.costoFifoFuncional)).toBe(0);
+  });
 });

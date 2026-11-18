@@ -474,7 +474,10 @@ export const initializeBankAccountsAction = withAction(
       if (openingEntry) {
         asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
       }
-      if (inventory.count > 0) {
+      // Sin valor que conciliar (todo el inventario en costo cero) no hay
+      // líneas de apertura que comprobar: el detalle y el replay siguen
+      // anclando las fuentes.
+      if (inventory.count > 0 && !new Prisma.Decimal(inventory.totalFuncional).isZero()) {
         const postedInventoryLines = (openingEntry?.postedLines ?? [])
           .filter((line) => line.rolCuenta === 'INVENTARIOS' && line.lado === 'DEBE');
         const postedInventoryTotal = postedInventoryLines.reduce(

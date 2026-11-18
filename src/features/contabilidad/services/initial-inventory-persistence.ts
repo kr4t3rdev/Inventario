@@ -52,6 +52,11 @@ function functionalValue(
   if (row.moneda === monedaFuncional) {
     return { amount: original.toDecimalPlaces(4), rate: null };
   }
+  // Una fila sin valor no necesita tasa: su importe funcional es cero con
+  // cualquier tasa, igual que el contrato exime el costo cero de FX.
+  if (original.isZero()) {
+    return { amount: new Prisma.Decimal(0), rate: null };
+  }
   const rawRate = row.tasaCambio ?? tasas?.[row.moneda];
   if (!rawRate) {
     throw new ActionError(

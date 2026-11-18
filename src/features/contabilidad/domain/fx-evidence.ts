@@ -62,7 +62,7 @@ export function buildAppliedFxEvidence(input: BuildEvidenceInput): AppliedFxEvid
   const functionalCurrency = input.functionalCurrency.trim().toUpperCase();
   const source = input.source.trim();
 
-  if (!Number.isFinite(input.originalAmount) || input.originalAmount <= 0) {
+  if (!Number.isFinite(input.originalAmount) || input.originalAmount < 0) {
     throw new FxEvidenceError('INVALID_AMOUNT', 'INVALID_AMOUNT: El importe original no es válido');
   }
   if (!source) {
@@ -148,7 +148,7 @@ interface VerifyAppliedFxEvidenceInput {
 export function verifyAppliedFxEvidence(input: VerifyAppliedFxEvidenceInput): boolean {
   if (input.fxEvidenceVersion !== 1 || !input.fxEvidenceFingerprint) return false;
   if (!input.fxProvenanceKind || !input.fxProvenanceSource) return false;
-  if (!Number.isFinite(input.convertedAmount) || input.convertedAmount <= 0) return false;
+  if (!Number.isFinite(input.convertedAmount) || input.convertedAmount < 0) return false;
 
   const originalCurrency = input.originalCurrency.trim().toUpperCase();
   const functionalCurrency = input.functionalCurrency.trim().toUpperCase();
