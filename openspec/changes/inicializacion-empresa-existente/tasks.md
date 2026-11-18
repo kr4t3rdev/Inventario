@@ -3,7 +3,7 @@
 - [x] 0. Revisar cambios existentes y actualizar la base desde origin/main sin perder trabajo; preparar PostgreSQL aislado y migrado. Referencias: `prisma/schema.prisma`, `src/features/contabilidad/services/`.
 - [x] 1. Probar primero contrato, borrador, permisos, planes efectivos, aislamiento, idempotencia y concurrencia; implementar en `src/features/contabilidad/services/initialization-contract.ts` y `initialization-idempotency.ts`.
 - [x] 2. Probar primero banco/caja a corte sin origen ficticio, múltiples monedas, balance, período, rollback y reintento; coordinar `actions-cuentas-bancarias.ts`, `actions-periodos.ts` y `src/lib/services/apertura-periodo-service.ts`.
-- [ ] 3. Probar primero productos, stock por almacén, costo y venta posterior sin compra ficticia; implementar carga coordinada en `src/features/productos/` y servicios de inventario.
+- [x] 3. Probar primero productos, stock por almacén, costo y venta posterior sin compra ficticia; implementar carga coordinada en `src/features/productos/` y servicios de inventario.
 - [ ] 4. Probar primero CxC/CxP externas, conciliación y cobros/pagos parciales; implementar en `src/features/contabilidad/actions-cuentas.ts` y servicios pertinentes.
 - [ ] 5. Probar primero anticipos, deudas y préstamos existentes sin segundo flujo bancario; implementar en `src/features/contabilidad/actions-anticipos.ts`, `actions-deudas-cash.ts` y `actions-prestamos-cash.ts`.
 - [ ] 6. Probar primero borrador reanudable, permisos, diferencias y confirmación en interfaz; adaptar `src/features/contabilidad/components/inicializacion-cuentas-dialog.tsx` y componentes asociados.
@@ -37,6 +37,8 @@
 - Tarea 3 CERRADA por tercera vez 2026-11-18 (tercera revisión externa, 2 HIGH, todos RED/GREEN): la entrega de un pedido con costo cero no postea costo en enforce, mismo guard que la venta inmediata (`f029629c`, con contraprueba de pedido con costo que sí postea); la evidencia FX de importe cero ya no atribuye tasa ficticia: nuevo tipo `ZERO_AMOUNT` sin tasa ni fecha en build/verify/validador FIFO (`cb83c9db`); con tasa declarada se conserva `MANUAL_GOVERNED`. Evidencia final: unitarias 1764/1764 en 207 archivos, PG 43/43 en 8 archivos, tsc 0, ESLint limpio.
 
 - Tarea 3 REABIERTA por cuarta vez (2026-11-18, cuarta revisión externa, 1 hallazgo verificado contra el código): `verifyAppliedFxEvidence` omite comparar `rateEffectiveAt` para `ZERO_AMOUNT`, así que acepta una fecha arbitraria que la huella no cubre. El validador FIFO no se ve afectado (compara todos los campos reconstruidos), pero el verificador es el primitivo compartido de reconciliación y períodos. Diagnóstico y plan presentados, sin visto bueno todavía.
+
+- Tarea 3 CERRADA por cuarta vez 2026-11-18 (cuarta revisión externa, 1 hallazgo, RED/GREEN): `verifyAppliedFxEvidence` aceptaba una fecha inventada para `ZERO_AMOUNT` porque el corto circuito saltaba la comparación y la huella no cubre la fecha; ahora la única fecha aceptable para ese tipo es la ausencia de fecha (nula, ausente o vacía) (`acbe6dee`). Evidencia final: unitarias 1766/1766 en 207 archivos, PG 43/43 en 8 archivos, tsc 0, ESLint limpio.
 
 
 ### Terminado en código, con alcance acotado
