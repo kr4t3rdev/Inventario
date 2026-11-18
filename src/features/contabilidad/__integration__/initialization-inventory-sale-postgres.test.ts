@@ -25,6 +25,7 @@ import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilida
 import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import { recolectarCandidatos } from '@/features/contabilidad-formal/services/replay-source-collector';
 import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
+import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import { withTestTenant } from '@/lib/db/tenant-context';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
@@ -227,6 +228,51 @@ async function makeRealSale(
   ) as { ventaId: string };
   const ventaCreada = await prisma.venta.findUniqueOrThrow({ where: { ventaId: venta.ventaId }, include: { items: true } });
   return { venta, ventaCreada, userCtx };
+}
+
+async function makeRealPedido(
+  tenantId: string,
+  user: { userId: string },
+  producto: { id: string },
+  almacen: { almacenId: string },
+  pv: { pvId: string },
+  cantidad: number,
+) {
+  await prisma.$transaction((tx) => Promise.all([
+    upsertStockUbicacion(tx, {
+      tenantId, productoId: producto.id, tipoUbicacion: 'almacen',
+      ubicacionId: almacen.almacenId, modo: 'increment', delta: -cantidad,
+    }),
+    upsertStockUbicacion(tx, {
+      tenantId, productoId: producto.id, tipoUbicacion: 'punto_venta',
+      ubicacionId: pv.pvId, modo: 'increment', delta: cantidad,
+    }),
+  ]));
+  const turno = await prisma.turnoPuntoVenta.create({
+    data: {
+      tenantId, puntoDeVentaId: pv.pvId, fondoInicialCup: 0, fondoInicialUsd: 0,
+      estado: 'ABIERTO', tipo: 'NORMAL',
+    },
+  });
+  const userCtx = {
+    userId: user.userId, role: 'admin', tenantId, isActive: true,
+    planFeatures: {
+      'ventas-pos': true, 'ventas-pedidos': true, 'turnos-pos': true,
+    },
+  } as unknown as AuthenticatedUser;
+  const pedido = await withTestTenant(tenantId, () =>
+    VentaMutationService.create({
+      input: {
+        puntoDeVentaId: pv.pvId,
+        turnoId: turno.id,
+        modoPedido: true,
+        items: [{ productoId: producto.id, cantidad, precioUnitario: 500 }],
+      } as never,
+      user: userCtx,
+    }),
+  ) as { ventaId: string };
+  const pedidoCreado = await prisma.venta.findUniqueOrThrow({ where: { ventaId: pedido.ventaId }, include: { items: true } });
+  return { pedido, pedidoCreado, userCtx };
 }
 
 describe('venta posterior y devolución sobre inventario inicial — PostgreSQL', { timeout: 120_000 }, () => {
@@ -843,5 +889,52 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     const candidatosCero = await recolectarCandidatos(tenantCero, prisma as never);
     const costoCero = candidatosCero.find((c) => c.origenTipo === 'venta_costo' && c.origenId === ventaCero.ventaId);
     expect(costoCero?.causaOmision).toBe('MONTO_NO_POSITIVO');
+  });
+
+  it('la entrega real de un pedido de costo cero no revierte en enforce', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId, '0');
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const { pedido, userCtx } = await makeRealPedido(tenantId, user, producto, almacen, pv, 2);
+    const entregada = await withTestTenant(tenantId, () =>
+      VentaLifecycleService.entregarVenta({ ventaId: pedido.ventaId, user: userCtx }),
+    );
+    expect(entregada).toMatchObject({ ventaId: pedido.ventaId, estado: 'ENTREGADA' });
+    const stockPv = await prisma.stockUbicacion.findUniqueOrThrow({
+      where: {
+        productoId_tipoUbicacion_ubicacionId: {
+          productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: pv.pvId,
+        },
+      },
+    });
+    expect(stockPv.cantidadDisponible).toBe(0);
+    const allocations = await prisma.purchaseAllocation.findMany({
+      where: { ventaItem: { ventaId: pedido.ventaId } },
+    });
+    expect(allocations).toHaveLength(1);
+    expect(allocations[0].fifoEvidenciaFx).toBeTruthy();
+    const asientoCosto = await prisma.asiento.findFirst({
+      where: { tenantId, origenTipo: 'venta_costo', origenId: pedido.ventaId, estado: 'CONTABILIZADO' },
+    });
+    expect(asientoCosto).toBeNull();
+  });
+
+  it('la entrega real de un pedido con costo postea el costo FIFO', async () => {
+    const { tenantId, user } = await makeTenant();
+    const { almacen, producto, pv } = await makeInventorySetup(tenantId);
+    const request = inventoryRequest(tenantId, producto.id, almacen.almacenId);
+    const first = await initialize(request);
+    expect(first).toMatchObject({ success: true, data: { replayed: false } });
+    const { pedido, userCtx } = await makeRealPedido(tenantId, user, producto, almacen, pv, 2);
+    const entregada = await withTestTenant(tenantId, () =>
+      VentaLifecycleService.entregarVenta({ ventaId: pedido.ventaId, user: userCtx }),
+    );
+    expect(entregada).toMatchObject({ ventaId: pedido.ventaId, estado: 'ENTREGADA' });
+    const asientoCosto = await prisma.asiento.findFirst({
+      where: { tenantId, origenTipo: 'venta_costo', origenId: pedido.ventaId, estado: 'CONTABILIZADO' },
+    });
+    expect(asientoCosto).not.toBeNull();
   });
 });
