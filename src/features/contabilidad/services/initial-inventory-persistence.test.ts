@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { persistInitialInventory } from './initial-inventory-persistence';
+import { hashInitialInventoryEvidence } from './initial-inventory-evidence';
 
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({
   upsertStockUbicacion: vi.fn(),
@@ -86,6 +87,30 @@ describe('persistencia de inventario inicial', () => {
     });
     expect(sourceData.costoUnitario.toString()).toBe('25.5');
     expect(sourceData.montoFuncional.toString()).toBe('102');
+  });
+
+  it('usa la fecha de corte común en la evidencia cuando la fila no trae fecha propia', async () => {
+    const mockedTx = tx as {
+      inicializacionContable: { findFirst: ReturnType<typeof vi.fn> };
+      producto: { findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+      almacen: { findFirst: ReturnType<typeof vi.fn> };
+      ubicacion: { findFirst: ReturnType<typeof vi.fn> };
+      lote: { create: ReturnType<typeof vi.fn> };
+      inventarioInicialFuente: { create: ReturnType<typeof vi.fn> };
+    };
+    mockedTx.inicializacionContable.findFirst.mockResolvedValue({ inicializacionId: 'init-a' });
+    mockedTx.producto.findFirst.mockResolvedValue({ id: 'producto-a', almacenId: 'almacen-a' });
+    mockedTx.almacen.findFirst.mockResolvedValue({ almacenId: 'almacen-a' });
+    mockedTx.ubicacion.findFirst.mockResolvedValue({ id: 'ubicacion-a' });
+    mockedTx.lote.create.mockResolvedValue({ id: 'lote-a' });
+    mockedTx.inventarioInicialFuente.create.mockResolvedValue({ id: 'fuente-a' });
+    mockedTx.producto.update.mockResolvedValue({ id: 'producto-a' });
+
+    await persistInitialInventory(tx, input);
+
+    const sourceData = mockedTx.inventarioInicialFuente.create.mock.calls[0][0].data;
+    expect(sourceData.evidencia.fechaCorte).toBe('2026-11-10');
+    expect(sourceData.evidenciaHash).toBe(hashInitialInventoryEvidence(sourceData.evidencia));
   });
 
   it('falla cerrado si la existencia pertenece a otro almacén o tenant', async () => {

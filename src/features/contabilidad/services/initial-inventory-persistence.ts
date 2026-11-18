@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import { Prisma } from '@/generated/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
@@ -9,6 +7,7 @@ import {
   type InitialInventoryData,
   type InitialInventoryRow,
 } from './initial-inventory-contract';
+import { hashInitialInventoryEvidence } from './initial-inventory-evidence';
 
 type Transaction = Prisma.TransactionClient;
 
@@ -40,7 +39,7 @@ function buildEvidence(input: {
     montoFuncional: input.montoFuncional.toFixed(4),
     tasaCambio: input.tasaCambio?.toFixed(8) ?? null,
   };
-  const hash = createHash('sha256').update(JSON.stringify(evidence)).digest('hex');
+  const hash = hashInitialInventoryEvidence(evidence);
   return { evidence, hash };
 }
 
