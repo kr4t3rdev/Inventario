@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
@@ -57,10 +58,10 @@ export async function resolveRoleAccountId(
 }
 
 /**
- * @description Contabiliza el asiento de apertura con las líneas de saldos no
- * documentados (débito a Bancos, crédito a Resultados acumulados). Las líneas
- * de capital, deuda y anticipo las contabilizan sus propios flujos y no se
- * repiten aquí. Sin líneas no documentadas no hay asiento.
+ * @description Contabiliza el asiento de apertura con líneas de saldos no
+ * documentados y activos operativos iniciales. Las líneas de capital, deuda y
+ * anticipo las contabilizan sus propios flujos y no se repiten aquí.
+ * Sin líneas coordinadas no hay asiento.
  */
 export async function postOpeningEntry(
   tx: Prisma.TransactionClient,
@@ -280,6 +281,34 @@ export async function verifyInitializationReplay(input: {
     if (!detalleCuenta || detalleCuenta.numeroCuenta !== persisted.numeroCuenta ||
       !decimalEquals(detalleCuenta.saldoOriginal, cuenta.saldo)) {
       throw incompleteError();
+    }
+  }
+  const storedInventory = stored.inventario;
+  if (storedInventory !== undefined) {
+    if (!storedInventory || typeof storedInventory !== 'object' || Array.isArray(storedInventory)) {
+      throw incompleteError();
+    }
+    const inventory = storedInventory as Record<string, unknown>;
+    if (typeof inventory.count !== 'number' || typeof inventory.totalFuncional !== 'string') {
+      throw incompleteError();
+    }
+    const sources = await prisma.inventarioInicialFuente.findMany({
+      where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId },
+      select: { montoFuncional: true, evidencia: true, evidenciaHash: true },
+    });
+    const total = sources.reduce(
+      (sum, source) => sum.plus(source.montoFuncional),
+      new Prisma.Decimal(0),
+    );
+    if (sources.length !== inventory.count ||
+      !total.equals(new Prisma.Decimal(inventory.totalFuncional))) {
+      throw incompleteError();
+    }
+    for (const source of sources) {
+      const evidenceHash = createHash('sha256')
+        .update(JSON.stringify(source.evidencia))
+        .digest('hex');
+      if (evidenceHash !== source.evidenciaHash) throw incompleteError();
     }
   }
   const injectedByCurrency = new Map<string, Prisma.Decimal>();

@@ -30,7 +30,7 @@ const quantity = z.string().regex(integerPattern, 'La cantidad debe ser un enter
 const cost = z.string().regex(decimalPattern, 'El costo unitario no es válido')
   .transform(normalizeDecimal);
 
-const row = z.object({
+export const initialInventoryRowContract = z.object({
   referenciaFila: requiredText,
   productoId: requiredText,
   almacenId: requiredText,
@@ -54,7 +54,7 @@ export const initialInventoryContract = z.object({
   fechaCorte: date,
   monedaFuncional: currency,
   tasas: z.record(z.string(), rate).optional(),
-  inventario: z.array(row).max(10000),
+  inventario: z.array(initialInventoryRowContract).max(10000),
 }).strict().superRefine((value, context) => {
   const keys = new Set<string>();
   value.inventario.forEach((item, index) => {

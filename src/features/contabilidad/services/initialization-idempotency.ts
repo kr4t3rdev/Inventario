@@ -85,7 +85,7 @@ export function assertInitializationAccess(user: AuthenticatedUser): void {
  */
 export async function runIdempotentInitialization(
   input: z.input<typeof requestSchema>,
-  execute: (tx: Prisma.TransactionClient) => Promise<JsonObject>,
+  execute: (tx: Prisma.TransactionClient, inicializacionId: string) => Promise<JsonObject>,
 ): Promise<{ replayed: boolean; resultado: JsonObject }> {
   const parsed = requestSchema.parse(input);
   return prisma.$transaction(async (tx) => {
@@ -125,7 +125,7 @@ export async function runIdempotentInitialization(
     const created = await tx.inicializacionContable.create({ data: parsed });
     inicializacionId = created.inicializacionId;
   }
-  const resultado = await execute(tx);
+  const resultado = await execute(tx, inicializacionId);
   if (!resultado || Array.isArray(resultado) || typeof resultado !== 'object' || !isJsonValue(resultado)) {
     throw new ActionError('El resultado de la inicialización no es verificable', 'INITIALIZATION_INCOMPLETE');
   }

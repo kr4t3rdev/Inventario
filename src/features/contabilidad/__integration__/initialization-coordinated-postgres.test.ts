@@ -70,6 +70,13 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
     if (previousNonCashMode === undefined) delete process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
     else process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = previousNonCashMode;
     for (const tenantId of tenants) {
+      await prisma.purchaseAllocation.deleteMany({ where: { tenantId } });
+      await prisma.inventarioInicialFuente.deleteMany({ where: { tenantId } });
+      await prisma.lote.deleteMany({ where: { tenantId } });
+      await prisma.stockUbicacion.deleteMany({ where: { tenantId } });
+      await prisma.producto.deleteMany({ where: { tenantId } });
+      await prisma.almacen.deleteMany({ where: { tenantId } });
+      await prisma.categoria.deleteMany({ where: { tenantId } });
       await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
       await prisma.cuentaPorPagar.deleteMany({ where: { tenantId } });
       const anticipos = await prisma.anticipo.findMany({ where: { tenantId }, select: { anticipoId: true } });
@@ -241,5 +248,94 @@ describe('inicialización coordinada de banco/caja — PostgreSQL', { timeout: 1
     expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(1);
     expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(1);
     expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(1);
+  });
+
+  it('carga inventario inicial en lote, stock y asiento sin crear compras', async () => {
+    const { tenantId } = await makeTenant();
+    const categoria = await prisma.categoria.create({
+      data: { tenantId, nombre: `Categoría inventario ${tenantId.slice(0, 8)}` },
+    });
+    const almacen = await prisma.almacen.create({
+      data: { tenantId, nombre: `Almacén inventario ${tenantId.slice(0, 8)}` },
+    });
+    const producto = await prisma.producto.create({
+      data: {
+        tenantId,
+        nombre: `Producto inicial ${tenantId.slice(0, 8)}`,
+        precioCosto: 25,
+        precioVenta: 40,
+        stock: 0,
+        categoriaId: categoria.catId,
+        almacenId: almacen.almacenId,
+      },
+    });
+    const inventoryAccount = await prisma.cuentaContable.create({
+      data: {
+        tenantId,
+        codigo: `INV-${tenantId.slice(0, 8)}`,
+        nombre: 'Inventarios',
+        tipo: 'ACTIVO',
+        naturaleza: 'DEUDORA',
+      },
+    });
+    await prisma.cuentaRolTenant.create({
+      data: { tenantId, rol: 'INVENTARIOS', cuentaId: inventoryAccount.cuentaContableId },
+    });
+
+    const request = {
+      idempotencyKey: `inventory-${tenantId.slice(0, 8)}`,
+      fechaCorte: '2026-11-01',
+      monedaFuncional: 'CUP',
+      cuentas: [{
+        nombreCuenta: 'Cuenta sin saldo',
+        nombreBanco: 'Banco QA',
+        numeroCuenta: `INV-${tenantId.slice(0, 8)}`,
+        tipoCuenta: 'CORRIENTE',
+        moneda: 'CUP',
+        saldoInicial: '0',
+      }],
+      inventario: [{
+        referenciaFila: 'fila-inventario-1',
+        productoId: producto.id,
+        almacenId: almacen.almacenId,
+        loteCodigo: 'LOTE-INICIAL-1',
+        cantidad: '4',
+        costoUnitario: '25',
+        moneda: 'CUP',
+      }],
+    };
+
+    const first = await initialize(request);
+    expect(first).toMatchObject({
+      success: true,
+      data: {
+        replayed: false,
+        resultado: {
+          inventario: { count: 1, totalFuncional: '100.0000' },
+          totalDebeFuncional: '100',
+          totalHaberFuncional: '100',
+        },
+      },
+    });
+    expect(await prisma.compraDocumento.count({ where: { tenantId } })).toBe(0);
+    expect(await prisma.inventarioInicialFuente.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.lote.count({ where: { tenantId, productoId: producto.id } })).toBe(1);
+    expect(await prisma.stockUbicacion.findFirstOrThrow({
+      where: { tenantId, productoId: producto.id, ubicacionId: almacen.almacenId },
+    })).toMatchObject({ cantidad: 4, cantidadDisponible: 4 });
+    expect((await prisma.producto.findUniqueOrThrow({ where: { id: producto.id } })).stock).toBe(4);
+
+    const asiento = await prisma.asiento.findFirstOrThrow({
+      where: { tenantId, origenTipo: 'inicializacion_contable' },
+      include: { lineas: { orderBy: { orden: 'asc' } } },
+    });
+    expect(asiento.lineas).toHaveLength(2);
+    expect(asiento.lineas[0].debe.toString()).toBe('100');
+    expect(asiento.lineas[1].haber.toString()).toBe('100');
+
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+    expect(await prisma.inventarioInicialFuente.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.lote.count({ where: { tenantId, productoId: producto.id } })).toBe(1);
   });
 });

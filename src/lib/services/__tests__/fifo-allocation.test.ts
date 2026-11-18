@@ -115,7 +115,6 @@ describe("allocateFifoForVentaItem", () => {
 				tenantId: "t1",
 				inventarioInicialFuenteId: "fuente-1",
 				compraDocumentoItemId: null,
-				recepcionItemId: undefined,
 				loteId: "lote-inicial",
 				cantidad: 2,
 				costoUnitarioSnapshot: 25,

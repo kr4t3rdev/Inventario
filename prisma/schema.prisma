@@ -4202,7 +4202,7 @@ model InicializacionContable {
   @@map("inicializaciones_contables")
 }
 
-/// Fuente de costo declarada en la apertura, todavía no conectada al asignador FIFO.
+/// Fuente de costo declarada en la apertura y consumible por el asignador FIFO.
 model InventarioInicialFuente {
   id                 String @id @default(cuid())
   tenantId           String
