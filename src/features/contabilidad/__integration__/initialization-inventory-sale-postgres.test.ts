@@ -614,8 +614,16 @@ describe('venta posterior y devolución sobre inventario inicial — PostgreSQL'
     expect(alloc[0].inventarioInicialFuenteId).toBe(fuente.id);
     // Sin tasa no hay conversión que verificar, pero el snapshot existe:
     // 0 en cualquier tasa es 0, y la valoración y la devolución lo exigen.
+    // La evidencia es honesta: tipo ZERO_AMOUNT, sin tasa ni fecha, nunca
+    // una tasa 1 atribuida como conversión gobernada.
     expect(alloc[0].fifoEvidenciaFx).toBeTruthy();
     expect(Number(alloc[0].fifoCostoFuncional)).toBe(0);
+    expect(alloc[0].fifoTasaCambio).toBeNull();
+    expect(alloc[0].fifoFechaTasa).toBeNull();
+    const evidencia = JSON.parse(alloc[0].fifoEvidenciaFx as string) as Record<string, unknown>;
+    expect(evidencia.fxProvenanceKind).toBe('ZERO_AMOUNT');
+    expect(evidencia.rateEffectiveAt).toBe('');
+    expect(evidencia.rawExchangeRate).toBeNull();
 
     const valor = await prisma.$transaction((tx) =>
       getCostoFifoVentaValorado(tx, tenantId, sale.venta.ventaId),

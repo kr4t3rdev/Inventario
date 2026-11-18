@@ -189,19 +189,15 @@ function buildInitialInventorySnapshot(
 		.toDecimalPlaces(4)
 		.toNumber();
 	// Una fuente de costo cero entre monedas no necesita conversión: 0 en
-	// cualquier tasa es 0. Sin tasa el snapshot quedaba ausente y la
-	// asignación no era valorable ni devolvible; se registra tasa 1 para
-	// que el snapshot exista y sea verificable (la evidencia FX con
-	// importe 0 ya se admite). Solo aplica al importe cero.
-	const effectiveRate = !sameCurrency && rate === null && amount === 0 &&
-		functionalAmount === 0 ? 1 : rate;
+	// cualquier tasa es 0. La evidencia FX registra ese caso como
+	// ZERO_AMOUNT (sin tasa ni fecha) en vez de inventar una tasa 1.
 	return buildFifoSnapshot({
 		amount,
 		sourceCurrency,
 		context: {
 			functionalCurrency,
-			rate: effectiveRate,
-			rateDate: sameCurrency ? null : source.fechaCorte,
+			rate,
+			rateDate: sameCurrency || rate === null ? null : source.fechaCorte,
 			rateId: null,
 		},
 		functionalAmount,
@@ -289,7 +285,8 @@ function buildFifoSnapshot(input: {
 	const { amount, sourceCurrency, context } = input;
 	if (!Number.isFinite(amount) || amount < 0) return null;
 	const sameCurrency = sourceCurrency === context.functionalCurrency;
-	if (!sameCurrency && (context.rate === null || context.rateDate === null)) return null;
+	const isZeroConversion = amount === 0 && (input.functionalAmount ?? 0) === 0;
+	if (!sameCurrency && (context.rate === null || context.rateDate === null) && !isZeroConversion) return null;
 	const rawConvertedAmount = input.functionalAmount ??
 		(sameCurrency ? amount : amount * (context.rate as number));
 	if (!Number.isFinite(rawConvertedAmount) || rawConvertedAmount < 0) return null;
@@ -298,7 +295,7 @@ function buildFifoSnapshot(input: {
 			originalAmount: amount,
 			originalCurrency: sourceCurrency,
 			functionalCurrency: context.functionalCurrency,
-			exchangeRate: context.rate ?? 1,
+			exchangeRate: context.rate,
 			convertedAmount: rawConvertedAmount,
 			rateEffectiveAt: context.rateDate,
 			fxCatalogRateId: context.rateId,
@@ -359,7 +356,7 @@ function validateFifoSnapshot(allocation: {
 			originalAmount,
 			originalCurrency: sourceCurrency,
 			functionalCurrency,
-			exchangeRate: rate ?? 1,
+			exchangeRate: rate,
 			convertedAmount: rawConvertedAmount,
 			rateEffectiveAt: rateDate,
 			fxCatalogRateId: rateId,
@@ -370,9 +367,12 @@ function validateFifoSnapshot(allocation: {
 		if (evidenceKeys.length !== canonicalKeys.length ||
 			evidenceKeys.some((key, index) => key !== canonicalKeys[index]) ||
 			evidence.rawExchangeRate !== rate) return null;
-		if ((!sameCurrency && (rate === null || rate <= 0 || !rateDate || Number.isNaN(rateDate.getTime()) ||
+		const isZeroAmount = originalAmount === 0 && rawConvertedAmount === 0 &&
+			evidence.fxProvenanceKind === 'ZERO_AMOUNT';
+		if ((!sameCurrency && !isZeroAmount && (rate === null || rate <= 0 || !rateDate || Number.isNaN(rateDate.getTime()) ||
 			!allocation.fifoFechaTasa || allocation.fifoFechaTasa.getTime() !== rateDate.getTime() ||
 			rateDate > allocation.fifoFechaFuente)) ||
+			(!sameCurrency && isZeroAmount && (allocation.fifoTasaCambio !== null || allocation.fifoFechaTasa !== null)) ||
 			(sameCurrency && (rate !== null || allocation.fifoTasaCambio !== null || allocation.fifoFechaTasa !== null))) return null;
 		if (roundFifoAmount(rawConvertedAmount) !== Number(allocation.fifoCostoFuncional) ||
 			(rate !== null && roundFifoRate(rate) !== Number(allocation.fifoTasaCambio))) return null;

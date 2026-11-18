@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
 /** Tipos de procedencia soportados para la evidencia de conversión aplicada. */
-export type FxProvenanceKind = 'SAME_CURRENCY' | 'MANUAL_GOVERNED';
+export type FxProvenanceKind = 'SAME_CURRENCY' | 'MANUAL_GOVERNED' | 'ZERO_AMOUNT';
 
 /** Evidencia inmutable que acompaña a una reconciliación convertida. */
 export interface AppliedFxEvidence {
@@ -87,6 +87,30 @@ export function buildAppliedFxEvidence(input: BuildEvidenceInput): AppliedFxEvid
     };
   }
 
+  // Importe cero entre monedas sin tasa declarada: no hay conversión que
+  // aplicar ni tasa que atribuir. La evidencia registra explícitamente que
+  // la conversión no fue necesaria, en vez de inventar una tasa 1 con
+  // fecha de corte. Con una tasa declarada se conserva MANUAL_GOVERNED.
+  if (input.originalAmount === 0 && (input.convertedAmount ?? 0) === 0 &&
+      input.exchangeRate == null) {
+    return {
+      functionalCurrency,
+      rateEffectiveAt: '',
+      fxProvenanceKind: 'ZERO_AMOUNT',
+      fxProvenanceSource: source,
+      fxCatalogRateId: null,
+      fxEvidenceFingerprint: fingerprint({
+        amount: 0,
+        catalogRateId: null,
+        convertedAmount: 0,
+        currency: originalCurrency,
+        kind: 'ZERO_AMOUNT',
+        source,
+      }),
+      fxEvidenceVersion: 1,
+    };
+  }
+
   const rate = Number(input.exchangeRate);
   const converted = Number(input.convertedAmount);
   if (!Number.isFinite(rate) || rate <= 0) {
@@ -159,7 +183,8 @@ export function verifyAppliedFxEvidence(input: VerifyAppliedFxEvidenceInput): bo
     if (input.fxProvenanceKind !== 'SAME_CURRENCY') return false;
     if (Math.abs(input.convertedAmount - input.originalAmount) > 0.01) return false;
     if (input.exchangeRate != null && Number(input.exchangeRate) !== 1) return false;
-  } else if (input.fxProvenanceKind !== 'MANUAL_GOVERNED') {
+  } else if (input.fxProvenanceKind !== 'MANUAL_GOVERNED' &&
+      input.fxProvenanceKind !== 'ZERO_AMOUNT') {
     return false;
   }
 
@@ -184,7 +209,8 @@ export function verifyAppliedFxEvidence(input: VerifyAppliedFxEvidenceInput): bo
       expected.fxCatalogRateId === (input.fxCatalogRateId ?? null) &&
       expected.fxEvidenceFingerprint === input.fxEvidenceFingerprint &&
       expected.fxEvidenceVersion === input.fxEvidenceVersion &&
-      (sameCurrency || expected.rateEffectiveAt === effectiveAt?.toISOString());
+      (sameCurrency || input.fxProvenanceKind === 'ZERO_AMOUNT' ||
+        expected.rateEffectiveAt === effectiveAt?.toISOString());
   } catch {
     return false;
   }
