@@ -2358,6 +2358,7 @@ model CuentaBancaria {
   reconciliacionesGasto    ReconciliacionGasto[]
   reconciliacionesServicio ReconciliacionServicio[]
   reconciliacionesVenta    ReconciliacionVenta[]
+  pagosCuentaPorPagar      PagoCuentaPorPagar[]
   transferenciasDestino    TransferenciaBancaria[]  @relation("TransferenciasDestino")
   transferenciasOrigen     TransferenciaBancaria[]  @relation("TransferenciasOrigen")
   facturas                 Factura[]                @relation("FacturaCuenta")
@@ -3103,6 +3104,7 @@ model PagoCuentaPorPagar {
   pagoCuentaPorPagarId String         @id @default(cuid())
   tenantId             String
   cuentaPorPagarId     String
+  cuentaId             String?
   monto                Decimal
   moneda                 String?
   montoFuncional         Decimal?              @db.Decimal(20, 4)
@@ -3122,10 +3124,12 @@ model PagoCuentaPorPagar {
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   cuentaPorPagar       CuentaPorPagar @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId], onDelete: Cascade)
+  cuentaBancaria       CuentaBancaria? @relation(fields: [cuentaId], references: [cuentaId])
   tenant               Tenant         @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
   @@index([cuentaPorPagarId])
+  @@index([cuentaId])
 }
 
 model EquipoReparacion {

@@ -495,6 +495,7 @@ export async function settleInitialPayable(
 		data: {
 			tenantId: params.tenantId,
 			cuentaPorPagarId: params.cuentaPorPagarId,
+			cuentaId: params.cuentaId,
 			monto,
 			moneda,
 			montoFuncional: new Prisma.Decimal(valuation.paymentFunctional),

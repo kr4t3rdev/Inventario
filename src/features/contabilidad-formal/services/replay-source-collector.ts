@@ -42,6 +42,7 @@ import { cashPaymentAllocationFingerprint } from '../lib/cash-payment-allocation
 import { getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import type { TipoEventoClave } from '../lib/plan-default';
 import { derivarMedioCobro } from '../lib/settlement-event-builder';
+import { calculateInitialSubledgerSettlement } from '@/features/contabilidad/services/initial-subledger-settlement';
 import { construirEventoLiquidacion } from './settlement-posting-service';
 import {
 	construirEventoAjusteBancario,
@@ -68,6 +69,8 @@ const QUERY_ID_BY_MODEL = {
 	transferenciaBancaria: 'transferenciaBancaria',
 	factura: 'factura',
 	cuentaPorCobrar: 'cuentaPorCobrar',
+	cuentaPorPagar: 'cuentaPorPagar',
+	pagoCuentaPorPagar: 'pagoCuentaPorPagar',
 	cuentaBancaria: 'cuentaBancaria',
 	reconciliacionGasto: 'reconciliacionGasto',
 	compraDocumento: 'compraDocumento',
@@ -118,6 +121,21 @@ function trackSourceQueries(
 			});
 		},
 	});
+}
+
+/**
+ * @description Ordena liquidaciones como las procesó el writer: fecha
+ * efectiva, creación e id como desempate determinista.
+ */
+function compararLiquidacionesPorFecha(
+	aFecha: Date, aCreado: Date | null | undefined, aId: string,
+	bFecha: Date, bCreado: Date | null | undefined, bId: string,
+): number {
+	const fecha = new Date(aFecha).getTime() - new Date(bFecha).getTime();
+	if (fecha !== 0) return fecha;
+	const creado = new Date(aCreado ?? aFecha).getTime() - new Date(bCreado ?? bFecha).getTime();
+	if (creado !== 0) return creado;
+	return aId.localeCompare(bId);
 }
 
 /** Candidato reconstruido con el evento formal listo para contabilizar. */
@@ -258,12 +276,15 @@ export async function recolectarCandidatos(
 		politica,
 		ventasConCosto,
 		ordenesProduccion,
+		cuentasPorPagar,
+		pagosCuentaPorPagar,
 	] = await Promise.all([
 		client.reconciliacionVenta.findMany({
 			where: { tenantId },
 			select: {
 				reconciliacionId: true,
 				ventaId: true,
+				cuentaPorCobrarId: true,
 				cuentaId: true,
 				monto: true,
 				moneda: true,
@@ -277,6 +298,7 @@ export async function recolectarCandidatos(
 				fxCatalogRateId: true,
 				fxEvidenceVersion: true,
 				fechaReconciliacion: true,
+				createdAt: true,
 				observaciones: true,
 				idTransferencia: true,
 				deudaCashId: true,
@@ -353,6 +375,13 @@ export async function recolectarCandidatos(
 				id: true,
 				facturaId: true,
 				estado: true,
+				inicializacionId: true,
+				montoDeuda: true,
+				montoDeudaFuncional: true,
+				montoPagado: true,
+				montoPagadoFuncional: true,
+				monedaOriginal: true,
+				monedaFuncional: true,
 			},
 		}),
 		client.cuentaBancaria.findMany({
@@ -570,6 +599,46 @@ export async function recolectarCandidatos(
 					tenantId: true,
 					fechaContabilizacion: true,
 					costoMateriales: true,
+				},
+			}),
+			client.cuentaPorPagar.findMany({
+				where: { tenantId },
+				select: {
+					cuentaPorPagarId: true,
+					inicializacionId: true,
+					montoDeuda: true,
+					montoDeudaFuncional: true,
+					montoPagado: true,
+					montoPagadoFuncional: true,
+					saldoPendiente: true,
+					moneda: true,
+					monedaFuncional: true,
+					estado: true,
+				},
+			}),
+			client.pagoCuentaPorPagar.findMany({
+				// Los pagos ordinarios ya los cubre la conciliación de gasto: aquí
+				// solo entran los de CxP iniciales.
+				where: { tenantId, cuentaPorPagar: { inicializacionId: { not: null } } },
+				select: {
+					pagoCuentaPorPagarId: true,
+					cuentaPorPagarId: true,
+					cuentaId: true,
+					monto: true,
+					moneda: true,
+					montoFuncional: true,
+					functionalCurrency: true,
+					tasaCambio: true,
+					rateEffectiveAt: true,
+					fxProvenanceKind: true,
+					fxProvenanceSource: true,
+					fxCatalogRateId: true,
+					fxEvidenceFingerprint: true,
+					fxEvidenceVersion: true,
+					fechaPago: true,
+					numeroTransaccion: true,
+					observaciones: true,
+					createdAt: true,
 				},
 			}),
 		]);
@@ -1034,6 +1103,257 @@ function snapshotFuenteEsInicial(fifoEvidenciaFx: string | null): boolean {
 			evento,
 			...(omision ? { causaOmision: omision } : {}),
 		});
+	}
+
+	// --- Liquidaciones de CxC/CxP iniciales ---------------------------------
+	// El cobro/pago externo no tiene venta ni gasto interno: su origen es la
+	// liquidación persistida por el writer del tramo 2. El aplicado se
+	// recalcula recorriendo las liquidaciones de la cuenta en el orden en que
+	// el writer las procesó, con la misma calculadora; ante cualquier duda la
+	// fuente se propone con su causa de omisión, no se contabiliza.
+	const cuentasInicialesPorId = new Map(
+		cuentasPorCobrar
+			.filter((cuenta) => cuenta.inicializacionId != null)
+			.map((cuenta) => [cuenta.id, cuenta]),
+	);
+	const cuentasPagarInicialesPorId = new Map(
+		cuentasPorPagar
+			.filter((cuenta) => cuenta.inicializacionId != null)
+			.map((cuenta) => [cuenta.cuentaPorPagarId, cuenta]),
+	);
+	const cobrosExternosPorCuenta = new Map<string, typeof reconciliacionesVenta>();
+	for (const cobro of reconciliacionesVenta) {
+		if (cobro.cuentaPorCobrarId == null) continue;
+		const lista = cobrosExternosPorCuenta.get(cobro.cuentaPorCobrarId) ?? [];
+		lista.push(cobro);
+		cobrosExternosPorCuenta.set(cobro.cuentaPorCobrarId, lista);
+	}
+	for (const [cuentaId, cobros] of cobrosExternosPorCuenta) {
+		const cuenta = cuentasInicialesPorId.get(cuentaId);
+		const ordenados = [...cobros].sort((a, b) =>
+			compararLiquidacionesPorFecha(a.fechaReconciliacion, a.createdAt, a.reconciliacionId,
+				b.fechaReconciliacion, b.createdAt, b.reconciliacionId));
+		let balanceOriginal = cuenta ? new Prisma.Decimal(cuenta.montoDeuda) : null;
+		let balanceFunctional = cuenta?.montoDeudaFuncional != null
+			? new Prisma.Decimal(cuenta.montoDeudaFuncional)
+			: null;
+		let recorridoRoto = false;
+		for (const cobro of ordenados) {
+			const montoConvertido = cobro.montoConvertido;
+			const monedaOriginal = cuenta?.monedaOriginal ?? null;
+			const monedaFuncional = cuenta?.monedaFuncional ?? null;
+			const tipoCuenta = tipoCuentaPorCuenta.get(cobro.cuentaId) ?? null;
+			let evento: EventoContableInput = {
+				tipo: 'COBRO_CXC',
+				fecha: cobro.fechaReconciliacion,
+				descripcion: cobro.observaciones ?? 'Cobro de cuenta por cobrar inicial',
+				origen: { tipo: 'cobro_cxc_externo', id: cobro.reconciliacionId },
+				monto: cobro.monto,
+				moneda: cobro.moneda,
+				montoFuncional: montoConvertido,
+				monedaFuncional: cobro.functionalCurrency,
+				tasaCambio: cobro.tasaCambio,
+				fxEvidenceFingerprint: cobro.fxEvidenceFingerprint,
+				...(tipoCuenta == null ? {} : { medioCobro: derivarMedioCobro(tipoCuenta) }),
+				auxiliares: { diferenciaFx: 0 },
+			};
+			let causa: string | undefined;
+			if (cuenta == null) {
+				causa = 'CUENTA_INICIAL_NO_VERIFICABLE';
+			} else if (cuenta.estado === 'ANULADA') {
+				causa = 'CUENTA_ANULADA';
+			} else if (tipoCuenta == null) {
+				causa = 'CUENTA_BANCARIA_NO_VERIFICABLE';
+			} else if (monedaOriginal == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (monedaFuncional == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (montoConvertido == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (!verifyAppliedFxEvidence({
+				originalAmount: Number(cobro.monto),
+				originalCurrency: cobro.moneda,
+				functionalCurrency: monedaFuncional,
+				convertedAmount: Number(montoConvertido),
+				exchangeRate: cobro.tasaCambio == null ? null : Number(cobro.tasaCambio),
+				rateEffectiveAt: cobro.rateEffectiveAt ?? null,
+				fxProvenanceKind: cobro.fxProvenanceKind ?? null,
+				fxProvenanceSource: cobro.fxProvenanceSource ?? null,
+				fxCatalogRateId: cobro.fxCatalogRateId ?? null,
+				fxEvidenceFingerprint: cobro.fxEvidenceFingerprint ?? null,
+				fxEvidenceVersion: cobro.fxEvidenceVersion ?? null,
+			})) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (recorridoRoto) {
+				causa = 'LIQUIDACION_NO_VERIFICABLE';
+			}
+			if (causa == null && cuenta != null && monedaOriginal != null && monedaFuncional != null && montoConvertido != null && balanceOriginal != null && balanceFunctional != null) {
+				try {
+					const calculo = calculateInitialSubledgerSettlement({
+						role: 'receivable',
+						balanceOriginal: balanceOriginal.toFixed(4),
+						balanceFunctional: balanceFunctional.toFixed(4),
+						obligationCurrency: monedaOriginal,
+						paymentCurrency: cobro.moneda,
+						functionalCurrency: monedaFuncional,
+						paymentOriginal: cobro.monto.toFixed(4),
+						paymentFunctional: montoConvertido.toFixed(4),
+					});
+					balanceOriginal = new Prisma.Decimal(calculo.remainingOriginal);
+					balanceFunctional = new Prisma.Decimal(calculo.remainingBookFunctional);
+					evento = await construirEventoLiquidacion(
+						client as Prisma.TransactionClient,
+						{ tenantId, userId: 'replay-preflight' },
+						{
+							tipo: 'COBRO_CXC',
+							reconciliacion: {
+								reconciliacionId: cobro.reconciliacionId,
+								monto: cobro.monto,
+								moneda: cobro.moneda,
+								montoConvertido,
+								functionalCurrency: cobro.functionalCurrency,
+								tasaCambio: cobro.tasaCambio,
+								fxEvidenceFingerprint: cobro.fxEvidenceFingerprint,
+								fechaReconciliacion: cobro.fechaReconciliacion,
+							},
+							functionalAmount: montoConvertido.toFixed(4),
+							exchangeRate: cobro.tasaCambio,
+							fxEvidenceFingerprint: cobro.fxEvidenceFingerprint,
+							valorContableAplicado: calculo.appliedBookFunctional,
+							origenExterno: 'cobro_cxc_externo',
+							treasuryAccountType: tipoCuenta,
+							descripcion: cobro.observaciones ?? 'Cobro de cuenta por cobrar inicial',
+						},
+					);
+				} catch {
+					causa = 'LIQUIDACION_NO_VERIFICABLE';
+					recorridoRoto = true;
+				}
+			}
+			candidatos.push({
+				origenTipo: evento.origen.tipo,
+				origenId: evento.origen.id,
+				fecha: evento.fecha,
+				evento,
+				...(causa ? { causaOmision: causa } : {}),
+			});
+		}
+	}
+	const pagosExternosPorCuenta = new Map<string, typeof pagosCuentaPorPagar>();
+	for (const pago of pagosCuentaPorPagar) {
+		const lista = pagosExternosPorCuenta.get(pago.cuentaPorPagarId) ?? [];
+		lista.push(pago);
+		pagosExternosPorCuenta.set(pago.cuentaPorPagarId, lista);
+	}
+	for (const [cuentaId, pagos] of pagosExternosPorCuenta) {
+		const cuenta = cuentasPagarInicialesPorId.get(cuentaId);
+		const ordenados = [...pagos].sort((a, b) =>
+			compararLiquidacionesPorFecha(a.fechaPago, a.createdAt, a.pagoCuentaPorPagarId,
+				b.fechaPago, b.createdAt, b.pagoCuentaPorPagarId));
+		let balanceOriginal = cuenta ? new Prisma.Decimal(cuenta.montoDeuda) : null;
+		let balanceFunctional = cuenta?.montoDeudaFuncional != null
+			? new Prisma.Decimal(cuenta.montoDeudaFuncional)
+			: null;
+		let recorridoRoto = false;
+		for (const pago of ordenados) {
+			const monedaOriginal = cuenta?.moneda ?? null;
+			const monedaFuncional = cuenta?.monedaFuncional ?? null;
+			const tipoCuenta = pago.cuentaId == null
+				? null
+				: (tipoCuentaPorCuenta.get(pago.cuentaId) ?? null);
+			let evento: EventoContableInput = {
+				tipo: 'PAGO_CXP',
+				fecha: pago.fechaPago,
+				descripcion: pago.observaciones ?? 'Pago de cuenta por pagar inicial',
+				origen: { tipo: 'pago_cxp_externo', id: pago.pagoCuentaPorPagarId },
+				monto: pago.monto,
+				moneda: pago.moneda,
+				montoFuncional: pago.montoFuncional,
+				monedaFuncional: pago.functionalCurrency,
+				tasaCambio: pago.tasaCambio,
+				fxEvidenceFingerprint: pago.fxEvidenceFingerprint,
+				...(tipoCuenta == null ? {} : { medioCobro: derivarMedioCobro(tipoCuenta) }),
+				auxiliares: { diferenciaFx: 0 },
+			};
+			let causa: string | undefined;
+			if (cuenta == null) {
+				causa = 'CUENTA_INICIAL_NO_VERIFICABLE';
+			} else if (tipoCuenta == null) {
+				causa = 'CUENTA_BANCARIA_NO_VERIFICABLE';
+			} else if (monedaOriginal == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (monedaFuncional == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (pago.montoFuncional == null || pago.functionalCurrency == null) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (!verifyAppliedFxEvidence({
+				originalAmount: Number(pago.monto),
+				originalCurrency: monedaOriginal,
+				functionalCurrency: monedaFuncional,
+				convertedAmount: Number(pago.montoFuncional),
+				exchangeRate: pago.tasaCambio == null ? null : Number(pago.tasaCambio),
+				rateEffectiveAt: pago.rateEffectiveAt ?? null,
+				fxProvenanceKind: pago.fxProvenanceKind ?? null,
+				fxProvenanceSource: pago.fxProvenanceSource ?? null,
+				fxCatalogRateId: pago.fxCatalogRateId ?? null,
+				fxEvidenceFingerprint: pago.fxEvidenceFingerprint ?? null,
+				fxEvidenceVersion: pago.fxEvidenceVersion ?? null,
+			})) {
+				causa = CAUSA_VALORACION_NO_VERIFICABLE;
+			} else if (recorridoRoto) {
+				causa = 'LIQUIDACION_NO_VERIFICABLE';
+			}
+			if (causa == null && cuenta != null && monedaOriginal != null && monedaFuncional != null && pago.montoFuncional != null && pago.functionalCurrency != null && balanceOriginal != null && balanceFunctional != null) {
+				try {
+					const calculo = calculateInitialSubledgerSettlement({
+						role: 'payable',
+						balanceOriginal: balanceOriginal.toFixed(4),
+						balanceFunctional: balanceFunctional.toFixed(4),
+						obligationCurrency: monedaOriginal,
+						paymentCurrency: monedaOriginal,
+						functionalCurrency: monedaFuncional,
+						paymentOriginal: pago.monto.toFixed(4),
+						paymentFunctional: pago.montoFuncional.toFixed(4),
+					});
+					balanceOriginal = new Prisma.Decimal(calculo.remainingOriginal);
+					balanceFunctional = new Prisma.Decimal(calculo.remainingBookFunctional);
+					evento = await construirEventoLiquidacion(
+						client as Prisma.TransactionClient,
+						{ tenantId, userId: 'replay-preflight' },
+						{
+							tipo: 'PAGO_CXP',
+							reconciliacion: {
+								reconciliacionId: pago.pagoCuentaPorPagarId,
+								monto: pago.monto,
+								moneda: monedaOriginal,
+								montoConvertido: pago.montoFuncional,
+								functionalCurrency: pago.functionalCurrency,
+								tasaCambio: pago.tasaCambio,
+								fxEvidenceFingerprint: pago.fxEvidenceFingerprint,
+								fechaReconciliacion: pago.fechaPago,
+							},
+							functionalAmount: pago.montoFuncional.toFixed(4),
+							exchangeRate: pago.tasaCambio,
+							fxEvidenceFingerprint: pago.fxEvidenceFingerprint,
+							valorContableAplicado: calculo.appliedBookFunctional,
+							origenExterno: 'pago_cxp_externo',
+							treasuryAccountType: tipoCuenta,
+							descripcion: pago.observaciones ?? 'Pago de cuenta por pagar inicial',
+						},
+					);
+				} catch {
+					causa = 'LIQUIDACION_NO_VERIFICABLE';
+					recorridoRoto = true;
+				}
+			}
+			candidatos.push({
+				origenTipo: evento.origen.tipo,
+				origenId: evento.origen.id,
+				fecha: evento.fecha,
+				evento,
+				...(causa ? { causaOmision: causa } : {}),
+			});
+		}
 	}
 
 	for (const factura of facturas) {
