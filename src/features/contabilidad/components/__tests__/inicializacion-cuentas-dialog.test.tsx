@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { initializationDraftContract } from '@/features/contabilidad/services/initialization-contract';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -138,6 +139,33 @@ describe('InicializacionCuentasDialog', () => {
     expect(cuenta).not.toHaveProperty('nombreBanco');
     expect(cuenta).not.toHaveProperty('numeroCuenta');
     expect(cuenta).not.toHaveProperty('origen');
+    expect(toastSuccessMock).toHaveBeenCalledWith('Borrador guardado');
+  });
+
+  it('guarda el borrador con la fecha de corte borrada sin enviarla vacía', async () => {
+    const user = userEvent.setup();
+    guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'request-1', estado: 'BORRADOR', borrador: {} } });
+    await openDialog(user);
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+    await user.clear(dateInput);
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    const borrador = guardarBorradorMock.mock.calls[0][0].borrador as Record<string, unknown>;
+    expect(borrador).not.toHaveProperty('fechaCorte');
+    expect(initializationDraftContract.safeParse({ ...borrador, idempotencyKey: 'request-1' }).success).toBe(true);
+    expect(toastSuccessMock).toHaveBeenCalledWith('Borrador guardado');
+  });
+
+  it('guarda el borrador con el saldo borrado sin enviarlo vacío', async () => {
+    const user = userEvent.setup();
+    guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'request-1', estado: 'BORRADOR', borrador: {} } });
+    await openDialog(user);
+    const fields = screen.getAllByRole('textbox');
+    await user.clear(fields[3]);
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    const borrador = guardarBorradorMock.mock.calls[0][0].borrador as Record<string, unknown>;
+    const cuenta = (borrador.cuentas as Array<Record<string, unknown>>)[0];
+    expect(cuenta).not.toHaveProperty('saldoInicial');
+    expect(initializationDraftContract.safeParse({ ...borrador, idempotencyKey: 'request-1' }).success).toBe(true);
     expect(toastSuccessMock).toHaveBeenCalledWith('Borrador guardado');
   });
 

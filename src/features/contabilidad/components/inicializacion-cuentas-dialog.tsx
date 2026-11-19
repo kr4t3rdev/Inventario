@@ -186,7 +186,7 @@ export function InicializacionCuentasDialog(): ReactElement {
       }
     });
     return {
-      fechaCorte,
+      ...(fechaCorte.trim() ? { fechaCorte: fechaCorte.trim() } : {}),
       monedaFuncional,
       ...(Object.keys(tasas).length > 0 ? { tasas } : {}),
       cuentas: accounts.map((account) => {
@@ -212,7 +212,7 @@ export function InicializacionCuentasDialog(): ReactElement {
           ...(account.numeroCuenta.trim() ? { numeroCuenta: account.numeroCuenta.trim() } : {}),
           tipoCuenta: account.tipoCuenta,
           moneda: account.moneda,
-          saldoInicial: account.saldoInicial,
+          ...(account.saldoInicial.trim() ? { saldoInicial: account.saldoInicial.trim() } : {}),
           ...fuente,
         };
       }),
@@ -243,8 +243,12 @@ export function InicializacionCuentasDialog(): ReactElement {
       // y estrechan el payload parcial (borrador) al contrato completo que
       // exige la acción de inicialización.
       const payload = buildPayload();
+      if (!payload.fechaCorte) {
+        throw new Error('Falta la fecha de corte para confirmar');
+      }
+      const fechaCorteConfirm = payload.fechaCorte;
       const cuentas = payload.cuentas.map((cuenta) => {
-        if (!cuenta.nombreCuenta || !cuenta.nombreBanco || !cuenta.numeroCuenta) {
+        if (!cuenta.nombreCuenta || !cuenta.nombreBanco || !cuenta.numeroCuenta || !cuenta.saldoInicial) {
           throw new Error('Faltan datos de la cuenta para confirmar');
         }
         const origen = cuenta.origen;
@@ -272,7 +276,7 @@ export function InicializacionCuentasDialog(): ReactElement {
             : {}),
         };
       });
-      const result = await initializeBankAccountsAction({ idempotencyKey: key, ...payload, cuentas });
+      const result = await initializeBankAccountsAction({ idempotencyKey: key, ...payload, fechaCorte: fechaCorteConfirm, cuentas });
       if (!result.success) throw new Error(result.error?.message || 'No se pudo inicializar la contabilidad');
       toast.success(result.data?.replayed ? 'Se recuperó la inicialización ya registrada' : 'Cuentas inicializadas');
       setAccounts([newAccount()]);
