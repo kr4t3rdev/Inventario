@@ -191,20 +191,25 @@ export function InicializacionCuentasDialog(): ReactElement {
       ...(Object.keys(tasas).length > 0 ? { tasas } : {}),
       cuentas: accounts.map((account) => {
         const saldoPositivo = Number(account.saldoInicial) > 0;
+        // El contrato parcial valida los campos que recibe: un texto vacío
+        // ('') no pasa requiredText, así que se omite y el borrador queda
+        // incompleto pero guardable. La confirmación sigue exigiendo los
+        // faltantes en la revisión.
         const fuente = !saldoPositivo ? {} : account.origen === 'NO_DOCUMENTADO'
           ? { origenNoDocumentado: true }
+          : account.origen === '' ? {}
           : {
             origen: {
               tipo: account.origen as Exclude<Source, '' | 'NO_DOCUMENTADO'>,
-              tercero: account.tercero,
-              ...(account.tasaCambio ? { tasaCambio: account.tasaCambio } : {}),
-              ...(account.origen === 'ANTICIPO' ? { tipoPagoId: account.tipoPagoId } : {}),
+              ...(account.tercero.trim() ? { tercero: account.tercero.trim() } : {}),
+              ...(account.tasaCambio.trim() ? { tasaCambio: account.tasaCambio.trim() } : {}),
+              ...(account.origen === 'ANTICIPO' && account.tipoPagoId.trim() ? { tipoPagoId: account.tipoPagoId.trim() } : {}),
             },
           };
         return {
-          nombreCuenta: account.nombreCuenta,
-          nombreBanco: account.nombreBanco,
-          numeroCuenta: account.numeroCuenta,
+          ...(account.nombreCuenta.trim() ? { nombreCuenta: account.nombreCuenta.trim() } : {}),
+          ...(account.nombreBanco.trim() ? { nombreBanco: account.nombreBanco.trim() } : {}),
+          ...(account.numeroCuenta.trim() ? { numeroCuenta: account.numeroCuenta.trim() } : {}),
           tipoCuenta: account.tipoCuenta,
           moneda: account.moneda,
           saldoInicial: account.saldoInicial,
@@ -233,7 +238,41 @@ export function InicializacionCuentasDialog(): ReactElement {
   const submit = async () => {
     setSaving(true);
     try {
-      const result = await initializeBankAccountsAction({ idempotencyKey: key, ...buildPayload() });
+      // La revisión bloquea la confirmación mientras haya faltantes, así que
+      // aquí cada cuenta está completa; los guardas son defensa en profundidad
+      // y estrechan el payload parcial (borrador) al contrato completo que
+      // exige la acción de inicialización.
+      const payload = buildPayload();
+      const cuentas = payload.cuentas.map((cuenta) => {
+        if (!cuenta.nombreCuenta || !cuenta.nombreBanco || !cuenta.numeroCuenta) {
+          throw new Error('Faltan datos de la cuenta para confirmar');
+        }
+        const origen = cuenta.origen;
+        const tercero = origen?.tercero;
+        if (origen && !tercero) {
+          throw new Error('Falta el tercero de la cuenta para confirmar');
+        }
+        return {
+          nombreCuenta: cuenta.nombreCuenta,
+          nombreBanco: cuenta.nombreBanco,
+          numeroCuenta: cuenta.numeroCuenta,
+          tipoCuenta: cuenta.tipoCuenta,
+          moneda: cuenta.moneda,
+          saldoInicial: cuenta.saldoInicial,
+          ...(cuenta.origenNoDocumentado ? { origenNoDocumentado: true } : {}),
+          ...(origen && tercero
+            ? {
+              origen: {
+                tipo: origen.tipo,
+                tercero,
+                ...(origen.tasaCambio ? { tasaCambio: origen.tasaCambio } : {}),
+                ...(origen.tipoPagoId ? { tipoPagoId: origen.tipoPagoId } : {}),
+              },
+            }
+            : {}),
+        };
+      });
+      const result = await initializeBankAccountsAction({ idempotencyKey: key, ...payload, cuentas });
       if (!result.success) throw new Error(result.error?.message || 'No se pudo inicializar la contabilidad');
       toast.success(result.data?.replayed ? 'Se recuperó la inicialización ya registrada' : 'Cuentas inicializadas');
       setAccounts([newAccount()]);

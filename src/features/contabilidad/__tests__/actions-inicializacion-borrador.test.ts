@@ -73,6 +73,7 @@ describe('Acciones del borrador de inicialización', () => {
       tenantId: 't1',
       idempotencyKey: 'draft-1',
       borrador: { fechaCorte: '2026-11-01', monedaFuncional: 'CUP' },
+      usuarioId: 'u1',
     });
     expect(result.data).toMatchObject({ idempotencyKey: 'draft-1', estado: 'BORRADOR' });
   });

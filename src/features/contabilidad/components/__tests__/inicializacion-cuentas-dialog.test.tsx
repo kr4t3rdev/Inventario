@@ -122,6 +122,25 @@ describe('InicializacionCuentasDialog', () => {
     expect(toastSuccessMock).toHaveBeenCalledWith('Borrador guardado');
   });
 
+  it('guarda el borrador vacío sin enviar campos de cuenta vacíos', async () => {
+    const user = userEvent.setup();
+    guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'request-1', estado: 'BORRADOR', borrador: {} } });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    expect(guardarBorradorMock).toHaveBeenCalledWith(expect.objectContaining({
+      idempotencyKey: 'request-1',
+      borrador: expect.objectContaining({
+        cuentas: [expect.objectContaining({ tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' })],
+      }),
+    }));
+    const cuenta = guardarBorradorMock.mock.calls[0][0].borrador.cuentas[0] as Record<string, unknown>;
+    expect(cuenta).not.toHaveProperty('nombreCuenta');
+    expect(cuenta).not.toHaveProperty('nombreBanco');
+    expect(cuenta).not.toHaveProperty('numeroCuenta');
+    expect(cuenta).not.toHaveProperty('origen');
+    expect(toastSuccessMock).toHaveBeenCalledWith('Borrador guardado');
+  });
+
   it('la revisión muestra los faltantes y bloquea la confirmación', async () => {
     const user = userEvent.setup();
     await openDialog(user);
