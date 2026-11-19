@@ -61,7 +61,7 @@ function toAccountDraft(raw: Record<string, unknown>, tasas: Record<string, stri
     numeroCuenta: typeof raw.numeroCuenta === 'string' ? raw.numeroCuenta : '',
     tipoCuenta: typeof raw.tipoCuenta === 'string' ? raw.tipoCuenta : 'CORRIENTE',
     moneda,
-    saldoInicial: typeof raw.saldoInicial === 'string' ? raw.saldoInicial : '0',
+    saldoInicial: typeof raw.saldoInicial === 'string' ? raw.saldoInicial : '',
     origen,
     tercero: typeof origenRaw?.tercero === 'string' ? origenRaw.tercero : '',
     tasaCambio,
@@ -165,7 +165,7 @@ export function InicializacionCuentasDialog(): ReactElement {
       const funcional = typeof draft.monedaFuncional === 'string' ? draft.monedaFuncional : 'CUP';
       const cuentasRaw = Array.isArray(draft.cuentas) ? draft.cuentas : [];
       setMonedaFuncional(funcional);
-      if (typeof draft.fechaCorte === 'string' && draft.fechaCorte.trim()) setFechaCorte(draft.fechaCorte);
+      setFechaCorte(typeof draft.fechaCorte === 'string' && draft.fechaCorte.trim() ? draft.fechaCorte : '');
       if (cuentasRaw.length > 0) {
         setAccounts(cuentasRaw.map((raw) => toAccountDraft(raw as Record<string, unknown>, tasas, funcional)));
       }

@@ -39,6 +39,21 @@ const draftResumed = {
   },
 };
 
+const draftResumedIncomplete = {
+  idempotencyKey: 'draft-key-2',
+  payloadHash: 'c'.repeat(64),
+  borrador: {
+    monedaFuncional: 'CUP',
+    cuentas: [{
+      nombreCuenta: 'Caja sin saldo',
+      nombreBanco: 'Banco QA',
+      numeroCuenta: 'QA-09',
+      tipoCuenta: 'CORRIENTE',
+      moneda: 'CUP',
+    }],
+  },
+};
+
 async function openDialog(user: ReturnType<typeof userEvent.setup>) {
   render(<InicializacionCuentasDialog />);
   await user.click(screen.getByRole('button', { name: 'Cargar saldos iniciales' }));
@@ -106,6 +121,28 @@ describe('InicializacionCuentasDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
     await user.click(screen.getByRole('button', { name: 'Inicializar cuentas' }));
     expect(initializeMock).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: 'draft-key-1' }));
+  });
+
+  it('retomar un borrador sin fecha ni saldo preserva la omisión y los marca pendientes', async () => {
+    const user = userEvent.setup();
+    obtenerActualMock.mockResolvedValue({ success: true, data: draftResumedIncomplete });
+    guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'draft-key-2', estado: 'BORRADOR', borrador: {} } });
+    await openDialog(user);
+    expect(await screen.findByDisplayValue('Caja sin saldo')).toBeInTheDocument();
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+    expect(dateInput.value).toBe('');
+    const fields = screen.getAllByRole('textbox');
+    expect((fields[3] as HTMLInputElement).value).toBe('');
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    const borrador = guardarBorradorMock.mock.calls[0][0].borrador as Record<string, unknown>;
+    expect(borrador).not.toHaveProperty('fechaCorte');
+    const cuenta = (borrador.cuentas as Array<Record<string, unknown>>)[0];
+    expect(cuenta).not.toHaveProperty('saldoInicial');
+    expect(initializationDraftContract.safeParse({ ...borrador, idempotencyKey: 'draft-key-2' }).success).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+    expect(screen.getByText(/Falta la fecha de corte/)).toBeInTheDocument();
+    expect(screen.getByText(/Cuenta 1: falta el saldo inicial/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inicializar cuentas' })).toBeDisabled();
   });
 
   it('guarda el borrador con la carga parcial del formulario', async () => {
