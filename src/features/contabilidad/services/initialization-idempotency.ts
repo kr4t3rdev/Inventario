@@ -6,6 +6,7 @@ import { ActionError } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { initializationDraftContract } from './initialization-contract';
 
 const requestSchema = z.object({
@@ -145,6 +146,7 @@ const draftRequestSchema = z.object({
   tenantId: z.string().trim().min(1),
   idempotencyKey: z.string().trim().min(1).max(64),
   borrador: z.unknown(),
+  usuarioId: z.string().trim().min(1).optional(),
 }).strict();
 
 const draftLookupSchema = z.object({
@@ -187,10 +189,29 @@ export async function guardarBorradorInicializacion(input: z.input<typeof draftR
       if (updated.count !== 1) {
         throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
       }
+      if (parsed.usuarioId) {
+        await AuditLogService.logStrict({
+          accion: 'UPDATE',
+          entidad: 'INICIALIZACION_CONTABLE',
+          entidadId: previous.inicializacionId,
+          usuarioId: parsed.usuarioId,
+          detalles: { idempotencyKey: parsed.idempotencyKey, payloadHash },
+        }, tx);
+      }
     } else {
-      await tx.inicializacionContable.create({
+      const created = await tx.inicializacionContable.create({
         data: { tenantId: parsed.tenantId, idempotencyKey: parsed.idempotencyKey, payloadHash, estado: 'BORRADOR', borrador: payload as Prisma.InputJsonObject },
+        select: { inicializacionId: true },
       });
+      if (parsed.usuarioId) {
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'INICIALIZACION_CONTABLE',
+          entidadId: created.inicializacionId,
+          usuarioId: parsed.usuarioId,
+          detalles: { idempotencyKey: parsed.idempotencyKey, payloadHash },
+        }, tx);
+      }
     }
     return { idempotencyKey: parsed.idempotencyKey, payloadHash, estado: 'BORRADOR' as const, borrador: payload as JsonObject };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });

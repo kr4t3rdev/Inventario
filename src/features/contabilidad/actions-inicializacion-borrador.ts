@@ -33,7 +33,7 @@ export const guardarBorradorInicializacionAction = withAction(
     assertInitializationAccess(user);
     const parsed = guardarSchema.parse(input);
     const tenantId = requireTenant(user);
-    return guardarBorradorInicializacion({ tenantId, ...parsed });
+    return guardarBorradorInicializacion({ tenantId, ...parsed, usuarioId: user.userId });
   },
 );
 
