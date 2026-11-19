@@ -294,7 +294,7 @@ export function InicializacionCuentasDialog(): ReactElement {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-<DialogTrigger asChild><Button variant="outline" className="min-h-11">Cargar saldos iniciales</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" className="min-h-11">Cargar saldos iniciales</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configurar cuentas bancarias</DialogTitle>
@@ -340,7 +340,16 @@ export function InicializacionCuentasDialog(): ReactElement {
               <Field label="Moneda funcional"><Select value={monedaFuncional} onValueChange={setMonedaFuncional}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CUP">CUP</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="MLC">MLC</SelectItem></SelectContent></Select></Field>
             </div>
             <div className="flex flex-wrap justify-between gap-2">
-              <Button type="button" variant="outline" className="min-h-11" onClick={() => setAccounts((rows) => [...rows, newAccount()])} disabled={accounts.length >= 100}><Plus className="mr-2 h-4 w-4" />Agregar cuenta</Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11"
+                onClick={() => setAccounts((rows) => [...rows, newAccount()])}
+                disabled={accounts.length >= 100}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Agregar cuenta
+              </Button>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" className="min-h-11" onClick={saveDraft} disabled={savingDraft}>{savingDraft ? 'Guardando…' : 'Guardar borrador'}</Button>
                 <Button type="button" className="min-h-11" onClick={() => setStep('review')}>Revisar y confirmar</Button>
