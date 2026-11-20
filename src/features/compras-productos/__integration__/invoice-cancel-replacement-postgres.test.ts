@@ -284,10 +284,11 @@ describe('purchase invoice cancellation and replacement — disposable PostgreSQ
       recepcionItemId: receiptItemId,
       purchaseReceiptInvoiceAllocationId: expect.any(String),
       cantidad: 2,
-      costoUnitarioSnapshot: 1000,
+      costoUnitarioSnapshot: expect.anything(),
       fifoMonedaOrigen: 'USD',
       fifoMonedaFuncional: 'CUP',
     });
+    expect(Number(allocated[0].costoUnitarioSnapshot)).toBe(1000);
     expect(allocated[0].fifoCostoFuncional?.toString()).toBe('0.6667');
     expect(allocated[0].fifoEvidenciaFx).toBeTruthy();
 
