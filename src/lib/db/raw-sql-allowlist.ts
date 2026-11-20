@@ -103,9 +103,9 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   },
   {
     file: 'src/features/contabilidad/services/accounting-tenant-lock-service.ts',
-    occurrences: 1,
-    reason: 'Advisory lock transaccional por tenant.',
-    tenantGuarantee: 'La clave del lock es el tenantId autenticado; no lee datos.',
+    occurrences: 2,
+    reason: 'Advisory locks transaccionales por tenant y por solicitud de apertura.',
+    tenantGuarantee: 'Las claves combinan el tenantId autenticado con el tenantId y solicitudId verificados; no leen datos.',
   },
   {
     file: 'src/features/contabilidad/services/accounting-period-version-lock.ts',

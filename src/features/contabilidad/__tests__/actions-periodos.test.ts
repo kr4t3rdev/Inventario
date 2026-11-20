@@ -21,6 +21,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 	const { mockPrisma } = vi.hoisted(() => ({
 		mockPrisma: {
 			$executeRaw: vi.fn().mockResolvedValue(1),
+			$queryRaw: vi.fn().mockResolvedValue([{ locked: true }]),
 			$transaction: vi.fn(
 			(
 				cb: (tx: typeof mockPrisma) => Promise<unknown>,
@@ -2447,6 +2448,15 @@ describe("apertura manual verificable", () => {
 
 		expect(result, JSON.stringify(result)).toMatchObject({ success: true });
 		if (result.success) expect(result.data.periodo.periodoId).toBe(period.periodoId);
+		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
+		expect(mockPrisma.asiento.create).not.toHaveBeenCalled();
+		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
+
+		// Un reintento posterior puede recuperar el período, pero un intento que
+		// solapa la transacción consumidora debe fallar sin duplicar efectos.
+		mockPrisma.$queryRaw.mockResolvedValueOnce([{ locked: false }]);
+		const overlapping = await abrirPeriodoManualAprobadoAction({ solicitudId: "manual-no-banks" });
+		expect(expectActionFailure(overlapping).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
 		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
 		expect(mockPrisma.asiento.create).not.toHaveBeenCalled();
 		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();

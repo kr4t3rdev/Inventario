@@ -38,7 +38,10 @@ import {
 	collectFinancialAuxiliaryEvidence,
 	type FinancialAuxiliaryCheckpointPayload,
 	} from "@/features/contabilidad/services/financial-auxiliary-checkpoint-service";
-import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import {
+	acquireAccountingTenantLock,
+	tryAcquireAccountingOpeningLock,
+} from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import {
 	approveFinancialSnapshotV3,
 	captureFinancialSnapshotV3,
@@ -648,8 +651,17 @@ export const abrirPeriodoManualAprobadoAction = withAction(
 		requirePermission(user, "financiero.apertura.aprobar", "abrir períodos contables manuales");
 		const { solicitudId } = solicitudIdSchema.parse(input);
 		const periodo = await prisma.$transaction(async (tx) => {
+			const openingLockAcquired = await tryAcquireAccountingOpeningLock(tx, tenantId, solicitudId);
+			if (!openingLockAcquired) {
+				throw new ActionError(
+					"La apertura ya está siendo consumida por otra ejecución concurrente",
+					"APERTURA_SALDOS_NO_VERIFICABLES",
+				);
+			}
 			await acquireAccountingTenantLock(tx, tenantId);
-			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({ where: { solicitudId, tenantId, estado: { in: ["APROBADA", "CONSUMIDA"] } } });
+			const solicitud = await tx.aperturaPeriodoSolicitud.findFirst({
+				where: { solicitudId, tenantId, estado: { in: ["APROBADA", "CONSUMIDA"] } },
+			});
 			if (!solicitud || !solicitud.hashAprobacion || !solicitud.aprobadaAt) {
 				throw new ActionError("La solicitud no cuenta con aprobación verificable", "APERTURA_SALDOS_NO_VERIFICABLES");
 			}
