@@ -101,7 +101,13 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 			const consumedOpeningCount = await prisma.aperturaPeriodoSolicitud.count({
 				where: { tenantId: fixture.tenantId, estado: "CONSUMIDA" },
 			});
-			if (evidenciaFxInmutable > 0 || consumedOpeningCount > 0) continue;
+			if (evidenciaFxInmutable > 0 || consumedOpeningCount > 0) {
+				// Conservar la evidencia de apertura consumida (inmutable), pero
+				// liberar las políticas contables del tenant para que no bloqueen
+				// el borrado de la moneda funcional compartida (CUP) al final.
+				await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId: fixture.tenantId } });
+				continue;
+			}
 			await prisma.$transaction(async (tx) => {
 				await tx.checkpointContableFormal.deleteMany({ where: { tenantId: fixture.tenantId } });
 				await tx.aperturaPeriodoSolicitud.deleteMany({
@@ -155,6 +161,12 @@ describe('replay historico — integración PostgreSQL', { timeout: 120_000 }, (
 			});
 		}
 		if (creoMonedaCUP) {
+			// Liberar cualquier política contable que use CUP como funcional
+			// antes de borrar la moneda, evitando violaciones de FK si algún
+			// teardown de fixture quedó incompleto.
+			await prisma.tenantAccountingPolicy.deleteMany({
+				where: { functionalCurrencyCode: 'CUP' },
+			});
 			await prisma.moneda.deleteMany({ where: { codigo: 'CUP' } });
 		}
 		if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
