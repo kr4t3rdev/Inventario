@@ -108,6 +108,7 @@ describe('replay y conciliación de liquidaciones iniciales — PostgreSQL', { t
     if (previousNonCashMode === undefined) delete process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
     else process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = previousNonCashMode;
     for (const { tenantId, userId } of tenants) {
+      await prisma.prestamoCash.deleteMany({ where: { tenantId } });
       await prisma.reconciliacionVenta.deleteMany({ where: { tenantId } });
       await prisma.pagoCuentaPorPagar.deleteMany({ where: { tenantId } });
       await prisma.cuentaPorCobrar.deleteMany({ where: { tenantId } });
@@ -349,5 +350,62 @@ describe('replay y conciliación de liquidaciones iniciales — PostgreSQL', { t
     const descuadreCxp = reconcileInitialSubledgerSettlements(await entrada());
     expect(descuadreCxp.conciliado).toBe(false);
     expect(descuadreCxp.discrepancias.join(' ')).toMatch(/saldoPendiente/);
+  });
+
+  it('el cobro por el writer decrementa el principal del PrestamoCash y lo marca PAGADO al liquidar', async () => {
+    const { tenantId, clientId } = await makeTenant();
+    const request = {
+      idempotencyKey: `settle-prestamo-${tenantId.slice(0, 8)}`,
+      fechaCorte: '2026-11-01',
+      monedaFuncional: 'CUP',
+      tasas: { USD: '24' },
+      cuentas: [{
+        nombreCuenta: 'Cuenta USD', nombreBanco: 'Banco QA',
+        numeroCuenta: `SETP-${tenantId.slice(0, 8)}`, tipoCuenta: 'CORRIENTE',
+        moneda: 'USD', saldoInicial: '0',
+      }],
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-prestamo', clienteId: clientId, moneda: 'USD', saldo: '100', tasaInteres: '12', tasaInteresMoratorio: '18', fechaVencimiento: '2027-06-01' }],
+    };
+    const first = await initialize(request);
+    expect(first.success).toBe(true);
+    if (!first.success) throw new Error(JSON.stringify(first));
+    const bancoUsd = await prisma.cuentaBancaria.findFirstOrThrow({ where: { tenantId, moneda: 'USD' } });
+    await prisma.cuentaBancaria.update({ where: { cuentaId: bancoUsd.cuentaId }, data: { saldo: 1000 } });
+    const receivable = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId } });
+    await seedRate('25', new Date('2026-11-10T00:00:00.000Z'));
+    const tipoPagoId = tipoPagoByTenant.get(tenantId)!;
+
+    const cobroParcial = await settleReceivable({
+      cuentaPorCobrarId: receivable.id,
+      cuentaId: bancoUsd.cuentaId,
+      tipoPagoId,
+      monto: '40',
+      fechaEfectiva: '2026-11-15',
+      referencia: 'cobro-prestamo-1',
+    });
+    expect(cobroParcial.success).toBe(true);
+    let prestamo = await prisma.prestamoCash.findFirstOrThrow({ where: { tenantId } });
+    expect(prestamo.cashInterestPrincipalRemaining.toString()).toBe('60');
+    expect(prestamo.estado).toBe('ACTIVO');
+    expect((await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId } })).estado).toBe('PARCIAL');
+
+    const cobroFinal = await settleReceivable({
+      cuentaPorCobrarId: receivable.id,
+      cuentaId: bancoUsd.cuentaId,
+      tipoPagoId,
+      monto: '60',
+      fechaEfectiva: '2026-11-20',
+      referencia: 'cobro-prestamo-2',
+    });
+    expect(cobroFinal.success).toBe(true);
+    prestamo = await prisma.prestamoCash.findFirstOrThrow({ where: { tenantId } });
+    expect(prestamo.cashInterestPrincipalRemaining.toString()).toBe('0');
+    expect(prestamo.estado).toBe('PAGADO');
+    expect((await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId } })).estado).toBe('PAGADA');
+
+    // El replay sigue intacto tras cobrar: la identidad no depende del saldo vivo.
+    const replay = await initialize(request);
+    expect(replay).toMatchObject({ success: true, data: { replayed: true } });
+    expect(await prisma.prestamoCash.count({ where: { tenantId } })).toBe(1);
   });
 });

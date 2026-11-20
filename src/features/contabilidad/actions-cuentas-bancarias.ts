@@ -16,6 +16,8 @@ import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
+import { persistInitialDebt } from './services/initial-debt-persistence';
+import { persistInitialLoan } from './services/initial-loan-persistence';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
@@ -35,6 +37,8 @@ import {
   postOpeningEntry,
   resolveRoleAccountId,
   verifyInitializationReplay,
+  type InitialDebtDetail,
+  type InitialLoanDetail,
   type OpeningAsientoRef,
 } from './services/initialization-coordinator';
 import { Prisma } from '@/generated/prisma';
@@ -272,14 +276,6 @@ export const initializeBankAccountsAction = withAction(
     const tenantId = requireTenant(user);
     const { idempotencyKey, ...payload } = parsed;
     const payloadHash = computeInitializationPayloadHash(payload);
-    const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
-    if (hasAdvance) {
-      throw new ActionError(
-        'Los saldos iniciales por anticipo aún no están coordinados a fecha de corte; llegan con la tarea 5',
-        'INITIALIZATION_ANTICIPO_NO_DISPONIBLE',
-      );
-    }
-
     const result = await runIdempotentInitialization({
       tenantId,
       idempotencyKey: parsed.idempotencyKey,
@@ -357,6 +353,31 @@ export const initializeBankAccountsAction = withAction(
       const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
       const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
       const asientos: OpeningAsientoRef[] = [];
+      const deudas: InitialDebtDetail[] = [];
+      const prestamos: InitialLoanDetail[] = [];
+      const loanRows = (parsed.cuentasPorCobrar ?? []).filter(
+        (row) => row.tasaInteres !== undefined && row.tasaInteresMoratorio !== undefined,
+      );
+      if (loanRows.length > 0) {
+        const createdCxc = await tx.cuentaPorCobrar.findMany({
+          where: { tenantId, inicializacionId, referenciaInicial: { in: loanRows.map((r) => r.referenciaFila) } },
+          select: { id: true, referenciaInicial: true },
+        });
+        for (const row of loanRows) {
+          const cxc = createdCxc.find((c) => c.referenciaInicial === row.referenciaFila);
+          if (!cxc) throw new ActionError('CxC inicial no encontrada para el préstamo', 'INITIALIZATION_INCOMPLETE');
+          const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaFila);
+          prestamos.push(await persistInitialLoan(tx, {
+            tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+            monedaFuncional: functionalCurrency,
+            cuentaPorCobrarId: cxc.id, referenciaFila: row.referenciaFila,
+            clienteId: row.clienteId, moneda: row.moneda, saldo: row.saldo,
+            tasaCambio: fila?.tasaCambio ?? row.tasaCambio,
+            tasaInteres: row.tasaInteres, tasaInteresMoratorio: row.tasaInteresMoratorio,
+            fechaVencimiento: row.fechaVencimiento, usuarioId: user.userId,
+          }));
+        }
+      }
       for (const [index, item] of parsed.cuentas.entries()) {
         const openingBalance = Number(item.saldoInicial);
         const isAdvance = item.origen?.tipo === 'ANTICIPO';
@@ -376,7 +397,11 @@ export const initializeBankAccountsAction = withAction(
         });
 
         if (openingBalance > 0 && item.origen) {
-          // Bloqueado hasta la tarea 5: el rechazo temprano de ANTICIPO impide llegar aquí.
+          // Tarea 5, tramo 1: el origen ANTICIPO es un anticipo de cliente
+          // recibido (COBRO) que ya existía a fecha de corte. Se valora con
+          // tasas[moneda] u origen.tasaCambio a fecha de corte y su asiento
+          // formal se fecha a corte; el anticipo entregado a proveedor
+          // (PAGO) queda para un tramo aparte.
           if (item.origen.tipo === 'ANTICIPO') {
             if (!item.origen.tipoPagoId) {
               throw new ActionError('Selecciona el tipo de pago para registrar el anticipo', 'TIPO_PAGO_REQUERIDO');
@@ -418,6 +443,12 @@ export const initializeBankAccountsAction = withAction(
               idempotencyKey: movementKey,
               usuarioId: user.userId,
               observaciones: `Saldo inicial recibido de ${item.origen.tercero}`,
+              valoracionInicial: {
+                fechaEfectiva: fechaCorteDate,
+                tasaCambio: valued[index].tasaCambio,
+                montoFuncional: Number(valued[index].montoFuncional),
+                fxEvidenceFingerprint: valued[index].fxEvidenceFingerprint,
+              },
             });
             asientos.push({ tipo: 'ANTICIPO', asientoId: null, estado: movement.idempotentReplay ? 'YA_EXISTENTE' : 'EMITIDO_POR_FLUJO', referencia: movementKey });
             await AuditLogService.logStrict({
@@ -464,6 +495,17 @@ export const initializeBankAccountsAction = withAction(
               );
             }
             asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
+            if (!isCapital && item.origen.proveedorId) {
+              const deuda = await persistInitialDebt(tx, {
+                tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+                monedaFuncional: functionalCurrency, numeroCuenta: item.numeroCuenta, moneda: item.moneda,
+                saldoInicial: item.saldoInicial, tercero: item.origen.tercero, tasaCambio: item.origen.tasaCambio,
+                proveedorId: item.origen.proveedorId, tasaInteres: item.origen.tasaInteres,
+                tasaInteresMoratorio: item.origen.tasaInteresMoratorio, fechaVencimiento: item.origen.fechaVencimiento,
+                cuentaBancariaId: created.cuentaId, inyeccionId: counterpart.id, usuarioId: user.userId,
+              });
+              deudas.push(deuda);
+            }
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
               usuarioId: user.userId,
@@ -679,6 +721,8 @@ export const initializeBankAccountsAction = withAction(
         })),
         inventario: detalleInventario,
         subledger: detalleSubledger,
+        deudas,
+        prestamos,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -694,6 +738,8 @@ export const initializeBankAccountsAction = withAction(
         monedaFuncional: functionalCurrency,
         inventario: inventory,
         subledger: { cuentasPorCobrar: receivables, cuentasPorPagar: payables },
+        deudas,
+        prestamos,
       };
     });
 

@@ -1080,7 +1080,8 @@ describe('Cuentas Bancarias Actions', () => {
       expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
     });
 
-    it('bloquea un saldo inicial por anticipo hasta la coordinación de la tarea 5', async () => {
+    it('carga un anticipo de cliente a fecha de corte con la valoración de la apertura', async () => {
+      txClient.anticipo.create.mockResolvedValue({ anticipoId: 'ant-1' });
       const input = {
         idempotencyKey: 'onboarding-advance',
         fechaCorte: '2026-11-01',
@@ -1094,11 +1095,31 @@ describe('Cuentas Bancarias Actions', () => {
 
       const result = await initializeBankAccountsAction(input);
 
-      expect(result.success).toBe(false);
-      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_ANTICIPO_NO_DISPONIBLE');
-      expect(vi.mocked(runIdempotentInitialization)).not.toHaveBeenCalled();
-      expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
-      expect(registrarMovimientoEfectivoAnticipo).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(expectActionSuccess(result).data?.replayed).toBe(false);
+      expect(txClient.cuentaBancaria.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ tenantId: 't1', saldo: 0, moneda: 'CUP' }),
+      }));
+      expect(txClient.anticipo.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: 't1', tipo: 'COBRO', estado: 'RESERVADO',
+          montoOriginal: 50, montoFinanciado: 0, saldoDisponible: 0, moneda: 'CUP',
+        }),
+      }));
+      expect(registrarMovimientoEfectivoAnticipo).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          anticipoId: 'ant-1',
+          monto: 50,
+          idempotencyKey: expect.stringMatching(/^init:[a-f0-9]{48}$/),
+          valoracionInicial: {
+            fechaEfectiva: new Date('2026-11-01T00:00:00.000Z'),
+            tasaCambio: 1,
+            montoFuncional: 50,
+            fxEvidenceFingerprint: expect.any(String),
+          },
+        }),
+      );
     });
   });
 });

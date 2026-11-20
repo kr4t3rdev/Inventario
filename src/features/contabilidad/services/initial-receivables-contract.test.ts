@@ -57,3 +57,19 @@ describe('contrato de cuentas por cobrar iniciales', () => {
     expect(initialReceivablesContract.safeParse({ cuentas: [] }).success).toBe(false);
   });
 });
+
+describe('marca de préstamo en la fila CxC', () => {
+  it('rechaza una sola tasa de interés sin su pareja', () => {
+    expect(initialReceivablesContract.safeParse({ cuentas: [{ ...row, tasaInteres: '12' }] }).success).toBe(false);
+    expect(initialReceivablesContract.safeParse({ cuentas: [{ ...row, tasaInteresMoratorio: '18' }] }).success).toBe(false);
+  });
+
+  it('acepta ambas tasas de interés juntas', () => {
+    expect(initialReceivablesContract.parse({ cuentas: [{ ...row, tasaInteres: '12', tasaInteresMoratorio: '18' }] }).cuentas[0])
+      .toMatchObject({ tasaInteres: '12', tasaInteresMoratorio: '18' });
+  });
+
+  it.each(['-1', '1e3', '1.00000000001', 'NaN'])('rechaza la tasa de interés no válida %s', (tasaInteres) => {
+    expect(initialReceivablesContract.safeParse({ cuentas: [{ ...row, tasaInteres, tasaInteresMoratorio: '18' }] }).success).toBe(false);
+  });
+});

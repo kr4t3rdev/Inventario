@@ -126,6 +126,7 @@ model InyeccionCapital {
   updatedAt          DateTime       @updatedAt
   cuentaBancaria     CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   pagos              PagoDeuda[]
+  deudaCash          DeudaCash?
 
   @@index([cuentaId, createdAt])
   @@index([tenantId])
@@ -3031,6 +3032,7 @@ model DeudaCash {
   idNumerico       Int                   @default(autoincrement())
   proveedorId      String
   cuentaPorPagarId String                @unique
+  inyeccionId      String?               @unique
   montoCapital     Decimal
   moneda           String                @default("CUP")
   tasaInteres      Decimal?
@@ -3053,6 +3055,7 @@ model DeudaCash {
   cashInterestOrdinaryCarry      Decimal? @db.Decimal(38, 18)
   cashInterestMoratoryCarry      Decimal? @db.Decimal(38, 18)
   cuentaPorPagar   CuentaPorPagar        @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  inyeccion        InyeccionCapital?     @relation(fields: [inyeccionId], references: [id])
   proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   reconciliaciones ReconciliacionVenta[]

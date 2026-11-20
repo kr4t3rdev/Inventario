@@ -384,6 +384,24 @@ export async function settleInitialReceivable(
 		fail('INITIAL_SETTLEMENT_CUENTA_NO_ENCONTRADA', 'Cuenta por cobrar no encontrada');
 	}
 
+	// El cobro por el writer es la única vía para un préstamo inicial: el
+	// aplicado es principal, así que el wrapper baja su principal restante y
+	// se marca PAGADO al liquidar. La fecha de devengo queda en el corte: el
+	// interés de un préstamo inicial no se devenga en este tramo.
+	const prestamo = await tx.prestamoCash.findFirst({
+		where: { cuentaPorCobrarId: params.cuentaPorCobrarId, tenantId: params.tenantId, deletedAt: null },
+		select: { id: true },
+	});
+	if (prestamo) {
+		await tx.prestamoCash.updateMany({
+			where: { id: prestamo.id, tenantId: params.tenantId },
+			data: {
+				cashInterestPrincipalRemaining: { decrement: new Prisma.Decimal(settlement.appliedOriginal).toNumber() },
+				...(settlement.remainingOriginal === '0.0000' ? { estado: 'PAGADO' } : {}),
+			},
+		});
+	}
+
 	return {
 		reconciliacionId: reconciliacion.reconciliacionId,
 		aplicadoOriginal: settlement.appliedOriginal,
@@ -437,6 +455,13 @@ export async function settleInitialPayable(
 	}
 	if (!cuenta.inicializacionId) {
 		fail('INITIAL_SETTLEMENT_CUENTA_NO_INICIAL', 'La cuenta por pagar no es inicial externa');
+	}
+	const deuda = await tx.deudaCash.findFirst({
+		where: { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, deletedAt: null },
+		select: { id: true },
+	});
+	if (deuda) {
+		fail('INITIAL_SETTLEMENT_DEUDA_CASH', 'Esta cuenta por pagar es una deuda cash; págala desde Deudas cash');
 	}
 	if (cuenta.estado === 'PAGADA') {
 		fail('INITIAL_SETTLEMENT_CUENTA_PAGADA', 'La cuenta por pagar ya está liquidada');

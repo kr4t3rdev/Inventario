@@ -20,6 +20,14 @@ const currencyCode = z.string().trim().transform((value) => value.toUpperCase())
   .pipe(z.string().regex(/^[A-Z]{3,8}$/));
 const positiveRate = z.string().regex(/^\d+(?:\.\d{1,8})?$/)
   .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0, 'La tasa debe ser mayor que cero');
+const nonNegativeRate = z.string().regex(/^\d+(?:\.\d{1,10})?$/)
+  .refine((value) => Number.isFinite(Number(value)) && Number(value) >= 0, 'La tasa debe ser no negativa');
+const fechaVencimiento = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de vencimiento debe tener formato aaaa-mm-dd')
+  .refine((value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+  }, 'La fecha de vencimiento no es una fecha válida');
 const fechaCorte = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de corte debe tener formato aaaa-mm-dd')
   .refine((value) => {
     const [year, month, day] = value.split('-').map(Number);
@@ -62,12 +70,30 @@ const origin = z.object({
   tercero: requiredText,
   tasaCambio: positiveRate.optional(),
   tipoPagoId: requiredText.optional(),
+  proveedorId: requiredText.optional(),
+  tasaInteres: nonNegativeRate.optional(),
+  tasaInteresMoratorio: nonNegativeRate.optional(),
+  fechaVencimiento: fechaVencimiento.optional(),
 }).strict().superRefine((value, context) => {
   if (value.tipo === 'ANTICIPO' && !value.tipoPagoId) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['tipoPagoId'], message: 'Indique el tipo de pago del anticipo' });
   }
   if (value.tipo !== 'ANTICIPO' && value.tipoPagoId) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['tipoPagoId'], message: 'El tipo de pago solo aplica a anticipos' });
+  }
+  if (value.tipo !== 'PRESTAMO' && (value.proveedorId || value.tasaInteres || value.tasaInteresMoratorio || value.fechaVencimiento)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['proveedorId'], message: 'El proveedor, las tasas de interés y el vencimiento solo aplican a préstamos' });
+  }
+  if (value.tipo === 'PRESTAMO') {
+    if ((value.tasaInteres || value.tasaInteresMoratorio || value.fechaVencimiento) && !value.proveedorId) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['proveedorId'], message: 'Indique el proveedor para crear la deuda con submayor' });
+    }
+    if (value.proveedorId && !value.tasaInteres) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['tasaInteres'], message: 'La deuda con submayor exige tasa de interés ordinaria' });
+    }
+    if (value.proveedorId && !value.tasaInteresMoratorio) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['tasaInteresMoratorio'], message: 'La deuda con submayor exige tasa de interés moratoria' });
+    }
   }
 });
 
