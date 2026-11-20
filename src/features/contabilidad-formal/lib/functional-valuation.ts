@@ -1,5 +1,6 @@
 import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import type { AppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 
 /** Entrada para valorar un importe operativo en la moneda funcional del tenant. */
 export interface FunctionalValuationInput {
@@ -31,6 +32,8 @@ export interface FunctionalValuation {
 	tasaCambio: number | null;
 	/** Huella de la evidencia FX aplicada; null cuando no hay conversión valorada. */
 	fxEvidenceFingerprint: string | null;
+	/** Evidencia FX completa para persistir junto al importe valorado. */
+	fxEvidence: AppliedFxEvidence | null;
 }
 
 /**
@@ -48,7 +51,7 @@ export function buildFunctionalValuation(input: FunctionalValuationInput): Funct
 
 	if (!functionalCurrency || currency === functionalCurrency) {
 		if (!functionalCurrency) {
-			return { sameCurrency: false, montoConvertido: null, tasaCambio: null, fxEvidenceFingerprint: null };
+			return { sameCurrency: false, montoConvertido: null, tasaCambio: null, fxEvidenceFingerprint: null, fxEvidence: null };
 		}
 		const evidence = buildAppliedFxEvidence({
 			originalAmount: monto,
@@ -61,12 +64,13 @@ export function buildFunctionalValuation(input: FunctionalValuationInput): Funct
 			montoConvertido: null,
 			tasaCambio: 1,
 			fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+			fxEvidence: evidence,
 		};
 	}
 
 	const tasa = input.tasaCambio;
 	if (tasa == null || !Number.isFinite(tasa) || tasa <= 0) {
-		return { sameCurrency: false, montoConvertido: null, tasaCambio: null, fxEvidenceFingerprint: null };
+		return { sameCurrency: false, montoConvertido: null, tasaCambio: null, fxEvidenceFingerprint: null, fxEvidence: null };
 	}
 
 	const rateEffectiveAt = input.fechaTasa ?? input.fechaOperacion;
@@ -90,5 +94,6 @@ export function buildFunctionalValuation(input: FunctionalValuationInput): Funct
 		montoConvertido,
 		tasaCambio: tasa,
 		fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+		fxEvidence: evidence,
 	};
 }

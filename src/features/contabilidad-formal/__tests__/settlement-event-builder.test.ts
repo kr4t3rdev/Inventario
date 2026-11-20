@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	buildCobroCxcEvent,
+	buildCobroCxcExternoEvent,
 	buildCobroServicioEvent,
 	buildPagoCxpEvent,
+	buildPagoCxpExternoEvent,
 	buildSettlementEvent,
 	derivarMedioCobro,
 } from '../lib/settlement-event-builder';
@@ -141,5 +143,39 @@ describe('settlement-event-builder', () => {
 	it('rechaza importes funcionales cero o expresados como número flotante', () => {
 		expect(() => buildSettlementEvent({ ...common, functionalAmount: '0', valorContableAplicado: '1' }, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow();
 		expect(() => buildSettlementEvent({ ...common, functionalAmount: 1, valorContableAplicado: '1' }, 'COBRO_CXC', 'cobro_cxc_externo')).toThrow();
+	});
+
+	it('preserva la diferencia de cambio y origen propio de un pago externo', () => {
+		// En un pago la diferencia es aplicado − pagado: pagar menos que el valor
+		// contable es ganancia (positiva), pagar más es pérdida (negativa). Es el
+		// signo opuesto al del cobro, donde la diferencia es recibido − aplicado.
+		const evento = buildSettlementEvent({ ...common, valorContableAplicado: '37745.0000' }, 'PAGO_CXP', 'pago_cxp_externo');
+		expect(evento.origen).toEqual({ tipo: 'pago_cxp_externo', id: 'recon-1' });
+		expect(evento.auxiliares).toEqual({ diferenciaFx: '20' });
+		expect(buildSettlementEvent({ ...common, valorContableAplicado: '37705.0000' }, 'PAGO_CXP', 'pago_cxp_externo').auxiliares)
+			.toEqual({ diferenciaFx: '-20' });
+	});
+
+	it('rechaza usar origen de pago externo en otra familia de eventos', () => {
+		expect(() => buildSettlementEvent({ ...common, valorContableAplicado: '37725' }, 'COBRO_CXC', 'pago_cxp_externo'))
+			.toThrow('El origen externo solo corresponde a pagos de CxP');
+	});
+
+	it('exige importes funcionales verificables en pagos externos', () => {
+		expect(() => buildSettlementEvent(common, 'PAGO_CXP', 'pago_cxp_externo')).toThrow(
+			'El pago externo requiere importes funcionales verificables',
+		);
+		expect(() => buildSettlementEvent({ ...common, functionalAmount: '0', valorContableAplicado: '1' }, 'PAGO_CXP', 'pago_cxp_externo')).toThrow();
+	});
+
+	it('los wrappers externos fijan el origen sin recalcular la diferencia', () => {
+		expect(buildCobroCxcExternoEvent({ ...common, valorContableAplicado: '37705.0000' }).origen)
+			.toEqual({ tipo: 'cobro_cxc_externo', id: 'recon-1' });
+		expect(buildCobroCxcExternoEvent({ ...common, valorContableAplicado: '37705.0000' }).auxiliares)
+			.toEqual({ diferenciaFx: '20' });
+		expect(buildPagoCxpExternoEvent({ ...common, valorContableAplicado: '37745.0000' }).origen)
+			.toEqual({ tipo: 'pago_cxp_externo', id: 'recon-1' });
+		expect(buildPagoCxpExternoEvent({ ...common, valorContableAplicado: '37745.0000' }).auxiliares)
+			.toEqual({ diferenciaFx: '20' });
 	});
 });

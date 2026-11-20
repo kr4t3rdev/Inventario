@@ -74,6 +74,67 @@ describe('líneas del asiento de apertura', () => {
     expect(result).toMatchObject({ totalDebeFuncional: '0', totalHaberFuncional: '0', balanced: true });
   });
 
+  it('debita CxC y acredita Resultados acumulados por cada fila de CxC', () => {
+    const result = buildOpeningEntryLines({
+      cuentas: [capitalAccount], valued: [valued({})], monedaFuncional: 'CUP',
+      cuentasPorCobrar: [{
+        referenciaFila: 'cxc-1', moneda: 'CUP', montoOriginal: '500',
+        tasaCambio: '1', montoFuncional: '500', fxEvidenceFingerprint: 'b'.repeat(64),
+      }],
+    });
+    expect(result.lines).toHaveLength(4);
+    expect(result.lines[2]).toMatchObject({
+      lado: 'DEBE', rolCuenta: 'CXC_CLIENTES', numeroCuenta: 'cxc-1',
+      moneda: 'CUP', montoOriginal: '500', tasaCambio: 1, montoFuncional: '500',
+      fxEvidenceFingerprint: 'b'.repeat(64),
+    });
+    expect(result.lines[3]).toMatchObject({
+      lado: 'HABER', rolCuenta: 'RESULTADOS_ACUMULADOS', numeroCuenta: 'cxc-1', montoFuncional: '500',
+    });
+    expect(result).toMatchObject({ totalDebeFuncional: '100500', totalHaberFuncional: '100500', balanced: true });
+  });
+
+  it('debita Resultados acumulados y acredita CxP por cada fila de CxP en divisa', () => {
+    const result = buildOpeningEntryLines({
+      cuentas: [], valued: [], monedaFuncional: 'CUP',
+      cuentasPorPagar: [{
+        referenciaFila: 'cxp-1', moneda: 'USD', montoOriginal: '100',
+        tasaCambio: '24', montoFuncional: '2400', fxEvidenceFingerprint: 'c'.repeat(64),
+      }],
+    });
+    expect(result.lines).toHaveLength(2);
+    expect(result.lines[0]).toMatchObject({
+      lado: 'DEBE', rolCuenta: 'RESULTADOS_ACUMULADOS', numeroCuenta: 'cxp-1',
+      moneda: 'USD', montoOriginal: '100', tasaCambio: 24, montoFuncional: '2400',
+      fxEvidenceFingerprint: 'c'.repeat(64),
+    });
+    expect(result.lines[1]).toMatchObject({
+      lado: 'HABER', rolCuenta: 'CXP_PROVEEDORES', numeroCuenta: 'cxp-1', montoFuncional: '2400',
+    });
+    expect(result).toMatchObject({ totalDebeFuncional: '2400', totalHaberFuncional: '2400', balanced: true });
+  });
+
+  it('no mezcla los índices de banco, inventario y submayor', () => {
+    const result = buildOpeningEntryLines({
+      cuentas: [capitalAccount], valued: [valued({})], monedaFuncional: 'CUP',
+      initialInventoryTotalFuncional: '1000',
+      cuentasPorCobrar: [{
+        referenciaFila: 'cxc-1', moneda: 'CUP', montoOriginal: '500',
+        tasaCambio: '1', montoFuncional: '500', fxEvidenceFingerprint: null,
+      }],
+      cuentasPorPagar: [{
+        referenciaFila: 'cxp-1', moneda: 'CUP', montoOriginal: '300',
+        tasaCambio: '1', montoFuncional: '300', fxEvidenceFingerprint: null,
+      }],
+    });
+    // banco (2) + inventario (2) + CxC (2) + CxP (2) = 8 líneas en 4 índices distintos
+    expect(result.lines).toHaveLength(8);
+    const byIndex = new Map<number, number>();
+    result.lines.forEach((line) => byIndex.set(line.index, (byIndex.get(line.index) ?? 0) + 1));
+    expect([...byIndex.values()]).toEqual([2, 2, 2, 2]);
+    expect(result).toMatchObject({ totalDebeFuncional: '101800', totalHaberFuncional: '101800', balanced: true });
+  });
+
   it('no genera líneas para saldos cero', () => {
     const result = buildOpeningEntryLines({
       cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco QA', numeroCuenta: 'QA-003', tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],

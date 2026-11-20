@@ -1,4 +1,5 @@
 import { hashInitialInventoryEvidence } from './initial-inventory-evidence';
+import { verifyAppliedFxEvidence } from '../domain/fx-evidence';
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
@@ -135,6 +136,27 @@ export interface InitialInventoryDetail {
   fuentes: InitialInventoryDetailSource[];
 }
 
+export interface InitialSubledgerDetailRow {
+  referenciaFila: string;
+  clienteId?: string;
+  proveedorId?: string;
+  moneda: string;
+  montoOriginal: string;
+  montoFuncional: string;
+  fxEvidenceFingerprint: string | null;
+}
+
+export interface InitialSubledgerDetailSection {
+  count: number;
+  totalFuncional: string;
+  filas: InitialSubledgerDetailRow[];
+}
+
+export interface InitialSubledgerDetail {
+  cuentasPorCobrar: InitialSubledgerDetailSection;
+  cuentasPorPagar: InitialSubledgerDetailSection;
+}
+
 export interface InitializationAperturaInput {
   periodoId: string;
   tenantId: string;
@@ -158,6 +180,7 @@ export interface InitializationAperturaInput {
   totalDebeFuncional: string;
   totalHaberFuncional: string;
   inventario?: InitialInventoryDetail;
+  subledger?: InitialSubledgerDetail;
 }
 
 /**
@@ -197,6 +220,7 @@ export async function createInitializationApertura(
         fxFingerprints: input.fxFingerprints,
         cuentas: input.cuentas,
         inventario: input.inventario ?? null,
+        subledger: input.subledger ?? null,
         totalDebeFuncional: input.totalDebeFuncional,
         totalHaberFuncional: input.totalHaberFuncional,
       } as unknown as Prisma.InputJsonValue,
@@ -374,6 +398,106 @@ export async function verifyInitializationReplay(input: {
       }
     }
   }
+  const storedSubledger = stored.subledger as Record<string, unknown> | undefined;
+  if (storedSubledger !== undefined) {
+    if (!storedSubledger || typeof storedSubledger !== 'object' || Array.isArray(storedSubledger)) {
+      throw incompleteError();
+    }
+    const sections = [
+      { key: 'cuentasPorCobrar', model: 'receivable' },
+      { key: 'cuentasPorPagar', model: 'payable' },
+    ] as const;
+    for (const { key, model } of sections) {
+      const section = storedSubledger[key] as Record<string, unknown> | undefined;
+      if (!section || typeof section !== 'object' || Array.isArray(section) ||
+        typeof section.count !== 'number' || typeof section.totalFuncional !== 'string' ||
+        !Array.isArray(section.filas)) {
+        throw incompleteError();
+      }
+      const live = model === 'receivable'
+        ? await prisma.cuentaPorCobrar.findMany({
+          where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId },
+          select: {
+            referenciaInicial: true, clienteId: true, monedaOriginal: true, monedaFuncional: true,
+            montoDeuda: true, montoDeudaFuncional: true, tasaCambio: true, rateEffectiveAt: true,
+            fxProvenanceKind: true, fxProvenanceSource: true, fxCatalogRateId: true,
+            fxEvidenceFingerprint: true, fxEvidenceVersion: true,
+          },
+        })
+        : await prisma.cuentaPorPagar.findMany({
+          where: { tenantId: input.tenantId, inicializacionId: row.inicializacionId },
+          select: {
+            referenciaInicial: true, proveedorId: true, monedaOriginal: true, monedaFuncional: true,
+            montoDeuda: true, montoDeudaFuncional: true, tasaCambio: true, rateEffectiveAt: true,
+            fxProvenanceKind: true, fxProvenanceSource: true, fxCatalogRateId: true,
+            fxEvidenceFingerprint: true, fxEvidenceVersion: true,
+          },
+        });
+      const total = live.reduce(
+        (sum, item) => sum.plus(new Prisma.Decimal(item.montoDeudaFuncional?.toString() ?? 0)),
+        new Prisma.Decimal(0),
+      );
+      if (live.length !== section.count ||
+        !total.equals(new Prisma.Decimal(String(section.totalFuncional)))) {
+        throw incompleteError();
+      }
+      // La identidad de cada fila (tercero, moneda, montos, huella FX) se
+      // ancla en el detalle; el saldo vivo no se compara: un cobro o pago
+      // posterior no invalida el replay.
+      const detalleSubledger = detalle.subledger as
+        | { cuentasPorCobrar?: unknown; cuentasPorPagar?: unknown }
+        | null
+        | undefined;
+      const detalleSection = detalleSubledger?.[key] as
+        | { count?: unknown; totalFuncional?: unknown; filas?: unknown }
+        | null
+        | undefined;
+      if (detalleSection != null) {
+        if (typeof detalleSection !== 'object' || Array.isArray(detalleSection) ||
+          typeof detalleSection.count !== 'number' ||
+          typeof detalleSection.totalFuncional !== 'string' ||
+          !Array.isArray(detalleSection.filas)) {
+          throw incompleteError();
+        }
+        const detalleFilas = detalleSection.filas as Array<Record<string, unknown>>;
+        if (detalleFilas.length !== detalleSection.count || live.length !== detalleSection.count ||
+          !total.equals(new Prisma.Decimal(String(detalleSection.totalFuncional)))) {
+          throw incompleteError();
+        }
+        const liveByReferencia = new Map(live.map((item) => [item.referenciaInicial, item]));
+        for (const fila of detalleFilas) {
+          if (typeof fila.referenciaFila !== 'string') throw incompleteError();
+          const item = liveByReferencia.get(fila.referenciaFila);
+          if (!item) throw incompleteError();
+          const tercero = model === 'receivable'
+            ? (item as { clienteId: string }).clienteId
+            : (item as { proveedorId: string }).proveedorId;
+          const terceroDetalle = model === 'receivable' ? fila.clienteId : fila.proveedorId;
+          if (tercero !== terceroDetalle || item.monedaOriginal !== fila.moneda ||
+            !decimalEquals(item.montoDeuda, fila.montoOriginal) ||
+            !decimalEquals(item.montoDeudaFuncional, fila.montoFuncional) ||
+            item.fxEvidenceFingerprint !== fila.fxEvidenceFingerprint) {
+            throw incompleteError();
+          }
+          if (!verifyAppliedFxEvidence({
+            originalAmount: Number(item.montoDeuda),
+            originalCurrency: item.monedaOriginal ?? '',
+            functionalCurrency: item.monedaFuncional ?? '',
+            convertedAmount: Number(item.montoDeudaFuncional ?? 0),
+            exchangeRate: item.tasaCambio === null ? null : Number(item.tasaCambio),
+            rateEffectiveAt: item.rateEffectiveAt,
+            fxProvenanceKind: item.fxProvenanceKind,
+            fxProvenanceSource: item.fxProvenanceSource,
+            fxCatalogRateId: item.fxCatalogRateId,
+            fxEvidenceFingerprint: item.fxEvidenceFingerprint,
+            fxEvidenceVersion: item.fxEvidenceVersion,
+          })) {
+            throw incompleteError();
+          }
+        }
+      }
+    }
+  }
   const injectedByCurrency = new Map<string, Prisma.Decimal>();
   for (const ref of stored.asientos as OpeningAsientoRef[]) {
     if (ref.asientoId) {
@@ -404,6 +528,20 @@ export async function verifyInitializationReplay(input: {
       monedaFuncional,
       current.add(new Prisma.Decimal(String((storedInventory as Record<string, unknown>).totalFuncional))),
     );
+  }
+  if (storedSubledger !== undefined) {
+    // Cada fila de submayor aporta una pierna DEBE por su importe original:
+    // CxC debita CxC y CxP debita Resultados acumulados, ambas en la moneda
+    // de la fila. Sin este ajuste el replay rechazaría cualquier carga con
+    // submayor por exceso del DEBE contabilizado frente al detalle.
+    for (const key of ['cuentasPorCobrar', 'cuentasPorPagar'] as const) {
+      const section = storedSubledger[key] as { filas?: Array<Record<string, unknown>> } | undefined;
+      for (const fila of section?.filas ?? []) {
+        const moneda = String(fila.moneda);
+        const current = storedByCurrency.get(moneda) ?? new Prisma.Decimal(0);
+        storedByCurrency.set(moneda, current.add(new Prisma.Decimal(String(fila.montoOriginal))));
+      }
+    }
   }
   for (const [moneda, total] of storedByCurrency) {
     const posted = (postedByCurrency.get(moneda) ?? new Prisma.Decimal(0))

@@ -25,8 +25,12 @@ vi.mock('@/lib/services/fifo-allocation', () => ({ getCostoFifoVentaValorado }))
 
 import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { buildFunctionalValuation } from '@/features/contabilidad-formal/lib/functional-valuation';
 import { cashPaymentAllocationFingerprint } from '../../lib/cash-payment-allocation-fingerprint';
-import { REPLAY_COLLECTOR_QUERY_IDS } from '../replay-source-manifest';
+import {
+	REPLAY_COLLECTOR_QUERY_IDS,
+	buildReplayManifestEvidence,
+} from '../replay-source-manifest';
 import { recolectarCandidatos } from '../replay-source-collector';
 
 describe('recolectarCandidatos', () => {
@@ -47,6 +51,8 @@ describe('recolectarCandidatos', () => {
 			reconciliacionServicio: { findMany: vi.fn().mockResolvedValue([]) },
 			factura: { findMany: vi.fn().mockResolvedValue([]) },
 			cuentaPorCobrar: { findMany: vi.fn().mockResolvedValue([]) },
+			cuentaPorPagar: { findMany: vi.fn().mockResolvedValue([]) },
+			pagoCuentaPorPagar: { findMany: vi.fn().mockResolvedValue([]) },
 			cuentaBancaria: {
 				findMany: vi.fn().mockResolvedValue([
 					{ cuentaId: 'cuenta-1', tipoCuenta: 'EFECTIVO' },
@@ -1746,5 +1752,160 @@ describe('recolectarCandidatos', () => {
 		const candidatos = await recolectarCandidatos('tenant-1', client as never);
 
 		expect(candidatos).toHaveLength(0);
+	});
+
+	it('reconstruye el cobro parcial de una CxC inicial con su diferencia FX', async () => {
+		const fecha = new Date('2026-11-10T00:00:00Z');
+		const valuation = buildFunctionalValuation({
+			monto: 40, moneda: 'USD', functionalCurrency: 'CUP', tasaCambio: 25,
+			fechaOperacion: fecha, fechaTasa: fecha, fxCatalogRateId: 'tasa-1',
+			source: 'initial-subledger-settlement',
+		});
+		const client = crearClient({
+			cuentaPorCobrar: { findMany: vi.fn().mockResolvedValue([{
+				id: 'cxc-1', facturaId: null, estado: 'PARCIAL', inicializacionId: 'init-1',
+				montoDeuda: new Prisma.Decimal(100), montoDeudaFuncional: new Prisma.Decimal(2400),
+				montoPagado: new Prisma.Decimal(40), montoPagadoFuncional: new Prisma.Decimal(960),
+				monedaOriginal: 'USD', monedaFuncional: 'CUP',
+			}]) },
+			reconciliacionVenta: { findMany: vi.fn().mockResolvedValue([{
+				reconciliacionId: 'rec-1', ventaId: null, cuentaPorCobrarId: 'cxc-1',
+				cuentaId: 'cuenta-1', monto: new Prisma.Decimal(40), moneda: 'USD',
+				montoConvertido: new Prisma.Decimal(1000), functionalCurrency: 'CUP',
+				tasaCambio: new Prisma.Decimal(25),
+				fxEvidenceFingerprint: valuation.fxEvidenceFingerprint,
+				rateEffectiveAt: fecha, fxProvenanceKind: 'MANUAL_GOVERNED',
+				fxProvenanceSource: 'initial-subledger-settlement',
+				fxCatalogRateId: 'tasa-1', fxEvidenceVersion: 1,
+				fechaReconciliacion: fecha, observaciones: null, idTransferencia: null,
+				deudaCashId: null, prestamoCashId: null, idempotencyKey: 'cobro-1',
+				tipoReconciliacion: null, cashInterestAllocation: null, venta: null,
+				createdAt: new Date('2026-11-10T10:00:00Z'),
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		const [candidato] = candidatos;
+		expect(candidato.origenTipo).toBe('cobro_cxc_externo');
+		expect(candidato.origenId).toBe('rec-1');
+		expect(candidato.evento.tipo).toBe('COBRO_CXC');
+		expect(String(candidato.evento.monto)).toBe('40');
+		expect(String(candidato.evento.montoFuncional)).toBe('1000.0000');
+		// Recibido 1000 − aplicado 960 (40/100 de 2400).
+		expect(candidato.evento.auxiliares?.diferenciaFx).toBe('40');
+		expect(candidato.causaOmision).toBeUndefined();
+	});
+
+	it('reconstruye el pago parcial de una CxP inicial en misma moneda', async () => {
+		const fecha = new Date('2026-11-10T00:00:00Z');
+		const valuation = buildFunctionalValuation({
+			monto: 200, moneda: 'CUP', functionalCurrency: 'CUP', tasaCambio: null,
+			fechaOperacion: fecha, fechaTasa: null, fxCatalogRateId: null,
+			source: 'initial-subledger-settlement',
+		});
+		const client = crearClient({
+			cuentaPorPagar: { findMany: vi.fn().mockResolvedValue([{
+				cuentaPorPagarId: 'cxp-1', inicializacionId: 'init-1',
+				montoDeuda: new Prisma.Decimal(500), montoDeudaFuncional: new Prisma.Decimal(500),
+				montoPagado: new Prisma.Decimal(200), montoPagadoFuncional: new Prisma.Decimal(200),
+				saldoPendiente: new Prisma.Decimal(300), moneda: 'CUP', monedaFuncional: 'CUP',
+				estado: 'PARCIAL',
+			}]) },
+			pagoCuentaPorPagar: { findMany: vi.fn().mockResolvedValue([{
+				pagoCuentaPorPagarId: 'pago-1', cuentaPorPagarId: 'cxp-1',
+				cuentaId: 'cuenta-1', monto: new Prisma.Decimal(200), moneda: 'CUP',
+				montoFuncional: new Prisma.Decimal(200), functionalCurrency: 'CUP',
+				tasaCambio: new Prisma.Decimal(1), rateEffectiveAt: null,
+				fxProvenanceKind: 'SAME_CURRENCY',
+				fxProvenanceSource: 'initial-subledger-settlement',
+				fxCatalogRateId: null, fxEvidenceFingerprint: valuation.fxEvidenceFingerprint,
+				fxEvidenceVersion: 1, fechaPago: fecha, numeroTransaccion: 'pago-1',
+				observaciones: null, createdAt: new Date('2026-11-10T10:00:00Z'),
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		const [candidato] = candidatos;
+		expect(candidato.origenTipo).toBe('pago_cxp_externo');
+		expect(candidato.origenId).toBe('pago-1');
+		expect(candidato.evento.tipo).toBe('PAGO_CXP');
+		expect(String(candidato.evento.monto)).toBe('200');
+		expect(String(candidato.evento.montoFuncional)).toBe('200.0000');
+		expect(candidato.evento.medioCobro).toBe('CAJA');
+		expect(candidato.evento.auxiliares?.diferenciaFx).toBe('0');
+		expect(candidato.causaOmision).toBeUndefined();
+	});
+
+	it('omite el cobro externo cuando la CxC no es inicial', async () => {
+		const fecha = new Date('2026-11-10T00:00:00Z');
+		const client = crearClient({
+			cuentaPorCobrar: { findMany: vi.fn().mockResolvedValue([{
+				id: 'cxc-1', facturaId: 'fac-1', estado: 'PENDIENTE', inicializacionId: null,
+				montoDeuda: new Prisma.Decimal(100), montoDeudaFuncional: new Prisma.Decimal(100),
+				montoPagado: new Prisma.Decimal(0), montoPagadoFuncional: new Prisma.Decimal(0),
+				monedaOriginal: 'CUP', monedaFuncional: 'CUP',
+			}]) },
+			reconciliacionVenta: { findMany: vi.fn().mockResolvedValue([{
+				reconciliacionId: 'rec-1', ventaId: null, cuentaPorCobrarId: 'cxc-1',
+				cuentaId: 'cuenta-1', monto: new Prisma.Decimal(40), moneda: 'CUP',
+				montoConvertido: new Prisma.Decimal(40), functionalCurrency: 'CUP',
+				tasaCambio: new Prisma.Decimal(1), fxEvidenceFingerprint: 'fp-1',
+				rateEffectiveAt: null, fxProvenanceKind: 'SAME_CURRENCY',
+				fxProvenanceSource: 'initial-subledger-settlement',
+				fxCatalogRateId: null, fxEvidenceVersion: 1,
+				fechaReconciliacion: fecha, observaciones: null, idTransferencia: null,
+				deudaCashId: null, prestamoCashId: null, idempotencyKey: 'cobro-1',
+				tipoReconciliacion: null, cashInterestAllocation: null, venta: null,
+				createdAt: new Date('2026-11-10T10:00:00Z'),
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+
+		expect(candidatos).toHaveLength(1);
+		expect(candidatos[0].origenTipo).toBe('cobro_cxc_externo');
+		expect(candidatos[0].causaOmision).toBe('CUENTA_INICIAL_NO_VERIFICABLE');
+	});
+
+	it('clasifica los orígenes externos en el manifiesto sin dejar sin clasificar', async () => {
+		const fecha = new Date('2026-11-10T00:00:00Z');
+		const valuation = buildFunctionalValuation({
+			monto: 40, moneda: 'USD', functionalCurrency: 'CUP', tasaCambio: 25,
+			fechaOperacion: fecha, fechaTasa: fecha, fxCatalogRateId: 'tasa-1',
+			source: 'initial-subledger-settlement',
+		});
+		const client = crearClient({
+			cuentaPorCobrar: { findMany: vi.fn().mockResolvedValue([{
+				id: 'cxc-1', facturaId: null, estado: 'PARCIAL', inicializacionId: 'init-1',
+				montoDeuda: new Prisma.Decimal(100), montoDeudaFuncional: new Prisma.Decimal(2400),
+				montoPagado: new Prisma.Decimal(40), montoPagadoFuncional: new Prisma.Decimal(960),
+				monedaOriginal: 'USD', monedaFuncional: 'CUP',
+			}]) },
+			reconciliacionVenta: { findMany: vi.fn().mockResolvedValue([{
+				reconciliacionId: 'rec-1', ventaId: null, cuentaPorCobrarId: 'cxc-1',
+				cuentaId: 'cuenta-1', monto: new Prisma.Decimal(40), moneda: 'USD',
+				montoConvertido: new Prisma.Decimal(1000), functionalCurrency: 'CUP',
+				tasaCambio: new Prisma.Decimal(25),
+				fxEvidenceFingerprint: valuation.fxEvidenceFingerprint,
+				rateEffectiveAt: fecha, fxProvenanceKind: 'MANUAL_GOVERNED',
+				fxProvenanceSource: 'initial-subledger-settlement',
+				fxCatalogRateId: 'tasa-1', fxEvidenceVersion: 1,
+				fechaReconciliacion: fecha, observaciones: null, idTransferencia: null,
+				deudaCashId: null, prestamoCashId: null, idempotencyKey: 'cobro-1',
+				tipoReconciliacion: null, cashInterestAllocation: null, venta: null,
+				createdAt: new Date('2026-11-10T10:00:00Z'),
+			}]) },
+		});
+
+		const candidatos = await recolectarCandidatos('tenant-1', client as never);
+		const evidencia = buildReplayManifestEvidence(
+			candidatos.map(({ evento }) => ({ tipo: evento.tipo, origenTipo: evento.origen.tipo })),
+			[...REPLAY_COLLECTOR_QUERY_IDS],
+		);
+		expect(evidencia.unclassifiedCount).toBe(0);
 	});
 });

@@ -26,6 +26,9 @@ import { buildOpeningEntryLines } from './services/initialization-opening-lines'
 import { ensureCutoffPeriod } from './services/initialization-period';
 import { persistInitialInventory } from './services/initial-inventory-persistence';
 import { reconcileInitialInventory } from './services/initial-inventory-reconciliation';
+import { persistInitialPayables } from './services/initial-payables-persistence';
+import { persistInitialReceivables } from './services/initial-receivables-persistence';
+import { reconcileInitialSubledgers } from './services/initial-subledger-reconciliation';
 import {
   createInitializationApertura,
   parseCutoffDate,
@@ -324,11 +327,31 @@ export const initializeBankAccountsAction = withAction(
           inventario: parsed.inventario,
         })
         : { count: 0, totalFuncional: '0', fuentes: [], filas: [] };
+      const receivables = parsed.cuentasPorCobrar?.length
+        ? await persistInitialReceivables(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          tasas: parsed.tasas,
+          cuentas: parsed.cuentasPorCobrar,
+        })
+        : { count: 0, totalFuncional: '0', filas: [] };
+      const payables = parsed.cuentasPorPagar?.length
+        ? await persistInitialPayables(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          tasas: parsed.tasas,
+          cuentas: parsed.cuentasPorPagar,
+        })
+        : { count: 0, totalFuncional: '0', filas: [] };
       const entryLines = buildOpeningEntryLines({
         cuentas: parsed.cuentas,
         valued,
         monedaFuncional: functionalCurrency,
         initialInventoryTotalFuncional: inventory.totalFuncional,
+        cuentasPorCobrar: receivables.filas,
+        cuentasPorPagar: payables.filas,
       });
       const periodo = await ensureCutoffPeriod(tx, { tenantId, fechaCorte: parsed.fechaCorte, actor: user.userId });
       const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
@@ -533,6 +556,57 @@ export const initializeBankAccountsAction = withAction(
           }
         }
       }
+      // El submayor valora por fila: el total funcional contabilizado debe
+      // coincidir con el valorado, y la conciliación compara los importes
+      // originales por auxiliar y moneda contra las piernas del asiento.
+      if (receivables.count > 0 || payables.count > 0) {
+        const postedReceivablesTotal = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'CXC_CLIENTES' && line.lado === 'DEBE')
+          .reduce((total, line) => total.add(new Prisma.Decimal(line.montoFuncional)), new Prisma.Decimal(0));
+        const postedPayablesTotal = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'CXP_PROVEEDORES' && line.lado === 'HABER')
+          .reduce((total, line) => total.add(new Prisma.Decimal(line.montoFuncional)), new Prisma.Decimal(0));
+        if (!openingEntry ||
+          !postedReceivablesTotal.equals(new Prisma.Decimal(receivables.totalFuncional)) ||
+          !postedPayablesTotal.equals(new Prisma.Decimal(payables.totalFuncional))) {
+          throw new ActionError(
+            'La valoración del submayor no coincide con las líneas del asiento de apertura',
+            'INITIALIZATION_INCOMPLETE',
+          );
+        }
+        const postedLines = openingEntry.postedLines;
+        const cxcAccountId = postedLines.find((line) => line.rolCuenta === 'CXC_CLIENTES')?.cuentaContableId;
+        const cxpAccountId = postedLines.find((line) => line.rolCuenta === 'CXP_PROVEEDORES')?.cuentaContableId;
+        if ((receivables.count > 0 && !cxcAccountId) || (payables.count > 0 && !cxpAccountId)) {
+          throw new ActionError('El submayor no coincide con las líneas de apertura', 'INITIALIZATION_INCOMPLETE');
+        }
+        try {
+          reconcileInitialSubledgers(
+            [
+              ...receivables.filas.map((fila) => ({
+                tipo: 'CXC' as const, cuentaContableId: cxcAccountId as string,
+                moneda: fila.moneda, saldo: fila.montoOriginal,
+              })),
+              ...payables.filas.map((fila) => ({
+                tipo: 'CXP' as const, cuentaContableId: cxpAccountId as string,
+                moneda: fila.moneda, saldo: fila.montoOriginal,
+              })),
+            ],
+            [
+              ...postedLines.filter((line) => line.rolCuenta === 'CXC_CLIENTES').map((line) => ({
+                tipo: 'CXC' as const, cuentaContableId: line.cuentaContableId,
+                moneda: line.moneda, debito: line.montoOriginal, credito: '0',
+              })),
+              ...postedLines.filter((line) => line.rolCuenta === 'CXP_PROVEEDORES').map((line) => ({
+                tipo: 'CXP' as const, cuentaContableId: line.cuentaContableId,
+                moneda: line.moneda, debito: '0', credito: line.montoOriginal,
+              })),
+            ],
+          );
+        } catch {
+          throw new ActionError('El submayor no coincide con las líneas de apertura', 'INITIALIZATION_INCOMPLETE');
+        }
+      }
       const filasByReferencia = new Map(inventory.filas.map((fila) => [fila.referenciaFila, fila]));
       const detalleInventario = {
         count: inventory.count,
@@ -552,13 +626,49 @@ export const initializeBankAccountsAction = withAction(
           };
         }),
       };
+      const detalleSubledger = {
+        cuentasPorCobrar: {
+          count: receivables.count,
+          totalFuncional: receivables.totalFuncional,
+          filas: receivables.filas.map((fila) => {
+            const row = (parsed.cuentasPorCobrar ?? []).find((r) => r.referenciaFila === fila.referenciaFila);
+            return {
+              referenciaFila: fila.referenciaFila,
+              clienteId: row?.clienteId ?? '',
+              moneda: fila.moneda,
+              montoOriginal: fila.montoOriginal,
+              montoFuncional: fila.montoFuncional,
+              fxEvidenceFingerprint: fila.fxEvidenceFingerprint,
+            };
+          }),
+        },
+        cuentasPorPagar: {
+          count: payables.count,
+          totalFuncional: payables.totalFuncional,
+          filas: payables.filas.map((fila) => {
+            const row = (parsed.cuentasPorPagar ?? []).find((r) => r.referenciaFila === fila.referenciaFila);
+            return {
+              referenciaFila: fila.referenciaFila,
+              proveedorId: row?.proveedorId ?? '',
+              moneda: fila.moneda,
+              montoOriginal: fila.montoOriginal,
+              montoFuncional: fila.montoFuncional,
+              fxEvidenceFingerprint: fila.fxEvidenceFingerprint,
+            };
+          }),
+        },
+      };
       await createInitializationApertura(tx, {
         periodoId: periodo.periodoId, tenantId, actor: user.userId,
         idempotencyKey: parsed.idempotencyKey, payloadHash,
         fechaCorte: parsed.fechaCorte, monedaFuncional: functionalCurrency,
         asientoId: openingEntry?.asientoId ?? null, asientos,
         lines: openingEntry?.postedLines ?? [],
-        fxFingerprints: [...new Set(valued.map((v) => v.fxEvidenceFingerprint).filter((f): f is string => f !== null))],
+        fxFingerprints: [...new Set([
+          ...valued.map((v) => v.fxEvidenceFingerprint),
+          ...receivables.filas.map((f) => f.fxEvidenceFingerprint),
+          ...payables.filas.map((f) => f.fxEvidenceFingerprint),
+        ].filter((f): f is string => f !== null))],
         cuentas: createdAccounts.map((cuenta, i) => ({
           cuentaBancariaId: cuenta.cuentaId,
           numeroCuenta: parsed.cuentas[i].numeroCuenta,
@@ -568,6 +678,7 @@ export const initializeBankAccountsAction = withAction(
           cuentaContableInicialId: cuenta.cuentaContableInicialId,
         })),
         inventario: detalleInventario,
+        subledger: detalleSubledger,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -582,6 +693,7 @@ export const initializeBankAccountsAction = withAction(
         fechaCorte: parsed.fechaCorte,
         monedaFuncional: functionalCurrency,
         inventario: inventory,
+        subledger: { cuentasPorCobrar: receivables, cuentasPorPagar: payables },
       };
     });
 

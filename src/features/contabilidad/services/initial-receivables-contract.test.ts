@@ -26,6 +26,17 @@ describe('contrato de cuentas por cobrar iniciales', () => {
     },
   );
 
+  it('acepta una tasa de cambio por fila sin normalizarla', () => {
+    expect(initialReceivablesContract.parse({ cuentas: [{ ...row, moneda: 'USD', tasaCambio: '24.5000' }] }).cuentas[0])
+      .toMatchObject({ moneda: 'USD', tasaCambio: '24.5000' });
+  });
+
+  it.each(['0', '0.0000', '-1', '1e3', '1.000000001', 'NaN'])(
+    'rechaza la tasa de cambio no positiva o fuera de precisión %s', (tasaCambio) => {
+      expect(initialReceivablesContract.safeParse({ cuentas: [{ ...row, tasaCambio }] }).success).toBe(false);
+    },
+  );
+
   it('rechaza claves de fila duplicadas después de normalizar espacios', () => {
     expect(initialReceivablesContract.safeParse({ cuentas: [row, { ...row, referenciaFila: ' row-1 ', clienteId: 'cliente-2' }] }).success).toBe(false);
   });

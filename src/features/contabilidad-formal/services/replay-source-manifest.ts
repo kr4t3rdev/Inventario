@@ -11,7 +11,7 @@ export const REPLAY_COLLECTOR_QUERY_IDS = [
 	'compraServicio', 'ventaServicios', 'anticipoMovimiento', 'devolucionVenta', 'devolucionCompra',
 	'ajusteBancario', 'inyeccionCapital', 'deudaCash', 'prestamoCash', 'ajusteInventarioMerma',
 	'asientoMerma', 'cuentaRolTenantMerma', 'fxEvidenceMermaReversada', 'tenantAccountingPolicy',
-	'ventaConCosto', 'ordenProduccion',
+	'ventaConCosto', 'ordenProduccion', 'pagoCuentaPorPagar', 'cuentaPorPagar',
 ] as const;
 export type ReplayCollectorQueryId = (typeof REPLAY_COLLECTOR_QUERY_IDS)[number];
 
@@ -29,7 +29,7 @@ type ReplayManifestEntry =
 export const REPLAY_SOURCE_MANIFEST = {
 	VENTA_CONTADO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_venta'], collectorQueryIds: ['reconciliacionVenta', 'factura', 'cuentaPorCobrar', 'cuentaBancaria'] },
 	VENTA_CREDITO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['factura'], collectorQueryIds: ['factura', 'cuentaPorCobrar'] },
-	COBRO_CXC: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_venta'], collectorQueryIds: ['reconciliacionVenta', 'factura', 'cuentaPorCobrar', 'cuentaBancaria'] },
+	COBRO_CXC: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_venta', 'cobro_cxc_externo'], collectorQueryIds: ['reconciliacionVenta', 'factura', 'cuentaPorCobrar', 'cuentaBancaria'] },
 	COSTO_VENTA_DEVENGADO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['venta_costo'], collectorQueryIds: ['ventaConCosto', 'tenantAccountingPolicy'] },
 	DEVOLUCION_VENTA: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['devolucion_venta'], collectorQueryIds: ['devolucionVenta', 'tenantAccountingPolicy'] },
 	DEVOLUCION_COMPRA: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['devolucion_compra'], collectorQueryIds: ['devolucionCompra', 'tenantAccountingPolicy'] },
@@ -38,7 +38,7 @@ export const REPLAY_SOURCE_MANIFEST = {
 	COBRO_SERVICIO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_servicio'], collectorQueryIds: ['reconciliacionServicio', 'cuentaBancaria'] },
 	COMPRA_CONTADO: { disposition: 'template-only', originTypes: [] },
 	COMPRA_CREDITO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['compra_documento'], collectorQueryIds: ['compraDocumento'] },
-	PAGO_CXP: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_gasto'], collectorQueryIds: ['reconciliacionGasto'] },
+	PAGO_CXP: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['reconciliacion_gasto', 'pago_cxp_externo'], collectorQueryIds: ['reconciliacionGasto', 'pagoCuentaPorPagar', 'cuentaPorPagar'] },
 	GASTO_CONTADO: { disposition: 'template-only', originTypes: [] },
 	GASTO_CREDITO: { disposition: 'replay', collectorId: REPLAY_SOURCE_COLLECTOR_ID, originTypes: ['compra_servicio'], collectorQueryIds: ['compraServicio'] },
 	PAGO_GASTO_CREDITO: { disposition: 'template-only', originTypes: [] },

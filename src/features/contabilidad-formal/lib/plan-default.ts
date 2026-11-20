@@ -517,13 +517,13 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 		{
 			lado: 'DEBE',
 			rol: 'CXP_PROVEEDORES',
-			regla: 'TOTAL_MENOS_DIFERENCIA',
+			regla: 'TOTAL_MAS_DIFERENCIA',
 			condicion: 'FX_POSITIVA',
 		},
 		{
 			lado: 'DEBE',
 			rol: 'CXP_PROVEEDORES',
-			regla: 'TOTAL_MAS_DIFERENCIA',
+			regla: 'TOTAL_MENOS_DIFERENCIA',
 			condicion: 'FX_NEGATIVA',
 		},
 		{

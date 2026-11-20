@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { initialInventoryRowContract } from './initial-inventory-contract';
+import { initialPayableRow } from './initial-payables-contract';
+import { initialReceivableRow } from './initial-receivables-contract';
 
 /**
  * @description Normaliza un importe decimal validado sin convertirlo a punto flotante.
@@ -107,6 +109,8 @@ export const initializationContractBase = z.object({
   tasas: tasas.optional(),
   cuentas: z.array(account).min(1).max(100),
   inventario: z.array(initialInventoryRowContract).max(10000).optional(),
+  cuentasPorCobrar: z.array(initialReceivableRow).max(1000).optional(),
+  cuentasPorPagar: z.array(initialPayableRow).max(1000).optional(),
 }).strict();
 
 export const initializationContract = initializationContractBase.superRefine((value, context) => {
@@ -162,6 +166,33 @@ export const initializationContract = initializationContractBase.superRefine((va
     }
     inventoryKeys.add(key);
   });
+  const subledgerSections = [
+    { rows: value.cuentasPorCobrar, section: 'cuentasPorCobrar' },
+    { rows: value.cuentasPorPagar, section: 'cuentasPorPagar' },
+  ] as const;
+  subledgerSections.forEach(({ rows, section }) => {
+    const references = new Set<string>();
+    rows?.forEach((item, index) => {
+      // El saldo es siempre positivo: la divisa exige tasa declarada en la
+      // fila o en la tabla de tasas, sin exención de importe cero.
+      if (item.moneda !== value.monedaFuncional
+        && item.tasaCambio === undefined && value.tasas?.[item.moneda] === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [section, index, 'tasaCambio'],
+          message: `Falta la tasa de cambio para ${item.moneda}`,
+        });
+      }
+      if (references.has(item.referenciaFila)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [section, index, 'referenciaFila'],
+          message: 'La referencia de fila está repetida',
+        });
+      }
+      references.add(item.referenciaFila);
+    });
+  });
 });
 
 export type InitializationInput = z.input<typeof initializationContract>;
@@ -178,6 +209,8 @@ export const initializationDraftContract = z.object({
   tasas: tasas.optional(),
   cuentas: z.array(accountBase.deepPartial().strict()).max(100).optional(),
   inventario: z.array(initialInventoryRowContract.deepPartial()).max(10000).optional(),
+  cuentasPorCobrar: z.array(initialReceivableRow.deepPartial()).max(1000).optional(),
+  cuentasPorPagar: z.array(initialPayableRow.deepPartial()).max(1000).optional(),
 }).strict().superRefine((value, context) => {
   const seen = new Set<string>();
   value.cuentas?.forEach((item, index) => {

@@ -151,6 +151,72 @@ describe('contrato de inicialización de empresa nueva', () => {
     }).success).toBe(true);
   });
 
+  it('transporta CxC/CxP externas en moneda funcional sin exigir tasas', () => {
+    const result = initializationContract.parse({
+      ...input,
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'cup', saldo: '0500.00' }],
+      cuentasPorPagar: [{ referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'CUP', saldo: '300' }],
+    });
+    expect(result.cuentasPorCobrar).toEqual([{ referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'CUP', saldo: '500' }]);
+    expect(result.cuentasPorPagar).toEqual([{ referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'CUP', saldo: '300' }]);
+  });
+
+  it('exige tasa para CxC/CxP en moneda extranjera', () => {
+    expect(initializationContract.safeParse({
+      ...input,
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'USD', saldo: '100' }],
+    }).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...input,
+      cuentasPorPagar: [{ referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'USD', saldo: '100' }],
+    }).success).toBe(false);
+  });
+
+  it('acepta tasa de la tabla tasas para CxC/CxP en moneda extranjera', () => {
+    const result = initializationContract.parse({
+      ...input, tasas: { USD: '24' },
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'USD', saldo: '100' }],
+      cuentasPorPagar: [{ referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'USD', saldo: '100' }],
+    });
+    expect(result.cuentasPorCobrar).toHaveLength(1);
+    expect(result.cuentasPorPagar).toHaveLength(1);
+  });
+
+  it('acepta tasa de cambio por fila para CxC/CxP en moneda extranjera', () => {
+    const result = initializationContract.parse({
+      ...input,
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'USD', saldo: '100', tasaCambio: '24' }],
+      cuentasPorPagar: [{ referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'USD', saldo: '100', tasaCambio: '24' }],
+    });
+    expect(result.cuentasPorCobrar?.[0].tasaCambio).toBe('24');
+    expect(result.cuentasPorPagar?.[0].tasaCambio).toBe('24');
+  });
+
+  it('rechaza referencia de fila duplicada dentro de CxC y dentro de CxP', () => {
+    expect(initializationContract.safeParse({
+      ...input,
+      cuentasPorCobrar: [
+        { referenciaFila: 'cxc-1', clienteId: 'cliente-1', moneda: 'CUP', saldo: '100' },
+        { referenciaFila: ' cxc-1 ', clienteId: 'cliente-2', moneda: 'CUP', saldo: '50' },
+      ],
+    }).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...input,
+      cuentasPorPagar: [
+        { referenciaFila: 'cxp-1', proveedorId: 'proveedor-1', moneda: 'CUP', saldo: '100' },
+        { referenciaFila: ' cxp-1 ', proveedorId: 'proveedor-2', moneda: 'CUP', saldo: '50' },
+      ],
+    }).success).toBe(false);
+  });
+
+  it('permite guardar un borrador parcial con CxC/CxP', () => {
+    const result = initializationDraftContract.parse({
+      idempotencyKey: 'draft-1', fechaCorte: '2026-11-01', monedaFuncional: 'CUP',
+      cuentasPorCobrar: [{ referenciaFila: 'cxc-1', clienteId: 'cliente-1' }],
+    });
+    expect(result.cuentasPorCobrar).toHaveLength(1);
+  });
+
   it('permite guardar un borrador parcial de inventario', () => {
     expect(initializationDraftContract.safeParse({
       idempotencyKey: 'draft-inventory',

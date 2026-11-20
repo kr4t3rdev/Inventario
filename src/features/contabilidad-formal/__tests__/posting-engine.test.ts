@@ -598,6 +598,50 @@ describe('postEvento — generación de líneas', () => {
 		expect(String(lineas[1].haber)).toBe('1.0001');
 	});
 
+	it('PAGO_CXP con diferencia negativa cuadra: CxP por el aplicado y gasto por la diferencia', async () => {
+		// Pérdida: aplicado 960, pagado 1000 → diferencia −40.
+		const resultado = await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'PAGO_CXP',
+			monto: 40,
+			moneda: 'USD',
+			tasaCambio: 25,
+			montoFuncional: 1000,
+			fxEvidenceFingerprint: 'fp-1',
+			auxiliares: { diferenciaFx: '-40' },
+			origen: { tipo: 'pago_cxp_externo', id: 'pago-1' },
+		}));
+		expect(resultado.estado).toBe('CONTABILIZADO');
+		expect(lineasDe(fixture.crearAsiento).map((l) => ({
+			cuentaId: l.cuentaId, debe: String(l.debe), haber: String(l.haber),
+		}))).toEqual([
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['CXP_PROVEEDORES']}`, debe: '960', haber: '0' },
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['DIFERENCIA_CAMBIARIA_GASTO']}`, debe: '40', haber: '0' },
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['CAJA_PRINCIPAL']}`, debe: '0', haber: '1000' },
+		]);
+	});
+
+	it('PAGO_CXP con diferencia positiva cuadra: CxP por el aplicado e ingreso por la diferencia', async () => {
+		// Ganancia: aplicado 1040, pagado 1000 → diferencia +40.
+		const resultado = await postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' }, eventoBase({
+			tipo: 'PAGO_CXP',
+			monto: 40,
+			moneda: 'USD',
+			tasaCambio: 25,
+			montoFuncional: 1000,
+			fxEvidenceFingerprint: 'fp-1',
+			auxiliares: { diferenciaFx: '40' },
+			origen: { tipo: 'pago_cxp_externo', id: 'pago-2' },
+		}));
+		expect(resultado.estado).toBe('CONTABILIZADO');
+		expect(lineasDe(fixture.crearAsiento).map((l) => ({
+			cuentaId: l.cuentaId, debe: String(l.debe), haber: String(l.haber),
+		}))).toEqual([
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['CXP_PROVEEDORES']}`, debe: '1040', haber: '0' },
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['DIFERENCIA_CAMBIARIA_INGRESO']}`, debe: '0', haber: '40' },
+			{ cuentaId: `cta-${ROLES_CUENTA_DEFAULT['CAJA_PRINCIPAL']}`, debe: '0', haber: '1000' },
+		]);
+	});
+
 	it('rechaza montos funcionales negativos antes de insertar', async () => {
 		await expect(postEvento(fixture.tx, { tenantId: TENANT, userId: 'u1' },
 			eventoBase({ montoFuncional: new Prisma.Decimal('-1') })))
