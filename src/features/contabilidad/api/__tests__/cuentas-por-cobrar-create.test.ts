@@ -3,13 +3,22 @@ import { createCuentaPorCobrarAction } from '@/features/contabilidad/actions-cue
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
+  $transaction: vi.fn(),
   venta: {
     findFirst: vi.fn(),
   },
+  cliente: { findFirst: vi.fn() },
   cuentaPorCobrar: {
     findFirst: vi.fn(),
     create: vi.fn(),
   },
+}))
+
+vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
+  acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -28,6 +37,7 @@ vi.mock('next/cache', () => ({
 describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    prismaMock.$transaction.mockImplementation((run) => run(prismaMock))
   })
 
   it('retorna AUTH_REQUIRED cuando el usuario no está autenticado', async () => {
@@ -82,9 +92,10 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     prismaMock.venta.findFirst.mockResolvedValue({
-      ventaId: 'venta-1',
+      ventaId: 'venta-1', clienteId: 'cli-1',
       factura: { idFactura: 'fac-1' },
     })
+    prismaMock.cliente.findFirst.mockResolvedValue({ clienteId: 'cli-1' })
 
     prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
       id: 'cxc-existente',
@@ -103,6 +114,44 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
   })
 
+  it('rechaza vincular la venta a un cliente distinto aunque ambos pertenezcan al tenant', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123', tenantId: 'tenant-1', name: 'Test', email: 'test@test.com',
+      role: 'ADMIN' as const, isActive: true, planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.venta.findFirst.mockResolvedValue({
+      ventaId: 'venta-1', clienteId: 'cliente-venta', factura: { idFactura: 'fac-1' },
+    })
+    prismaMock.cliente.findFirst.mockResolvedValue({ clienteId: 'cliente-otro' })
+
+    const result = await createCuentaPorCobrarAction({
+      ventaId: 'venta-1', clienteId: 'cliente-otro', monto: 1000, moneda: 'CUP',
+    })
+
+    expect(result.success).toBe(false)
+    expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
+    expect(expectActionFailure(result).error?.code).toBe('CLIENTE_NO_COINCIDE')
+  })
+
+  it('rechaza el cliente cuando no existe dentro del tenant de la venta', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123', tenantId: 'tenant-1', name: 'Test', email: 'test@test.com',
+      role: 'ADMIN' as const, isActive: true, planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.venta.findFirst.mockResolvedValue({
+      ventaId: 'venta-1', clienteId: 'cliente-venta', factura: { idFactura: 'fac-1' },
+    })
+    prismaMock.cliente.findFirst.mockResolvedValue(null)
+
+    const result = await createCuentaPorCobrarAction({
+      ventaId: 'venta-1', clienteId: 'cliente-otro-tenant', monto: 1000, moneda: 'CUP',
+    })
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('NOT_FOUND')
+    expect(prismaMock.cuentaPorCobrar.create).not.toHaveBeenCalled()
+  })
+
   it('crea exitosamente una cuenta por cobrar con datos válidos', async () => {
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-123',
@@ -115,9 +164,10 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
     })
 
     prismaMock.venta.findFirst.mockResolvedValue({
-      ventaId: 'venta-1',
+      ventaId: 'venta-1', clienteId: 'cli-1',
       factura: { idFactura: 'fac-1' },
     })
+    prismaMock.cliente.findFirst.mockResolvedValue({ clienteId: 'cli-1' })
 
     prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue(null)
 
@@ -174,6 +224,9 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
         where: { ventaId: 'venta-1', tenantId: 'tenant-1' },
       })
     )
+    expect(prismaMock.cliente.findFirst).toHaveBeenCalledWith({
+      where: { clienteId: 'cli-1', tenantId: 'tenant-1' }, select: { clienteId: true },
+    })
 
     // Verificar que create recibió datos correctos
     expect(prismaMock.cuentaPorCobrar.create).toHaveBeenCalledWith(

@@ -180,6 +180,10 @@ export default function CuentasPorPagarPage() {
 	};
 
 	const handleOpenPago = (cuenta: CuentaPorPagar) => {
+		if (cuenta.tipo === "inicial_externa") {
+			toast.error("El pago de saldos iniciales aún no está disponible.");
+			return;
+		}
 		if (!cuenta.cuentaPorPagarId) {
 			toast.error(
 				"Esta factura no tiene cuenta por pagar asociada. Actualice los datos antes de registrar pagos.",
@@ -540,7 +544,7 @@ onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
 																			</TableCell>
 																			<TableCell className="py-3">
 																				<div className="font-medium">
-																					{cuenta.numeroFactura}
+																					{cuenta.numeroFactura || cuenta.referenciaExternaInicial || "Sin factura"}
 																				</div>
 																			</TableCell>
 																			<TableCell className="py-3">
@@ -558,19 +562,19 @@ onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
 																					variant="outline"
 																					className="capitalize"
 																				>
-																					{cuenta.tipo === "compra"
+																					{cuenta.tipo === "inicial_externa" ? "Saldo inicial" : cuenta.tipo === "compra"
 																						? "Compra"
 																						: "Servicio"}
 																				</Badge>
 																			</TableCell>
 																			<TableCell className="py-3">
 																				<div className="flex flex-col gap-1">
-																					<Badge className={aging.className}>
-																						{aging.label}
-																					</Badge>
-																					<span className="text-xs text-muted-foreground">
-																						{cuenta.diasTranscurridos ?? 0} días
-																					</span>
+																					{cuenta.diasTranscurridos == null ? (
+																						<span>Antigüedad desconocida</span>
+																					) : <>
+																						<Badge className={aging.className}>{aging.label}</Badge>
+																						<span className="text-xs text-muted-foreground">{cuenta.diasTranscurridos} días</span>
+																					</>}
 																				</div>
 																			</TableCell>
 																			<TableCell className="py-3 text-right font-semibold tabular-nums">
@@ -596,7 +600,7 @@ onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
 																					<TooltipTrigger asChild>
 																						<Button
 																							size="sm"
-																							disabled={saldoPendiente <= 0}
+																									disabled={saldoPendiente <= 0 || cuenta.tipo === "inicial_externa"}
 																							onClick={() =>
 																								handleOpenPago(cuenta)
 																							}
@@ -695,7 +699,7 @@ onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
 					</StaggerContainer>
 
 					{/* Dialog de pago */}
-					{selectedCuenta && (
+					{selectedCuenta && selectedCuenta.tipo !== "inicial_externa" && (
 						<ReconciliacionGastosForm
 							gasto={cuentaToGastoPendiente(selectedCuenta)}
 							open={openPago}

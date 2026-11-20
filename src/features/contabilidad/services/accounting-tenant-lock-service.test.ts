@@ -17,22 +17,15 @@ describe('accounting tenant advisory lock', () => {
     );
   });
 
-  it('serializes concurrent operations for the same tenant', async () => {
-    let active = 0;
-    let maxActive = 0;
+  it('allows reentrant acquisition in one transaction without a local lock queue', async () => {
     const client = { $executeRaw: vi.fn().mockResolvedValue(1) };
-    const operation = async () => {
-      active += 1;
-      maxActive = Math.max(maxActive, active);
-      await new Promise((resolve) => setTimeout(resolve, 1));
-      active -= 1;
-    };
+    const nestedOperation = vi.fn().mockResolvedValue('done');
+    const result = await withAccountingTenantLock(client, 'tenant-a', () =>
+      withAccountingTenantLock(client, 'tenant-a', nestedOperation),
+    );
 
-    const first = withAccountingTenantLock(client, 'tenant-a', operation);
-    const second = withAccountingTenantLock(client, 'tenant-a', operation);
-    await Promise.all([first, second]);
-
+    expect(result).toBe('done');
     expect(client.$executeRaw).toHaveBeenCalledTimes(2);
-    expect(maxActive).toBe(1);
+    expect(nestedOperation).toHaveBeenCalledOnce();
   });
 });

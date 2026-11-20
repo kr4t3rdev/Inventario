@@ -11,8 +11,9 @@ export type Prioridad = "baja" | "media" | "alta" | "urgente";
 
 export interface CuentaPorPagar {
 	cuentaPorPagarId: string;
-	numeroFactura: string;
-	tipo: "compra" | "servicio";
+	numeroFactura: string | null;
+	referenciaExternaInicial?: string | null;
+	tipo: "compra" | "servicio" | "inicial_externa";
 	gastoCompraId: string | null;
 	gastosDEId: string | null;
 	proveedorId: string | null;
@@ -21,14 +22,14 @@ export interface CuentaPorPagar {
 	montoPagado: number;
 	saldoPendiente: number;
 	moneda: string;
-	fechaEmision: string;
+	fechaEmision: string | null;
 	fechaVencimiento: string | null;
 	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
 	tipoDeuda?: "COMPRA" | "DEUDA_CASH";
 	createdAt: string;
 	updatedAt: string;
-	rangoAntiguedad?: string;
-	diasTranscurridos?: number;
+	rangoAntiguedad?: string | null;
+	diasTranscurridos?: number | null;
 	proveedor?: Vendor;
 	vendor?: Vendor;
 	gastosDE?: GastosDE;

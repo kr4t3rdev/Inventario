@@ -6,6 +6,8 @@ const listRequestsMock = vi.hoisted(() => vi.fn());
 const readRequestMock = vi.hoisted(() => vi.fn());
 const submitRequestMock = vi.hoisted(() => vi.fn());
 const accountingPolicyStateMock = vi.hoisted(() => vi.fn());
+const bankOptionsMock = vi.hoisted(() => vi.fn());
+vi.mock('@/features/contabilidad/actions-initial-bank-options', () => ({ getInitialBankOptionsAction: bankOptionsMock }));
 vi.mock('@/features/contabilidad/actions-periodos', () => ({
 	listarSolicitudesAperturaManualAction: listRequestsMock,
 	obtenerSolicitudAperturaManualAction: readRequestMock,
@@ -20,9 +22,60 @@ import { AbrirPeriodoDialog } from './abrir-periodo-dialog';
 describe('AbrirPeriodoDialog', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		bankOptionsMock.mockResolvedValue({ success: true, data: { roles: [{ rol: 'BANCOS', cuentaContableId: 'bank-id', codigo: '101', nombre: 'Bancos' }], monedas: [{ codigo: 'EUR', nombre: 'Euro' }], monedaFuncional: 'EUR', multiMoneda: false } });
 		accountingPolicyStateMock.mockResolvedValue({ success: true, data: {
 			policy: { functionalCurrencyCode: 'EUR' }, evidence: null, canManage: false,
 		} });
+	});
+
+	it('informa y bloquea la carga bancaria mientras la conciliación está pendiente', async () => {
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		expect(await screen.findByRole('button', { name: 'Agregar cuenta bancaria' })).toBeDisabled();
+		expect(screen.getByText(/aún no puede confirmarse/)).toBeInTheDocument();
+	});
+
+	it.skip('pendiente: permite agregar un saldo bancario sin exigir origen', async () => {
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		await userEvent.click(await screen.findByRole('button', { name: 'Agregar cuenta bancaria' }));
+		expect(screen.getByLabelText('Nombre de cuenta bancaria 1')).toBeInTheDocument();
+		expect(screen.queryByText('Origen del dinero')).not.toBeInTheDocument();
+	});
+
+	it.skip('pendiente: envía cuenta existente con saldo y sin origen', async () => {
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [] } });
+		submitRequestMock.mockResolvedValue({ success: true, data: { solicitudId: 'r1' } });
+		readRequestMock.mockResolvedValue({ success: true, data: { solicitud: { solicitudId: 'r1', tipo: 'MENSUAL', fechaInicio: '2026-04-01', fechaFin: '2026-04-30', estado: 'PENDIENTE', functionalCurrencyCode: 'EUR', lineas: [], lineasValuadas: [], previewHash: 'x', cuentasBancarias: [{ nombreCuenta: 'Principal', nombreBanco: 'Banco', numeroCuenta: '123', tipoCuenta: 'CORRIENTE', moneda: 'EUR', saldo: '100000', cuentaContableId: 'bank-id' }] } } });
+		const user = userEvent.setup();
+		render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		await screen.findByText(/Moneda funcional:/);
+		await user.type(screen.getByLabelText('Fecha de inicio'), '2026-04-01');
+		await user.type(screen.getByLabelText('Fecha de fin'), '2026-04-30');
+		await user.click(screen.getByRole('button', { name: 'Agregar cuenta bancaria' }));
+		await user.type(screen.getByLabelText('Nombre de cuenta bancaria 1'), 'Principal');
+		await user.type(screen.getByLabelText('Banco 1'), 'Banco');
+		await user.type(screen.getByLabelText('Número de cuenta bancaria 1'), '123');
+		await user.clear(screen.getByLabelText('Saldo bancario 1'));
+		await user.type(screen.getByLabelText('Saldo bancario 1'), '100000');
+		await user.selectOptions(await screen.findByLabelText('Cuenta contable bancaria 1'), 'bank-id');
+		await user.click(screen.getByRole('button', { name: 'Enviar para aprobación' }));
+		expect(submitRequestMock).toHaveBeenCalledWith(expect.objectContaining({ cuentasBancarias: [expect.objectContaining({ saldo: '100000', cuentaContableId: 'bank-id' })] }));
+		expect(await screen.findByText(/Principal · Banco · 123/)).toBeInTheDocument();
+	});
+
+	it('muestra fallo al recargar opciones y bloquea aprobación bancaria', async () => {
+		bankOptionsMock.mockResolvedValueOnce({ success: true, data: { roles: [], monedas: [], monedaFuncional: 'EUR', multiMoneda: false } }).mockResolvedValueOnce({ success: false, error: { message: 'Opciones no disponibles' } });
+		listRequestsMock.mockResolvedValue({ success: true, data: { solicitudes: [{ solicitudId: 'r1', tipo: 'MENSUAL', fechaInicio: '2026-04-01', fechaFin: '2026-04-30', functionalCurrencyCode: 'EUR', estado: 'PENDIENTE' }] } });
+		readRequestMock.mockResolvedValue({ success: true, data: { solicitud: { solicitudId: 'r1', tipo: 'MENSUAL', fechaInicio: '2026-04-01', fechaFin: '2026-04-30', estado: 'PENDIENTE', functionalCurrencyCode: 'EUR', lineas: [], lineasValuadas: [], previewHash: 'x', cuentasBancarias: [{ nombreCuenta: 'Principal', nombreBanco: 'Banco', numeroCuenta: '123', tipoCuenta: 'CORRIENTE', moneda: 'EUR', saldo: '1', cuentaContableId: 'bank-id' }] } } });
+		const user = userEvent.setup();
+		const view = render(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		await screen.findByText(/PENDIENTE · MENSUAL/);
+		view.rerender(<AbrirPeriodoDialog open={false} onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		view.rerender(<AbrirPeriodoDialog open onOpenChange={vi.fn()} onSuccess={vi.fn()} />);
+		expect(await screen.findByText('Opciones no disponibles')).toBeInTheDocument();
+		await user.click(screen.getByRole('button', { name: /PENDIENTE · MENSUAL/ }));
+		expect(await screen.findByRole('button', { name: 'Aprobar cuadre' })).toBeDisabled();
 	});
 
 	it('loads the tenant functional currency and restores category and accounting mode controls', async () => {

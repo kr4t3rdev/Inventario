@@ -83,6 +83,16 @@ describe('AS-01 contrato de clasificación de modelos', () => {
     expect(MODEL_CLASSIFICATION.AperturaPeriodoSolicitud.reason).toContain('tenantId');
   });
 
+  it('clasifica la inicialización contable como datos scoped del tenant', () => {
+    expect(getModelScope('InicializacionContable')).toBe('scoped');
+    expect(MODEL_CLASSIFICATION.InicializacionContable.reason).toContain('tenantId');
+  });
+
+  it('clasifica la versión de períodos como dato scoped del tenant', () => {
+    expect(getModelScope('PeriodoContableVersion')).toBe('scoped');
+    expect(MODEL_CLASSIFICATION.PeriodoContableVersion.reason).toContain('tenant');
+  });
+
   it('clasifica las plantillas de variantes como datos scoped del tenant', () => {
     expect(getModelScope('ProductoPlantilla')).toBe('scoped');
     expect(MODEL_CLASSIFICATION.ProductoPlantilla.reason).toContain('tenant');

@@ -53,7 +53,8 @@ const DIRECT_TENANT_MODELS = [
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
   'CheckpointContableFormal',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable',
+  'InventarioInicialFuente', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
   'ConfiguracionContratos',
   // CRM y Fidelización
@@ -74,6 +75,7 @@ const EXCLUDED_MODELS = [
   'SalesAgentProfile', 'SalesAgentReferral', 'SalesAgentCommissionLedger', 'TenantLicensePayment',
   'SalesAgentBalance', 'SalesAgentPayout', 'AffiliatePerkGrant', 'ReferralPerkRequest',
   'Notification', 'SalesAgentEmailDelivery', 'UserActivityLog', 'UserSession',
+  'PeriodoContableVersion',
   'AccountingPolicyRolloutRun', 'AccountingPolicyRolloutEntry', 'AccountingPolicyTenantApproval', 'AlertHistory',
   'AuditLog', 'ReportHistory', 'ScheduledReport', 'ScenarioSimulation',
   'ProductoCostSheetTemplate', 'ReplayPreflight', 'ReplayApproval', 'ReplayRun',
@@ -111,7 +113,8 @@ const BUSINESS_MODEL_NAMES = [
   'FiscalDocument', 'FiscalEmisionEvent', 'PeriodoContable', 'CuentaContable',
   'Diario', 'CashPaymentInterestAllocation', 'Asiento', 'AsientoLinea',
   'CheckpointContableFormal',
-  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'SaldoSnapshot',
+  'CuentaRolTenant', 'SnapshotPeriodo', 'AperturaPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable',
+  'InventarioInicialFuente', 'SaldoSnapshot',
   'AuditoriaPeriodo', 'Review', 'ReviewPrompt', 'TipoContratoCustom',
 ] as const;
 const CHILD_OWNER_PATHS = {
@@ -139,7 +142,8 @@ const PROTECTED_EVIDENCE_CANDIDATES = [
   'SalesAgentCommissionLedger', 'TenantLicensePayment', 'TenantAccountingPolicy',
   'FinancialAuxiliaryCheckpoint', 'FxEvidence', 'DevolucionVenta',
   'FiscalDocument', 'FiscalEmisionEvent', 'CashPaymentInterestAllocation',
-  'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud',
+  'Asiento', 'AsientoLinea', 'SnapshotPeriodo', 'AperturaPeriodoSolicitud', 'InicializacionContable',
+  'InventarioInicialFuente',
   'CheckpointContableFormal',
   'PurchaseAllocation', 'PurchaseReceiptInvoiceAllocation',
 ] as const;
@@ -242,6 +246,9 @@ const MANIFEST_RATIONALE_OVERRIDES: Readonly<Record<string, string>> = {
   PurchaseReceiptInvoiceAllocation:
     'PurchaseReceiptInvoiceAllocation preserves invoice-to-receipt FIFO cost and FX provenance evidence; '
     + 'include only after relation and field validation.',
+  InventarioInicialFuente:
+    'InventarioInicialFuente preserves the tenant opening inventory source and its immutable FIFO evidence; '
+    + 'include only after relation and field validation.',
 };
 
 const MANIFEST_PRODUCT_IMPACT_OVERRIDES: Readonly<Record<string, string>> = {
@@ -260,6 +267,9 @@ const MANIFEST_PRODUCT_IMPACT_OVERRIDES: Readonly<Record<string, string>> = {
     + 'restore eligibility is not yet approved.',
   PurchaseReceiptInvoiceAllocation:
     'Omission can lose invoice-to-receipt FIFO cost and FX provenance evidence; '
+    + 'restore eligibility is not yet approved.',
+  InventarioInicialFuente:
+    'Omission can lose opening inventory FIFO provenance and cost evidence; '
     + 'restore eligibility is not yet approved.',
 };
 

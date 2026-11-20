@@ -8,7 +8,11 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@/generated/prisma";
+import type { PeriodoContable, Prisma } from "@/generated/prisma";
+import {
+	acquireAccountingTenantLock,
+} from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import { advanceAccountingPeriodVersion } from "@/features/contabilidad/services/accounting-period-version-lock";
 import { ActionError } from "@/lib/server-actions/types";
 import {
 	EstadoPeriodo,
@@ -267,8 +271,13 @@ export class PeriodoContableService {
 		input: CreatePeriodoInput,
 		actor: string,
 		client?: Prisma.TransactionClient,
-	) {
+	): Promise<PeriodoContable> {
+		if (!client) {
+			return prisma.$transaction((tx) => this.abrirPeriodo(input, actor, tx));
+		}
 		const db = client ?? prisma;
+		await acquireAccountingTenantLock(client, input.tenantId);
+		await advanceAccountingPeriodVersion(client, input.tenantId);
 
 		const solapado = await this.verificarSolapamiento(
 			input.tenantId,
@@ -339,15 +348,24 @@ export class PeriodoContableService {
 		metadata?: { snapshotsCount?: number; operacionesCount?: number },
 		esManager: boolean = false,
 		client?: Prisma.TransactionClient,
-	) {
+	): Promise<PeriodoContable> {
+		if (!client) {
+			return prisma.$transaction((tx) =>
+				this.cerrarPeriodo(periodoId, actor, metadata, esManager, tx),
+			);
+		}
 		const db = client ?? prisma;
-		const periodo = await db.periodoContable.findUnique({
+		let periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
 		if (!periodo) {
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
+		await acquireAccountingTenantLock(client, periodo.tenantId);
+		await advanceAccountingPeriodVersion(client, periodo.tenantId);
+		periodo = await db.periodoContable.findUnique({ where: { periodoId } });
+		if (!periodo) throw new ActionError("Período no encontrado", "NOT_FOUND");
 
 		// Definir estado destino: managers saltan directo a APROBADO
 		const estadoActual = periodo.estado as EstadoPeriodo;
@@ -460,7 +478,8 @@ export class PeriodoContableService {
 		periodoId: string,
 		actor: string,
 		motivo: string,
-	) {
+		client?: Prisma.TransactionClient,
+	): Promise<PeriodoContable> {
 		if (!motivo || motivo.trim().length === 0) {
 			throw new PeriodoError(
 				"El motivo de reapertura es obligatorio.",
@@ -468,13 +487,21 @@ export class PeriodoContableService {
 			);
 		}
 
-		const periodo = await prisma.periodoContable.findUnique({
+		if (!client) {
+			return prisma.$transaction((tx) => this.reabrirPeriodo(periodoId, actor, motivo, tx));
+		}
+		const db = client ?? prisma;
+		let periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
 		if (!periodo) {
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
+		await acquireAccountingTenantLock(client, periodo.tenantId);
+		await advanceAccountingPeriodVersion(client, periodo.tenantId);
+		periodo = await db.periodoContable.findUnique({ where: { periodoId } });
+		if (!periodo) throw new ActionError("Período no encontrado", "NOT_FOUND");
 
 		// Validar transición
 		if (
@@ -490,7 +517,7 @@ export class PeriodoContableService {
 			);
 		}
 
-		const reabierto = await prisma.periodoContable.update({
+		const reabierto = await db.periodoContable.update({
 			where: { periodoId },
 			data: {
 				estado: EstadoPeriodo.REABIERTO,
@@ -507,7 +534,7 @@ export class PeriodoContableService {
 			evento: EventoAuditoria.REAPERTURA,
 			actor,
 			motivo,
-		});
+		}, client);
 
 		return reabierto;
 	}
@@ -526,15 +553,22 @@ export class PeriodoContableService {
 		periodoId: string,
 		actor: string,
 		client?: Prisma.TransactionClient,
-	) {
+	): Promise<PeriodoContable> {
+		if (!client) {
+			return prisma.$transaction((tx) => this.aprobarPeriodo(periodoId, actor, tx));
+		}
 		const db = client ?? prisma;
-		const periodo = await db.periodoContable.findUnique({
+		let periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
 		if (!periodo) {
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
+		await acquireAccountingTenantLock(client, periodo.tenantId);
+		await advanceAccountingPeriodVersion(client, periodo.tenantId);
+		periodo = await db.periodoContable.findUnique({ where: { periodoId } });
+		if (!periodo) throw new ActionError("Período no encontrado", "NOT_FOUND");
 
 		// Validar transición
 		if (

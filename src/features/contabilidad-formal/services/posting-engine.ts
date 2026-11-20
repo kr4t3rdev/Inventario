@@ -40,7 +40,14 @@ import { registrarResultadoShadow } from '@/features/contabilidad-formal/service
 import { ActionError } from '@/lib/server-actions';
 import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
 import { PeriodoContableService } from '@/lib/services/periodo-contable-service';
-import { withAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
+import {
+	acquireAccountingTenantLock,
+	withAccountingTenantLock,
+} from '@/features/contabilidad/services/accounting-tenant-lock-service';
+import {
+	advanceAccountingPeriodVersion,
+	lockAccountingPeriodVersion,
+} from '@/features/contabilidad/services/accounting-period-version-lock';
 import { validateHashChain } from '@/features/contabilidad-formal/services/hash-chain-integrity';
 import {
 	DIARIO_POR_EVENTO,
@@ -750,6 +757,11 @@ async function postEventoInterno(
 	modo: ModoMotorContable,
 	opciones?: OpcionesPosteo,
 ): Promise<PostEventoResult> {
+	// Bloquear antes de consultar origen, guard o período. El bloqueo de versión
+	// invalida snapshots REPEATABLE READ/Serializable si un cambio de período ganó.
+	await acquireAccountingTenantLock(tx, ctx.tenantId);
+	await lockAccountingPeriodVersion(tx, ctx.tenantId);
+
 	const existente = await tx.asiento.findUnique({
 		where: {
 			tenantId_origenTipo_origenId: {
@@ -762,6 +774,7 @@ async function postEventoInterno(
 	if (existente) {
 		return { estado: 'YA_EXISTENTE', asientoId: existente.asientoId };
 	}
+	await advanceAccountingPeriodVersion(tx, ctx.tenantId);
 
 	const roles = await tx.cuentaRolTenant.findMany({
 		where: { tenantId: ctx.tenantId },
@@ -783,6 +796,7 @@ async function postEventoInterno(
 			ctx.tenantId,
 			'asiento',
 			{ actorId: ctx.userId, actorTipo: 'USUARIO', origen: evento.origen },
+			tx,
 		);
 		if (!validacion.permitido) {
 			throw new ActionError(
@@ -798,6 +812,8 @@ async function postEventoInterno(
 		: await PeriodoContableService.resolverPeriodoActivo(
 				evento.fecha,
 				ctx.tenantId,
+				undefined,
+				tx,
 			);
 	if (!resolucion.periodo) {
 		throw new ActionError(

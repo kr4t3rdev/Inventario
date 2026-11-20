@@ -7,6 +7,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
@@ -14,7 +15,24 @@ import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import type { Prisma } from '@/generated/prisma';
+import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
+import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
+import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
+import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
+import { assertInitializationAccess, computeInitializationPayloadHash } from './services/initialization-idempotency';
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
+import { valueOpeningAccounts } from './services/initialization-valuation';
+import { buildOpeningEntryLines } from './services/initialization-opening-lines';
+import { ensureCutoffPeriod } from './services/initialization-period';
+import {
+  createInitializationApertura,
+  parseCutoffDate,
+  postOpeningEntry,
+  resolveRoleAccountId,
+  verifyInitializationReplay,
+  type OpeningAsientoRef,
+} from './services/initialization-coordinator';
+import { Prisma } from '@/generated/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Types ─────────────────────────────────────────────────
@@ -48,6 +66,7 @@ interface HistorialPagination {
 // ─── Schemas ───────────────────────────────────────────────
 
 const createSchema = z.object({
+  nombreCuenta: z.string().trim().max(200).optional(),
   nombreBanco: z.string().min(1, 'El nombre del banco es requerido'),
   numeroCuenta: z.string().min(1, 'El número de cuenta es requerido'),
   tipoCuenta: z.string().min(1, 'El tipo de cuenta es requerido'),
@@ -83,6 +102,7 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   cuentaId: z.string().min(1),
+  nombreCuenta: z.string().trim().max(200).optional(),
   nombreBanco: z.string().optional(),
   numeroCuenta: z.string().optional(),
   tipoCuenta: z.string().optional(),
@@ -94,11 +114,13 @@ const updateSchema = z.object({
 
 const CUENTA_SELECT = {
   cuentaId: true,
+  nombreCuenta: true,
   nombreBanco: true,
   numeroCuenta: true,
   tipoCuenta: true,
   saldo: true,
   moneda: true,
+  cuentaContableInicialId: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -155,8 +177,10 @@ export const createCuentaBancariaAction = withAction(withPeriodValidation(
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const cuenta = await prisma.$transaction(async (tx) => {
+    await acquireAccountingTenantLock(tx, tenantId);
     const created = await tx.cuentaBancaria.create({
       data: {
+        nombreCuenta: parsed.nombreCuenta ?? null,
         nombreBanco: parsed.nombreBanco,
         numeroCuenta: parsed.numeroCuenta,
         tipoCuenta: parsed.tipoCuenta,
@@ -184,6 +208,14 @@ export const createCuentaBancariaAction = withAction(withPeriodValidation(
           estado: isDebt ? 'ACTIVA' : null,
           descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
         },
+      });
+      await emitirInyeccionCapital(tx, { tenantId, userId: user.userId }, {
+        inyeccionId: counterpart.id,
+        fecha: counterpart.fechaRegistro,
+        monto: parsed.saldo,
+        moneda: parsed.moneda,
+        descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
+        tipo: parsed.fuenteSaldoInicial,
       });
       await AuditLogService.logStrict({
         accion: 'CREATE',
@@ -222,6 +254,247 @@ export const createCuentaBancariaAction = withAction(withPeriodValidation(
   return cuenta;
 }));
 
+/**
+ * @description Inicializa varias cuentas y sus saldos en una transacción idempotente.
+ * @param input - Cuentas normalizadas, origen contable y clave de reintento del onboarding.
+ * @param user - Usuario autenticado que inicia la configuración del tenant.
+ * @returns Identificadores de cuentas y movimientos creados, o resultado del replay.
+ */
+export const initializeBankAccountsAction = withAction(
+  async (input: z.input<typeof initializationContract>, user: AuthenticatedUser) => {
+    assertInitializationAccess(user);
+    const parsed = initializationContract.parse(input);
+    const tenantId = requireTenant(user);
+    const { idempotencyKey, ...payload } = parsed;
+    const payloadHash = computeInitializationPayloadHash(payload);
+    const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
+
+    const result = await runIdempotentInitialization({
+      tenantId,
+      idempotencyKey: parsed.idempotencyKey,
+      payloadHash,
+    }, async (tx) => {
+      if (hasAdvance) requireFeature(user, 'anticipos', 'inicializar saldos provenientes de anticipos');
+      const fechaCorteDate = parseCutoffDate(parsed.fechaCorte);
+      const policy = await tx.tenantAccountingPolicy.findUnique({
+        where: { tenantId },
+        select: { functionalCurrencyCode: true },
+      });
+      const functionalCurrency = parsed.monedaFuncional;
+      if (policy?.functionalCurrencyCode && policy.functionalCurrencyCode.trim().toUpperCase() !== functionalCurrency) {
+        throw new ActionError(
+          `La moneda funcional de la carga (${functionalCurrency}) no coincide con la política del tenant (${policy.functionalCurrencyCode.trim().toUpperCase()})`,
+          'MONEDA_FUNCIONAL_NO_COINCIDE',
+        );
+      }
+      const subledgerChecks: Array<{ label: string; count: number }> = [
+        { label: 'cuentas bancarias', count: await tx.cuentaBancaria.count({ where: { tenantId } }) },
+        { label: 'asientos', count: await tx.asiento.count({ where: { tenantId } }) },
+        { label: 'aperturas', count: await tx.aperturaPeriodo.count({ where: { tenantId } }) },
+        { label: 'cuentas por cobrar', count: await tx.cuentaPorCobrar.count({ where: { tenantId } }) },
+        { label: 'cuentas por pagar', count: await tx.cuentaPorPagar.count({ where: { tenantId } }) },
+        { label: 'existencias', count: await tx.stockUbicacion.count({ where: { tenantId } }) },
+        { label: 'anticipos', count: await tx.anticipo.count({ where: { tenantId } }) },
+        { label: 'inyecciones de capital', count: await tx.inyeccionCapital.count({ where: { tenantId } }) },
+        { label: 'deudas', count: await tx.deudaCash.count({ where: { tenantId } }) },
+        { label: 'préstamos', count: await tx.prestamoCash.count({ where: { tenantId } }) },
+      ];
+      const existingSubledger = subledgerChecks.find((check) => check.count > 0);
+      if (existingSubledger) {
+        throw new ActionError(
+          `Ya existen ${existingSubledger.label}; usa la apertura contable de empresa existente`,
+          'INITIALIZATION_NOT_EMPTY',
+        );
+      }
+      const valued = valueOpeningAccounts(parsed);
+      const entryLines = buildOpeningEntryLines({ cuentas: parsed.cuentas, valued, monedaFuncional: functionalCurrency });
+      const periodo = await ensureCutoffPeriod(tx, { tenantId, fechaCorte: parsed.fechaCorte, actor: user.userId });
+      const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
+      const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
+      const asientos: OpeningAsientoRef[] = [];
+      for (const [index, item] of parsed.cuentas.entries()) {
+        const openingBalance = Number(item.saldoInicial);
+        const isAdvance = item.origen?.tipo === 'ANTICIPO';
+        const created = await tx.cuentaBancaria.create({
+          data: {
+            nombreCuenta: item.nombreCuenta,
+            nombreBanco: item.nombreBanco,
+            numeroCuenta: item.numeroCuenta,
+            tipoCuenta: item.tipoCuenta,
+            saldo: isAdvance ? 0 : openingBalance,
+            moneda: item.moneda,
+            isActive: true,
+            tenantId,
+            cuentaContableInicialId: bancosCuentaId,
+          },
+          select: CUENTA_SELECT,
+        });
+
+        if (openingBalance > 0 && item.origen) {
+          if (item.origen.tipo === 'ANTICIPO') {
+            if (!item.origen.tipoPagoId) {
+              throw new ActionError('Selecciona el tipo de pago para registrar el anticipo', 'TIPO_PAGO_REQUERIDO');
+            }
+            const anticipo = await tx.anticipo.create({
+              data: {
+                tenantId,
+                tipo: 'COBRO',
+                estado: 'RESERVADO',
+                montoOriginal: openingBalance,
+                montoFinanciado: 0,
+                saldoDisponible: 0,
+                moneda: item.moneda,
+                cuentaOrigenId: created.cuentaId,
+                referenciaExterna: `SALDO_INICIAL:${parsed.idempotencyKey}:${index}`,
+                createdById: user.userId,
+              },
+              select: { anticipoId: true },
+            });
+            await tx.anticipoMovimiento.create({
+              data: {
+                anticipoId: anticipo.anticipoId,
+                tipoMovimiento: 'CREACION_RESERVA',
+                monto: openingBalance,
+                moneda: item.moneda,
+                saldoAntes: 0,
+                saldoDespues: 0,
+                usuarioId: user.userId,
+              },
+            });
+            const movementKey = `init:${createHash('sha256')
+              .update(`${parsed.idempotencyKey}:${index}`).digest('hex').slice(0, 48)}`;
+            const movement = await registrarMovimientoEfectivoAnticipo(tx, {
+              anticipoId: anticipo.anticipoId,
+              tenantId,
+              cuentaId: created.cuentaId,
+              tipoPagoId: item.origen.tipoPagoId,
+              monto: openingBalance,
+              idempotencyKey: movementKey,
+              usuarioId: user.userId,
+              observaciones: `Saldo inicial recibido de ${item.origen.tercero}`,
+            });
+            asientos.push({ tipo: 'ANTICIPO', asientoId: null, estado: movement.idempotentReplay ? 'YA_EXISTENTE' : 'EMITIDO_POR_FLUJO', referencia: movementKey });
+            await AuditLogService.logStrict({
+              accion: 'CREATE', entidad: 'ANTICIPO', entidadId: anticipo.anticipoId,
+              usuarioId: user.userId,
+              detalles: { origen: 'INICIALIZACION_CONTABLE', cuentaId: created.cuentaId, monto: openingBalance, moneda: item.moneda },
+            }, tx);
+          } else {
+            const isCapital = item.origen.tipo === 'CAPITAL_SOCIAL';
+            const resolvedRate = valued[index].tasaCambio;
+            const counterpart = await tx.inyeccionCapital.create({
+              data: {
+                tenantId,
+                tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
+                montoRecibido: openingBalance,
+                moneda: item.moneda,
+                tasaCambio: resolvedRate,
+                cuentaId: created.cuentaId,
+                socio: isCapital ? item.origen.tercero : null,
+                entidadPrestamista: isCapital ? null : item.origen.tercero,
+                montoTotalDeuda: isCapital ? null : openingBalance,
+                saldoPendiente: isCapital ? null : openingBalance,
+                estado: isCapital ? null : 'ACTIVA',
+                idempotencyKey: movementKeyFor(parsed.idempotencyKey, index),
+                descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
+                fechaRegistro: fechaCorteDate,
+              },
+              select: { id: true, fechaRegistro: true },
+            });
+            const posting = await emitirInyeccionCapital(tx, { tenantId, userId: user.userId }, {
+              inyeccionId: counterpart.id,
+              fecha: fechaCorteDate,
+              monto: openingBalance,
+              moneda: item.moneda,
+              tasaCambio: resolvedRate,
+              referencia: movementKeyFor(parsed.idempotencyKey, index),
+              descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
+              tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
+            });
+            asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
+            await AuditLogService.logStrict({
+              accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
+              usuarioId: user.userId,
+              detalles: {
+                origen: 'INICIALIZACION_CONTABLE', cuentaId: created.cuentaId,
+                tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA', monto: openingBalance, moneda: item.moneda,
+              },
+            }, tx);
+          }
+        }
+
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'CUENTA_BANCARIA',
+          entidadId: created.cuentaId,
+          usuarioId: user.userId,
+          detalles: {
+            origen: 'INICIALIZACION_CONTABLE',
+            nombreCuenta: item.nombreCuenta,
+            moneda: item.moneda,
+            saldoInicial: openingBalance,
+            fuenteSaldoInicial: item.origen?.tipo ?? null,
+          },
+        }, tx);
+        createdAccounts.push({ cuentaId: created.cuentaId, nombreCuenta: item.nombreCuenta, saldo: openingBalance, moneda: item.moneda, cuentaContableInicialId: bancosCuentaId });
+      }
+      const openingEntry = await postOpeningEntry(tx, {
+        tenantId, userId: user.userId, periodoId: periodo.periodoId,
+        fechaCorte: parsed.fechaCorte, idempotencyKey: parsed.idempotencyKey, lines: entryLines.lines,
+      });
+      if (openingEntry) {
+        asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
+      }
+      await createInitializationApertura(tx, {
+        periodoId: periodo.periodoId, tenantId, actor: user.userId,
+        idempotencyKey: parsed.idempotencyKey, payloadHash,
+        fechaCorte: parsed.fechaCorte, monedaFuncional: functionalCurrency,
+        asientoId: openingEntry?.asientoId ?? null, asientos,
+        lines: openingEntry?.postedLines ?? [],
+        fxFingerprints: [...new Set(valued.map((v) => v.fxEvidenceFingerprint).filter((f): f is string => f !== null))],
+        cuentas: createdAccounts.map((cuenta, i) => ({
+          cuentaBancariaId: cuenta.cuentaId,
+          numeroCuenta: parsed.cuentas[i].numeroCuenta,
+          moneda: cuenta.moneda,
+          saldoOriginal: parsed.cuentas[i].saldoInicial,
+          montoFuncional: new Prisma.Decimal(valued[i].montoFuncional).toString(),
+          cuentaContableInicialId: cuenta.cuentaContableInicialId,
+        })),
+        totalDebeFuncional: entryLines.totalDebeFuncional,
+        totalHaberFuncional: entryLines.totalHaberFuncional,
+      });
+      return {
+        cuentas: createdAccounts,
+        periodoId: periodo.periodoId,
+        asientoId: openingEntry?.asientoId ?? null,
+        asientos,
+        lineas: openingEntry?.postedLines ?? [],
+        totalDebeFuncional: entryLines.totalDebeFuncional,
+        totalHaberFuncional: entryLines.totalHaberFuncional,
+        fechaCorte: parsed.fechaCorte,
+        monedaFuncional: functionalCurrency,
+      };
+    });
+
+    if (result.replayed) {
+      await verifyInitializationReplay({ tenantId, idempotencyKey: parsed.idempotencyKey, payloadHash });
+    }
+    revalidatePath('/busy/contabilidad/cuentas');
+    revalidatePath('/busy/contabilidad/anticipos');
+    return result;
+  },
+);
+
+/**
+ * @description Genera una referencia determinista y acotada por origen del onboarding.
+ * @param idempotencyKey - Clave principal de la inicialización.
+ * @param index - Posición estable de la cuenta en la solicitud normalizada.
+ * @returns Referencia SHA-256 compatible con los límites de almacenamiento.
+ */
+function movementKeyFor(idempotencyKey: string, index: number): string {
+  return `init:${createHash('sha256').update(`${idempotencyKey}:${index}`).digest('hex').slice(0, 48)}`;
+}
+
 export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
   requireFeature(user, 'contabilidad', 'editar cuentas bancarias');
   const parsed = updateSchema.parse(input);
@@ -250,6 +523,7 @@ export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeo
   const cuenta = await prisma.cuentaBancaria.update({
     where: { cuentaId },
     data: {
+      ...(data.nombreCuenta !== undefined && { nombreCuenta: data.nombreCuenta || null }),
       ...(data.nombreBanco !== undefined && { nombreBanco: data.nombreBanco }),
       ...(data.numeroCuenta !== undefined && { numeroCuenta: data.numeroCuenta }),
       ...(data.tipoCuenta !== undefined && { tipoCuenta: data.tipoCuenta }),

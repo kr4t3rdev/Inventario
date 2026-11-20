@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { cumpleSegmento, normalizarClienteParaSegmento } from './services/segmento-engine';
 import { encontrarDuplicados } from './services/deduplication-service';
@@ -276,6 +277,7 @@ export const fusionarClientesAction = withAction(
     const tenantId = requireTenant(user);
 
     await prisma.$transaction(async (tx) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       // Verificar ambos clientes existen y pertenecen al tenant
       const principal = await tx.cliente.findFirst({
         where: { clienteId: input.clientePrincipal, tenantId },
@@ -286,6 +288,20 @@ export const fusionarClientesAction = withAction(
 
       if (!principal) throw new ActionError('Cliente principal no encontrado', 'NOT_FOUND');
       if (!secundario) throw new ActionError('Cliente secundario no encontrado', 'NOT_FOUND');
+
+      const cuentaInicial = await tx.cuentaPorCobrar.findFirst({
+        where: {
+          tenantId, clienteId: { in: [input.clientePrincipal, input.clienteSecundario] },
+          OR: [{ inicializacionId: { not: null } }, { tipoCuenta: 'APERTURA_EXTERNA' }],
+        },
+        select: { id: true },
+      });
+      if (cuentaInicial) {
+        throw new ActionError(
+          'No se pueden fusionar clientes vinculados a una cuenta inicial hasta coordinar su evidencia contable',
+          'INITIAL_RECEIVABLE_MERGE_BLOCKED',
+        );
+      }
 
       // Reasignar ventas del secundario al principal
       await tx.venta.updateMany({
@@ -350,7 +366,7 @@ export const fusionarClientesAction = withAction(
       await tx.cliente.delete({
         where: { clienteId: input.clienteSecundario },
       });
-    });
+    }, { isolationLevel: 'ReadCommitted' });
 
     revalidatePath('/busy/cliente');
     return { fusionado: true, clientePrincipal: input.clientePrincipal, clienteEliminado: input.clienteSecundario };

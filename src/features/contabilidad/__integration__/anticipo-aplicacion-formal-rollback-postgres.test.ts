@@ -383,7 +383,7 @@ describe(
       expect(after.compras).toHaveLength(before.compras.length + 1);
       // El reconocimiento de la compra y la aplicacion del anticipo.
       expect(after.ledger).toHaveLength(before.ledger.length + 2);
-      const aplicacion = after.ledger.at(-1);
+      const aplicacion = after.ledger.find((entry) => entry.origenTipo === 'anticipo_movimiento');
       expect(aplicacion?.origenTipo).toBe('anticipo_movimiento');
 
       const movimiento = after.movimientos.find(

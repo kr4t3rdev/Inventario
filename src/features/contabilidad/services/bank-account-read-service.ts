@@ -147,6 +147,7 @@ function summarizeTransactions(
 
 const CUENTA_SELECT = {
   cuentaId: true,
+  nombreCuenta: true,
   nombreBanco: true,
   numeroCuenta: true,
   tipoCuenta: true,

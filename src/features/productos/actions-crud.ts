@@ -11,6 +11,7 @@ import {
 	validateTenantLimit,
 } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
@@ -216,6 +217,7 @@ export const createProductoAction = withAction(
 
 			// ── Generar código EAN-13 en transacción ──
 			const resultado = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
 				const surtido = await FindNextAvailableSurtido(
 					tx,
 					tenantId,
@@ -290,26 +292,6 @@ export const createProductoAction = withAction(
 
 				return { producto, generatedCode };
 			});
-
-			// ── GastoCompra para stock inicial ──
-			if (parsed.stock > 0 && resolvedVendorId) {
-				const now = new Date();
-				const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-				await prisma.gastoCompra.create({
-					data: {
-						tenantId,
-						productoId: resultado.producto.id,
-						vendorId: resolvedVendorId,
-						cantidad: parsed.stock,
-						precioUnitario: parsed.precioCosto,
-						total: parsed.stock * parsed.precioCosto,
-						fechaCompra: now,
-						descripcion: `Compra inicial - ${parsed.nombre}`,
-						periodo,
-					},
-				});
-			}
-
 			revalidatePath("/busy/products");
 			if (parsed.photoAssets) {
 				await syncOwnerAssets({
@@ -324,47 +306,51 @@ export const createProductoAction = withAction(
 		}
 
 		// ── Sin EAN-13: create simple ──
-		const producto = await prisma.producto.create({
-			data: {
-				nombre: parsed.nombre,
-				descripcion: parsed.descripcion ?? null,
-				precioCosto: parsed.precioCosto,
-				precioVenta: parsed.precioVenta,
-				stock: parsed.stock,
-				stockMinimo: parsed.stockMinimo ?? 0,
-				codigoInterno: parsed.codigoInterno ?? null,
-				proveedorCodigo: parsed.proveedorCodigo ?? null,
-				categoriaId: parsed.categoriaId,
-				subcategoriaId: parsed.subcategoriaId ?? null,
-				unidadId: parsed.unidadId ?? null,
-				vendorId: parsed.vendorId ?? null,
-				almacenId: parsed.almacenId,
-				puntoDeVentaId: parsed.puntoDeVentaId ?? null,
-				fotos: parsed.fotos ?? [],
-				tenantId,
-				...(parsed.precios?.length
-					? {
-							precios: {
-								create: parsed.precios.map((p) => ({
-									listaPrecioId: p.listaPrecioId,
-									precio: p.precio,
-								})),
-							},
-						}
-					: {}),
-			},
-			select: PRODUCTO_SELECT,
-		});
-
-		if (parsed.stock > 0) {
-			await upsertStockUbicacion(prisma, {
-				productoId: producto.id,
-				tipoUbicacion: "almacen",
-				ubicacionId: parsed.almacenId,
-				modo: "set",
-				valor: parsed.stock,
+		const producto = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const created = await tx.producto.create({
+				data: {
+					nombre: parsed.nombre,
+					descripcion: parsed.descripcion ?? null,
+					precioCosto: parsed.precioCosto,
+					precioVenta: parsed.precioVenta,
+					stock: parsed.stock,
+					stockMinimo: parsed.stockMinimo ?? 0,
+					codigoInterno: parsed.codigoInterno ?? null,
+					proveedorCodigo: parsed.proveedorCodigo ?? null,
+					categoriaId: parsed.categoriaId,
+					subcategoriaId: parsed.subcategoriaId ?? null,
+					unidadId: parsed.unidadId ?? null,
+					vendorId: parsed.vendorId ?? null,
+					almacenId: parsed.almacenId,
+					puntoDeVentaId: parsed.puntoDeVentaId ?? null,
+					fotos: parsed.fotos ?? [],
+					tenantId,
+					...(parsed.precios?.length
+						? {
+								precios: {
+									create: parsed.precios.map((p) => ({
+										listaPrecioId: p.listaPrecioId,
+										precio: p.precio,
+									})),
+								},
+							}
+						: {}),
+				},
+				select: PRODUCTO_SELECT,
 			});
-		}
+
+			if (parsed.stock > 0) {
+				await upsertStockUbicacion(tx, {
+					productoId: created.id,
+					tipoUbicacion: "almacen",
+					ubicacionId: parsed.almacenId,
+					modo: "set",
+					valor: parsed.stock,
+				});
+			}
+			return created;
+		});
 
 		if (parsed.photoAssets) {
 			await syncOwnerAssets({

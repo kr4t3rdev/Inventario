@@ -1,0 +1,14 @@
+# Diseño
+
+Usar fecha de corte común y borrador reanudable con estados explícitos. Validar permisos y features efectivos en servidor y mostrar solo secciones autorizadas. Confirmar cuando los detalles operativos concilien con el asiento equilibrado en moneda funcional; exigir evidencia de tasa cuando corresponda. No atribuir diferencias ni saldo bancario a aportes históricos. No permitir confirmar datos incompletos o de valoración desconocida como si estuvieran conciliados; explicar faltantes con mensajes y toast claros. Evaluar cómo registrar patrimonio de apertura con responsable contable sin inventar hechos.
+
+La confirmación coordina período, registros operativos y asiento en una transacción o protocolo equivalente con recuperación demostrada; clave idempotente vinculada a payload normalizado y tenant, aislamiento, bloqueo y auditoría. Reconciliar estado antes de reintentar respuestas ambiguas. Evitar duplicar banco al importar anticipos o préstamos. Diseñar carga manual sin respaldo; importación por archivo opcional queda fuera de la primera entrega.
+
+El trabajo local previo debe revisarse: initialization-contract exige origen para saldo positivo; initializeBankAccountsAction usa fecha actual y emite contrapartidas, y su guard de aperturas entra en conflicto con el orden de apertura. CxC exige venta interna. No asumir que estas piezas están terminadas.
+
+## Dependencias de la carga operativa
+
+- Las CxC y CxP externas necesitan identidad propia por tenant y solicitud, valor en moneda original y funcional, y evidencia de valoración verificable. El cobro o pago posterior debe actualizar el auxiliar y tesorería y emitir su asiento en una única transacción, con idempotencia. El recolector de replay formal debe reconocer los nuevos orígenes; las conciliaciones actuales exigen venta o gasto interno.
+- Las existencias iniciales necesitan una fuente FIFO propia con producto, ubicación, cantidad, fecha de corte y costo verificable, sin crear una compra. La asignación debe serializar el consumo entre ubicaciones; valoración, devoluciones y replay deben reconocer la fuente. Las ventas inmediatas, entregas y facturación de ofertas consumen FIFO. Producto y stock actuales almacenan cantidades enteras: el contrato de carga deberá comprobar la unidad y representación permitidas antes de persistir.
+- Los anticipos necesitan evidencia de apertura que sus aplicaciones y devoluciones posteriores puedan valorar, sin registrar una recepción o entrega bancaria ficticia. Deudas y préstamos necesitan principal, intereses y valoración funcional, sin repetir un desembolso previo a la instalación.
+- La conciliación debe comprobar cada auxiliar por cuenta y moneda y también sus importes funcionales y evidencia FX. Una comparación parcial de importes originales no autoriza la confirmación. Mientras los escritores y submayores no estén coordinados, se conserva el bloqueo de la apertura bancaria y de la inicialización directa.

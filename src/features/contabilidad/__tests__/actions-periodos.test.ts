@@ -21,6 +21,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 	const { mockPrisma } = vi.hoisted(() => ({
 		mockPrisma: {
 			$executeRaw: vi.fn().mockResolvedValue(1),
+			$queryRaw: vi.fn().mockResolvedValue([{ locked: true }]),
 			$transaction: vi.fn(
 			(
 				cb: (tx: typeof mockPrisma) => Promise<unknown>,
@@ -77,6 +78,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 		},
 		aperturaPeriodo: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			create: vi.fn(),
 		},
 		aperturaPeriodoSolicitud: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
@@ -85,7 +87,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 		tasaCambio: { findUnique: vi.fn() },
 		tenantAccountingPolicy: { findUnique: vi.fn() },
 		diario: { findFirst: vi.fn() },
-		asiento: { findUnique: vi.fn(), aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() },
+		asiento: { findUnique: vi.fn(), findFirst: vi.fn(), aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() },
 		snapshotPeriodo: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -178,6 +180,7 @@ import {
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { Prisma } from "@/generated/prisma";
 import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
+import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services/immutable-financial-evidence";
 import type { ActionResponse } from "@/lib/server-actions/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -2393,6 +2396,70 @@ describe("apertura manual verificable", () => {
 		expect(storedLines.map((line: { debe: unknown; haber: unknown }) => [String(line.debe), String(line.haber)])).toEqual([["20", "0"], ["0", "20"]]);
 		expect(storedLines[0].fxEvidenceFingerprint).toBe(canonical.fxEvidenceFingerprint);
 		expect(storedLines[0].montoOriginal.toString()).toBe("10");
+	});
+
+	it("verifies a consumed opening without bank accounts without creating duplicate accounting records", async () => {
+		const approvedAt = new Date("2026-04-01T12:00:00.000Z");
+		const period = makePeriodo({ periodoId: "p-manual-no-banks", estado: EstadoPeriodo.ABIERTO });
+		const lineas = [
+			{ lineId: "line-1", cuentaCodigo: "101", moneda: "CUP", debito: "100", credito: "0" },
+			{ lineId: "line-2", cuentaCodigo: "301", moneda: "CUP", debito: "0", credito: "100" },
+		];
+		const valuedLines = [
+			{
+				cuentaCodigo: "101", cuentaContableId: "account-cash", moneda: "CUP", debito: "100",
+				credito: "0", monedaFuncional: "CUP", debitoFuncional: "100", creditoFuncional: "0",
+				tasaCambio: null, fxEvidenceId: null, fxEvidenceFingerprint: null, fxEvidence: null,
+			},
+			{
+				cuentaCodigo: "301", cuentaContableId: "account-equity", moneda: "CUP", debito: "0",
+				credito: "100", monedaFuncional: "CUP", debitoFuncional: "0", creditoFuncional: "100",
+				tasaCambio: null, fxEvidenceId: null, fxEvidenceFingerprint: null, fxEvidence: null,
+			},
+		];
+		const hashAprobacion = hashImmutableFinancialEvidence({
+			solicitudId: "manual-no-banks", tenantId: TENANT, solicitedBy: ACTOR,
+			approvedBy: ACTOR, approvedAt: approvedAt.toISOString(), functionalCurrencyCode: "CUP",
+			fechaInicio: "2026-04-01T00:00:00.000Z", fechaFin: "2026-04-30T23:59:59.000Z",
+			tipo: "MENSUAL", categoria: "ORDINARIO", modoContable: "CAJA", observaciones: null,
+			lineas, fxFingerprints: [], lineasValuadas: valuedLines,
+		});
+		mockPrisma.aperturaPeriodoSolicitud.findFirst.mockResolvedValue({
+			solicitudId: "manual-no-banks", tenantId: TENANT, tipo: "MENSUAL",
+			fechaInicio: new Date("2026-04-01T00:00:00.000Z"), fechaFin: new Date("2026-04-30T23:59:59.000Z"),
+			observaciones: null, categoria: "ORDINARIO", modoContable: "CAJA", functionalCurrencyCode: "CUP",
+			estado: "CONSUMIDA", solicitadaPor: ACTOR, aprobadaPor: ACTOR, aprobadaAt: approvedAt,
+			hashAprobacion, lineas, periodoId: period.periodoId,
+		});
+		mockPrisma.aperturaPeriodo.findFirst.mockResolvedValue({ detalleJson: {
+			solicitudId: "manual-no-banks", hashAprobacion, asientoId: "opening-entry-no-banks",
+			origen: "CUADRE_MANUAL_APROBADO", functionalCurrencyCode: "CUP",
+			lineas: valuedLines, fxFingerprints: [],
+		} });
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(period);
+		mockPrisma.asiento.findFirst.mockResolvedValue({
+			asientoId: "opening-entry-no-banks", lineas: [
+				{ cuentaId: "account-cash", debe: new Prisma.Decimal("100"), haber: new Prisma.Decimal("0"), monedaOriginal: "CUP", montoOriginal: new Prisma.Decimal("100"), tasaCambio: null, fxEvidenceFingerprint: null },
+				{ cuentaId: "account-equity", debe: new Prisma.Decimal("0"), haber: new Prisma.Decimal("100"), monedaOriginal: "CUP", montoOriginal: new Prisma.Decimal("100"), tasaCambio: null, fxEvidenceFingerprint: null },
+			],
+		});
+
+		const result = await abrirPeriodoManualAprobadoAction({ solicitudId: "manual-no-banks" });
+
+		expect(result, JSON.stringify(result)).toMatchObject({ success: true });
+		if (result.success) expect(result.data.periodo.periodoId).toBe(period.periodoId);
+		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
+		expect(mockPrisma.asiento.create).not.toHaveBeenCalled();
+		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
+
+		// Un reintento posterior puede recuperar el período, pero un intento que
+		// solapa la transacción consumidora debe fallar sin duplicar efectos.
+		mockPrisma.$queryRaw.mockResolvedValueOnce([{ locked: false }]);
+		const overlapping = await abrirPeriodoManualAprobadoAction({ solicitudId: "manual-no-banks" });
+		expect(expectActionFailure(overlapping).error?.code).toBe("APERTURA_SALDOS_NO_VERIFICABLES");
+		expect(mockPrisma.periodoContable.create).not.toHaveBeenCalled();
+		expect(mockPrisma.asiento.create).not.toHaveBeenCalled();
+		expect(mockPrisma.aperturaPeriodo.create).not.toHaveBeenCalled();
 	});
 
 	it("replays a request retry with the same key and payload without creating another row", async () => {

@@ -64,6 +64,23 @@ describe('anticipos-workflow', () => {
     vi.mocked(emitirEventoAnticipo).mockResolvedValue({ estado: 'OMITIDO' })
   })
 
+  it.each([registrarMovimientoEfectivoAnticipo, devolverFondosAnticipo])(
+    'espera el bloqueo del tenant antes de consultar un anticipo', async (workflow) => {
+      const tx = createTxMock()
+      let release!: () => void
+      tx.$executeRaw.mockImplementation(() => new Promise<void>((resolve) => { release = resolve }))
+      tx.anticipo.findFirst.mockResolvedValue(null)
+      const pending = workflow(tx, { anticipoId: 'a1', tenantId: 't1', cuentaId: 'b1',
+        tipoPagoId: 'p1', monto: 1, idempotencyKey: 'key', usuarioId: 'u1' })
+      const outcome = pending.catch((error: unknown) => error)
+      await vi.waitFor(() => expect(tx.$executeRaw).toHaveBeenCalled())
+      expect(tx.anticipo.findFirst).not.toHaveBeenCalled()
+      release()
+      expect(await outcome).toBeInstanceOf(Error)
+      expect(tx.anticipo.findFirst).toHaveBeenCalledOnce()
+    },
+  )
+
   it('valida monto al crear anticipo', async () => {
     const tx = createTxMock()
     await expect(

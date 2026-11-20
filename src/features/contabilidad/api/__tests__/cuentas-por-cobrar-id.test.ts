@@ -116,7 +116,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     )
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
+        where: { id: 'cxc-1', tenantId: 'tenant-1', inicializacionId: null, estado: { not: 'ANULADA' } },
         data: expect.objectContaining({
           montoPagado: 450,
           estado: 'PARCIAL',
@@ -170,6 +170,23 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
 
+  it('rechaza la edición genérica de una CxC inicial externa', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123', tenantId: 'tenant-1', name: 'Test', email: 'test@test.com',
+      role: 'ADMIN' as const, isActive: true, planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
+      id: 'cxc-1', tenantId: 'tenant-1', estado: 'PENDIENTE',
+      inicializacionId: 'init-1', tipoCuenta: 'APERTURA_EXTERNA',
+    })
+
+    const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', montoPagado: 50 })
+
+    expect(result.success).toBe(false)
+    expect(expectActionFailure(result).error?.code).toBe('INITIAL_RECEIVABLE_UPDATE_UNAVAILABLE')
+    expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
+  })
+
   it('rejects a concurrent annulment when the atomic update claims no row', async () => {
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-123',
@@ -193,7 +210,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     expect(expectActionFailure(result).error?.code).toBe('VALIDATION_ERROR')
     expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
+        where: { id: 'cxc-1', tenantId: 'tenant-1', inicializacionId: null, estado: { not: 'ANULADA' } },
       }),
     )
   })

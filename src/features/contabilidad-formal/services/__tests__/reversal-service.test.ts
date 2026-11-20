@@ -9,6 +9,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../posting-engine', () => ({
 	insertarAsientoConNumeracion: vi.fn(),
 }));
+vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
+	acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@/features/contabilidad/services/accounting-period-version-lock', () => ({
+	advanceAccountingPeriodVersion: vi.fn().mockResolvedValue(undefined),
+	lockAccountingPeriodVersion: vi.fn().mockResolvedValue(0),
+}));
 vi.mock('../../lib/modo-tenant', () => ({
 	resolverModoTenant: vi.fn(),
 }));

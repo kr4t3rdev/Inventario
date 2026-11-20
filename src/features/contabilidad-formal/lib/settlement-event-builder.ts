@@ -10,6 +10,7 @@
  */
 
 import type { DecimalInput } from '../services/posting-engine';
+import { Prisma } from '@/generated/prisma';
 
 export type SettlementDecimalInput = DecimalInput;
 
@@ -17,7 +18,8 @@ export type SettlementDecimalInput = DecimalInput;
 export type SettlementOriginType =
 	| 'reconciliacion_venta'
 	| 'reconciliacion_gasto'
-	| 'reconciliacion_servicio';
+	| 'reconciliacion_servicio'
+	| 'cobro_cxc_externo';
 
 export interface SettlementEvent {
 	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO';
@@ -44,6 +46,8 @@ export interface SettlementEventParams {
 	currency: string;
 	/** Monto ya convertido a moneda funcional (null si el writer no lo persistio). */
 	functionalAmount?: SettlementDecimalInput | null;
+	/** Importe funcional histórico aplicado a la CxC externa, ya persistido. */
+	valorContableAplicado?: string;
 	/** Moneda funcional del tenant (persistida o de la politica contable). */
 	functionalCurrency?: string | null;
 	/** Tasa aplicada en la conciliacion. */
@@ -82,6 +86,21 @@ export function buildSettlementEvent(
 	tipo: 'COBRO_CXC' | 'PAGO_CXP' | 'COBRO_SERVICIO',
 	origenTipo: SettlementOriginType,
 ): SettlementEvent {
+	if (origenTipo === 'cobro_cxc_externo' && tipo !== 'COBRO_CXC') {
+		throw new Error('El origen externo solo corresponde a cobros de CxC');
+	}
+	let diferenciaFx: SettlementDecimalInput = 0;
+	if (origenTipo === 'cobro_cxc_externo') {
+		const decimalFuncional = /^\d{1,16}(?:\.\d{1,4})?$/;
+		if (typeof params.functionalAmount !== 'string' || !decimalFuncional.test(params.functionalAmount)
+			|| typeof params.valorContableAplicado !== 'string' || !decimalFuncional.test(params.valorContableAplicado)) {
+			throw new Error('El cobro externo requiere importes funcionales verificables');
+		}
+		const recibido = new Prisma.Decimal(params.functionalAmount);
+		const aplicado = new Prisma.Decimal(params.valorContableAplicado);
+		if (!recibido.gt(0) || !aplicado.gt(0)) throw new Error('Los importes funcionales deben ser positivos');
+		diferenciaFx = recibido.minus(aplicado).toString();
+	}
 	const fingerprint = params.fxEvidenceFingerprint ?? null;
 	return {
 		tipo,
@@ -104,10 +123,7 @@ export function buildSettlementEvent(
 			? {}
 			: { medioCobro: derivarMedioCobro(params.treasuryAccountType) }),
 		...(params.reference == null ? {} : { referencia: params.reference }),
-		// Sin diferencia FX residual: la conciliacion ya contiene el valor
-		// funcional valuado con la tasa persistida, por lo que la rama
-		// SIN_DIFERENCIA_FX aplica.
-		auxiliares: { diferenciaFx: 0 },
+		auxiliares: { diferenciaFx },
 	};
 }
 

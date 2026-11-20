@@ -5,6 +5,11 @@
  * reales por defecto para ejercitar el mapeo completo (evento → líneas).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/features/contabilidad/services/accounting-period-version-lock', () => ({
+	advanceAccountingPeriodVersion: vi.fn().mockResolvedValue(undefined),
+	lockAccountingPeriodVersion: vi.fn().mockResolvedValue(0),
+}));
 import { Prisma } from '@/generated/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { withReplayPostingCapability } from '@/features/contabilidad-formal/services/replay-posting-capability';
@@ -55,7 +60,12 @@ vi.mock('@/lib/services/periodo-contable-service', () => ({
 }));
 
 vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
+	acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
 	withAccountingTenantLock: lockMock,
+}));
+vi.mock('@/features/contabilidad/services/accounting-period-version-lock', () => ({
+	lockAccountingPeriodVersion: vi.fn().mockResolvedValue(0),
+	advanceAccountingPeriodVersion: vi.fn().mockResolvedValue(undefined),
 }));
 
 interface CtxFixture {
@@ -481,7 +491,7 @@ describe('postEvento — modos y guardas', () => {
 		).rejects.toMatchObject({ code: 'PERIODO_CERRADO' });
 		expect(guardMock).toHaveBeenCalledWith(
 			eventoBase().fecha, TENANT, 'asiento',
-			{ actorId: 'u1', actorTipo: 'USUARIO', origen: eventoBase().origen },
+			{ actorId: 'u1', actorTipo: 'USUARIO', origen: eventoBase().origen }, fixture.tx,
 		);
 
 		fixture.setModo('shadow');
@@ -559,6 +569,7 @@ describe('postEvento — generación de líneas', () => {
 
 		expect(resultado.estado).toBe('CONTABILIZADO');
 		expect(resultado.asientoId).toBe('ast-nuevo');
+		expect(resolverMock).toHaveBeenCalledWith(eventoBase().fecha, TENANT, undefined, fixture.tx);
 
 		const data = fixture.crearAsiento.mock.calls[0][0].data;
 		expect(data.numero).toBe(1);

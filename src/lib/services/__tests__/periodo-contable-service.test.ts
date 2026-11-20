@@ -11,6 +11,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const { mockPrisma } = vi.hoisted(() => ({
 	mockPrisma: {
+		$executeRaw: vi.fn().mockResolvedValue(1),
+		$transaction: vi.fn((callback: (tx: unknown) => Promise<unknown>) =>
+			callback(mockPrisma)),
 		periodoContable: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),

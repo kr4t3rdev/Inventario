@@ -26,6 +26,7 @@ const suffix = randomUUID().replaceAll('-', '');
 const tenantId = `ct1_venta_val_${suffix}`;
 const userId = `ct1_venta_user_${suffix}`;
 const bancoId = `ct1_venta_bank_${suffix}`;
+const monedaSinTasa = `FX${suffix.slice(0, 6).toUpperCase()}`;
 const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
 
 let pvId = '';
@@ -148,6 +149,13 @@ describe('valoración de venta con costo FIFO sin tasa en PostgreSQL aislado', {
       create: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP' },
       update: {},
     });
+    await prisma.moneda.create({
+      data: {
+        codigo: monedaSinTasa,
+        nombre: `Moneda sin tasa ${suffix}`,
+        simbolo: monedaSinTasa,
+      },
+    });
     await prisma.tenantAccountingPolicy.create({
       data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId },
     });
@@ -170,7 +178,7 @@ describe('valoración de venta con costo FIFO sin tasa en PostgreSQL aislado', {
       data: { nombre: `PV ${suffix}`, tenantId, tipoCaja: 'SECUNDARIA' },
     });
     pvId = pv.pvId;
-    productoSinTasa = await seedProductoConLote(`Prod USD ${suffix}`, 'USD');
+    productoSinTasa = await seedProductoConLote(`Prod FX ${suffix}`, monedaSinTasa);
     productoValorado = await seedProductoConLote(`Prod CUP ${suffix}`, 'CUP');
     await prisma.cuentaBancaria.create({
       data: {
@@ -194,8 +202,8 @@ describe('valoración de venta con costo FIFO sin tasa en PostgreSQL aislado', {
       items: [{ productoId: productoSinTasa, cantidad: 1, precioUnitario: 15 }],
     });
 
-    // Causa demostrada: la fuente FIFO está en USD sin tasa publicada, así que
-    // el costo no tiene monto funcional; el rechazo identifica emisor y dato.
+    // Causa demostrada: la fuente FIFO usa una moneda única sin tasa publicada,
+    // así que el costo no tiene monto funcional; el rechazo identifica emisor y dato.
     await expect(venta).rejects.toThrow(/COSTO_VENTA_DEVENGADO/);
     await expect(venta).rejects.toThrow(/monto funcional/);
 

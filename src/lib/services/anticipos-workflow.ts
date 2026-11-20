@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma'
 import { createHash } from 'node:crypto'
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider'
+import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service'
 import {
 	emitirEventoAnticipo,
 	emitirAplicacionAnticipo,
@@ -197,6 +198,8 @@ export async function registrarMovimientoEfectivoAnticipo(
     throw createAnticipoWorkflowError(400, 'IDEMPOTENCY_KEY_REQUERIDA', 'La clave de idempotencia es obligatoria')
   }
 
+  await acquireAccountingTenantLock(tx, params.tenantId)
+
   const anticipo = await tx.anticipo.findFirst({
     where: { anticipoId: params.anticipoId, tenantId: params.tenantId },
     select: {
@@ -389,6 +392,8 @@ export async function devolverFondosAnticipo(
   if (!params.idempotencyKey.trim()) {
     throw createAnticipoWorkflowError(400, 'IDEMPOTENCY_KEY_REQUERIDA', 'La clave de idempotencia es obligatoria')
   }
+
+  await acquireAccountingTenantLock(tx, params.tenantId)
 
   const anticipo = await tx.anticipo.findFirst({
     where: { anticipoId: params.anticipoId, tenantId: params.tenantId },

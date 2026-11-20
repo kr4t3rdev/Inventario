@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
+interface BancoInicial { nombreCuenta: string; nombreBanco: string; numeroCuenta: string; tipoCuenta: 'CORRIENTE' | 'AHORROS' | 'EFECTIVO'; moneda: string; saldo: string; cuentaContableId: string }
+interface OpcionesBanco { roles: Array<{ rol: string; cuentaContableId: string; codigo: string; nombre: string }>; monedas: Array<{ codigo: string; nombre: string }>; monedaFuncional: string; multiMoneda: boolean }
+
 interface AperturaManualLinea {
 	lineId?: string;
 	cuentaCodigo: string;
@@ -79,6 +82,9 @@ function formatCivilDate(value: string | Date): string {
  */
 export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPeriodoDialogProps): ReactElement {
 	const [loading, setLoading] = useState(false);
+	const [bancos, setBancos] = useState<BancoInicial[]>([]);
+	const [opcionesBanco, setOpcionesBanco] = useState<OpcionesBanco | null>(null);
+	const [errorOpcionesBanco, setErrorOpcionesBanco] = useState('');
 	const [error, setError] = useState("");
 	const [solicitudId, setSolicitudId] = useState("");
 	const [estado, setEstado] = useState<"NUEVA" | "PENDIENTE" | "APROBADA">("NUEVA");
@@ -160,6 +166,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			setFechaFin(new Date(request.fechaFin).toISOString().slice(0, 10));
 			setObservaciones(request.observaciones ?? "");
 			setLineas(lines);
+			setBancos((request.cuentasBancarias as unknown as BancoInicial[] | null) ?? []);
 		} catch (cause) {
 			setError(cause instanceof Error ? cause.message : "Error inesperado");
 		} finally {
@@ -168,10 +175,19 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 	};
 
 	useEffect(() => {
-		if (open) {
-			void loadSolicitudes();
-			void loadFunctionalCurrency();
-		}
+		if (!open) return;
+		let active = true;
+		setOpcionesBanco(null);
+		setErrorOpcionesBanco('');
+		void loadSolicitudes();
+		void loadFunctionalCurrency();
+		void import('@/features/contabilidad/actions-initial-bank-options').then(async ({ getInitialBankOptionsAction }) => {
+			const result = await getInitialBankOptionsAction({});
+			if (!active) return;
+			if (result.success) setOpcionesBanco(result.data);
+			else setErrorOpcionesBanco(result.error?.message ?? 'No se pudieron cargar las opciones de cuentas y monedas.');
+		}).catch(() => { if (active) setErrorOpcionesBanco('No se pudieron cargar las opciones de cuentas y monedas.'); });
+		return () => { active = false; };
 	}, [open, loadSolicitudes, loadFunctionalCurrency]);
 
 	const runAction = async (operation: "solicitar" | "aprobar" | "abrir") => {
@@ -188,6 +204,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					fechaFin: new Date(`${fechaFin}T23:59:59.999Z`).toISOString(),
 					observaciones: observaciones || undefined,
 					lineas,
+					...(bancos.length ? { cuentasBancarias: bancos } : {}),
 				};
 				const serializedPayload = JSON.stringify(requestPayload);
 				if (pendingRequestKey.current?.payload !== serializedPayload) {
@@ -230,7 +247,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 			{ cuentaCodigo: "", moneda: functionalCurrencyCode, debito: "0", credito: "0" },
 			{ cuentaCodigo: "", moneda: functionalCurrencyCode, debito: "0", credito: "0" },
 		]);
-		setLineasValuadas([]);
+		setLineasValuadas([]); setBancos([]);
 	};
 
 	return <Dialog open={open} onOpenChange={(value) => { if (!value) reset(); onOpenChange(value); }}>
@@ -273,10 +290,32 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					<Button type="button" variant="outline" onClick={() => setLineas((current) => [...current, { cuentaCodigo: "", moneda: functionalCurrencyCode, debito: "0", credito: "0" }])}>Agregar línea</Button>
 					<p className="text-sm text-muted-foreground">No se ingresan tasas manualmente ni se generan contrapartidas automáticas.</p>
 				</div>
+                <section className="space-y-3 rounded border p-3">
+                    <h3 className="font-medium">Cuentas bancarias y caja</h3>
+                    <p className="text-sm text-muted-foreground">La carga inicial de cuentas aún no puede confirmarse mientras se completa la conciliación de saldos operativos.</p>
+                    {bancos.map((banco, index) => {
+                      const change = (patch: Partial<BancoInicial>) => setBancos((rows) => rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+                      const roles = opcionesBanco?.roles.filter((role) => role.rol === (banco.tipoCuenta === 'EFECTIVO' ? 'CAJA_PRINCIPAL' : 'BANCOS')) ?? [];
+                      return <div key={index} className="grid gap-2 rounded border p-3 sm:grid-cols-2">
+                        <Input aria-label={`Nombre de cuenta bancaria ${index + 1}`} placeholder="Nombre de cuenta" value={banco.nombreCuenta} onChange={(e) => change({ nombreCuenta: e.target.value })} />
+                        <Input aria-label={`Banco ${index + 1}`} placeholder="Banco" value={banco.nombreBanco} onChange={(e) => change({ nombreBanco: e.target.value })} />
+                        <Input aria-label={`Número de cuenta bancaria ${index + 1}`} placeholder="Número de cuenta" value={banco.numeroCuenta} onChange={(e) => change({ numeroCuenta: e.target.value })} />
+                        <select aria-label={`Tipo de cuenta bancaria ${index + 1}`} value={banco.tipoCuenta} onChange={(e) => change({ tipoCuenta: e.target.value as BancoInicial['tipoCuenta'], cuentaContableId: '' })}><option value="CORRIENTE">Corriente</option><option value="AHORROS">Ahorros</option><option value="EFECTIVO">Efectivo</option></select>
+                        <select aria-label={`Moneda bancaria ${index + 1}`} value={banco.moneda} onChange={(e) => change({ moneda: e.target.value })}><option value="">Seleccione moneda</option>{opcionesBanco?.monedas.map((m) => <option key={m.codigo} value={m.codigo}>{m.codigo} · {m.nombre}</option>)}</select>
+                        <Input aria-label={`Saldo bancario ${index + 1}`} inputMode="decimal" value={banco.saldo} onChange={(e) => change({ saldo: e.target.value })} />
+                        <select aria-label={`Cuenta contable bancaria ${index + 1}`} value={banco.cuentaContableId} onChange={(e) => change({ cuentaContableId: e.target.value })}><option value="">Seleccione cuenta contable</option>{roles.map((role) => <option key={role.cuentaContableId} value={role.cuentaContableId}>{role.codigo} · {role.nombre}</option>)}</select>
+                        <Button type="button" variant="outline" onClick={() => setBancos((rows) => rows.filter((_, i) => i !== index))}>Eliminar cuenta {index + 1}</Button>
+                      </div>;
+                    })}
+                    <Button type="button" variant="outline" disabled onClick={() => setBancos((rows) => [...rows, { nombreCuenta: '', nombreBanco: '', numeroCuenta: '', tipoCuenta: 'CORRIENTE', moneda: functionalCurrencyCode, saldo: '0', cuentaContableId: '' }])}>Agregar cuenta bancaria</Button>
+                    {bancos.length > 0 && !opcionesBanco && <p className="text-sm text-destructive">No se pudieron cargar las opciones de cuentas y monedas.</p>}
+                </section>
 				<div><Label htmlFor="obs">Observaciones</Label><Textarea id="obs" value={observaciones} onChange={(event) => setObservaciones(event.target.value)} /></div>
 			</div> : <div className="space-y-3">
 				<p>Solicitud {solicitudId}: {estado === "PENDIENTE" ? "pendiente de aprobación" : "aprobada; puede abrirse"}.</p>
 				<p>Período: {fechaInicio} a {fechaFin}</p>
+                {bancos.length > 0 && <section><h3 className="font-medium">Cuentas bancarias declaradas</h3>{bancos.map((banco, index) => <p key={index}>{banco.nombreCuenta} · {banco.nombreBanco} · {banco.numeroCuenta} · {banco.tipoCuenta} · {banco.saldo} {banco.moneda} · {opcionesBanco?.roles.find((r) => r.cuentaContableId === banco.cuentaContableId)?.nombre ?? 'Cuenta contable no disponible'}</p>)}</section>}
+				{bancos.length > 0 && <p className="text-sm text-muted-foreground">La carga inicial de cuentas aún no puede confirmarse mientras se completa la conciliación de saldos operativos.</p>}
 				<p className="font-medium">Revise cada cuenta, moneda, débito/crédito y evidencia FX antes de aprobar:</p>
 				<div className="space-y-3">{lineasValuadas.map((line, index) => <article key={`${line.cuentaContableId}-${index}`} className="rounded border p-3 text-sm">
 					<p className="font-medium">{line.cuentaCodigo} · {line.moneda}: débito {line.debito} / crédito {line.credito}</p>
@@ -292,6 +331,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 				<p className="break-all text-xs text-muted-foreground">Huella de revisión: {previewHash || "No disponible"}</p>
 				<p className="text-sm text-muted-foreground">La aprobación queda registrada con hash; no genera contrapartidas.</p>
 			</div>}
+			{errorOpcionesBanco && <p className="text-sm text-destructive">{errorOpcionesBanco}</p>}
 			{error && <p className="text-sm text-destructive">{error}</p>}
 			<DialogFooter>
 				<Button type="button" variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cancelar</Button>
@@ -299,7 +339,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					type="button"
 					className="min-h-11"
 					onClick={() => runAction("solicitar")}
-					disabled={loading || !functionalCurrencyCode || !fechaInicio || !fechaFin || lineas.some((line) => !line.moneda)}
+					disabled={loading || !functionalCurrencyCode || !fechaInicio || !fechaFin || (bancos.length > 0 && (!opcionesBanco || bancos.some((b) => !b.nombreCuenta || !b.nombreBanco || !b.numeroCuenta || !b.cuentaContableId || !b.moneda || !b.saldo))) || lineas.some((line) => !line.moneda)}
 				>
 					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
 					Enviar para aprobación
@@ -308,7 +348,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					type="button"
 					className="min-h-11"
 					onClick={() => runAction("aprobar")}
-					disabled={loading || lineasValuadas.length !== lineas.length}
+					disabled={loading || bancos.length > 0 || lineasValuadas.length !== lineas.length}
 				>
 					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
 					Aprobar cuadre
@@ -317,7 +357,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 					type="button"
 					className="min-h-11"
 					onClick={() => runAction("abrir")}
-					disabled={loading}
+					disabled={loading || bancos.length > 0}
 				>
 					{loading && <Loader2 className="mr-2 size-4 animate-spin" />}
 					Abrir período aprobado

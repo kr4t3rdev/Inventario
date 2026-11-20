@@ -15,7 +15,7 @@
 import { prisma } from "@/lib/prisma";
 import { ActionError } from "@/lib/server-actions/types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
-import { PeriodoContableService } from "./periodo-contable-service";
+import { PeriodoContableService, type PeriodoReadClient } from "./periodo-contable-service";
 import { PeriodoAuditService } from './periodo-audit-service';
 import {
 	EstadoPeriodo,
@@ -39,6 +39,8 @@ export interface VerificarEscrituraParams {
 	metadata?: Record<string, unknown>;
 	/** A formal asiento fails closed if durable audit evidence cannot be saved. */
 	auditoriaObligatoria?: boolean;
+	/** Lectura de período de la transacción; evita compartir estado sin confirmar en caché. */
+	periodoClient?: PeriodoReadClient;
 }
 
 export interface ContextoAuditoriaAsiento {
@@ -203,7 +205,7 @@ export class PeriodoGuard {
 	async verificarEscritura(
 		params: VerificarEscrituraParams,
 	): Promise<VerificarEscrituraResult> {
-		const { fecha, tenantId, tipoOperacion, actor, metadata, auditoriaObligatoria } = params;
+		const { fecha, tenantId, tipoOperacion, actor, metadata, auditoriaObligatoria, periodoClient } = params;
 
 		// Modo disabled: bypass completo
 		if (this.config.mode === "disabled" || !this.config.enabled) {
@@ -215,7 +217,9 @@ export class PeriodoGuard {
 		}
 
 		// Resolver período (cache → DB)
-		const resultado = await this._resolverConCache(fecha, tenantId);
+		const resultado = periodoClient
+			? await PeriodoContableService.resolverPeriodoActivo(fecha, tenantId, undefined, periodoClient)
+			: await this._resolverConCache(fecha, tenantId);
 
 		// No existe período
 		if (resultado.estado === "NO_EXISTE") {
@@ -254,7 +258,7 @@ export class PeriodoGuard {
 				fecha: fecha.toISOString(),
 				tipoOperacion,
 				...metadata,
-			}, auditoriaObligatoria);
+			}, auditoriaObligatoria, Boolean(periodoClient));
 
 			if (this.config.mode === "enforce") {
 				return { permitido: false, error, codigo: code, modo: "enforce" };
@@ -283,6 +287,7 @@ export class PeriodoGuard {
 		tenantId: string,
 		tipoOperacion?: string,
 		contexto?: ContextoAuditoriaAsiento,
+		periodoClient?: PeriodoReadClient,
 	): Promise<VerificarEscrituraResult> {
 		const config = getGuardConfigExtended();
 		if (contexto && (!contexto.actorId || !tenantId || !contexto.origen.tipo ||
@@ -297,6 +302,7 @@ export class PeriodoGuard {
 			actor: contexto?.actorId ?? 'system',
 			metadata: contexto ? { actorTipo: contexto.actorTipo, origen: contexto.origen } : undefined,
 			auditoriaObligatoria: Boolean(contexto),
+			periodoClient,
 		});
 	}
 
@@ -399,6 +405,7 @@ export class PeriodoGuard {
 		mensaje: string,
 		payload?: Record<string, unknown>,
 		obligatoria = false,
+		referenciaTransaccional = false,
 	): Promise<void> {
 		if (!this.auditService) {
 			if (obligatoria) throw new ActionError('Auditoría no disponible', 'AUDITORIA_NO_DISPONIBLE');
@@ -406,11 +413,21 @@ export class PeriodoGuard {
 		}
 
 		try {
+			const idObservado = typeof payload?.periodoId === 'string' ? payload.periodoId : null;
+			// La auditoría es autónoma para sobrevivir al rollback. Solo puede
+			// referenciar períodos visibles para esa conexión y del mismo tenant.
+			// Un ID aún no confirmado se conserva en el payload, sin violar la FK.
+			const periodoVisible = referenciaTransaccional && idObservado
+				? await prisma.periodoContable.findFirst({
+					where: { periodoId: idObservado, tenantId },
+					select: { periodoId: true },
+				})
+				: null;
 			await this.auditService.registrar({
 				// Sin período aplicable no hay referencia válida: se audita con
 				// periodoId null (FK nullable) en lugar de un marcador 'N/A' que
 				// la FK rechaza y oculta el diagnóstico original.
-				periodoId: typeof payload?.periodoId === 'string' ? payload.periodoId : null,
+				periodoId: referenciaTransaccional ? periodoVisible?.periodoId ?? null : idObservado,
 				tenantId,
 				evento: "INTENTO_BYPASS",
 				actor,

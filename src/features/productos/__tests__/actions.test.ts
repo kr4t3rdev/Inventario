@@ -66,6 +66,7 @@ vi.mock("@/lib/prisma", () => {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
 		},
+		vendor: { findUnique: vi.fn() },
 		listaPrecio: {
 			count: vi.fn(),
 		},
@@ -77,6 +78,7 @@ vi.mock("@/lib/prisma", () => {
 			gastoCompra: tx.gastoCompra,
 			stockUbicacion: tx.stockUbicacion,
 			categoria: tx.categoria,
+			vendor: tx.vendor,
 			listaPrecio: tx.listaPrecio,
 			miEmpresa: {
 				findUnique: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
@@ -97,6 +99,23 @@ vi.mock("@/lib/prisma", () => {
 });
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
+}));
+vi.mock("@/lib/product-business-code", () => ({
+	resolveTaxonomySegments: vi.fn(() => ({ idSeccionCodigo: "01", especificoCodigo: "001" })),
+	normalizeProveedorCodigo: vi.fn(() => "12"),
+}));
+vi.mock("@/lib/product-business-code.server", () => ({
+	generateProductCodeWithRetry: vi.fn().mockResolvedValue({
+		codigoNegocio: "1201001000100", proveedorCodigo: "12", idSeccionCodigo: "01",
+		especificoCodigo: "001", surtidoCodigo: "0001", dcCodigo: "0",
+	}),
+}));
+vi.mock("@/lib/ean13-utils", () => ({
+	FindNextAvailableSurtido: vi.fn().mockResolvedValue("0001"),
+	ValidateAssembledCode: vi.fn(() => true),
+}));
+vi.mock("@/features/contabilidad/services/accounting-tenant-lock-service", () => ({
+	acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
 }));
 // auth-middleware importa platform-prisma (cliente sin escope) y ejecuta
 // buildPlatformClient al cargar; lo mockeamos para que no instancie el cliente base.
@@ -125,6 +144,7 @@ vi.mock("@/features/contabilidad-formal/services/settlement-posting-service", ()
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import {
 	getProductosAction,
@@ -177,6 +197,7 @@ const mockProducto = {
 describe("Productos Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValue({ usaCodigoEan13: false } as never);
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
 	});
 
@@ -236,6 +257,21 @@ describe("Productos Server Actions", () => {
 			fotos: [],
 		};
 
+		it("espera el bloqueo contable antes de crear stock inicial", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+			let release!: () => void;
+			vi.mocked(acquireAccountingTenantLock).mockImplementationOnce(
+				() => new Promise<void>((resolve) => { release = resolve; }),
+			);
+			const pending = createProductoAction(validInput);
+			await vi.waitFor(() => expect(acquireAccountingTenantLock).toHaveBeenCalled());
+			expect(prisma.producto.create).not.toHaveBeenCalled();
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			release();
+			expect((await pending).success).toBe(true);
+		});
+
 		it("crea producto exitosamente con datos válidos", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
@@ -252,6 +288,26 @@ describe("Productos Server Actions", () => {
 				}),
 			);
 		});
+
+	it("no registra el stock inicial preexistente como una compra por indicar proveedor", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValue({ usaCodigoEan13: true } as never);
+		vi.mocked(prisma.vendor.findUnique).mockResolvedValue({ vendorId: "vendor-1", vendorCode: "12" } as never);
+		vi.mocked(prisma.categoria.findFirst)
+			.mockResolvedValueOnce({ catId: "cat-1", nombre: "Categoría" } as never)
+			.mockResolvedValueOnce({ catId: "sub-1", nombre: "Subcategoría", parentId: "cat-1" } as never);
+		vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+
+		const result = await createProductoAction({
+			...validInput, categoriaId: "cat-1", subcategoriaId: "sub-1", vendorId: "vendor-1",
+		});
+
+		expect(result.success).toBe(true);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+			modo: "set", valor: 100, ubicacionId: "almacen-1",
+		}));
+		expect(prisma.gastoCompra.create).not.toHaveBeenCalled();
+	});
 
 		it("retorna error de validación si el nombre está vacío", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);

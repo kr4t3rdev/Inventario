@@ -3,10 +3,18 @@ import { createCuentaPorPagarAction } from '@/features/contabilidad/actions-cuen
 import { expectActionFailure, expectActionSuccess } from "@/test/action-response";
 
 const prismaMock = vi.hoisted(() => ({
+  $transaction: vi.fn(),
   cuentaPorPagar: {
     findFirst: vi.fn(),
     create: vi.fn(),
   },
+}))
+
+vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
+  acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -35,6 +43,7 @@ const AUTH_USER = {
 describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    prismaMock.$transaction.mockImplementation((run) => run(prismaMock))
     getCurrentUserMock.mockResolvedValue(AUTH_USER)
   })
 
