@@ -276,4 +276,10 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     reason: 'Agregados de dashboard: distribución RFM, tiers, tendencia de churn y redención con GROUP BY.',
     tenantGuarantee: 'Cada query parametrizada filtra por tenantId de requireTenant en el WHERE.',
   },
+  {
+    file: 'src/features/contabilidad/services/initial-subledger-settlement-writer.ts',
+    occurrences: 3,
+    reason: 'Locks FOR UPDATE para serializar el cobro/pago de CxC/CxP iniciales: bloquean la cuenta, la cuenta bancaria y la CxC/CxP antes de leer y actualizar.',
+    tenantGuarantee: 'Cada query parametrizada filtra por tenantId del usuario autenticado y por el id de la fila del mismo tenant.',
+  },
 ] as const;

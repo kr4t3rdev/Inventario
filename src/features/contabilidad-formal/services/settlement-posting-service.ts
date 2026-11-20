@@ -25,8 +25,10 @@ import {
 import { resolveModoEmisorNoCash } from './non-cash-emitter-gate';
 import {
 	buildCobroCxcEvent,
+	buildCobroCxcExternoEvent,
 	buildCobroServicioEvent,
 	buildPagoCxpEvent,
+	buildPagoCxpExternoEvent,
 	type SettlementEvent,
 	type SettlementEventParams,
 } from '../lib/settlement-event-builder';
@@ -67,6 +69,14 @@ export interface SettlementPostingParams {
 	referencia?: string;
 	/** Descripcion legible del evento. */
 	descripcion?: string;
+	/**
+	 * Origen externo de una liquidacion de submayor inicial. Cuando se informa,
+	 * el evento se construye con ese origen (y su diferencia FX) en vez de con
+	 * la conciliacion ordinaria de venta o gasto.
+	 */
+	origenExterno?: 'cobro_cxc_externo' | 'pago_cxp_externo';
+	/** Importe funcional historico aplicado al submayor (valor contable). */
+	valorContableAplicado?: string;
 }
 
 /**
@@ -85,6 +95,20 @@ async function resolverMonedaFuncional(
 		select: { functionalCurrencyCode: true },
 	});
 	return politica?.functionalCurrencyCode ?? null;
+}
+
+/**
+ * @description Normaliza un importe funcional a la cadena decimal que exige el
+ * constructor de eventos externos (hasta 16 enteros y 4 decimales).
+ * @param {DecimalInput | null | undefined} value - Importe funcional resuelto.
+ * @returns {string | null} Cadena de 4 decimales o null si no es convertible.
+ */
+function toFunctionalAmountString(value: DecimalInput | null | undefined): string | null {
+	if (value == null) return null;
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number') return Number.isFinite(value) ? value.toFixed(4) : null;
+	const asDecimal = value as { toFixed?: (digits: number) => string };
+	return typeof asDecimal.toFixed === 'function' ? asDecimal.toFixed(4) : null;
 }
 
 /**
@@ -142,6 +166,20 @@ export async function construirEventoLiquidacion(
 		...(params.descripcion == null ? {} : { descripcion: params.descripcion }),
 	};
 
+	if (params.origenExterno === 'cobro_cxc_externo') {
+		return buildCobroCxcExternoEvent({
+			...base,
+			functionalAmount: toFunctionalAmountString(montoFuncional),
+			valorContableAplicado: params.valorContableAplicado,
+		});
+	}
+	if (params.origenExterno === 'pago_cxp_externo') {
+		return buildPagoCxpExternoEvent({
+			...base,
+			functionalAmount: toFunctionalAmountString(montoFuncional),
+			valorContableAplicado: params.valorContableAplicado,
+		});
+	}
 	return params.tipo === 'COBRO_CXC'
 		? buildCobroCxcEvent(base)
 		: params.tipo === 'COBRO_SERVICIO'

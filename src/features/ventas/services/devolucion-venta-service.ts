@@ -225,6 +225,13 @@ export const DevolucionVentaService = {
             cantidad: item.cantidad,
           });
           fuentesCostoDevuelto.push(...fuentes);
+          // El costo auditado conserva los centavos (25.50, no 26): el
+          // promedio ponderado se calcula con Decimal a 4 decimales. El
+          // kardex sigue con su escala entera existente.
+          const costoUnitarioDevolucion =
+            restaurado > 0
+              ? new Prisma.Decimal(costoTotal).div(restaurado).toDecimalPlaces(4)
+              : new Prisma.Decimal(origen.producto.precioCosto);
           const costoUnitario =
             restaurado > 0
               ? Math.round(costoTotal / restaurado)
@@ -250,7 +257,7 @@ export const DevolucionVentaService = {
               cantidad: item.cantidad,
               precioUnitario: item.precioUnitario,
               total: item.total,
-              costoUnitarioDevolucion: costoUnitario,
+              costoUnitarioDevolucion,
               tipoUbicacion: ubicacion.tipoUbicacion,
               ubicacionId: ubicacion.ubicacionId,
             },

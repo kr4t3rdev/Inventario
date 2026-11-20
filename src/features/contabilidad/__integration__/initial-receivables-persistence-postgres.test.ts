@@ -55,7 +55,7 @@ describe('persistencia CxC iniciales en PostgreSQL aislado', { timeout: 120_000 
   });
 
   it('persiste solo el submayor, sin venta, factura, banco ni asiento', async () => {
-    expect(await prisma.$transaction((tx) => persist(tx, input()))).toEqual({ count: 1 });
+    expect(await prisma.$transaction((tx) => persist(tx, input()))).toMatchObject({ count: 1, totalFuncional: '125.25' });
     const row = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId: tenantA } });
     expect(row).toMatchObject({ inicializacionId: initA, referenciaInicial: 'fila-1',
       tipoCuenta: 'APERTURA_EXTERNA', facturaId: null, ventaServicioId: null,
@@ -103,5 +103,41 @@ describe('persistencia CxC iniciales en PostgreSQL aislado', { timeout: 120_000 
       throw new Error('fallo de prueba');
     })).rejects.toThrow('fallo de prueba');
     expect(await prisma.cuentaPorCobrar.count({ where: { tenantId: tenantA, referenciaInicial: 'rollback' } })).toBe(0);
+  });
+  it('valora una deuda en divisa con la tasa de la tabla y guarda la evidencia FX', async () => {
+    const result = await prisma.$transaction((tx) => persist(tx, {
+      ...input(), fechaCorte: '2026-11-01', tasas: { USD: '24' },
+      cuentas: [{ referenciaFila: 'fx-1', clienteId: clientA, moneda: 'USD', saldo: '100' }],
+    }));
+    expect(result).toMatchObject({ count: 1, totalFuncional: '2400' });
+    const row = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId: tenantA, referenciaInicial: 'fx-1' } });
+    expect(row.montoDeuda.toString()).toBe('100');
+    expect(row.montoDeudaFuncional?.toString()).toBe('2400');
+    expect(row.monedaOriginal).toBe('USD');
+    expect(row.monedaFuncional).toBe('CUP');
+    expect(row.tasaCambio?.toString()).toBe('24');
+    expect(row.rateEffectiveAt?.toISOString().slice(0, 10)).toBe('2026-11-01');
+    expect(row.fxProvenanceKind).toBe('MANUAL_GOVERNED');
+    expect(row.fxProvenanceSource).toBe('INICIALIZACION_CONTABLE');
+    expect(row.fxEvidenceFingerprint).toMatch(/^[0-9a-f]{64}$/);
+    expect(row.fxEvidenceVersion).toBe(1);
+    expect(row.fxEvidenceJson).toMatchObject({ fxProvenanceKind: 'MANUAL_GOVERNED', fxProvenanceSource: 'INICIALIZACION_CONTABLE' });
+  });
+  it('valora una deuda en divisa con la tasa de la fila', async () => {
+    const result = await prisma.$transaction((tx) => persist(tx, {
+      ...input(), fechaCorte: '2026-11-01',
+      cuentas: [{ referenciaFila: 'fx-2', clienteId: clientA, moneda: 'USD', saldo: '100', tasaCambio: '25' }],
+    }));
+    expect(result).toMatchObject({ count: 1, totalFuncional: '2500' });
+    const row = await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId: tenantA, referenciaInicial: 'fx-2' } });
+    expect(row.montoDeudaFuncional?.toString()).toBe('2500');
+    expect(row.tasaCambio?.toString()).toBe('25');
+  });
+  it('rechaza divisa sin tasa declarada', async () => {
+    await expect(prisma.$transaction((tx) => persist(tx, {
+      ...input(), fechaCorte: '2026-11-01',
+      cuentas: [{ referenciaFila: 'fx-sin-tasa', clienteId: clientA, moneda: 'USD', saldo: '100' }],
+    }))).rejects.toThrow('divisa');
+    expect(await prisma.cuentaPorCobrar.count({ where: { tenantId: tenantA, referenciaInicial: 'fx-sin-tasa' } })).toBe(0);
   });
 });

@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const requiredText = z.string().trim().min(1).max(200);
 const monetaryValue = /^\d{1,16}(?:\.\d{1,4})?$/;
+const nonNegativeRate = z.string().regex(/^\d+(?:\.\d{1,10})?$/)
+  .refine((value) => Number(value) >= 0, 'La tasa debe ser mayor o igual que cero');
 
 /**
  * @description Normaliza un saldo decimal sin convertirlo a punto flotante.
@@ -26,7 +28,7 @@ function isCivilDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-const receivable = z.object({
+export const initialReceivableRow = z.object({
   referenciaFila: z.string().trim().min(1).max(64),
   clienteId: requiredText,
   referenciaExterna: requiredText.optional(),
@@ -36,6 +38,11 @@ const receivable = z.object({
     .refine((value) => /[1-9]/.test(value), 'El saldo debe ser mayor que cero')
     .transform(normalizeAmount),
   fechaVencimiento: z.string().refine(isCivilDate, 'Indique una fecha válida').optional(),
+  tasaCambio: z.string().regex(/^\d+(?:\.\d{1,8})?$/)
+    .refine((value) => Number(value) > 0, 'La tasa debe ser mayor que cero')
+    .optional(),
+  tasaInteres: nonNegativeRate.optional(),
+  tasaInteresMoratorio: nonNegativeRate.optional(),
 }).strict();
 
 /**
@@ -43,7 +50,7 @@ const receivable = z.object({
  * @remarks La identidad y autorización del cliente, FX y persistencia se verifican en el servidor.
  */
 export const initialReceivablesContract = z.object({
-  cuentas: z.array(receivable).min(1).max(1000),
+  cuentas: z.array(initialReceivableRow).min(1).max(1000),
 }).strict().superRefine(({ cuentas }, context) => {
   const references = new Set<string>();
   cuentas.forEach((account, index) => {
@@ -55,6 +62,13 @@ export const initialReceivablesContract = z.object({
       });
     }
     references.add(account.referenciaFila);
+    if ((account.tasaInteres == null) !== (account.tasaInteresMoratorio == null)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cuentas', index, 'tasaInteres'],
+        message: 'Ambas tasas de interés deben declararse juntas',
+      });
+    }
   });
 });
 

@@ -684,6 +684,12 @@ export const AccountingCashOperationsMutationService = {
       if (prestamo.estado === 'PAGADO' || prestamo.estado === 'CANCELADO') {
         throw new ActionError('El préstamo no admite más pagos', 'VALIDATION_ERROR');
       }
+      if (prestamo.cuentaPorCobrar?.inicializacionId) {
+        throw new ActionError(
+          'Este préstamo inicial se cobra desde la liquidación de CxC',
+          'COBRO_PRESTAMO_INICIAL_BLOQUEADO',
+        );
+      }
       let interestAllocation: ReturnType<typeof calculateCashObligationPaymentAllocation>;
       try {
         interestAllocation = calculateCashObligationPaymentAllocation({

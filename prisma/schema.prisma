@@ -126,6 +126,7 @@ model InyeccionCapital {
   updatedAt          DateTime       @updatedAt
   cuentaBancaria     CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   pagos              PagoDeuda[]
+  deudaCash          DeudaCash?
 
   @@index([cuentaId, createdAt])
   @@index([tenantId])
@@ -1822,7 +1823,7 @@ model PurchaseAllocation {
   inventarioInicialFuenteId String?
   ventaItemId           String
   loteId                String?
-  costoUnitarioSnapshot Int?
+  costoUnitarioSnapshot Decimal?          @db.Decimal(20, 4)
   fifoMonedaOrigen      String?
   fifoFechaFuente       DateTime?
   fifoMonedaFuncional   String?
@@ -2358,6 +2359,7 @@ model CuentaBancaria {
   reconciliacionesGasto    ReconciliacionGasto[]
   reconciliacionesServicio ReconciliacionServicio[]
   reconciliacionesVenta    ReconciliacionVenta[]
+  pagosCuentaPorPagar      PagoCuentaPorPagar[]
   transferenciasDestino    TransferenciaBancaria[]  @relation("TransferenciasDestino")
   transferenciasOrigen     TransferenciaBancaria[]  @relation("TransferenciasOrigen")
   facturas                 Factura[]                @relation("FacturaCuenta")
@@ -2388,6 +2390,7 @@ model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
   tenantId                    String
   ventaId                     String?
+  cuentaPorCobrarId           String?
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
@@ -2423,8 +2426,10 @@ model ReconciliacionVenta {
   cashInterestAllocation     CashPaymentInterestAllocation?
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
+  cuentaPorCobrar           CuentaPorCobrar? @relation(fields: [cuentaPorCobrarId], references: [id])
 
   @@index([tenantId])
+  @@index([cuentaPorCobrarId])
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
@@ -2954,6 +2959,7 @@ model CuentaPorCobrar {
   updatedAt        DateTime              @updatedAt
   tipoCuenta       String?
   ventaServicioId  String?               @unique
+  reconciliacionesVenta ReconciliacionVenta[]
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
@@ -3026,6 +3032,7 @@ model DeudaCash {
   idNumerico       Int                   @default(autoincrement())
   proveedorId      String
   cuentaPorPagarId String                @unique
+  inyeccionId      String?               @unique
   montoCapital     Decimal
   moneda           String                @default("CUP")
   tasaInteres      Decimal?
@@ -3048,6 +3055,7 @@ model DeudaCash {
   cashInterestOrdinaryCarry      Decimal? @db.Decimal(38, 18)
   cashInterestMoratoryCarry      Decimal? @db.Decimal(38, 18)
   cuentaPorPagar   CuentaPorPagar        @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  inyeccion        InyeccionCapital?     @relation(fields: [inyeccionId], references: [id])
   proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   reconciliaciones ReconciliacionVenta[]
@@ -3099,7 +3107,19 @@ model PagoCuentaPorPagar {
   pagoCuentaPorPagarId String         @id @default(cuid())
   tenantId             String
   cuentaPorPagarId     String
+  cuentaId             String?
   monto                Decimal
+  moneda                 String?
+  montoFuncional         Decimal?              @db.Decimal(20, 4)
+  tasaCambio             Decimal?              @db.Decimal(20, 10)
+  functionalCurrency     String?
+  rateEffectiveAt        DateTime?
+  fxProvenanceKind       String?
+  fxProvenanceSource     String?
+  fxCatalogRateId        String?
+  fxEvidenceJson         Json?
+  fxEvidenceFingerprint  String?
+  fxEvidenceVersion      Int?
   numeroTransaccion    String
   cuentaProveedor      String
   fechaPago            DateTime       @default(now())
@@ -3107,10 +3127,12 @@ model PagoCuentaPorPagar {
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   cuentaPorPagar       CuentaPorPagar @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId], onDelete: Cascade)
+  cuentaBancaria       CuentaBancaria? @relation(fields: [cuentaId], references: [cuentaId])
   tenant               Tenant         @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
   @@index([cuentaPorPagarId])
+  @@index([cuentaId])
 }
 
 model EquipoReparacion {
@@ -3605,7 +3627,7 @@ model DevolucionVentaItem {
   precioUnitario          Int
   total                   Int
   /// Costo FIFO ponderado restaurado (auditoría y rentabilidad)
-  costoUnitarioDevolucion Int
+  costoUnitarioDevolucion Decimal @db.Decimal(20, 4)
   /// 'punto_venta' | 'almacen' (ubicación origen de la venta)
   tipoUbicacion           String
   ubicacionId             String
@@ -4202,7 +4224,7 @@ model InicializacionContable {
   @@map("inicializaciones_contables")
 }
 
-/// Fuente de costo declarada en la apertura, todavía no conectada al asignador FIFO.
+/// Fuente de costo declarada en la apertura y consumible por el asignador FIFO.
 model InventarioInicialFuente {
   id                 String @id @default(cuid())
   tenantId           String
@@ -4210,7 +4232,7 @@ model InventarioInicialFuente {
   loteId             String
   productoId         String
   cantidad           Int
-  costoUnitario      Int
+  costoUnitario      Decimal          @db.Decimal(20, 4)
   moneda             String
   fechaCorte         DateTime
   montoFuncional     Decimal @db.Decimal(20, 4)

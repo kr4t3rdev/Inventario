@@ -7,6 +7,7 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { Prisma } from '@/generated/prisma';
 import {
 	allocateFifoForVentaItem,
 	getAvailableStock,
@@ -34,6 +35,7 @@ function createMockTx() {
 			findMany: vi.fn(),
 		},
 		purchaseReceiptInvoiceAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+		inventarioInicialFuente: { findMany: vi.fn().mockResolvedValue([]) },
 		tenantAccountingPolicy: { findUnique: vi.fn() },
 		ventaItem: {
 			findMany: vi.fn(),
@@ -65,6 +67,66 @@ describe("allocateFifoForVentaItem", () => {
 			compraDocumentoItemId: "c1", cantidad: 2, costoUnitarioSnapshot: 120,
 			fifoMonedaOrigen: "USD", fifoFechaFuente: fecha,
 		})] });
+	});
+
+	it("asigna primero una fuente de inventario inicial con evidencia verificable", async () => {
+		const fecha = new Date("2026-10-01T00:00:00.000Z");
+		const evidence = {
+			version: "1",
+			source: "INICIALIZACION_CONTABLE",
+			referenciaFila: "fila-1",
+			fechaCorte: "2026-10-01",
+			monedaOriginal: "CUP",
+			monedaFuncional: "CUP",
+			cantidad: "4",
+			costoUnitario: "25",
+			montoFuncional: "100.0000",
+			tasaCambio: null,
+		};
+		const { hashInitialInventoryEvidence } = await import("@/features/contabilidad/services/initial-inventory-evidence");
+		const evidenciaHash = hashInitialInventoryEvidence(evidence);
+		tx.compraDocumentoItem.findMany.mockResolvedValue([]);
+		tx.inventarioInicialFuente.findMany.mockResolvedValue([{
+			id: "fuente-1",
+			tenantId: "t1",
+			productoId: "p1",
+			cantidad: 4,
+			costoUnitario: 25,
+			moneda: "CUP",
+			fechaCorte: fecha,
+			montoFuncional: 100,
+			monedaFuncional: "CUP",
+			evidencia: evidence,
+			evidenciaHash,
+			lote: {
+				id: "lote-inicial",
+				cantidadDisponible: 4,
+				fechaVencimiento: null,
+				createdAt: fecha,
+			},
+		}]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1", ventaItemId: "v-inicial", productoId: "p1", cantidad: 2,
+		});
+
+		expect(tx.purchaseAllocation.createMany).toHaveBeenCalledWith({
+			data: [expect.objectContaining({
+				tenantId: "t1",
+				inventarioInicialFuenteId: "fuente-1",
+				compraDocumentoItemId: null,
+				loteId: "lote-inicial",
+				cantidad: 2,
+				costoUnitarioSnapshot: new Prisma.Decimal(25),
+				fifoMonedaOrigen: "CUP",
+				fifoFechaFuente: fecha,
+				fifoMonedaFuncional: "CUP",
+				fifoCostoFuncional: 50,
+				fifoTasaCambio: null,
+				fifoFechaTasa: null,
+			})],
+		});
 	});
 
 	it("persiste la valoración y evidencia FX de una asignación directa", async () => {

@@ -240,7 +240,10 @@ export const VentaLifecycleService = {
       // inventario con el costo FIFO real de los lotes consumidos.
       if ((await resolverModoTenant(tx, tenantId)) !== 'off') {
         const costoFifo = await getCostoFifoVentaValorado(tx, tenantId, ventaId);
-        if (costoFifo && costoFifo.cantidad > 0) {
+        // Una entrega sin costo no tiene nada que devengar: el motor formal
+        // rechaza montos cero y la transacción revertiría. El costo nulo
+        // (sin valorar) mantiene el comportamiento previo (falla al postear).
+        if (costoFifo && costoFifo.cantidad > 0 && costoFifo.montoFuncional !== 0) {
           await emitirCostoVenta(
             tx,
             { tenantId, userId: user.userId },

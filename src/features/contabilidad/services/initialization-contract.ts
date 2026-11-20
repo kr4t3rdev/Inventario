@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { initialInventoryRowContract } from './initial-inventory-contract';
+import { initialPayableRow } from './initial-payables-contract';
+import { initialReceivableRow } from './initial-receivables-contract';
 
 /**
  * @description Normaliza un importe decimal validado sin convertirlo a punto flotante.
@@ -17,6 +20,14 @@ const currencyCode = z.string().trim().transform((value) => value.toUpperCase())
   .pipe(z.string().regex(/^[A-Z]{3,8}$/));
 const positiveRate = z.string().regex(/^\d+(?:\.\d{1,8})?$/)
   .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0, 'La tasa debe ser mayor que cero');
+const nonNegativeRate = z.string().regex(/^\d+(?:\.\d{1,10})?$/)
+  .refine((value) => Number.isFinite(Number(value)) && Number(value) >= 0, 'La tasa debe ser no negativa');
+const fechaVencimiento = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de vencimiento debe tener formato aaaa-mm-dd')
+  .refine((value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+  }, 'La fecha de vencimiento no es una fecha válida');
 const fechaCorte = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de corte debe tener formato aaaa-mm-dd')
   .refine((value) => {
     const [year, month, day] = value.split('-').map(Number);
@@ -59,12 +70,30 @@ const origin = z.object({
   tercero: requiredText,
   tasaCambio: positiveRate.optional(),
   tipoPagoId: requiredText.optional(),
+  proveedorId: requiredText.optional(),
+  tasaInteres: nonNegativeRate.optional(),
+  tasaInteresMoratorio: nonNegativeRate.optional(),
+  fechaVencimiento: fechaVencimiento.optional(),
 }).strict().superRefine((value, context) => {
   if (value.tipo === 'ANTICIPO' && !value.tipoPagoId) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['tipoPagoId'], message: 'Indique el tipo de pago del anticipo' });
   }
   if (value.tipo !== 'ANTICIPO' && value.tipoPagoId) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['tipoPagoId'], message: 'El tipo de pago solo aplica a anticipos' });
+  }
+  if (value.tipo !== 'PRESTAMO' && (value.proveedorId || value.tasaInteres || value.tasaInteresMoratorio || value.fechaVencimiento)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['proveedorId'], message: 'El proveedor, las tasas de interés y el vencimiento solo aplican a préstamos' });
+  }
+  if (value.tipo === 'PRESTAMO') {
+    if ((value.tasaInteres || value.tasaInteresMoratorio || value.fechaVencimiento) && !value.proveedorId) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['proveedorId'], message: 'Indique el proveedor para crear la deuda con submayor' });
+    }
+    if (value.proveedorId && !value.tasaInteres) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['tasaInteres'], message: 'La deuda con submayor exige tasa de interés ordinaria' });
+    }
+    if (value.proveedorId && !value.tasaInteresMoratorio) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['tasaInteresMoratorio'], message: 'La deuda con submayor exige tasa de interés moratoria' });
+    }
   }
 });
 
@@ -105,6 +134,9 @@ export const initializationContractBase = z.object({
   monedaFuncional: currencyCode,
   tasas: tasas.optional(),
   cuentas: z.array(account).min(1).max(100),
+  inventario: z.array(initialInventoryRowContract).max(10000).optional(),
+  cuentasPorCobrar: z.array(initialReceivableRow).max(1000).optional(),
+  cuentasPorPagar: z.array(initialPayableRow).max(1000).optional(),
 }).strict();
 
 export const initializationContract = initializationContractBase.superRefine((value, context) => {
@@ -128,6 +160,65 @@ export const initializationContract = initializationContractBase.superRefine((va
       });
     }
   });
+  const inventoryKeys = new Set<string>();
+  value.inventario?.forEach((item, index) => {
+    if (item.fechaCorte !== undefined && item.fechaCorte !== value.fechaCorte) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'fechaCorte'],
+        message: 'La existencia debe usar la fecha de corte común',
+      });
+    }
+    if (item.costoUnitario !== '0' && item.moneda !== value.monedaFuncional &&
+      item.tasaCambio === undefined && value.tasas?.[item.moneda] === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'tasaCambio'],
+        message: `Falta la tasa de cambio para ${item.moneda}`,
+      });
+    }
+    const key = JSON.stringify([
+      item.productoId,
+      item.almacenId,
+      item.ubicacionId ?? null,
+      item.loteCodigo,
+    ]);
+    if (inventoryKeys.has(key)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'loteCodigo'],
+        message: 'La existencia de producto, ubicación y lote está repetida',
+      });
+    }
+    inventoryKeys.add(key);
+  });
+  const subledgerSections = [
+    { rows: value.cuentasPorCobrar, section: 'cuentasPorCobrar' },
+    { rows: value.cuentasPorPagar, section: 'cuentasPorPagar' },
+  ] as const;
+  subledgerSections.forEach(({ rows, section }) => {
+    const references = new Set<string>();
+    rows?.forEach((item, index) => {
+      // El saldo es siempre positivo: la divisa exige tasa declarada en la
+      // fila o en la tabla de tasas, sin exención de importe cero.
+      if (item.moneda !== value.monedaFuncional
+        && item.tasaCambio === undefined && value.tasas?.[item.moneda] === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [section, index, 'tasaCambio'],
+          message: `Falta la tasa de cambio para ${item.moneda}`,
+        });
+      }
+      if (references.has(item.referenciaFila)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [section, index, 'referenciaFila'],
+          message: 'La referencia de fila está repetida',
+        });
+      }
+      references.add(item.referenciaFila);
+    });
+  });
 });
 
 export type InitializationInput = z.input<typeof initializationContract>;
@@ -143,6 +234,9 @@ export const initializationDraftContract = z.object({
   monedaFuncional: currencyCode.optional(),
   tasas: tasas.optional(),
   cuentas: z.array(accountBase.deepPartial().strict()).max(100).optional(),
+  inventario: z.array(initialInventoryRowContract.deepPartial()).max(10000).optional(),
+  cuentasPorCobrar: z.array(initialReceivableRow.deepPartial()).max(1000).optional(),
+  cuentasPorPagar: z.array(initialPayableRow.deepPartial()).max(1000).optional(),
 }).strict().superRefine((value, context) => {
   const seen = new Set<string>();
   value.cuentas?.forEach((item, index) => {

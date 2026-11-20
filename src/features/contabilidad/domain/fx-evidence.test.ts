@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAppliedFxEvidence,
   FxEvidenceError,
+  verifyAppliedFxEvidence,
 } from './fx-evidence';
 
 describe('buildAppliedFxEvidence', () => {
@@ -84,5 +85,143 @@ describe('buildAppliedFxEvidence', () => {
       .toThrow(/MISSING_RATE_DATE/);
     expect(() => buildAppliedFxEvidence({ ...base, source: '  ' }))
       .toThrow(/INVALID_SOURCE/);
+  });
+
+  it('registra importe cero entre monedas sin tasa como ZERO_AMOUNT', () => {
+    const a = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+    const b = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+
+    expect(a.fxProvenanceKind).toBe('ZERO_AMOUNT');
+    expect(a.rateEffectiveAt).toBe('');
+    expect(a.fxCatalogRateId).toBeNull();
+    expect(a.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/);
+    expect(a.fxEvidenceFingerprint).toBe(b.fxEvidenceFingerprint);
+  });
+
+  it('sigue rechazando la tasa ausente cuando el importe no es cero', () => {
+    expect(() => buildAppliedFxEvidence({
+      originalAmount: 100,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    })).toThrow(/INVALID_RATE/);
+  });
+});
+
+describe('verifyAppliedFxEvidence', () => {
+  it('verifica la evidencia de importe cero sin tasa atribuida', () => {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+
+    expect(verifyAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      rateEffectiveAt: null,
+      fxProvenanceKind: evidence.fxProvenanceKind,
+      fxProvenanceSource: evidence.fxProvenanceSource,
+      fxCatalogRateId: evidence.fxCatalogRateId,
+      fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+      fxEvidenceVersion: evidence.fxEvidenceVersion,
+    })).toBe(true);
+  });
+
+  it('rechaza una evidencia cero que afirma una conversión gobernada sin tasa', () => {
+    expect(verifyAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      rateEffectiveAt: null,
+      fxProvenanceKind: 'MANUAL_GOVERNED',
+      fxProvenanceSource: 'initial-inventory',
+      fxCatalogRateId: null,
+      fxEvidenceFingerprint: 'a'.repeat(64),
+      fxEvidenceVersion: 1,
+    })).toBe(false);
+  });
+
+  it('rechaza una fecha inventada en una evidencia de importe cero', () => {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+    const base = {
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      fxProvenanceKind: evidence.fxProvenanceKind,
+      fxProvenanceSource: evidence.fxProvenanceSource,
+      fxCatalogRateId: evidence.fxCatalogRateId,
+      fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+      fxEvidenceVersion: evidence.fxEvidenceVersion,
+    };
+
+    // La huella de ZERO_AMOUNT no cubre la fecha: una fecha inventada
+    // no puede pasar como verificada, ni como texto ni como Date.
+    expect(verifyAppliedFxEvidence({ ...base, rateEffectiveAt: '2026-01-15T12:00:00.000Z' })).toBe(false);
+    expect(verifyAppliedFxEvidence({ ...base, rateEffectiveAt: new Date('2026-01-15T12:00:00.000Z') })).toBe(false);
+  });
+
+  it('acepta la fecha vacía en una evidencia de importe cero', () => {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: null,
+      convertedAmount: 0,
+      rateEffectiveAt: null,
+      source: 'initial-inventory',
+    });
+
+    expect(verifyAppliedFxEvidence({
+      originalAmount: 0,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      convertedAmount: 0,
+      exchangeRate: null,
+      rateEffectiveAt: '',
+      fxProvenanceKind: evidence.fxProvenanceKind,
+      fxProvenanceSource: evidence.fxProvenanceSource,
+      fxCatalogRateId: evidence.fxCatalogRateId,
+      fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+      fxEvidenceVersion: evidence.fxEvidenceVersion,
+    })).toBe(true);
   });
 });

@@ -26,13 +26,19 @@ beforeEach(() => {
 
 describe('persistencia interna de CxC iniciales', () => {
   it('guarda el saldo sin factura ni venta con origen y valoración funcional identificables', async () => {
-    await expect(persistInitialReceivables(tx as never, valid)).resolves.toEqual({ count: 1 });
+    await expect(persistInitialReceivables(tx as never, valid)).resolves.toMatchObject({
+      count: 1, totalFuncional: '125.25',
+      filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoOriginal: '125.25', montoFuncional: '125.25' }],
+    });
     expect(tx.cuentaPorCobrar.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({
       tenantId: 'tenant-a', clienteId: 'cliente-a', inicializacionId: 'init-a',
       referenciaInicial: 'fila-1', tipoCuenta: 'APERTURA_EXTERNA',
       montoDeuda: '125.25', montoOriginal: '125.25', montoDeudaFuncional: '125.25',
       montoPagado: '0', montoPagadoFuncional: '0', monedaOriginal: 'CUP', monedaFuncional: 'CUP',
       facturaId: null, ventaServicioId: null,
+      tasaCambio: '1', rateEffectiveAt: null, fxProvenanceKind: 'SAME_CURRENCY',
+      fxProvenanceSource: 'INICIALIZACION_CONTABLE', fxEvidenceVersion: 1,
+      fxEvidenceFingerprint: expect.stringMatching(/^[0-9a-f]{64}$/),
     })] });
   });
 

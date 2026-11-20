@@ -23,13 +23,19 @@ beforeEach(() => {
 
 describe('persistencia de CxP iniciales externas', () => {
   it('guarda deuda funcional sin factura ni compra', async () => {
-    await expect(persistInitialPayables(tx as never, input)).resolves.toEqual({ count: 1 });
+    await expect(persistInitialPayables(tx as never, input)).resolves.toMatchObject({
+      count: 1, totalFuncional: '125.25',
+      filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoOriginal: '125.25', montoFuncional: '125.25' }],
+    });
     expect(tx.cuentaPorPagar.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({
       tenantId: 'tenant-a', inicializacionId: 'init-a', referenciaInicial: 'fila-1',
       proveedorId: 'vendor-a', tipo: 'inicial_externa', numeroFactura: null,
       gastoCompraId: null, gastosDEId: null, montoDeuda: '125.25', saldoPendiente: '125.25',
       montoDeudaFuncional: '125.25', montoPagado: '0', montoPagadoFuncional: '0',
       moneda: 'CUP', monedaOriginal: 'CUP', monedaFuncional: 'CUP',
+      tasaCambio: '1', rateEffectiveAt: null, fxProvenanceKind: 'SAME_CURRENCY',
+      fxProvenanceSource: 'INICIALIZACION_CONTABLE', fxEvidenceVersion: 1,
+      fxEvidenceFingerprint: expect.stringMatching(/^[0-9a-f]{64}$/),
     })] });
   });
   it('rechaza inicialización ajena o inactiva', async () => {

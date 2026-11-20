@@ -16,6 +16,8 @@ import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { emitirInyeccionCapital } from '@/features/contabilidad-formal/services/capital-adjustment-posting-service';
+import { persistInitialDebt } from './services/initial-debt-persistence';
+import { persistInitialLoan } from './services/initial-loan-persistence';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
@@ -24,12 +26,19 @@ import { acquireAccountingTenantLock } from '@/features/contabilidad/services/ac
 import { valueOpeningAccounts } from './services/initialization-valuation';
 import { buildOpeningEntryLines } from './services/initialization-opening-lines';
 import { ensureCutoffPeriod } from './services/initialization-period';
+import { persistInitialInventory } from './services/initial-inventory-persistence';
+import { reconcileInitialInventory } from './services/initial-inventory-reconciliation';
+import { persistInitialPayables } from './services/initial-payables-persistence';
+import { persistInitialReceivables } from './services/initial-receivables-persistence';
+import { reconcileInitialSubledgers } from './services/initial-subledger-reconciliation';
 import {
   createInitializationApertura,
   parseCutoffDate,
   postOpeningEntry,
   resolveRoleAccountId,
   verifyInitializationReplay,
+  type InitialDebtDetail,
+  type InitialLoanDetail,
   type OpeningAsientoRef,
 } from './services/initialization-coordinator';
 import { Prisma } from '@/generated/prisma';
@@ -267,14 +276,11 @@ export const initializeBankAccountsAction = withAction(
     const tenantId = requireTenant(user);
     const { idempotencyKey, ...payload } = parsed;
     const payloadHash = computeInitializationPayloadHash(payload);
-    const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
-
     const result = await runIdempotentInitialization({
       tenantId,
       idempotencyKey: parsed.idempotencyKey,
       payloadHash,
-    }, async (tx) => {
-      if (hasAdvance) requireFeature(user, 'anticipos', 'inicializar saldos provenientes de anticipos');
+    }, async (tx, inicializacionId) => {
       const fechaCorteDate = parseCutoffDate(parsed.fechaCorte);
       const policy = await tx.tenantAccountingPolicy.findUnique({
         where: { tenantId },
@@ -307,11 +313,147 @@ export const initializeBankAccountsAction = withAction(
         );
       }
       const valued = valueOpeningAccounts(parsed);
-      const entryLines = buildOpeningEntryLines({ cuentas: parsed.cuentas, valued, monedaFuncional: functionalCurrency });
+      const inventory = parsed.inventario?.length
+        ? await persistInitialInventory(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          monedaFuncional: functionalCurrency,
+          tasas: parsed.tasas,
+          inventario: parsed.inventario,
+        })
+        : { count: 0, totalFuncional: '0', fuentes: [], filas: [] };
+      const receivables = parsed.cuentasPorCobrar?.length
+        ? await persistInitialReceivables(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          tasas: parsed.tasas,
+          cuentas: parsed.cuentasPorCobrar,
+        })
+        : { count: 0, totalFuncional: '0', filas: [] };
+      const payables = parsed.cuentasPorPagar?.length
+        ? await persistInitialPayables(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          tasas: parsed.tasas,
+          cuentas: parsed.cuentasPorPagar,
+        })
+        : { count: 0, totalFuncional: '0', filas: [] };
+      for (const fuente of inventory.fuentes) {
+        const fila = inventory.filas.find((f) => f.referenciaFila === fuente.referenciaFila);
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'INVENTARIO_INICIAL',
+          entidadId: fuente.fuenteId,
+          usuarioId: user.userId,
+          detalles: {
+            origen: 'INICIALIZACION_CONTABLE',
+            inicializacionId,
+            referenciaFila: fuente.referenciaFila,
+            loteId: fuente.loteId,
+            moneda: fila?.moneda ?? null,
+            montoFuncional: fila?.montoFuncional ?? null,
+          },
+        }, tx);
+      }
+      if (receivables.count > 0) {
+        const createdCxc = await tx.cuentaPorCobrar.findMany({
+          where: { tenantId, inicializacionId },
+          select: { id: true, referenciaInicial: true, clienteId: true },
+        });
+        for (const row of createdCxc) {
+          const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaInicial);
+          await AuditLogService.logStrict({
+            accion: 'CREATE',
+            entidad: 'CUENTA_POR_COBRAR',
+            entidadId: row.id,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE',
+              inicializacionId,
+              referenciaInicial: row.referenciaInicial,
+              clienteId: row.clienteId,
+              moneda: fila?.moneda ?? null,
+              montoOriginal: fila?.montoOriginal ?? null,
+              montoFuncional: fila?.montoFuncional ?? null,
+            },
+          }, tx);
+        }
+      }
+      if (payables.count > 0) {
+        const createdCxp = await tx.cuentaPorPagar.findMany({
+          where: { tenantId, inicializacionId },
+          select: { cuentaPorPagarId: true, referenciaInicial: true, proveedorId: true },
+        });
+        for (const row of createdCxp) {
+          const fila = payables.filas.find((f) => f.referenciaFila === row.referenciaInicial);
+          await AuditLogService.logStrict({
+            accion: 'CREATE',
+            entidad: 'CUENTA_POR_PAGAR',
+            entidadId: row.cuentaPorPagarId,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE',
+              inicializacionId,
+              referenciaInicial: row.referenciaInicial,
+              proveedorId: row.proveedorId,
+              moneda: fila?.moneda ?? null,
+              montoOriginal: fila?.montoOriginal ?? null,
+              montoFuncional: fila?.montoFuncional ?? null,
+            },
+          }, tx);
+        }
+      }
+      const entryLines = buildOpeningEntryLines({
+        cuentas: parsed.cuentas,
+        valued,
+        monedaFuncional: functionalCurrency,
+        initialInventoryTotalFuncional: inventory.totalFuncional,
+        cuentasPorCobrar: receivables.filas,
+        cuentasPorPagar: payables.filas,
+      });
       const periodo = await ensureCutoffPeriod(tx, { tenantId, fechaCorte: parsed.fechaCorte, actor: user.userId });
       const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
       const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
       const asientos: OpeningAsientoRef[] = [];
+      const deudas: InitialDebtDetail[] = [];
+      const prestamos: InitialLoanDetail[] = [];
+      const loanRows = (parsed.cuentasPorCobrar ?? []).filter(
+        (row) => row.tasaInteres !== undefined && row.tasaInteresMoratorio !== undefined,
+      );
+      if (loanRows.length > 0) {
+        const createdCxc = await tx.cuentaPorCobrar.findMany({
+          where: { tenantId, inicializacionId, referenciaInicial: { in: loanRows.map((r) => r.referenciaFila) } },
+          select: { id: true, referenciaInicial: true },
+        });
+        for (const row of loanRows) {
+          const cxc = createdCxc.find((c) => c.referenciaInicial === row.referenciaFila);
+          if (!cxc) throw new ActionError('CxC inicial no encontrada para el préstamo', 'INITIALIZATION_INCOMPLETE');
+          const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaFila);
+          const prestamo = await persistInitialLoan(tx, {
+            tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+            monedaFuncional: functionalCurrency,
+            cuentaPorCobrarId: cxc.id, referenciaFila: row.referenciaFila,
+            clienteId: row.clienteId, moneda: row.moneda, saldo: row.saldo,
+            tasaCambio: fila?.tasaCambio ?? row.tasaCambio,
+            tasaInteres: row.tasaInteres, tasaInteresMoratorio: row.tasaInteresMoratorio,
+            fechaVencimiento: row.fechaVencimiento, usuarioId: user.userId,
+          });
+          prestamos.push(prestamo);
+          await AuditLogService.logStrict({
+            accion: 'CREATE', entidad: 'PRESTAMO_CASH', entidadId: prestamo.prestamoCashId,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE', inicializacionId,
+              cuentaPorCobrarId: prestamo.cuentaPorCobrarId, clienteId: prestamo.clienteId,
+              moneda: prestamo.moneda, montoOriginal: prestamo.montoOriginal,
+              montoFuncional: prestamo.montoFuncional,
+            },
+          }, tx);
+        }
+      }
       for (const [index, item] of parsed.cuentas.entries()) {
         const openingBalance = Number(item.saldoInicial);
         const isAdvance = item.origen?.tipo === 'ANTICIPO';
@@ -331,6 +473,11 @@ export const initializeBankAccountsAction = withAction(
         });
 
         if (openingBalance > 0 && item.origen) {
+          // Tarea 5, tramo 1: el origen ANTICIPO es un anticipo de cliente
+          // recibido (COBRO) que ya existía a fecha de corte. Se valora con
+          // tasas[moneda] u origen.tasaCambio a fecha de corte y su asiento
+          // formal se fecha a corte; el anticipo entregado a proveedor
+          // (PAGO) queda para un tramo aparte.
           if (item.origen.tipo === 'ANTICIPO') {
             if (!item.origen.tipoPagoId) {
               throw new ActionError('Selecciona el tipo de pago para registrar el anticipo', 'TIPO_PAGO_REQUERIDO');
@@ -372,6 +519,12 @@ export const initializeBankAccountsAction = withAction(
               idempotencyKey: movementKey,
               usuarioId: user.userId,
               observaciones: `Saldo inicial recibido de ${item.origen.tercero}`,
+              valoracionInicial: {
+                fechaEfectiva: fechaCorteDate,
+                tasaCambio: valued[index].tasaCambio,
+                montoFuncional: Number(valued[index].montoFuncional),
+                fxEvidenceFingerprint: valued[index].fxEvidenceFingerprint,
+              },
             });
             asientos.push({ tipo: 'ANTICIPO', asientoId: null, estado: movement.idempotentReplay ? 'YA_EXISTENTE' : 'EMITIDO_POR_FLUJO', referencia: movementKey });
             await AuditLogService.logStrict({
@@ -411,7 +564,34 @@ export const initializeBankAccountsAction = withAction(
               descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
               tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
             });
+            if (posting.estado !== 'CONTABILIZADO' && posting.estado !== 'YA_EXISTENTE') {
+              throw new ActionError(
+                `La contrapartida de ${isCapital ? 'capital social' : 'préstamo'} no se contabilizó (estado ${posting.estado}); la apertura no puede completarse sin su asiento formal`,
+                'INITIALIZATION_POSTING_NO_CONFIRMADO',
+              );
+            }
             asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
+            if (!isCapital && item.origen.proveedorId) {
+              const deuda = await persistInitialDebt(tx, {
+                tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
+                monedaFuncional: functionalCurrency, numeroCuenta: item.numeroCuenta, moneda: item.moneda,
+                saldoInicial: item.saldoInicial, tercero: item.origen.tercero, tasaCambio: item.origen.tasaCambio,
+                proveedorId: item.origen.proveedorId, tasaInteres: item.origen.tasaInteres,
+                tasaInteresMoratorio: item.origen.tasaInteresMoratorio, fechaVencimiento: item.origen.fechaVencimiento,
+                cuentaBancariaId: created.cuentaId, inyeccionId: counterpart.id, usuarioId: user.userId,
+              });
+              deudas.push(deuda);
+              await AuditLogService.logStrict({
+                accion: 'CREATE', entidad: 'DEUDA_CASH', entidadId: deuda.deudaCashId,
+                usuarioId: user.userId,
+                detalles: {
+                  origen: 'INICIALIZACION_CONTABLE', inicializacionId,
+                  cuentaPorPagarId: deuda.cuentaPorPagarId, inyeccionId: deuda.inyeccionId,
+                  proveedorId: deuda.proveedorId, moneda: deuda.moneda,
+                  montoOriginal: deuda.montoOriginal, montoFuncional: deuda.montoFuncional,
+                },
+              }, tx);
+            }
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
               usuarioId: user.userId,
@@ -445,13 +625,178 @@ export const initializeBankAccountsAction = withAction(
       if (openingEntry) {
         asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
       }
+      // Sin valor que conciliar (todo el inventario en costo cero) no hay
+      // líneas de apertura que comprobar: el detalle y el replay siguen
+      // anclando las fuentes.
+      if (inventory.count > 0 && !new Prisma.Decimal(inventory.totalFuncional).isZero()) {
+        const postedInventoryLines = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'INVENTARIOS' && line.lado === 'DEBE');
+        const postedInventoryTotal = postedInventoryLines.reduce(
+          (total, line) => total.add(new Prisma.Decimal(line.montoFuncional)),
+          new Prisma.Decimal(0),
+        );
+        if (!openingEntry || postedInventoryLines.length === 0 ||
+          !postedInventoryTotal.equals(new Prisma.Decimal(inventory.totalFuncional))) {
+          throw new ActionError(
+            'La valoración del inventario no coincide con el débito del asiento de apertura',
+            'INITIALIZATION_INCOMPLETE',
+          );
+        }
+
+        const functionalRows = (parsed.inventario ?? [])
+          .filter((row) => row.moneda === functionalCurrency);
+        if (functionalRows.length > 0) {
+          const inventoryAccountId = postedInventoryLines[0].cuentaContableId;
+          const functionalTotal = inventory.filas
+            .filter((row) => row.moneda === functionalCurrency)
+            .reduce(
+              (total, row) => total.add(new Prisma.Decimal(row.montoFuncional)),
+              new Prisma.Decimal(0),
+            );
+          const linesForReconciliation = functionalRows.length === parsed.inventario?.length
+            ? postedInventoryLines.map((line) => ({
+              cuentaContableId: line.cuentaContableId,
+              moneda: line.moneda,
+              debito: line.montoFuncional,
+              credito: '0',
+            }))
+            : [{
+              cuentaContableId: inventoryAccountId,
+              moneda: functionalCurrency,
+              debito: functionalTotal.toString(),
+              credito: '0',
+            }];
+          try {
+            reconcileInitialInventory(
+              functionalRows.map((row) => ({
+                cuentaContableId: inventoryAccountId,
+                moneda: row.moneda,
+                cantidad: row.cantidad,
+                costoUnitario: row.costoUnitario,
+              })),
+              linesForReconciliation,
+            );
+          } catch {
+            throw new ActionError(
+              'El inventario no coincide con las líneas de apertura',
+              'INITIALIZATION_INCOMPLETE',
+            );
+          }
+        }
+      }
+      // El submayor valora por fila: el total funcional contabilizado debe
+      // coincidir con el valorado, y la conciliación compara los importes
+      // originales por auxiliar y moneda contra las piernas del asiento.
+      if (receivables.count > 0 || payables.count > 0) {
+        const postedReceivablesTotal = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'CXC_CLIENTES' && line.lado === 'DEBE')
+          .reduce((total, line) => total.add(new Prisma.Decimal(line.montoFuncional)), new Prisma.Decimal(0));
+        const postedPayablesTotal = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'CXP_PROVEEDORES' && line.lado === 'HABER')
+          .reduce((total, line) => total.add(new Prisma.Decimal(line.montoFuncional)), new Prisma.Decimal(0));
+        if (!openingEntry ||
+          !postedReceivablesTotal.equals(new Prisma.Decimal(receivables.totalFuncional)) ||
+          !postedPayablesTotal.equals(new Prisma.Decimal(payables.totalFuncional))) {
+          throw new ActionError(
+            'La valoración del submayor no coincide con las líneas del asiento de apertura',
+            'INITIALIZATION_INCOMPLETE',
+          );
+        }
+        const postedLines = openingEntry.postedLines;
+        const cxcAccountId = postedLines.find((line) => line.rolCuenta === 'CXC_CLIENTES')?.cuentaContableId;
+        const cxpAccountId = postedLines.find((line) => line.rolCuenta === 'CXP_PROVEEDORES')?.cuentaContableId;
+        if ((receivables.count > 0 && !cxcAccountId) || (payables.count > 0 && !cxpAccountId)) {
+          throw new ActionError('El submayor no coincide con las líneas de apertura', 'INITIALIZATION_INCOMPLETE');
+        }
+        try {
+          reconcileInitialSubledgers(
+            [
+              ...receivables.filas.map((fila) => ({
+                tipo: 'CXC' as const, cuentaContableId: cxcAccountId as string,
+                moneda: fila.moneda, saldo: fila.montoOriginal,
+              })),
+              ...payables.filas.map((fila) => ({
+                tipo: 'CXP' as const, cuentaContableId: cxpAccountId as string,
+                moneda: fila.moneda, saldo: fila.montoOriginal,
+              })),
+            ],
+            [
+              ...postedLines.filter((line) => line.rolCuenta === 'CXC_CLIENTES').map((line) => ({
+                tipo: 'CXC' as const, cuentaContableId: line.cuentaContableId,
+                moneda: line.moneda, debito: line.montoOriginal, credito: '0',
+              })),
+              ...postedLines.filter((line) => line.rolCuenta === 'CXP_PROVEEDORES').map((line) => ({
+                tipo: 'CXP' as const, cuentaContableId: line.cuentaContableId,
+                moneda: line.moneda, debito: '0', credito: line.montoOriginal,
+              })),
+            ],
+          );
+        } catch {
+          throw new ActionError('El submayor no coincide con las líneas de apertura', 'INITIALIZATION_INCOMPLETE');
+        }
+      }
+      const filasByReferencia = new Map(inventory.filas.map((fila) => [fila.referenciaFila, fila]));
+      const detalleInventario = {
+        count: inventory.count,
+        totalFuncional: inventory.totalFuncional,
+        fuentes: inventory.fuentes.map((fuente) => {
+          const fila = filasByReferencia.get(fuente.referenciaFila);
+          const row = (parsed.inventario ?? []).find((r) => r.referenciaFila === fuente.referenciaFila);
+          return {
+            referenciaFila: fuente.referenciaFila,
+            fuenteId: fuente.fuenteId,
+            loteId: fuente.loteId,
+            productoId: row?.productoId ?? '',
+            cantidad: row?.cantidad ?? '',
+            costoUnitario: row?.costoUnitario ?? '',
+            moneda: fila?.moneda ?? row?.moneda ?? '',
+            montoFuncional: fila?.montoFuncional ?? '0',
+          };
+        }),
+      };
+      const detalleSubledger = {
+        cuentasPorCobrar: {
+          count: receivables.count,
+          totalFuncional: receivables.totalFuncional,
+          filas: receivables.filas.map((fila) => {
+            const row = (parsed.cuentasPorCobrar ?? []).find((r) => r.referenciaFila === fila.referenciaFila);
+            return {
+              referenciaFila: fila.referenciaFila,
+              clienteId: row?.clienteId ?? '',
+              moneda: fila.moneda,
+              montoOriginal: fila.montoOriginal,
+              montoFuncional: fila.montoFuncional,
+              fxEvidenceFingerprint: fila.fxEvidenceFingerprint,
+            };
+          }),
+        },
+        cuentasPorPagar: {
+          count: payables.count,
+          totalFuncional: payables.totalFuncional,
+          filas: payables.filas.map((fila) => {
+            const row = (parsed.cuentasPorPagar ?? []).find((r) => r.referenciaFila === fila.referenciaFila);
+            return {
+              referenciaFila: fila.referenciaFila,
+              proveedorId: row?.proveedorId ?? '',
+              moneda: fila.moneda,
+              montoOriginal: fila.montoOriginal,
+              montoFuncional: fila.montoFuncional,
+              fxEvidenceFingerprint: fila.fxEvidenceFingerprint,
+            };
+          }),
+        },
+      };
       await createInitializationApertura(tx, {
         periodoId: periodo.periodoId, tenantId, actor: user.userId,
         idempotencyKey: parsed.idempotencyKey, payloadHash,
         fechaCorte: parsed.fechaCorte, monedaFuncional: functionalCurrency,
         asientoId: openingEntry?.asientoId ?? null, asientos,
         lines: openingEntry?.postedLines ?? [],
-        fxFingerprints: [...new Set(valued.map((v) => v.fxEvidenceFingerprint).filter((f): f is string => f !== null))],
+        fxFingerprints: [...new Set([
+          ...valued.map((v) => v.fxEvidenceFingerprint),
+          ...receivables.filas.map((f) => f.fxEvidenceFingerprint),
+          ...payables.filas.map((f) => f.fxEvidenceFingerprint),
+        ].filter((f): f is string => f !== null))],
         cuentas: createdAccounts.map((cuenta, i) => ({
           cuentaBancariaId: cuenta.cuentaId,
           numeroCuenta: parsed.cuentas[i].numeroCuenta,
@@ -460,6 +805,10 @@ export const initializeBankAccountsAction = withAction(
           montoFuncional: new Prisma.Decimal(valued[i].montoFuncional).toString(),
           cuentaContableInicialId: cuenta.cuentaContableInicialId,
         })),
+        inventario: detalleInventario,
+        subledger: detalleSubledger,
+        deudas,
+        prestamos,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -473,6 +822,10 @@ export const initializeBankAccountsAction = withAction(
         totalHaberFuncional: entryLines.totalHaberFuncional,
         fechaCorte: parsed.fechaCorte,
         monedaFuncional: functionalCurrency,
+        inventario: inventory,
+        subledger: { cuentasPorCobrar: receivables, cuentasPorPagar: payables },
+        deudas,
+        prestamos,
       };
     });
 

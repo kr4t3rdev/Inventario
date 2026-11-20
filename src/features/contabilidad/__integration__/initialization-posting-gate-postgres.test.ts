@@ -1,0 +1,149 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { prisma } from '@/lib/prisma';
+import { seedPlanContable, seedPlantillasGlobales } from '@/features/contabilidad-formal/services/seed-plan-contable';
+import { assertDisposableDatabase, assertDisposableDatabaseIdentity } from '../../../../scripts/ci/disposable-database.mjs';
+
+assertDisposableDatabase(process.env);
+
+const auth = vi.hoisted(() => ({ user: null as AuthenticatedUser | null }));
+vi.mock('@/lib/server-actions/get-current-user', () => ({ getCurrentUser: async () => auth.user }));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn(), logStrict: vi.fn().mockResolvedValue({}) },
+}));
+
+const previousFormalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+const previousNonCashMode = process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
+const tenants: string[] = [];
+let initialize: typeof import('@/features/contabilidad/actions-cuentas-bancarias').initializeBankAccountsAction;
+let cupCreated = false;
+
+function setFormalMode(mode: 'off' | 'shadow' | 'enforce') {
+  process.env.CONTABILIDAD_FORMAL_MODE = mode;
+  process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = mode;
+}
+
+async function makeTenant(license: 'full' | 'none' | 'no-feature' = 'full') {
+  const tenantId = randomUUID();
+  const userId = randomUUID();
+  const user = {
+    userId, name: 'QA gate', email: `qa-gate-${tenantId.slice(0, 8)}@example.test`,
+    role: 'admin' as const, isActive: true, tenantId, tenantRole: 'manager' as const,
+  };
+  auth.user = user as unknown as AuthenticatedUser;
+  await prisma.tenant.create({ data: { tenantId, nombre: 'QA gate', slug: randomUUID() } });
+  await prisma.user.create({ data: { userId, name: user.name, email: user.email, password: 'integration-only-placeholder' } });
+  await prisma.tenantAccountingPolicy.create({ data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId } });
+  await prisma.$transaction((tx) => seedPlanContable(tx as never, tenantId));
+  await seedPlantillasGlobales(prisma as never);
+  if (license === 'full') {
+    await prisma.tenantLicense.create({
+      data: { tenantId, activa: true, expiracion: new Date(Date.now() + 86_400_000), features: { 'contabilidad-formal': true } },
+    });
+  } else if (license === 'no-feature') {
+    await prisma.tenantLicense.create({
+      data: { tenantId, activa: true, expiracion: new Date(Date.now() + 86_400_000), features: {} },
+    });
+  }
+  tenants.push(tenantId);
+  return { tenantId, user };
+}
+
+async function assertNothingPersisted(tenantId: string) {
+  expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(0);
+  expect(await prisma.inyeccionCapital.count({ where: { tenantId } })).toBe(0);
+  expect(await prisma.asiento.count({ where: { tenantId } })).toBe(0);
+  expect(await prisma.periodoContable.count({ where: { tenantId } })).toBe(0);
+  expect(await prisma.aperturaPeriodo.count({ where: { tenantId } })).toBe(0);
+  expect(await prisma.inicializacionContable.count({ where: { tenantId } })).toBe(0);
+}
+
+function capitalRequest(tenantId: string) {
+  return {
+    idempotencyKey: `gate-${tenantId.slice(0, 8)}`, fechaCorte: '2026-11-01', monedaFuncional: 'CUP',
+    cuentas: [
+      { nombreCuenta: 'Operaciones', nombreBanco: 'Banco QA', numeroCuenta: 'GATE-001', tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '100000', origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio QA' } },
+    ],
+  };
+}
+
+describe('gate de posteo formal en la inicialización — PostgreSQL', { timeout: 120_000 }, () => {
+  beforeAll(async () => {
+    initialize = (await import('@/features/contabilidad/actions-cuentas-bancarias')).initializeBankAccountsAction;
+    const identity = await prisma.$queryRaw<Array<{ databaseName: string; roleName: string; serverPort: number }>>`
+      SELECT current_database() AS "databaseName", current_user AS "roleName", inet_server_port() AS "serverPort"
+    `;
+    assertDisposableDatabaseIdentity(identity[0], process.env);
+    if (!(await prisma.moneda.findUnique({ where: { codigo: 'CUP' } }))) {
+      await prisma.moneda.create({ data: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP' } });
+      cupCreated = true;
+    }
+  });
+
+  afterAll(async () => {
+    if (previousFormalMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+    else process.env.CONTABILIDAD_FORMAL_MODE = previousFormalMode;
+    if (previousNonCashMode === undefined) delete process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE;
+    else process.env.CONTABILIDAD_FORMAL_NO_CASH_MODE = previousNonCashMode;
+    for (const tenantId of tenants) {
+      await prisma.inicializacionContable.deleteMany({ where: { tenantId } });
+      await prisma.inyeccionCapital.deleteMany({ where: { tenantId } });
+      await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
+      await prisma.asientoLinea.deleteMany({ where: { tenantId } });
+      await prisma.asiento.deleteMany({ where: { tenantId } });
+      await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
+      await prisma.periodoContable.deleteMany({ where: { tenantId } });
+      await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
+      await prisma.diario.deleteMany({ where: { tenantId } });
+      await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
+      await prisma.cuentaContable.deleteMany({ where: { tenantId } });
+      await prisma.tenantLicense.deleteMany({ where: { tenantId } });
+      await prisma.tenant.deleteMany({ where: { tenantId } });
+    }
+    if (cupCreated) await prisma.moneda.deleteMany({ where: { codigo: 'CUP' } });
+    await prisma.$disconnect();
+  });
+
+  it('rechaza una apertura con capital cuando el modo formal está apagado', async () => {
+    setFormalMode('off');
+    const { tenantId } = await makeTenant('full');
+    const result = await initialize(capitalRequest(tenantId));
+    expect(result).toMatchObject({ success: false, error: { code: 'INITIALIZATION_POSTING_NO_CONFIRMADO' } });
+    await assertNothingPersisted(tenantId);
+  });
+
+  it('rechaza una apertura con capital en modo sombra', async () => {
+    setFormalMode('shadow');
+    const { tenantId } = await makeTenant('full');
+    const result = await initialize(capitalRequest(tenantId));
+    expect(result).toMatchObject({ success: false, error: { code: 'INITIALIZATION_POSTING_NO_CONFIRMADO' } });
+    await assertNothingPersisted(tenantId);
+  });
+
+  it('rechaza una apertura con capital sin licencia', async () => {
+    setFormalMode('enforce');
+    const { tenantId } = await makeTenant('none');
+    const result = await initialize(capitalRequest(tenantId));
+    expect(result).toMatchObject({ success: false, error: { code: 'INITIALIZATION_POSTING_NO_CONFIRMADO' } });
+    await assertNothingPersisted(tenantId);
+  });
+
+  it('rechaza una apertura con capital si la licencia no trae la feature formal', async () => {
+    setFormalMode('enforce');
+    const { tenantId } = await makeTenant('no-feature');
+    const result = await initialize(capitalRequest(tenantId));
+    expect(result).toMatchObject({ success: false, error: { code: 'INITIALIZATION_POSTING_NO_CONFIRMADO' } });
+    await assertNothingPersisted(tenantId);
+  });
+
+  it('abre con capital cuando el modo es enforce y hay licencia con la feature', async () => {
+    setFormalMode('enforce');
+    const { tenantId } = await makeTenant('full');
+    const result = await initialize(capitalRequest(tenantId));
+    expect(result).toMatchObject({ success: true, data: { replayed: false } });
+    expect(await prisma.cuentaBancaria.count({ where: { tenantId } })).toBe(1);
+    expect(await prisma.asiento.count({ where: { tenantId } })).toBe(1);
+  });
+});
