@@ -534,8 +534,18 @@ describe(
       expect(Number(after.banco)).toBe(Number(before.banco) - 200);
       // El reconocimiento de la compra y el pago a la cuenta por pagar.
       expect(after.ledger).toHaveLength(before.ledger.length + 2);
-      const pago = after.ledger.at(-1);
-      expect(pago?.origenTipo).toBe('reconciliacion_gasto');
+      const nuevosAsientos = after.ledger.slice(before.ledger.length);
+      expect(nuevosAsientos.map((asiento) => asiento.origenTipo)).toEqual(
+        expect.arrayContaining(['reconciliacion_gasto', 'compra_documento']),
+      );
+      const pago = nuevosAsientos.find((asiento) => asiento.origenTipo === 'reconciliacion_gasto');
+      expect(pago).toBeDefined();
+      const conciliacion = await prisma.reconciliacionGasto.findFirstOrThrow({
+        where: { tenantId, tipoGasto: 'compra' },
+        orderBy: { createdAt: 'desc' },
+        select: { reconciliacionId: true },
+      });
+      expect(pago?.origenId).toBe(conciliacion.reconciliacionId);
     });
 
     it('revierte el pago de la compra cuando falla el insert del asiento', async () => {

@@ -129,27 +129,41 @@ describe('manual verified opening workflow — PostgreSQL', { timeout: 120_000 }
 			await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "AuditLog"`);
 			await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
 		}
+		let consumedOpeningCount = 0;
 		if (tenantId) {
-			await prisma.aperturaPeriodoSolicitud.deleteMany({ where: { tenantId } });
-			await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
-			await prisma.auditoriaPeriodo.deleteMany({ where: { tenantId } });
-			await prisma.asientoLinea.deleteMany({ where: { tenantId } });
-			await prisma.asiento.deleteMany({ where: { tenantId } });
-			await prisma.periodoContable.deleteMany({ where: { tenantId } });
-			await prisma.periodoCache.deleteMany({ where: { tenantId } });
-			await prisma.$executeRawUnsafe('ALTER TABLE "fx_evidence" DISABLE TRIGGER "fx_evidence_immutable_delete"');
-			try {
-				await prisma.fxEvidence.deleteMany({ where: { tenantId } });
-			} finally {
-				await prisma.$executeRawUnsafe('ALTER TABLE "fx_evidence" ENABLE TRIGGER "fx_evidence_immutable_delete"');
+			consumedOpeningCount = await prisma.aperturaPeriodoSolicitud.count({
+				where: { tenantId, estado: "CONSUMIDA" },
+			});
+			await prisma.aperturaPeriodoSolicitud.deleteMany({
+				where: { tenantId, estado: { not: "CONSUMIDA" } },
+			});
+			if (consumedOpeningCount === 0) {
+				await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
+				await prisma.auditoriaPeriodo.deleteMany({ where: { tenantId } });
+				await prisma.asientoLinea.deleteMany({ where: { tenantId } });
+				await prisma.asiento.deleteMany({ where: { tenantId } });
+				await prisma.periodoContable.deleteMany({ where: { tenantId } });
+				await prisma.periodoCache.deleteMany({ where: { tenantId } });
+				await prisma.$executeRawUnsafe('ALTER TABLE "fx_evidence" DISABLE TRIGGER "fx_evidence_immutable_delete"');
+				try {
+					await prisma.fxEvidence.deleteMany({ where: { tenantId } });
+				} finally {
+					await prisma.$executeRawUnsafe('ALTER TABLE "fx_evidence" ENABLE TRIGGER "fx_evidence_immutable_delete"');
+				}
+				await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
+				await prisma.diario.deleteMany({ where: { tenantId } });
+				await prisma.cuentaContable.deleteMany({ where: { tenantId } });
 			}
-			await prisma.tenantAccountingPolicy.deleteMany({ where: { tenantId } });
-			await prisma.diario.deleteMany({ where: { tenantId } });
-			await prisma.cuentaContable.deleteMany({ where: { tenantId } });
 		}
-		if (userId) await prisma.auditLog.deleteMany({ where: { usuarioId: userId } });
-		if (licenseId) await prisma.tenantLicense.deleteMany({ where: { tenantId } });
-		if (tenantId) await prisma.tenant.deleteMany({ where: { tenantId } });
+		if (userId && consumedOpeningCount === 0) {
+			await prisma.auditLog.deleteMany({ where: { usuarioId: userId } });
+		}
+		if (licenseId && consumedOpeningCount === 0) {
+			await prisma.tenantLicense.deleteMany({ where: { tenantId } });
+		}
+		if (tenantId && consumedOpeningCount === 0) {
+			await prisma.tenant.deleteMany({ where: { tenantId } });
+		}
 		if (otherTenantId) await prisma.tenant.deleteMany({ where: { tenantId: otherTenantId } });
 		if (planId) await prisma.plan.deleteMany({ where: { planId } });
 		if (userId) await prisma.user.deleteMany({ where: { userId } });
