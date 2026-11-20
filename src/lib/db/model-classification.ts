@@ -66,6 +66,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Anticipo: SCOPED(),
   AperturaPeriodoSolicitud: SCOPED('Solicitud de apertura manual con evidencia de aprobación y tenantId propio.'),
   InicializacionContable: SCOPED('Idempotencia y evidencia de inicialización con tenantId propio.'),
+  InventarioInicialFuente: SCOPED('Fuente de inventario inicial con evidencia FIFO y tenantId propio.'),
   ConfiguracionContratos: SCOPED('Configuración de contratos por tenant (CTF-5): una fila por tenant.'),
   AperturaPeriodo: SCOPED(),
   ArqueoCaja: SCOPED(),
