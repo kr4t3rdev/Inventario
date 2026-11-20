@@ -9,6 +9,7 @@
  */
 
 import { Prisma } from "@/generated/prisma";
+import { hashInitialInventoryEvidence } from "@/features/contabilidad/services/initial-inventory-evidence";
 import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import { buildAppliedFxEvidence } from "@/features/contabilidad/domain/fx-evidence";
 
@@ -117,7 +118,92 @@ interface ReceiptSourceIdentity {
 	ordenItem: { tenantId: string; ordenId: string; productoId: string };
 }
 
+interface InitialInventorySourceIdentity {
+	id: string;
+	tenantId: string;
+	productoId: string;
+	cantidad: number;
+	costoUnitario: Prisma.Decimal | number;
+	moneda: string;
+	fechaCorte: Date;
+	montoFuncional: Prisma.Decimal | number;
+	monedaFuncional: string;
+	evidencia: Prisma.JsonValue;
+	evidenciaHash: string;
+	lote: {
+		id: string;
+		cantidadDisponible: number;
+		fechaVencimiento: Date | null;
+		createdAt: Date;
+	};
+}
+
 const FIFO_EVIDENCE_SOURCE = "fifo-allocation";
+const INITIAL_INVENTORY_EVIDENCE_SOURCE = "initial-inventory";
+
+/**
+ * @description Verifica el hash y los campos esenciales de la evidencia de
+ * una fuente de inventario inicial antes de reutilizarla en FIFO.
+ * @param source - Fuente inicial persistida con su evidencia de costo.
+ * @returns Verdadero cuando la evidencia coincide con los datos persistidos.
+ */
+function isInitialInventoryEvidenceValid(source: InitialInventorySourceIdentity): boolean {
+	if (!source.evidencia || typeof source.evidencia !== "object" ||
+		Array.isArray(source.evidencia)) return false;
+	const evidence = source.evidencia as Record<string, unknown>;
+	const hash = hashInitialInventoryEvidence(evidence);
+	return hash === source.evidenciaHash &&
+		evidence.version === "1" &&
+		evidence.source === "INICIALIZACION_CONTABLE" &&
+		evidence.fechaCorte === source.fechaCorte.toISOString().slice(0, 10) &&
+		evidence.monedaOriginal === source.moneda.trim().toUpperCase() &&
+		evidence.monedaFuncional === source.monedaFuncional.trim().toUpperCase() &&
+		evidence.cantidad === String(source.cantidad) &&
+		evidence.costoUnitario === new Prisma.Decimal(source.costoUnitario).toString() &&
+		evidence.montoFuncional === new Prisma.Decimal(source.montoFuncional).toFixed(4);
+}
+
+/**
+ * @description Construye el snapshot FIFO proporcional a una porción de una
+ * fuente inicial, conservando su costo y valoración funcional.
+ * @param source - Fuente inicial validada.
+ * @param quantity - Unidades que se asignarán a la venta.
+ * @returns Snapshot verificable o null si la evidencia no es suficiente.
+ */
+function buildInitialInventorySnapshot(
+	source: InitialInventorySourceIdentity,
+	quantity: number,
+): FifoSnapshotFields | null {
+	if (!isInitialInventoryEvidenceValid(source) || source.cantidad <= 0 ||
+		quantity <= 0 || quantity > source.cantidad) return null;
+	const evidence = source.evidencia as Record<string, unknown>;
+	const sourceCurrency = source.moneda.trim().toUpperCase();
+	const functionalCurrency = source.monedaFuncional.trim().toUpperCase();
+	const sameCurrency = sourceCurrency === functionalCurrency;
+	const rawRate = evidence.tasaCambio;
+	const rate = sameCurrency ? null : typeof rawRate === "string" ? Number(rawRate) : null;
+	const amount = new Prisma.Decimal(source.costoUnitario).times(quantity).toNumber();
+	const functionalAmount = new Prisma.Decimal(source.montoFuncional)
+		.times(quantity)
+		.div(source.cantidad)
+		.toDecimalPlaces(4)
+		.toNumber();
+	// Una fuente de costo cero entre monedas no necesita conversión: 0 en
+	// cualquier tasa es 0. La evidencia FX registra ese caso como
+	// ZERO_AMOUNT (sin tasa ni fecha) en vez de inventar una tasa 1.
+	return buildFifoSnapshot({
+		amount,
+		sourceCurrency,
+		context: {
+			functionalCurrency,
+			rate,
+			rateDate: sameCurrency || rate === null ? null : source.fechaCorte,
+			rateId: null,
+		},
+		functionalAmount,
+		source: INITIAL_INVENTORY_EVIDENCE_SOURCE,
+	});
+}
 
 /**
  * @description Valida la cadena de procedencia factura → línea → recepción → orden.
@@ -197,18 +283,19 @@ function buildFifoSnapshot(input: {
 	source?: string;
 }): FifoSnapshotFields | null {
 	const { amount, sourceCurrency, context } = input;
-	if (!Number.isFinite(amount) || amount <= 0) return null;
+	if (!Number.isFinite(amount) || amount < 0) return null;
 	const sameCurrency = sourceCurrency === context.functionalCurrency;
-	if (!sameCurrency && (context.rate === null || context.rateDate === null)) return null;
+	const isZeroConversion = amount === 0 && (input.functionalAmount ?? 0) === 0;
+	if (!sameCurrency && (context.rate === null || context.rateDate === null) && !isZeroConversion) return null;
 	const rawConvertedAmount = input.functionalAmount ??
 		(sameCurrency ? amount : amount * (context.rate as number));
-	if (!Number.isFinite(rawConvertedAmount) || rawConvertedAmount <= 0) return null;
+	if (!Number.isFinite(rawConvertedAmount) || rawConvertedAmount < 0) return null;
 	try {
 		const evidence = buildAppliedFxEvidence({
 			originalAmount: amount,
 			originalCurrency: sourceCurrency,
 			functionalCurrency: context.functionalCurrency,
-			exchangeRate: context.rate ?? 1,
+			exchangeRate: context.rate,
 			convertedAmount: rawConvertedAmount,
 			rateEffectiveAt: context.rateDate,
 			fxCatalogRateId: context.rateId,
@@ -238,7 +325,7 @@ function buildFifoSnapshot(input: {
  */
 function validateFifoSnapshot(allocation: {
 	cantidad: number;
-	costoUnitarioSnapshot: number | null;
+	costoUnitarioSnapshot: number | Prisma.Decimal | null;
 	fifoMonedaOrigen: string | null;
 	fifoFechaFuente: Date | null;
 	fifoMonedaFuncional: string | null;
@@ -251,8 +338,8 @@ function validateFifoSnapshot(allocation: {
 		!allocation.fifoFechaFuente || !allocation.fifoMonedaFuncional?.trim() ||
 		allocation.fifoCostoFuncional == null || !allocation.fifoEvidenciaFx ||
 		allocation.fifoMonedaFuncional.trim().toUpperCase() !== functionalCurrency) return null;
-	const originalAmount = allocation.costoUnitarioSnapshot * allocation.cantidad;
-	if (!Number.isFinite(originalAmount) || originalAmount <= 0) return null;
+	const originalAmount = Number(allocation.costoUnitarioSnapshot) * allocation.cantidad;
+	if (!Number.isFinite(originalAmount) || originalAmount < 0) return null;
 	try {
 		const evidence = JSON.parse(allocation.fifoEvidenciaFx) as Record<string, unknown>;
 		const rawConvertedAmount = evidence.rawConvertedAmount;
@@ -269,7 +356,7 @@ function validateFifoSnapshot(allocation: {
 			originalAmount,
 			originalCurrency: sourceCurrency,
 			functionalCurrency,
-			exchangeRate: rate ?? 1,
+			exchangeRate: rate,
 			convertedAmount: rawConvertedAmount,
 			rateEffectiveAt: rateDate,
 			fxCatalogRateId: rateId,
@@ -280,9 +367,12 @@ function validateFifoSnapshot(allocation: {
 		if (evidenceKeys.length !== canonicalKeys.length ||
 			evidenceKeys.some((key, index) => key !== canonicalKeys[index]) ||
 			evidence.rawExchangeRate !== rate) return null;
-		if ((!sameCurrency && (rate === null || rate <= 0 || !rateDate || Number.isNaN(rateDate.getTime()) ||
+		const isZeroAmount = originalAmount === 0 && rawConvertedAmount === 0 &&
+			evidence.fxProvenanceKind === 'ZERO_AMOUNT';
+		if ((!sameCurrency && !isZeroAmount && (rate === null || rate <= 0 || !rateDate || Number.isNaN(rateDate.getTime()) ||
 			!allocation.fifoFechaTasa || allocation.fifoFechaTasa.getTime() !== rateDate.getTime() ||
 			rateDate > allocation.fifoFechaFuente)) ||
+			(!sameCurrency && isZeroAmount && (allocation.fifoTasaCambio !== null || allocation.fifoFechaTasa !== null)) ||
 			(sameCurrency && (rate !== null || allocation.fifoTasaCambio !== null || allocation.fifoFechaTasa !== null))) return null;
 		if (roundFifoAmount(rawConvertedAmount) !== Number(allocation.fifoCostoFuncional) ||
 			(rate !== null && roundFifoRate(rate) !== Number(allocation.fifoTasaCambio))) return null;
@@ -369,7 +459,7 @@ export async function allocateFifoForVentaItem(
 		},
 	});
 	const purchaseItemIds = purchaseItems.map((item) => item.compraDocumentoItemId);
-	const [directLots, receiptItems] = await Promise.all([
+	const [directLots, receiptItems, initialSources] = await Promise.all([
 		purchaseItemIds.length > 0
 			? tx.lote.findMany({
 					where: {
@@ -407,6 +497,35 @@ export async function allocateFifoForVentaItem(
 				},
 				recepcion: { select: { fecha: true } },
 				lotes: {
+					select: {
+						id: true,
+						cantidadDisponible: true,
+						fechaVencimiento: true,
+						createdAt: true,
+					},
+				},
+			},
+		}),
+		tx.inventarioInicialFuente.findMany({
+			where: {
+				tenantId,
+				productoId,
+				lote: { cantidadDisponible: { gt: 0 } },
+			},
+			orderBy: [{ fechaCorte: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+			select: {
+				id: true,
+				tenantId: true,
+				productoId: true,
+				cantidad: true,
+				costoUnitario: true,
+				moneda: true,
+				fechaCorte: true,
+				montoFuncional: true,
+				monedaFuncional: true,
+				evidencia: true,
+				evidenciaHash: true,
+				lote: {
 					select: {
 						id: true,
 						cantidadDisponible: true,
@@ -482,11 +601,30 @@ export async function allocateFifoForVentaItem(
 				_sum: { cantidad: true },
 			})
 		: [];
+	const previousInitialAllocations = initialSources.length > 0
+		? await tx.purchaseAllocation.groupBy({
+				by: ["inventarioInicialFuenteId"],
+				where: {
+					tenantId,
+					inventarioInicialFuenteId: { in: initialSources.map((source) => source.id) },
+				},
+				_sum: { cantidad: true },
+			})
+		: [];
 
 	const allocatedMap = new Map<string, number>();
 	for (const alloc of previousAllocations) {
 		if (alloc.compraDocumentoItemId) {
 			allocatedMap.set(alloc.compraDocumentoItemId, alloc._sum.cantidad ?? 0);
+		}
+	}
+	const allocatedByInitialSource = new Map<string, number>();
+	for (const alloc of previousInitialAllocations) {
+		if (alloc.inventarioInicialFuenteId) {
+			allocatedByInitialSource.set(
+				alloc.inventarioInicialFuenteId,
+				alloc._sum.cantidad ?? 0,
+			);
 		}
 	}
 	const receiptItemIds = receiptItems.map((item) => item.id);
@@ -560,6 +698,7 @@ export async function allocateFifoForVentaItem(
 	// 3. Construir fuentes físicas FIFO. Los items de una OC con recepciones
 	// trazadas no duplican stock: su fuente física son los lotes recibidos.
 	type AllocationSource =
+		| { kind: "initial"; date: Date; source: InitialInventorySourceIdentity }
 		| { kind: "purchase"; date: Date; item: (typeof purchaseItems)[number] }
 		| {
 				kind: "receipt";
@@ -573,6 +712,9 @@ export async function allocateFifoForVentaItem(
 				}>;
 			};
 	const sources: AllocationSource[] = [];
+	for (const source of initialSources as InitialInventorySourceIdentity[]) {
+		sources.push({ kind: "initial", date: source.fechaCorte, source });
+	}
 	for (const item of purchaseItems) {
 		const orderId = item.compraDocumento?.ordenCompraId;
 		if (orderId && receiptOrderProducts.has(`${orderId}:${productoId}`)) continue;
@@ -585,17 +727,23 @@ export async function allocateFifoForVentaItem(
 		);
 		sources.push({ kind: "receipt", date, receiptLots: sourceLots });
 	}
-	sources.sort((a, b) => a.date.getTime() - b.date.getTime());
+	sources.sort((a, b) => {
+		const byDate = a.date.getTime() - b.date.getTime();
+		if (byDate !== 0) return byDate;
+		const priority = { initial: 0, purchase: 1, receipt: 2 };
+		return priority[a.kind] - priority[b.kind];
+	});
 
 	// 4. Asignar FIFO y FEFO dentro de la fuente física.
 	let remaining = cantidad;
 	const allocations: Array<{
 		tenantId: string;
 		compraDocumentoItemId: string | null;
+		inventarioInicialFuenteId?: string;
 		recepcionItemId?: string;
 		ventaItemId: string;
 		loteId?: string;
-		costoUnitarioSnapshot?: number;
+		costoUnitarioSnapshot?: number | Prisma.Decimal;
 		fifoMonedaOrigen?: string;
 		fifoFechaFuente?: Date;
 		fifoMonedaFuncional?: string;
@@ -612,6 +760,40 @@ export async function allocateFifoForVentaItem(
 
 	for (const source of sources) {
 		if (remaining <= 0) break;
+		if (source.kind === "initial") {
+			const initial = source.source;
+			const sourceAvailable = Math.max(
+				0,
+				initial.cantidad - (allocatedByInitialSource.get(initial.id) ?? 0),
+			);
+			const lotAvailable = Math.max(
+				0,
+				initial.lote.cantidadDisponible - (allocatedByLot.get(initial.lote.id) ?? 0) -
+					(allocatedInThisCallByLot.get(initial.lote.id) ?? 0),
+			);
+			const available = Math.min(sourceAvailable, lotAvailable);
+			if (available <= 0) continue;
+			const toAllocate = Math.min(remaining, available);
+			const snapshot = buildInitialInventorySnapshot(initial, toAllocate);
+			allocations.push({
+				tenantId,
+				compraDocumentoItemId: null,
+				inventarioInicialFuenteId: initial.id,
+				ventaItemId,
+				loteId: initial.lote.id,
+				costoUnitarioSnapshot: new Prisma.Decimal(initial.costoUnitario),
+				fifoMonedaOrigen: initial.moneda.trim().toUpperCase(),
+				fifoFechaFuente: initial.fechaCorte,
+				...(snapshot ?? {}),
+				cantidad: toAllocate,
+			});
+			remaining -= toAllocate;
+			allocatedInThisCallByLot.set(
+				initial.lote.id,
+				(allocatedInThisCallByLot.get(initial.lote.id) ?? 0) + toAllocate,
+			);
+			continue;
+		}
 		if (source.kind === "purchase") {
 			const item = source.item;
 			const moneda = item.compraDocumento?.moneda?.trim().toUpperCase();
@@ -944,6 +1126,32 @@ export async function getCostoFifoVentaValorado(
 					},
 				},
 			},
+			inventarioInicialFuente: {
+				select: {
+					id: true,
+					tenantId: true,
+					productoId: true,
+					cantidad: true,
+					costoUnitario: true,
+					moneda: true,
+					fechaCorte: true,
+					montoFuncional: true,
+					monedaFuncional: true,
+					evidencia: true,
+					evidenciaHash: true,
+					lote: {
+						select: {
+							id: true,
+							cantidadDisponible: true,
+							fechaVencimiento: true,
+							createdAt: true,
+						},
+					},
+				},
+			},
+			ventaItem: {
+				select: { productoId: true },
+			},
 			recepcionItem: {
 				select: {
 					id: true, tenantId: true, productoId: true,
@@ -965,7 +1173,30 @@ export async function getCostoFifoVentaValorado(
 		if (!Number.isSafeInteger(cantidad) || cantidad <= 0) { fuenteNoVerificable = true; continue; }
 		cantidadTotal += cantidad;
 		if (asignacion.inventarioInicialFuenteId != null) {
-			fuenteNoVerificable = true;
+			const source = asignacion.inventarioInicialFuente;
+			if (!source || source.id !== asignacion.inventarioInicialFuenteId ||
+				source.tenantId !== tenantId || source.productoId !== asignacion.ventaItem?.productoId ||
+				source.cantidad < cantidad ||
+				Number(asignacion.costoUnitarioSnapshot) !== Number(source.costoUnitario) ||
+				asignacion.fifoMonedaOrigen?.trim().toUpperCase() !== source.moneda.trim().toUpperCase() ||
+				asignacion.fifoFechaFuente?.getTime() !== source.fechaCorte.getTime() ||
+				!monedaFuncional ||
+				asignacion.fifoMonedaFuncional?.trim().toUpperCase() !==
+					source.monedaFuncional.trim().toUpperCase() ||
+				!isInitialInventoryEvidenceValid(source as InitialInventorySourceIdentity)) {
+				fuenteNoVerificable = true;
+				continue;
+			}
+			const snapshot = validateFifoSnapshot(
+				asignacion,
+				monedaFuncional,
+				INITIAL_INVENTORY_EVIDENCE_SOURCE,
+			);
+			if (!snapshot) {
+				fuenteNoVerificable = true;
+				continue;
+			}
+			costoCapturado = costoCapturado.add(snapshot.amountFunctional);
 			continue;
 		}
 		const hasReceiptSource = asignacion.recepcionItemId != null;
@@ -991,7 +1222,7 @@ export async function getCostoFifoVentaValorado(
 				monedaFuncional,
 				"purchase-receipt-invoice-allocation",
 			);
-			if (!linkedSnapshot || asignacion.costoUnitarioSnapshot !== source.costoUnitarioSnapshot ||
+			if (!linkedSnapshot || Number(asignacion.costoUnitarioSnapshot) !== source.costoUnitarioSnapshot ||
 				asignacion.fifoMonedaOrigen?.trim().toUpperCase() !== source.fifoMonedaOrigen.trim().toUpperCase() ||
 				asignacion.fifoFechaFuente?.getTime() !== source.fifoFechaFuente.getTime() ||
 				!asignacion.fifoEvidenciaFx) {
@@ -1023,7 +1254,9 @@ export async function getCostoFifoVentaValorado(
 			continue;
 		}
 		const costoUnitario =
-			asignacion.costoUnitarioSnapshot ?? asignacion.compraDocumentoItem?.precioUnitario ?? null;
+			asignacion.costoUnitarioSnapshot != null
+				? Number(asignacion.costoUnitarioSnapshot)
+				: asignacion.compraDocumentoItem?.precioUnitario ?? null;
 		if (costoUnitario == null || !Number.isFinite(costoUnitario) || costoUnitario < 0) {
 			fuenteNoVerificable = true; continue;
 		}
@@ -1221,6 +1454,29 @@ export async function restaurarAllocacionesFifo(
 					},
 				},
 			},
+			inventarioInicialFuente: {
+				select: {
+					id: true,
+					tenantId: true,
+					productoId: true,
+					cantidad: true,
+					costoUnitario: true,
+					moneda: true,
+					fechaCorte: true,
+					montoFuncional: true,
+					monedaFuncional: true,
+					evidencia: true,
+					evidenciaHash: true,
+					lote: {
+						select: {
+							id: true,
+							cantidadDisponible: true,
+							fechaVencimiento: true,
+							createdAt: true,
+						},
+					},
+				},
+			},
 		},
 	});
 
@@ -1241,7 +1497,28 @@ export async function restaurarAllocacionesFifo(
 	for (const alloc of allocations) {
 		if (remainingToValidate <= 0) break;
 		if (alloc.inventarioInicialFuenteId != null) {
-			throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+			const source = alloc.inventarioInicialFuente;
+			functionalCurrency ??= await monedaFuncionalDelTenant(tx, tenantId);
+			if (!source || source.id !== alloc.inventarioInicialFuenteId ||
+				source.tenantId !== tenantId || source.cantidad < alloc.cantidad ||
+				Number(alloc.costoUnitarioSnapshot) !== Number(source.costoUnitario) ||
+				alloc.fifoMonedaOrigen?.trim().toUpperCase() !== source.moneda.trim().toUpperCase() ||
+				alloc.fifoFechaFuente?.getTime() !== source.fechaCorte.getTime() ||
+				!functionalCurrency ||
+				alloc.fifoMonedaFuncional?.trim().toUpperCase() !==
+					source.monedaFuncional.trim().toUpperCase() ||
+				!isInitialInventoryEvidenceValid(source as InitialInventorySourceIdentity)) {
+				throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+			}
+			const snapshot = validateFifoSnapshot(
+				alloc,
+				functionalCurrency,
+				INITIAL_INVENTORY_EVIDENCE_SOURCE,
+			);
+			if (!snapshot) throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
+			verifiedSnapshots.set(alloc.id, snapshot);
+			remainingToValidate -= Math.min(remainingToValidate, alloc.cantidad);
+			continue;
 		}
 		if (!Number.isFinite(alloc.cantidad) || alloc.cantidad <= 0) {
 			throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
@@ -1271,7 +1548,7 @@ export async function restaurarAllocacionesFifo(
 				source,
 				functionalCurrency,
 				'purchase-receipt-invoice-allocation',
-			) || alloc.costoUnitarioSnapshot !== source.costoUnitarioSnapshot ||
+			) || Number(alloc.costoUnitarioSnapshot) !== source.costoUnitarioSnapshot ||
 				alloc.fifoMonedaOrigen?.trim().toUpperCase() !== source.fifoMonedaOrigen?.trim().toUpperCase() ||
 				alloc.fifoFechaFuente?.getTime() !== source.fifoFechaFuente?.getTime()) {
 				throw new Error('PROCEDENCIA_FIFO_NO_VERIFICABLE');
@@ -1316,9 +1593,10 @@ export async function restaurarAllocacionesFifo(
 		const snapshot = verifiedSnapshots.get(alloc.id) ?? null;
 		const devolver = Math.min(restante, alloc.cantidad);
 		const cantidadRestante = alloc.cantidad - devolver;
-		const costoUnitario = alloc.costoUnitarioSnapshot ??
-			alloc.compraDocumentoItem?.precioUnitario ??
-			alloc.recepcionItem?.ordenItem.precioUnitario ?? 0;
+		const costoUnitario = alloc.costoUnitarioSnapshot != null
+			? Number(alloc.costoUnitarioSnapshot)
+			: alloc.compraDocumentoItem?.precioUnitario ??
+				alloc.recepcionItem?.ordenItem.precioUnitario ?? 0;
 		const montoFuncionalDevuelto = snapshot
 			? devolver >= alloc.cantidad
 				? snapshot.amountFunctional
@@ -1335,6 +1613,12 @@ export async function restaurarAllocacionesFifo(
 					rateId: snapshot.rateId,
 				},
 				functionalAmount: snapshot.amountFunctional - (montoFuncionalDevuelto ?? 0),
+				// Una asignación de fuente inicial se valida después contra
+				// 'initial-inventory': sin este origen el snapshot restante
+				// se firmaría 'fifo-allocation' y dejaría de ser verificable.
+				source: alloc.inventarioInicialFuenteId != null
+					? INITIAL_INVENTORY_EVIDENCE_SOURCE
+					: undefined,
 			})
 			: null;
 		if (snapshot && cantidadRestante > 0 && !snapshotRestante) {
@@ -1396,12 +1680,14 @@ export async function restaurarAllocacionesFifo(
  */
 function allocationSourceDate(allocation: {
 	compraDocumentoItem: { createdAt: Date } | null;
+	inventarioInicialFuente: { fechaCorte: Date } | null;
 	recepcionItem: {
 		recepcion: { fecha: Date };
 		ordenItem: { createdAt: Date };
 	} | null;
 }): Date {
-	return allocation.compraDocumentoItem?.createdAt ??
+	return allocation.inventarioInicialFuente?.fechaCorte ??
+		allocation.compraDocumentoItem?.createdAt ??
 		allocation.recepcionItem?.recepcion.fecha ??
 		allocation.recepcionItem?.ordenItem.createdAt ??
 		new Date(0);

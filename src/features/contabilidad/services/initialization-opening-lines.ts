@@ -8,7 +8,7 @@ export type OpeningEntryLine = {
   index: number;
   numeroCuenta: string;
   lado: 'DEBE' | 'HABER';
-  rolCuenta: 'BANCOS' | OpeningCounterpartRol;
+  rolCuenta: 'BANCOS' | 'INVENTARIOS' | OpeningCounterpartRol;
   moneda: string;
   montoOriginal: string;
   tasaCambio: number | null;
@@ -35,6 +35,7 @@ export function buildOpeningEntryLines(input: {
   cuentas: InitializationData['cuentas'];
   valued: ValuedOpeningAccount[];
   monedaFuncional: string;
+  initialInventoryTotalFuncional?: string;
 }): OpeningEntryLines {
   const lines: OpeningEntryLine[] = [];
   const excludedAnticipoIndexes: number[] = [];
@@ -86,6 +87,36 @@ export function buildOpeningEntryLines(input: {
     totalDebe = totalDebe.add(new Prisma.Decimal(v.montoFuncional));
     totalHaber = totalHaber.add(new Prisma.Decimal(v.montoFuncional));
   });
+  const inventoryTotal = new Prisma.Decimal(input.initialInventoryTotalFuncional ?? 0)
+    .toDecimalPlaces(4);
+  if (inventoryTotal.greaterThan(0)) {
+    const inventoryIndex = input.cuentas.length;
+    const amount = inventoryTotal.toString();
+    lines.push({
+      index: inventoryIndex,
+      numeroCuenta: 'INVENTARIO_INICIAL',
+      lado: 'DEBE',
+      rolCuenta: 'INVENTARIOS',
+      moneda: input.monedaFuncional,
+      montoOriginal: amount,
+      tasaCambio: null,
+      montoFuncional: amount,
+      fxEvidenceFingerprint: null,
+    });
+    lines.push({
+      index: inventoryIndex,
+      numeroCuenta: 'INVENTARIO_INICIAL',
+      lado: 'HABER',
+      rolCuenta: 'RESULTADOS_ACUMULADOS',
+      moneda: input.monedaFuncional,
+      montoOriginal: amount,
+      tasaCambio: null,
+      montoFuncional: amount,
+      fxEvidenceFingerprint: null,
+    });
+    totalDebe = totalDebe.add(inventoryTotal);
+    totalHaber = totalHaber.add(inventoryTotal);
+  }
   const totalDebeFuncional = totalDebe.toString();
   const totalHaberFuncional = totalHaber.toString();
   const balanced = totalDebe.equals(totalHaber);

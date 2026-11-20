@@ -529,9 +529,11 @@ export async function recolectarCandidatos(
 				costoVentaFecha: true,
 				items: { select: { cantidad: true, productoId: true, allocations: { select: {
 					cantidad: true,
+					loteId: true,
 					compraDocumentoItemId: true,
 					recepcionItemId: true,
 					purchaseReceiptInvoiceAllocationId: true,
+					inventarioInicialFuenteId: true,
 					costoUnitarioSnapshot: true,
 					fifoMonedaOrigen: true,
 					fifoFechaFuente: true,
@@ -553,6 +555,11 @@ export async function recolectarCandidatos(
 						tenantId: true,
 						productoId: true,
 						compraDocumento: { select: { tenantId: true, estado: true, deletedAt: true } },
+					} },
+					inventarioInicialFuente: { select: {
+						id: true, tenantId: true, inicializacionId: true, productoId: true,
+						loteId: true, cantidad: true, costoUnitario: true, moneda: true,
+						monedaFuncional: true, montoFuncional: true, fechaCorte: true,
 					} },
 				} } } } },
 			}),
@@ -676,6 +683,20 @@ export async function recolectarCandidatos(
 		reconciliacionesPorVenta.set(reconciliacion.ventaId, lista);
 	}
 
+/**
+ * @description Comprueba que el snapshot FIFO persistido se construyó como
+ * evidencia de inventario inicial (y no como compra o recepción).
+ */
+function snapshotFuenteEsInicial(fifoEvidenciaFx: string | null): boolean {
+	try {
+		if (!fifoEvidenciaFx) return false;
+		const evidence = JSON.parse(fifoEvidenciaFx) as Record<string, unknown>;
+		return evidence.fxProvenanceSource === 'initial-inventory';
+	} catch {
+		return false;
+	}
+}
+
 	const candidatos: CandidatoReplay[] = [...candidatosMerma];
 
 	for (const orden of ordenesProduccion) {
@@ -751,15 +772,29 @@ export async function recolectarCandidatos(
 					lineaCapa.tenantId === tenantId && lineaCapa.productoId === item.productoIdVenta &&
 					lineaCapa.compraDocumento.tenantId === tenantId &&
 					lineaCapa.compraDocumento.deletedAt === null &&
-					item.costoUnitarioSnapshot === capaRecepcion.costoUnitarioSnapshot &&
+					Number(item.costoUnitarioSnapshot) === capaRecepcion.costoUnitarioSnapshot &&
 					item.fifoMonedaOrigen?.trim().toUpperCase() ===
 						capaRecepcion.fifoMonedaOrigen.trim().toUpperCase() &&
 					item.fifoFechaFuente?.getTime() === capaRecepcion.fifoFechaFuente.getTime());
+				const hasInitial = item.inventarioInicialFuenteId != null;
+				const fuenteInicial = item.inventarioInicialFuente;
+				const fuenteInicialVerificable = hasInitial && Boolean(fuenteInicial &&
+					fuenteInicial.id === item.inventarioInicialFuenteId &&
+					fuenteInicial.tenantId === tenantId &&
+					fuenteInicial.productoId === item.productoIdVenta &&
+					fuenteInicial.loteId === item.loteId &&
+					fuenteInicial.cantidad >= item.cantidad &&
+					Number(fuenteInicial.costoUnitario) === Number(item.costoUnitarioSnapshot) &&
+					fuenteInicial.moneda.trim().toUpperCase() ===
+						item.fifoMonedaOrigen?.trim().toUpperCase() &&
+					fuenteInicial.fechaCorte.getTime() === item.fifoFechaFuente?.getTime() &&
+					snapshotFuenteEsInicial(item.fifoEvidenciaFx));
 				return Number.isSafeInteger(item.cantidad) && item.cantidad > 0 &&
 					item.costoUnitarioSnapshot !== null && item.fifoMonedaOrigen?.trim() &&
 					item.fifoFechaFuente && item.fifoMonedaFuncional?.trim() &&
 					item.fifoCostoFuncional !== null && item.fifoEvidenciaFx &&
 					((hasReceipt ? fuenteRecepcionVerificable :
+						hasInitial ? fuenteInicialVerificable :
 						item.compraDocumentoItemId !== null && fuenteDirectaVerificable)) &&
 					hasReceipt === hasInvoiceLayer;
 			});
@@ -768,12 +803,19 @@ export async function recolectarCandidatos(
 		const costo = !tieneDevoluciones && fechaPersistida && asignacionesVerificables
 			? await getCostoFifoVentaValorado(client as Prisma.TransactionClient, tenantId, venta.ventaId)
 			: null;
+		// Una venta verificada de costo cero no tiene asiento que reconstruir:
+		// el writer tampoco lo postea. Se omite como MONTO_NO_POSITIVO (el
+		// mismo patrón que el resto de fuentes), no como no verificable.
+		const todasCero = asignaciones.every((item) => Number(item.costoUnitarioSnapshot) === 0);
 		const causa = tieneDevoluciones ? 'DEVOLUCION_FIFO_NO_RECONSTRUIBLE' :
 			!fechaPersistida ? 'FECHA_COSTO_FIFO_NO_PERSISTIDA' :
 			!asignacionesVerificables ? 'ASIGNACION_FIFO_NO_VERIFICABLE' :
 			!costo || costo.cantidad !== cantidadEsperada || costo.montoFuncional === null ||
-			!costo.monedaFuncional || !Number.isFinite(costo.montoFuncional) || costo.montoFuncional <= 0
-				? CAUSA_VALORACION_NO_VERIFICABLE : undefined;
+			!costo.monedaFuncional || !Number.isFinite(costo.montoFuncional) || costo.montoFuncional < 0
+				? CAUSA_VALORACION_NO_VERIFICABLE :
+			costo.montoFuncional === 0
+				? (todasCero ? 'MONTO_NO_POSITIVO' : CAUSA_VALORACION_NO_VERIFICABLE)
+				: undefined;
 		const monto = costo?.montoFuncional ?? 0;
 		const moneda = costo?.monedaFuncional ?? monedaFuncional;
 		candidatos.push({

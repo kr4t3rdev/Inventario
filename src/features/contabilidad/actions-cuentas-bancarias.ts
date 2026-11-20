@@ -24,6 +24,8 @@ import { acquireAccountingTenantLock } from '@/features/contabilidad/services/ac
 import { valueOpeningAccounts } from './services/initialization-valuation';
 import { buildOpeningEntryLines } from './services/initialization-opening-lines';
 import { ensureCutoffPeriod } from './services/initialization-period';
+import { persistInitialInventory } from './services/initial-inventory-persistence';
+import { reconcileInitialInventory } from './services/initial-inventory-reconciliation';
 import {
   createInitializationApertura,
   parseCutoffDate,
@@ -268,13 +270,18 @@ export const initializeBankAccountsAction = withAction(
     const { idempotencyKey, ...payload } = parsed;
     const payloadHash = computeInitializationPayloadHash(payload);
     const hasAdvance = parsed.cuentas.some((cuenta) => cuenta.origen?.tipo === 'ANTICIPO');
+    if (hasAdvance) {
+      throw new ActionError(
+        'Los saldos iniciales por anticipo aún no están coordinados a fecha de corte; llegan con la tarea 5',
+        'INITIALIZATION_ANTICIPO_NO_DISPONIBLE',
+      );
+    }
 
     const result = await runIdempotentInitialization({
       tenantId,
       idempotencyKey: parsed.idempotencyKey,
       payloadHash,
-    }, async (tx) => {
-      if (hasAdvance) requireFeature(user, 'anticipos', 'inicializar saldos provenientes de anticipos');
+    }, async (tx, inicializacionId) => {
       const fechaCorteDate = parseCutoffDate(parsed.fechaCorte);
       const policy = await tx.tenantAccountingPolicy.findUnique({
         where: { tenantId },
@@ -307,7 +314,22 @@ export const initializeBankAccountsAction = withAction(
         );
       }
       const valued = valueOpeningAccounts(parsed);
-      const entryLines = buildOpeningEntryLines({ cuentas: parsed.cuentas, valued, monedaFuncional: functionalCurrency });
+      const inventory = parsed.inventario?.length
+        ? await persistInitialInventory(tx, {
+          tenantId,
+          inicializacionId,
+          fechaCorte: parsed.fechaCorte,
+          monedaFuncional: functionalCurrency,
+          tasas: parsed.tasas,
+          inventario: parsed.inventario,
+        })
+        : { count: 0, totalFuncional: '0', fuentes: [], filas: [] };
+      const entryLines = buildOpeningEntryLines({
+        cuentas: parsed.cuentas,
+        valued,
+        monedaFuncional: functionalCurrency,
+        initialInventoryTotalFuncional: inventory.totalFuncional,
+      });
       const periodo = await ensureCutoffPeriod(tx, { tenantId, fechaCorte: parsed.fechaCorte, actor: user.userId });
       const bancosCuentaId = await resolveRoleAccountId(tx, tenantId, 'BANCOS').catch(() => null);
       const createdAccounts: Array<{ cuentaId: string; nombreCuenta: string; saldo: number; moneda: string; cuentaContableInicialId: string | null }> = [];
@@ -331,6 +353,7 @@ export const initializeBankAccountsAction = withAction(
         });
 
         if (openingBalance > 0 && item.origen) {
+          // Bloqueado hasta la tarea 5: el rechazo temprano de ANTICIPO impide llegar aquí.
           if (item.origen.tipo === 'ANTICIPO') {
             if (!item.origen.tipoPagoId) {
               throw new ActionError('Selecciona el tipo de pago para registrar el anticipo', 'TIPO_PAGO_REQUERIDO');
@@ -411,6 +434,12 @@ export const initializeBankAccountsAction = withAction(
               descripcion: 'Contrapartida del saldo inicial de la cuenta bancaria',
               tipo: isCapital ? 'CAPITAL_SOCIAL' : 'DEUDA_EXTERNA',
             });
+            if (posting.estado !== 'CONTABILIZADO' && posting.estado !== 'YA_EXISTENTE') {
+              throw new ActionError(
+                `La contrapartida de ${isCapital ? 'capital social' : 'préstamo'} no se contabilizó (estado ${posting.estado}); la apertura no puede completarse sin su asiento formal`,
+                'INITIALIZATION_POSTING_NO_CONFIRMADO',
+              );
+            }
             asientos.push({ tipo: 'INYECCION_CAPITAL', asientoId: posting.asientoId ?? null, estado: posting.estado, referencia: movementKeyFor(parsed.idempotencyKey, index) });
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,
@@ -445,6 +474,84 @@ export const initializeBankAccountsAction = withAction(
       if (openingEntry) {
         asientos.unshift({ tipo: 'APERTURA', asientoId: openingEntry.asientoId, estado: 'CONTABILIZADO', referencia: parsed.idempotencyKey });
       }
+      // Sin valor que conciliar (todo el inventario en costo cero) no hay
+      // líneas de apertura que comprobar: el detalle y el replay siguen
+      // anclando las fuentes.
+      if (inventory.count > 0 && !new Prisma.Decimal(inventory.totalFuncional).isZero()) {
+        const postedInventoryLines = (openingEntry?.postedLines ?? [])
+          .filter((line) => line.rolCuenta === 'INVENTARIOS' && line.lado === 'DEBE');
+        const postedInventoryTotal = postedInventoryLines.reduce(
+          (total, line) => total.add(new Prisma.Decimal(line.montoFuncional)),
+          new Prisma.Decimal(0),
+        );
+        if (!openingEntry || postedInventoryLines.length === 0 ||
+          !postedInventoryTotal.equals(new Prisma.Decimal(inventory.totalFuncional))) {
+          throw new ActionError(
+            'La valoración del inventario no coincide con el débito del asiento de apertura',
+            'INITIALIZATION_INCOMPLETE',
+          );
+        }
+
+        const functionalRows = (parsed.inventario ?? [])
+          .filter((row) => row.moneda === functionalCurrency);
+        if (functionalRows.length > 0) {
+          const inventoryAccountId = postedInventoryLines[0].cuentaContableId;
+          const functionalTotal = inventory.filas
+            .filter((row) => row.moneda === functionalCurrency)
+            .reduce(
+              (total, row) => total.add(new Prisma.Decimal(row.montoFuncional)),
+              new Prisma.Decimal(0),
+            );
+          const linesForReconciliation = functionalRows.length === parsed.inventario?.length
+            ? postedInventoryLines.map((line) => ({
+              cuentaContableId: line.cuentaContableId,
+              moneda: line.moneda,
+              debito: line.montoFuncional,
+              credito: '0',
+            }))
+            : [{
+              cuentaContableId: inventoryAccountId,
+              moneda: functionalCurrency,
+              debito: functionalTotal.toString(),
+              credito: '0',
+            }];
+          try {
+            reconcileInitialInventory(
+              functionalRows.map((row) => ({
+                cuentaContableId: inventoryAccountId,
+                moneda: row.moneda,
+                cantidad: row.cantidad,
+                costoUnitario: row.costoUnitario,
+              })),
+              linesForReconciliation,
+            );
+          } catch {
+            throw new ActionError(
+              'El inventario no coincide con las líneas de apertura',
+              'INITIALIZATION_INCOMPLETE',
+            );
+          }
+        }
+      }
+      const filasByReferencia = new Map(inventory.filas.map((fila) => [fila.referenciaFila, fila]));
+      const detalleInventario = {
+        count: inventory.count,
+        totalFuncional: inventory.totalFuncional,
+        fuentes: inventory.fuentes.map((fuente) => {
+          const fila = filasByReferencia.get(fuente.referenciaFila);
+          const row = (parsed.inventario ?? []).find((r) => r.referenciaFila === fuente.referenciaFila);
+          return {
+            referenciaFila: fuente.referenciaFila,
+            fuenteId: fuente.fuenteId,
+            loteId: fuente.loteId,
+            productoId: row?.productoId ?? '',
+            cantidad: row?.cantidad ?? '',
+            costoUnitario: row?.costoUnitario ?? '',
+            moneda: fila?.moneda ?? row?.moneda ?? '',
+            montoFuncional: fila?.montoFuncional ?? '0',
+          };
+        }),
+      };
       await createInitializationApertura(tx, {
         periodoId: periodo.periodoId, tenantId, actor: user.userId,
         idempotencyKey: parsed.idempotencyKey, payloadHash,
@@ -460,6 +567,7 @@ export const initializeBankAccountsAction = withAction(
           montoFuncional: new Prisma.Decimal(valued[i].montoFuncional).toString(),
           cuentaContableInicialId: cuenta.cuentaContableInicialId,
         })),
+        inventario: detalleInventario,
         totalDebeFuncional: entryLines.totalDebeFuncional,
         totalHaberFuncional: entryLines.totalHaberFuncional,
       });
@@ -473,6 +581,7 @@ export const initializeBankAccountsAction = withAction(
         totalHaberFuncional: entryLines.totalHaberFuncional,
         fechaCorte: parsed.fechaCorte,
         monedaFuncional: functionalCurrency,
+        inventario: inventory,
       };
     });
 

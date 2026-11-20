@@ -38,7 +38,7 @@ function calcularCostoFifoItem(
   allocations: Array<{
     compraDocumentoItemId: string | null
     cantidad: number
-    costoUnitarioSnapshot: number | null
+    costoUnitarioSnapshot: number | Prisma.Decimal | null
   }>,
   comprasMap: Map<string, number>,
   precioCostoFallback: number,
@@ -52,8 +52,9 @@ function calcularCostoFifoItem(
   // Sumar costo de todas las allocations
   let costoReal = 0
   for (const alloc of allocations) {
-    const precioCompra = alloc.costoUnitarioSnapshot ??
-      (alloc.compraDocumentoItemId ? comprasMap.get(alloc.compraDocumentoItemId) : undefined) ?? 0
+    const precioCompra = alloc.costoUnitarioSnapshot != null
+      ? Number(alloc.costoUnitarioSnapshot)
+      : (alloc.compraDocumentoItemId ? comprasMap.get(alloc.compraDocumentoItemId) : undefined) ?? 0
     costoReal += alloc.cantidad * precioCompra
   }
 
@@ -208,7 +209,7 @@ export const getVentasProductoAction = withAction(
     const allocationsPorVenta = new Map<string, Array<{
       compraDocumentoItemId: string | null
       cantidad: number
-      costoUnitarioSnapshot: number | null
+      costoUnitarioSnapshot: number | Prisma.Decimal | null
     }>>()
     for (const alloc of allocations) {
       const existing = allocationsPorVenta.get(alloc.ventaItemId) ?? []

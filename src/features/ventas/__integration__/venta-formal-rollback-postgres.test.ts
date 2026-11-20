@@ -378,7 +378,7 @@ describe(
         where: { tenantId, ventaItem: { ventaId: venta.ventaId } },
         include: { compraDocumentoItem: { include: { compraDocumento: true } } },
       });
-      expect(allocation.costoUnitarioSnapshot).toBe(100);
+      expect(Number(allocation.costoUnitarioSnapshot)).toBe(100);
       expect(allocation.fifoMonedaOrigen).toBe(allocation.compraDocumentoItem?.compraDocumento.moneda);
       expect(allocation.fifoFechaFuente).toEqual(allocation.compraDocumentoItem?.compraDocumento.fechaCompra);
       expect(allocation.fifoMonedaFuncional).toBe('CUP');

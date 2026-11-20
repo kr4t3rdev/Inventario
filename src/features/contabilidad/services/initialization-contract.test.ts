@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initializationContract } from './initialization-contract';
+import { initializationContract, initializationDraftContract } from './initialization-contract';
 
 const account = {
   nombreCuenta: ' Caja de prueba ',
@@ -98,6 +98,64 @@ describe('contrato de inicialización de empresa nueva', () => {
     expect(initializationContract.safeParse({ ...input, cuentas: [account, {
       ...account, numeroCuenta: 'qa-001',
     }] }).success).toBe(true);
+  });
+
+  it('transporta inventario inicial con la misma fecha de corte y moneda funcional', () => {
+    const result = initializationContract.parse({
+      ...input,
+      inventario: [{
+        referenciaFila: 'existencia-1',
+        productoId: 'producto-1',
+        almacenId: 'almacen-1',
+        loteCodigo: 'LOTE-1',
+        cantidad: '4',
+        costoUnitario: '25.5000',
+        moneda: 'cup',
+      }],
+    });
+
+    expect(result.inventario).toEqual([{
+      referenciaFila: 'existencia-1',
+      productoId: 'producto-1',
+      almacenId: 'almacen-1',
+      loteCodigo: 'LOTE-1',
+      cantidad: '4',
+      costoUnitario: '25.5',
+      moneda: 'CUP',
+    }]);
+  });
+
+  it('rechaza inventario con fecha distinta o sin tasa extranjera', () => {
+    const inventory = {
+      referenciaFila: 'existencia-1',
+      productoId: 'producto-1',
+      almacenId: 'almacen-1',
+      loteCodigo: 'LOTE-1',
+      cantidad: '4',
+      costoUnitario: '25',
+      moneda: 'USD',
+    };
+
+    expect(initializationContract.safeParse({
+      ...input,
+      inventario: [{ ...inventory, fechaCorte: '2026-10-31' }],
+    }).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...input,
+      inventario: [inventory],
+    }).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...input,
+      tasas: { USD: '400' },
+      inventario: [inventory],
+    }).success).toBe(true);
+  });
+
+  it('permite guardar un borrador parcial de inventario', () => {
+    expect(initializationDraftContract.safeParse({
+      idempotencyKey: 'draft-inventory',
+      inventario: [{ productoId: 'producto-1', cantidad: '4' }],
+    }).success).toBe(true);
   });
 
 describe('contrato de inicialización: fecha de corte, moneda funcional y evidencia FX', () => {

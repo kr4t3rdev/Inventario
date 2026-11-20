@@ -39,6 +39,12 @@ vi.mock('@/features/contabilidad/services/initialization-idempotency', async (im
   const actual = await importOriginal<typeof import('@/features/contabilidad/services/initialization-idempotency')>();
   return { ...actual, runIdempotentInitialization: vi.fn() };
 });
+vi.mock('@/features/contabilidad/services/initial-inventory-persistence', () => ({
+  persistInitialInventory: vi.fn().mockResolvedValue({ count: 0, totalFuncional: '0', fuentes: [], filas: [] }),
+}));
+vi.mock('@/features/contabilidad/services/initial-inventory-reconciliation', () => ({
+  reconcileInitialInventory: vi.fn().mockReturnValue({ conciliado: true }),
+}));
 vi.mock('@/features/contabilidad/services/accounting-tenant-lock-service', () => ({
   acquireAccountingTenantLock: vi.fn().mockResolvedValue(undefined),
 }));
@@ -74,6 +80,8 @@ import { runIdempotentInitialization } from '@/features/contabilidad/services/in
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { ActionError } from '@/lib/server-actions';
 import { ensureCutoffPeriod } from '@/features/contabilidad/services/initialization-period';
+import { persistInitialInventory } from '@/features/contabilidad/services/initial-inventory-persistence';
+import { reconcileInitialInventory } from '@/features/contabilidad/services/initial-inventory-reconciliation';
 import {
   createInitializationApertura,
   postOpeningEntry,
@@ -139,7 +147,7 @@ describe('Cuentas Bancarias Actions', () => {
     vi.mocked(AuditLogService.logStrict).mockResolvedValue({} as never);
     periodGuardState.blocked = false;
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(txClient as never));
-    txClient.cuentaBancaria.create.mockReset();
+    txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'init-default', saldo: 0 });
     txClient.cuentaBancaria.count.mockResolvedValue(0);
     txClient.asiento.count.mockResolvedValue(0);
     txClient.aperturaPeriodo.count.mockResolvedValue(0);
@@ -155,7 +163,7 @@ describe('Cuentas Bancarias Actions', () => {
     vi.mocked(createInitializationApertura).mockResolvedValue({} as never);
     vi.mocked(resolveRoleAccountId).mockResolvedValue('cc-bancos');
     vi.mocked(verifyInitializationReplay).mockResolvedValue(undefined);
-    txClient.inyeccionCapital.create.mockReset();
+    txClient.inyeccionCapital.create.mockResolvedValue({ id: 'inj-1', fechaRegistro: new Date('2026-11-01T00:00:00.000Z') });
     txClient.anticipo.create.mockReset();
     txClient.anticipoMovimiento.create.mockReset();
     vi.mocked(registrarMovimientoEfectivoAnticipo).mockResolvedValue({
@@ -165,6 +173,9 @@ describe('Cuentas Bancarias Actions', () => {
       replayed: false,
       resultado: await execute(txClient as never),
     }));
+    vi.mocked(emitirInyeccionCapital).mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'as-cap-1' });
+    vi.mocked(persistInitialInventory).mockResolvedValue({ count: 0, totalFuncional: '0', fuentes: [], filas: [] });
+    vi.mocked(reconcileInitialInventory).mockReturnValue({ conciliado: true });
     txClient.auditLog.create.mockReset();
   });
 
@@ -763,6 +774,216 @@ describe('Cuentas Bancarias Actions', () => {
       );
       expect(expectActionSuccess(result).data?.resultado.asientoId).toBe('as-apertura-1');
     });
+
+    it('rechaza la apertura cuando el posteo de capital queda omitido por el modo formal', async () => {
+      vi.mocked(emitirInyeccionCapital).mockResolvedValue({ estado: 'OMITIDO', asientoId: null } as never);
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'omitted-posting',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{
+          nombreCuenta: 'Operaciones', nombreBanco: 'Banco', numeroCuenta: 'OMIT-001',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '100000',
+          origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio' },
+        }],
+      });
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_POSTING_NO_CONFIRMADO');
+      expect(vi.mocked(createInitializationApertura)).not.toHaveBeenCalled();
+    });
+
+    it('rechaza la apertura cuando el posteo de capital queda simulado en sombra', async () => {
+      vi.mocked(emitirInyeccionCapital).mockResolvedValue({ estado: 'SIMULADO', asientoId: null } as never);
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'simulated-posting',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{
+          nombreCuenta: 'Operaciones', nombreBanco: 'Banco', numeroCuenta: 'SIM-001',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '100000',
+          origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio' },
+        }],
+      });
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_POSTING_NO_CONFIRMADO');
+      expect(vi.mocked(createInitializationApertura)).not.toHaveBeenCalled();
+    });
+
+    it('concilia el inventario inicial con las líneas DEBE de apertura', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '100.0000',
+        fuentes: [{ referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1' }],
+        filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoFuncional: '100.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '100', tasaCambio: null, montoFuncional: '100',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-ok',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-OK',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-1', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-1', cantidad: '4', costoUnitario: '25', moneda: 'CUP' }],
+      });
+      expect(result.success).toBe(true);
+      expect(vi.mocked(reconcileInitialInventory)).toHaveBeenCalledWith(
+        [{ cuentaContableId: 'cc-inventarios', moneda: 'CUP', cantidad: '4', costoUnitario: '25' }],
+        [{ cuentaContableId: 'cc-inventarios', moneda: 'CUP', debito: '100', credito: '0' }],
+      );
+      expect(vi.mocked(createInitializationApertura)).toHaveBeenCalled();
+    });
+
+    it('rechaza la apertura cuando la conciliación de inventario no coincide', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '100.0000',
+        fuentes: [{ referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1' }],
+        filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoFuncional: '100.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '100', tasaCambio: null, montoFuncional: '100',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      vi.mocked(reconcileInitialInventory).mockImplementation(() => {
+        throw new Error('El inventario no coincide con las líneas de apertura');
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-mismatch',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-MISMATCH',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-1', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-1', cantidad: '4', costoUnitario: '25', moneda: 'CUP' }],
+      });
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_INCOMPLETE');
+      expect(vi.mocked(createInitializationApertura)).not.toHaveBeenCalled();
+    });
+
+    it('rechaza la apertura cuando la valoración funcional no coincide con el débito posteado', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '90.0000',
+        fuentes: [{ referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1' }],
+        filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoFuncional: '90.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '100', tasaCambio: null, montoFuncional: '100',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-fx-mismatch',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-FX',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-1', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-1', cantidad: '4', costoUnitario: '25', moneda: 'CUP' }],
+      });
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_INCOMPLETE');
+      expect(vi.mocked(reconcileInitialInventory)).not.toHaveBeenCalled();
+      expect(vi.mocked(createInitializationApertura)).not.toHaveBeenCalled();
+    });
+
+    it('no exige la conciliación por moneda original cuando el inventario es en moneda extranjera', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '400.0000',
+        fuentes: [{ referenciaFila: 'fila-usd', fuenteId: 'fuente-usd', loteId: 'lote-usd' }],
+        filas: [{ referenciaFila: 'fila-usd', moneda: 'USD', montoFuncional: '400.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '400', tasaCambio: null, montoFuncional: '400',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-usd',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-USD',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-usd', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-USD', cantidad: '4', costoUnitario: '10', moneda: 'USD', tasaCambio: '10' }],
+      });
+      expect(result.success).toBe(true);
+      expect(vi.mocked(reconcileInitialInventory)).not.toHaveBeenCalled();
+      expect(vi.mocked(createInitializationApertura)).toHaveBeenCalled();
+    });
+    it('guarda el inventario en el detalle de la apertura con la identidad de cada fuente', async () => {
+      vi.mocked(persistInitialInventory).mockResolvedValue({
+        count: 1, totalFuncional: '100.0000',
+        fuentes: [{ referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1' }],
+        filas: [{ referenciaFila: 'fila-1', moneda: 'CUP', montoFuncional: '100.0000' }],
+      });
+      vi.mocked(postOpeningEntry).mockResolvedValue({
+        asientoId: 'as-apertura-1',
+        postedLines: [{
+          index: 1, numeroCuenta: 'INVENTARIO_INICIAL', lado: 'DEBE', rolCuenta: 'INVENTARIOS',
+          moneda: 'CUP', montoOriginal: '100', tasaCambio: null, montoFuncional: '100',
+          fxEvidenceFingerprint: null, cuentaContableId: 'cc-inventarios',
+        }],
+      });
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-detail',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'INV-DET',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'fila-1', productoId: 'prod-1', almacenId: 'alm-1',
+          loteCodigo: 'LOTE-1', cantidad: '4', costoUnitario: '25', moneda: 'CUP' }],
+      });
+      expect(result.success).toBe(true);
+      expect(vi.mocked(createInitializationApertura)).toHaveBeenCalledWith(
+        txClient,
+        expect.objectContaining({
+          inventario: {
+            count: 1, totalFuncional: '100.0000',
+            fuentes: [{
+              referenciaFila: 'fila-1', fuenteId: 'fuente-1', loteId: 'lote-1',
+              productoId: 'prod-1', cantidad: '4', costoUnitario: '25',
+              moneda: 'CUP', montoFuncional: '100.0000',
+            }],
+          },
+        }),
+      );
+    });
+
+    it('acepta YA_EXISTENTE del posteo de capital como contrapartida ya registrada', async () => {
+      txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'init-ya', saldo: 0 });
+      vi.mocked(emitirInyeccionCapital).mockResolvedValue({ estado: 'YA_EXISTENTE', asientoId: 'as-cap-previo' } as never);
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'already-posted',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{
+          nombreCuenta: 'Operaciones', nombreBanco: 'Banco', numeroCuenta: 'YA-001',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '100000',
+          origen: { tipo: 'CAPITAL_SOCIAL' as const, tercero: 'Socio' },
+        }],
+      });
+      expect(result.success).toBe(true);
+      expect(expectActionSuccess(result).data?.resultado.asientos).toContainEqual(
+        expect.objectContaining({ tipo: 'INYECCION_CAPITAL', estado: 'YA_EXISTENTE', asientoId: 'as-cap-previo' }),
+      );
+    });
     it('rechaza usuarios no autenticados antes de abrir la transacción idempotente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await initializeBankAccountsAction({
@@ -859,9 +1080,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
     });
 
-    it('registra un saldo inicial por anticipo mediante el flujo contable existente', async () => {
-      txClient.cuentaBancaria.create.mockResolvedValue({ ...mockCuenta, cuentaId: 'advance-account', saldo: 0 });
-      txClient.anticipo.create.mockResolvedValue({ anticipoId: 'advance-1' });
+    it('bloquea un saldo inicial por anticipo hasta la coordinación de la tarea 5', async () => {
       const input = {
         idempotencyKey: 'onboarding-advance',
         fechaCorte: '2026-11-01',
@@ -875,13 +1094,11 @@ describe('Cuentas Bancarias Actions', () => {
 
       const result = await initializeBankAccountsAction(input);
 
-      expect(result.success).toBe(true);
-      expect(txClient.cuentaBancaria.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ saldo: 0 }),
-      }));
-      expect(registrarMovimientoEfectivoAnticipo).toHaveBeenCalledWith(txClient, expect.objectContaining({
-        anticipoId: 'advance-1', tenantId: 't1', cuentaId: 'advance-account', monto: 50,
-      }));
+      expect(result.success).toBe(false);
+      expect(expectActionFailure(result).error?.code).toBe('INITIALIZATION_ANTICIPO_NO_DISPONIBLE');
+      expect(vi.mocked(runIdempotentInitialization)).not.toHaveBeenCalled();
+      expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
+      expect(registrarMovimientoEfectivoAnticipo).not.toHaveBeenCalled();
     });
   });
 });

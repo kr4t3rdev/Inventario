@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { initialInventoryRowContract } from './initial-inventory-contract';
 
 /**
  * @description Normaliza un importe decimal validado sin convertirlo a punto flotante.
@@ -105,6 +106,7 @@ export const initializationContractBase = z.object({
   monedaFuncional: currencyCode,
   tasas: tasas.optional(),
   cuentas: z.array(account).min(1).max(100),
+  inventario: z.array(initialInventoryRowContract).max(10000).optional(),
 }).strict();
 
 export const initializationContract = initializationContractBase.superRefine((value, context) => {
@@ -128,6 +130,38 @@ export const initializationContract = initializationContractBase.superRefine((va
       });
     }
   });
+  const inventoryKeys = new Set<string>();
+  value.inventario?.forEach((item, index) => {
+    if (item.fechaCorte !== undefined && item.fechaCorte !== value.fechaCorte) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'fechaCorte'],
+        message: 'La existencia debe usar la fecha de corte común',
+      });
+    }
+    if (item.costoUnitario !== '0' && item.moneda !== value.monedaFuncional &&
+      item.tasaCambio === undefined && value.tasas?.[item.moneda] === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'tasaCambio'],
+        message: `Falta la tasa de cambio para ${item.moneda}`,
+      });
+    }
+    const key = JSON.stringify([
+      item.productoId,
+      item.almacenId,
+      item.ubicacionId ?? null,
+      item.loteCodigo,
+    ]);
+    if (inventoryKeys.has(key)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['inventario', index, 'loteCodigo'],
+        message: 'La existencia de producto, ubicación y lote está repetida',
+      });
+    }
+    inventoryKeys.add(key);
+  });
 });
 
 export type InitializationInput = z.input<typeof initializationContract>;
@@ -143,6 +177,7 @@ export const initializationDraftContract = z.object({
   monedaFuncional: currencyCode.optional(),
   tasas: tasas.optional(),
   cuentas: z.array(accountBase.deepPartial().strict()).max(100).optional(),
+  inventario: z.array(initialInventoryRowContract.deepPartial()).max(10000).optional(),
 }).strict().superRefine((value, context) => {
   const seen = new Set<string>();
   value.cuentas?.forEach((item, index) => {
