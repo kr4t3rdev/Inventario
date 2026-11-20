@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { guardarBorradorInicializacion, obtenerBorradorInicializacion } from './initialization-idempotency';
+import { guardarBorradorInicializacion, obtenerBorradorActualInicializacion, obtenerBorradorInicializacion } from './initialization-idempotency';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { prisma } from '@/lib/prisma';
 
@@ -90,6 +90,31 @@ describe('borrador reanudable de inicialización', () => {
   it('rechaza retomar un borrador corrupto', async () => {
     findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), estado: 'BORRADOR', borrador: [] });
     await expect(obtenerBorradorInicializacion(base))
+      .rejects.toMatchObject({ code: 'INITIALIZATION_INCOMPLETE' });
+  });
+
+  it('retoma el borrador actual del tenant sin conocer su clave', async () => {
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), estado: 'BORRADOR', borrador: draft });
+    const result = await obtenerBorradorActualInicializacion({ tenantId: 'tenant-a' });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: 'ReadCommitted' });
+    expect(acquireAccountingTenantLock).toHaveBeenCalledWith(tx, 'tenant-a');
+    expect(findFirst).toHaveBeenCalledWith({ where: { tenantId: 'tenant-a' } });
+    expect(result).toMatchObject({ idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), borrador: draft });
+  });
+
+  it('devuelve null cuando el tenant no tiene borrador actual', async () => {
+    expect(await obtenerBorradorActualInicializacion({ tenantId: 'tenant-a' })).toBeNull();
+  });
+
+  it('rechaza el borrador actual si la inicialización ya está completada o en curso', async () => {
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), estado: 'COMPLETADA', resultado: {} });
+    await expect(obtenerBorradorActualInicializacion({ tenantId: 'tenant-a' }))
+      .rejects.toMatchObject({ code: 'INITIALIZATION_ALREADY_COMPLETED' });
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), estado: 'EN_PROGRESO', resultado: null });
+    await expect(obtenerBorradorActualInicializacion({ tenantId: 'tenant-a' }))
+      .rejects.toMatchObject({ code: 'INITIALIZATION_INCOMPLETE' });
+    findFirst.mockResolvedValue({ inicializacionId: 'init-a', idempotencyKey: 'draft-key', payloadHash: 'a'.repeat(64), estado: 'BORRADOR', borrador: [] });
+    await expect(obtenerBorradorActualInicializacion({ tenantId: 'tenant-a' }))
       .rejects.toMatchObject({ code: 'INITIALIZATION_INCOMPLETE' });
   });
 });

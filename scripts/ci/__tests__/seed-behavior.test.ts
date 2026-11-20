@@ -9,6 +9,10 @@ const state = vi.hoisted(() => ({
   deleted: [] as string[],
 }));
 vi.mock('../../../src/generated/prisma', () => ({
+  RolCuenta: {
+    INTERESES_MORATORIOS_GANADOS: 'INTERESES_MORATORIOS_GANADOS',
+    GASTOS_MORATORIOS: 'GASTOS_MORATORIOS',
+  },
   PrismaClient: class {
     constructor() { state.construct(); }
     $disconnect = state.disconnect;
@@ -35,6 +39,10 @@ vi.mock('../../../src/generated/prisma', () => ({
       stockUbicacion: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('stockUbicacion'); return { count: 1 }; }) },
       cuentaBancaria: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('cuentaBancaria'); return { count: 1 }; }) },
       tipoPago: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('tipoPago'); return { count: 1 }; }) },
+      diario: { upsert: vi.fn() },
+      cuentaContable: { upsert: vi.fn(async (args: { create: Record<string, unknown> }) => ({ ...args.create, cuentaContableId: `${String(args.create.tenantId)}-${String(args.create.codigo)}`, activa: true })) },
+      cuentaRolTenant: { upsert: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+      plantillaAsiento: { upsert: vi.fn() },
       });
       if (state.commitFailure) throw new Error('commit failed');
       return result;
@@ -86,6 +94,7 @@ it('does not reset an existing identity and disconnects on collision', async () 
 it('never logs success if transaction commit fails, and disconnects', async () => {
   environment();
   state.create.mockResolvedValueOnce({ userId: 'isolated-user' });
+  state.create.mockResolvedValueOnce({ userId: 'isolated-init-user' });
   state.commitFailure = true;
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});
   try {
@@ -99,6 +108,7 @@ it('never logs success if transaction commit fails, and disconnects', async () =
 it('returns fixture ownership and removes every owned record during teardown', async () => {
   environment();
   state.create.mockResolvedValueOnce({ userId: 'isolated-user' });
+  state.create.mockResolvedValueOnce({ userId: 'isolated-init-user' });
   const { cleanup, run } = await import('../../seed-e2e-user');
   const ownership = await run();
   expect(ownership.tenantId).toMatch(/^e2e-/);

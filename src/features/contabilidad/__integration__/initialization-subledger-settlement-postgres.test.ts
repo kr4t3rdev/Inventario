@@ -379,4 +379,20 @@ describe('liquidación de CxC/CxP iniciales — PostgreSQL', { timeout: 120_000 
     expect(await prisma.pagoCuentaPorPagar.count({ where: { tenantId } })).toBe(0);
     expect((await prisma.cuentaBancaria.findFirstOrThrow({ where: { cuentaId: bancoCup.cuentaId } })).saldo).toBe(100);
   });
+
+  it('rechaza la fecha efectiva civil imposible sin persistir nada', async () => {
+    const { tenantId, clientId, vendorId } = await makeTenant();
+    const { bancoUsd, receivable } = await seedInit(tenantId, clientId, vendorId);
+    const result = await settleReceivable({
+      cuentaPorCobrarId: receivable.id,
+      cuentaId: bancoUsd.cuentaId,
+      tipoPagoId: tipoPagoByTenant.get(tenantId)!,
+      monto: '10',
+      fechaEfectiva: '2026-02-30',
+      referencia: 'cobro-fecha-imposible',
+    });
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('se esperaba rechazo de fecha imposible');
+    expect(await prisma.reconciliacionVenta.count({ where: { tenantId } })).toBe(0);
+  });
 });

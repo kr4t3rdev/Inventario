@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache';
 
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -47,7 +48,7 @@ export const settleInitialReceivableAction = withAction(
 					businessDate: fechaEfectiva,
 					actorId: user.userId,
 				});
-				return settleInitialReceivable(tx, {
+				const result = await settleInitialReceivable(tx, {
 					tenantId,
 					cuentaPorCobrarId: parsed.cuentaPorCobrarId,
 					cuentaId: parsed.cuentaId,
@@ -58,6 +59,20 @@ export const settleInitialReceivableAction = withAction(
 					observaciones: parsed.observaciones,
 					actorId: user.userId,
 				});
+				await AuditLogService.logStrict({
+					accion: 'CREATE',
+					entidad: 'RECONCILIACION',
+					entidadId: result.reconciliacionId!,
+					usuarioId: user.userId,
+					detalles: {
+						origen: 'INICIALIZACION_CONTABLE',
+						cuentaPorCobrarId: parsed.cuentaPorCobrarId,
+						cuentaId: parsed.cuentaId,
+						monto: parsed.monto,
+						estado: result.estado,
+					},
+				}, tx);
+				return result;
 			});
 			revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
 			return { success: true, ...result };
@@ -81,7 +96,7 @@ export const settleInitialPayableAction = withAction(
 					businessDate: fechaEfectiva,
 					actorId: user.userId,
 				});
-				return settleInitialPayable(tx, {
+				const result = await settleInitialPayable(tx, {
 					tenantId,
 					cuentaPorPagarId: parsed.cuentaPorPagarId,
 					cuentaId: parsed.cuentaId,
@@ -92,6 +107,20 @@ export const settleInitialPayableAction = withAction(
 					observaciones: parsed.observaciones,
 					actorId: user.userId,
 				});
+				await AuditLogService.logStrict({
+					accion: 'CREATE',
+					entidad: 'PAGO_CUENTA_POR_PAGAR',
+					entidadId: result.pagoCuentaPorPagarId!,
+					usuarioId: user.userId,
+					detalles: {
+						origen: 'INICIALIZACION_CONTABLE',
+						cuentaPorPagarId: parsed.cuentaPorPagarId,
+						cuentaId: parsed.cuentaId,
+						monto: parsed.monto,
+						estado: result.estado,
+					},
+				}, tx);
+				return result;
 			});
 			revalidatePath('/busy/contabilidad/cuentas-por-pagar');
 			return { success: true, ...result };

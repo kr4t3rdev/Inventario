@@ -6,6 +6,7 @@ import { ActionError } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { initializationDraftContract } from './initialization-contract';
 
 const requestSchema = z.object({
@@ -145,6 +146,7 @@ const draftRequestSchema = z.object({
   tenantId: z.string().trim().min(1),
   idempotencyKey: z.string().trim().min(1).max(64),
   borrador: z.unknown(),
+  usuarioId: z.string().trim().min(1).optional(),
 }).strict();
 
 const draftLookupSchema = z.object({
@@ -187,10 +189,29 @@ export async function guardarBorradorInicializacion(input: z.input<typeof draftR
       if (updated.count !== 1) {
         throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
       }
+      if (parsed.usuarioId) {
+        await AuditLogService.logStrict({
+          accion: 'UPDATE',
+          entidad: 'INICIALIZACION_CONTABLE',
+          entidadId: previous.inicializacionId,
+          usuarioId: parsed.usuarioId,
+          detalles: { idempotencyKey: parsed.idempotencyKey, payloadHash },
+        }, tx);
+      }
     } else {
-      await tx.inicializacionContable.create({
+      const created = await tx.inicializacionContable.create({
         data: { tenantId: parsed.tenantId, idempotencyKey: parsed.idempotencyKey, payloadHash, estado: 'BORRADOR', borrador: payload as Prisma.InputJsonObject },
+        select: { inicializacionId: true },
       });
+      if (parsed.usuarioId) {
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'INICIALIZACION_CONTABLE',
+          entidadId: created.inicializacionId,
+          usuarioId: parsed.usuarioId,
+          detalles: { idempotencyKey: parsed.idempotencyKey, payloadHash },
+        }, tx);
+      }
     }
     return { idempotencyKey: parsed.idempotencyKey, payloadHash, estado: 'BORRADOR' as const, borrador: payload as JsonObject };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
@@ -214,6 +235,34 @@ export async function obtenerBorradorInicializacion(input: z.input<typeof draftL
     }
     if (previous.idempotencyKey !== parsed.idempotencyKey) {
       throw new ActionError('La clave de idempotencia ya se usó con otra solicitud', 'IDEMPOTENCY_CONFLICT');
+    }
+    if (!previous.borrador || Array.isArray(previous.borrador) || typeof previous.borrador !== 'object' || !isJsonValue(previous.borrador)) {
+      throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
+    }
+    return { idempotencyKey: previous.idempotencyKey, payloadHash: previous.payloadHash, borrador: previous.borrador as JsonObject };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
+}
+
+const draftActualLookupSchema = z.object({
+  tenantId: z.string().trim().min(1),
+}).strict();
+
+/**
+ * @description Retoma el borrador actual de un tenant sin conocer su clave.
+ * El tenant solo tiene una fila de inicialización, así que el borrador actual
+ * es la fila en estado BORRADOR. Devuelve null si no hay nada que retomar.
+ */
+export async function obtenerBorradorActualInicializacion(input: z.input<typeof draftActualLookupSchema>): Promise<{ idempotencyKey: string; payloadHash: string; borrador: JsonObject } | null> {
+  const parsed = draftActualLookupSchema.parse(input);
+  return prisma.$transaction(async (tx) => {
+    await acquireAccountingTenantLock(tx, parsed.tenantId);
+    const previous = await tx.inicializacionContable.findFirst({ where: { tenantId: parsed.tenantId } });
+    if (!previous) return null;
+    if (previous.estado === 'COMPLETADA') {
+      throw new ActionError('La empresa ya tiene una inicialización contable completada', 'INITIALIZATION_ALREADY_COMPLETED');
+    }
+    if (previous.estado !== 'BORRADOR') {
+      throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');
     }
     if (!previous.borrador || Array.isArray(previous.borrador) || typeof previous.borrador !== 'object' || !isJsonValue(previous.borrador)) {
       throw new ActionError('La inicialización anterior no tiene un resultado verificable', 'INITIALIZATION_INCOMPLETE');

@@ -341,6 +341,71 @@ export const initializeBankAccountsAction = withAction(
           cuentas: parsed.cuentasPorPagar,
         })
         : { count: 0, totalFuncional: '0', filas: [] };
+      for (const fuente of inventory.fuentes) {
+        const fila = inventory.filas.find((f) => f.referenciaFila === fuente.referenciaFila);
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'INVENTARIO_INICIAL',
+          entidadId: fuente.fuenteId,
+          usuarioId: user.userId,
+          detalles: {
+            origen: 'INICIALIZACION_CONTABLE',
+            inicializacionId,
+            referenciaFila: fuente.referenciaFila,
+            loteId: fuente.loteId,
+            moneda: fila?.moneda ?? null,
+            montoFuncional: fila?.montoFuncional ?? null,
+          },
+        }, tx);
+      }
+      if (receivables.count > 0) {
+        const createdCxc = await tx.cuentaPorCobrar.findMany({
+          where: { tenantId, inicializacionId },
+          select: { id: true, referenciaInicial: true, clienteId: true },
+        });
+        for (const row of createdCxc) {
+          const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaInicial);
+          await AuditLogService.logStrict({
+            accion: 'CREATE',
+            entidad: 'CUENTA_POR_COBRAR',
+            entidadId: row.id,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE',
+              inicializacionId,
+              referenciaInicial: row.referenciaInicial,
+              clienteId: row.clienteId,
+              moneda: fila?.moneda ?? null,
+              montoOriginal: fila?.montoOriginal ?? null,
+              montoFuncional: fila?.montoFuncional ?? null,
+            },
+          }, tx);
+        }
+      }
+      if (payables.count > 0) {
+        const createdCxp = await tx.cuentaPorPagar.findMany({
+          where: { tenantId, inicializacionId },
+          select: { cuentaPorPagarId: true, referenciaInicial: true, proveedorId: true },
+        });
+        for (const row of createdCxp) {
+          const fila = payables.filas.find((f) => f.referenciaFila === row.referenciaInicial);
+          await AuditLogService.logStrict({
+            accion: 'CREATE',
+            entidad: 'CUENTA_POR_PAGAR',
+            entidadId: row.cuentaPorPagarId,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE',
+              inicializacionId,
+              referenciaInicial: row.referenciaInicial,
+              proveedorId: row.proveedorId,
+              moneda: fila?.moneda ?? null,
+              montoOriginal: fila?.montoOriginal ?? null,
+              montoFuncional: fila?.montoFuncional ?? null,
+            },
+          }, tx);
+        }
+      }
       const entryLines = buildOpeningEntryLines({
         cuentas: parsed.cuentas,
         valued,
@@ -367,7 +432,7 @@ export const initializeBankAccountsAction = withAction(
           const cxc = createdCxc.find((c) => c.referenciaInicial === row.referenciaFila);
           if (!cxc) throw new ActionError('CxC inicial no encontrada para el préstamo', 'INITIALIZATION_INCOMPLETE');
           const fila = receivables.filas.find((f) => f.referenciaFila === row.referenciaFila);
-          prestamos.push(await persistInitialLoan(tx, {
+          const prestamo = await persistInitialLoan(tx, {
             tenantId, inicializacionId, fechaCorte: parsed.fechaCorte, tasas: parsed.tasas,
             monedaFuncional: functionalCurrency,
             cuentaPorCobrarId: cxc.id, referenciaFila: row.referenciaFila,
@@ -375,7 +440,18 @@ export const initializeBankAccountsAction = withAction(
             tasaCambio: fila?.tasaCambio ?? row.tasaCambio,
             tasaInteres: row.tasaInteres, tasaInteresMoratorio: row.tasaInteresMoratorio,
             fechaVencimiento: row.fechaVencimiento, usuarioId: user.userId,
-          }));
+          });
+          prestamos.push(prestamo);
+          await AuditLogService.logStrict({
+            accion: 'CREATE', entidad: 'PRESTAMO_CASH', entidadId: prestamo.prestamoCashId,
+            usuarioId: user.userId,
+            detalles: {
+              origen: 'INICIALIZACION_CONTABLE', inicializacionId,
+              cuentaPorCobrarId: prestamo.cuentaPorCobrarId, clienteId: prestamo.clienteId,
+              moneda: prestamo.moneda, montoOriginal: prestamo.montoOriginal,
+              montoFuncional: prestamo.montoFuncional,
+            },
+          }, tx);
         }
       }
       for (const [index, item] of parsed.cuentas.entries()) {
@@ -505,6 +581,16 @@ export const initializeBankAccountsAction = withAction(
                 cuentaBancariaId: created.cuentaId, inyeccionId: counterpart.id, usuarioId: user.userId,
               });
               deudas.push(deuda);
+              await AuditLogService.logStrict({
+                accion: 'CREATE', entidad: 'DEUDA_CASH', entidadId: deuda.deudaCashId,
+                usuarioId: user.userId,
+                detalles: {
+                  origen: 'INICIALIZACION_CONTABLE', inicializacionId,
+                  cuentaPorPagarId: deuda.cuentaPorPagarId, inyeccionId: deuda.inyeccionId,
+                  proveedorId: deuda.proveedorId, moneda: deuda.moneda,
+                  montoOriginal: deuda.montoOriginal, montoFuncional: deuda.montoFuncional,
+                },
+              }, tx);
             }
             await AuditLogService.logStrict({
               accion: 'CREATE', entidad: 'INYECCION_CAPITAL', entidadId: counterpart.id,

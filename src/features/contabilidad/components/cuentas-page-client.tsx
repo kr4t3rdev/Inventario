@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
 import { PanelError } from '@/features/contabilidad/components/panel-states';
 import { AccountingPageShell } from '@/features/contabilidad/components/accounting-page-shell';
+import { InicializacionCuentasDialog } from '@/features/contabilidad/components/inicializacion-cuentas-dialog';
 import {
   createCuentaBancariaAction,
   updateCuentaBancariaAction,
@@ -170,6 +171,7 @@ export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }
       actions={
         <>
           <Button variant="outline" asChild><Link href="/busy/contabilidad/periodos">Inicializar saldos</Link></Button>
+          <InicializacionCuentasDialog />
           <Button
             variant="ghost"
             size="icon"
