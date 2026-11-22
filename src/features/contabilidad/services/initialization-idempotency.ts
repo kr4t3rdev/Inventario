@@ -12,6 +12,7 @@ import { initializationDraftContract } from './initialization-contract';
 export interface InitializationPlanFeatureUsage {
   inventario?: boolean;
   cuentasPorCobrar?: boolean;
+  clientes?: boolean;
   cuentasPorPagar?: boolean;
   anticipo?: boolean;
   inyeccionCapital?: boolean;
@@ -47,7 +48,10 @@ export function getInitializationPlanFeatureUsage(
   return {
     inventario: Boolean(sections.inventario?.length),
     cuentasPorCobrar: Boolean(receivables.length),
-    cuentasPorPagar: Boolean(sections.cuentasPorPagar?.length),
+    cuentasPorPagar: Boolean(sections.cuentasPorPagar?.length) || origins.some(
+      (origin) => origin?.tipo === 'PRESTAMO' && Boolean(origin.proveedorId),
+    ),
+    clientes: Boolean(receivables.length),
     anticipo: origins.some((origin) => origin?.tipo === 'ANTICIPO'),
     inyeccionCapital: origins.some((origin) =>
       origin?.tipo === 'CAPITAL_SOCIAL' || origin?.tipo === 'PRESTAMO'),
@@ -73,6 +77,7 @@ export function assertInitializationPlanFeatures(
   const requirements: Array<[keyof InitializationPlanFeatureUsage, string, string]> = [
     ['inventario', 'productos', 'inicializar inventario'],
     ['cuentasPorCobrar', 'cuentas-cobrar', 'inicializar cuentas por cobrar'],
+    ['clientes', 'clientes', 'vincular CxC con clientes'],
     ['cuentasPorPagar', 'cuentas-pagar', 'inicializar cuentas por pagar'],
     ['anticipo', 'anticipos', 'inicializar anticipos'],
     ['inyeccionCapital', 'inyeccion-capital', 'inicializar capital o deuda externa'],

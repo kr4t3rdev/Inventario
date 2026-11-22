@@ -113,7 +113,7 @@ test.describe('Inicialización de cuentas (E2E local)', () => {
 
     await dialog.getByRole('button', { name: 'Revisar y confirmar' }).click();
     await expect(dialog.getByText(/Total funcional: 1000 CUP/)).toBeVisible({ timeout: 15_000 });
-    await dialog.getByRole('button', { name: 'Inicializar cuentas' }).click();
+    await dialog.getByRole('button', { name: 'Inicializar empresa' }).click();
     await expect(page.getByText('Cuentas inicializadas')).toBeVisible({ timeout: 15_000 });
 
     // La cuenta inicializada aparece en la lista de la página.

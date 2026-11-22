@@ -192,6 +192,18 @@ describe('contrato de inicialización de empresa nueva', () => {
     expect(result.cuentasPorPagar?.[0].tasaCambio).toBe('24');
   });
 
+  it('exige ambas tasas cuando una CxC inicial representa un préstamo', () => {
+    const base = {
+      ...input,
+      cuentasPorCobrar: [{ referenciaFila: 'loan-1', clienteId: 'cliente-1', moneda: 'CUP', saldo: '100', tasaInteres: '0' }],
+    };
+    expect(initializationContract.safeParse(base).success).toBe(false);
+    expect(initializationContract.safeParse({
+      ...base,
+      cuentasPorCobrar: [{ ...base.cuentasPorCobrar[0], tasaInteresMoratorio: '0' }],
+    }).success).toBe(true);
+  });
+
   it('rechaza referencia de fila duplicada dentro de CxC y dentro de CxP', () => {
     expect(initializationContract.safeParse({
       ...input,

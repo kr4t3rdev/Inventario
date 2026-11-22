@@ -219,6 +219,15 @@ export const initializationContract = initializationContractBase.superRefine((va
       references.add(item.referenciaFila);
     });
   });
+  value.cuentasPorCobrar?.forEach((row, index) => {
+    if ((row.tasaInteres === undefined) !== (row.tasaInteresMoratorio === undefined)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cuentasPorCobrar', index, 'tasaInteres'],
+        message: 'Ambas tasas de interés deben declararse juntas',
+      });
+    }
+  });
 });
 
 export type InitializationInput = z.input<typeof initializationContract>;

@@ -51,6 +51,7 @@ describe('acceso a la inicialización contable', () => {
       contabilidad: true,
       productos: true,
       'cuentas-cobrar': true,
+      clientes: true,
       'cuentas-pagar': true,
       anticipos: true,
       'inyeccion-capital': true,
@@ -61,6 +62,7 @@ describe('acceso a la inicialización contable', () => {
     expect(() => assertInitializationPlanFeatures(fullPlan, {
       inventario: true,
       cuentasPorCobrar: true,
+      clientes: true,
       cuentasPorPagar: true,
       anticipo: true,
       inyeccionCapital: true,
@@ -80,6 +82,7 @@ describe('acceso a la inicialización contable', () => {
     })).toEqual({
       inventario: true,
       cuentasPorCobrar: true,
+      clientes: true,
       cuentasPorPagar: true,
       anticipo: false,
       inyeccionCapital: true,
@@ -91,6 +94,7 @@ describe('acceso a la inicialización contable', () => {
 
   it.each([
     [{ cuentasPorCobrar: true }, 'cuentas-cobrar'],
+    [{ clientes: true }, 'clientes'],
     [{ cuentasPorPagar: true }, 'cuentas-pagar'],
     [{ anticipo: true }, 'anticipos'],
     [{ inyeccionCapital: true }, 'inyeccion-capital'],
