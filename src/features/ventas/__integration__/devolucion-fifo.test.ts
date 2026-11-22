@@ -17,24 +17,24 @@ const nuevosIds: { tenantIds: string[] } = { tenantIds: [] };
  * @description Crea el escenario: compra de 3 unidades a 100 y otra de 2 a 300;
  * venta de 4 unidades (cruza ambos lotes) con factura y CxC parcialmente paga.
  */
-async function crearEscenario() {
+async function crearEscenario(sufijo: string = String(stamp)) {
   const tenant = await prisma.tenant.create({
-    data: { nombre: `T-DNC ${stamp}`, slug: `t-dnc-${stamp}` },
+    data: { nombre: `T-DNC ${sufijo}`, slug: `t-dnc-${sufijo}` },
   });
   nuevosIds.tenantIds.push(tenant.tenantId);
   const tenantId = tenant.tenantId;
 
   const user = await prisma.user.create({
-    data: { name: 'Tester DNC', email: `dnc-${stamp}@test.local`, password: 'x' },
+    data: { name: 'Tester DNC', email: `dnc-${sufijo}@test.local`, password: 'x' },
   });
   const categoria = await prisma.categoria.create({
-    data: { nombre: `Cat ${stamp}`, tenantId },
+    data: { nombre: `Cat ${sufijo}`, tenantId },
   });
   const almacen = await prisma.almacen.create({
-    data: { nombre: `Alm ${stamp}`, tenantId },
+    data: { nombre: `Alm ${sufijo}`, tenantId },
   });
   const pv = await prisma.puntoDeVenta.create({
-    data: { nombre: `PV ${stamp}`, tenantId },
+    data: { nombre: `PV ${sufijo}`, tenantId },
   });
   const producto = await prisma.producto.create({
     data: {
@@ -53,7 +53,7 @@ async function crearEscenario() {
 
   // Lote A: 3 uds a costo 100. Lote B: 2 uds a costo 300.
   const vendor = await prisma.vendor.create({
-    data: { nombre: `Proveedor ${stamp}`, tenantId },
+    data: { nombre: `Proveedor ${sufijo}`, tenantId },
   });
   const compraA = await prisma.compraDocumento.create({
     data: {
@@ -173,6 +173,41 @@ async function crearEscenario() {
   return { tenantId, user, producto, venta, ventaItem, factura, cxc, pv };
 }
 
+/**
+ * @description Detecta el conflicto de serialización reintentable (P2034) que
+ * PostgreSQL emite bajo aislamiento Serializable cuando dos devoluciones de la
+ * misma venta compiten por el lock de fila.
+ * @param {unknown} error - Error capturado del servicio.
+ * @returns {boolean} true cuando el error es un P2034 reintentable.
+ */
+function esConflictoSerializable(error: unknown): boolean {
+  return (error as { code?: string } | null | undefined)?.code === 'P2034';
+}
+
+/**
+ * @description Registra una devolución reintentando los P2034 del aislamiento
+ * Serializable. Un P2034 aborta la transacción sin efectos, así que reintentar
+ * con la misma clave es seguro y no duplica la devolución.
+ * @param {object} params - Entrada del servicio y usuario autenticado.
+ * @returns {Promise<Awaited<ReturnType<typeof DevolucionVentaService.registrar>>>}
+ *   Resultado de la devolución una vez completada sin conflicto.
+ */
+async function registrarDevolucionRobusta(params: {
+  input: Parameters<typeof DevolucionVentaService.registrar>[0]['input'];
+  user: AuthenticatedUser;
+}) {
+  let ultimoError: unknown;
+  for (let intento = 0; intento < 3; intento++) {
+    try {
+      return await DevolucionVentaService.registrar(params);
+    } catch (error) {
+      if (!esConflictoSerializable(error)) throw error;
+      ultimoError = error;
+    }
+  }
+  throw ultimoError;
+}
+
 describe('devolución FIFO con NC e idempotencia (integración real)', { timeout: 60_000 }, () => {
   afterAll(async () => {
     // Limpieza opcional: la base es descartable; se deja el rastro para inspección.
@@ -265,9 +300,13 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
 
     // Dos devoluciones concurrentes consumen el remanente sin sobre-restaurar
     // inventario ni borrar más cantidad FIFO de la existente.
+    // Ambas caben (4 vendidas - 2 ya devueltas - 2 solicitadas = 0 restantes),
+    // así que el resultado válido es que las dos terminen registradas. Cuando
+    // compiten por el lock de fila, PostgreSQL puede abortar una con P2034; ese
+    // rechazo es reintentable (no es sobredevolución) y completa al reintentar.
     const idempotencyKeys = [crypto.randomUUID(), crypto.randomUUID()];
     const concurrentes = await Promise.allSettled([1, 1].map((cantidad, index) =>
-      DevolucionVentaService.registrar({
+      registrarDevolucionRobusta({
         input: {
           ventaId: venta.ventaId,
           items: [{ ventaItemId: venta.items[0].id, cantidad }],
@@ -278,20 +317,24 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
         user: userCtx,
       }),
     ));
-    expect(concurrentes.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
-    expect(concurrentes.filter((result) => result.status === 'rejected')).toHaveLength(1);
-    const rejectedIndex = concurrentes.findIndex((result) => result.status === 'rejected');
-    const retry = await DevolucionVentaService.registrar({
+    expect(concurrentes.filter((result) => result.status === 'fulfilled')).toHaveLength(2);
+    for (const resultado of concurrentes) {
+      if (resultado.status === 'rejected') throw resultado.reason;
+    }
+
+    // Reintento con una clave ya usada: idempotente, sin efectos nuevos.
+    const repetida = await registrarDevolucionRobusta({
       input: {
         ventaId: venta.ventaId,
         items: [{ ventaItemId: venta.items[0].id, cantidad: 1 }],
-        motivo: `Reintento devolución concurrente ${rejectedIndex + 2}`,
+        motivo: 'Reintento devolución concurrente',
         preferenciaFinanciera: 'SALDO_FAVOR',
-        idempotencyKey: idempotencyKeys[rejectedIndex],
+        idempotencyKey: idempotencyKeys[0],
       },
       user: userCtx,
     });
-    expect(retry.devolucionId).toBeTruthy();
+    expect(repetida.repetida).toBe(true);
+    expect(repetida.devolucionId).toBe(concurrentes[0].value.devolucionId);
 
     const asignacionesRestantes = await prisma.purchaseAllocation.findMany({
       where: { tenantId, ventaItemId: venta.items[0].id },
@@ -307,5 +350,70 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
       where: { tenantId, tipoUbicacion: 'punto_venta', ubicacionId: venta.puntoDeVentaId },
     });
     expect(restoredStock.cantidadDisponible).toBe(5);
+  });
+
+  it('rechaza la sobredevolución concurrente y no restaura más de lo vendido', async () => {
+    const { tenantId, user, venta } = await crearEscenario(`exc-${stamp}-${Date.now()}`);
+    const userCtx = {
+      userId: user.userId,
+      role: 'admin',
+      tenantId,
+      isActive: true,
+    } as unknown as AuthenticatedUser;
+
+    // Devuelve 2 de 4: quedan 2 unidades devolubles.
+    await registrarDevolucionRobusta({
+      input: {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: venta.items[0].id, cantidad: 2 }],
+        motivo: 'Devolución previa',
+        preferenciaFinanciera: 'SALDO_FAVOR',
+        idempotencyKey: crypto.randomUUID(),
+      },
+      user: userCtx,
+    });
+
+    // Concurrentes: 1 y 3 unidades. La de 3 excede el remanente y debe
+    // rechazarse con CANTIDAD_EXCEDIDA; la de 1 cabe y se registra.
+    const solicitudes = [
+      { cantidad: 1, idempotencyKey: crypto.randomUUID() },
+      { cantidad: 3, idempotencyKey: crypto.randomUUID() },
+    ];
+    const concurrentes = await Promise.allSettled(
+      solicitudes.map(({ cantidad, idempotencyKey }) =>
+        registrarDevolucionRobusta({
+          input: {
+            ventaId: venta.ventaId,
+            items: [{ ventaItemId: venta.items[0].id, cantidad }],
+            motivo: `Devolución excesiva ${cantidad}`,
+            preferenciaFinanciera: 'SALDO_FAVOR',
+            idempotencyKey,
+          },
+          user: userCtx,
+        }),
+      ),
+    );
+
+    expect(concurrentes.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const rechazada = concurrentes.find((result) => result.status === 'rejected');
+    expect(rechazada?.status).toBe('rejected');
+    expect((rechazada as PromiseRejectedResult).reason.code).toBe('CANTIDAD_EXCEDIDA');
+
+    // El stock nunca supera lo comprado: 1 disponible + 2 + 1 devueltas = 4.
+    const stock = await prisma.stockUbicacion.findFirstOrThrow({
+      where: { tenantId, tipoUbicacion: 'punto_venta', ubicacionId: venta.puntoDeVentaId },
+    });
+    expect(stock.cantidadDisponible).toBe(4);
+    expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(2);
+    expect(await prisma.stockMoveLine.aggregate({
+      where: { tenantId, tipoOrigen: 'VENTA' },
+      _sum: { cantidad: true },
+    })).toMatchObject({ _sum: { cantidad: 3 } });
+    // Las allocations conservan exactamente la unidad que sigue siendo
+    // devolucionable (4 vendidas - 2 - 1 devueltas), sin borrar de más.
+    const asignaciones = await prisma.purchaseAllocation.findMany({
+      where: { tenantId, ventaItemId: venta.items[0].id },
+    });
+    expect(asignaciones.reduce((sum, a) => sum + a.cantidad, 0)).toBe(1);
   });
 });
