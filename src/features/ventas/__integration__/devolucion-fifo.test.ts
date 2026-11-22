@@ -173,41 +173,6 @@ async function crearEscenario(sufijo: string = String(stamp)) {
   return { tenantId, user, producto, venta, ventaItem, factura, cxc, pv };
 }
 
-/**
- * @description Detecta el conflicto de serialización reintentable (P2034) que
- * PostgreSQL emite bajo aislamiento Serializable cuando dos devoluciones de la
- * misma venta compiten por el lock de fila.
- * @param {unknown} error - Error capturado del servicio.
- * @returns {boolean} true cuando el error es un P2034 reintentable.
- */
-function esConflictoSerializable(error: unknown): boolean {
-  return (error as { code?: string } | null | undefined)?.code === 'P2034';
-}
-
-/**
- * @description Registra una devolución reintentando los P2034 del aislamiento
- * Serializable. Un P2034 aborta la transacción sin efectos, así que reintentar
- * con la misma clave es seguro y no duplica la devolución.
- * @param {object} params - Entrada del servicio y usuario autenticado.
- * @returns {Promise<Awaited<ReturnType<typeof DevolucionVentaService.registrar>>>}
- *   Resultado de la devolución una vez completada sin conflicto.
- */
-async function registrarDevolucionRobusta(params: {
-  input: Parameters<typeof DevolucionVentaService.registrar>[0]['input'];
-  user: AuthenticatedUser;
-}) {
-  let ultimoError: unknown;
-  for (let intento = 0; intento < 3; intento++) {
-    try {
-      return await DevolucionVentaService.registrar(params);
-    } catch (error) {
-      if (!esConflictoSerializable(error)) throw error;
-      ultimoError = error;
-    }
-  }
-  throw ultimoError;
-}
-
 describe('devolución FIFO con NC e idempotencia (integración real)', { timeout: 60_000 }, () => {
   afterAll(async () => {
     // Limpieza opcional: la base es descartable; se deja el rastro para inspección.
@@ -306,7 +271,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
     // rechazo es reintentable (no es sobredevolución) y completa al reintentar.
     const idempotencyKeys = [crypto.randomUUID(), crypto.randomUUID()];
     const concurrentes = await Promise.allSettled([1, 1].map((cantidad, index) =>
-      registrarDevolucionRobusta({
+      DevolucionVentaService.registrar({
         input: {
           ventaId: venta.ventaId,
           items: [{ ventaItemId: venta.items[0].id, cantidad }],
@@ -323,7 +288,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
     }
 
     // Reintento con una clave ya usada: idempotente, sin efectos nuevos.
-    const repetida = await registrarDevolucionRobusta({
+    const repetida = await DevolucionVentaService.registrar({
       input: {
         ventaId: venta.ventaId,
         items: [{ ventaItemId: venta.items[0].id, cantidad: 1 }],
@@ -362,7 +327,7 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
     } as unknown as AuthenticatedUser;
 
     // Devuelve 2 de 4: quedan 2 unidades devolubles.
-    await registrarDevolucionRobusta({
+    await DevolucionVentaService.registrar({
       input: {
         ventaId: venta.ventaId,
         items: [{ ventaItemId: venta.items[0].id, cantidad: 2 }],
@@ -373,15 +338,14 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
       user: userCtx,
     });
 
-    // Concurrentes: 1 y 3 unidades. La de 3 excede el remanente y debe
-    // rechazarse con CANTIDAD_EXCEDIDA; la de 1 cabe y se registra.
+    // Cada solicitud cabe por separado, pero juntas exceden el remanente.
     const solicitudes = [
-      { cantidad: 1, idempotencyKey: crypto.randomUUID() },
-      { cantidad: 3, idempotencyKey: crypto.randomUUID() },
+      { cantidad: 2, idempotencyKey: crypto.randomUUID() },
+      { cantidad: 2, idempotencyKey: crypto.randomUUID() },
     ];
     const concurrentes = await Promise.allSettled(
       solicitudes.map(({ cantidad, idempotencyKey }) =>
-        registrarDevolucionRobusta({
+        DevolucionVentaService.registrar({
           input: {
             ventaId: venta.ventaId,
             items: [{ ventaItemId: venta.items[0].id, cantidad }],
@@ -399,21 +363,20 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
     expect(rechazada?.status).toBe('rejected');
     expect((rechazada as PromiseRejectedResult).reason.code).toBe('CANTIDAD_EXCEDIDA');
 
-    // El stock nunca supera lo comprado: 1 disponible + 2 + 1 devueltas = 4.
+    // El stock nunca supera lo comprado: 1 disponible + 2 + 2 devueltas = 5.
     const stock = await prisma.stockUbicacion.findFirstOrThrow({
       where: { tenantId, tipoUbicacion: 'punto_venta', ubicacionId: venta.puntoDeVentaId },
     });
-    expect(stock.cantidadDisponible).toBe(4);
+    expect(stock.cantidadDisponible).toBe(5);
     expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(2);
     expect(await prisma.stockMoveLine.aggregate({
       where: { tenantId, tipoOrigen: 'VENTA' },
       _sum: { cantidad: true },
-    })).toMatchObject({ _sum: { cantidad: 3 } });
-    // Las allocations conservan exactamente la unidad que sigue siendo
-    // devolucionable (4 vendidas - 2 - 1 devueltas), sin borrar de más.
+    })).toMatchObject({ _sum: { cantidad: 4 } });
+    // Las cuatro unidades vendidas ya fueron devueltas.
     const asignaciones = await prisma.purchaseAllocation.findMany({
       where: { tenantId, ventaItemId: venta.items[0].id },
     });
-    expect(asignaciones.reduce((sum, a) => sum + a.cantidad, 0)).toBe(1);
+    expect(asignaciones.reduce((sum, a) => sum + a.cantidad, 0)).toBe(0);
   });
 });

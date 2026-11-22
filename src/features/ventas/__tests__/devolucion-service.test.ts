@@ -144,7 +144,48 @@ const inputBase = {
 };
 
 describe('DevolucionVentaService.registrar (DNC-T3)', () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(prisma.$transaction).mockReset();
+		vi.mocked(prisma.$transaction).mockImplementation(
+			((cb: (tx: unknown) => unknown) => cb(mockTx)) as never,
+		);
+	});
+
+	it('reintenta un conflicto transaccional antes de registrar la devolución', async () => {
+		preparar();
+		vi.mocked(prisma.$transaction).mockRejectedValueOnce({ code: 'P2034' });
+		const resultado = await DevolucionVentaService.registrar({ input: inputBase, user: admin });
+		expect(resultado.devolucionId).toBe('dev-1');
+		expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+		expect(mockTx.devolucionVenta.create).toHaveBeenCalledTimes(1);
+	});
+
+	it('reintenta un deadlock transaccional', async () => {
+		preparar();
+		vi.mocked(prisma.$transaction).mockRejectedValueOnce({ code: '40P01' });
+		await DevolucionVentaService.registrar({ input: inputBase, user: admin });
+		expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+	});
+
+	it('limita los reintentos y propaga el último conflicto', async () => {
+		preparar();
+		const conflicto = { code: 'P2034' };
+		vi.mocked(prisma.$transaction).mockRejectedValueOnce(conflicto)
+			.mockRejectedValueOnce(conflicto).mockRejectedValueOnce(conflicto);
+		await expect(DevolucionVentaService.registrar({ input: inputBase, user: admin }))
+			.rejects.toBe(conflicto);
+		expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+	});
+
+	it('no reintenta errores de negocio', async () => {
+		preparar();
+		const error = { code: 'CANTIDAD_EXCEDIDA' };
+		vi.mocked(prisma.$transaction).mockRejectedValueOnce(error);
+		await expect(DevolucionVentaService.registrar({ input: inputBase, user: admin }))
+			.rejects.toBe(error);
+		expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+	});
 
 	it('registra devolución parcial con NC y saldo a favor (sin CxC)', async () => {
 		preparar({ cxcSaldo: 0 });
