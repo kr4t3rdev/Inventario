@@ -150,7 +150,9 @@ export const DevolucionVentaService = {
     });
     assertVentaDevolvible(venta, tenantId);
 
-    return prisma.$transaction(
+    for (let intento = 1; intento <= 3; intento++) {
+      try {
+        return await prisma.$transaction(
       async (tx) => {
         await tx.$queryRaw`
           SELECT "ventaId" FROM "Venta"
@@ -469,7 +471,16 @@ export const DevolucionVentaService = {
           reembolso: finanzas.reembolso,
         } satisfies ResultadoDevolucion;
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+      } catch (error) {
+        const code = error && typeof error === 'object' && 'code' in error
+          ? error.code
+          : undefined;
+        if ((code !== 'P2034' && code !== '40P01') || intento === 3) throw error;
+        await new Promise((resolve) => setTimeout(resolve, intento * 10));
+      }
+    }
+    throw new Error('No se pudo registrar la devolución.');
   },
 };
