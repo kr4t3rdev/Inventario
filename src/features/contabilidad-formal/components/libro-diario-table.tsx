@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { getLibroDiarioAction } from '@/features/contabilidad-formal/actions-libros';
+import { formatCivilDate } from '@/features/contabilidad/lib/format-civil-date';
 import type { ResultadoLibroDiario } from '@/features/contabilidad-formal/services/libro-diario-service';
 
 interface LibroDiarioTableProps {
@@ -87,7 +88,7 @@ export function LibroDiarioTable({ periodoId }: LibroDiarioTableProps): JSX.Elem
 							<TableRow className="bg-muted/40 font-medium">
 								<TableCell>{asiento.etiqueta}</TableCell>
 								<TableCell>
-									{new Date(asiento.fecha).toLocaleDateString('es-ES')}
+									{formatCivilDate(asiento.fecha, 'dd/MM/yyyy')}
 								</TableCell>
 								<TableCell className="max-w-[280px] truncate">
 									{asiento.descripcion}
