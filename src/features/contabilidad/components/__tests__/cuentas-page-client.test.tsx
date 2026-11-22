@@ -18,6 +18,8 @@ vi.mock('@/features/contabilidad/actions-cuentas-bancarias', () => ({
   updateCuentaBancariaAction: mocks.updateCuentaBancariaAction,
 }));
 
+vi.mock('@/contexts/auth-context', () => ({ useAuth: () => ({ user: null }) }));
+
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 vi.mock('framer-motion', async (importOriginal) => {
