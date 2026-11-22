@@ -89,7 +89,7 @@ test.describe('Inicialización de cuentas (E2E local)', () => {
     const numeroCuenta = `E2E-${Date.now().toString().slice(-6)}`;
     await page.getByRole('button', { name: 'Cargar saldos iniciales' }).click();
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog.getByRole('heading', { name: 'Configurar cuentas bancarias' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Configurar saldos iniciales' })).toBeVisible();
 
     const fields = dialog.getByRole('textbox');
     await fields.nth(0).fill('Cuenta E2E');
