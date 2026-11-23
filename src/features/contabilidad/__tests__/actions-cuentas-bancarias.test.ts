@@ -738,6 +738,27 @@ describe('Cuentas Bancarias Actions', () => {
   });
 
   describe('initializeBankAccountsAction', () => {
+    it('rechaza inventario cuando el plan no incluye productos antes de leer o crear datos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...mockUser,
+        role: 'user',
+        permissions: new Set(['financiero.apertura.aprobar']),
+        planFeatures: { contabilidad: true },
+      } as AuthenticatedUser);
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: 'inventory-feature-gate',
+        fechaCorte: '2026-11-01',
+        monedaFuncional: 'CUP',
+        cuentas: [{ nombreCuenta: 'Caja', nombreBanco: 'Banco', numeroCuenta: 'GATE-1',
+          tipoCuenta: 'CORRIENTE', moneda: 'CUP', saldoInicial: '0' }],
+        inventario: [{ referenciaFila: 'stock-1', productoId: 'prod-1', almacenId: 'wh-1',
+          loteCodigo: 'initial-1', cantidad: '1', costoUnitario: '0', moneda: 'CUP' }],
+      });
+      expect(expectActionFailure(result).error).toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' });
+      expect(txClient.cuentaBancaria.count).not.toHaveBeenCalled();
+      expect(txClient.cuentaBancaria.create).not.toHaveBeenCalled();
+    });
+
     it('bloquea una inicialización nueva si ya existen saldos en submayores', async () => {
       txClient.cuentaPorCobrar.count.mockResolvedValue(1);
       const result = await initializeBankAccountsAction({

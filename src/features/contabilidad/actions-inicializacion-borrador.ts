@@ -4,9 +4,12 @@ import { z } from 'zod';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { withAction } from '@/lib/server-actions';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { initializationDraftContract } from './services/initialization-contract';
 import {
   assertInitializationAccess,
+  assertInitializationPlanFeatures,
   guardarBorradorInicializacion,
+  getInitializationPlanFeatureUsage,
   obtenerBorradorActualInicializacion,
   obtenerBorradorInicializacion,
 } from './services/initialization-idempotency';
@@ -32,6 +35,12 @@ export const guardarBorradorInicializacionAction = withAction(
   async (input: z.input<typeof guardarSchema>, user: AuthenticatedUser) => {
     assertInitializationAccess(user);
     const parsed = guardarSchema.parse(input);
+    const borrador = z.record(z.string(), z.unknown()).parse(parsed.borrador);
+    const draft = initializationDraftContract.parse({
+      ...borrador,
+      idempotencyKey: parsed.idempotencyKey,
+    });
+    assertInitializationPlanFeatures(user, getInitializationPlanFeatureUsage(draft));
     const tenantId = requireTenant(user);
     return guardarBorradorInicializacion({ tenantId, ...parsed, usuarioId: user.userId });
   },
