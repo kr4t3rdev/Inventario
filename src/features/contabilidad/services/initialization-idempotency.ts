@@ -9,6 +9,87 @@ import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { initializationDraftContract } from './initialization-contract';
 
+export interface InitializationPlanFeatureUsage {
+  inventario?: boolean;
+  cuentasPorCobrar?: boolean;
+  clientes?: boolean;
+  cuentasPorPagar?: boolean;
+  anticipo?: boolean;
+  inyeccionCapital?: boolean;
+  deudaCash?: boolean;
+  prestamoCash?: boolean;
+  multiMoneda?: boolean;
+}
+
+interface InitializationPlanSections {
+  monedaFuncional?: string;
+  cuentas?: readonly { moneda?: string; origen?: { tipo?: string; proveedorId?: string } }[];
+  inventario?: readonly { moneda?: string }[];
+  cuentasPorCobrar?: readonly {
+    moneda?: string;
+    tasaInteres?: unknown;
+    tasaInteresMoratorio?: unknown;
+  }[];
+  cuentasPorPagar?: readonly { moneda?: string }[];
+}
+
+/** @description Resuelve las capacidades de plan que usa una carga inicial o su borrador. */
+export function getInitializationPlanFeatureUsage(
+  sections: InitializationPlanSections,
+): InitializationPlanFeatureUsage {
+  const currencies = [
+    ...(sections.cuentas ?? []).map((row) => row.moneda),
+    ...(sections.inventario ?? []).map((row) => row.moneda),
+    ...(sections.cuentasPorCobrar ?? []).map((row) => row.moneda),
+    ...(sections.cuentasPorPagar ?? []).map((row) => row.moneda),
+  ].filter((currency): currency is string => Boolean(currency));
+  const origins = (sections.cuentas ?? []).map((account) => account.origen);
+  const receivables = sections.cuentasPorCobrar ?? [];
+  return {
+    inventario: Boolean(sections.inventario?.length),
+    cuentasPorCobrar: Boolean(receivables.length),
+    cuentasPorPagar: Boolean(sections.cuentasPorPagar?.length) || origins.some(
+      (origin) => origin?.tipo === 'PRESTAMO' && Boolean(origin.proveedorId),
+    ),
+    clientes: Boolean(receivables.length),
+    anticipo: origins.some((origin) => origin?.tipo === 'ANTICIPO'),
+    inyeccionCapital: origins.some((origin) =>
+      origin?.tipo === 'CAPITAL_SOCIAL' || origin?.tipo === 'PRESTAMO'),
+    deudaCash: origins.some((origin) => origin?.tipo === 'PRESTAMO' && Boolean(origin.proveedorId)),
+    prestamoCash: receivables.some((row) =>
+      row.tasaInteres !== undefined && row.tasaInteresMoratorio !== undefined),
+    multiMoneda: Boolean(sections.monedaFuncional && currencies.some(
+      (currency) => currency.trim().toUpperCase() !== sections.monedaFuncional?.trim().toUpperCase(),
+    )),
+  };
+}
+
+/**
+ * @description Rechaza las secciones de apertura que el plan del tenant no habilita.
+ * @param user - Usuario autenticado dentro del tenant.
+ * @param usage - Secciones efectivamente incluidas en la carga.
+ * @returns No devuelve valor; lanza FEATURE_NOT_AVAILABLE si falta capacidad.
+ */
+export function assertInitializationPlanFeatures(
+  user: AuthenticatedUser,
+  usage: InitializationPlanFeatureUsage,
+): void {
+  const requirements: Array<[keyof InitializationPlanFeatureUsage, string, string]> = [
+    ['inventario', 'productos', 'inicializar inventario'],
+    ['cuentasPorCobrar', 'cuentas-cobrar', 'inicializar cuentas por cobrar'],
+    ['clientes', 'clientes', 'vincular CxC con clientes'],
+    ['cuentasPorPagar', 'cuentas-pagar', 'inicializar cuentas por pagar'],
+    ['anticipo', 'anticipos', 'inicializar anticipos'],
+    ['inyeccionCapital', 'inyeccion-capital', 'inicializar capital o deuda externa'],
+    ['deudaCash', 'deudas-cash', 'inicializar deudas con submayor'],
+    ['prestamoCash', 'prestamos-cash', 'inicializar préstamos con submayor'],
+    ['multiMoneda', 'multi-moneda', 'inicializar saldos en moneda extranjera'],
+  ];
+  for (const [section, feature, action] of requirements) {
+    if (usage[section]) requireFeature(user, feature, action);
+  }
+}
+
 const requestSchema = z.object({
   tenantId: z.string().trim().min(1),
   idempotencyKey: z.string().trim().min(1).max(64),
