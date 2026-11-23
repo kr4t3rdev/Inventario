@@ -78,6 +78,26 @@ describe('Acciones del borrador de inicialización', () => {
     expect(result.data).toMatchObject({ idempotencyKey: 'draft-1', estado: 'BORRADOR' });
   });
 
+  it('no guarda secciones que el plan del tenant no incluye', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'user',
+      permissions: new Set(['financiero.apertura.aprobar']),
+      planFeatures: { contabilidad: true },
+    } as AuthenticatedUser);
+    const result = await guardarBorradorInicializacionAction({
+      idempotencyKey: 'inventory-draft',
+      borrador: {
+        inventario: [{
+          referenciaFila: 'stock-1', productoId: 'prod-1', almacenId: 'wh-1',
+          loteCodigo: 'opening-1', cantidad: '1', costoUnitario: '0', moneda: 'CUP',
+        }],
+      },
+    });
+    expect(expectActionFailure(result).error).toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' });
+    expect(guardarBorradorInicializacion).not.toHaveBeenCalled();
+  });
+
   it('guardar rechaza un tenantId enviado por el cliente', async () => {
     const result = await guardarBorradorInicializacionAction({
       idempotencyKey: 'draft-1',

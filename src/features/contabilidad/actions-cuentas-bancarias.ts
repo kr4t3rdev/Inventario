@@ -21,7 +21,12 @@ import { persistInitialLoan } from './services/initial-loan-persistence';
 import { registrarMovimientoEfectivoAnticipo } from '@/lib/services/anticipos-workflow';
 import { initializationContract } from '@/features/contabilidad/services/initialization-contract';
 import { runIdempotentInitialization } from '@/features/contabilidad/services/initialization-idempotency';
-import { assertInitializationAccess, computeInitializationPayloadHash } from './services/initialization-idempotency';
+import {
+  assertInitializationAccess,
+  assertInitializationPlanFeatures,
+  computeInitializationPayloadHash,
+  getInitializationPlanFeatureUsage,
+} from './services/initialization-idempotency';
 import { acquireAccountingTenantLock } from '@/features/contabilidad/services/accounting-tenant-lock-service';
 import { valueOpeningAccounts } from './services/initialization-valuation';
 import { buildOpeningEntryLines } from './services/initialization-opening-lines';
@@ -281,6 +286,7 @@ export const initializeBankAccountsAction = withAction(
       idempotencyKey: parsed.idempotencyKey,
       payloadHash,
     }, async (tx, inicializacionId) => {
+      assertInitializationPlanFeatures(user, getInitializationPlanFeatureUsage(parsed));
       const fechaCorteDate = parseCutoffDate(parsed.fechaCorte);
       const policy = await tx.tenantAccountingPolicy.findUnique({
         where: { tenantId },
