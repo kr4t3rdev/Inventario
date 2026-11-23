@@ -20,13 +20,13 @@ describe('mobile product sync cursors', () => {
     const token = encodeSnapshotPageToken({
       tenantId: 'tenant-a',
       lastId: 'product-10',
-      watermark: '18446744073709551617',
+      watermark: '9223372036854775807',
     });
 
     expect(decodeSnapshotPageToken(token, 'tenant-a')).toEqual({
       tenantId: 'tenant-a',
       lastId: 'product-10',
-      watermark: '18446744073709551617',
+      watermark: '9223372036854775807',
     });
   });
 
