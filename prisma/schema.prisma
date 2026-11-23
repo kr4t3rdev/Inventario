@@ -369,6 +369,8 @@ model Tenant {
   replayRuns       ReplayRun[]
   checkpointsFormales CheckpointContableFormal[]
   shadowPosteos                  ShadowPosteoOutbox[]
+  mobileProductSyncCursor       MobileProductSyncCursor?
+  mobileProductSyncChanges      MobileProductSyncChange[]
   stockUbicacionDetalles         StockUbicacionDetalle[]
   /// CRM: segmentos de clientes
   segmentosCliente               SegmentoCliente[]
@@ -739,6 +741,26 @@ model StockUbicacion {
   @@index([tenantId])
   @@index([ubicacionId, tipoUbicacion])
   @@index([productoId])
+}
+
+/// Secuencia transaccional independiente por tenant para el feed móvil de productos.
+model MobileProductSyncCursor {
+  tenantId     String   @id
+  lastSequence BigInt   @default(0)
+  tenant       Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+}
+
+/// Cambios de catálogo y stock; no tiene FK a Producto para conservar tombstones.
+model MobileProductSyncChange {
+  tenantId  String
+  sequence  BigInt
+  productId String
+  operation String
+  changedAt DateTime @default(now()) @db.Timestamptz(6)
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@id([tenantId, sequence])
+  @@index([tenantId, changedAt])
 }
 
 /// Ajuste unificado de inventario con motivo de catálogo y valorización.

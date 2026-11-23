@@ -25,7 +25,7 @@ describe('mobile product sync journal triggers', () => {
     await client.query(`CREATE SCHEMA "${schemaName}"`);
     await client.query(`SET search_path TO "${schemaName}"`);
     await client.query(`
-      CREATE TABLE "Tenant" ("tenantId" TEXT PRIMARY KEY);
+      CREATE TABLE "tenants" ("tenantId" TEXT PRIMARY KEY);
       CREATE TABLE "Producto" (
         "id" TEXT PRIMARY KEY,
         "tenantId" TEXT NOT NULL,
@@ -35,7 +35,8 @@ describe('mobile product sync journal triggers', () => {
         "id" TEXT PRIMARY KEY,
         "tenantId" TEXT NOT NULL,
         "productoId" TEXT NOT NULL,
-        "cantidad" INTEGER NOT NULL DEFAULT 0
+        "cantidad" INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY ("productoId") REFERENCES "Producto" ("id") ON DELETE CASCADE
       );
     `);
     await client.query(await readFile(migrationPath, 'utf8'));
@@ -48,7 +49,7 @@ describe('mobile product sync journal triggers', () => {
   });
 
   it('records product and stock changes in tenant-local transactional order', async () => {
-    await client.query(`INSERT INTO "Tenant" ("tenantId") VALUES ('tenant-a'), ('tenant-b')`);
+    await client.query(`INSERT INTO "tenants" ("tenantId") VALUES ('tenant-a'), ('tenant-b')`);
     await client.query(`
       INSERT INTO "Producto" ("id", "tenantId", "nombre")
       VALUES ('product-a', 'tenant-a', 'Arroz'), ('product-b', 'tenant-b', 'Frijol')
@@ -77,22 +78,47 @@ describe('mobile product sync journal triggers', () => {
       { tenantId: 'tenant-a', sequence: '2', productId: 'product-a', operation: 'UPSERT' },
       { tenantId: 'tenant-a', sequence: '3', productId: 'product-a', operation: 'UPSERT' },
       { tenantId: 'tenant-a', sequence: '4', productId: 'product-a', operation: 'UPSERT' },
-      { tenantId: 'tenant-a', sequence: '5', productId: 'product-a', operation: 'DELETE' },
+      { tenantId: 'tenant-a', sequence: '5', productId: 'product-a', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: '6', productId: 'product-a', operation: 'DELETE' },
     ]);
     expect(rows.filter((row) => row.tenantId === 'tenant-b')).toEqual([
       { tenantId: 'tenant-b', sequence: '1', productId: 'product-b', operation: 'UPSERT' },
     ]);
+
+    await client.query(`
+      INSERT INTO "Producto" ("id", "tenantId", "nombre")
+      VALUES ('product-cascade', 'tenant-a', 'Cascada');
+      INSERT INTO "StockUbicacion" ("id", "tenantId", "productoId", "cantidad")
+      VALUES ('stock-cascade', 'tenant-a', 'product-cascade', 3);
+      DELETE FROM "Producto" WHERE "id" = 'product-cascade';
+    `);
+    const cascadeRows = await client.query<ChangeRow>(`
+      SELECT "tenantId", "sequence"::text, "productId", "operation"
+      FROM "MobileProductSyncChange"
+      WHERE "tenantId" = 'tenant-a' AND "productId" = 'product-cascade'
+      ORDER BY "sequence"
+    `);
+    expect(cascadeRows.rows).toEqual([
+      { tenantId: 'tenant-a', sequence: '7', productId: 'product-cascade', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: '8', productId: 'product-cascade', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: '9', productId: 'product-cascade', operation: 'DELETE' },
+    ]);
   });
 
   it('rolls the journal entry back with its product mutation', async () => {
+    await client.query(`INSERT INTO "tenants" ("tenantId") VALUES ('tenant-c')`);
     await client.query('BEGIN');
     await client.query(`INSERT INTO "Producto" ("id", "tenantId", "nombre")
-      VALUES ('rolled-back', 'tenant-a', 'Temporal')`);
+      VALUES ('rolled-back', 'tenant-c', 'Temporal')`);
     await client.query('ROLLBACK');
 
     const { rows } = await client.query(
-      `SELECT 1 FROM "MobileProductSyncChange" WHERE "productId" = 'rolled-back'`,
+      `SELECT 1 FROM "MobileProductSyncChange" WHERE "tenantId" = 'tenant-c'`,
     );
     expect(rows).toHaveLength(0);
+    const cursor = await client.query(
+      `SELECT 1 FROM "MobileProductSyncCursor" WHERE "tenantId" = 'tenant-c'`,
+    );
+    expect(cursor.rows).toHaveLength(0);
   });
 });
