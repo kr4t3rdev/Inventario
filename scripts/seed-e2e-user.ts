@@ -19,6 +19,10 @@ export interface E2EFixtureOwnership {
     tenantId: string;
     userId: string;
     email: string;
+    productoId: string;
+    almacenId: string;
+    clienteId: string;
+    proveedorId: string;
   };
 }
 
@@ -241,15 +245,21 @@ export async function run(): Promise<E2EFixtureOwnership> {
 
       /**
        * @description Siembra el tenant vacío para el E2E de inicialización de
-       * cuentas: usuario manager con licencia Profesional (contabilidad en el
-       * plan base) y sin catálogo, para que la acción no rechace por
-       * INITIALIZATION_NOT_EMPTY.
+       * cuentas: usuario manager con licencia Profesional, catálogo maestro
+       * mínimo y subledgers vacíos para probar los apartados opcionales.
        * @param {string} hashedPassword - Hash bcrypt de E2E_TEST_PASSWORD.
-       * @returns {Promise<{ tenantId: string; userId: string; email: string }>} Identidad del tenant vacío.
+       * @returns {Promise<{ tenantId: string; userId: string; email: string; productoId: string; almacenId: string; clienteId: string; proveedorId: string }>} Tenant vacío y referencias de catálogo.
        */
-      async function seedInitTenant(hashedPassword: string): Promise<{ tenantId: string; userId: string; email: string }> {
+      async function seedInitTenant(hashedPassword: string): Promise<{ tenantId: string; userId: string; email: string; productoId: string; almacenId: string; clienteId: string; proveedorId: string }> {
         const initTenantId = `${fixtureId}-init`;
         const initEmail = `${fixtureId}-init@test.invalid`;
+        const initIds = {
+          almacenId: `${fixtureId}-init-almacen`,
+          categoriaId: `${fixtureId}-init-categoria`,
+          productoId: `${fixtureId}-init-producto`,
+          clienteId: `${fixtureId}-init-cliente`,
+          proveedorId: `${fixtureId}-init-proveedor`,
+        };
         await prisma.tenant.create({ data: { tenantId: initTenantId, nombre: 'Tenant E2E inicialización' } });
         const initUser = await prisma.user.create({
           data: {
@@ -261,6 +271,42 @@ export async function run(): Promise<E2EFixtureOwnership> {
           where: { tenantId_userId: { tenantId: initTenantId, userId: initUser.userId } },
           update: { tenantRole: 'manager', isActive: true },
           create: { tenantId: initTenantId, userId: initUser.userId, tenantRole: 'manager', isActive: true },
+        });
+        await prisma.moneda.upsert({
+          where: { codigo: 'CUP' },
+          update: { nombre: 'Peso cubano', simbolo: 'CUP', isActive: true },
+          create: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP', isActive: true },
+        });
+        await prisma.tenantAccountingPolicy.create({
+          data: {
+            tenantId: initTenantId,
+            functionalCurrencyCode: 'CUP',
+            updatedBy: initUser.userId,
+          },
+        });
+        await prisma.almacen.create({
+          data: { almacenId: initIds.almacenId, tenantId: initTenantId, nombre: 'Almacén apertura E2E' },
+        });
+        await prisma.categoria.create({
+          data: { catId: initIds.categoriaId, tenantId: initTenantId, nombre: 'Categoría apertura E2E' },
+        });
+        await prisma.producto.create({
+          data: {
+            id: initIds.productoId,
+            tenantId: initTenantId,
+            nombre: 'Producto apertura E2E',
+            precioCosto: 50,
+            precioVenta: 75,
+            stock: 0,
+            categoriaId: initIds.categoriaId,
+            almacenId: initIds.almacenId,
+          },
+        });
+        await prisma.cliente.create({
+          data: { clienteId: initIds.clienteId, tenantId: initTenantId, nombre: 'Cliente apertura E2E' },
+        });
+        await prisma.vendor.create({
+          data: { vendorId: initIds.proveedorId, tenantId: initTenantId, nombre: 'Proveedor apertura E2E' },
         });
         await prisma.review.upsert({
           where: { tenantId_userId: { tenantId: initTenantId, userId: initUser.userId } },
@@ -301,7 +347,12 @@ export async function run(): Promise<E2EFixtureOwnership> {
             finalPriceUsd: 0,
           },
         });
-        return { tenantId: initTenantId, userId: initUser.userId, email: initEmail };
+        return {
+          tenantId: initTenantId,
+          userId: initUser.userId,
+          email: initEmail,
+          ...initIds,
+        };
       }
 
       /**
