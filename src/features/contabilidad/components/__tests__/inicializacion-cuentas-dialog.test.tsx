@@ -415,4 +415,49 @@ describe('InicializacionCuentasDialog', () => {
     expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
     expect(guardarBorradorMock).not.toHaveBeenCalled();
   });
+
+  it('valora, resume y confirma CxP en moneda extranjera', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: {
+      proveedores: true, 'cuentas-pagar': true, 'multi-moneda': true,
+    } } });
+    getVendorsMock.mockResolvedValue({ success: true, data: [{ vendorId: 'vendor-1', nombre: 'Proveedor QA' }] });
+    initializeMock.mockResolvedValue({ success: true, data: { replayed: false } });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por pagar' }));
+    await user.click(screen.getByLabelText('Proveedor de cuenta por pagar'));
+    await user.click(await screen.findByRole('option', { name: 'Proveedor QA' }));
+    await user.type(screen.getByLabelText('Saldo inicial de CxP'), '100');
+    await user.click(screen.getByLabelText('Moneda de CxP'));
+    await user.click(screen.getByRole('option', { name: 'USD' }));
+    await user.type(screen.getByLabelText('Tasa de cambio de CxP'), '24');
+    await fillAccount(user, { nombre: 'Caja', banco: 'Banco QA', numero: 'QA-05', saldo: '0' });
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+
+    expect(screen.getByText(/CxP 1 — Proveedor QA · 100 USD/)).toBeInTheDocument();
+    expect(screen.getByText(/Total funcional: 2400 CUP/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Inicializar cuentas' }));
+    expect(initializeMock.mock.calls[0][0].cuentasPorPagar[0]).toMatchObject({
+      proveedorId: 'vendor-1', saldo: '100', moneda: 'USD', tasaCambio: '24',
+    });
+  });
+
+  it('bloquea CxP con saldo o tasa FX inválidos', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: {
+      proveedores: true, 'cuentas-pagar': true, 'multi-moneda': true,
+    } } });
+    getVendorsMock.mockResolvedValue({ success: true, data: [{ vendorId: 'vendor-1', nombre: 'Proveedor QA' }] });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por pagar' }));
+    await user.click(screen.getByLabelText('Proveedor de cuenta por pagar'));
+    await user.click(await screen.findByRole('option', { name: 'Proveedor QA' }));
+    await user.type(screen.getByLabelText('Saldo inicial de CxP'), '1e2');
+    await user.click(screen.getByLabelText('Moneda de CxP'));
+    await user.click(screen.getByRole('option', { name: 'USD' }));
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/falta un saldo mayor que cero[\s\S]*falta una tasa de cambio mayor que cero/);
+    expect(screen.getByRole('button', { name: 'Inicializar cuentas' })).toBeDisabled();
+  });
 });

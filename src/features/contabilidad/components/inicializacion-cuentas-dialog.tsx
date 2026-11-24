@@ -87,6 +87,7 @@ function toAccountDraft(raw: Record<string, unknown>, tasas: Record<string, stri
  * @param monedaFuncional - Moneda funcional del formulario.
  * @param inventory - Existencias iniciales que deben quedar completas antes de confirmar.
  * @param receivables - Cuentas por cobrar iniciales externas.
+ * @param payables - Cuentas por pagar iniciales externas.
  * @returns Faltantes en texto, vacía si no hay nada que impida confirmar.
  */
 function computeFaltantes(
@@ -95,6 +96,7 @@ function computeFaltantes(
   monedaFuncional: string,
   inventory: InitialInventoryDraft[] = [],
   receivables: InitialReceivableDraft[] = [],
+  payables: InitialPayableDraft[] = [],
 ): string[] {
   const faltantes: string[] = [];
   if (fechaCorte.trim() === '') faltantes.push('Falta la fecha de corte');
@@ -154,6 +156,17 @@ function computeFaltantes(
       faltantes.push(`${label}: verifica las tasas de interés del préstamo`);
     }
   });
+  payables.forEach((row, index) => {
+    const label = `Cuenta por pagar ${index + 1}`;
+    if (!row.proveedorId) faltantes.push(`${label}: falta el proveedor`);
+    if (!/^\d{1,16}(?:\.\d{1,4})?$/.test(row.saldo) || !/[1-9]/.test(row.saldo)) {
+      faltantes.push(`${label}: falta un saldo mayor que cero`);
+    }
+    if (row.moneda !== monedaFuncional &&
+      (!/^\d+(?:\.\d{1,8})?$/.test(row.tasaCambio) || Number(row.tasaCambio) <= 0)) {
+      faltantes.push(`${label}: falta una tasa de cambio mayor que cero`);
+    }
+  });
   return faltantes;
 }
 
@@ -162,9 +175,10 @@ function computeFaltantes(
  * @param accounts - Cuentas del formulario.
  * @param monedaFuncional - Moneda funcional del formulario.
  * @param receivables - Cuentas por cobrar externas capturadas.
+ * @param payables - Cuentas por pagar externas capturadas.
  * @returns Subtotales por moneda y total funcional (null si falta una tasa).
  */
-function computeTotals(accounts: AccountDraft[], monedaFuncional: string, receivables: InitialReceivableDraft[] = []): { porMoneda: Array<{ moneda: string; total: number }>; funcional: number | null } {
+function computeTotals(accounts: AccountDraft[], monedaFuncional: string, receivables: InitialReceivableDraft[] = [], payables: InitialPayableDraft[] = []): { porMoneda: Array<{ moneda: string; total: number }>; funcional: number | null } {
   const porMoneda = new Map<string, number>();
   let funcional = 0;
   let sinValorar = false;
@@ -184,6 +198,14 @@ function computeTotals(accounts: AccountDraft[], monedaFuncional: string, receiv
     funcional += saldo * tasa;
   });
   receivables.forEach((row) => {
+    if (row.saldo.trim() === '' || !Number.isFinite(Number(row.saldo))) return;
+    const saldo = Number(row.saldo);
+    porMoneda.set(row.moneda, (porMoneda.get(row.moneda) ?? 0) + saldo);
+    if (row.moneda === monedaFuncional) funcional += saldo;
+    else if (!/^\d+(?:\.\d{1,8})?$/.test(row.tasaCambio) || Number(row.tasaCambio) <= 0) sinValorar = true;
+    else funcional += saldo * Number(row.tasaCambio);
+  });
+  payables.forEach((row) => {
     if (row.saldo.trim() === '' || !Number.isFinite(Number(row.saldo))) return;
     const saldo = Number(row.saldo);
     porMoneda.set(row.moneda, (porMoneda.get(row.moneda) ?? 0) + saldo);
@@ -395,8 +417,8 @@ export function InicializacionCuentasDialog(): ReactElement {
     }
   };
 
-  const faltantes = [...computeFaltantes(accounts, fechaCorte, monedaFuncional, inventory, receivables), ...planRestrictions];
-  const totals = computeTotals(accounts, monedaFuncional, receivables);
+  const faltantes = [...computeFaltantes(accounts, fechaCorte, monedaFuncional, inventory, receivables, payables), ...planRestrictions];
+  const totals = computeTotals(accounts, monedaFuncional, receivables, payables);
 
   const submit = async () => {
     setSaving(true);
@@ -473,6 +495,18 @@ export function InicializacionCuentasDialog(): ReactElement {
             : {}),
         };
       });
+      const initialPayables = payables.map((row) => {
+        if (!row.proveedorId || !row.saldo.trim() || Number(row.saldo) <= 0) {
+          throw new Error('Completa el proveedor y un saldo mayor que cero para cada CxP');
+        }
+        return {
+          referenciaFila: row.referenciaFila, proveedorId: row.proveedorId,
+          moneda: row.moneda, saldo: row.saldo.trim(),
+          ...(row.referenciaExterna.trim() ? { referenciaExterna: row.referenciaExterna.trim() } : {}),
+          ...(row.fechaVencimiento ? { fechaVencimiento: row.fechaVencimiento } : {}),
+          ...(row.moneda !== monedaFuncional && row.tasaCambio.trim() ? { tasaCambio: row.tasaCambio.trim() } : {}),
+        };
+      });
       const confirmedBasePayload = {
         fechaCorte: fechaCorteConfirm,
         monedaFuncional: payload.monedaFuncional,
@@ -484,12 +518,14 @@ export function InicializacionCuentasDialog(): ReactElement {
         cuentas,
         ...(canInventory && initialInventory.length ? { inventario: initialInventory } : {}),
         ...(canReceivables && initialReceivables.length ? { cuentasPorCobrar: initialReceivables } : {}),
+        ...(canPayables && initialPayables.length ? { cuentasPorPagar: initialPayables } : {}),
       });
       if (!result.success) throw new Error(result.error?.message || 'No se pudo inicializar la contabilidad');
       toast.success(result.data?.replayed ? 'Se recuperó la inicialización ya registrada' : 'Cuentas inicializadas');
       setAccounts([newAccount()]);
       setInventory([]);
       setReceivables([]);
+      setPayables([]);
       setKey(crypto.randomUUID());
       setStep('form');
       setResumed(false);
@@ -600,6 +636,9 @@ export function InicializacionCuentasDialog(): ReactElement {
               </ul>
               {receivables.length > 0 && <ul className="space-y-2">{receivables.map((row, index) => (
                 <li key={row.referenciaFila}>{`CxC ${index + 1} — ${clients.find((client) => client.id === row.clienteId)?.nombre || 'Cliente pendiente'} · ${row.saldo || 'Sin saldo'} ${row.moneda}${row.fechaVencimiento ? ` · vence ${row.fechaVencimiento}` : ''}`}</li>
+              ))}</ul>}
+              {payables.length > 0 && <ul className="space-y-2">{payables.map((row, index) => (
+                <li key={row.referenciaFila}>{`CxP ${index + 1} — ${suppliers.find((supplier) => supplier.id === row.proveedorId)?.nombre || 'Proveedor pendiente'} · ${row.saldo || 'Sin saldo'} ${row.moneda}${row.fechaVencimiento ? ` · vence ${row.fechaVencimiento}` : ''}`}</li>
               ))}</ul>}
               <ul className="space-y-1">
                 {totals.porMoneda.map(({ moneda, total }) => (
