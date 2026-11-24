@@ -10,6 +10,7 @@ vi.mock('@/lib/prisma', () => ({
     ajusteBancario: { findMany: vi.fn() },
     inyeccionCapital: { findMany: vi.fn() },
     pagoDeuda: { findMany: vi.fn() },
+    cuentaPorCobrar: { findMany: vi.fn() },
     tasaCambio: { findMany: vi.fn() },
     transaccionMoneda: { findMany: vi.fn() },
     moneda: { findMany: vi.fn() },
@@ -163,6 +164,48 @@ describe('AccountingReportsService', () => {
     expect(usd!.totalIngresos).toBe(50);
     expect(usd!.totalEgresos).toBe(10);
     expect(usd!.flujoNeto).toBe(40);
+  });
+
+  it('scopea y calcula antigüedad de CxC desde la fecha de vencimiento', async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const due45DaysAgo = new Date(Date.now() - (44.5 * day));
+    const due10DaysAhead = new Date(Date.now() + 10 * day);
+    const oldCreatedAt = new Date(Date.now() - 365 * day);
+    vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
+      {
+        id: 'receivable-overdue',
+        clienteId: 'client-a',
+        createdAt: oldCreatedAt,
+        fechaVencimiento: due45DaysAgo,
+        montoDeuda: 100,
+        montoPagado: 0,
+        cliente: { nombre: 'Cliente A' },
+        factura: { total: 100, venta: { total: 100, reconciliaciones: [] } },
+      },
+      {
+        id: 'receivable-current',
+        clienteId: 'client-a',
+        createdAt: oldCreatedAt,
+        fechaVencimiento: due10DaysAhead,
+        montoDeuda: 50,
+        montoPagado: 0,
+        cliente: { nombre: 'Cliente A' },
+        factura: { total: 50, venta: { total: 50, reconciliaciones: [] } },
+      },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getOverdueInvoicesReport({ tenantId: 'tenant-a' });
+
+    expect(prisma.cuentaPorCobrar.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-a' }),
+      }),
+    );
+    expect(result.facturas).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'receivable-overdue', dias: 45, categoria: '30-60 Días' }),
+      expect.objectContaining({ id: 'receivable-current', dias: 0, categoria: 'Corriente' }),
+    ]));
   });
 
   it('préstamos y anticipos permanecen separados por moneda del préstamo', async () => {

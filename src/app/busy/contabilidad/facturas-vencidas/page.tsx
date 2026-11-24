@@ -25,6 +25,7 @@ import {
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
+import { buildFacturasVencidasTotalsRow } from "@/features/contabilidad/lib/facturas-vencidas-export"
 import { useAuth } from "@/contexts/auth-context"
 import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 
@@ -125,14 +126,7 @@ export default function FacturasVencidasPage() {
     })
 
     // Add totals row
-    rows.push([
-      "TOTALES",
-      totals.dias30,
-      totals.dias60,
-      totals.dias90,
-      totals.dias120,
-      totals.diasPlus120,
-      totals.total])
+    rows.push(buildFacturasVencidasTotalsRow(totals))
 
     const csvContent = [
       headers.join(","),
@@ -183,15 +177,11 @@ export default function FacturasVencidasPage() {
     })
 
     // Add totals
-    tableData.push([
-      "TOTALES",
-      formatCurrency(totals.dias30),
-      formatCurrency(totals.dias60),
-      formatCurrency(totals.dias90),
-      formatCurrency(totals.dias120),
-      formatCurrency(totals.diasPlus120),
-      formatCurrency(totals.total)
-    ])
+    tableData.push(
+      buildFacturasVencidasTotalsRow(totals)
+        .slice(0, 9)
+        .map((value, index) => index >= 3 ? formatCurrency(Number(value)) : value),
+    )
 
     autoTable(doc, {
       head: [[

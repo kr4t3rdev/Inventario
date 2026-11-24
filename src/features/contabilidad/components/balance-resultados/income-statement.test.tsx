@@ -178,6 +178,13 @@ describe('IncomeStatement', () => {
   });
 
   describe('totales anuales', () => {
+    it('describe los ingresos reconocidos y no solo los cobrados', () => {
+      const statement = makeStatement([monthlyRow]);
+      render(<IncomeStatement statement={statement} currency="CUP" />);
+
+      expect(screen.getByText('Ventas y servicios reconocidos')).toBeInTheDocument();
+    });
+
     it('muestra métricas anuales de ingresos, gastos y utilidad', () => {
       const statement = makeStatement([monthlyRow]);
       render(<IncomeStatement statement={statement} currency="CUP" />);

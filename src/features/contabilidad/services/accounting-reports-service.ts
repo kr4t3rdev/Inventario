@@ -1794,6 +1794,7 @@ export const AccountingReportsService = {
   }) {
     const cuentas = await prisma.cuentaPorCobrar.findMany({
       where: {
+        tenantId: params.tenantId,
         estado: { not: 'PAGADA' },
       },
       include: {
@@ -1864,9 +1865,15 @@ export const AccountingReportsService = {
 
       if (saldoPendiente <= 0.01) continue;
 
-      const fechaReferencia = new Date(cuenta.createdAt);
-      const diffTime = Math.abs(now.getTime() - fechaReferencia.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const fechaVencimiento = cuenta.fechaVencimiento
+        ? new Date(cuenta.fechaVencimiento)
+        : null;
+      const diffTime = fechaVencimiento
+        ? now.getTime() - fechaVencimiento.getTime()
+        : 0;
+      const diffDays = fechaVencimiento && Number.isFinite(diffTime)
+        ? Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+        : 0;
 
       let bucket: 'Corriente' | '30-60 Días' | '60-90 Días' | '90-120 Días' | '+120 Días' = 'Corriente';
 
