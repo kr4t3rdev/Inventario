@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { getAlmacenesAction } from '@/features/almacenes/actions';
 import { getClientesAction } from '@/features/clientes/actions';
+import { getVendorsAction } from '@/features/vendors/actions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,9 @@ import { getTiposPagoAction } from '@/features/contabilidad/actions-tipos-pago';
 import { getProductosAction } from '@/features/productos/actions-crud';
 import { toInitialInventoryDraft, type InitialInventoryDraft } from '../services/initialization-additional-drafts';
 import { toInitialReceivableDraft, type InitialReceivableDraft } from '../services/initialization-additional-drafts';
+import { toInitialPayableDraft, type InitialPayableDraft } from '../services/initialization-additional-drafts';
 import { InitialInventoryOpeningSection } from './initial-inventory-opening-section';
+import { InitialPayablesOpeningSection } from './initial-payables-opening-section';
 import { InitialReceivablesOpeningSection } from './initial-receivables-opening-section';
 
 type Source = '' | 'CAPITAL_SOCIAL' | 'PRESTAMO' | 'ANTICIPO' | 'NO_DOCUMENTADO';
@@ -204,6 +207,9 @@ export function InicializacionCuentasDialog(): ReactElement {
   const canReceivables = user?.role === 'admin' || (
     user?.planFeatures?.clientes === true && user?.planFeatures?.['cuentas-cobrar'] === true
   );
+  const canPayables = user?.role === 'admin' || (
+    user?.planFeatures?.proveedores === true && user?.planFeatures?.['cuentas-pagar'] === true
+  );
   const canLoanReceivable = user?.role === 'admin' || user?.planFeatures?.['prestamos-cash'] === true;
   const canMultiCurrency = user?.role === 'admin' || user?.planFeatures?.['multi-moneda'] === true;
   const [open, setOpen] = useState(false);
@@ -211,7 +217,9 @@ export function InicializacionCuentasDialog(): ReactElement {
   const [accounts, setAccounts] = useState<AccountDraft[]>([newAccount()]);
   const [inventory, setInventory] = useState<InitialInventoryDraft[]>([]);
   const [receivables, setReceivables] = useState<InitialReceivableDraft[]>([]);
+  const [payables, setPayables] = useState<InitialPayableDraft[]>([]);
   const [clients, setClients] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; nombre: string }>>([]);
   const [products, setProducts] = useState<Array<{ id: string; nombre: string }>>([]);
   const [warehouses, setWarehouses] = useState<Array<{ id: string; nombre: string }>>([]);
   const [paymentTypes, setPaymentTypes] = useState<Array<{ tipoId: string; nombre: string }>>([]);
@@ -241,6 +249,12 @@ export function InicializacionCuentasDialog(): ReactElement {
         else toast.error(result.error?.message || 'No se pudieron cargar los clientes');
       });
     }
+    if (canPayables) {
+      void getVendorsAction().then((result) => {
+        if (result.success) setSuppliers((result.data ?? []).map((item) => ({ id: item.vendorId, nombre: item.nombre })));
+        else toast.error(result.error?.message || 'No se pudieron cargar los proveedores');
+      });
+    }
     void getTiposPagoAction({}).then((result) => {
       if (result.success) setPaymentTypes(result.data?.data ?? []);
     });
@@ -261,10 +275,13 @@ export function InicializacionCuentasDialog(): ReactElement {
       setReceivables(Array.isArray(draft.cuentasPorCobrar)
         ? draft.cuentasPorCobrar.map(toInitialReceivableDraft)
         : []);
+      setPayables(Array.isArray(draft.cuentasPorPagar)
+        ? draft.cuentasPorPagar.map(toInitialPayableDraft)
+        : []);
       setKey(result.data.idempotencyKey);
       setResumed(true);
     });
-  }, [open, canInventory, canReceivables]);
+  }, [open, canInventory, canReceivables, canPayables]);
 
   const update = (index: number, patch: Partial<AccountDraft>) => {
     setAccounts((current) => current.map((account, i) => i === index ? { ...account, ...patch } : account));
@@ -303,6 +320,15 @@ export function InicializacionCuentasDialog(): ReactElement {
         ...(row.moneda !== monedaFuncional && row.tasaCambio.trim() ? { tasaCambio: row.tasaCambio.trim() } : {}),
         ...(row.tasaInteres.trim() ? { tasaInteres: row.tasaInteres.trim() } : {}),
         ...(row.tasaInteresMoratorio.trim() ? { tasaInteresMoratorio: row.tasaInteresMoratorio.trim() } : {}),
+      })) } : {}),
+      ...(payables.length ? { cuentasPorPagar: payables.map((row) => ({
+        referenciaFila: row.referenciaFila,
+        moneda: row.moneda,
+        ...(row.proveedorId ? { proveedorId: row.proveedorId } : {}),
+        ...(row.referenciaExterna.trim() ? { referenciaExterna: row.referenciaExterna.trim() } : {}),
+        ...(row.saldo.trim() ? { saldo: row.saldo.trim() } : {}),
+        ...(row.fechaVencimiento ? { fechaVencimiento: row.fechaVencimiento } : {}),
+        ...(row.moneda !== monedaFuncional && row.tasaCambio.trim() ? { tasaCambio: row.tasaCambio.trim() } : {}),
       })) } : {}),
       cuentas: accounts.map((account) => {
         const saldoPositivo = Number(account.saldoInicial) > 0;
@@ -343,6 +369,12 @@ export function InicializacionCuentasDialog(): ReactElement {
       : []),
     ...(!canMultiCurrency && receivables.some((row) => row.moneda !== monedaFuncional)
       ? ['El plan actual ya no permite CxC en moneda extranjera. Restaura el acceso antes de guardar o confirmar.']
+      : []),
+    ...(!canPayables && payables.length
+      ? ['El plan actual ya no permite confirmar las CxP guardadas. Restaura el acceso antes de guardar o confirmar.']
+      : []),
+    ...(!canMultiCurrency && payables.some((row) => row.moneda !== monedaFuncional)
+      ? ['El plan actual ya no permite CxP en moneda extranjera. Restaura el acceso antes de guardar o confirmar.']
       : []),
   ];
 
@@ -528,6 +560,11 @@ export function InicializacionCuentasDialog(): ReactElement {
               rows={receivables} clients={clients}
               currencies={canMultiCurrency ? ['CUP', 'USD', 'MLC'] : [monedaFuncional]}
               functionalCurrency={monedaFuncional} canLoanReceivable={canLoanReceivable} onChange={setReceivables}
+            />}
+            {canPayables && <InitialPayablesOpeningSection
+              rows={payables} suppliers={suppliers}
+              currencies={canMultiCurrency ? ['CUP', 'USD', 'MLC'] : [monedaFuncional]}
+              functionalCurrency={monedaFuncional} onChange={setPayables}
             />}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Fecha de corte"><Input type="date" value={fechaCorte} onChange={(e) => setFechaCorte(e.target.value)} /></Field>
