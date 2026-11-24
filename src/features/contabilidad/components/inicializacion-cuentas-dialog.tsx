@@ -4,6 +4,8 @@ import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth-context';
+import { getAlmacenesAction } from '@/features/almacenes/actions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -12,6 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { initializeBankAccountsAction } from '@/features/contabilidad/actions-cuentas-bancarias';
 import { guardarBorradorInicializacionAction, obtenerBorradorActualInicializacionAction } from '@/features/contabilidad/actions-inicializacion-borrador';
 import { getTiposPagoAction } from '@/features/contabilidad/actions-tipos-pago';
+import { getProductosAction } from '@/features/productos/actions-crud';
+import { toInitialInventoryDraft, type InitialInventoryDraft } from '../services/initialization-additional-drafts';
+import { InitialInventoryOpeningSection } from './initial-inventory-opening-section';
 
 type Source = '' | 'CAPITAL_SOCIAL' | 'PRESTAMO' | 'ANTICIPO' | 'NO_DOCUMENTADO';
 interface AccountDraft {
@@ -74,9 +79,15 @@ function toAccountDraft(raw: Record<string, unknown>, tasas: Record<string, stri
  * @param accounts - Cuentas del formulario.
  * @param fechaCorte - Fecha de corte del formulario.
  * @param monedaFuncional - Moneda funcional del formulario.
+ * @param inventory - Existencias iniciales que deben quedar completas antes de confirmar.
  * @returns Faltantes en texto, vacía si no hay nada que impida confirmar.
  */
-function computeFaltantes(accounts: AccountDraft[], fechaCorte: string, monedaFuncional: string): string[] {
+function computeFaltantes(
+  accounts: AccountDraft[],
+  fechaCorte: string,
+  monedaFuncional: string,
+  inventory: InitialInventoryDraft[] = [],
+): string[] {
   const faltantes: string[] = [];
   if (fechaCorte.trim() === '') faltantes.push('Falta la fecha de corte');
   if (monedaFuncional.trim() === '') faltantes.push('Falta la moneda funcional');
@@ -100,6 +111,23 @@ function computeFaltantes(accounts: AccountDraft[], fechaCorte: string, monedaFu
     }
     if (account.moneda !== monedaFuncional && account.tasaCambio.trim() === '') {
       faltantes.push(`${label}: falta la tasa a moneda funcional (${account.moneda} → ${monedaFuncional})`);
+    }
+  });
+  inventory.forEach((row, index) => {
+    const label = `Existencia ${index + 1}`;
+    const quantity = Number(row.cantidad);
+    const cost = Number(row.costoUnitario);
+    if (!row.productoId) faltantes.push(`${label}: falta el producto`);
+    if (!row.almacenId) faltantes.push(`${label}: falta el almacén`);
+    if (!row.loteCodigo.trim()) faltantes.push(`${label}: falta el lote`);
+    if (!row.cantidad.trim() || !Number.isFinite(quantity) || quantity <= 0) {
+      faltantes.push(`${label}: falta una cantidad mayor que cero`);
+    }
+    if (!row.costoUnitario.trim() || !Number.isFinite(cost) || cost < 0) {
+      faltantes.push(`${label}: falta el costo unitario`);
+    }
+    if (row.moneda !== monedaFuncional && !row.tasaCambio.trim()) {
+      faltantes.push(`${label}: falta la tasa de cambio del inventario`);
     }
   });
   return faltantes;
@@ -141,9 +169,14 @@ function computeTotals(accounts: AccountDraft[], monedaFuncional: string): { por
  */
 export function InicializacionCuentasDialog(): ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
+  const canInventory = user?.role === 'admin' || user?.planFeatures?.productos === true;
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'form' | 'review'>('form');
   const [accounts, setAccounts] = useState<AccountDraft[]>([newAccount()]);
+  const [inventory, setInventory] = useState<InitialInventoryDraft[]>([]);
+  const [products, setProducts] = useState<Array<{ id: string; nombre: string }>>([]);
+  const [warehouses, setWarehouses] = useState<Array<{ id: string; nombre: string }>>([]);
   const [paymentTypes, setPaymentTypes] = useState<Array<{ tipoId: string; nombre: string }>>([]);
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [fechaCorte, setFechaCorte] = useState(() => new Date().toISOString().slice(0, 10));
@@ -155,6 +188,16 @@ export function InicializacionCuentasDialog(): ReactElement {
   useEffect(() => {
     if (!open) return;
     setStep('form');
+    if (canInventory) {
+      void getProductosAction().then((result) => {
+        if (result.success) setProducts((result.data ?? []).map((item) => ({ id: item.id, nombre: item.nombre })));
+        else toast.error(result.error?.message || 'No se pudieron cargar los productos');
+      });
+      void getAlmacenesAction().then((result) => {
+        if (result.success) setWarehouses((result.data ?? []).map((item) => ({ id: item.almacenId, nombre: item.nombre })));
+        else toast.error(result.error?.message || 'No se pudieron cargar los almacenes');
+      });
+    }
     void getTiposPagoAction({}).then((result) => {
       if (result.success) setPaymentTypes(result.data?.data ?? []);
     });
@@ -169,10 +212,13 @@ export function InicializacionCuentasDialog(): ReactElement {
       if (cuentasRaw.length > 0) {
         setAccounts(cuentasRaw.map((raw) => toAccountDraft(raw as Record<string, unknown>, tasas, funcional)));
       }
+      setInventory(canInventory && Array.isArray(draft.inventario)
+        ? draft.inventario.map(toInitialInventoryDraft)
+        : []);
       setKey(result.data.idempotencyKey);
       setResumed(true);
     });
-  }, [open]);
+  }, [open, canInventory]);
 
   const update = (index: number, patch: Partial<AccountDraft>) => {
     setAccounts((current) => current.map((account, i) => i === index ? { ...account, ...patch } : account));
@@ -189,6 +235,18 @@ export function InicializacionCuentasDialog(): ReactElement {
       ...(fechaCorte.trim() ? { fechaCorte: fechaCorte.trim() } : {}),
       monedaFuncional,
       ...(Object.keys(tasas).length > 0 ? { tasas } : {}),
+      ...(canInventory && inventory.length ? { inventario: inventory.map((row) => ({
+        referenciaFila: row.referenciaFila,
+        ...(row.productoId ? { productoId: row.productoId } : {}),
+        ...(row.almacenId ? { almacenId: row.almacenId } : {}),
+        ...(row.ubicacionId ? { ubicacionId: row.ubicacionId } : {}),
+        ...(row.loteCodigo ? { loteCodigo: row.loteCodigo } : {}),
+        ...(row.cantidad.trim() ? { cantidad: row.cantidad.trim() } : {}),
+        ...(row.costoUnitario.trim() ? { costoUnitario: row.costoUnitario.trim() } : {}),
+        moneda: row.moneda,
+        ...(row.tasaCambio.trim() ? { tasaCambio: row.tasaCambio.trim() } : {}),
+        ...(row.fechaVencimiento ? { fechaVencimiento: row.fechaVencimiento } : {}),
+      })) } : {}),
       cuentas: accounts.map((account) => {
         const saldoPositivo = Number(account.saldoInicial) > 0;
         // El contrato parcial valida los campos que recibe: un texto vacío
@@ -232,7 +290,7 @@ export function InicializacionCuentasDialog(): ReactElement {
     }
   };
 
-  const faltantes = computeFaltantes(accounts, fechaCorte, monedaFuncional);
+  const faltantes = computeFaltantes(accounts, fechaCorte, monedaFuncional, inventory);
   const totals = computeTotals(accounts, monedaFuncional);
 
   const submit = async () => {
@@ -276,10 +334,40 @@ export function InicializacionCuentasDialog(): ReactElement {
             : {}),
         };
       });
-      const result = await initializeBankAccountsAction({ idempotencyKey: key, ...payload, fechaCorte: fechaCorteConfirm, cuentas });
+      const initialInventory = inventory.map((row) => {
+        if (!row.productoId || !row.almacenId || !row.loteCodigo.trim()
+          || !row.cantidad.trim() || !row.costoUnitario.trim()) {
+          throw new Error('Completa producto, almacén, lote, cantidad y costo del inventario inicial');
+        }
+        return {
+          referenciaFila: row.referenciaFila,
+          productoId: row.productoId,
+          almacenId: row.almacenId,
+          loteCodigo: row.loteCodigo.trim(),
+          cantidad: row.cantidad.trim(),
+          costoUnitario: row.costoUnitario.trim(),
+          moneda: row.moneda,
+          fechaCorte: fechaCorteConfirm,
+          ...(row.ubicacionId ? { ubicacionId: row.ubicacionId } : {}),
+          ...(row.fechaVencimiento ? { fechaVencimiento: row.fechaVencimiento } : {}),
+          ...(row.tasaCambio ? { tasaCambio: row.tasaCambio.trim() } : {}),
+        };
+      });
+      const confirmedBasePayload = {
+        fechaCorte: fechaCorteConfirm,
+        monedaFuncional: payload.monedaFuncional,
+        ...(payload.tasas ? { tasas: payload.tasas } : {}),
+      };
+      const result = await initializeBankAccountsAction({
+        idempotencyKey: key,
+        ...confirmedBasePayload,
+        cuentas,
+        ...(canInventory && initialInventory.length ? { inventario: initialInventory } : {}),
+      });
       if (!result.success) throw new Error(result.error?.message || 'No se pudo inicializar la contabilidad');
       toast.success(result.data?.replayed ? 'Se recuperó la inicialización ya registrada' : 'Cuentas inicializadas');
       setAccounts([newAccount()]);
+      setInventory([]);
       setKey(crypto.randomUUID());
       setStep('form');
       setResumed(false);
@@ -335,6 +423,16 @@ export function InicializacionCuentasDialog(): ReactElement {
                 </div>}
               </section>
             ))}
+            {canInventory && (
+              <InitialInventoryOpeningSection
+                rows={inventory}
+                products={products}
+                warehouses={warehouses}
+                currencies={user?.planFeatures?.['multi-moneda'] ? ['CUP', 'USD', 'MLC'] : [monedaFuncional]}
+                functionalCurrency={monedaFuncional}
+                onChange={setInventory}
+              />
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Fecha de corte"><Input type="date" value={fechaCorte} onChange={(e) => setFechaCorte(e.target.value)} /></Field>
               <Field label="Moneda funcional"><Select value={monedaFuncional} onValueChange={setMonedaFuncional}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CUP">CUP</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="MLC">MLC</SelectItem></SelectContent></Select></Field>
