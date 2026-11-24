@@ -25,13 +25,15 @@ vi.mock('../../../src/generated/prisma', () => ({
       review: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('review'); return { count: 1 }; }) },
       tenantMembership: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('membership'); return { count: 1 }; }) },
       tenantLicense: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('license'); return { count: 1 }; }) },
-      producto: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('producto'); return { count: 2 }; }) },
+      tenantAccountingPolicy: { create: vi.fn() },
+      moneda: { upsert: vi.fn() },
+      producto: { create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('producto'); return { count: 2 }; }) },
       servicios: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('servicio'); return { count: 2 }; }) },
-      vendor: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('vendor'); return { count: 1 }; }) },
-      cliente: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('cliente'); return { count: 1 }; }) },
+      vendor: { create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('vendor'); return { count: 1 }; }) },
+      cliente: { create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('cliente'); return { count: 1 }; }) },
       unidad: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('unidad'); return { count: 2 }; }) },
-      categoria: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('categoria'); return { count: 1 }; }) },
-      almacen: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('almacen'); return { count: 1 }; }) },
+      categoria: { create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('categoria'); return { count: 1 }; }) },
+      almacen: { create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('almacen'); return { count: 1 }; }) },
       // LP-1.4: fixtures de listas de precios sembradas por seedPrecioListaCatalog.
       listaPrecio: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('listaPrecio'); return { count: 2 }; }) },
       precioProducto: { upsert: vi.fn(), deleteMany: vi.fn(() => { state.deleted.push('precioProducto'); return { count: 2 }; }) },
@@ -118,6 +120,14 @@ it('returns fixture ownership and removes every owned record during teardown', a
     almacenId: `${ownership.tenantId}-almacen-principal`,
     productoId: `${ownership.tenantId}-producto-aceite`,
     proveedorId: `${ownership.tenantId}-proveedor-1`,
+  });
+  expect(ownership.initTenant).toMatchObject({
+    tenantId: `${ownership.tenantId}-init`,
+    email: expect.stringMatching(/^e2e-.*-init@test\.invalid$/),
+    productoId: `${ownership.tenantId}-init-producto`,
+    almacenId: `${ownership.tenantId}-init-almacen`,
+    clienteId: `${ownership.tenantId}-init-cliente`,
+    proveedorId: `${ownership.tenantId}-init-proveedor`,
   });
   await cleanup(ownership);
   expect(state.deleted).toEqual(['schema', 'schema']);
