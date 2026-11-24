@@ -38,7 +38,7 @@ export function IncomeStatement({ statement, currency: rawCurrency, isVisible = 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <ResultMetric label="Ingresos totales" value={annual.totalIngresos} detail="Ventas y servicios cobrados" tone="positive" currency={currency} icon={ArrowUpRight} />
+        <ResultMetric label="Ingresos totales" value={annual.totalIngresos} detail="Ventas y servicios reconocidos" tone="positive" currency={currency} icon={ArrowUpRight} />
         <ResultMetric label="Gastos totales" value={annual.totalGastos} detail="Compras, operación y nómina" tone="negative" currency={currency} icon={ArrowDownRight} />
         <ResultMetric label="Utilidad neta" value={annual.utilidadNeta} detail="Resultado reconciliado del período" tone={annual.utilidadNeta >= 0 ? 'positive' : 'negative'} currency={currency} icon={TrendingUp} />
       </div>
