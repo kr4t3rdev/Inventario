@@ -45,7 +45,7 @@ export function InitialReceivablesOpeningSection({
     <section className="space-y-3 rounded-md border p-4" aria-label="Cuentas por cobrar iniciales">
       <div className="flex items-center justify-between">
         <h3 className="font-medium">Cuentas por cobrar iniciales</h3>
-        <Button type="button" variant="outline" onClick={() => onChange([...rows, newInitialReceivableDraft()])}>
+        <Button type="button" variant="outline" onClick={() => onChange([...rows, { ...newInitialReceivableDraft(), moneda: functionalCurrency }])}>
           <Plus className="mr-2 h-4 w-4" />Agregar cuenta por cobrar
         </Button>
       </div>

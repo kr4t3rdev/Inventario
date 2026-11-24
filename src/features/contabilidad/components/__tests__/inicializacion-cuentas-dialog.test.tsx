@@ -8,6 +8,7 @@ const paymentTypesMock = vi.hoisted(() => vi.fn());
 const authUserMock = vi.hoisted(() => vi.fn());
 const getProductsMock = vi.hoisted(() => vi.fn());
 const getWarehousesMock = vi.hoisted(() => vi.fn());
+const getClientsMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
 const toastErrorMock = vi.hoisted(() => vi.fn());
 const toastSuccessMock = vi.hoisted(() => vi.fn());
@@ -20,6 +21,7 @@ vi.mock('@/features/contabilidad/actions-cuentas-bancarias', () => ({ initialize
 vi.mock('@/features/contabilidad/actions-tipos-pago', () => ({ getTiposPagoAction: paymentTypesMock }));
 vi.mock('@/features/productos/actions-crud', () => ({ getProductosAction: getProductsMock }));
 vi.mock('@/features/almacenes/actions', () => ({ getAlmacenesAction: getWarehousesMock }));
+vi.mock('@/features/clientes/actions', () => ({ getClientesAction: getClientsMock }));
 vi.mock('@/features/contabilidad/actions-inicializacion-borrador', () => ({
   guardarBorradorInicializacionAction: guardarBorradorMock,
   obtenerBorradorActualInicializacionAction: obtenerActualMock,
@@ -89,6 +91,7 @@ describe('InicializacionCuentasDialog', () => {
     authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: {} } });
     getProductsMock.mockResolvedValue({ success: true, data: [] });
     getWarehousesMock.mockResolvedValue({ success: true, data: [] });
+    getClientsMock.mockResolvedValue({ success: true, data: [] });
     initializeMock.mockResolvedValue({ success: false, error: { message: 'Carga bloqueada' } });
     guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'request-1', estado: 'BORRADOR' } });
     obtenerActualMock.mockResolvedValue({ success: true, data: null });
@@ -290,5 +293,89 @@ describe('InicializacionCuentasDialog', () => {
       productoId: 'product-1', almacenId: 'warehouse-1', loteCodigo: 'LOTE-1',
       cantidad: '2', costoUnitario: '50', moneda: 'CUP',
     });
+  });
+
+  it('incluye las CxC externas en el borrador y la confirmación con plan habilitado', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: { clientes: true, 'cuentas-cobrar': true, 'multi-moneda': true } } });
+    getClientsMock.mockResolvedValue({ success: true, data: [{ clienteId: 'client-1', nombre: 'Cliente QA' }] });
+    initializeMock.mockResolvedValue({ success: true, data: { replayed: false } });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por cobrar' }));
+    await user.click(screen.getByLabelText('Cliente de cuenta por cobrar'));
+    await user.click(await screen.findByRole('option', { name: 'Cliente QA' }));
+    await user.type(screen.getByLabelText('Saldo inicial de CxC'), '250');
+    await user.click(screen.getByLabelText('Moneda de CxC'));
+    await user.click(screen.getByRole('option', { name: 'USD' }));
+    await user.type(screen.getByLabelText('Tasa de cambio de CxC'), '24');
+    await user.click(screen.getByLabelText('Moneda de CxC'));
+    await user.click(screen.getByRole('option', { name: 'CUP' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    expect(guardarBorradorMock.mock.calls[0][0].borrador.cuentasPorCobrar[0]).toMatchObject({ clienteId: 'client-1', saldo: '250', moneda: 'CUP' });
+    expect(guardarBorradorMock.mock.calls[0][0].borrador.cuentasPorCobrar[0]).not.toHaveProperty('tasaCambio');
+    await fillAccount(user, { nombre: 'Caja', banco: 'Banco QA', numero: 'QA-04', saldo: '0' });
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+    expect(screen.getByText(/Total funcional: 250 CUP/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Inicializar cuentas' }));
+    expect(initializeMock.mock.calls[0][0].cuentasPorCobrar[0]).toMatchObject({ clienteId: 'client-1', saldo: '250', moneda: 'CUP' });
+    expect(initializeMock.mock.calls[0][0].cuentasPorCobrar[0]).not.toHaveProperty('tasaCambio');
+  });
+
+  it('bloquea guardar si el plan perdió acceso a las CxC del borrador', async () => {
+    const user = userEvent.setup();
+    obtenerActualMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'restricted', borrador: {
+      cuentasPorCobrar: [{ referenciaFila: 'row-1', clienteId: 'client-1', saldo: '250', moneda: 'CUP' }],
+    } } });
+    await openDialog(user);
+    expect(await screen.findByText(/El plan actual ya no permite confirmar las CxC/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
+    expect(guardarBorradorMock).not.toHaveBeenCalled();
+  });
+
+  it('bloquea guardar intereses restaurados sin acceso a préstamos', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: { clientes: true, 'cuentas-cobrar': true } } });
+    obtenerActualMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'loan', borrador: {
+      cuentasPorCobrar: [{ referenciaFila: 'loan-1', clienteId: 'client-1', saldo: '300', moneda: 'CUP', tasaInteres: '5', tasaInteresMoratorio: '2' }],
+    } } });
+    getClientsMock.mockResolvedValue({ success: true, data: [{ clienteId: 'client-1', nombre: 'Cliente QA' }] });
+    await openDialog(user);
+    expect(await screen.findByText(/El plan actual ya no permite préstamos/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
+  });
+
+  it('preserva tasas de préstamo parciales en el borrador y bloquea confirmar', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: { clientes: true, 'cuentas-cobrar': true, 'prestamos-cash': true } } });
+    getClientsMock.mockResolvedValue({ success: true, data: [{ clienteId: 'client-1', nombre: 'Cliente QA' }] });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por cobrar' }));
+    await user.click(screen.getByLabelText('Cliente de cuenta por cobrar'));
+    await user.click(await screen.findByRole('option', { name: 'Cliente QA' }));
+    await user.type(screen.getByLabelText('Saldo inicial de CxC'), '300');
+    await user.type(screen.getByLabelText('Interés ordinario del préstamo'), '5');
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    expect(guardarBorradorMock.mock.calls[0][0].borrador.cuentasPorCobrar[0].tasaInteres).toBe('5');
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('verifica las tasas de interés del préstamo');
+  });
+
+  it('rechaza saldos y tasas CxC que no cumplen el formato decimal', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: { clientes: true, 'cuentas-cobrar': true, 'multi-moneda': true, 'prestamos-cash': true } } });
+    getClientsMock.mockResolvedValue({ success: true, data: [{ clienteId: 'client-1', nombre: 'Cliente QA' }] });
+    await openDialog(user);
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por cobrar' }));
+    await user.click(screen.getByLabelText('Cliente de cuenta por cobrar'));
+    await user.click(await screen.findByRole('option', { name: 'Cliente QA' }));
+    await user.type(screen.getByLabelText('Saldo inicial de CxC'), '1e2');
+    await user.click(screen.getByLabelText('Moneda de CxC'));
+    await user.click(screen.getByRole('option', { name: 'USD' }));
+    await user.type(screen.getByLabelText('Tasa de cambio de CxC'), 'abc');
+    await user.type(screen.getByLabelText('Interés ordinario del préstamo'), '1e2');
+    await user.type(screen.getByLabelText('Interés moratorio del préstamo'), '-1');
+    await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(/falta un saldo mayor que cero[\s\S]*falta una tasa de cambio mayor que cero[\s\S]*verifica las tasas de interés/);
+    expect(screen.getByRole('button', { name: 'Inicializar cuentas' })).toBeDisabled();
   });
 });
