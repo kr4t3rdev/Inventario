@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({ user: { role: 'manager', planFeatures: {} } }),
+}));
 
 vi.mock('@/features/contabilidad/actions-cuentas-bancarias', () => ({
   createCuentaBancariaAction: mocks.createCuentaBancariaAction,
