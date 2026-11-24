@@ -9,6 +9,7 @@ const authUserMock = vi.hoisted(() => vi.fn());
 const getProductsMock = vi.hoisted(() => vi.fn());
 const getWarehousesMock = vi.hoisted(() => vi.fn());
 const getClientsMock = vi.hoisted(() => vi.fn());
+const getVendorsMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
 const toastErrorMock = vi.hoisted(() => vi.fn());
 const toastSuccessMock = vi.hoisted(() => vi.fn());
@@ -22,6 +23,7 @@ vi.mock('@/features/contabilidad/actions-tipos-pago', () => ({ getTiposPagoActio
 vi.mock('@/features/productos/actions-crud', () => ({ getProductosAction: getProductsMock }));
 vi.mock('@/features/almacenes/actions', () => ({ getAlmacenesAction: getWarehousesMock }));
 vi.mock('@/features/clientes/actions', () => ({ getClientesAction: getClientsMock }));
+vi.mock('@/features/vendors/actions', () => ({ getVendorsAction: getVendorsMock }));
 vi.mock('@/features/contabilidad/actions-inicializacion-borrador', () => ({
   guardarBorradorInicializacionAction: guardarBorradorMock,
   obtenerBorradorActualInicializacionAction: obtenerActualMock,
@@ -92,6 +94,7 @@ describe('InicializacionCuentasDialog', () => {
     getProductsMock.mockResolvedValue({ success: true, data: [] });
     getWarehousesMock.mockResolvedValue({ success: true, data: [] });
     getClientsMock.mockResolvedValue({ success: true, data: [] });
+    getVendorsMock.mockResolvedValue({ success: true, data: [] });
     initializeMock.mockResolvedValue({ success: false, error: { message: 'Carga bloqueada' } });
     guardarBorradorMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'request-1', estado: 'BORRADOR' } });
     obtenerActualMock.mockResolvedValue({ success: true, data: null });
@@ -377,5 +380,39 @@ describe('InicializacionCuentasDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Revisar y confirmar' }));
     expect(screen.getByRole('alert')).toHaveTextContent(/falta un saldo mayor que cero[\s\S]*falta una tasa de cambio mayor que cero[\s\S]*verifica las tasas de interés/);
     expect(screen.getByRole('button', { name: 'Inicializar cuentas' })).toBeDisabled();
+  });
+
+  it('captura y guarda CxP iniciales cuando el plan habilita proveedores y pagar', async () => {
+    const user = userEvent.setup();
+    authUserMock.mockReturnValue({ user: { role: 'manager', planFeatures: {
+      proveedores: true, 'cuentas-pagar': true,
+    } } });
+    getVendorsMock.mockResolvedValue({ success: true, data: [{ vendorId: 'vendor-1', nombre: 'Proveedor QA' }] });
+    await openDialog(user);
+
+    expect(getVendorsMock).toHaveBeenCalledOnce();
+    expect(screen.getByRole('region', { name: 'Cuentas por pagar iniciales' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Agregar cuenta por pagar' }));
+    await user.click(screen.getByLabelText('Proveedor de cuenta por pagar'));
+    await user.click(await screen.findByRole('option', { name: 'Proveedor QA' }));
+    await user.type(screen.getByLabelText('Referencia externa de CxP'), 'FAC-EXT-1');
+    await user.type(screen.getByLabelText('Saldo inicial de CxP'), '350');
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+
+    expect(guardarBorradorMock.mock.calls[0][0].borrador.cuentasPorPagar).toEqual([
+      expect.objectContaining({ proveedorId: 'vendor-1', referenciaExterna: 'FAC-EXT-1', saldo: '350', moneda: 'CUP' }),
+    ]);
+  });
+
+  it('conserva CxP de un borrador cuando el plan dejó de permitirlas y bloquea cambios', async () => {
+    const user = userEvent.setup();
+    obtenerActualMock.mockResolvedValue({ success: true, data: { idempotencyKey: 'restricted', borrador: {
+      cuentasPorPagar: [{ referenciaFila: 'row-1', proveedorId: 'vendor-1', saldo: '350', moneda: 'CUP' }],
+    } } });
+    await openDialog(user);
+
+    expect(await screen.findByText(/El plan actual ya no permite confirmar las CxP/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
+    expect(guardarBorradorMock).not.toHaveBeenCalled();
   });
 });
