@@ -147,14 +147,17 @@ sesión/caché; no se sorteará este comportamiento hasta acordar autenticación
 ### Fase 2 — Backend: feed de sincronización
 
 - [x] Autorizar soporte de esquema para el registro transaccional de cambios.
-- [ ] Diseñar snapshot inicial y pull incremental por cursor en el OpenAPI móvil.
-- [ ] Definir orden total, cursores opacos, reanudación, expiración y paginación.
-- [ ] Asegurar aislamiento por tenant y autorización por operación.
-- [ ] Registrar los cambios de dominio y los realizados desde web en el mismo
-  límite transaccional apropiado; definir estrategia de retención/reconstrucción.
-- [ ] Añadir pruebas de contrato, aislamiento, concurrencia y recuperación antes de
-  activar el endpoint.
-- [ ] Regenerar SDKs solo tras validar el contrato.
+- [x] Diseñar snapshot inicial y pull incremental por cursor en el OpenAPI móvil.
+- [x] Definir orden total por secuencia tenant-local, cursores opacos firmados,
+  reanudación y paginación con watermark fijo.
+- [x] No aplicar expiración automática ni purga hasta que se apruebe la política de
+  retención; el cliente puede reiniciar con un snapshot si un cursor no valida.
+- [x] Asegurar aislamiento por tenant y autenticación por operación.
+- [x] Registrar cambios de producto/stock, incluidos borrados, en la transacción que
+  modifica las tablas de dominio.
+- [ ] Definir estrategia futura de retención y reconstrucción del feed.
+- [x] Añadir pruebas de contrato, aislamiento, orden y rollback transaccional.
+- [x] Regenerar SDKs tras validar el contrato y las pruebas de endpoint.
 
 ### Fase 3 — iOS: sincronización incremental de lectura
 

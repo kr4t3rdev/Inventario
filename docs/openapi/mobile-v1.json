@@ -11304,6 +11304,184 @@
         "description": "Devuelve el inventario disponible en un almacén o punto de venta específico."
       }
     },
+    "/products/sync/snapshot": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Obtener una página inicial del catálogo sincronizable",
+        "operationId": "mobileGetProductsSyncSnapshot",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            }
+          },
+          {
+            "name": "pageToken",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token opaco de continuación, ligado al tenant autenticado."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página del catálogo y cursor base para comenzar el pull incremental al terminar el snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsSyncSnapshotResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros o token de continuación inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El usuario autenticado no tiene un tenant activo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo."
+      }
+    },
+    "/products/sync/changes": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Consultar cambios incrementales de productos",
+        "operationId": "mobileGetProductsSyncChanges",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cursor opaco tenant-scoped recibido del snapshot o del pull anterior."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página ordenada de cambios y cursor reanudable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsSyncChangesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cursor o parámetros inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El usuario autenticado no tiene un tenant activo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase."
+      }
+    },
     "/products/{id}": {
       "get": {
         "tags": [
@@ -17197,6 +17375,324 @@
         },
         "additionalProperties": false
       },
+      "MobileSyncProduct": {
+        "type": "object",
+        "description": "Proyección offline del producto. No contiene precioCosto ni otros datos de costo.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "precioVenta": {
+            "type": "integer"
+          },
+          "stock": {
+            "type": "integer"
+          },
+          "stockMinimo": {
+            "type": "integer"
+          },
+          "codigoInterno": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "codigoNegocio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "atributoJson": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "esVariante": {
+            "type": "boolean"
+          },
+          "plantillaId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proveedorCodigo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "idSeccionCodigo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "especificoCodigo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "surtidoCodigo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dcCodigo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categoriaId": {
+            "type": "string"
+          },
+          "subcategoriaId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unidadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vendorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "almacenId": {
+            "type": "string"
+          },
+          "puntoDeVentaId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fotos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "esCompuesto": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "categoria": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "catId": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "catId",
+              "nombre"
+            ],
+            "additionalProperties": false
+          },
+          "subcategoria": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "catId": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "parentId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "catId",
+              "nombre",
+              "parentId"
+            ],
+            "additionalProperties": false
+          },
+          "unidad": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "unidadId": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "simbolo": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "unidadId",
+              "nombre",
+              "simbolo"
+            ],
+            "additionalProperties": false
+          },
+          "vendor": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "vendorId": {
+                "type": "string"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "vendorId",
+              "nombre"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "descripcion",
+          "precioVenta",
+          "stock",
+          "stockMinimo",
+          "codigoInterno",
+          "codigoNegocio",
+          "sku",
+          "atributoJson",
+          "esVariante",
+          "plantillaId",
+          "proveedorCodigo",
+          "idSeccionCodigo",
+          "especificoCodigo",
+          "surtidoCodigo",
+          "dcCodigo",
+          "categoriaId",
+          "subcategoriaId",
+          "unidadId",
+          "vendorId",
+          "almacenId",
+          "puntoDeVentaId",
+          "fotos",
+          "esCompuesto",
+          "createdAt",
+          "updatedAt",
+          "categoria",
+          "subcategoria",
+          "unidad",
+          "vendor"
+        ],
+        "additionalProperties": false
+      },
+      "MobileProductSyncChange": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/MobileProductSyncUpsert"
+          },
+          {
+            "$ref": "#/components/schemas/MobileProductSyncDelete"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "operation",
+          "mapping": {
+            "UPSERT": "#/components/schemas/MobileProductSyncUpsert",
+            "DELETE": "#/components/schemas/MobileProductSyncDelete"
+          }
+        }
+      },
+      "MobileProductSyncUpsert": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "operation": {
+            "const": "UPSERT"
+          },
+          "product": {
+            "$ref": "#/components/schemas/MobileSyncProduct"
+          }
+        },
+        "required": [
+          "sequence",
+          "productId",
+          "operation",
+          "product"
+        ],
+        "additionalProperties": false
+      },
+      "MobileProductSyncDelete": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "operation": {
+            "const": "DELETE"
+          }
+        },
+        "required": [
+          "sequence",
+          "productId",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
       "Product": {
         "type": "object",
         "properties": {
@@ -20189,6 +20685,55 @@
         },
         "required": [
           "items"
+        ],
+        "additionalProperties": false
+      },
+      "GetProductsSyncSnapshotResponse": {
+        "type": "object",
+        "description": "Página de snapshot con un cursor base para recibir cambios posteriores.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MobileSyncProduct"
+            }
+          },
+          "nextPageToken": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Token opaco para continuar el snapshot; nulo al llegar a la última página."
+          },
+          "changesCursor": {
+            "type": "string",
+            "description": "Cursor de cambios con el watermark capturado al iniciar el snapshot."
+          }
+        },
+        "required": [
+          "items",
+          "nextPageToken",
+          "changesCursor"
+        ],
+        "additionalProperties": false
+      },
+      "GetProductsSyncChangesResponse": {
+        "type": "object",
+        "description": "Página de eventos y cursor reanudable.",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MobileProductSyncChange"
+            }
+          },
+          "cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "changes",
+          "cursor"
         ],
         "additionalProperties": false
       },

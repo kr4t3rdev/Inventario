@@ -69,14 +69,14 @@ const productRow = {
 describe('mobile product sync service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCursorFindUnique.mockResolvedValue({ lastSequence: 0n });
+    mockCursorFindUnique.mockResolvedValue({ lastSequence: BigInt(0) });
     mockProductFindMany.mockResolvedValue([]);
     mockChangeFindMany.mockResolvedValue([]);
     mockStockTotals.mockResolvedValue(new Map());
   });
 
   it('returns a tenant-scoped snapshot page without product cost', async () => {
-    mockCursorFindUnique.mockResolvedValue({ lastSequence: 12n });
+    mockCursorFindUnique.mockResolvedValue({ lastSequence: BigInt(12) });
     mockProductFindMany.mockResolvedValue([
       productRow,
       { ...productRow, id: 'product-b', nombre: 'Frijol' },
@@ -134,10 +134,10 @@ describe('mobile product sync service', () => {
       after: '10',
       upperBound: null,
     });
-    mockCursorFindUnique.mockResolvedValue({ lastSequence: 14n });
+    mockCursorFindUnique.mockResolvedValue({ lastSequence: BigInt(14) });
     mockChangeFindMany.mockResolvedValue([
-      { tenantId: 'tenant-a', sequence: 11n, productId: 'product-a', operation: 'UPSERT' },
-      { tenantId: 'tenant-a', sequence: 12n, productId: 'product-a', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: BigInt(11), productId: 'product-a', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: BigInt(12), productId: 'product-a', operation: 'UPSERT' },
     ]);
     mockProductFindMany.mockResolvedValue([productRow]);
     mockStockTotals.mockResolvedValue(new Map([['product-a', 6]]));
@@ -151,7 +151,7 @@ describe('mobile product sync service', () => {
     expect(mockChangeFindMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         tenantId: 'tenant-a',
-        sequence: { gt: 10n, lte: 14n },
+        sequence: { gt: BigInt(10), lte: BigInt(14) },
       },
       orderBy: { sequence: 'asc' },
       take: 2,
@@ -176,9 +176,9 @@ describe('mobile product sync service', () => {
       after: '0',
       upperBound: null,
     });
-    mockCursorFindUnique.mockResolvedValue({ lastSequence: 1n });
+    mockCursorFindUnique.mockResolvedValue({ lastSequence: BigInt(1) });
     mockChangeFindMany.mockResolvedValue([
-      { tenantId: 'tenant-a', sequence: 1n, productId: 'deleted-product', operation: 'UPSERT' },
+      { tenantId: 'tenant-a', sequence: BigInt(1), productId: 'deleted-product', operation: 'UPSERT' },
     ]);
     mockProductFindMany.mockResolvedValue([]);
 
@@ -194,6 +194,36 @@ describe('mobile product sync service', () => {
     expect(decodeChangesCursor(result.cursor, 'tenant-a')).toEqual({
       tenantId: 'tenant-a',
       after: '1',
+      upperBound: null,
+    });
+  });
+
+  it('finishes a pinned pull window before capturing later writes', async () => {
+    const cursor = encodeChangesCursor({
+      tenantId: 'tenant-a',
+      after: '12',
+      upperBound: '14',
+    });
+    mockChangeFindMany.mockResolvedValue([
+      { tenantId: 'tenant-a', sequence: BigInt(14), productId: 'product-gone', operation: 'DELETE' },
+    ]);
+
+    const result = await pullProductChanges({
+      tenantId: 'tenant-a',
+      cursor,
+      limit: 10,
+    });
+
+    expect(mockCursorFindUnique).not.toHaveBeenCalled();
+    expect(mockChangeFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { tenantId: 'tenant-a', sequence: { gt: BigInt(12), lte: BigInt(14) } },
+    }));
+    expect(result.changes).toEqual([
+      { sequence: '14', productId: 'product-gone', operation: 'DELETE' },
+    ]);
+    expect(decodeChangesCursor(result.cursor, 'tenant-a')).toEqual({
+      tenantId: 'tenant-a',
+      after: '14',
       upperBound: null,
     });
   });

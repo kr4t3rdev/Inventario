@@ -212,6 +212,8 @@ docs/GetProduccionListResponse.md
 docs/GetProductsIdResponse.md
 docs/GetProductsResponse.md
 docs/GetProductsStockResponse.md
+docs/GetProductsSyncChangesResponse.md
+docs/GetProductsSyncSnapshotResponse.md
 docs/GetPuntosVentaDetailResponse.md
 docs/GetPuntosVentaListResponse.md
 docs/GetReparacionesDetailResponse.md
@@ -233,6 +235,14 @@ docs/LoginRequest.md
 docs/Merma.md
 docs/MermasApi.md
 docs/MobileCreateUnitRequest.md
+docs/MobileProductSyncChange.md
+docs/MobileProductSyncDelete.md
+docs/MobileProductSyncUpsert.md
+docs/MobileSyncProduct.md
+docs/MobileSyncProductCategoria.md
+docs/MobileSyncProductSubcategoria.md
+docs/MobileSyncProductUnidad.md
+docs/MobileSyncProductVendor.md
 docs/MobileUpdateUnitRequest.md
 docs/Oferta.md
 docs/OfertasApi.md
@@ -575,6 +585,8 @@ src/models/GetProduccionListResponse.ts
 src/models/GetProductsIdResponse.ts
 src/models/GetProductsResponse.ts
 src/models/GetProductsStockResponse.ts
+src/models/GetProductsSyncChangesResponse.ts
+src/models/GetProductsSyncSnapshotResponse.ts
 src/models/GetPuntosVentaDetailResponse.ts
 src/models/GetPuntosVentaListResponse.ts
 src/models/GetReparacionesDetailResponse.ts
@@ -594,6 +606,14 @@ src/models/LockAdminUserRequest.ts
 src/models/LoginRequest.ts
 src/models/Merma.ts
 src/models/MobileCreateUnitRequest.ts
+src/models/MobileProductSyncChange.ts
+src/models/MobileProductSyncDelete.ts
+src/models/MobileProductSyncUpsert.ts
+src/models/MobileSyncProduct.ts
+src/models/MobileSyncProductCategoria.ts
+src/models/MobileSyncProductSubcategoria.ts
+src/models/MobileSyncProductUnidad.ts
+src/models/MobileSyncProductVendor.ts
 src/models/MobileUpdateUnitRequest.ts
 src/models/Oferta.ts
 src/models/OrdenProduccion.ts

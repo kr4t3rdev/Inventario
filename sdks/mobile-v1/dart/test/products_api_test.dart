@@ -44,5 +44,23 @@ void main() {
       // TODO
     });
 
+    // Consultar cambios incrementales de productos
+    //
+    // Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+    //
+    //Future<GetProductsSyncChangesResponse> mobileGetProductsSyncChanges(String cursor, { int limit }) async
+    test('test mobileGetProductsSyncChanges', () async {
+      // TODO
+    });
+
+    // Obtener una página inicial del catálogo sincronizable
+    //
+    // Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+    //
+    //Future<GetProductsSyncSnapshotResponse> mobileGetProductsSyncSnapshot({ int limit, String pageToken }) async
+    test('test mobileGetProductsSyncSnapshot', () async {
+      // TODO
+    });
+
   });
 }

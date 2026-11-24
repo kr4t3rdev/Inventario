@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { getJwtSecret } from '@/lib/secrets';
 
 const MAX_CURSOR_LENGTH = 4096;
-const MAX_POSTGRES_BIGINT = 9_223_372_036_854_775_807n;
+const MAX_POSTGRES_BIGINT = BigInt('9223372036854775807');
 const TOKEN_PATTERN = /^([A-Za-z0-9_-]+)\.([A-Fa-f0-9]{64})$/;
 
 interface CursorPayloadBase {

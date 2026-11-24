@@ -19,6 +19,8 @@ import type {
   GetProductsIdResponse,
   GetProductsResponse,
   GetProductsStockResponse,
+  GetProductsSyncChangesResponse,
+  GetProductsSyncSnapshotResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -29,6 +31,10 @@ import {
     GetProductsResponseToJSON,
     GetProductsStockResponseFromJSON,
     GetProductsStockResponseToJSON,
+    GetProductsSyncChangesResponseFromJSON,
+    GetProductsSyncChangesResponseToJSON,
+    GetProductsSyncSnapshotResponseFromJSON,
+    GetProductsSyncSnapshotResponseToJSON,
 } from '../models/index';
 
 export interface MobileGetProductsByIdRequest {
@@ -39,6 +45,16 @@ export interface MobileGetProductsStockRequest {
     ubicacionId?: string;
     tipoUbicacion?: MobileGetProductsStockTipoUbicacionEnum;
     includeZero?: MobileGetProductsStockIncludeZeroEnum;
+}
+
+export interface MobileGetProductsSyncChangesRequest {
+    cursor: string;
+    limit?: number;
+}
+
+export interface MobileGetProductsSyncSnapshotRequest {
+    limit?: number;
+    pageToken?: string;
 }
 
 /**
@@ -96,6 +112,40 @@ export interface ProductsApiInterface {
      * Consultar existencias por ubicación
      */
     mobileGetProductsStock(requestParameters: MobileGetProductsStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsStockResponse>;
+
+    /**
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * @summary Consultar cambios incrementales de productos
+     * @param {string} cursor Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+     * @param {number} [limit] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProductsApiInterface
+     */
+    mobileGetProductsSyncChangesRaw(requestParameters: MobileGetProductsSyncChangesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetProductsSyncChangesResponse>>;
+
+    /**
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * Consultar cambios incrementales de productos
+     */
+    mobileGetProductsSyncChanges(requestParameters: MobileGetProductsSyncChangesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsSyncChangesResponse>;
+
+    /**
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * @summary Obtener una página inicial del catálogo sincronizable
+     * @param {number} [limit] 
+     * @param {string} [pageToken] Token opaco de continuación, ligado al tenant autenticado.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProductsApiInterface
+     */
+    mobileGetProductsSyncSnapshotRaw(requestParameters: MobileGetProductsSyncSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetProductsSyncSnapshotResponse>>;
+
+    /**
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * Obtener una página inicial del catálogo sincronizable
+     */
+    mobileGetProductsSyncSnapshot(requestParameters: MobileGetProductsSyncSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsSyncSnapshotResponse>;
 
 }
 
@@ -238,6 +288,107 @@ export class ProductsApi extends runtime.BaseAPI implements ProductsApiInterface
      */
     async mobileGetProductsStock(requestParameters: MobileGetProductsStockRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsStockResponse> {
         const response = await this.mobileGetProductsStockRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * Consultar cambios incrementales de productos
+     */
+    async mobileGetProductsSyncChangesRaw(requestParameters: MobileGetProductsSyncChangesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetProductsSyncChangesResponse>> {
+        if (requestParameters['cursor'] == null) {
+            throw new runtime.RequiredError(
+                'cursor',
+                'Required parameter "cursor" was null or undefined when calling mobileGetProductsSyncChanges().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['cursor'] != null) {
+            queryParameters['cursor'] = requestParameters['cursor'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/products/sync/changes`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetProductsSyncChangesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * Consultar cambios incrementales de productos
+     */
+    async mobileGetProductsSyncChanges(requestParameters: MobileGetProductsSyncChangesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsSyncChangesResponse> {
+        const response = await this.mobileGetProductsSyncChangesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * Obtener una página inicial del catálogo sincronizable
+     */
+    async mobileGetProductsSyncSnapshotRaw(requestParameters: MobileGetProductsSyncSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetProductsSyncSnapshotResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['pageToken'] != null) {
+            queryParameters['pageToken'] = requestParameters['pageToken'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/products/sync/snapshot`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetProductsSyncSnapshotResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * Obtener una página inicial del catálogo sincronizable
+     */
+    async mobileGetProductsSyncSnapshot(requestParameters: MobileGetProductsSyncSnapshotRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProductsSyncSnapshotResponse> {
+        const response = await this.mobileGetProductsSyncSnapshotRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

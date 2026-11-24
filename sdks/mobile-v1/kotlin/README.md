@@ -198,6 +198,8 @@ All URIs are relative to */api/mobile/v1*
 | *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
 | *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto |
 | *ProductsApi* | [**mobileGetProductsStock**](docs/ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación |
+| *ProductsApi* | [**mobileGetProductsSyncChanges**](docs/ProductsApi.md#mobilegetproductssyncchanges) | **GET** /products/sync/changes | Consultar cambios incrementales de productos |
+| *ProductsApi* | [**mobileGetProductsSyncSnapshot**](docs/ProductsApi.md#mobilegetproductssyncsnapshot) | **GET** /products/sync/snapshot | Obtener una página inicial del catálogo sincronizable |
 | *ProvidersApi* | [**mobileDeleteProvidersById**](docs/ProvidersApi.md#mobiledeleteprovidersbyid) | **DELETE** /providers/{id} | Eliminar proveedor |
 | *ProvidersApi* | [**mobileGetProviders**](docs/ProvidersApi.md#mobilegetproviders) | **GET** /providers | Listar proveedores |
 | *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor |
@@ -422,6 +424,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsResponse](docs/GetProductsResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsStockResponse](docs/GetProductsStockResponse.md)
+ - [com.tcp.mobile.v1.models.GetProductsSyncChangesResponse](docs/GetProductsSyncChangesResponse.md)
+ - [com.tcp.mobile.v1.models.GetProductsSyncSnapshotResponse](docs/GetProductsSyncSnapshotResponse.md)
  - [com.tcp.mobile.v1.models.GetPuntosVentaDetailResponse](docs/GetPuntosVentaDetailResponse.md)
  - [com.tcp.mobile.v1.models.GetPuntosVentaListResponse](docs/GetPuntosVentaListResponse.md)
  - [com.tcp.mobile.v1.models.GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
@@ -441,6 +445,14 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.LoginRequest](docs/LoginRequest.md)
  - [com.tcp.mobile.v1.models.Merma](docs/Merma.md)
  - [com.tcp.mobile.v1.models.MobileCreateUnitRequest](docs/MobileCreateUnitRequest.md)
+ - [com.tcp.mobile.v1.models.MobileProductSyncChange](docs/MobileProductSyncChange.md)
+ - [com.tcp.mobile.v1.models.MobileProductSyncDelete](docs/MobileProductSyncDelete.md)
+ - [com.tcp.mobile.v1.models.MobileProductSyncUpsert](docs/MobileProductSyncUpsert.md)
+ - [com.tcp.mobile.v1.models.MobileSyncProduct](docs/MobileSyncProduct.md)
+ - [com.tcp.mobile.v1.models.MobileSyncProductCategoria](docs/MobileSyncProductCategoria.md)
+ - [com.tcp.mobile.v1.models.MobileSyncProductSubcategoria](docs/MobileSyncProductSubcategoria.md)
+ - [com.tcp.mobile.v1.models.MobileSyncProductUnidad](docs/MobileSyncProductUnidad.md)
+ - [com.tcp.mobile.v1.models.MobileSyncProductVendor](docs/MobileSyncProductVendor.md)
  - [com.tcp.mobile.v1.models.MobileUpdateUnitRequest](docs/MobileUpdateUnitRequest.md)
  - [com.tcp.mobile.v1.models.Oferta](docs/Oferta.md)
  - [com.tcp.mobile.v1.models.OrdenProduccion](docs/OrdenProduccion.md)

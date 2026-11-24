@@ -154,4 +154,94 @@ open class ProductsAPI {
 
         return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }
+
+    /**
+     Consultar cambios incrementales de productos
+     
+     - parameter cursor: (query) Cursor opaco tenant-scoped recibido del snapshot o del pull anterior. 
+     - parameter limit: (query)  (optional, default to 200)
+     - returns: GetProductsSyncChangesResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetProductsSyncChanges(cursor: String, limit: Int? = nil) async throws -> GetProductsSyncChangesResponse {
+        return try await mobileGetProductsSyncChangesWithRequestBuilder(cursor: cursor, limit: limit).execute().body
+    }
+
+    /**
+     Consultar cambios incrementales de productos
+     - GET /products/sync/changes
+     - Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter cursor: (query) Cursor opaco tenant-scoped recibido del snapshot o del pull anterior. 
+     - parameter limit: (query)  (optional, default to 200)
+     - returns: RequestBuilder<GetProductsSyncChangesResponse> 
+     */
+    open class func mobileGetProductsSyncChangesWithRequestBuilder(cursor: String, limit: Int? = nil) -> RequestBuilder<GetProductsSyncChangesResponse> {
+        let localVariablePath = "/products/sync/changes"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "cursor": (wrappedValue: cursor.encodeToJSON(), isExplode: true),
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetProductsSyncChangesResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Obtener una página inicial del catálogo sincronizable
+     
+     - parameter limit: (query)  (optional, default to 200)
+     - parameter pageToken: (query) Token opaco de continuación, ligado al tenant autenticado. (optional)
+     - returns: GetProductsSyncSnapshotResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileGetProductsSyncSnapshot(limit: Int? = nil, pageToken: String? = nil) async throws -> GetProductsSyncSnapshotResponse {
+        return try await mobileGetProductsSyncSnapshotWithRequestBuilder(limit: limit, pageToken: pageToken).execute().body
+    }
+
+    /**
+     Obtener una página inicial del catálogo sincronizable
+     - GET /products/sync/snapshot
+     - Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter limit: (query)  (optional, default to 200)
+     - parameter pageToken: (query) Token opaco de continuación, ligado al tenant autenticado. (optional)
+     - returns: RequestBuilder<GetProductsSyncSnapshotResponse> 
+     */
+    open class func mobileGetProductsSyncSnapshotWithRequestBuilder(limit: Int? = nil, pageToken: String? = nil) -> RequestBuilder<GetProductsSyncSnapshotResponse> {
+        let localVariablePath = "/products/sync/snapshot"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        var localVariableUrlComponents = URLComponents(string: localVariableURLString)
+        localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+            "pageToken": (wrappedValue: pageToken?.encodeToJSON(), isExplode: true),
+        ])
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<GetProductsSyncSnapshotResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
 }

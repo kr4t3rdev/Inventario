@@ -11,6 +11,9 @@ const migrationPath = path.join(
 );
 const schemaName = `mobile_sync_${randomUUID().replaceAll('-', '')}`;
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const concurrentClient = new pg.Client({ connectionString: process.env.DATABASE_URL });
+let isConnected = false;
+let isConcurrentClientConnected = false;
 
 interface ChangeRow {
   tenantId: string;
@@ -22,6 +25,7 @@ interface ChangeRow {
 describe('mobile product sync journal triggers', () => {
   beforeAll(async () => {
     await client.connect();
+    isConnected = true;
     await client.query(`CREATE SCHEMA "${schemaName}"`);
     await client.query(`SET search_path TO "${schemaName}"`);
     await client.query(`
@@ -40,12 +44,19 @@ describe('mobile product sync journal triggers', () => {
       );
     `);
     await client.query(await readFile(migrationPath, 'utf8'));
+    await concurrentClient.connect();
+    isConcurrentClientConnected = true;
+    await concurrentClient.query(`SET search_path TO "${schemaName}"`);
   });
 
   afterAll(async () => {
-    if (client.ended) return;
-    await client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
-    await client.end();
+    if (isConnected) {
+      await client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
+      await client.end();
+    }
+    if (isConcurrentClientConnected) {
+      await concurrentClient.end();
+    }
   });
 
   it('records product and stock changes in tenant-local transactional order', async () => {
@@ -120,5 +131,30 @@ describe('mobile product sync journal triggers', () => {
       `SELECT 1 FROM "MobileProductSyncCursor" WHERE "tenantId" = 'tenant-c'`,
     );
     expect(cursor.rows).toHaveLength(0);
+  });
+
+  it('allocates distinct tenant-local sequences for concurrent product writes', async () => {
+    await client.query(`INSERT INTO "tenants" ("tenantId") VALUES ('tenant-race')`);
+
+    await Promise.all([
+      client.query(`
+        INSERT INTO "Producto" ("id", "tenantId", "nombre")
+        VALUES ('product-race-a', 'tenant-race', 'A')
+      `),
+      concurrentClient.query(`
+        INSERT INTO "Producto" ("id", "tenantId", "nombre")
+        VALUES ('product-race-b', 'tenant-race', 'B')
+      `),
+    ]);
+
+    const { rows } = await client.query<ChangeRow>(`
+      SELECT "tenantId", "sequence"::text, "productId", "operation"
+      FROM "MobileProductSyncChange"
+      WHERE "tenantId" = 'tenant-race'
+      ORDER BY "sequence"
+    `);
+    expect(rows.map((row) => row.sequence)).toEqual(['1', '2']);
+    expect(rows.map((row) => row.productId).sort()).toEqual(['product-race-a', 'product-race-b']);
+    expect(rows.every((row) => row.operation === 'UPSERT')).toBe(true);
   });
 });

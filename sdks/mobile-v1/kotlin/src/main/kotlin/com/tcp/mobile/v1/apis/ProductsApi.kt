@@ -23,6 +23,8 @@ import com.tcp.mobile.v1.models.ApiError
 import com.tcp.mobile.v1.models.GetProductsIdResponse
 import com.tcp.mobile.v1.models.GetProductsResponse
 import com.tcp.mobile.v1.models.GetProductsStockResponse
+import com.tcp.mobile.v1.models.GetProductsSyncChangesResponse
+import com.tcp.mobile.v1.models.GetProductsSyncSnapshotResponse
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -308,6 +310,172 @@ class ProductsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factor
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/products/stock",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /products/sync/changes
+     * Consultar cambios incrementales de productos
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * @param cursor Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+     * @param limit  (optional, default to 200)
+     * @return GetProductsSyncChangesResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetProductsSyncChanges(cursor: kotlin.String, limit: kotlin.Int? = 200) : GetProductsSyncChangesResponse {
+        val localVarResponse = mobileGetProductsSyncChangesWithHttpInfo(cursor = cursor, limit = limit)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as GetProductsSyncChangesResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /products/sync/changes
+     * Consultar cambios incrementales de productos
+     * Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+     * @param cursor Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+     * @param limit  (optional, default to 200)
+     * @return ApiResponse<GetProductsSyncChangesResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetProductsSyncChangesWithHttpInfo(cursor: kotlin.String, limit: kotlin.Int?) : ApiResponse<GetProductsSyncChangesResponse?> {
+        val localVariableConfig = mobileGetProductsSyncChangesRequestConfig(cursor = cursor, limit = limit)
+
+        return request<Unit, GetProductsSyncChangesResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetProductsSyncChanges
+     *
+     * @param cursor Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+     * @param limit  (optional, default to 200)
+     * @return RequestConfig
+     */
+    fun mobileGetProductsSyncChangesRequestConfig(cursor: kotlin.String, limit: kotlin.Int?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("cursor", listOf(cursor.toString()))
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/products/sync/changes",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /products/sync/snapshot
+     * Obtener una página inicial del catálogo sincronizable
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * @param limit  (optional, default to 200)
+     * @param pageToken Token opaco de continuación, ligado al tenant autenticado. (optional)
+     * @return GetProductsSyncSnapshotResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileGetProductsSyncSnapshot(limit: kotlin.Int? = 200, pageToken: kotlin.String? = null) : GetProductsSyncSnapshotResponse {
+        val localVarResponse = mobileGetProductsSyncSnapshotWithHttpInfo(limit = limit, pageToken = pageToken)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as GetProductsSyncSnapshotResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /products/sync/snapshot
+     * Obtener una página inicial del catálogo sincronizable
+     * Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+     * @param limit  (optional, default to 200)
+     * @param pageToken Token opaco de continuación, ligado al tenant autenticado. (optional)
+     * @return ApiResponse<GetProductsSyncSnapshotResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileGetProductsSyncSnapshotWithHttpInfo(limit: kotlin.Int?, pageToken: kotlin.String?) : ApiResponse<GetProductsSyncSnapshotResponse?> {
+        val localVariableConfig = mobileGetProductsSyncSnapshotRequestConfig(limit = limit, pageToken = pageToken)
+
+        return request<Unit, GetProductsSyncSnapshotResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileGetProductsSyncSnapshot
+     *
+     * @param limit  (optional, default to 200)
+     * @param pageToken Token opaco de continuación, ligado al tenant autenticado. (optional)
+     * @return RequestConfig
+     */
+    fun mobileGetProductsSyncSnapshotRequestConfig(limit: kotlin.Int?, pageToken: kotlin.String?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+                if (pageToken != null) {
+                    put("pageToken", listOf(pageToken.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/products/sync/snapshot",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,
