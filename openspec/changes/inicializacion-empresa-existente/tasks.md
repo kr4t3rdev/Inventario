@@ -112,3 +112,15 @@
 - `origin/main` se actualizó a `34f297402` y se incorporó mediante merge local sin conflictos; el merge forma parte de esta actualización local y no se publicó. La migración 00 de `origin/main` quedó aplicada en la base desechable junto a las migraciones de esta rama.
 - Siguen sin ruta de cobro/pago para CxC/CxP externas, conciliación de auxiliares con líneas de apertura y FX, asignación y valoración FIFO inicial real, asiento coordinado del inventario, importación usable de anticipos/deudas/préstamos sin movimiento bancario duplicado, conciliación integral, verificación E2E y cobertura global. No se habilita ni confirma ninguna inicialización y no se marca ninguna tarea global completa.
 - Avance 2026-11-17: se agregó cálculo puro de liquidación parcial/final CxC/CxP con `Prisma.Decimal`, remanentes exactos a cuatro decimales y diferencia funcional basada en importes explícitos. El ciclo TDD observó los seis casos fallando con el esqueleto `NOT_IMPLEMENTED` y luego pasó los seis tras la implementación. ESLint y `tsc --noEmit --incremental false` pasan. El helper no persiste cobros/pagos, no modifica banco ni auxiliares y no emite asiento formal; la ruta de liquidación continúa pendiente y deshabilitada. Graphify se actualizó tras los cambios de código. Las tareas globales permanecen abiertas.
+
+## Cierre de validación integrada (2026-11-24)
+
+Esta evidencia reciente sustituye los pendientes de ejecución de los avances históricos anteriores para los flujos ya integrados en `origin/main`:
+
+- Se ejecutó la validación contra el commit `a92689213044dfebbff02dd4ce57bc757d9bfc3d` en una base PostgreSQL 17 desechable; se aplicaron las 208 migraciones. No se usó la base de producción.
+- La suite de integración pasó: 48 archivos, 234 pruebas aprobadas y 1 omitida. La omisión corresponde a la apertura bancaria manual aprobada (`initial-bank-opening-postgres.test.ts`); queda fuera del flujo soportado por decisión de producto y no bloquea este cierre.
+- Los recorridos cubiertos incluyen inicialización coordinada, inventario FIFO con venta y devolución, CxC/CxP externas con liquidaciones parciales y totales, FX, anticipos/deudas/préstamos, replay y conciliación.
+- `e2e/inicializacion-cuentas.spec.ts` pasó en Chromium (1/1): guardar borrador, reanudar, revisar y confirmar. El teardown verificó la limpieza de los fixtures.
+- La CI de `main`, ejecución `45339027563`, terminó correctamente. Se retiraron los contenedores, red, worktree y caché temporales; se preservaron los cambios preexistentes del checkout del servidor Linux.
+
+No quedan ejecuciones de código pendientes para los flujos soportados incluidos en esta validación. La apertura manual bancaria aprobada permanece intencionalmente fuera del flujo y omitida en pruebas; no debe habilitarse como parte de este cambio.
