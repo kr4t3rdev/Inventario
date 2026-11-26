@@ -24,6 +24,7 @@ const prismaMock = vi.hoisted(() => ({
   cuentaPorPagar: { findMany: vi.fn() },
   cierreContable: { findMany: vi.fn() },
   periodoContable: { findMany: vi.fn() },
+  cuentaRolTenant: { findUnique: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
   venta: { findMany: vi.fn() },
   ventaServicios: { findMany: vi.fn() },
@@ -89,6 +90,7 @@ describe('exchange-handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.periodoContable.findMany.mockResolvedValue([])
+    prismaMock.cuentaRolTenant.findUnique.mockResolvedValue(null)
     prismaMock.fxEvidence.findMany.mockResolvedValue([])
     prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
       tenantId: 'tenant-1',
