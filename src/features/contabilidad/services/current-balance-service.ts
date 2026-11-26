@@ -99,6 +99,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     fxEvidence,
      closures,
      approvedAccountingPeriods,
+     retainedEarningsRole,
   ] = await Promise.all([
     db.cuentaBancaria.findMany({
       where: { tenantId: params.tenantId, isActive: true, saldo: { not: 0 } },
@@ -238,6 +239,12 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
           },
         },
       },
+    }),
+    db.cuentaRolTenant.findUnique({
+      where: {
+        tenantId_rol: { tenantId: params.tenantId, rol: 'RESULTADOS_ACUMULADOS' },
+      },
+      select: { cuentaId: true },
     }),
   ]);
 
@@ -457,6 +464,29 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     gains: Number(closure.ganancias),
     losses: Number(closure.perdidas),
   })), ...snapshotClosures];
+  const openingEntries = retainedEarningsRole
+    ? await db.asiento.findMany({
+      where: {
+        tenantId: params.tenantId,
+        origenTipo: 'inicializacion_contable',
+        estado: 'CONTABILIZADO',
+        fecha: { lte: params.asOf },
+        lineas: { some: { cuentaId: retainedEarningsRole.cuentaId } },
+      },
+      select: {
+        lineas: {
+          where: { cuentaId: retainedEarningsRole.cuentaId },
+          select: { debe: true, haber: true },
+        },
+      },
+    })
+    : [];
+  const openingRetainedEarnings = openingEntries.reduce((total, entry) => (
+    total + entry.lineas.reduce(
+      (balance, line) => balance + Number(line.haber) - Number(line.debe),
+      0,
+    )
+  ), 0);
   const resultYearIsClosed = approvedClosures.some((closure) => {
     return getAccountingYear(closure.endedAt) === params.currentResultYear;
   });
@@ -493,6 +523,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     payables: payableRows,
     externalDebts,
     capitalContributions,
+    openingRetainedEarnings,
      approvedClosures,
     currentResult: effectiveCurrentResult ?? 0,
     unresolvedParts,

@@ -7,6 +7,8 @@ const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: { findMany: vi.fn() },
   cuentaPorPagar: { findMany: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
+  cuentaRolTenant: { findUnique: vi.fn() },
+  asiento: { findMany: vi.fn() },
   cierreContable: { findMany: vi.fn() },
   periodoContable: { findMany: vi.fn() },
   fxEvidence: { findMany: vi.fn() },
@@ -86,6 +88,8 @@ describe('getCurrentBalance', () => {
     }]);
     prismaMock.periodoContable.findMany.mockResolvedValue([]);
     prismaMock.fxEvidence.findMany.mockResolvedValue([]);
+    prismaMock.cuentaRolTenant.findUnique.mockResolvedValue({ cuentaId: 'retained-earnings' });
+    prismaMock.asiento.findMany.mockResolvedValue([]);
   });
 
   it('construye el balance con costos remanentes y cobertura explícita', async () => {
@@ -373,5 +377,57 @@ describe('getCurrentBalance', () => {
     });
 
     expect(result.equity.retainedEarnings).toBe(0);
+  });
+
+  it('incluye resultados acumulados contabilizados por la apertura inicial', async () => {
+    prismaMock.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cup-bank', saldo: 99_900, moneda: 'CUP' },
+    ]);
+    prismaMock.stockUbicacion.findMany.mockResolvedValue([{
+      productoId: 'opening-stock',
+      cantidad: 10,
+      producto: { precioCosto: 10 },
+    }]);
+    prismaMock.compraDocumentoItem.findMany.mockResolvedValue([{
+      compraDocumentoItemId: 'opening-stock-layer',
+      productoId: 'opening-stock',
+      cantidad: 10,
+      precioUnitario: 10,
+      allocations: [],
+    }]);
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([]);
+    prismaMock.cuentaPorPagar.findMany.mockResolvedValue([]);
+    prismaMock.inyeccionCapital.findMany.mockResolvedValue([]);
+    prismaMock.cierreContable.findMany.mockResolvedValue([]);
+    prismaMock.asiento.findMany.mockResolvedValue([{
+      lineas: [{ debe: 0, haber: 100_000 }],
+    }]);
+    const { getCurrentBalance } = await import(
+      '@/features/contabilidad/services/current-balance-service'
+    );
+
+    const result = await getCurrentBalance({
+      tenantId: 'tenant-1',
+      asOf: new Date('2026-08-20T12:00:00Z'),
+      currentResult: 0,
+      currentResultYear: 2026,
+    });
+
+    expect(result.equity.retainedEarnings).toBe(100_000);
+    expect(result.equation).toEqual({
+      assets: 100_000,
+      liabilitiesAndEquity: 100_000,
+      difference: 0,
+      status: 'CUADRADO',
+    });
+    expect(prismaMock.asiento.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        tenantId: 'tenant-1',
+        origenTipo: 'inicializacion_contable',
+        fecha: { lte: new Date('2026-08-20T12:00:00Z') },
+        estado: 'CONTABILIZADO',
+        lineas: { some: { cuentaId: 'retained-earnings' } },
+      }),
+    }));
   });
 });

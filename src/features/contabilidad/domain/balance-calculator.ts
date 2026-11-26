@@ -46,6 +46,7 @@ export interface CalculateCurrentBalanceInput {
     amount: number;
     registeredAt: Date | string;
   }>;
+  openingRetainedEarnings: number;
   approvedClosures: Array<{
     id: string;
     type: string;
@@ -273,7 +274,11 @@ export function calculateCurrentBalance(
     closures.push(closure);
     closuresByYear.set(year, closures);
   }
-  let retainedEarnings = 0;
+  let retainedEarnings = input.openingRetainedEarnings;
+  if (!Number.isFinite(retainedEarnings)) {
+    incidents.push({ code: 'INVALID_AMOUNT', itemId: 'opening-retained-earnings', affectedAmount: 0 });
+    retainedEarnings = 0;
+  }
   for (const [year, closures] of closuresByYear) {
     if (closures.length > 1) {
       const affectedAmount = closures.reduce((total, closure) => {
