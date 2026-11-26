@@ -7,6 +7,18 @@ const mockReplace = vi.fn();
 const useAuthMock = vi.fn();
 const mockFetch = vi.fn();
 
+const emptyMonthlyPeriods = Array.from({ length: 12 }, (_, index) => ({
+  month: index + 1,
+  totalIngresos: 0,
+  ventasCosto: 0,
+  gastosCompras: 0,
+  gastosSalarios: 0,
+  gastosGenerales: 0,
+  gastosMermas: 0,
+  totalGastos: 0,
+  utilidadNeta: 0,
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
   usePathname: () => '/busy/contabilidad/balance-resultados',
@@ -36,7 +48,7 @@ const balancePayload = {
     patrimonio: { capitalSocial: 0, utilidadEjercicio: 0, total: 0 },
   },
   estadoResultados: {
-    mensual: [],
+    mensual: emptyMonthlyPeriods,
     anual: {
       ingresosVentas: 0,
       ingresosServicios: 0,
@@ -135,6 +147,8 @@ describe('/busy/contabilidad/balance-resultados page', () => {
     await waitFor(() => expect(screen.getByText('Sin actividad registrada')).toBeInTheDocument());
 
     expect(screen.getByRole('heading', { name: 'Balance general y resultados' })).toBeInTheDocument();
+    expect(screen.getByText('Sin actividad para evaluar')).toBeInTheDocument();
+    expect(screen.queryByText('Cobertura completa')).not.toBeInTheDocument();
     expect(screen.queryByText('Total de activos')).not.toBeInTheDocument();
   });
 
