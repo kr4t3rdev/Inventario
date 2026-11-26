@@ -60,10 +60,20 @@ export function isEmptyFinancialReport(data: FinancialData): boolean {
     data.estadoResultados.anual.totalGastos,
     data.estadoResultados.anual.utilidadNeta,
   ];
+  const monthlyTotals = data.estadoResultados.mensual.flatMap((period) => [
+    period.totalIngresos,
+    period.ventasCosto,
+    period.gastosCompras,
+    period.gastosSalarios,
+    period.gastosGenerales,
+    period.gastosMermas,
+    period.totalGastos,
+    period.utilidadNeta,
+  ]);
   const hasIncidents = (data.balance.incidencias?.length ?? 0) > 0 ||
     (data.estadoResultados.incidencias?.length ?? 0) > 0;
 
   return !hasIncidents &&
-    data.estadoResultados.mensual.length === 0 &&
-    [...balanceTotals, ...resultTotals].every((value) => Number(value) === 0);
+    [...balanceTotals, ...resultTotals, ...monthlyTotals]
+      .every((value) => Number(value) === 0);
 }

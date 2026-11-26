@@ -16,7 +16,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import { formatAccountingDate, getFunctionalCurrency } from './formatters';
+import {
+  formatAccountingDate,
+  getFunctionalCurrency,
+  isEmptyFinancialReport,
+} from './formatters';
 import type { FinancialData } from './types';
 
 interface ReportStatusBandProps {
@@ -132,6 +136,7 @@ export function AccountingPolicyRequiredState({
  */
 export function ReportStatusBand({ data }: ReportStatusBandProps): JSX.Element {
   const isSnapshot = data.reporte.origen === 'SNAPSHOT';
+  const isEmpty = isEmptyFinancialReport(data);
   const coverage = data.balance.cobertura;
   const hasPartialCoverage = coverage?.complete === false || (coverage?.unresolvedCount ?? 0) > 0;
 
@@ -167,9 +172,11 @@ export function ReportStatusBand({ data }: ReportStatusBandProps): JSX.Element {
 
       <div className="flex shrink-0 items-center gap-3 text-sm">
         <span className="rounded-full border border-current/15 bg-white/45 px-3 py-1.5 font-medium dark:bg-black/10">
-          {hasPartialCoverage ? 'Cobertura parcial' : 'Cobertura completa'}
+          {isEmpty
+            ? 'Sin actividad para evaluar'
+            : hasPartialCoverage ? 'Cobertura parcial' : 'Cobertura completa'}
         </span>
-        {hasPartialCoverage && (
+        {hasPartialCoverage && !isEmpty && (
           <Link
             href="/busy/contabilidad/reconciliacion"
             className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 font-semibold underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
