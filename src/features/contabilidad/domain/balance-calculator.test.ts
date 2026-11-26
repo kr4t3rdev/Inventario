@@ -14,6 +14,7 @@ const BASE_INPUT: CalculateCurrentBalanceInput = {
   payables: [],
   externalDebts: [],
   capitalContributions: [],
+  openingRetainedEarnings: 0,
   approvedClosures: [],
   currentResult: 0,
   unresolvedParts: [],
