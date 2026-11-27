@@ -1,15 +1,10 @@
 import { getMonedasAction, getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 import { getCurrentUser } from "@/lib/server-actions/get-current-user"
 import { resolverMonedaPrincipal } from "@/lib/services/moneda-principal-service"
-import { Separator } from "@/components/ui/separator"
+import Link from 'next/link';
+import { FloatingNavigationMenu } from '@/components/floating-navigation';
+import { NavUser } from '@/components/nav-user';
 import { ThemeToggle } from "./theme-toggle"
-import {
-  FloatingAccount,
-  FloatingHeaderMenu,
-  SidebarHeaderFrame,
-  SidebarViewCollapse,
-  SidebarViewToggle,
-} from "./sidebar-view"
 import { PanelNotificaciones } from "@/features/notificaciones/components/panel-notificaciones"
 import { CurrencyIndicator } from "@/features/contabilidad/components/currency-indicator"
 import { PeriodoActivoIndicator } from "@/features/contabilidad/components/periodo-activo-indicator"
@@ -36,29 +31,21 @@ export async function SiteHeader() {
   
   return (
     <div>
-      <SidebarHeaderFrame>
-        <div className="flex min-w-0 flex-1 items-center gap-1 px-4 lg:gap-2 lg:px-6">
-          <SidebarViewCollapse />
-          <SidebarViewToggle />
-          <Separator
-            orientation="vertical"
-            className="mx-2 data-[orientation=vertical]:h-4"
-          />
-          <FloatingHeaderMenu />
-          
-          {/* Período Activo */}
-          <PeriodoActivoIndicator />
+      <header className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 sm:pl-20 lg:px-6">
+        <Link href="/busy/dashboard" className="mr-auto font-semibold">FinanceMDM</Link>
+        <div className="order-3 w-full min-w-0 lg:order-none lg:w-auto lg:flex-1">
+          <FloatingNavigationMenu />
         </div>
-        
-        {/* Currency Indicator */}
-        <CurrencyIndicator monedas={monedas} tasas={tasas} monedaPrincipal={monedaPrincipal} />
-        
-        <div className="flex items-center gap-2">
-          <FloatingAccount />
+        <div className="order-2 flex w-full min-w-0 flex-wrap items-center gap-1 empty:hidden lg:order-none lg:w-auto lg:max-w-[35%]">
+          <PeriodoActivoIndicator />
+          <CurrencyIndicator monedas={monedas} tasas={tasas} monedaPrincipal={monedaPrincipal} />
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <NavUser compact />
           <ThemeToggle/>
           <PanelNotificaciones/>        
         </div>
-      </SidebarHeaderFrame>
+      </header>
       
       {/* Breadcrumb Navigation */}
       <div className="px-4 lg:px-6 py-2">

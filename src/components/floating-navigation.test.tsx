@@ -21,13 +21,13 @@ describe('navegación flotante', () => {
   it('retira la sección anterior de la navegación durante la transición', async () => {
     const { unmount } = render(<FloatingNavigationProvider><FloatingNavigationMenu /><FloatingNavigationRail /></FloatingNavigationProvider>);
     const rail = screen.getByRole('navigation', { name: 'Opciones de Gestión' });
-    expect(rail.style.height).toContain('100dvh');
+    expect(rail.style.getPropertyValue('--rail-height')).toContain('100dvh');
     expect(rail.firstElementChild).toHaveClass('[scrollbar-width:none]');
-    expect(rail.firstElementChild).toHaveClass('overflow-y-auto');
-    const initialHeight = rail.style.height;
+    expect(rail.firstElementChild).toHaveClass('sm:overflow-y-auto');
+    const initialHeight = rail.style.getPropertyValue('--rail-height');
     fireEvent.click(screen.getByRole('button', { name: 'Acciones' }));
     expect(screen.getByRole('navigation', { name: 'Opciones de Acciones' })).toBe(rail);
-    expect(rail.style.height).not.toBe(initialHeight);
+    expect(rail.style.getPropertyValue('--rail-height')).not.toBe(initialHeight);
     expect(screen.queryByRole('link', { name: 'Productos' })).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('link', { name: 'Ventas' })).toBeInTheDocument());
     unmount();

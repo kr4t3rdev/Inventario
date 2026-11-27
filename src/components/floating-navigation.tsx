@@ -78,16 +78,17 @@ export function FloatingNavigationRail(): React.JSX.Element | null {
   return (
     <nav
       aria-label={`Opciones de ${group.title}`}
-      style={{ height }}
+      style={{ '--rail-height': height } as React.CSSProperties}
       className={cn(
-        'fixed left-2 top-1/2 z-40 flex -translate-y-1/2 flex-col rounded-full border',
-        'border-border bg-background/95 p-1 shadow-lg backdrop-blur sm:left-4',
+        'fixed inset-x-2 bottom-[max(.5rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-fit max-w-[calc(100%-1rem)] rounded-full border',
+        'sm:inset-x-auto sm:bottom-auto sm:left-4 sm:top-1/2 sm:h-[var(--rail-height)] sm:-translate-y-1/2 sm:flex-col',
+        'border-border bg-background/95 p-1 shadow-lg backdrop-blur',
         'motion-safe:transition-[height] motion-safe:duration-[440ms]',
         'motion-safe:ease-[cubic-bezier(0.45,0,0.35,1)]',
       )}
     >
-      <div key={group.title} className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex flex-col gap-1">
+      <div key={group.title} className="min-h-0 min-w-0 flex-1 overflow-x-auto overscroll-contain sm:overflow-x-hidden sm:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-1 sm:flex-col [&>*]:shrink-0">
           {group.items.map((item) => (
             <FloatingItem
               key={`${item.title}-${item.url}`}
