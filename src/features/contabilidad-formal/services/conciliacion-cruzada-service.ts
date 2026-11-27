@@ -267,12 +267,12 @@ async function leerConciliacionEnSnapshot(
 	const serviciosConPago = new Set(serviciosConReconciliaciones.map((rec) => rec.ventaServicioId));
 	const pagosCxp = cxpOperativo.length === 0 ? [] : await db.pagoCuentaPorPagar.findMany({
 		where: {
+			tenantId,
 			cuentaPorPagarId: { in: cxpOperativo.map((cuenta) => cuenta.cuentaPorPagarId) },
 			cuentaPorPagar: { tenantId, deletedAt: null },
 		},
-		select: { cuentaPorPagarId: true },
+		select: { cuentaPorPagarId: true, monto: true, moneda: true },
 	});
-	const cuentasCxpConPago = new Set(pagosCxp.map((pago) => pago.cuentaPorPagarId));
 
 	const esMonedaFuncional = (moneda: unknown) =>
 		typeof moneda === 'string' && moneda.trim().toUpperCase() === monedaFuncional;
@@ -375,6 +375,16 @@ async function leerConciliacionEnSnapshot(
 				.toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
 		return total.add(deudaFuncional.sub(valorLiquidadoEnLibros));
 	}, new Prisma.Decimal(CERO));
+	const pagosPorCuenta = new Map<string, Prisma.Decimal | null>();
+	for (const pago of pagosCxp) {
+		const monto = decimalPersistido(pago.monto);
+		const acumulado = pagosPorCuenta.get(pago.cuentaPorPagarId);
+		const total = acumulado === null || !monto || !monto.gt(0) ||
+			!esMonedaFuncional(pago.moneda)
+			? null
+			: (acumulado ?? new Prisma.Decimal(CERO)).add(monto);
+		pagosPorCuenta.set(pago.cuentaPorPagarId, total);
+	}
 	let cxpComparable = cxpOperativo.length > 0;
 	const cxpOperativoTotal = cxpOperativo.reduce((total, cuenta) => {
 		const pendiente = decimalPersistido(cuenta.saldoPendiente);
@@ -385,7 +395,9 @@ async function leerConciliacionEnSnapshot(
 			cxpComparable = false;
 			return total;
 		}
-		if (!pagado.isZero() || cuentasCxpConPago.has(cuenta.cuentaPorPagarId)) {
+		const totalPagos = pagosPorCuenta.get(cuenta.cuentaPorPagarId);
+		if (totalPagos === null || !(totalPagos ?? new Prisma.Decimal(CERO)).eq(pagado) ||
+			(totalPagos !== undefined && !esMonedaFuncional(cuenta.moneda))) {
 			cxpComparable = false;
 			return total;
 		}
@@ -428,7 +440,9 @@ async function leerConciliacionEnSnapshot(
 		ROLES_POR_RUBRO[clave].every((rol) => Boolean(cuentasPorRol.get(rol)));
 	// CuentaPorCobrar has no currency/functional fields to prove comparability.
 	const cxcFuenteComparable = cxcComparable;
-	const cxcNota = 'Las cuentas por cobrar no tienen valoración funcional completa y verificable.';
+	const cxcNota = cxcOperativo.length === 0
+		? 'No hay cuentas por cobrar operativas para conciliar.'
+		: 'Las cuentas por cobrar no tienen valoración funcional completa y verificable.';
 	const cxpPendientes = cxpOperativo.filter((cuenta) => !decimal(cuenta.saldoPendiente).isZero());
 	const cxpMonedaComparable = cxpComparable && cxpOperativo.length > 0 && cxpPendientes.every(
 		(cuenta) => esMonedaFuncional(cuenta.moneda),

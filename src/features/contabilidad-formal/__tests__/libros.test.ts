@@ -340,6 +340,22 @@ describe('obtenerConciliacionCruzada', () => {
 		expect(resultado.enforceReady).toBe(false);
 	});
 
+	it('concilia una CxP liquidada con un pago en moneda funcional verificable', async () => {
+		prismaMock.cuentaPorPagar.findMany.mockResolvedValue([
+			{ cuentaPorPagarId: 'cxp-paid', saldoPendiente: 0, montoDeuda: 100, montoPagado: 100, moneda: 'CUP' },
+		]);
+		prismaMock.pagoCuentaPorPagar.findMany.mockResolvedValue([
+			{ cuentaPorPagarId: 'cxp-paid', monto: 100, moneda: 'CUP' },
+		]);
+		prismaMock.asientoLinea.groupBy.mockResolvedValue([]);
+
+		const resultado = await obtenerConciliacionCruzada(TENANT, {});
+
+		expect(resultado.rubros.find((r) => r.clave === 'CXP')).toMatchObject({
+			saldoOperativo: '0', diferencia: '0',
+		});
+	});
+
 	it('no evalúa CxP liquidada cuando existen pagos sin moneda verificable', async () => {
 		prismaMock.cuentaPorPagar.findMany.mockResolvedValue([
 			{ cuentaPorPagarId: 'cxp-open', saldoPendiente: 390, montoDeuda: 390, montoPagado: 0, moneda: 'CUP' },
