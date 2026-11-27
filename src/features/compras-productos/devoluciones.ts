@@ -124,14 +124,8 @@ export const crearDevolucionCompraAction = withAction(
 				);
 			}
 
-			const lineas: Array<{
-				tenantId: string;
-				compraDocumentoItemId: string;
-				productoId: string;
-				cantidad: number;
-				costoUnitario: number;
-				total: number;
-			}> = [];
+			// El vínculo con la devolución padre asigna el tenant de las líneas.
+			const lineas: Prisma.DevolucionCompraItemUncheckedCreateWithoutDevolucionInput[] = [];
 			let montoTotal = 0;
 
 			for (const [compraDocumentoItemId, cantidad] of seleccion) {
@@ -167,7 +161,6 @@ export const crearDevolucionCompraAction = withAction(
 					throw new ActionError('El total de la devolución excede el límite permitido', 'VALIDATION_ERROR');
 				}
 				lineas.push({
-					tenantId,
 					compraDocumentoItemId,
 					productoId: compraItem.productoId,
 					cantidad,
