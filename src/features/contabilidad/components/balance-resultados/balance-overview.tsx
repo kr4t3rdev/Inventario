@@ -178,7 +178,7 @@ export function BalanceOverview({ balance }: BalanceOverviewProps): JSX.Element 
     { label: 'Deudas externas', category: 'Pasivo no corriente', source: 'Deuda externa', value: balance.pasivos.deudaExterna },
     { label: 'Cuentas por pagar', category: 'Pasivo corriente', source: 'Cuentas por pagar', value: balance.pasivos.cuentasPorPagar ?? 0 },
     { label: 'Capital social', category: 'Patrimonio', source: 'Aportes de capital', value: balance.patrimonio.capitalSocial },
-    { label: 'Resultados acumulados', category: 'Patrimonio', source: 'Cierres aprobados', value: balance.patrimonio.resultadosAcumulados ?? 0 },
+    { label: 'Resultados acumulados', category: 'Patrimonio', source: 'Aperturas contabilizadas y cierres aprobados', value: balance.patrimonio.resultadosAcumulados ?? 0 },
     { label: 'Resultado del período', category: 'Patrimonio', source: 'Reconciliaciones', value: balance.patrimonio.utilidadEjercicio },
   ];
 
@@ -195,7 +195,7 @@ export function BalanceOverview({ balance }: BalanceOverviewProps): JSX.Element 
         <BalanceSignal label="Inventario" value={balance.activos.inventario} source="Stock y costos" currency={currency} />
         <BalanceSignal label="CxC" value={balance.activos.cuentasPorCobrar} source="Cuentas por cobrar" currency={currency} />
         <BalanceSignal label="CxP" value={balance.pasivos.cuentasPorPagar ?? 0} source="Cuentas por pagar" currency={currency} />
-        <BalanceSignal label="Patrimonio" value={balance.patrimonio.total} source="Capital y cierres" currency={currency} />
+        <BalanceSignal label="Patrimonio" value={balance.patrimonio.total} source="Aportes y resultados contables" currency={currency} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
