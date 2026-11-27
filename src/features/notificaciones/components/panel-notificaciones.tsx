@@ -169,7 +169,7 @@ export function PanelNotificaciones() {
           </AnimatePresence>
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[540px]">
+      <SheetContent className="w-full sm:w-[540px]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <motion.div

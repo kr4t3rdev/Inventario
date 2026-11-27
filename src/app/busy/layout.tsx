@@ -3,14 +3,12 @@ export const dynamic = 'force-dynamic'
 import { ReactNode } from 'react'
 import { headers } from 'next/headers'
 import { SiteHeader } from '@/components/site-header'
-import { SidebarInset } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from 'sonner'
 import {
-  SidebarContentFrame,
-  SidebarViewProvider,
-  SidebarViewSelection,
-  SidebarViewShell,
-} from '@/components/sidebar-view'
+  FloatingNavigationProvider,
+  FloatingNavigationRail,
+} from '@/components/floating-navigation'
 import { ReviewDialogProvider } from '@/features/reviews'
 import { redirect } from 'next/navigation'
 import { getProtectedRouteIdentity } from '@/lib/auth/server-route-identity'
@@ -32,15 +30,15 @@ export default async function BusyLayout({ children }: { children: ReactNode }) 
 
   return (
     <div>
-      <SidebarViewProvider>
-        <SidebarViewShell>
-          <SidebarViewSelection variant="floating" />
+      <FloatingNavigationProvider>
+        <SidebarProvider>
+          <FloatingNavigationRail />
           <SidebarInset>
             {!isPrintRoute && <SiteHeader />}
-            <SidebarContentFrame>{children}</SidebarContentFrame>
+            <div className="pb-20 sm:pb-0 sm:pl-20">{children}</div>
           </SidebarInset>
-        </SidebarViewShell>
-      </SidebarViewProvider>
+        </SidebarProvider>
+      </FloatingNavigationProvider>
       <Toaster />
       <ReviewDialogProvider />
     </div>

@@ -26,14 +26,10 @@ vi.mock('@/lib/services/moneda-principal-service', () => ({
   })),
 }))
 
-vi.mock('@/components/ui/sidebar', () => ({
-  useSidebar: () => ({ isMobile: false, openMobile: false, open: true }),
-  SidebarTrigger: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-    <button {...props}>Barra lateral</button>
-  ),
+vi.mock('@/components/nav-user', () => ({ NavUser: () => null }))
+vi.mock('@/components/floating-navigation', () => ({
+  FloatingNavigationMenu: () => <nav aria-label="Menú principal" />,
 }))
-
-vi.mock('@/components/ui/separator', () => ({ Separator: () => <hr /> }))
 vi.mock('./theme-toggle', () => ({ ThemeToggle: () => null }))
 vi.mock('@/features/notificaciones/components/panel-notificaciones', () => ({
   PanelNotificaciones: () => null,
@@ -55,10 +51,12 @@ import { SiteHeader } from './site-header'
 import { resolverMonedaPrincipal } from '@/lib/services/moneda-principal-service'
 
 describe('SiteHeader', () => {
-  it('ofrece un control accesible de 44 px para la barra lateral', async () => {
+  it('muestra el menú flotante incluso con una preferencia clásica anterior', async () => {
+    window.localStorage.setItem('financemdm-sidebar-view', 'classic')
     render(await SiteHeader())
 
-    expect(screen.getByRole('button', { name: 'Contraer barra lateral' })).toHaveClass('size-11')
+    expect(screen.getByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Vista de navegación' })).toBeNull()
   })
 
   it('pasa al indicador la moneda resuelta desde la política contable del tenant', async () => {
