@@ -25,6 +25,7 @@ const prismaMock = vi.hoisted(() => ({
 	cuentaPorCobrar: { findMany: vi.fn() },
 	cuentaPorPagar: { findMany: vi.fn() },
 	pagoCuentaPorPagar: { findMany: vi.fn() },
+	reconciliacionGasto: { findMany: vi.fn() },
 	factura: { findMany: vi.fn() },
 	reconciliacionVenta: { findMany: vi.fn() },
 	reconciliacionServicio: { findMany: vi.fn() },
@@ -346,6 +347,25 @@ describe('obtenerConciliacionCruzada', () => {
 		]);
 		prismaMock.pagoCuentaPorPagar.findMany.mockResolvedValue([
 			{ cuentaPorPagarId: 'cxp-paid', monto: 100, moneda: 'CUP' },
+		]);
+		prismaMock.asientoLinea.groupBy.mockResolvedValue([]);
+
+		const resultado = await obtenerConciliacionCruzada(TENANT, {});
+
+		expect(resultado.rubros.find((r) => r.clave === 'CXP')).toMatchObject({
+			saldoOperativo: '0', diferencia: '0',
+		});
+	});
+
+	it('recupera moneda histórica de la reconciliación vinculada', async () => {
+		prismaMock.cuentaPorPagar.findMany.mockResolvedValue([
+			{ cuentaPorPagarId: 'cxp-paid', saldoPendiente: 0, montoDeuda: 100, montoPagado: 100, moneda: 'CUP' },
+		]);
+		prismaMock.pagoCuentaPorPagar.findMany.mockResolvedValue([
+			{ cuentaPorPagarId: 'cxp-paid', monto: 100, moneda: null, observaciones: 'reconciliationIds:rec-1' },
+		]);
+		prismaMock.reconciliacionGasto.findMany.mockResolvedValue([
+			{ reconciliacionId: 'rec-1', cuentaPorPagarId: 'cxp-paid', monto: 100, moneda: 'CUP', estado: 'PAGADA' },
 		]);
 		prismaMock.asientoLinea.groupBy.mockResolvedValue([]);
 
