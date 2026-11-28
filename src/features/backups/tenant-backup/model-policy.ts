@@ -29,6 +29,7 @@ const DIRECT_TENANT_MODELS = [
   'Categoria', 'Unidad', 'Vendor', 'InyeccionCapital',
   'PagoDeuda', 'Cliente', 'MiEmpresa', 'Almacen',
   'PuntoDeVenta', 'TurnoPuntoVenta', 'ArqueoCaja', 'Producto', 'ProductoPlantilla', 'UnidadConversion', 'Lote',
+  'MobileProductSyncCursor', 'MobileProductSyncChange',
   'StockUbicacion', 'StockUbicacionDetalle', 'AjusteInventario', 'ConteoInventario', 'ConteoLinea',
   'StockMoveLine', 'Venta', 'Merma', 'Transferencia',
   'Empleado', 'Pagosalario', 'CierreContable', 'GastoCompra',
@@ -195,6 +196,10 @@ const DIRECT_RATIONALE_OVERRIDES: Readonly<Record<string, string>> = {
   PurchaseReceiptInvoiceAllocation:
     'Tenant-owned invoice-to-receipt allocation with same-tenant CompraDocumentoItem and RecepcionItem references; '
     + 'export and restore remain gated by relation and field review.',
+  MobileProductSyncChange:
+    'Tenant-owned product and stock sync journal; retain with the matching product and stock snapshot to preserve tombstones.',
+  MobileProductSyncCursor:
+    'Tenant-owned product and stock sequence cursor; retain atomically with its journal to preserve incremental sync continuity.',
 };
 
 const MODEL_ROWS: readonly TenantBackupModelPolicy[] = [

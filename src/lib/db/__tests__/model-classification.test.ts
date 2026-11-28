@@ -113,6 +113,8 @@ describe('AS-01 contrato de clasificación de modelos', () => {
   it('getModelScope resuelve los kinds esperados en casos representativos', () => {
     const expectations: Array<[string, ModelScopeKind]> = [
       ['Venta', 'scoped'],
+      ['MobileProductSyncChange', 'scoped'],
+      ['MobileProductSyncCursor', 'scoped'],
       ['Contrato', 'scoped'],
       ['TenantMembership', 'scoped'],
       ['TenantRole', 'scoped'],

@@ -123,6 +123,8 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Lote: SCOPED('Lote tenant-owned con FK compuesta tenantId-productoId al producto.'),
   Merma: SCOPED(),
   MiEmpresa: SCOPED('Ficha de empresa del tenant (1:1 por tenant).'),
+  MobileProductSyncChange: SCOPED('Journal de cambios de producto por tenant; cada fila incluye tenantId.'),
+  MobileProductSyncCursor: SCOPED('Cursor secuencial por tenant; tenantId es la clave primaria.'),
   NominaConfig: SCOPED('Configuración de nómina 1:1 por tenant.'),
   Oferta: SCOPED(),
   OrdenCompra: SCOPED('Orden de compra por tenant.'),

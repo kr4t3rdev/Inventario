@@ -179,6 +179,8 @@ Class | Method | HTTP request | Description
 *ProductsAPI* | [**mobileGetProducts**](docs/ProductsAPI.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsAPI* | [**mobileGetProductsById**](docs/ProductsAPI.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsAPI* | [**mobileGetProductsStock**](docs/ProductsAPI.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
+*ProductsAPI* | [**mobileGetProductsSyncChanges**](docs/ProductsAPI.md#mobilegetproductssyncchanges) | **GET** /products/sync/changes | Consultar cambios incrementales de productos
+*ProductsAPI* | [**mobileGetProductsSyncSnapshot**](docs/ProductsAPI.md#mobilegetproductssyncsnapshot) | **GET** /products/sync/snapshot | Obtener una página inicial del catálogo sincronizable
 *ProvidersAPI* | [**mobileDeleteProvidersById**](docs/ProvidersAPI.md#mobiledeleteprovidersbyid) | **DELETE** /providers/{id} | Eliminar proveedor
 *ProvidersAPI* | [**mobileGetProviders**](docs/ProvidersAPI.md#mobilegetproviders) | **GET** /providers | Listar proveedores
 *ProvidersAPI* | [**mobileGetProvidersById**](docs/ProvidersAPI.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
@@ -402,6 +404,8 @@ Class | Method | HTTP request | Description
  - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [GetProductsResponse](docs/GetProductsResponse.md)
  - [GetProductsStockResponse](docs/GetProductsStockResponse.md)
+ - [GetProductsSyncChangesResponse](docs/GetProductsSyncChangesResponse.md)
+ - [GetProductsSyncSnapshotResponse](docs/GetProductsSyncSnapshotResponse.md)
  - [GetPuntosVentaDetailResponse](docs/GetPuntosVentaDetailResponse.md)
  - [GetPuntosVentaListResponse](docs/GetPuntosVentaListResponse.md)
  - [GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
@@ -421,6 +425,14 @@ Class | Method | HTTP request | Description
  - [LoginRequest](docs/LoginRequest.md)
  - [Merma](docs/Merma.md)
  - [MobileCreateUnitRequest](docs/MobileCreateUnitRequest.md)
+ - [MobileProductSyncChange](docs/MobileProductSyncChange.md)
+ - [MobileProductSyncDelete](docs/MobileProductSyncDelete.md)
+ - [MobileProductSyncUpsert](docs/MobileProductSyncUpsert.md)
+ - [MobileSyncProduct](docs/MobileSyncProduct.md)
+ - [MobileSyncProductCategoria](docs/MobileSyncProductCategoria.md)
+ - [MobileSyncProductSubcategoria](docs/MobileSyncProductSubcategoria.md)
+ - [MobileSyncProductUnidad](docs/MobileSyncProductUnidad.md)
+ - [MobileSyncProductVendor](docs/MobileSyncProductVendor.md)
  - [MobileUpdateUnitRequest](docs/MobileUpdateUnitRequest.md)
  - [Oferta](docs/Oferta.md)
  - [OrdenProduccion](docs/OrdenProduccion.md)

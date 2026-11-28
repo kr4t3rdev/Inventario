@@ -90,6 +90,10 @@ describe('route-permissions mobile (PG-05 mobile)', () => {
   it('mapea grupos mobile v1 a claves de dominio', () => {
     expect(getMobilePermissionKey('/api/mobile/v1/accounting/cash-loans', 'GET')).toBe('financiero.contabilidad.acceder');
     expect(getMobilePermissionKey('/api/mobile/v1/products', 'GET')).toBe('inventario.productos.consultar');
+    expect(getMobilePermissionKey('/api/mobile/v1/products/sync/snapshot', 'GET')).toBe('inventario.productos.consultar');
+    expect(getMobilePermissionKey('/api/mobile/v1/products/sync/changes', 'GET')).toBe('inventario.productos.consultar');
+    expect(getMobilePermissionKey('/api/mobile/v1/products/sync/snapshot', 'POST')).toBe('__mobile_method_not_allowed__');
+    expect(getMobilePermissionKey('/api/mobile/v1/products/sync/other', 'GET')).toBe('__mobile_method_not_allowed__');
     expect(getMobilePermissionKey('/api/mobile/v1/sales', 'GET')).toBe('ventas.venta.registrar');
     expect(getMobilePermissionKey('/api/mobile/v1/pos/turnos', 'POST')).toBe('operaciones.pos.gestionar');
   });

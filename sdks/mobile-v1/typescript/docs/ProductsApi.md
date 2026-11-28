@@ -7,6 +7,8 @@ All URIs are relative to */api/mobile/v1*
 | [**mobileGetProducts**](ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
 | [**mobileGetProductsById**](ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto |
 | [**mobileGetProductsStock**](ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación |
+| [**mobileGetProductsSyncChanges**](ProductsApi.md#mobilegetproductssyncchanges) | **GET** /products/sync/changes | Consultar cambios incrementales de productos |
+| [**mobileGetProductsSyncSnapshot**](ProductsApi.md#mobilegetproductssyncsnapshot) | **GET** /products/sync/snapshot | Obtener una página inicial del catálogo sincronizable |
 
 
 
@@ -227,6 +229,162 @@ example().catch(console.error);
 | **401** | No autenticado |  -  |
 | **403** | No autorizado |  -  |
 | **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobileGetProductsSyncChanges
+
+> GetProductsSyncChangesResponse mobileGetProductsSyncChanges(cursor, limit)
+
+Consultar cambios incrementales de productos
+
+Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ProductsApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileGetProductsSyncChangesRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ProductsApi(config);
+
+  const body = {
+    // string | Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+    cursor: cursor_example,
+    // number (optional)
+    limit: 56,
+  } satisfies MobileGetProductsSyncChangesRequest;
+
+  try {
+    const data = await api.mobileGetProductsSyncChanges(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **cursor** | `string` | Cursor opaco tenant-scoped recibido del snapshot o del pull anterior. | [Defaults to `undefined`] |
+| **limit** | `number` |  | [Optional] [Defaults to `200`] |
+
+### Return type
+
+[**GetProductsSyncChangesResponse**](GetProductsSyncChangesResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Página ordenada de cambios y cursor reanudable. |  -  |
+| **400** | Cursor o parámetros inválidos. |  -  |
+| **401** | No autenticado. |  -  |
+| **403** | El usuario autenticado no tiene un tenant activo. |  -  |
+| **500** | Error interno. |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobileGetProductsSyncSnapshot
+
+> GetProductsSyncSnapshotResponse mobileGetProductsSyncSnapshot(limit, pageToken)
+
+Obtener una página inicial del catálogo sincronizable
+
+Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ProductsApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileGetProductsSyncSnapshotRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ProductsApi(config);
+
+  const body = {
+    // number (optional)
+    limit: 56,
+    // string | Token opaco de continuación, ligado al tenant autenticado. (optional)
+    pageToken: pageToken_example,
+  } satisfies MobileGetProductsSyncSnapshotRequest;
+
+  try {
+    const data = await api.mobileGetProductsSyncSnapshot(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **limit** | `number` |  | [Optional] [Defaults to `200`] |
+| **pageToken** | `string` | Token opaco de continuación, ligado al tenant autenticado. | [Optional] [Defaults to `undefined`] |
+
+### Return type
+
+[**GetProductsSyncSnapshotResponse**](GetProductsSyncSnapshotResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Página del catálogo y cursor base para comenzar el pull incremental al terminar el snapshot. |  -  |
+| **400** | Parámetros o token de continuación inválidos. |  -  |
+| **401** | No autenticado. |  -  |
+| **403** | El usuario autenticado no tiene un tenant activo. |  -  |
+| **500** | Error interno. |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

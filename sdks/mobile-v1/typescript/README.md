@@ -207,6 +207,8 @@ All URIs are relative to */api/mobile/v1*
 *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsApi* | [**mobileGetProductsStock**](docs/ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
+*ProductsApi* | [**mobileGetProductsSyncChanges**](docs/ProductsApi.md#mobilegetproductssyncchanges) | **GET** /products/sync/changes | Consultar cambios incrementales de productos
+*ProductsApi* | [**mobileGetProductsSyncSnapshot**](docs/ProductsApi.md#mobilegetproductssyncsnapshot) | **GET** /products/sync/snapshot | Obtener una página inicial del catálogo sincronizable
 *ProvidersApi* | [**mobileDeleteProvidersById**](docs/ProvidersApi.md#mobiledeleteprovidersbyid) | **DELETE** /providers/{id} | Eliminar proveedor
 *ProvidersApi* | [**mobileGetProviders**](docs/ProvidersApi.md#mobilegetproviders) | **GET** /providers | Listar proveedores
 *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
@@ -430,6 +432,8 @@ All URIs are relative to */api/mobile/v1*
 - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
 - [GetProductsResponse](docs/GetProductsResponse.md)
 - [GetProductsStockResponse](docs/GetProductsStockResponse.md)
+- [GetProductsSyncChangesResponse](docs/GetProductsSyncChangesResponse.md)
+- [GetProductsSyncSnapshotResponse](docs/GetProductsSyncSnapshotResponse.md)
 - [GetPuntosVentaDetailResponse](docs/GetPuntosVentaDetailResponse.md)
 - [GetPuntosVentaListResponse](docs/GetPuntosVentaListResponse.md)
 - [GetReparacionesDetailResponse](docs/GetReparacionesDetailResponse.md)
@@ -449,6 +453,14 @@ All URIs are relative to */api/mobile/v1*
 - [LoginRequest](docs/LoginRequest.md)
 - [Merma](docs/Merma.md)
 - [MobileCreateUnitRequest](docs/MobileCreateUnitRequest.md)
+- [MobileProductSyncChange](docs/MobileProductSyncChange.md)
+- [MobileProductSyncDelete](docs/MobileProductSyncDelete.md)
+- [MobileProductSyncUpsert](docs/MobileProductSyncUpsert.md)
+- [MobileSyncProduct](docs/MobileSyncProduct.md)
+- [MobileSyncProductCategoria](docs/MobileSyncProductCategoria.md)
+- [MobileSyncProductSubcategoria](docs/MobileSyncProductSubcategoria.md)
+- [MobileSyncProductUnidad](docs/MobileSyncProductUnidad.md)
+- [MobileSyncProductVendor](docs/MobileSyncProductVendor.md)
 - [MobileUpdateUnitRequest](docs/MobileUpdateUnitRequest.md)
 - [Oferta](docs/Oferta.md)
 - [OrdenProduccion](docs/OrdenProduccion.md)

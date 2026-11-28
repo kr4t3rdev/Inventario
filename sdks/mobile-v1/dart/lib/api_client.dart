@@ -566,6 +566,10 @@ class ApiClient {
           return GetProductsResponse.fromJson(value);
         case 'GetProductsStockResponse':
           return GetProductsStockResponse.fromJson(value);
+        case 'GetProductsSyncChangesResponse':
+          return GetProductsSyncChangesResponse.fromJson(value);
+        case 'GetProductsSyncSnapshotResponse':
+          return GetProductsSyncSnapshotResponse.fromJson(value);
         case 'GetPuntosVentaDetailResponse':
           return GetPuntosVentaDetailResponse.fromJson(value);
         case 'GetPuntosVentaListResponse':
@@ -604,6 +608,22 @@ class ApiClient {
           return Merma.fromJson(value);
         case 'MobileCreateUnitRequest':
           return MobileCreateUnitRequest.fromJson(value);
+        case 'MobileProductSyncChange':
+          return MobileProductSyncChange.fromJson(value);
+        case 'MobileProductSyncDelete':
+          return MobileProductSyncDelete.fromJson(value);
+        case 'MobileProductSyncUpsert':
+          return MobileProductSyncUpsert.fromJson(value);
+        case 'MobileSyncProduct':
+          return MobileSyncProduct.fromJson(value);
+        case 'MobileSyncProductCategoria':
+          return MobileSyncProductCategoria.fromJson(value);
+        case 'MobileSyncProductSubcategoria':
+          return MobileSyncProductSubcategoria.fromJson(value);
+        case 'MobileSyncProductUnidad':
+          return MobileSyncProductUnidad.fromJson(value);
+        case 'MobileSyncProductVendor':
+          return MobileSyncProductVendor.fromJson(value);
         case 'MobileUpdateUnitRequest':
           return MobileUpdateUnitRequest.fromJson(value);
         case 'Oferta':

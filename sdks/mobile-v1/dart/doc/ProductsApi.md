@@ -12,6 +12,8 @@ Method | HTTP request | Description
 [**mobileGetProducts**](ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
 [**mobileGetProductsById**](ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 [**mobileGetProductsStock**](ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
+[**mobileGetProductsSyncChanges**](ProductsApi.md#mobilegetproductssyncchanges) | **GET** /products/sync/changes | Consultar cambios incrementales de productos
+[**mobileGetProductsSyncSnapshot**](ProductsApi.md#mobilegetproductssyncsnapshot) | **GET** /products/sync/snapshot | Obtener una página inicial del catálogo sincronizable
 
 
 # **mobileGetProducts**
@@ -149,6 +151,108 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**GetProductsStockResponse**](GetProductsStockResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobileGetProductsSyncChanges**
+> GetProductsSyncChangesResponse mobileGetProductsSyncChanges(cursor, limit)
+
+Consultar cambios incrementales de productos
+
+Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = ProductsApi();
+final cursor = cursor_example; // String | Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+final limit = 56; // int | 
+
+try {
+    final result = api_instance.mobileGetProductsSyncChanges(cursor, limit);
+    print(result);
+} catch (e) {
+    print('Exception when calling ProductsApi->mobileGetProductsSyncChanges: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **cursor** | **String**| Cursor opaco tenant-scoped recibido del snapshot o del pull anterior. | 
+ **limit** | **int**|  | [optional] [default to 200]
+
+### Return type
+
+[**GetProductsSyncChangesResponse**](GetProductsSyncChangesResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobileGetProductsSyncSnapshot**
+> GetProductsSyncSnapshotResponse mobileGetProductsSyncSnapshot(limit, pageToken)
+
+Obtener una página inicial del catálogo sincronizable
+
+Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = ProductsApi();
+final limit = 56; // int | 
+final pageToken = pageToken_example; // String | Token opaco de continuación, ligado al tenant autenticado.
+
+try {
+    final result = api_instance.mobileGetProductsSyncSnapshot(limit, pageToken);
+    print(result);
+} catch (e) {
+    print('Exception when calling ProductsApi->mobileGetProductsSyncSnapshot: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **limit** | **int**|  | [optional] [default to 200]
+ **pageToken** | **String**| Token opaco de continuación, ligado al tenant autenticado. | [optional] 
+
+### Return type
+
+[**GetProductsSyncSnapshotResponse**](GetProductsSyncSnapshotResponse.md)
 
 ### Authorization
 

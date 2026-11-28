@@ -23,6 +23,8 @@ import com.tcp.mobile.v1.models.ApiError
 import com.tcp.mobile.v1.models.GetProductsIdResponse
 import com.tcp.mobile.v1.models.GetProductsResponse
 import com.tcp.mobile.v1.models.GetProductsStockResponse
+import com.tcp.mobile.v1.models.GetProductsSyncChangesResponse
+import com.tcp.mobile.v1.models.GetProductsSyncSnapshotResponse
 
 class ProductsApiTest : ShouldSpec() {
     init {
@@ -51,6 +53,24 @@ class ProductsApiTest : ShouldSpec() {
             //val tipoUbicacion : kotlin.String = tipoUbicacion_example // kotlin.String | Valor de tipoUbicacion aceptado por el handler.
             //val includeZero : kotlin.String = includeZero_example // kotlin.String | Valor de includeZero aceptado por el handler.
             //val result : GetProductsStockResponse = apiInstance.mobileGetProductsStock(ubicacionId, tipoUbicacion, includeZero)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetProductsSyncChanges
+        should("test mobileGetProductsSyncChanges") {
+            // uncomment below to test mobileGetProductsSyncChanges
+            //val cursor : kotlin.String = cursor_example // kotlin.String | Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+            //val limit : kotlin.Int = 56 // kotlin.Int | 
+            //val result : GetProductsSyncChangesResponse = apiInstance.mobileGetProductsSyncChanges(cursor, limit)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobileGetProductsSyncSnapshot
+        should("test mobileGetProductsSyncSnapshot") {
+            // uncomment below to test mobileGetProductsSyncSnapshot
+            //val limit : kotlin.Int = 56 // kotlin.Int | 
+            //val pageToken : kotlin.String = pageToken_example // kotlin.String | Token opaco de continuación, ligado al tenant autenticado.
+            //val result : GetProductsSyncSnapshotResponse = apiInstance.mobileGetProductsSyncSnapshot(limit, pageToken)
             //result shouldBe ("TODO")
         }
 

@@ -202,4 +202,140 @@ class ProductsApi {
     }
     return null;
   }
+
+  /// Consultar cambios incrementales de productos
+  ///
+  /// Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] cursor (required):
+  ///   Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+  ///
+  /// * [int] limit:
+  Future<Response> mobileGetProductsSyncChangesWithHttpInfo(String cursor, { int? limit, }) async {
+    // ignore: prefer_const_declarations
+    final path = r'/products/sync/changes';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+      queryParams.addAll(_queryParams('', 'cursor', cursor));
+    if (limit != null) {
+      queryParams.addAll(_queryParams('', 'limit', limit));
+    }
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Consultar cambios incrementales de productos
+  ///
+  /// Entrega cambios de producto y stock en orden ascendente de secuencia. La ventana queda acotada durante la paginación; no se aplica expiración automática ni purga de eventos en esta fase.
+  ///
+  /// Parameters:
+  ///
+  /// * [String] cursor (required):
+  ///   Cursor opaco tenant-scoped recibido del snapshot o del pull anterior.
+  ///
+  /// * [int] limit:
+  Future<GetProductsSyncChangesResponse?> mobileGetProductsSyncChanges(String cursor, { int? limit, }) async {
+    final response = await mobileGetProductsSyncChangesWithHttpInfo(cursor,  limit: limit, );
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetProductsSyncChangesResponse',) as GetProductsSyncChangesResponse;
+    
+    }
+    return null;
+  }
+
+  /// Obtener una página inicial del catálogo sincronizable
+  ///
+  /// Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [int] limit:
+  ///
+  /// * [String] pageToken:
+  ///   Token opaco de continuación, ligado al tenant autenticado.
+  Future<Response> mobileGetProductsSyncSnapshotWithHttpInfo({ int? limit, String? pageToken, }) async {
+    // ignore: prefer_const_declarations
+    final path = r'/products/sync/snapshot';
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    if (limit != null) {
+      queryParams.addAll(_queryParams('', 'limit', limit));
+    }
+    if (pageToken != null) {
+      queryParams.addAll(_queryParams('', 'pageToken', pageToken));
+    }
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Obtener una página inicial del catálogo sincronizable
+  ///
+  /// Devuelve páginas ordenadas por identificador y una marca de agua fija. Los cambios posteriores a esa marca se reproducen desde el feed; el cliente debe aplicar upserts de forma idempotente. La respuesta no incluye costo.
+  ///
+  /// Parameters:
+  ///
+  /// * [int] limit:
+  ///
+  /// * [String] pageToken:
+  ///   Token opaco de continuación, ligado al tenant autenticado.
+  Future<GetProductsSyncSnapshotResponse?> mobileGetProductsSyncSnapshot({ int? limit, String? pageToken, }) async {
+    final response = await mobileGetProductsSyncSnapshotWithHttpInfo( limit: limit, pageToken: pageToken, );
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'GetProductsSyncSnapshotResponse',) as GetProductsSyncSnapshotResponse;
+    
+    }
+    return null;
+  }
 }

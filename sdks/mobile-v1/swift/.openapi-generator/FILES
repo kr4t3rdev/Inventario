@@ -235,6 +235,8 @@ Sources/Models/GetProduccionListResponse.swift
 Sources/Models/GetProductsIdResponse.swift
 Sources/Models/GetProductsResponse.swift
 Sources/Models/GetProductsStockResponse.swift
+Sources/Models/GetProductsSyncChangesResponse.swift
+Sources/Models/GetProductsSyncSnapshotResponse.swift
 Sources/Models/GetPuntosVentaDetailResponse.swift
 Sources/Models/GetPuntosVentaListResponse.swift
 Sources/Models/GetReparacionesDetailResponse.swift
@@ -254,6 +256,14 @@ Sources/Models/LockAdminUserRequest.swift
 Sources/Models/LoginRequest.swift
 Sources/Models/Merma.swift
 Sources/Models/MobileCreateUnitRequest.swift
+Sources/Models/MobileProductSyncChange.swift
+Sources/Models/MobileProductSyncDelete.swift
+Sources/Models/MobileProductSyncUpsert.swift
+Sources/Models/MobileSyncProduct.swift
+Sources/Models/MobileSyncProductCategoria.swift
+Sources/Models/MobileSyncProductSubcategoria.swift
+Sources/Models/MobileSyncProductUnidad.swift
+Sources/Models/MobileSyncProductVendor.swift
 Sources/Models/MobileUpdateUnitRequest.swift
 Sources/Models/Oferta.swift
 Sources/Models/OrdenProduccion.swift
@@ -574,6 +584,8 @@ docs/GetProduccionListResponse.md
 docs/GetProductsIdResponse.md
 docs/GetProductsResponse.md
 docs/GetProductsStockResponse.md
+docs/GetProductsSyncChangesResponse.md
+docs/GetProductsSyncSnapshotResponse.md
 docs/GetPuntosVentaDetailResponse.md
 docs/GetPuntosVentaListResponse.md
 docs/GetReparacionesDetailResponse.md
@@ -595,6 +607,14 @@ docs/LoginRequest.md
 docs/Merma.md
 docs/MermasAPI.md
 docs/MobileCreateUnitRequest.md
+docs/MobileProductSyncChange.md
+docs/MobileProductSyncDelete.md
+docs/MobileProductSyncUpsert.md
+docs/MobileSyncProduct.md
+docs/MobileSyncProductCategoria.md
+docs/MobileSyncProductSubcategoria.md
+docs/MobileSyncProductUnidad.md
+docs/MobileSyncProductVendor.md
 docs/MobileUpdateUnitRequest.md
 docs/Oferta.md
 docs/OfertasAPI.md
