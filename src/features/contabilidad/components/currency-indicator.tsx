@@ -28,6 +28,10 @@ interface CurrencyIndicatorProps {
   monedaPrincipal?: ResultadoMonedaPrincipal | null
 }
 
+// En el header apilado hay una fila propia; en escritorio se prioriza el menú.
+const CURRENCY_LAYOUT =
+  'flex min-w-0 flex-wrap items-center gap-2 px-3 lg:hidden xl:flex'
+
 /**
  * @description Indicador compacto de la moneda principal de la empresa y tasas
  * para el header. La moneda principal proviene exclusivamente de la política
@@ -59,7 +63,7 @@ export function CurrencyIndicator({
         ? "Moneda no disponible"
         : "Sin moneda configurada"
     return (
-      <div className="flex min-w-0 max-w-[45vw] shrink items-center gap-2 overflow-x-auto px-3 sm:max-w-none">
+      <div className={CURRENCY_LAYOUT}>
         <Badge variant="outline" className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
           {mensaje}
@@ -72,14 +76,14 @@ export function CurrencyIndicator({
 
   return (
     <TooltipProvider>
-      <div className="flex min-w-0 max-w-[45vw] shrink items-center gap-2 overflow-x-auto px-3 sm:max-w-none">
+      <div className={CURRENCY_LAYOUT}>
         <Badge variant="default" className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
           {codigoPrincipal}
         </Badge>
 
-        {tasasSecundarias && tasasSecundarias.length > 0 && (
-          <div className="flex items-center gap-1">
+        {tasasSecundarias.length > 0 && (
+          <div className="flex min-w-0 flex-wrap items-center gap-1 lg:hidden 2xl:flex">
             {tasasSecundarias.slice(0, 2).map((tasa) => {
               const moneda = monedas.find(m => m.codigo === tasa.monedaOrigenId)
               if (!moneda) return null
