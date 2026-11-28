@@ -81,7 +81,11 @@ describe('CurrencyIndicator', () => {
       />,
     )
 
-    expect(screen.getByText('USD')).toBeInTheDocument()
+    const principal = screen.getByText('USD')
+    const tasas = screen.getByRole('button').parentElement
+    expect(principal.parentElement).toHaveClass('lg:hidden', 'xl:flex', 'flex-wrap')
+    expect(principal.parentElement).not.toHaveClass('overflow-x-auto')
+    expect(tasas).toHaveClass('lg:hidden', '2xl:flex', 'flex-wrap')
     expect(screen.getByText('24.50')).toBeInTheDocument()
     expect(screen.queryByText('1.00')).not.toBeInTheDocument()
   })
