@@ -719,6 +719,7 @@ export async function applyPagoGastoWorkflow(
         tenantId: params.tenantId,
         cuentaPorPagarId: params.cuentaPorPagarId,
         monto: montoTotal,
+        moneda: params.moneda,
         numeroTransaccion: numeroTransaccion || 'N/A',
         cuentaProveedor,
         fechaPago: fechaPagoNormalizada,

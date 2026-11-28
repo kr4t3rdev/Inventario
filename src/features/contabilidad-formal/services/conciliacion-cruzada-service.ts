@@ -271,7 +271,7 @@ async function leerConciliacionEnSnapshot(
 			cuentaPorPagarId: { in: cxpOperativo.map((cuenta) => cuenta.cuentaPorPagarId) },
 			cuentaPorPagar: { tenantId, deletedAt: null },
 		},
-		select: { cuentaPorPagarId: true, monto: true, moneda: true },
+		select: { cuentaPorPagarId: true, monto: true, moneda: true, observaciones: true },
 	});
 
 	const esMonedaFuncional = (moneda: unknown) =>
@@ -375,12 +375,48 @@ async function leerConciliacionEnSnapshot(
 				.toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
 		return total.add(deudaFuncional.sub(valorLiquidadoEnLibros));
 	}, new Prisma.Decimal(CERO));
+	// Los pagos anteriores a la persistencia de moneda conservan los IDs de origen.
+	const referencias = pagosCxp.map((pago) => {
+		const marcas = pago.observaciones?.split(' | ')
+			.filter((parte) => parte.startsWith('reconciliationIds:')) ?? [];
+		return marcas.length === 1
+			? marcas[0].slice('reconciliationIds:'.length).split(',')
+			: [];
+	});
+	const usos = new Map<string, number>();
+	for (const id of referencias.flat()) usos.set(id, (usos.get(id) ?? 0) + 1);
+	const idsHistoricos = [...new Set(referencias.flatMap((ids, index) =>
+		pagosCxp[index].moneda == null ? ids.filter((id) => id && usos.get(id) === 1) : [],
+	))];
+	const origenes = idsHistoricos.length === 0 ? [] : await db.reconciliacionGasto.findMany({
+		where: { tenantId, reconciliacionId: { in: idsHistoricos } },
+		select: { reconciliacionId: true, cuentaPorPagarId: true, moneda: true, monto: true, estado: true },
+	});
+	const origenPorId = new Map(origenes.map((origen) => [origen.reconciliacionId, origen]));
+
+	/** Comprueba la evidencia histórica de moneda e importe sin alterar el pago. */
+	function monedaHistoricaVerificada(index: number, monto: Prisma.Decimal): boolean {
+		const ids = referencias[index];
+		if (!ids.length) return false;
+		let suma = new Prisma.Decimal(CERO);
+		for (const id of ids) {
+			const origen = origenPorId.get(id);
+			if (!origen || usos.get(id) !== 1 ||
+				origen.cuentaPorPagarId !== pagosCxp[index].cuentaPorPagarId ||
+				!esMonedaFuncional(origen.moneda) ||
+				!['PAGADA', 'PARCIAL'].includes(origen.estado)) return false;
+			const importe = decimalPersistido(origen.monto);
+			if (!importe || !importe.gt(0)) return false;
+			suma = suma.add(importe);
+		}
+		return suma.eq(monto);
+	}
 	const pagosPorCuenta = new Map<string, Prisma.Decimal | null>();
-	for (const pago of pagosCxp) {
+	for (const [index, pago] of pagosCxp.entries()) {
 		const monto = decimalPersistido(pago.monto);
 		const acumulado = pagosPorCuenta.get(pago.cuentaPorPagarId);
 		const total = acumulado === null || !monto || !monto.gt(0) ||
-			!esMonedaFuncional(pago.moneda)
+			!(pago.moneda == null ? monedaHistoricaVerificada(index, monto) : esMonedaFuncional(pago.moneda))
 			? null
 			: (acumulado ?? new Prisma.Decimal(CERO)).add(monto);
 		pagosPorCuenta.set(pago.cuentaPorPagarId, total);
