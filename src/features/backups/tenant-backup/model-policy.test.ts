@@ -16,7 +16,7 @@ const schemaModelNames = [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((matc
 
 describe('tenant backup model policy contract', () => {
   it('classifies every current schema model exactly once and rejects unknown additions', () => {
-    expect(schemaModelNames).toHaveLength(191);
+    expect(schemaModelNames).toHaveLength(193);
     expect(getModelPolicy('AperturaPeriodoSolicitud')?.kind).toBe('tenant-direct');
     const coverage = inspectPolicyCoverage(schemaModelNames.map((name) => ({ name })));
 
@@ -29,7 +29,7 @@ describe('tenant backup model policy contract', () => {
       return counts;
     }, {});
     expect(classificationCounts).toEqual({
-      'tenant-direct': 127,
+      'tenant-direct': 129,
       'tenant-child': 17,
       'reference-only': 10,
       excluded: 37,
@@ -41,6 +41,16 @@ describe('tenant backup model policy contract', () => {
       { name: 'UnreviewedFutureModel' },
     ]).unknownModels)
       .toEqual(['UnreviewedFutureModel']);
+  });
+
+  it('keeps the product sync journal and cursor tenant-scoped backup candidates', () => {
+    for (const model of ['MobileProductSyncChange', 'MobileProductSyncCursor']) {
+      const policy = getModelPolicy(model);
+
+      expect(policy?.kind, model).toBe('tenant-direct');
+      expect(policy?.ownerPath, model).toContain('tenantId');
+      expect(policy?.rationale, model).toContain('product and stock');
+    }
   });
 
   it('keeps each expected business model in the independent manifest with explicit disposition', () => {
