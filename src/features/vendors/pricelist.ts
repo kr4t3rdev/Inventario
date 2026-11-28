@@ -260,6 +260,7 @@ export const getProveedor360Action = withAction(
             total: true,
             moneda: true,
             createdAt: true,
+            cuentaPorPagar: { select: { tenantId: true, estado: true, deletedAt: true } },
           },
         }),
         prisma.cuentaPorPagar.findMany({
@@ -296,7 +297,12 @@ export const getProveedor360Action = withAction(
     return {
       vendor,
       pricelist,
-      comprasRecientes,
+      comprasRecientes: comprasRecientes.map(({ cuentaPorPagar, ...compra }) => ({
+        ...compra,
+        estadoPago: cuentaPorPagar?.tenantId === tenantId && cuentaPorPagar.deletedAt === null
+          ? cuentaPorPagar.estado
+          : null,
+      })),
       cuentasPorPagar,
       anticipos,
       deudasCash,

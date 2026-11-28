@@ -168,7 +168,9 @@ export function OrdenesCompraPageClient({
       .map((line) => ({
         productoId: line.productoId,
         cantidadPedida: Number(line.cantidad),
-        precioUnitario: Number(line.precioUnitario) || 0,
+        ...(line.precioUnitario.trim() === ''
+          ? {}
+          : { precioUnitario: Number(line.precioUnitario) }),
       }));
     const ok = await run(() => createOrdenCompraAction({ proveedorId: vendorId, items }));
     if (ok) setLines([{ ...EMPTY_LINE }]);
@@ -234,7 +236,7 @@ export function OrdenesCompraPageClient({
                 <Input aria-label={`Cantidad ${index + 1}`} type="number" min="1" value={line.cantidad} onChange={(e) => updateLine(index, { cantidad: e.target.value })} required />
               </label>
               <label className="space-y-1 text-sm">Precio unitario
-                <Input aria-label={`Precio unitario ${index + 1}`} type="number" min="0" value={line.precioUnitario} onChange={(e) => updateLine(index, { precioUnitario: e.target.value })} required />
+                <Input aria-label={`Precio unitario ${index + 1}`} type="number" min="0" placeholder="Precio del proveedor" value={line.precioUnitario} onChange={(e) => updateLine(index, { precioUnitario: e.target.value })} />
               </label>
               {lines.length > 1 && (
                 <Button type="button" variant="ghost" className="self-end" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}>

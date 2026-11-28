@@ -116,6 +116,20 @@ describe('OrdenesCompraPageClient', () => {
     }));
   });
 
+  it('permite guardar sin precio manual y solicita el precio del proveedor', async () => {
+    vi.mocked(createOrdenCompraAction).mockResolvedValue({ success: true, data: {} } as never);
+    render(<OrdenesCompraPageClient {...props} />);
+    fireEvent.change(screen.getByLabelText(/proveedor/i), { target: { value: 'ven-1' } });
+    fireEvent.change(screen.getByLabelText(/producto/i), { target: { value: 'prod-1' } });
+    fireEvent.change(screen.getByLabelText(/cantidad/i), { target: { value: '1' } });
+    expect(screen.getByLabelText(/precio unitario/i)).not.toBeRequired();
+    fireEvent.click(screen.getByRole('button', { name: /crear orden/i }));
+    await waitFor(() => expect(createOrdenCompraAction).toHaveBeenCalledWith({
+      proveedorId: 'ven-1',
+      items: [{ productoId: 'prod-1', cantidadPedida: 1 }],
+    }));
+  });
+
   it('confirma, recibe y cancela acciones sobre órdenes existentes', async () => {
     vi.mocked(confirmarOrdenCompraAction).mockResolvedValue({ success: true, data: {} } as any);
     vi.mocked(registrarRecepcionAction).mockResolvedValue({ success: true, data: {} } as any);
