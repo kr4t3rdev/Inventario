@@ -36,6 +36,7 @@ interface Proveedor360Data {
     compraDocumentoId: string;
     numeroFactura: string;
     estado: string;
+    estadoPago: 'PENDIENTE' | 'PARCIAL' | 'PAGADA' | null;
     total: number;
     moneda: string;
     createdAt: string | Date;
@@ -180,7 +181,7 @@ export function Proveedor360PageClient({ vendorId }: Proveedor360PageClientProps
       <Card>
         <CardHeader><CardTitle>Compras recientes</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
-          {data.comprasRecientes.length === 0 ? <p className="text-sm text-muted-foreground">No hay compras registradas.</p> : <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Factura</th><th className="p-2">Fecha</th><th className="p-2">Estado</th><th className="p-2">Total</th></tr></thead><tbody>{data.comprasRecientes.map((compra) => <tr className="border-b" key={compra.compraDocumentoId}><td className="p-2">{compra.numeroFactura || 'Sin número'}</td><td className="p-2">{new Intl.DateTimeFormat('es').format(new Date(compra.createdAt))}</td><td className="p-2">{compra.estado}</td><td className="p-2 tabular-nums">{money(compra.total, compra.moneda)}</td></tr>)}</tbody></table>}
+          {data.comprasRecientes.length === 0 ? <p className="text-sm text-muted-foreground">No hay compras registradas.</p> : <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Factura</th><th className="p-2">Fecha</th><th className="p-2">Estado del documento</th><th className="p-2">Estado del pago</th><th className="p-2">Total</th></tr></thead><tbody>{data.comprasRecientes.map((compra) => <tr className="border-b" key={compra.compraDocumentoId}><td className="p-2">{compra.numeroFactura || 'Sin número'}</td><td className="p-2">{new Intl.DateTimeFormat('es').format(new Date(compra.createdAt))}</td><td className="p-2">{compra.estado}</td><td className="p-2">{compra.estadoPago ? { PENDIENTE: 'Pendiente', PARCIAL: 'Pago parcial', PAGADA: 'Pagada' }[compra.estadoPago] : 'Sin registro de pago'}</td><td className="p-2 tabular-nums">{money(compra.total, compra.moneda)}</td></tr>)}</tbody></table>}
         </CardContent>
       </Card>
       <section className="grid gap-6 lg:grid-cols-2">

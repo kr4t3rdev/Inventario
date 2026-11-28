@@ -23,7 +23,7 @@ import { Proveedor360PageClient } from '../proveedor-360-page-client';
 const fixture = {
   vendor: { vendorId: 'vendor-1', nombre: 'Distribuidora Centro', contacto: 'Ana', telefono: '555-0100', direccion: 'Calle 1' },
   pricelist: [{ proveedorProductoId: 'pp-1', costoUnitario: 12500, moneda: 'CUP', esPreferente: true, producto: { nombre: 'Arroz' } }],
-  comprasRecientes: [{ compraDocumentoId: 'c-1', numeroFactura: 'F-10', estado: 'PAGADA', total: 25000, moneda: 'CUP', createdAt: '2026-10-01T00:00:00Z' }],
+  comprasRecientes: [{ compraDocumentoId: 'c-1', numeroFactura: 'F-10', estado: 'PENDIENTE', estadoPago: 'PAGADA', total: 25000, moneda: 'CUP', createdAt: '2026-10-01T00:00:00Z' }],
   cuentasPorPagar: [{ cuentaPorPagarId: 'cxp-1', saldoPendiente: 7000, moneda: 'CUP', estado: 'PENDIENTE' }],
   anticipos: [{ anticipoId: 'a-1', monto: 3000, moneda: 'CUP', estado: 'PENDIENTE' }],
   deudasCash: [{ deudaCashId: 'd-1', montoPendiente: 1500, moneda: 'CUP' }],
@@ -43,6 +43,9 @@ describe('Proveedor360PageClient', () => {
     expect(screen.getByText('555-0100')).toBeInTheDocument();
     expect(screen.getByText('Arroz')).toBeInTheDocument();
     expect(screen.getByText('F-10')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Estado del documento' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Estado del pago' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'Pagada' })).toBeInTheDocument();
     expect(screen.getByText('Cuentas por pagar')).toBeInTheDocument();
     expect(screen.getByText('Anticipos')).toBeInTheDocument();
     expect(screen.getByText('Deudas en efectivo')).toBeInTheDocument();
