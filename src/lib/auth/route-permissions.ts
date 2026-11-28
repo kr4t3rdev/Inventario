@@ -146,6 +146,16 @@ const MOBILE_LEGACY_GET_KEYS: Readonly<Record<string, string>> = {
 };
 
 const MOBILE_METHOD_DENIED = '__mobile_method_not_allowed__';
+
+/**
+ * Rutas de sincronización incremental de productos (solo lectura). Viven bajo
+ * `/products` pero con dos segmentos extra, así que el match genérico
+ * colección/detalle no las cubre y el gate mobile las rechazaría con 405.
+ */
+const MOBILE_PRODUCTS_SYNC_GET_PATHS: readonly string[] = [
+  '/api/mobile/v1/products/sync/snapshot',
+  '/api/mobile/v1/products/sync/changes',
+];
 const MOBILE_EXEMPT_ROUTE_RULES: readonly { method: string; path: RegExp }[] = [
   { method: 'POST', path: /^\/api\/mobile\/v1\/auth\/(?:login|logout|refresh|register)$/ },
   { method: 'GET', path: /^\/api\/mobile\/v1\/auth\/(?:me|tenants)$/ },
@@ -336,6 +346,14 @@ export function getMobilePermissionKey(path: string, method?: string): string | 
     (rule) => rule.method === httpMethod && rule.path.test(path),
   );
   if (writeRule) return writeRule.key;
+
+  if (
+    group === 'products' &&
+    httpMethod === 'GET' &&
+    MOBILE_PRODUCTS_SYNC_GET_PATHS.includes(path)
+  ) {
+    return MOBILE_GROUP_KEYS.products;
+  }
 
   if (group === 'accounting') {
     const knownReadRoute = MOBILE_ACCOUNTING_GET_PATHS.some((template) => {
